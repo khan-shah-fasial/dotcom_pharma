@@ -11,7 +11,7 @@ webtesti_dotcomdb.sql
 /node_modules
 
 /public/storage
-
+/public/uploads
 /storage/*.key
 /storage/debugbar
 /vendor

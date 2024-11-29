@@ -1182,6 +1182,11 @@ if (!function_exists('my_asset')) {
      */
     function my_asset($path, $secure = null)
     {
+        
+        if(app()->environment('local')){
+            return app('url')->asset('/' . $path, $secure);
+        }
+
         if (config('filesystems.default') != 'local') {
             return Storage::disk(config('filesystems.default'))->url($path);
         }
@@ -1200,7 +1205,12 @@ if (!function_exists('static_asset')) {
      */
     function static_asset($path, $secure = null)
     {
-        return app('url')->asset('public/' . $path, $secure);
+        if(app()->environment('production')){
+            return app('url')->asset('public/' . $path, $secure); //for production environment
+        }else{
+            return app('url')->asset('/' . $path, $secure); //for production environment
+        }
+        //return app('url')->asset('public/' . $path, $secure);
     }
 }
 
@@ -1226,6 +1236,10 @@ if (!function_exists('getBaseURL')) {
 if (!function_exists('getFileBaseURL')) {
     function getFileBaseURL()
     {
+        if(app()->environment('local')){
+            return getBaseURL() . 'public/';  //for local machine
+        }
+        
         if (env('FILESYSTEM_DRIVER') != 'local') {
             return env(Str::upper(env('FILESYSTEM_DRIVER')) . '_URL') . '/';
         }
