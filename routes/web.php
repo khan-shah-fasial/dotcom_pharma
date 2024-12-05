@@ -40,6 +40,7 @@ use App\Http\Controllers\Payment\SslcommerzController;
 use App\Http\Controllers\Payment\StripeController;
 use App\Http\Controllers\Payment\TapController;
 use App\Http\Controllers\Payment\VoguepayController;
+use App\Http\Controllers\Payment\PayumoneyController;
 use App\Http\Controllers\ProductQueryController;
 use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\ReviewController;
@@ -393,6 +394,11 @@ Route::controller(VoguepayController::class)->group(function () {
     Route::get('/vogue-pay/success/{id}', 'paymentSuccess');
     Route::get('/vogue-pay/callback', 'handleCallback');
     Route::get('/vogue-pay/failure/{id}', 'paymentFailure');
+});
+
+Route::controller(PayumoneyController::class)->group(function () {
+    Route::get('/payumoney/success/{coid}', 'paymentSuccess')->name('payumoney.success');
+    Route::get('/payumoney/failure/{coid}', 'paymentFailure')->name('payumoney.failure');
 });
 
 
