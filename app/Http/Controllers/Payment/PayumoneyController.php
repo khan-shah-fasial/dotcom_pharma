@@ -34,36 +34,35 @@ class PayumoneyController extends Controller
         }*/
     }
 
-    public function paymentSuccess($id)
+    public function paymentSuccess(Request $request,$id)
     {
-        if (BusinessSetting::where('type', 'payumoney_sandbox')->first()->value == 1) {
-            $url = '//payumoney.com/?v_transaction_id=' . $id . '&type=json&demo=true';
-        } else {
-            $url = '//payumoney.com/?v_transaction_id=' . $id . '&type=json';
-        }
-        $client = new Client();
-        $response = $client->request('GET', $url);
-        $obj = json_decode($response->getBody());
+        //dd($request->all());
+        $this->validateHash($request->all());
 
-        if ($obj->response_message == 'Approved') {
-            $payment_detalis = json_encode($obj);
-            // dd($payment_detalis);
-            if (Session::has('payment_type')) {
-                $paymentType = Session::get('payment_type');
-                $paymentData = Session::get('payment_data');
+        if($this->validateHash($request->all()) && $request->status == 'success'){
+            $payment_detalis = json_encode($request->all());
+            $paymentType = $request->udf2;
+            $paymentData = ['order_id' => null, 'payment_method' => 'payumoney'];  //dont know what to put
+            $combined_order_id = $request->udf3;
+            $user_id = $request->udf1;
 
-                if ($paymentType == 'cart_payment') {
-                    return (new CheckoutController)->checkout_done(Session::get('combined_order_id'), $payment_detalis);
-                } elseif ($paymentType == 'order_re_payment') {
-                    return (new CheckoutController)->orderRePaymentDone($paymentData, $payment_detalis);
-                } elseif ($paymentType == 'wallet_payment') {
-                    return (new WalletController)->wallet_payment_done($paymentData, $payment_detalis);
-                } elseif ($paymentType == 'customer_package_payment') {
-                    return (new CustomerPackageController)->purchase_payment_done($paymentData, $payment_detalis);
-                } elseif ($paymentType == 'seller_package_payment') {
-                    return (new SellerPackageController)->purchase_payment_done($paymentData, $payment_detalis);
-                }
-            }
+            $user = auth()->user();
+            if (!$user) {
+                $user = User::find($user_id);
+                auth()->login($user);
+            }         
+            
+            if ($paymentType == 'cart_payment') {
+                return (new CheckoutController)->checkout_done($combined_order_id, $payment_detalis);
+            } elseif ($paymentType == 'order_re_payment') {
+                return (new CheckoutController)->orderRePaymentDone($paymentData, $payment_detalis);
+            } elseif ($paymentType == 'wallet_payment') {
+                return (new WalletController)->wallet_payment_done($paymentData, $payment_detalis);
+            } /*elseif ($paymentType == 'customer_package_payment') {
+                return (new CustomerPackageController)->purchase_payment_done($paymentData, $payment_detalis);
+            } elseif ($paymentType == 'seller_package_payment') {
+                return (new SellerPackageController)->purchase_payment_done($paymentData, $payment_detalis);
+            }*/            
         } else {
             flash(translate('Payment Failed'))->error();
             return redirect()->route('home');
@@ -111,9 +110,59 @@ class PayumoneyController extends Controller
         }
     }
 
-    public function paymentFailure($id)
+    public function paymentFailure(Request $request, $id)
     {
+        //dd($request->all());
         flash(translate('Payment Failed'))->error();
         return redirect()->route('home');
     }
+
+
+    public function validateHash(array $data)
+    {
+        // Get the values from the response data
+        $status = $data['status'];
+        $txnid = $data['txnid'];
+        $amount = $data['amount'];
+        $productinfo = $data['productinfo'];
+        $firstname = $data['firstname'];
+        $email = $data['email'];
+        $salt = env('PAYUMONEY_SALT');  // Get salt from environment
+        $key = env('PAYUMONEY_KEY');  // Get salt from environment
+    
+        // Get the UDF fields, which can be empty or have values
+        $udf1 = $data['udf1'] ?? 'udf1';
+        $udf2 = $data['udf2'] ?? 'udf2';
+        $udf3 = $data['udf3'] ?? 'udf3';
+        $udf4 = $data['udf4'] ?? 'udf4';
+        $udf5 = $data['udf5'] ?? 'udf5';
+        // $udf6 = $data['udf6'] ?? 'udf6';
+        // $udf7 = $data['udf7'] ?? 'udf7';
+        // $udf8 = $data['udf8'] ?? 'udf8';
+        // $udf9 = $data['udf9'] ?? 'udf9';
+        // $udf10 = $data['udf10'] ?? 'udf10';
+    
+        // Generate the hash sequence
+        //sha512(SALT|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key)
+        //$retHashSeq = $salt.'|'.$status.'|'.$udf10.'|'.$udf9.'|'.$udf8.'|'.$udf7.'|'.$udf6.'|'.$udf5.'|'.$udf4.'|'.$udf3.'|'.$udf2.'|'.$udf1.'|'.$email.'|'.$firstname.'|'.$productinfo.'|'.$amount.'|'.$txnid.'|'.$key;
+        $retHashSeq = $salt.'|'.$status.'||||||'.$udf5.'|'.$udf4.'|'.$udf3.'|'.$udf2.'|'.$udf1.'|'.$email.'|'.$firstname.'|'.$productinfo.'|'.$amount.'|'.$txnid.'|'.$key;
+    
+        // Generate hash using SHA512
+        $generatedHash = hash("sha512", $retHashSeq);
+
+        // var_dump($retHashSeq);
+        // var_dump($generatedHash);
+        // dd($data['hash']);
+    
+        // Compare the generated hash with the received hash
+        if (strtolower($generatedHash) === strtolower($data['hash'])) {
+            // Hashes match, payment is successful
+            return true;
+        } else {
+            // Hashes do not match, something is wrong
+            return false;
+        }
+    }    
+    
+
 }

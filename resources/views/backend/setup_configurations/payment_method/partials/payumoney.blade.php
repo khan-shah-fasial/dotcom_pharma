@@ -30,7 +30,7 @@
         <div class="col-md-8">
             <label class="aiz-switch aiz-switch-success mb-0">
                 <input value="1" name="puyumoney_sandbox" type="checkbox"
-                    @if (get_setting('puyumoney_sandbox') == 1) checked @endif>
+                    @if (get_setting('payumoney_sandbox') == 1) checked @endif>
                 <span class="slider round"></span>
             </label>
         </div>

@@ -397,8 +397,8 @@ Route::controller(VoguepayController::class)->group(function () {
 });
 
 Route::controller(PayumoneyController::class)->group(function () {
-    Route::get('/payumoney/success/{coid}', 'paymentSuccess')->name('payumoney.success');
-    Route::get('/payumoney/failure/{coid}', 'paymentFailure')->name('payumoney.failure');
+    Route::post('/payumoney/success/{coid}', 'paymentSuccess')->name('payumoney.success');
+    Route::post('/payumoney/failure/{coid}', 'paymentFailure')->name('payumoney.failure');
 });
 
 
