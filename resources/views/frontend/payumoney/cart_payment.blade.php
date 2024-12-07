@@ -1,7 +1,13 @@
 @php
+    /*
+        Common Troubleshoots
+        -- make sure all the data is exact same from request to response
+        -- make sure to use key & salt properly in proper enviroment
+        -- https://docs.payu.in/docs/generate-hash-merchant-hosted -- docs for hash generation
+        -- https://docs.payu.in/docs/test-cards-upi-id-and-wallets -- docs for test payment cards
+    */
+
     // PayU Merchant Details
-    //https://docs.payu.in/docs/generate-hash-merchant-hosted
-    //https://docs.payu.in/docs/test-cards-upi-id-and-wallets
     $key = env("PAYUMONEY_KEY");
     $salt = env("PAYUMONEY_SALT");
 
@@ -15,22 +21,16 @@
         'firstname' => auth()->user()->name,
         'email' => auth()->user()->email,
         'phone' => auth()->user()->phone,
-        'surl' => route('payumoney.success', ['coid' => Session::get('combined_order_id')]),
-        'furl' => route('payumoney.failure', ['coid' => Session::get('combined_order_id')]),      
-        'udf1' => auth()->user()->id, // Dynamic user ID
-        'udf2' => 'cart_payment', // Static data
+        'surl' => route('payumoney.success'),
+        'furl' => route('payumoney.failure'),      
+        'udf1' => auth()->user()->id,
+        'udf2' => 'cart_payment',
         'udf3' => Session::get('combined_order_id'),
-        'udf4' => 'udf4', 
-        'udf5' => 'udf5', 
-        //'udf6' => 'udf6', 
-        //'udf7' => 'udf7', 
-        //'udf8' => 'udf8', 
-        //'udf9' => 'udf9', 
-        //'udf10' => 'udf10',
+        'udf4' => 'none', 
+        'udf5' => Session::get('payment_data')['payment_method'], 
     ];
 
-    //sha512(key|txnid|amount|productinfo|firstname|email|||||||||||SALT)
-    //$hashString = $pum['key'] . '|' . $pum['txnid'] . '|' . $pum['amount'] . '|' . $pum['productinfo'] . '|' . $pum['firstname'] . '|' . $pum['email'] . '|' . $pum['udf1'] . '|' . $pum['udf2'] . '|' . $pum['udf3'] . '|' . $pum['udf4'] . '|' . $pum['udf5'] . '|' . $pum['udf6'] . '|' . $pum['udf7'] . '|' . $pum['udf8'] . '|' . $pum['udf9'] . '|' . $pum['udf10'] . '|' . $pum['salt'];
+    //sha512(key|txnid|amount|productinfo|firstname|email|||||||||||SALT) -- this is hash making mechanism during request by docs 
     $hashString = $pum['key'] . '|' . $pum['txnid'] . '|' . $pum['amount'] . '|' . $pum['productinfo'] . '|' . $pum['firstname'] . '|' . $pum['email'] . '|' . $pum['udf1'] . '|' . $pum['udf2'] . '|' . $pum['udf3'] . '|' . $pum['udf4'] . '|' . $pum['udf5'] . '||||||' . $pum['salt'];
     $pum['hash'] = strtolower(hash('sha512', $hashString));
 
@@ -50,25 +50,17 @@
     <input type="hidden" name="surl" value="{{ $pum['surl'] }}" />
     <input type="hidden" name="furl" value="{{ $pum['furl'] }}" />
     <input type="hidden" name="hash" value="{{ $pum['hash'] }}" />
-
-    <!-- Additional Parameters (udf1 to udf10) -->
     <input type="hidden" name="udf1" value="{{ $pum['udf1'] }}" />
     <input type="hidden" name="udf2" value="{{ $pum['udf2'] }}" />
     <input type="hidden" name="udf3" value="{{ $pum['udf3'] }}" />
     <input type="hidden" name="udf4" value="{{ $pum['udf4'] }}" />
     <input type="hidden" name="udf5" value="{{ $pum['udf5'] }}" />
-    {{--<input type="hidden" name="udf6" value="{{ $pum['udf6'] }}" />
-    <input type="hidden" name="udf7" value="{{ $pum['udf7'] }}" />
-    <input type="hidden" name="udf8" value="{{ $pum['udf8'] }}" />
-    <input type="hidden" name="udf9" value="{{ $pum['udf9'] }}" />
-    <input type="hidden" name="udf10" value="{{ $pum['udf10'] }}" />--}}
-
     <button type="submit" style="display: none;">Pay Now</button>
 </form>
 
 <script>
     // Automatically submit the form on page load
     window.onload = function() {
-        //document.getElementById('payumoney-form').submit();
+        document.getElementById('payumoney-form').submit();
     };
 </script>
