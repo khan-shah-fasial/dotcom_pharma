@@ -133,6 +133,16 @@ class HomeController extends Controller
         return view('auth.' . get_setting('authentication_layout_select') . '.user_registration');
     }
 
+
+    public function new_user_registrations(Request $request)
+    {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+        return view('frontend.user_registration');
+    }
+
+
     public function cart_login(Request $request)
     {
         $user = null;

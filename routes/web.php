@@ -50,7 +50,7 @@ use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\SizeChartController;
-
+use App\Http\Controllers\Auth\RegisterController;
 /*
   |--------------------------------------------------------------------------
   | Web Routes
@@ -76,6 +76,18 @@ Route::controller(DemoController::class)->group(function () {
 
 Route::get('/refresh-csrf', function () {
     return csrf_token();
+});
+
+Route::get('/csrf-token', function () {
+    return response()->json(['token' => csrf_token()]);
+});
+
+
+Route::get('/test-otp', function () {
+    $sessionData = Session()->all();
+
+    // Print session data
+    dd($sessionData);
 });
 
 // AIZ Uploader
@@ -116,6 +128,8 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/deliveryboy/login', 'login')->name('deliveryboy.login')->middleware('handle-demo-login');
     Route::get('/users/registration', 'registration')->name('user.registration')->middleware('handle-demo-login');
     Route::post('/users/login/cart', 'cart_login')->name('cart.login.submit')->middleware('handle-demo-login');
+
+    Route::get('/user/registration', 'new_user_registrations')->name('user.new_registration');
 
     Route::post('/import-data', 'import_data');
 
@@ -162,6 +176,11 @@ Route::controller(HomeController::class)->group(function () {
 
     Route::get('/track-your-order', 'trackOrder')->name('orders.track');
 });
+
+//new user registration
+Route::post('/register/create-new-user-registration', [RegisterController::class, 'new_user_register'])->name('create.new.user.registration')->middleware('handle-demo-login');
+
+Route::post('/register/create-new-user-phone-verify', [RegisterController::class, 'verify_otp'])->name('create.new.user.registration.phone.verify')->middleware('handle-demo-login');
 
 // Language Switch
 Route::post('/language', [LanguageController::class, 'changeLanguage'])->name('language.change');
