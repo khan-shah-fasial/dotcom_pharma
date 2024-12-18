@@ -399,6 +399,7 @@ Route::controller(VoguepayController::class)->group(function () {
 Route::controller(PayumoneyController::class)->group(function () {
     Route::post('/payumoney/success', 'paymentSuccess')->name('payumoney.success');
     Route::post('/payumoney/failure', 'paymentFailure')->name('payumoney.failure');
+    Route::any('/payumoney/webhook', 'paymentWebhook')->name('payumoney.webhook');
 });
 
 
