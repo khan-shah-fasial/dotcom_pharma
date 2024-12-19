@@ -28,13 +28,16 @@ class CustomerController extends Controller
         $sort_search = null;
         $verification_status =  $request->verification_status ?? null;
         $users = User::where('user_type', 'customer')->orderBy('created_at', 'desc');
+        // if($verification_status != null){
+        //     $users = $verification_status == 'verified' ? $users->where('email_verified_at', '!=', null) : $users->where('email_verified_at', null);
+        // }
         if($verification_status != null){
-            $users = $verification_status == 'verified' ? $users->where('email_verified_at', '!=', null) : $users->where('email_verified_at', null);
+            $users = $verification_status == 'verified' ? $users->where('approval_Status', 1) : $users->where('approval_Status', 0);
         }
         if ($request->has('search')){
             $sort_search = $request->search;
             $users->where(function ($q) use ($sort_search){
-                $q->where('name', 'like', '%'.$sort_search.'%')->orWhere('email', 'like', '%'.$sort_search.'%');
+                $q->where('name', 'like', '%'.$sort_search.'%')->orWhere('email', 'like', '%'.$sort_search.'%')->orWhere('phone', 'like', '%'.$sort_search.'%');
             });
         }
         $users = $users->paginate(15);
@@ -227,5 +230,48 @@ class CustomerController extends Controller
         $user->save();
         
         return back();
+    }
+
+
+    public function view($id)
+    {
+        $user = User::findOrFail(decrypt($id));
+        return view('backend.customer.customers.view', compact('user'));
+    }
+
+    public function approval(Request $request) {
+        $user = User::findOrFail($request->id);
+
+
+
+        if($user->approval_status == 1) {
+            $user->approval_status = 0;
+            $user->note = $request->note;
+
+            $user->save();
+
+            try {
+                EmailUtility::approval_reject_email($user);
+            } catch (\Exception $e) {}
+
+            flash(translate('Customer Not Approve Successfully'))->success();
+
+        } else {
+
+            $user->approval_status = 1;
+            $user->note = $request->note;
+
+            $user->save();
+
+            try {
+                EmailUtility::approval_registration_email($user);
+            } catch (\Exception $e) {}
+
+            flash(translate('Customer Approve Successfully'))->success();
+
+        }
+
+        return back();
+
     }
 }

@@ -254,4 +254,34 @@ class EmailUtility
             }
         }
     }
+
+
+    // Not Approval Email 
+    public static function approval_reject_email($user){
+        $emailSendTo = $user->email;
+        $emailSubject = 'Your Registration Has Not Been Approved by Admin';
+        $emailBody = 'Reason for not approval: ';
+        $emailBody = nl2br($user->note);
+        
+        $array['subject'] = $emailSubject;
+        $array['content'] = $emailBody;
+
+        Mail::to($emailSendTo)->queue(new MailManager($array));
+    }
+
+
+    // Approval Email 
+    public static function approval_registration_email($user){
+        $emailSendTo = $user->email;
+        $emailSubject = 'Your Registration Has Been Approved by Admin';
+        $emailBody = 'You can now browse and use the website.';
+        
+        $array['subject'] = $emailSubject;
+        $array['content'] = $emailBody;
+
+        Mail::to($emailSendTo)->queue(new MailManager($array));
+    }
+
+
+
 }

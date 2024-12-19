@@ -181,6 +181,9 @@ class RegisterController extends Controller
 
     protected function registered(Request $request, $user)
     {
+
+        
+
         if ($user->email == null) {
             return redirect()->route('verification');
         }elseif(session('link') != null){
@@ -358,6 +361,17 @@ class RegisterController extends Controller
         
         // Store user data in session
         Session::put('user_data', $user_data);
+
+
+        // $user = [
+        //     'name' => $user_data['name'],
+        //     'phone' => '+'.$user_data['phone'],
+        //     'password' => $user_data['password'],
+        //     'verification_code' => $otp,
+        // ];
+
+        // $otpController = new OTPVerificationController;
+        // $otpController->send_code($user);
         
         // Return a success response
         return response()->json([
@@ -368,7 +382,47 @@ class RegisterController extends Controller
     }
 
 
-    public function verify_otp($request)
+    public function resendOtp(Request $request)
+    {
+
+        $data = Session::get('user_data');
+    
+        // Ensure $data exists
+        if (!$data) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User data not found. Please start the process again.',
+            ], 200);
+        }
+
+        // $otp = mt_rand(100000, 999999);
+        $otp = '123456';
+        Session::put('otp', $otp);
+
+        $timestamp = date('Y-m-d H:i:s'); // Use PHP's native date() function for timestamp
+        Session::put('otp_timestamp', $timestamp);
+
+
+        // $user = [
+        //     'name' => $data['name'],
+        //     'phone' => '+'.$data['phone'],
+        //     'password' => $data['password'],
+        //     'verification_code' => $otp,
+        // ];
+
+        // $otpController = new OTPVerificationController;
+        // $otpController->send_code($user);
+
+
+        // Return a success response
+        return response()->json([
+            'status' => 'success',
+            'message' => 'OTP has been Resend no this Phone : ' . $data['phone'],
+        ], 200);
+    }
+
+
+    public function verify_otp(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'otp' => 'required|digits:6',
@@ -418,6 +472,7 @@ class RegisterController extends Controller
             // Create user
             $user = User::create([
                 'name' => $data['name'],
+                'email' => $data['email'],
                 'phone' => '+' . $data['phone'],
                 'password' => bcrypt($data['password']), // Hash password before saving
                 'ad_contact_number' => $data['ad_contact_number'],
@@ -449,6 +504,40 @@ class RegisterController extends Controller
                 'micr_code' => $data['micr_code'],
                 'customer_care_executive' => $data['customer_care_executive'],
             ]);
+
+
+            $this->guard()->login($user);
+
+            if(session('temp_user_id') != null){
+                if(auth()->user()->user_type == 'customer'){
+                    Cart::where('temp_user_id', session('temp_user_id'))
+                    ->update(
+                        [
+                            'user_id' => auth()->user()->id,
+                            'temp_user_id' => null
+                        ]
+                    );
+                }
+                else {
+                    Cart::where('temp_user_id', session('temp_user_id'))->delete();
+                }
+                Session::forget('temp_user_id');
+            }
+
+
+            // Account Opening Email to customer
+
+                try {
+                    EmailUtility::customer_registration_email('registration_email_to_customer', $user, null);
+                } catch (\Exception $e) {}
+            
+
+            // customer Account Opening Email to Admin
+
+                try {
+                    EmailUtility::customer_registration_email('customer_reg_email_to_admin', $user, null);
+                } catch (\Exception $e) {}
+            
     
             return response()->json([
                 'status' => 'success',

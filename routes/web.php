@@ -104,7 +104,7 @@ Route::group(['middleware' => ['prevent-back-history','handle-demo-login']], fun
 });
 
 // Login
-Route::controller(LoginController::class)->group(function () {
+Route::controller( ::class)->group(function () {
     Route::get('/logout', 'logout');
     Route::get('/social-login/redirect/{provider}', 'redirectToProvider')->name('social.login');
     Route::get('/social-login/{provider}/callback', 'handleProviderCallback')->name('social.callback');
@@ -181,6 +181,8 @@ Route::controller(HomeController::class)->group(function () {
 Route::post('/register/create-new-user-registration', [RegisterController::class, 'new_user_register'])->name('create.new.user.registration')->middleware('handle-demo-login');
 
 Route::post('/register/create-new-user-phone-verify', [RegisterController::class, 'verify_otp'])->name('create.new.user.registration.phone.verify')->middleware('handle-demo-login');
+
+Route::post('/register/create-new-user-resend-phone-verify', [RegisterController::class, 'resendOtp'])->name('create.new.user.registration.resend.phone.verify')->middleware('handle-demo-login');
 
 // Language Switch
 Route::post('/language', [LanguageController::class, 'changeLanguage'])->name('language.change');

@@ -65,7 +65,7 @@
                                     $.each(response.message, function (key, msg) {
                                         errors += "<div>" + (key + 1) + ". " + msg + "</div>";
                                     });
-                                    // AIZ.plugins.notify('danger', errors); // Display all errors
+                                    AIZ.plugins.notify('danger', errors); // Display all errors
                                 } else {
                                     AIZ.plugins.notify('danger', response.message); // If it's not an array, show the single message
                                 }

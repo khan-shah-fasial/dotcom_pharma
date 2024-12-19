@@ -413,5 +413,27 @@
             };
         });
 
+        $(document).ready(function(){
+            $('#resendOTPButton_Phone').click(function(e){
+                e.preventDefault();
+
+                var csrfToken = '{{ csrf_token() }}';
+
+                $.ajax({
+                    url: "{{ route('create.new.user.registration.resend.phone.verify') }}",
+                    type: "Post",
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    success: function(response) {
+                        AIZ.plugins.notify('success', response.message);
+                    },
+                    error: function(xhr, status, error) {
+                        AIZ.plugins.notify('danger', response.message);
+                    }
+                });
+            });
+        });
+
     </script>
 @endsection
