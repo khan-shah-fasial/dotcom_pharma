@@ -936,8 +936,23 @@
         echo get_setting('footer_script');
     @endphp
 
+    
+    @include('frontend.not_approval_model')
+
 
     @yield('custome-script')
+
+
+    @if (Session::has('registartion_status'))
+        @php
+            Session::forget('registartion_status');
+        @endphp
+
+        <script>
+            alert('working');
+            $('#not_approval_model').modal('show');
+        </script>
+    @endif
 
 </body>
 </html>

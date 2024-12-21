@@ -284,6 +284,13 @@ class LoginController extends Controller
             return redirect()->route('seller.dashboard');
         } else {
 
+            if(auth()->user()->approval_status != '1'){
+                $this->guard()->logout();
+
+                Session()->put('registartion_status', 'not approved');
+
+            }
+
             if (session('link') != null) {
                 return redirect(session('link'));
             } else {

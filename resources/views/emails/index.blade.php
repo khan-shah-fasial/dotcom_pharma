@@ -44,7 +44,7 @@
 
                                     <!-- Content -->
                                     <div style="padding: 10px 30px 70px 30px;">
-                                        <p>{!! $content !!}</p>
+                                        <p style="line-height: 20px;">{!! $content !!}</p>
                                     </div>
                                     
                                 </td>

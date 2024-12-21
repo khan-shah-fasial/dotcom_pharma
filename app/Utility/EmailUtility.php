@@ -260,8 +260,8 @@ class EmailUtility
     public static function approval_reject_email($user){
         $emailSendTo = $user->email;
         $emailSubject = 'Your Registration Has Not Been Approved by Admin';
-        $emailBody = 'Reason for not approval: ';
-        $emailBody = nl2br($user->note);
+        $emailBody = 'Reason for not approval: '. nl2br($user->note);
+        // $emailBody = nl2br($user->note);
         
         $array['subject'] = $emailSubject;
         $array['content'] = $emailBody;

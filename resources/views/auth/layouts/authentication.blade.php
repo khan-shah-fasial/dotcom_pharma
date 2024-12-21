@@ -99,5 +99,18 @@
 
     @yield('script')
 
+    @include('frontend.not_approval_model')
+
+    @if (Session::has('registartion_status'))
+
+        <script>
+            $('#not_approval_model').modal('show');
+        </script>
+
+        @php
+            Session::forget('registartion_status');
+        @endphp
+    @endif
+
 </body>
 </html>

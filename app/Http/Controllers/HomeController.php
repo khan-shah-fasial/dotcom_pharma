@@ -694,7 +694,13 @@ class HomeController extends Controller
                 $user->email_verified_at = date('Y-m-d h:m:s');
                 $user->save();
                 event(new PasswordReset($user));
-                auth()->login($user, true);
+
+                if($user->approval_status == 1){
+                    auth()->login($user, true);
+                } else {
+                    flash(translate('Password updated successfully'))->success();
+                    return redirect()->route('home');
+                }
 
                 flash(translate('Password updated successfully'))->success();
 

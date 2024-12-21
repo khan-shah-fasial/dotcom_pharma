@@ -181,9 +181,6 @@ class RegisterController extends Controller
 
     protected function registered(Request $request, $user)
     {
-
-        
-
         if ($user->email == null) {
             return redirect()->route('verification');
         }elseif(session('link') != null){
@@ -474,7 +471,7 @@ class RegisterController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'phone' => '+' . $data['phone'],
-                'password' => bcrypt($data['password']), // Hash password before saving
+                'password' => $data['password'], // Hash password before saving
                 'ad_contact_number' => $data['ad_contact_number'],
                 'land_mark_village' => $data['land_mark_village'],
                 'post' => $data['post'],
@@ -505,8 +502,21 @@ class RegisterController extends Controller
                 'customer_care_executive' => $data['customer_care_executive'],
             ]);
 
-
             $this->guard()->login($user);
+
+
+            // Account Opening Email to customer
+
+            // try {
+                EmailUtility::customer_registration_email('registration_email_to_customer', $user, null);
+            // } catch (\Exception $e) {}
+
+            // customer Account Opening Email to Admin
+    
+            // try {
+                EmailUtility::customer_registration_email('customer_reg_email_to_admin', $user, null);
+            // } catch (\Exception $e) {}
+
 
             if(session('temp_user_id') != null){
                 if(auth()->user()->user_type == 'customer'){
@@ -525,24 +535,26 @@ class RegisterController extends Controller
             }
 
 
-            // Account Opening Email to customer
-
-                try {
-                    EmailUtility::customer_registration_email('registration_email_to_customer', $user, null);
-                } catch (\Exception $e) {}
-            
-
-            // customer Account Opening Email to Admin
-
-                try {
-                    EmailUtility::customer_registration_email('customer_reg_email_to_admin', $user, null);
-                } catch (\Exception $e) {}
-            
     
-            return response()->json([
-                'status' => 'success',
-                'message' => 'OTP has been verified.',
-            ], 200);
+            if($user->approval_status == 1){
+                return response()->json([
+                    'status' => 'success',
+                    'registration' => 'approve',
+                    'message' => 'OTP has been verified.',
+                ], 200);
+
+            } else {
+
+                $this->guard()->logout();
+
+                return response()->json([
+                    'status' => 'success',
+                    'registration' => 'not approve',
+                    'message' => 'OTP has been verified.',
+                ], 200);
+            }   
+
+
         } else {
             return response()->json([
                 'status' => 'error',

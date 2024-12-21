@@ -104,7 +104,7 @@ Route::group(['middleware' => ['prevent-back-history','handle-demo-login']], fun
 });
 
 // Login
-Route::controller( ::class)->group(function () {
+Route::controller(LoginController::class)->group(function () {
     Route::get('/logout', 'logout');
     Route::get('/social-login/redirect/{provider}', 'redirectToProvider')->name('social.login');
     Route::get('/social-login/{provider}/callback', 'handleProviderCallback')->name('social.callback');

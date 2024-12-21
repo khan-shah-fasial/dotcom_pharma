@@ -245,7 +245,7 @@ class CustomerController extends Controller
 
 
         if($user->approval_status == 1) {
-            $user->approval_status = 0;
+            $user->approval_status = 2;
             $user->note = $request->note;
 
             $user->save();
