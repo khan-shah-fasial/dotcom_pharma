@@ -405,8 +405,7 @@
                     </div>
                     <div class="purple_btn_close">
                         <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
-                            data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true" style="font-size: 24px;">&times;</span>
+                            data-dismiss="modal" aria-label="Close"> v 
                         </button>
                     </div>
                 </div>
@@ -473,6 +472,7 @@
                 ajax_form_submit(e, form, responseHandler_phone_verify);
             });
 
+            let login_page_redirect = "{{ route('user.login') }}";
 
             var responseHandler_phone_verify = function(response) {
                 var form = $('#phone-verify-otp');
@@ -484,7 +484,8 @@
 
                     // Reload the page after 100ms
                     setTimeout(function() {
-                        location.reload();
+                        // location.reload();
+                        window.location.href = login_page_redirect;
                     }, 100);
                 }
 
@@ -495,6 +496,11 @@
                     form.find("input[type=text], input[type=email], input[type=password], textarea").val("");
 
                     $('#not_approval_model').modal('show');
+
+                    setTimeout(function() {
+                        // location.reload();
+                        window.location.href = login_page_redirect;
+                    }, 2000);
                 }
             };
 

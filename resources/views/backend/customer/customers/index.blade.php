@@ -241,7 +241,6 @@
                     </div>
                     <div class="purple_btn_close">
                         <button type="button" class="close p-1 px-3" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true" style="font-size: 24px;">&times;</span>
                         </button>
                     </div>
                 </div>
@@ -372,6 +371,15 @@
 
             // Set the selected option in the dropdown
             $('#approval-status').val(status);
+
+
+            $('#approval-status option').each(function () {
+                if ($(this).val() !== status) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
 
             // Trigger the toggleNote function to ensure the note section visibility is updated
             toggleNote();

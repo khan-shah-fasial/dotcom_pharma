@@ -11,7 +11,6 @@
                     <div class="purple_btn_close">
                         <button type="button" onclick="close_and_reload();" class="close p-1 px-3"
                             data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true" style="font-size: 24px;">&times;</span>
                         </button>
                     </div>
                 </div>
@@ -34,10 +33,14 @@
     {{-- - //------------------------------  Not Approval modal -----------------------// -- --}}
 
     <script>
+
+            let login_page = "{{ route('user.login') }}";
+
             function close_and_reload (){
                 $('#not_approval_model').modal('hide');
                 setTimeout(function() {
-                    location.reload();
+                    // location.reload();
+                    window.location.href = login_page;
                 }, 100);
             }
     </script>
