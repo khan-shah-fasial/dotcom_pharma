@@ -71,6 +71,9 @@
         <link rel="stylesheet" href="{{ static_asset('assets/css/bootstrap-rtl.min.css') }}">
     @endif
     <link rel="stylesheet" href="{{ static_asset('assets/css/aiz-core.css?v=') }}{{ rand(1000, 9999) }}">
+
+    <link rel="stylesheet" href="{{ static_asset('assets/css/intlTelinput.css') }}" />
+
     <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}">
 
 
@@ -376,10 +379,13 @@
     <!-- SCRIPTS -->
     <script src="{{ static_asset('assets/js/vendors.js') }}"></script>
     <script src="{{ static_asset('assets/js/aiz-core.js?v=') }}{{ rand(1000, 9999) }}"></script>
+
+    <!-- to show country code and flags in mobile view field -->
+    {{-- <script src="{{ static_asset('assets/js/utils.min.js') }}"></script>
+    <script src="{{ static_asset('assets/js/inteliput.min.js') }}"></script> --}}
+    
     <script src="{{ static_asset('assets/js/jquery.validate.min.js') }}"></script>
     <script src="{{ static_asset('assets/js/script.js') }}"></script>
-
-
 
     @if (get_setting('facebook_chat') == 1)
         <script type="text/javascript">
@@ -826,6 +832,10 @@
                 }
             });
 
+
+            // Set default country code to +91 (India)
+            iti.setCountry('in'); // 'in' is the ISO2 code for India
+
             var country = iti.getSelectedCountryData();
             $('input[name=country_code]').val(country.dialCode);
 
@@ -953,6 +963,147 @@
             $('#not_approval_model').modal('show');
         </script>
     @endif
+
+    <script>
+        // to show country code and flags in mobile view field
+        // $(document).ready(function () {
+        //     const phoneInputFields = $('#phone, #ad_contact_number, #whats_app_no, #phone_no_2, #phone_no_1');
+        //     phoneInputFields.intlTelInput({
+        //         utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        //     });
+        // });
+
+        // $(document).ready(function () {
+        //     const phoneInputFields = $('#phone, #ad_contact_number, #whats_app_no, #phone_no_2, #phone_no_1');
+            
+        //     phoneInputFields.intlTelInput({
+        //         utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        //     });
+
+        //     // Grab country code and set it in the #country__code element
+        //     $('#phone').on('countrychange', function() {
+        //         // Get the selected country data
+        //         const countryData = $('#phone').intlTelInput("getSelectedCountryData");
+                
+        //         // Get the dial code
+        //         const dialCode = countryData.dialCode;
+
+        //         // Set the dial code in the #country__code field
+        //         $('#country__code').val(dialCode);
+        //     });
+
+        // });
+
+        var ad_contact_number = document.querySelector("#ad_contact_number");
+
+        var iti1 = intlTelInput(ad_contact_number, {
+            separateDialCode: true,
+            utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
+            onlyCountries: @php echo get_active_countries()->pluck('code') @endphp,
+            customPlaceholder: function(selectedCountryPlaceholder, selectedCountryData) {
+                if (selectedCountryData.iso2 == 'bd') {
+                    return "01xxxxxxxxx";
+                }
+                return selectedCountryPlaceholder;
+            }
+        });
+
+
+        // Set default country code to +91 (India)
+        iti1.setCountry('in'); // 'in' is the ISO2 code for India
+
+        var country1 = iti1.getSelectedCountryData();
+        $('input[name=country_code_ad_contact_number]').val(country1.dialCode);
+
+        ad_contact_number.addEventListener("countrychange", function(e) {
+            // var currentMask = e.currentTarget.placeholder;
+            var country1 = iti1.getSelectedCountryData();
+            $('input[name=country_code_ad_contact_number]').val(country1.dialCode);
+        });
+
+
+        var phone_no_1 = document.querySelector("#phone_no_1");
+
+        var iti2 = intlTelInput(phone_no_1, {
+            separateDialCode: true,
+            utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
+            onlyCountries: @php echo get_active_countries()->pluck('code') @endphp,
+            customPlaceholder: function(selectedCountryPlaceholder, selectedCountryData) {
+                if (selectedCountryData.iso2 == 'bd') {
+                    return "01xxxxxxxxx";
+                }
+                return selectedCountryPlaceholder;
+            }
+        });
+
+
+        // Set default country code to +91 (India)
+        iti2.setCountry('in'); // 'in' is the ISO2 code for India
+
+        var country2 = iti2.getSelectedCountryData();
+        $('input[name=country_code_phone_no_1]').val(country2.dialCode);
+
+        phone_no_1.addEventListener("countrychange", function(e) {
+            // var currentMask = e.currentTarget.placeholder;
+            var country2 = iti1.getSelectedCountryData();
+            $('input[name=country_code_phone_no_1]').val(country2.dialCode);
+        });
+
+        var phone_no_2 = document.querySelector("#phone_no_2");
+
+        var iti3 = intlTelInput(phone_no_2, {
+            separateDialCode: true,
+            utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
+            onlyCountries: @php echo get_active_countries()->pluck('code') @endphp,
+            customPlaceholder: function(selectedCountryPlaceholder, selectedCountryData) {
+                if (selectedCountryData.iso2 == 'bd') {
+                    return "01xxxxxxxxx";
+                }
+                return selectedCountryPlaceholder;
+            }
+        });
+
+
+        // Set default country code to +91 (India)
+        iti3.setCountry('in'); // 'in' is the ISO2 code for India
+
+        var country3 = iti2.getSelectedCountryData();
+        $('input[name=country_code_phone_no_2]').val(country3.dialCode);
+
+        phone_no_2.addEventListener("countrychange", function(e) {
+            // var currentMask = e.currentTarget.placeholder;
+            var country3 = iti1.getSelectedCountryData();
+            $('input[name=country_code_phone_no_2]').val(country3.dialCode);
+        });
+
+        var whats_app_no = document.querySelector("#whats_app_no");
+
+        var iti4 = intlTelInput(whats_app_no, {
+            separateDialCode: true,
+            utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
+            onlyCountries: @php echo get_active_countries()->pluck('code') @endphp,
+            customPlaceholder: function(selectedCountryPlaceholder, selectedCountryData) {
+                if (selectedCountryData.iso2 == 'bd') {
+                    return "01xxxxxxxxx";
+                }
+                return selectedCountryPlaceholder;
+            }
+        });
+
+
+        // Set default country code to +91 (India)
+        iti4.setCountry('in'); // 'in' is the ISO2 code for India
+
+        var country4 = iti4.getSelectedCountryData();
+        $('input[name=country_code_whats_app_no]').val(country4.dialCode);
+
+        whats_app_no.addEventListener("countrychange", function(e) {
+            // var currentMask = e.currentTarget.placeholder;
+            var country3 = iti1.getSelectedCountryData();
+            $('input[name=country_code_whats_app_no]').val(country4.dialCode);
+        });
+
+    </script>
 
 </body>
 </html>

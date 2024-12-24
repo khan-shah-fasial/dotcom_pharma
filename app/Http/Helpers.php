@@ -2765,3 +2765,51 @@ if (!function_exists('home_usertype_base_price')) {
         return format_price(convert_price($lowest_price));
     }
 }
+
+if(!function_exists('sendEmail')){
+    function sendEmail($to, $subject, $body, $replyTo = null)
+    {
+    // API endpoint
+    $url = 'https://api.brevo.com/v3/smtp/email';
+    
+    // API key
+    $apiKey = env("BRAVIO_API");
+    
+    // Data to be sent
+    $data = array(
+        "sender" => array(
+            "name" => "Dotcom Pharma",
+            "email" => "info@dotcompharma.com"
+        ),
+        "to" => array(
+            array(
+                "email" => $to,
+            )
+        ),
+        "subject" => $subject,
+        "htmlContent" => $body
+    );
+    // Convert data to JSON format
+    $postData = json_encode($data);
+    
+    // Initialize cURL session
+    $ch = curl_init($url);
+    
+    // Set cURL options
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'accept: application/json',
+        'api-key: ' . $apiKey,
+        'content-type: application/json'
+    ));
+    
+    // Execute cURL session
+    $response = curl_exec($ch);
+
+    // Close cURL session
+    curl_close($ch);
+    
+    }  
+}

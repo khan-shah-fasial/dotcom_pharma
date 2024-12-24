@@ -204,7 +204,7 @@ class RegisterController extends Controller
             'pincode' => ['required', 'regex:/^\d{6}$/'], // Assuming Indian pincode format
             'district' => ['required', 'string', 'max:100'],
             'state' => ['required', 'string', 'max:100'],
-            'country__code' => 'required', // ISO 3166-1 alpha-2
+            'country_code' => 'nullable', // ISO 3166-1 alpha-2
             'phone_no_1' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
             'phone_no_2' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
             'whats_app_no' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
@@ -268,7 +268,7 @@ class RegisterController extends Controller
             'state.string' => 'The State must be a string.',
             'state.max' => 'The State may not be greater than 100 characters.',
         
-            'country__code.required' => 'The Country Code field is required.',
+            'country_code.required' => 'The Country Code field is required.',
         
             'gst_no.regex' => 'The GST Number format is invalid.',
             'ifsc_code.regex' => 'The IFSC Code format is invalid.',
@@ -324,8 +324,9 @@ class RegisterController extends Controller
         $user_data = [
             'name' => $request->name,
             'email' => $request->email_id,
-            'phone' => $request->country__code . $request->phone,
-            'ad_contact_number' => $request->ad_contact_number,
+            'phone' => $request->country_code . $request->phone,
+            // 'phone' => str_replace(' ', '', $request->phone),
+            'ad_contact_number' => $request->country_code_ad_contact_number . $request->ad_contact_number,
             'land_mark_village' => $request->land_mark_village,
             'post' => $request->post,
             'address_1' => $request->address_1,
@@ -333,10 +334,10 @@ class RegisterController extends Controller
             'pincode' => $request->pincode,
             'district' => $request->district,
             'state' => $request->state,
-            'country__code' => $request->country__code,
-            'phone_no_1' => $request->phone_no_1,
-            'phone_no_2' => $request->phone_no_2,
-            'whats_app_no' => $request->whats_app_no,
+            'country__code' => $request->country_code,
+            'phone_no_1' => $request->country_code_phone_no_1 . $request->phone_no_1,
+            'phone_no_2' => $request->country_code_phone_no_2 . $request->phone_no_2,
+            'whats_app_no' => $request->country_code_whats_app_no . $request->whats_app_no,
             'gst_no' => $request->gst_no,
             'cc_no' => $request->cc_no,
             'd_l_no_1' => $request->d_l_no_1,
@@ -507,17 +508,17 @@ class RegisterController extends Controller
 
             // Account Opening Email to customer
 
-            // try {
+            try {
                 EmailUtility::customer_registration_email('registration_email_to_customer', $user, null);
-            // } catch (\Exception $e) {}
+            } catch (\Exception $e) {}
 
             // customer Account Opening Email to Admin
     
-            // try {
+            try {
                 EmailUtility::customer_registration_email('customer_reg_email_to_admin', $user, null);
-            // } catch (\Exception $e) {}
+            } catch (\Exception $e) {}
 
-
+            
             if(session('temp_user_id') != null){
                 if(auth()->user()->user_type == 'customer'){
                     Cart::where('temp_user_id', session('temp_user_id'))

@@ -116,12 +116,14 @@
                                         <span class="badge badge-inline badge-success">{{ translate('Verified') }}</span>
                                     </td>
                                     <td>
-                                        @if ($user->approval_status != 0)
+                                        @if ($user->approval_status == 1)
                                             <span
-                                                class="badge badge-inline badge-success">{{ translate('Verified') }}</span>
+                                                class="badge badge-inline badge-success">{{ translate('Verified') }}
+                                            </span>
                                         @else
                                             <span
-                                                class="badge badge-inline badge-warning">{{ translate('Unverified') }}</span>
+                                                class="badge badge-inline badge-warning">{{ translate('Unverified') }}
+                                            </span>
                                         @endif
                                     </td>
                                     <td class="text-right">

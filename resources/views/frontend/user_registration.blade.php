@@ -33,23 +33,39 @@
                                     </div>
                                     <div class="col-md-4 mb-4">
 
-                                        <div class="form-group">
+                                        {{-- <div class="form-group">
                                             <label class="form-label" for="phone">Phone No</label>
                                             <input type="text" id="phone" name="phone"
                                                 class="form-control form-control-lg" required />
+                                        </div> --}}
+
+                                        <div class="form-group phone-form-group mb-1">
+                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone No') }}</label>
+                                            <input type="tel" id="phone-code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" value="{{ old('phone') }}" placeholder="" name="phone" autocomplete="off" required>
                                         </div>
+    
+                                        <input type="hidden" name="country_code" value="">
 
                                     </div>
+
+
                                 </div>
 
                                 <div class="row">
                                     <div class="col-md-4 mb-4">
 
-                                        <div class="form-group">
+                                        {{-- <div class="form-group">
                                             <label class="form-label" for="phone">Ad. Contact Number</label>
                                             <input type="text" id="ad_contact_number" name="ad_contact_number"
                                                 class="form-control form-control-lg" />
+                                        </div> --}}
+
+                                        <div class="form-group phone-form-group mb-1">
+                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Ad. Contact Number') }}</label>
+                                            <input type="tel" id="ad_contact_number" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="ad_contact_number" autocomplete="off" required>
                                         </div>
+    
+                                        <input type="hidden" name="country_code_ad_contact_number" value="">
 
                                     </div>
                                     <div class="col-md-4 mb-4">
@@ -120,7 +136,10 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-4 mb-4">
+                                    {{-- <input type="hidden" id="country__code" name="country__code"
+                                    class="form-control form-control-lg" /> --}}
+
+                                    {{-- <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
                                             <label class="form-label" for="country__code">Country Code</label>
@@ -128,36 +147,57 @@
                                                 class="form-control form-control-lg" required />
                                         </div>
 
-                                    </div>
+                                    </div> --}}
                                     <div class="col-md-4 mb-4">
 
-                                        <div class="form-group">
+                                        {{-- <div class="form-group">
                                             <label class="form-label" for="phone_no_1">Phone No 1</label>
                                             <input type="text" id="phone_no_1" name="phone_no_1"
                                                 class="form-control form-control-lg" />
+                                        </div> --}}
+
+                                        <div class="form-group phone-form-group mb-1">
+                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone No 1') }}</label>
+                                            <input type="tel" id="phone_no_1" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="phone_no_1" autocomplete="off" required>
                                         </div>
+    
+                                        <input type="hidden" name="country_code_phone_no_1" value="">
 
                                     </div>
                                     <div class="col-md-4 mb-4">
 
-                                        <div class="form-group">
+                                        {{-- <div class="form-group">
                                             <label class="form-label" for="phone_no_2">Phone No 2</label>
                                             <input type="text" id="phone_no_2" name="phone_no_2"
                                                 class="form-control form-control-lg" />
+                                        </div> --}}
+
+                                        <div class="form-group phone-form-group mb-1">
+                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone No 2') }}</label>
+                                            <input type="tel" id="phone_no_2" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="phone_no_2" autocomplete="off" required>
                                         </div>
+    
+                                        <input type="hidden" name="country_code_phone_no_2" value="">
+
+                                    </div>
+                                    <div class="col-md-4 mb-4">
+
+                                        {{-- <div class="form-group">
+                                            <label class="form-label" for="whats_app_no">Whats App No</label>
+                                            <input type="text" id="whats_app_no" name="whats_app_no"
+                                                class="form-control form-control-lg" />
+                                        </div> --}}
+
+                                        <div class="form-group phone-form-group mb-1">
+                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Whats App No') }}</label>
+                                            <input type="tel" id="whats_app_no" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="whats_app_no" autocomplete="off" required>
+                                        </div>
+    
+                                        <input type="hidden" name="country_code_whats_app_no" value="">
 
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="whats_app_no">Whats App No</label>
-                                            <input type="text" id="whats_app_no" name="whats_app_no"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -176,8 +216,6 @@
                                         </div>
 
                                     </div>
-                                </div>
-                                <div class="row">
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -187,6 +225,9 @@
                                         </div>
 
                                     </div>
+                                </div>
+                                <div class="row">
+
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -205,8 +246,6 @@
                                         </div>
 
                                     </div>
-                                </div>
-                                <div class="row">
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -216,6 +255,9 @@
                                         </div>
 
                                     </div>
+                                </div>
+                                <div class="row">
+
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -234,8 +276,6 @@
                                         </div>
 
                                     </div>
-                                </div>
-                                <div class="row">
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -245,6 +285,9 @@
                                         </div>
 
                                     </div>
+                                </div>
+                                <div class="row">
+
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -263,8 +306,6 @@
                                         </div>
 
                                     </div>
-                                </div>
-                                <div class="row">
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -274,6 +315,9 @@
                                         </div>
 
                                     </div>
+                                </div>
+                                <div class="row">
+
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -292,8 +336,6 @@
                                         </div>
 
                                     </div>
-                                </div>
-                                <div class="row">
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -303,6 +345,9 @@
                                         </div>
 
                                     </div>
+                                </div>
+                                <div class="row">
+
                                     <div class="col-md-4 mb-4">
 
                                         <div class="form-group">
@@ -452,6 +497,15 @@
                     $('#not_approval_model').modal('show');
                 }
             };
+
+            ['phone', 'ad_contact_number', 'whats_app_no', 'phone_no_2', 'phone_no_1'].forEach(function (id) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', function (event) {
+                        this.value = this.value.replace(/[^0-9+ ]/g, '');
+                    });
+                }
+            });
 
         });
 

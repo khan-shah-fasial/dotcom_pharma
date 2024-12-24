@@ -33,7 +33,11 @@ class EmailUtility
         $array['subject'] = $emailSubject;
         $array['content'] = $emailBody;
 
-        Mail::to($emailSendTo)->queue(new MailManager($array));
+        // Mail::to($emailSendTo)->queue(new MailManager($array));
+        $array = ['subject' => $emailSubject, 'content' => $emailBody];
+        $emailHtml = (new MailManager($array))->render();
+    
+        sendEmail($emailSendTo, $emailSubject, $emailHtml);
     }
 
     // Seller registration email to Admin & Seller
@@ -61,7 +65,11 @@ class EmailUtility
         $array['subject'] = $emailSubject;
         $array['content'] = $emailBody;
 
-        Mail::to($emailSendTo)->queue(new MailManager($array));
+        // Mail::to($emailSendTo)->queue(new MailManager($array));
+        $array = ['subject' => $emailSubject, 'content' => $emailBody];
+        $emailHtml = (new MailManager($array))->render();
+    
+        sendEmail($emailSendTo, $emailSubject, $emailHtml);
     }
 
     public static function deliveryBoyRegEmail($emailIdentifiers, $user, $password){
@@ -266,7 +274,11 @@ class EmailUtility
         $array['subject'] = $emailSubject;
         $array['content'] = $emailBody;
 
-        Mail::to($emailSendTo)->queue(new MailManager($array));
+        // Mail::to($emailSendTo)->queue(new MailManager($array));
+        $array = ['subject' => $emailSubject, 'content' => $emailBody];
+        $emailHtml = (new MailManager($array))->render();
+    
+        sendEmail($emailSendTo, $emailSubject, $emailHtml);
     }
 
 
@@ -279,7 +291,11 @@ class EmailUtility
         $array['subject'] = $emailSubject;
         $array['content'] = $emailBody;
 
-        Mail::to($emailSendTo)->queue(new MailManager($array));
+        // Mail::to($emailSendTo)->queue(new MailManager($array));
+        $array = ['subject' => $emailSubject, 'content' => $emailBody];
+        $emailHtml = (new MailManager($array))->render();
+    
+        sendEmail($emailSendTo, $emailSubject, $emailHtml);
     }
 
 

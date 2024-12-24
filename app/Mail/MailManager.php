@@ -9,8 +9,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class MailManager  extends Mailable
 {
-    // use Queueable, SerializesModels;
-    use SerializesModels;
+    use Queueable, SerializesModels;
+    // use SerializesModels;
     /**
      * Create a new message instance.
      *
