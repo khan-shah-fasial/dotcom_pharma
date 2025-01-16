@@ -90,6 +90,13 @@ Route::get('/test-otp', function () {
     dd($sessionData);
 });
 
+
+Route::get('/clear-session', function () {
+    Session()->flush();
+
+    echo"clear";
+});
+
 // AIZ Uploader
 Route::controller(AizUploadController::class)->group(function () {
     Route::post('/aiz-uploader', 'show_uploader');
@@ -112,6 +119,9 @@ Route::controller(LoginController::class)->group(function () {
     Route::post('/apple-callback', 'handleAppleCallback');
     Route::get('/account-deletion', 'account_deletion')->name('account_delete');
     Route::get('/handle-demo-login', 'handle_demo_login')->name('handleDemoLogin');
+
+    Route::post('/users/login-via-otp', 'login_via_mobile_otp')->name('user.login.via.otp');
+    Route::post('/users/verify-mobile-otp', 'verify_mobile_otp')->name('user.login.via.otp.verify');
 });
 
 Route::controller(VerificationController::class)->group(function () {
@@ -180,9 +190,15 @@ Route::controller(HomeController::class)->group(function () {
 //new user registration
 Route::post('/register/create-new-user-registration', [RegisterController::class, 'new_user_register'])->name('create.new.user.registration')->middleware('handle-demo-login');
 
-Route::post('/register/create-new-user-phone-verify', [RegisterController::class, 'verify_otp'])->name('create.new.user.registration.phone.verify')->middleware('handle-demo-login');
+Route::get('/get-reg-step', [RegisterController::class, 'get_reg_step'])->name('get-reg-step');
+
+Route::any('/create-account/{param}', [RegisterController::class, 'create_account'])->name('new.user.account.create');
+
+// Route::post('/register/create-new-user-phone-verify', [RegisterController::class, 'verify_otp'])->name('create.new.user.registration.phone.verify')->middleware('handle-demo-login');
 
 Route::post('/register/create-new-user-resend-phone-verify', [RegisterController::class, 'resendOtp'])->name('create.new.user.registration.resend.phone.verify')->middleware('handle-demo-login');
+
+Route::get('/register/previous-reg-form', [RegisterController::class, 'previous_reg_form'])->name('previous.reg.form');
 
 // Language Switch
 Route::post('/language', [LanguageController::class, 'changeLanguage'])->name('language.change');
@@ -276,6 +292,12 @@ Route::group(['middleware' => ['user', 'verified', 'unbanned']], function () {
         Route::post('/new-user-verification', 'new_verify')->name('user.new.verify');
         Route::post('/new-user-email', 'update_email')->name('user.change.email');
         Route::post('/user/update-profile', 'userProfileUpdate')->name('user.profile.update');
+        Route::post('/user/update-bank-details', 'userBankDetailsUpdate')->name('user.bankdetails.update');
+        Route::post('/user/update-license-details', 'userLicenseDetailsUpdate')->name('user.licensedetails.update');
+        Route::post('/user/update-transport-details', 'usertransportDetailsUpdate')->name('user.transportdetails.update');
+
+        Route::post('/user/update-phone-details', 'update_phone_main')->name('user.phone.update');
+        Route::post('/user/update-phone-otp', 'verify_update_phone_otp')->name('user.phone.verify.update');
     });
 
     Route::controller(NotificationController::class)->group(function () {

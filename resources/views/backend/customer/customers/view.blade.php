@@ -3,284 +3,289 @@
 @section('content')
     <div class="container my-3">
         <div class="card">
+
             <div class="container my-3 mx-2">
                 <h3> View  Details of Customer {{ $user->name ?? "-" }} </h3>
                 <hr>
                 <br>
-                <div class="row">
-                    <div class="col-md-4 mb-4">
 
-                        <div class="form-group">
-                            <label class="form-label" for="name">Name</label>
-                            <p>{{ $user->name ?? "-" }}</p>
+                <div class="card p-3">
+                    <h5> GST Details </h5>
+                    <hr>
+                    <br>
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">GST No</label>
+                                <p>{{ $user->gst_no ?? "-" }}</p>
+                            </div>
+
                         </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="email_id">Email</label>
-                            <p>{{ $user->email ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="phone">Phone No</label>
-                            <p> {{ $user->phone ?? "-" }}</p>
-                        </div>
-
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-4 mb-4">
+                <div class="card p-3">
+                    <h5> Personal Details </h5>
+                    <hr>
+                    <br>
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
 
-                        <div class="form-group">
-                            <label class="form-label" for="phone">Ad. Contact Number</label>
-                            <p> {{ $user->ad_contact_number ?? "-" }}</p>
+                            <div class="form-group">
+                                <label class="form-label" for="name">Company Name</label>
+                                <p>{{ $user->company_name ?? "-" }}</p>
+                            </div>
+
                         </div>
+                        <div class="col-md-4 mb-4">
 
-                    </div>
-                    <div class="col-md-4 mb-4">
+                            <div class="form-group">
+                                <label class="form-label" for="email_id">Concerned Person Name</label>
+                                <p>{{ $user->name ?? "-" }}</p>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="phone">Land Mark Village</label>
-                            <p> {{ $user->land_mark_village ?? "-" }}</p>
                         </div>
+                        <div class="col-md-4 mb-4">
 
-                    </div>
-                    <div class="col-md-4 mb-4">
+                            <div class="form-group">
+                                <label class="form-label" for="phone">Email</label>
+                                <p> {{ $user->email ?? "-" }}</p>
+                            </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="phone">Post</label>
-                            <p> {{ $user->post ?? "-" }}</p>
                         </div>
+                        <div class="col-md-4 mb-4">
 
-                    </div>
-                </div>
+                            <div class="form-group">
+                                <label class="form-label" for="phone">Phone No</label>
+                                <p> {{ $user->phone ?? "-" }}</p>
+                            </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="address_1">Address 1</label>
-                            <p> {{ $user->address_1 ?? "-" }}</p>
                         </div>
+                        <div class="col-md-4 mb-4">
 
-                    </div>
-                    <div class="col-md-6 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="address_2">Address 2</label>
-                            <p> {{ $user->address_2 ?? "-" }}</p>
+                            <div class="form-group">
+                                <label class="form-label" for="phone">Telephone No</label>
+                                <p> {{ $user->tel_number ?? "-" }}</p>
+                            </div>
+    
                         </div>
+                        <div class="col-md-4 mb-4">
 
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="pincode">Pincode</label>
-                            <p> {{ $user->pincode ?? "-" }}</p>
+                            <div class="form-group">
+                                <label class="form-label" for="phone">Whatsapp No</label>
+                                <p> {{ $user->whats_app_no ?? "-" }}</p>
+                            </div>
+    
                         </div>
+                        <div class="col-md-4 mb-4">
 
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="district">District</label>
-                            <p> {{ $user->district ?? "-" }}</p>
+                            <div class="form-group">
+                                <label class="form-label" for="phone">Post</label>
+                                <p> {{ $user->post ?? "-" }}</p>
+                            </div>
+    
                         </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="state">State</label>
-                            <p> {{ $user->state ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="country__code">Country Code</label>
-                            <p> {{ $user->country__code ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="phone_no_1">Phone No 1</label>
-                            <p> {{ $user->phone_no_1 ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="phone_no_2">Phone No 2</label>
-                            <p> {{ $user->phone_no_2 ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="whats_app_no">Whats App No</label>
-                            <p> {{ $user->whats_app_no ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="gst_no">GST No</label>
-                            <p> {{ $user->gst_no ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="cc_no">CC NO</label>
-                            <p> {{ $user->cc_no ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="d_l_no_1">D.L No 1 (Drug Licence)</label>
-                            <p> {{ $user->d_l_no_1 ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="d_l_no_2">D.L No 2</label>
-                            <p> {{ $user->d_l_no_2 ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="d_l_no_3">D.L No 3</label>
-                            <p> {{ $user->d_l_no_3 ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="d_l_exp_Date">D.L Expiry Date</label>
-                            <p> {{ $user->d_l_exp_Date ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="transport">Transport</label>
-                            <p> {{ $user->transport ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="cargo">Cargo</label>
-                            <p> {{ $user->cargo ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="booked_to">Booked To</label>
-                            <p> {{ $user->booked_to ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="bank_name">Bank Name</label>
-                            <p> {{ $user->bank_name ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="account_no">Account No</label>
-                            <p> {{ $user->account_no ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="branch_no">Branch No</label>
-                            <p> {{ $user->branch_no ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="branch_code">Branch Code</label>
-                            <p> {{ $user->branch_code ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="ifsc_code">IFSC Code</label>
-                            <p> {{ $user->ifsc_code ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="micr_code">MICR Code</label>
-                            <p> {{ $user->micr_code ?? "-" }}</p>
-                        </div>
-
-                    </div>
-                    <div class="col-md-4 mb-4">
-
-                        <div class="form-group">
-                            <label class="form-label" for="customer_care_executive">Customer Care Executive</label>
-                            <p> {{ $user->customer_care_executive ?? "-" }}</p>
-                        </div>
-
                     </div>
                 </div>
 
-                <div class="row">
+
+                <div class="card p-3">
+                    <h5> Address Details </h5>
+                    <hr>
+                    <br>
+                    <div class="row">
+
+                        <div class="col-md-12 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="phone">Address</label>
+                                <p> {{ $user->address ?? "-" }}</p>
+                            </div>
+
+                        </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="country__code">Country</label>
+                                <p> {{ getParticularData('countries','name',$user->country_id) ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="country__code">state</label>
+                                <p> {{ getParticularData('states','name',$user->state_id) ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="country__code">City</label>
+                                <p> {{ getParticularData('cities','name',$user->city_id) ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Pincode</label>
+                                <p> {{ $user->pincode ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+                    </div>
+                </div>
+
+
+                <div class="card p-3">
+                    <h5> Bank Details </h5>
+                    <hr>
+                    <br>
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="bank_name">Bank Name</label>
+                                <p> {{ $user->bank_name ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="account_no">Account No</label>
+                                <p> {{ $user->account_no ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="branch_no">Branch No</label>
+                                <p> {{ $user->branch_no ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="branch_code">Branch Code</label>
+                                <p> {{ $user->branch_code ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="ifsc_code">IFSC Code</label>
+                                <p> {{ $user->ifsc_code ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="micr_code">MICR Code</label>
+                                <p> {{ $user->micr_code ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="customer_care_executive">Customer Care Executive</label>
+                                <p> {{ $user->customer_care_executive ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-3">
+                    <h5> License Details </h5>
+                    <hr>
+                    <br>
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="cc_no">CC NO</label>
+                                <p> {{ $user->cc_no ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="d_l_no_1">D.L No 1 (Drug Licence)</label>
+                                <p> {{ $user->d_l_no_1 ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="d_l_no_2">D.L No 2</label>
+                                <p> {{ $user->d_l_no_2 ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="d_l_no_3">D.L No 3</label>
+                                <p> {{ $user->d_l_no_3 ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="card p-3">
+                    <h5> Transport Details </h5>
+                    <hr>
+                    <br>
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="d_l_exp_Date">D.L Expiry Date</label>
+                                <p> {{ $user->d_l_exp_Date ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="transport">Transport</label>
+                                <p> {{ $user->transport ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="cargo">Cargo</label>
+                                <p> {{ $user->cargo ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+    
+                            <div class="form-group">
+                                <label class="form-label" for="booked_to">Booked To</label>
+                                <p> {{ $user->booked_to ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                    </div>
+                </div>
+
+                {{-- <div class="row">
                     <div>
                         @can('ban_customer')
                             @if($user->approval_status != 1)
@@ -294,7 +299,7 @@
                             @endif
                         @endcan
                     </div>
-                </div>
+                </div> --}}
 
             </div>
         </div>
@@ -304,7 +309,7 @@
 
     {{--- //------------------------------ approval modal -----------------------// ----}}
 
-    <div class="modal fade" id="approval_model" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel_phone"
+    {{-- <div class="modal fade" id="approval_model" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel_phone"
     aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content py-3">
@@ -341,7 +346,7 @@
                 </form>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     {{--- //------------------------------ approval modal -----------------------// ----}}
     

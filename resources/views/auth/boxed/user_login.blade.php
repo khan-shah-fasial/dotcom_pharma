@@ -29,7 +29,7 @@
                                 <!-- Login form -->
                                 <div class="pt-3">
                                     <div class="">
-                                        <form class="form-default" role="form" action="{{ route('login') }}" method="POST">
+                                        <form id="login-form-customer" class="form-default" role="form" action="{{ route('user.login.via.otp') }}" method="POST">
                                             @csrf
                                             
                                             <!-- Email or Phone -->
@@ -51,9 +51,9 @@
                                                     @endif
                                                 </div>
                                                 
-                                                <div class="form-group text-right">
+                                                {{-- <div class="form-group text-right">
                                                     <button class="btn btn-link p-0 text-primary fs-12 fw-400" type="button" onclick="toggleEmailPhone(this)"><i>*{{ translate('Use Email Instead') }}</i></button>
-                                                </div>
+                                                </div> --}}
                                             @else
                                                 <div class="form-group">
                                                     <label for="email" class="fs-12 fw-700 text-soft-dark">{{  translate('Email') }}</label>
@@ -171,13 +171,108 @@
             </div>
         </section>
     </div>
+
+
+    {{--/* otp popup  */ --}}
+
+    <div class="modal" id="otp-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mobile OTP Verify</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+                <form class="form-default" id="otp-login-customer" role="form" action="{{ route('user.login.via.otp.verify') }}" method="POST">
+                @csrf
+                    <div class="modal-body">
+                        <div class="form-group mt-4 adhar_field">
+                            <label class="pb-2">Verify OTP *</label>
+                            <input type="text" class="form-control" name="otp" pattern="[0-9]+" minlength="6"
+                                maxlength="6" placeholder="Please Enter OTP" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Proceed</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeOtpModal()">Close</button>
+                    </div>
+                </form>
+            
+            </div>
+        </div>
+        </div>
+    
+    {{--/* otp popup  */ --}}
+
+
 @endsection
 
 @section('script')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script>
         function autoFillCustomer(){
             $('#email').val('customer@example.com');
             $('#password').val('123456');
         }
+
+
+        /*-----------------New CODE-------------------------------------- */
+
+        function closeOtpModal() {
+            $('#otp-modal').modal('hide');
+        }
+        
+        $('#login-form-customer').on('submit', function(e) {
+            e.preventDefault(); // Prevent the default form submission
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.status == true) {
+                        toastr.success(response.notification);
+                        if(response.otp == true){
+                            $('#otp-modal').modal('show');
+                        } else {
+                            toastr.error('Somthing Went Wrong!');
+                        }
+        
+                    } else {
+                        toastr.error(response.notification);
+                    }
+                },
+                error: function(error) {
+                    toastr.error('An error occurred while processing your request.');
+                }
+            });
+        });
+
+        $('#otp-login-customer').on('submit', function(e) {
+            e.preventDefault(); // Prevent the default form submission
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('action'),
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.status == true) {
+                        toastr.success(response.notification);
+
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1000);
+        
+                    } else {
+                        toastr.error(response.notification);
+                    }
+                },
+                error: function(error) {
+                    toastr.error('An error occurred while processing your request.');
+                }
+            });
+        });
+
+
     </script>
 @endsection

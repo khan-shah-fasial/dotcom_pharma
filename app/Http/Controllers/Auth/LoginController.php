@@ -17,6 +17,8 @@ use CoreComponentRepository;
 use Illuminate\Support\Facades\Http;
 use GuzzleHttp\Client;
 use Storage;
+use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class LoginController extends Controller
 {
@@ -385,6 +387,123 @@ class LoginController extends Controller
         flash(translate("Your account deletion successfully done."))->success();
         return redirect()->route($redirect_route);
     }
+
+
+    /* ------------------------- new ------------------------ */
+    public function login_via_mobile_otp(Request $request){
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|regex:/^\d{10}$/',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'notification' => $validator->errors()->all()
+            ], 200);
+        }
+
+        $user = User::where('phone', $request->input('country_code').'-'.$request->input('phone'))->first();
+
+        if($user != null){
+
+            // $otp = mt_rand(100000, 999999);
+            $otp = '123456';
+            $timestamp = Carbon::now();
+            Session()->put('otp_login', $otp);
+            Session()->put('otp_timestamp', $timestamp);
+            Session()->put('user_id', $user->id);
+
+            // $user->verification_code = $otp;
+            // SmsUtility::login_verification($user);
+
+            $response = [
+                'status' => true,
+                'otp' => true,
+                'notification' => 'OTP has been sent to your Mobile Number',
+            ];
+
+            return response()->json($response);
+
+        } else {
+
+            $response = [
+                'status' => false,
+                'notification' => 'Mobile Number Not Exist!',
+            ];
+
+            return response()->json($response);
+
+        }
+
+    }
+
+
+    public function verify_mobile_otp(Request $request){
+        $validator = Validator::make($request->all(), [
+            'otp' => 'required|regex:/^\d{6}$/',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'notification' => $validator->errors()->all()
+            ], 200);
+        }
+
+        $otp = Session()->get('otp_login');
+        $timestamp = Session()->get('otp_timestamp');
+        $user_id = Session()->get('user_id');
+
+        // Check if OTP expired (2 minutes)
+        if (Carbon::parse($timestamp)->diffInMinutes(Carbon::now()) > 2) {
+
+            $response = [
+                'status' => false,
+                'notification' => 'OTP has expired. Please request a new one!',
+            ];
+
+            return response()->json($response);
+
+        }
+
+        if ($request->otp == $otp) {
+
+            $user = User::findOrFail(($user_id));
+
+            auth()->login($user, true);
+
+            if(auth()->user()->approval_status != '1'){
+                $this->guard()->logout();
+
+                Session()->put('registartion_status', 'not approved');
+
+            }
+
+            session()->forget('otp_timestamp');
+            session()->forget('otp_login');
+            session()->forget('user_id');
+
+            $response = [
+                'status' => true,
+                'notification' => 'Login successfully',
+            ];
+
+            return response()->json($response);
+
+        } else {
+
+            $response = [
+                'status' => false,
+                'notification' => 'Invalid OTP!',
+            ];
+
+            return response()->json($response);
+        }
+
+
+    }
+    /* ------------------------- new ------------------------ */
+
 
     /**
      * Create a new controller instance.

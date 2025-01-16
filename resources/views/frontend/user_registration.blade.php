@@ -1,540 +1,317 @@
 @extends('frontend.layouts.app')
 
 @section('content')
-    <section class="gradient-custom">
-        <div class="container py-5">
-            <div class="row justify-content-center align-items-center h-100">
-                <div class="col-12 col-lg-12 col-xl-12">
-                    <div class="card shadow-2-strong card-registration" style="border-radius: 15px;">
-                        <div class="card-body p-4 p-md-5">
-                            <h3 class="mb-4 pb-2 pb-md-0 mb-md-5 center">Registration Form</h3>
-                            <form id="user-info" action="{{ url(route('create.new.user.registration')) }}" method="post"
-                                enctype="multipart/form-data">
-                                @csrf
 
-                                <div class="row">
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="name">Name</label>
-                                            <input type="text" id="name" name="name"
-                                                class="form-control form-control-lg" required />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="email_id">Email</label>
-                                            <input type="email" id="email_id" name="email_id"
-                                                class="form-control form-control-lg" required />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        {{-- <div class="form-group">
-                                            <label class="form-label" for="phone">Phone No</label>
-                                            <input type="text" id="phone" name="phone"
-                                                class="form-control form-control-lg" required />
-                                        </div> --}}
-
-                                        <div class="form-group phone-form-group mb-1">
-                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone No') }}</label>
-                                            <input type="tel" id="phone-code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" value="{{ old('phone') }}" placeholder="" name="phone" autocomplete="off" required>
-                                        </div>
-    
-                                        <input type="hidden" name="country_code" value="">
-
-                                    </div>
-
-
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-4 mb-4">
-
-                                        {{-- <div class="form-group">
-                                            <label class="form-label" for="phone">Ad. Contact Number</label>
-                                            <input type="text" id="ad_contact_number" name="ad_contact_number"
-                                                class="form-control form-control-lg" />
-                                        </div> --}}
-
-                                        <div class="form-group phone-form-group mb-1">
-                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Ad. Contact Number') }}</label>
-                                            <input type="tel" id="ad_contact_number" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="ad_contact_number" autocomplete="off" required>
-                                        </div>
-    
-                                        <input type="hidden" name="country_code_ad_contact_number" value="">
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="phone">Land Mark Village</label>
-                                            <input type="text" id="land_mark_village" name="land_mark_village"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="phone">Post</label>
-                                            <input type="text" id="post" name="post"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="address_1">Address 1</label>
-                                            <textarea class="form-control" id="address_1" name="address_1" rows="3" required></textarea>
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-6 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="address_2">Address 2</label>
-                                            <textarea class="form-control" id="address_2" name="address_2" rows="3"></textarea>
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="pincode">Pincode</label>
-                                            <input type="text" id="pincode" name="pincode"
-                                                class="form-control form-control-lg" required />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="district">District</label>
-                                            <input type="text" id="district" name="district"
-                                                class="form-control form-control-lg" required />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="state">State</label>
-                                            <input type="text" id="state" name="state"
-                                                class="form-control form-control-lg" required />
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    {{-- <input type="hidden" id="country__code" name="country__code"
-                                    class="form-control form-control-lg" /> --}}
-
-                                    {{-- <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="country__code">Country Code</label>
-                                            <input type="text" id="country__code" name="country__code"
-                                                class="form-control form-control-lg" required />
-                                        </div>
-
-                                    </div> --}}
-                                    <div class="col-md-4 mb-4">
-
-                                        {{-- <div class="form-group">
-                                            <label class="form-label" for="phone_no_1">Phone No 1</label>
-                                            <input type="text" id="phone_no_1" name="phone_no_1"
-                                                class="form-control form-control-lg" />
-                                        </div> --}}
-
-                                        <div class="form-group phone-form-group mb-1">
-                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone No 1') }}</label>
-                                            <input type="tel" id="phone_no_1" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="phone_no_1" autocomplete="off" required>
-                                        </div>
-    
-                                        <input type="hidden" name="country_code_phone_no_1" value="">
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        {{-- <div class="form-group">
-                                            <label class="form-label" for="phone_no_2">Phone No 2</label>
-                                            <input type="text" id="phone_no_2" name="phone_no_2"
-                                                class="form-control form-control-lg" />
-                                        </div> --}}
-
-                                        <div class="form-group phone-form-group mb-1">
-                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone No 2') }}</label>
-                                            <input type="tel" id="phone_no_2" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="phone_no_2" autocomplete="off" required>
-                                        </div>
-    
-                                        <input type="hidden" name="country_code_phone_no_2" value="">
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        {{-- <div class="form-group">
-                                            <label class="form-label" for="whats_app_no">Whats App No</label>
-                                            <input type="text" id="whats_app_no" name="whats_app_no"
-                                                class="form-control form-control-lg" />
-                                        </div> --}}
-
-                                        <div class="form-group phone-form-group mb-1">
-                                            <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Whats App No') }}</label>
-                                            <input type="tel" id="whats_app_no" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="whats_app_no" autocomplete="off" required>
-                                        </div>
-    
-                                        <input type="hidden" name="country_code_whats_app_no" value="">
-
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="gst_no">GST No</label>
-                                            <input type="text" id="gst_no" name="gst_no"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="cc_no">CC NO</label>
-                                            <input type="text" id="cc_no" name="cc_no"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="d_l_no_1">D.L No 1 (Drug Licence)</label>
-                                            <input type="text" id="d_l_no_1" name="d_l_no_1"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="row">
-
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="d_l_no_2">D.L No 2</label>
-                                            <input type="text" id="d_l_no_2" name="d_l_no_2"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="d_l_no_3">D.L No 3</label>
-                                            <input type="text" id="d_l_no_3" name="d_l_no_3"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="d_l_exp_Date">D.L Expiry Date</label>
-                                            <input type="date" id="d_l_exp_Date" name="d_l_exp_Date"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="row">
-
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="transport">Transport</label>
-                                            <input type="text" id="transport" name="transport"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="cargo">Cargo</label>
-                                            <input type="text" id="cargo" name="cargo"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="booked_to">Booked To</label>
-                                            <input type="text" id="booked_to" name="booked_to"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="row">
-
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="bank_name">Bank Name</label>
-                                            <input type="text" id="bank_name" name="bank_name"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="account_no">Account No</label>
-                                            <input type="text" id="account_no" name="account_no"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="branch_no">Branch No</label>
-                                            <input type="text" id="branch_no" name="branch_no"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="row">
-
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="branch_code">Branch Code</label>
-                                            <input type="text" id="branch_code" name="branch_code"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="ifsc_code">IFSC Code</label>
-                                            <input type="text" id="ifsc_code" name="ifsc_code"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="micr_code">MICR Code</label>
-                                            <input type="text" id="micr_code" name="micr_code"
-                                                class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="row">
-
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="customer_care_executive">Customer Care
-                                                Executive</label>
-                                            <input type="text" id="customer_care_executive"
-                                                name="customer_care_executive" class="form-control form-control-lg" />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="password">Password</label>
-                                            <input type="password" id="password" name="password"
-                                                class="form-control form-control-lg" required />
-                                        </div>
-
-                                    </div>
-                                    <div class="col-md-4 mb-4">
-
-                                        <div class="form-group">
-                                            <label class="form-label" for="password_confirmation">Conform Password</label>
-                                            <input type="password" id="password_confirmation"
-                                                name="password_confirmation" class="form-control form-control-lg"
-                                                required />
-                                        </div>
-
-                                    </div>
-                                </div>
-
-
-                                <div class="mt-4 pt-2">
-                                    <button class="btn btn-primary btn-lg" type="submit">Submit</button>
-                                </div>
-
-                            </form>
+    @if (!Session::has('step') || Session::get('step') == 1)
+
+        @php
+            session()->forget('temp_user_id');
+            session()->forget('otp');
+            Session()->put('step', 1);
+        @endphp
+
+        {{-- - //------------------------------ Registration 1 modal -----------------------// -- --}}
+
+        <div class="modal fade" id="reg_gst_model" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+            aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content py-3">
+                    <div class="modal-header">
+                        <div class="heading">
+                            <h5 class="modal-title" id="exampleModalLabel_phone">Company Details</h5>
                         </div>
+                        {{-- <div class="purple_btn_close">
+                            <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
+                                data-dismiss="modal" aria-label="Close"> v 
+                            </button>
+                        </div> --}}
                     </div>
+                    <form id="reg_gst" action="{{ url(route('new.user.account.create', ['param' => 'gst'])) }}"
+                        method="post">
+                    
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="gst_no" class="col-form-label form-label">GST No:</label>
+                                <input type="text" class="form-control form-control-lg" id="gst_no" name="gst_no"
+                                 minlength="15" maxlength="15" placeholder="Please Enter GST No" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            {{-- <div class="blue_btn">
+                                <button type="button" onclick="close_Phone_modal();" class="btn btn-secondary"
+                                    data-dismiss="modal">Close</button>
+                            </div> --}}
+                            <div class="purple_btn">
+                                <button type="submit" class="btn btn-primary">Next</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-    </section>
 
+    {{-- - //------------------------------  Registration 1 modal -----------------------// -- --}}
 
-    {{-- - //------------------------------ Phone verify modal -----------------------// -- --}}
+    @endif
 
-    <div class="modal fade" id="phone_otp_model" tabindex="-1" role="dialog"
-        aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content py-3">
-                <div class="modal-header">
-                    <div class="heading">
-                        <h5 class="modal-title" id="exampleModalLabel_phone">Verify Phone Number</h5>
-                    </div>
-                    <div class="purple_btn_close">
-                        <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
-                            data-dismiss="modal" aria-label="Close"> v 
-                        </button>
-                    </div>
-                </div>
-                <form id="phone-verify-otp" action="{{ url(route('create.new.user.registration.phone.verify')) }}"
-                    method="post">
-                    @csrf
+    <div id="regModalContainer"></div>
 
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
-                            <input type="number" class="form-control" id="recipient-name" name="otp"
-                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <div class="blue_btn">
-                            <button type="button" onclick="close_Phone_modal();" class="btn btn-secondary"
-                                data-dismiss="modal">Close</button>
-                        </div>
-                        <div class="purple_btn">
-                            <button type="submit" class="btn btn-primary">Verify</button>
-                        </div>
-                        <div class="resend_otp">
-                            <a class="ms-4" class="btn btn-primary" id="resendOTPButton_Phone"
-                                style="display: none; cursor: pointer;">Resend OTP</a>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    {{-- - //------------------------------  phone verify modal -----------------------// -- --}}
 
 @endsection
 
 @section('custome-script')
     <script>
         $(document).ready(function() {
-            // Initialize form validation
-            initValidate('#user-info');
-            initValidate('#phone-verify-otp');
 
-            $('#user-info').on('submit', function(e) {
-                var form = $(this);
-                ajax_form_submit(e, form, responseHandler_phone_verify_otp);
-            });
+            function validate_form(step) {
+                // Initialize validation for the specific form step
+                initValidate(`#reg_model_form_${step}`);
 
-
-            var responseHandler_phone_verify_otp = function(response) {
-
-                $('#phone_otp_model').modal('show');
-
-                setTimeout(function() {
-                    var resendButton_phone = document.getElementById('resendOTPButton_Phone');
-                    resendButton_phone.style.display = 'block';
-                }, 30000); // 30 seconds
-
-            };
-
-
-            $('#phone-verify-otp').on('submit', function(e) {
-                var form = $(this);
-                ajax_form_submit(e, form, responseHandler_phone_verify);
-            });
-
-            let login_page_redirect = "{{ route('user.login') }}";
-
-            var responseHandler_phone_verify = function(response) {
-                var form = $('#phone-verify-otp');
-
-                // Check if the response status indicates success
-                if (response.status === 'success' && response.registration === 'approve') {
-                    // Clear form inputs
-                    form.find("input[type=text], input[type=email], input[type=password], textarea").val("");
-
-                    // Reload the page after 100ms
-                    setTimeout(function() {
-                        // location.reload();
-                        window.location.href = login_page_redirect;
-                    }, 100);
-                }
-
-                if (response.status === 'success' && response.registration === 'not approve') {
-                    // Clear form inputs
-                    $('#phone_otp_model').modal('hide');
-
-                    form.find("input[type=text], input[type=email], input[type=password], textarea").val("");
-
-                    $('#not_approval_model').modal('show');
-
-                    setTimeout(function() {
-                        // location.reload();
-                        window.location.href = login_page_redirect;
-                    }, 2000);
-                }
-            };
-
-            ['phone', 'ad_contact_number', 'whats_app_no', 'phone_no_2', 'phone_no_1'].forEach(function (id) {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('input', function (event) {
-                        this.value = this.value.replace(/[^0-9+ ]/g, '');
+                // Attach the submit event handler
+                $(`#reg_model_form_${step}`).on('submit', function (e) {
+                    var form = $(this);
+                    ajax_form_submit(e, form, function (response) {
+                        responseHandler(step, response);
                     });
+                });
+
+                // Define the response handler function
+                function responseHandler(step, response) {
+                    modelRendStep(); // Perform the required step rendering
                 }
-            });
 
-        });
-
-        $(document).ready(function() {
-            $('#resendOTPButton_Phone').click(function(e) {
-                e.preventDefault();
-
-                var csrfToken = '{{ csrf_token() }}';
-
-                $.ajax({
-                    url: "{{ route('create.new.user.registration.resend.phone.verify') }}",
-                    type: "Post",
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    success: function(response) {
-                        AIZ.plugins.notify('success', response.message);
-                    },
-                    error: function(xhr, status, error) {
-                        AIZ.plugins.notify('danger', response.message);
+                ['phone-code', 'tel_number', 'whats_app_no'].forEach(function (id) {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.addEventListener('input', function (event) {
+                            this.value = this.value.replace(/[^0-9+ ]/g, '');
+                        });
                     }
                 });
+
+                AIZ.plugins.bootstrapSelect('refresh'); 
+            }
+
+            function intil_input(name) {
+                // Select the input element dynamically based on the name parameter
+                var inputElement = document.querySelector(`#${name}`);
+
+                // Initialize the intlTelInput plugin
+                var iti1 = intlTelInput(inputElement, {
+                    separateDialCode: true,
+                    utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
+                    onlyCountries: @php echo json_encode(get_active_countries()->pluck('code')->toArray()) @endphp,
+                    customPlaceholder: function (selectedCountryPlaceholder, selectedCountryData) {
+                        if (selectedCountryData.iso2 === 'bd') {
+                            return "01xxxxxxxxx"; // Custom placeholder for Bangladesh
+                        }
+                        return selectedCountryPlaceholder;
+                    }
+                });
+
+                // // Set default country code to +91 (India)
+                // iti1.setCountry('in'); // 'in' is the ISO2 code for India
+
+                if(name === 'whats_app_no'){
+                    var country_selected = "{{ getSelectedCountry('whats_app_no_meta') }}"; 
+                } else {
+                    var country_selected = "{{ getSelectedCountry('phone_code_meta') }}"; 
+                }
+
+
+                if(country_selected !== 'null'){
+                    iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
+                } else {
+                    // Set default country code to +91 (India)
+                    iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                }
+
+                // Update the hidden input with the selected country's dial code
+                var countryData = iti1.getSelectedCountryData();
+                document.querySelector(`input[name="country_code_${name}"]`).value = countryData.dialCode;
+                document.querySelector(`input[name="${name}_meta"]`).value = countryData.iso2;
+
+                // Update the country code when the country changes
+                inputElement.addEventListener("countrychange", function () {
+                    var updatedCountryData = iti1.getSelectedCountryData();
+                    document.querySelector(`input[name="country_code_${name}"]`).value = updatedCountryData.dialCode;
+                    document.querySelector(`input[name="${name}_meta"]`).value = updatedCountryData.iso2;
+                });
+            }
+
+
+            // Function to render the modal for the current step
+            function modelRendStep() {
+                $.ajax({
+                    url: "{{ route('get-reg-step') }}", // Simplified route helper
+                    method: 'GET',
+                    success: function (response) {
+                        if (response.success) {
+                            const step = response.step;
+
+                            // Inject dynamic content and show the modal for the given step
+                            $('#regModalContainer').html(response.html);
+                            $(`#reg_model_${step}`).modal('show');
+
+
+                            validate_form(step);
+                            intil_input('phone_code');
+                            intil_input('whats_app_no');
+
+
+                        } else {
+                            console.error('Error:', response.message || 'An error occurred.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('AJAX error:', error);
+                    },
+                });
+            }
+
+            // Function to check the registration step
+            function checkRegStep() {
+                $.ajax({
+                    url: "{{ route('get-reg-step') }}", // Simplified route helper
+                    method: 'GET',
+                    success: function (response) {
+                        if (response.success) {
+                            const step = response.step;
+
+                            if (step === 1) {
+                                // Show the first modal if the step is 1
+                                $('#reg_gst_model').modal('show');
+                            } else {
+                                // Call modelRendStep for other steps
+                                modelRendStep();
+                            }
+                        } else {
+                            console.error('Error:', response.message || 'An error occurred.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('AJAX error:', error);
+                    },
+                });
+            }
+
+            // Initial check when the document is ready
+            checkRegStep();
+
+            initValidate('#reg_gst');
+            $('#reg_gst').on('submit', function(e) {
+                var form = $(this);
+                ajax_form_submit(e, form, responseHandler_reg_gst);
             });
+
+            var responseHandler_reg_gst = function(response) {
+
+                $(`#reg_gst_model`).modal('hide');
+                modelRendStep();
+
+            };
+
         });
+
+        function back_to_prev_reg() {
+            var csrfToken = '{{ csrf_token() }}';
+            $.ajax({
+                url: "{{ route('previous.reg.form') }}", // Simplified route helper
+                method: 'GET',
+                success: function (response) {
+                    if (response.success) {
+
+                        location.reload();
+
+                    } else {
+                        console.error('Error:', response.message || 'An error occurred.');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('AJAX error:', error);
+                },
+            });
+        }
+
+        function resendOTPButton_Phone() {
+            var csrfToken = '{{ csrf_token() }}';
+            $.ajax({
+                url: "{{ route('create.new.user.registration.resend.phone.verify') }}",
+                type: "Post",
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                success: function(response) {
+                    AIZ.plugins.notify('success', response.message);
+                },
+                error: function(xhr, status, error) {
+                    AIZ.plugins.notify('danger', response.message);
+                }
+            });
+        }
+
+        let login_page_reg = "{{ route('user.login') }}";
+
+        function close_and_reload_reg (){
+            $('#reg_model_8').modal('hide');
+            setTimeout(function() {
+                // location.reload();
+                window.location.href = login_page_reg;
+            }, 100);
+        }
+
+
+        $(document).on('change', '[name=country_id]', function() {
+            var country_id = $(this).val();
+            get_states(country_id);
+        });
+
+        $(document).on('change', '[name=state_id]', function() {
+            var state_id = $(this).val();
+            get_city(state_id);
+        });
+
+        function get_states(country_id) {
+            $('[name="state"]').html("");
+            $.ajax({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                url: "{{route('get-state')}}",
+                type: 'POST',
+                data: {
+                    country_id  : country_id
+                },
+                success: function (response) {
+                    var obj = JSON.parse(response);
+                    if(obj != '') {
+                        $('[name="state_id"]').html(obj);
+                        AIZ.plugins.bootstrapSelect('refresh');
+                    }
+                }
+            });
+        }
+
+        function get_city(state_id) {
+            $('[name="city"]').html("");
+            $.ajax({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                url: "{{route('get-city')}}",
+                type: 'POST',
+                data: {
+                    state_id: state_id
+                },
+                success: function (response) {
+                    var obj = JSON.parse(response);
+                    if(obj != '') {
+                        $('[name="city_id"]').html(obj);
+                        AIZ.plugins.bootstrapSelect('refresh');
+                    }
+                }
+            });
+        }
+
     </script>
 @endsection

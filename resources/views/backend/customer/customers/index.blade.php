@@ -18,9 +18,7 @@
     <div class="card">
         <form class="" id="sort_customers" action="" method="GET">
             <div class="card-header row gutters-5">
-                <div class="col">
-                    <h5 class="mb-0 h6">{{ translate('Customers') }}</h5>
-                </div>
+
 
                 {{-- <div class="dropdown mb-2 mb-md-0">
                     <button class="btn border dropdown-toggle" type="button" data-toggle="dropdown">
@@ -31,21 +29,69 @@
                             data-target="#bulk-delete-modal">{{ translate('Delete selection') }}</a>
                     </div>
                 </div> --}}
-                <div class="col-lg-2 ml-auto">
-                    <select class="form-control aiz-selectpicker" name="verification_status" onchange="sort_customers()"
-                        data-selected="{{ $verification_status }}">
-                        <option value="">{{ translate('Filter by Approval Status') }}</option>
-                        <option value="verified">{{ translate('Verified') }}</option>
-                        <option value="un_verified">{{ translate('Unverified') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group mb-0">
-                        <input type="text" class="form-control" id="search"
-                            name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset
-                            placeholder="{{ translate('Type email or name & Phone Enter') }}">
+                <div class="row">
+                    <div class="col-md-12 mb-2">
+                        <h5 class="mb-0 h6">{{ translate('Customers') }}</h5>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="search"
+                                name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset
+                                placeholder="{{ translate('Type email or name & Phone & Telephone No Enter') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="company_name"
+                                name="company_name"@isset($company_name) value="{{ $company_name }}" @endisset
+                                placeholder="{{ translate('Type Company Name') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="gst_no"
+                                name="gst_no"@isset($gst_no) value="{{ $gst_no }}" @endisset
+                                placeholder="{{ translate('Type GST No') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-12 mb-2">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="bank_details"
+                                name="bank_details"@isset($bank_details) value="{{ $bank_details }}" @endisset
+                                placeholder="{{ translate('Type Bank Name or Account No or Branch No or Branch Code & IFSC Code & MICR Code & Customer Care Executive Enter') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="license_details"
+                                name="license_details"@isset($license_details) value="{{ $license_details }}" @endisset
+                                placeholder="{{ translate('Type CC No or D.L No 1 or D.L No 2 or D.L No 3 Enter') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <div class="form-group mb-0">
+                            <input type="date" class="form-control" id="dl_expiry_Data"
+                                name="dl_expiry_Data"@isset($dl_expiry_Data) value="{{ $dl_expiry_Data }}" @endisset>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <div class="form-group mb-0">
+                            <input type="type" class="form-control" id="transport_Details"
+                                name="transport_Details"@isset($transport_Details) value="{{ $transport_Details }}" @endisset
+                                placeholder="{{ translate('Type Transport or Cargo & Booked To Enter') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 ml-auto mb-2">
+                        <select class="form-control aiz-selectpicker" name="verification_status" onchange="sort_customers()"
+                            data-selected="{{ $verification_status }}">
+                            <option value="">{{ translate('Filter by Approval Status') }}</option>
+                            <option value="verified">{{ translate('Verified') }}</option>
+                            <option value="un_verified">{{ translate('Unverified') }}</option>
+                        </select>
                     </div>
                 </div>
+                <button class="mx-2" onclick="sort_customers()">Search</button>
+                <button class="mx-2" onclick="reset_customer_form()">Reset</button>
             </div>
 
             <div class="card-body">
@@ -135,13 +181,13 @@
                                         @can('ban_customer')
                                             @if ($user->approval_status != 1)
                                                 <a href="#" class="btn btn-soft-danger btn-icon btn-circle btn-sm"
-                                                    onclick="show_Approval_model({{ $user->id }}, 'approve');"
+                                                    onclick="show_Approval_model({{ $user->id }}, 'approve', '{{ $user->user_subtype ?? 'null' }}');"
                                                     title="{{ translate('Approval this Customer') }}">
                                                     <i class="las la-thumbs-up"></i>
                                                 </a>
                                             @else
                                                 <a href="#" class="btn btn-soft-success btn-icon btn-circle btn-sm"
-                                                    onclick="show_Approval_model({{ $user->id }}, 'not_approve');"
+                                                    onclick="show_Approval_model({{ $user->id }}, 'not_approve', '{{ $user->user_subtype ?? 'null' }}');"
                                                     title="{{ translate('Not Approve this Customer') }}">
                                                     <i class="las la-thumbs-down"></i>
                                                 </a>
@@ -259,12 +305,26 @@
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="approval-status" class="modal-body col-form-label form-label">User Role:</label>
+                        <select class="form-control" id="user-role" name="user_subtype" required>
+                            <option value="">---Select---</option>
+                            <option value="pts">pts</option>
+                            <option value="ptr">ptr</option>
+                            <option value="ptd">ptd</option>
+                            <option value="gov">gov</option>
+                            <option value="expo">expo</option>
+                        </select>
+                    </div>
+
                     <div id="note-section" style="display: none;" class="modal-body">
                         <div class="form-group">
                             <label for="recipient-name" class="col-form-label form-label">Note :</label>
                             <textarea type="text" class="form-control" id="note" name="note"></textarea>
                         </div>
                     </div>
+
+
                     <div class="modal-footer">
                         <div class="blue_btn">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -306,6 +366,11 @@
 
         function sort_customers(el) {
             $('#sort_customers').submit();
+        }
+
+        function reset_customer_form() {
+            let customer_page_url = "{{ url(route('customers.index')) }}";
+            location.href = customer_page_url;
         }
 
         function confirm_ban(url) {
@@ -365,12 +430,17 @@
 
 
         // // Global scope
-        function show_Approval_model(id, status) {
+        function show_Approval_model(id, status, role) {
             // // Set the value of the hidden input field
             $('#approval_model input[name="id"]').val(id);
 
             // Set the selected option in the dropdown
             $('#approval-status').val(status);
+
+            if(role !== 'null'){
+                // Set the selected option in the dropdown
+                $('#user-role').val(role);
+            }
 
 
             $('#approval-status option').each(function () {

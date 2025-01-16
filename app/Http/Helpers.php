@@ -1247,7 +1247,7 @@ if (!function_exists('getFileBaseURL')) {
             return env(Str::upper(env('FILESYSTEM_DRIVER')) . '_URL') . '/';
         }
 
-        return getBaseURL() . 'public/';
+        return getBaseURL() . '/public/';
     }
 }
 
@@ -2815,4 +2815,56 @@ if(!function_exists('sendEmail')){
     curl_close($ch);
     
     }  
+}
+
+
+if(!function_exists('getParticularData')){
+    function getParticularData(string $tableName, string $fieldName, int $id)
+    {
+        return DB::table($tableName)
+            ->where('id', $id)
+            ->value($fieldName);
+    } 
+}
+
+if (!function_exists('getSelectedCountry')) {
+    function getSelectedCountry(string $colName)
+    {
+        // Check if the user is authenticated
+        if (Auth::check()) {
+            // Get the selected country from the authenticated user
+            $data = Auth::user()->$colName;
+            if(!empty($data)){
+                $data = $data;
+            } else {
+                $data = 'null';
+            }
+        } else {
+            // Check if there's a temp user ID in the session
+            if (session()->has('temp_user_id')) {
+                $id = session()->get('temp_user_id');
+
+                // Fetch the selected country for the temp user
+                $user_data = User::where('id', $id)->pluck($colName)->first(); // Corrected dynamic column usage
+
+                // Check if user data was found
+                if ($user_data) {
+                    if(!empty($user_data)){
+                        $data = $user_data;
+                    } else {
+                        $data = 'null';
+                    }
+
+                } else {
+                    $data = 'null'; // Set to null if no data is found
+                }
+            } else {
+                // If no temp user ID, set data to null
+                $data = 'null';
+            }
+        }
+
+        // Return the selected country data
+        return $data;
+    }
 }

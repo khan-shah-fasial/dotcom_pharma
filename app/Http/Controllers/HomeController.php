@@ -32,6 +32,8 @@ use Artisan;
 use DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 use ZipArchive;
 
 class HomeController extends Controller
@@ -220,11 +222,18 @@ class HomeController extends Controller
 
         $user = Auth::user();
         $user->name = $request->name;
+        $user->whats_app_no = '+'.$request->country_code_whats_app_no.'-'.$request->whats_app_no;
+        $user->whats_app_no_meta = $request->whats_app_no_meta;
+        $user->tel_number = $request->tel_number;
+        $user->gst_no = $request->gst_no;
+        $user->post = $request->post;
+        $user->company_name = $request->company_name;
+
         $user->address = $request->address;
         $user->country = $request->country;
         $user->city = $request->city;
         $user->postal_code = $request->postal_code;
-        $user->phone = $request->phone;
+        // $user->phone = $request->phone;
 
         if ($request->new_password != null && ($request->new_password == $request->confirm_password)) {
             $user->password = Hash::make($request->new_password);
@@ -235,6 +244,315 @@ class HomeController extends Controller
 
         flash(translate('Your Profile has been updated successfully!'))->success();
         return back();
+    }
+
+    public function userBankDetailsUpdate(Request $request)
+    {
+        if (env('DEMO_MODE') == 'On') {
+            flash(translate('Sorry! the action is not permitted in demo '))->error();
+            return back();
+        }
+
+        $validator = Validator::make($request->all(), [
+            'bank_name' => ['required', 'string', 'max:255'],
+            'account_no' => ['required', 'regex:/^\d+$/', 'max:20'], // Numeric only
+            'branch_no' => ['required', 'string', 'max:50'],
+            'branch_code' => ['required', 'string', 'max:50'],
+            'ifsc_code' => ['required', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'], // IFSC code format
+            'micr_code' => ['required', 'regex:/^\d{9}$/'], // MICR code format
+            'customer_care_executive' => ['required', 'string', 'max:255'],
+        ], [
+            // Custom error messages
+            'bank_name.required' => 'The bank name is required.',
+            'bank_name.string' => 'The bank name must be a valid string.',
+            'bank_name.max' => 'The bank name must not exceed 255 characters.',
+            
+            'account_no.required' => 'The account number is required.',
+            'account_no.regex' => 'The account number must contain only numeric characters.',
+            'account_no.max' => 'The account number must not exceed 20 digits.',
+            
+            'branch_no.required' => 'The branch number is required.',
+            'branch_no.string' => 'The branch number must be a valid string.',
+            'branch_no.max' => 'The branch number must not exceed 50 characters.',
+            
+            'branch_code.required' => 'The branch code is required.',
+            'branch_code.string' => 'The branch code must be a valid string.',
+            'branch_code.max' => 'The branch code must not exceed 50 characters.',
+            
+            'ifsc_code.required' => 'The IFSC Code is required.',
+            'ifsc_code.regex' => 'The IFSC Code format is invalid. It should follow the format: 4 uppercase letters, a 0, followed by 6 alphanumeric characters.',
+            
+            'micr_code.required' => 'The MICR Code is required.',
+            'micr_code.regex' => 'The MICR Code must be exactly 9 numeric digits.',
+            
+            'customer_care_executive.required' => 'The customer care executive name is required.',
+            'customer_care_executive.string' => 'The customer care executive name must be a valid string.',
+            'customer_care_executive.max' => 'The customer care executive name must not exceed 255 characters.',
+        ]);
+
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            // Check if $errors is an array
+            if (is_array($errors) && !empty($errors)) {
+                foreach ($errors as $error) {
+                    flash($error)->error(); // Flash each error individually
+                }
+            } else {
+                // Flash a generic error message if $errors is not an array
+                flash('An error occurred, please try again.')->error();
+            }
+
+            return back();
+        }
+
+        $user = Auth::user();
+
+        $user->bank_name = $request->bank_name;
+        $user->account_no = $request->account_no;
+        $user->branch_no = $request->branch_no;
+        $user->branch_code = $request->branch_code;
+        $user->ifsc_code = $request->ifsc_code;
+        $user->micr_code = $request->micr_code;
+        $user->customer_care_executive = $request->customer_care_executive;
+
+        $user->save();
+
+        flash(translate('Your Profile has been updated successfully!'))->success();
+        return back();
+    }
+
+    public function userLicenseDetailsUpdate(Request $request)
+    {
+        if (env('DEMO_MODE') == 'On') {
+            flash(translate('Sorry! the action is not permitted in demo '))->error();
+            return back();
+        }
+
+        $validator = Validator::make($request->all(), [
+            'cc_no' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+            'd_l_no_1' => ['required', 'string', 'max:50'],
+            'd_l_no_2' => ['required', 'string', 'max:50'],
+            'd_l_no_3' => ['required', 'string', 'max:50'],
+        ], [
+            // Custom error messages
+            'cc_no.required' => 'The CC number is required.',
+            'cc_no.regex' => 'The CC number must only contain numbers, spaces, dashes, or plus signs.',
+            'cc_no.min' => 'The CC number must be at least 5 characters long.',
+            
+            'd_l_no_1.required' => 'The first D.L.No is required.',
+            'd_l_no_1.string' => 'The first D.L.No must be a valid string.',
+            'd_l_no_1.max' => 'The first D.L.No must not exceed 50 characters.',
+            
+            'd_l_no_2.required' => 'The second D.L.No is required.',
+            'd_l_no_2.string' => 'The second D.L.No must be a valid string.',
+            'd_l_no_2.max' => 'The second D.L.No must not exceed 50 characters.',
+            
+            'd_l_no_3.required' => 'The third D.L.No is required.',
+            'd_l_no_3.string' => 'The third D.L.No must be a valid string.',
+            'd_l_no_3.max' => 'The third D.L.No must not exceed 50 characters.',
+        ]);
+
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            // Check if $errors is an array
+            if (is_array($errors) && !empty($errors)) {
+                foreach ($errors as $error) {
+                    flash($error)->error(); // Flash each error individually
+                }
+            } else {
+                // Flash a generic error message if $errors is not an array
+                flash('An error occurred, please try again.')->error();
+            }
+
+            return back();
+        }
+
+        $user = Auth::user();
+
+        $user->cc_no = $request->cc_no;
+        $user->d_l_no_1 = $request->d_l_no_1;
+        $user->d_l_no_2 = $request->d_l_no_2;
+        $user->d_l_no_3 = $request->d_l_no_3;
+
+        $user->save();
+
+        flash(translate('Your Profile has been updated successfully!'))->success();
+        return back();
+    }
+
+    public function usertransportDetailsUpdate(Request $request)
+    {
+        if (env('DEMO_MODE') == 'On') {
+            flash(translate('Sorry! the action is not permitted in demo '))->error();
+            return back();
+        }
+
+        $validator = Validator::make($request->all(), [
+            'd_l_exp_Date' => ['required', 'date'],
+            'transport' => ['required', 'string', 'max:255'],
+            'cargo' => ['required', 'string', 'max:255'],
+            'booked_to' => ['required', 'string', 'max:255'],
+        ], [
+            // Custom error messages
+            'd_l_exp_Date.required' => 'The D.L expiration date is required.',
+            'd_l_exp_Date.date' => 'The D.L expiration date must be a valid date.',
+            
+            'transport.required' => 'The transport field is required.',
+            'transport.string' => 'The transport field must be a valid string.',
+            'transport.max' => 'The transport field must not exceed 255 characters.',
+            
+            'cargo.required' => 'The cargo field is required.',
+            'cargo.string' => 'The cargo field must be a valid string.',
+            'cargo.max' => 'The cargo field must not exceed 255 characters.',
+            
+            'booked_to.required' => 'The booked-to field is required.',
+            'booked_to.string' => 'The booked-to field must be a valid string.',
+            'booked_to.max' => 'The booked-to field must not exceed 255 characters.',
+        ]);
+
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            // Check if $errors is an array
+            if (is_array($errors) && !empty($errors)) {
+                foreach ($errors as $error) {
+                    flash($error)->error(); // Flash each error individually
+                }
+            } else {
+                // Flash a generic error message if $errors is not an array
+                flash('An error occurred, please try again.')->error();
+            }
+
+            return back();
+        }
+
+        $user = Auth::user();
+
+        $user->d_l_exp_Date = $request->d_l_exp_Date;
+        $user->transport = $request->transport;
+        $user->cargo = $request->cargo;
+        $user->booked_to = $request->booked_to;
+
+        $user->save();
+
+        flash(translate('Your Profile has been updated successfully!'))->success();
+        return back();
+    }
+
+
+    public function update_phone_main(Request $request){
+        $validator = Validator::make($request->all(), [
+            'phone_code' => 'required|regex:/^\d{8,}$/',
+        ],[
+            'phone_code.required' => 'The phone field is required.',
+            'phone_code.regex' => 'The phone must be at least 8 digits long and Space in Between Number.',
+        ]);
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->all()
+            ], 200);
+
+        }
+
+        $user = User::where('phone', $request->input('country_code_phone_code').'-'.$request->input('phone_code'))->where('id','!=', Auth::user()->id)->first();
+
+        if($user == null){
+
+            // $otp = mt_rand(100000, 999999);
+            $otp = '123456';
+            $timestamp = Carbon::now();
+            Session()->put('otp_update', $otp);
+            Session()->put('otp_timestamp', $timestamp);
+            $phone_update = $request->input('country_code_phone_code').'-'.$request->input('phone_code');
+            Session()->put('phone_update', $phone_update);
+            Session()->put('phone_update_meta', $request->input('phone_code_meta'));
+
+
+            return response()->json([
+                'status' => 'success',
+                'otp' => true,
+                'message' => 'OTP has been sent to your Mobile Number',
+            ], 200);
+
+        } else {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Mobile Number is Exist!',
+            ], 200);
+
+        }
+
+    }
+
+    public function verify_update_phone_otp(Request $request){
+        $validator = Validator::make($request->all(), [
+            'otp' => 'required|regex:/^\d{6}$/',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->all()
+            ], 200);
+        }
+
+        $otp = Session()->get('otp_update');
+        $timestamp = Session()->get('otp_timestamp');
+        $phone_update = Session()->get('phone_update');
+        $phone_update_meta = Session()->get('phone_update_meta');
+
+        // Check if OTP expired (2 minutes)
+        if (Carbon::parse($timestamp)->diffInMinutes(Carbon::now()) > 2) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'OTP has expired. Please request a new one!',
+            ], 200);
+
+        }
+
+        if ($request->otp == $otp) {
+
+            
+            $user = Auth::user();
+
+            $user->phone = $phone_update;
+            $user->phone_code_meta = $phone_update_meta;
+
+    
+            $user->save();
+
+            session()->forget('otp_timestamp');
+            session()->forget('otp_update');
+            session()->forget('phone_update_meta');
+            session()->forget('phone_update');
+
+            return response()->json([
+                'status' => 'success',
+                'update' => 'true',
+                'message' => 'Phone No Update Successfully',
+            ], 200);
+
+
+        } else {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid OTP!',
+            ], 200);
+
+        }
+
+
     }
 
     public function flash_deal_details($slug)
@@ -634,8 +952,8 @@ class HomeController extends Controller
     {
         $email = $request->email;
         if (isUnique($email)) {
-            $this->send_email_change_verification_mail($request, $email);
-            flash(translate('A verification mail has been sent to the mail you provided us with.'))->success();
+            // $this->send_email_change_verification_mail($request, $email);
+            flash(translate('You can update this email.'))->success();
             return back();
         }
 
@@ -649,9 +967,18 @@ class HomeController extends Controller
         $response['status'] = 0;
         $response['message'] = 'Unknown';
         try {
-            EmailUtility::email_verification($user, $user->user_type);
+            // EmailUtility::email_verification($user, $user->user_type);
+
+            $user = Auth::user();
+
+            $user->email = $email;
+            $user->email_verified_at = now();
+
+            $user->save();
+
+
             $response['status'] = 1;
-            $response['message'] = translate("Your verification mail has been Sent to your email.");
+            $response['message'] = translate("Your email updated Successfully");
         } catch (\Exception $e) {
             $response['status'] = 0;
             $response['message'] = $e->getMessage();
