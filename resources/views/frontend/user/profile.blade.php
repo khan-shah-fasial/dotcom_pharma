@@ -302,7 +302,7 @@
                         </div>
                         <div class="row fs-14 mb-2 mb-md-0">
                             <span class="col-md-2 text-secondary text-secondary">{{ translate('Phone') }}:</span>
-                            <span class="col-md-10 text-dark">{{ $address->phone }}</span>
+                            <span class="col-md-10 text-dark">+{{ $address->phone }}</span>
                         </div>
                         @if ($address->set_default)
                             <div class="absolute-md-top-right pt-2 pt-md-4 pr-md-5">

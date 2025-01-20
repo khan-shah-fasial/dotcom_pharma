@@ -29,6 +29,50 @@
         $('#new-address-modal').modal('show');
     }
 
+
+    function intil_input_edit(name, phone_meta = null) {
+        // Select the input element dynamically based on the name parameter
+        var inputElement = document.querySelector(`#${name}`);
+
+        // Initialize the intlTelInput plugin
+        var iti1 = intlTelInput(inputElement, {
+            separateDialCode: true,
+            utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
+            onlyCountries: @php echo json_encode(get_active_countries()->pluck('code')->toArray()) @endphp,
+            customPlaceholder: function (selectedCountryPlaceholder, selectedCountryData) {
+                if (selectedCountryData.iso2 === 'bd') {
+                    return "01xxxxxxxxx"; // Custom placeholder for Bangladesh
+                }
+                return selectedCountryPlaceholder;
+            }
+        });
+
+        // // Set default country code to +91 (India)
+        // iti1.setCountry('in'); // 'in' is the ISO2 code for India
+
+
+        if(phone_meta !== 'null'){
+            iti1.setCountry(phone_meta); // 'in' is the ISO2 code for India
+        } else {
+            // Set default country code to +91 (India)
+            iti1.setCountry('in'); // 'in' is the ISO2 code for India
+        }
+
+        // Update the hidden input with the selected country's dial code
+        var countryData = iti1.getSelectedCountryData();
+        document.querySelector(`input[name="country_code_${name}"]`).value = countryData.dialCode;
+        document.querySelector(`input[name="${name}_meta"]`).value = countryData.iso2;
+
+        // Update the country code when the country changes
+        inputElement.addEventListener("countrychange", function () {
+            var updatedCountryData = iti1.getSelectedCountryData();
+            document.querySelector(`input[name="country_code_${name}"]`).value = updatedCountryData.dialCode;
+            document.querySelector(`input[name="${name}_meta"]`).value = updatedCountryData.iso2;
+        });
+    }
+
+
+
     function edit_address(address) {
         var url = '{{ route("addresses.edit", ":id") }}';
         url = url.replace(':id', address);
@@ -42,6 +86,14 @@
             success: function (response) {
                 $('#edit_modal_body').html(response.html);
                 $('#edit-address-modal').modal('show');
+
+                const phone_meta = $('#edit-address-modal').find('#phone_meta').val();
+
+                if (phone_meta) {
+                    intil_input_edit('phone_code_addr_edit', phone_meta);
+                } else {
+                    intil_input_edit('phone_code_addr_edit');
+                }
                 AIZ.plugins.bootstrapSelect('refresh');
 
                 @if (get_setting('google_map') == 1)

@@ -58,6 +58,7 @@ use App\Models\PaymentMethod;
 use App\Models\UserCoupon;
 use App\Models\NotificationType;
 use App\Utility\EmailUtility;
+use App\Models\Address;
 
 //sensSMS function for OTP
 if (!function_exists('sendSMS')) {
@@ -2861,6 +2862,28 @@ if (!function_exists('getSelectedCountry')) {
             } else {
                 // If no temp user ID, set data to null
                 $data = 'null';
+            }
+        }
+
+        // Return the selected country data
+        return $data;
+    }
+}
+
+
+if (!function_exists('getSelectedCountry_addr')) {
+    function getSelectedCountry_addr(string $colName)
+    {
+        // Initialize $data with 'null' as the default value
+        $data = 'null';
+
+        // Check if the user is authenticated
+        if (Auth::check()) {
+            $id = Auth::user()->id ?? null;
+
+            if ($id !== null) {
+                // Retrieve the value of the specified column for the authenticated user
+                $data = Address::where('user_id', $id)->value($colName) ?? 'null';
             }
         }
 
