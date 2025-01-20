@@ -130,7 +130,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Close</button>
+                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
                     </div>
                     <div class="purple_btn">
                         <button type="submit" class="btn btn-primary">Next</button>
@@ -176,7 +176,7 @@
                     </div>
                     <div class="modal-footer">
                         <div class="blue_btn">
-                            <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Close</button>
+                            <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
                         </div>
                         <div class="purple_btn">
                             <button type="submit" class="btn btn-primary">Verify</button>
@@ -282,7 +282,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Close</button>
+                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
                     </div>
                     <div class="purple_btn">
                         <button type="submit" class="btn btn-primary">Next</button>
@@ -391,7 +391,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Close</button>
+                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
                     </div>
                     <div class="purple_btn">
                         <button type="submit" class="btn btn-primary">Next</button>
@@ -468,7 +468,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Close</button>
+                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
                     </div>
                     <div class="purple_btn">
                         <button type="submit" class="btn btn-primary">Next</button>
@@ -547,7 +547,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Close</button>
+                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
                     </div>
                     <div class="purple_btn">
                         <button type="submit" class="btn btn-primary">Next</button>

@@ -661,7 +661,10 @@ class RegisterController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            'gst_no' => ['required', 'regex:/^[0-9]{15}$/'], // Assuming GSTIN format
+            'gst_no' => [
+                'required', 
+                'regex:/^[0-9A-Z]{15}$/i' // Allows alphanumeric (uppercase and lowercase)
+            ], 
         ], [
             'gst_no.required' => 'The GST Number is required.',
             'gst_no.regex' => 'The GST Number format is invalid.',
