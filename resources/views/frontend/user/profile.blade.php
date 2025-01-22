@@ -15,7 +15,7 @@
             <h5 class="mb-0 fs-18 fw-700 text-dark">{{ translate('Personal Info')}}</h5>
         </div>
         <div class="card-body">
-            <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data">
+            <form id="basic_details" action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <!-- Name-->
                 <div class="form-group row">
@@ -121,7 +121,7 @@
             <h5 class="mb-0 fs-18 fw-700 text-dark">{{ translate('Bank Info')}}</h5>
         </div>
         <div class="card-body">
-            <form action="{{ route('user.bankdetails.update') }}" method="POST" enctype="multipart/form-data">
+            <form id="bank_details" action="{{ route('user.bankdetails.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <!-- Name-->
                 <div class="form-group row">
@@ -187,7 +187,7 @@
             <h5 class="mb-0 fs-18 fw-700 text-dark">{{ translate('License Details')}}</h5>
         </div>
         <div class="card-body">
-            <form action="{{ route('user.licensedetails.update') }}" method="POST" enctype="multipart/form-data">
+            <form id="license_details" action="{{ route('user.licensedetails.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <!-- Name-->
                 <div class="form-group row">
@@ -232,7 +232,7 @@
             <h5 class="mb-0 fs-18 fw-700 text-dark">{{ translate('Transport Details')}}</h5>
         </div>
         <div class="card-body">
-            <form action="{{ route('user.transportdetails.update') }}" method="POST" enctype="multipart/form-data">
+            <form id="transport_details" action="{{ route('user.transportdetails.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <!-- Name-->
                 <div class="form-group row">
@@ -559,6 +559,11 @@
 
             validate_form('change_phone');
             validate_form('otp-phone-verify');
+
+            initValidate(`#basic_details`);
+            initValidate(`#bank_details`);
+            initValidate(`#license_details`);
+            initValidate(`#transport_details`);
 
         });
 

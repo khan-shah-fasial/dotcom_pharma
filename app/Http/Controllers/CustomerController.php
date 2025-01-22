@@ -285,22 +285,10 @@ class CustomerController extends Controller
     public function approval(Request $request) {
         $user = User::findOrFail($request->id);
 
+        $approval = ($request->approval_status == 'approve') ? '1' : '0';
 
+        if($approval == 1) {
 
-        if($user->approval_status == 1) {
-            $user->approval_status = 2;
-            $user->note = $request->note;
-            $user->user_subtype = $request->user_subtype;
-
-            $user->save();
-
-            try {
-                EmailUtility::approval_reject_email($user);
-            } catch (\Exception $e) {}
-
-            flash(translate('Customer Not Approve Successfully'))->success();
-
-        } else {
 
             $user->approval_status = 1;
             $user->note = $request->note;
@@ -313,6 +301,20 @@ class CustomerController extends Controller
             } catch (\Exception $e) {}
 
             flash(translate('Customer Approve Successfully'))->success();
+
+        } else {
+
+            $user->approval_status = 2;
+            $user->note = $request->note;
+            $user->user_subtype = $request->user_subtype;
+
+            $user->save();
+
+            try {
+                EmailUtility::approval_reject_email($user);
+            } catch (\Exception $e) {}
+
+            flash(translate('Customer Not Approve Successfully'))->success();
 
         }
 

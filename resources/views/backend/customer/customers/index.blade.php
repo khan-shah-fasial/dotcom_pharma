@@ -91,7 +91,7 @@
                     </div>
                 </div>
                 <button class="mx-2" onclick="sort_customers()">Search</button>
-                <button class="mx-2" onclick="reset_customer_form()">Reset</button>
+                <a href="{{ url(route('customers.index')) }}" class="mx-2">Reset</a>
             </div>
 
             <div class="card-body">
@@ -368,11 +368,6 @@
             $('#sort_customers').submit();
         }
 
-        function reset_customer_form() {
-            let customer_page_url = "{{ url(route('customers.index')) }}";
-            location.href = customer_page_url;
-        }
-
         function confirm_ban(url) {
             if ('{{ env('DEMO_MODE') }}' == 'On') {
                 AIZ.plugins.notify('info', '{{ translate('Data can not change in demo mode.') }}');
@@ -443,13 +438,13 @@
             }
 
 
-            $('#approval-status option').each(function () {
-                if ($(this).val() !== status) {
-                    $(this).hide();
-                } else {
-                    $(this).show();
-                }
-            });
+            // $('#approval-status option').each(function () {
+            //     if ($(this).val() !== status) {
+            //         $(this).hide();
+            //     } else {
+            //         $(this).show();
+            //     }
+            // });
 
             // Trigger the toggleNote function to ensure the note section visibility is updated
             toggleNote();
