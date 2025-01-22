@@ -137,7 +137,7 @@
                             @foreach (json_decode($product->choice_options) as $key => $choice)
 
                                 <!--<div class="row no-gutters mt-3">--> <!--old code-->
-                                    <div class="row no-gutters mb-3 @if($key == 0) d-none @endif"> <!--hiding 1st attribute ROLE [by nexgeno]-->
+                                    <div class="row no-gutters mb-3 @if($key == 1) d-none @endif"> <!--hiding 1st attribute ROLE [by nexgeno]-->
                                     <div class="col-3">
                                         <div class="text-secondary fs-14 fw-400 mt-2 ">{{ get_single_attribute_name($choice->attribute_id) }}</div>
                                     </div>
