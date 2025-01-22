@@ -55,6 +55,13 @@ return [
             'visibility' => 'public',
         ],
 
+        'payu' => [
+            'driver' => 'local',
+            'root' => storage_path('app/payu'), // Directory for storing PayU-related files
+            'url' => env('APP_URL') . '/storage/payu', // Correct URL to access files in this disk
+            'visibility' => 'public',
+        ],       
+
         'aws' => [
             'driver'    => 's3',
             'key'       => env('AWS_ACCESS_KEY_ID'),
