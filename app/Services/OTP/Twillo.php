@@ -24,6 +24,7 @@ class Twillo implements SendSms
                 )
             );
         } catch (\Exception $e) {
+            
         }
     }
 }

@@ -259,6 +259,8 @@ class SendSMSUtility
             curl_close($ch);
 
             return $response;
+        }elseif(OtpConfiguration::where('type', 'twofactor')->first()->value == 1){
+            //not in ise
         }
         return true;
     }

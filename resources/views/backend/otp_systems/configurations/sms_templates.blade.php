@@ -55,7 +55,7 @@
                                                 <label class="col-md-2 col-form-label">{{translate('Template ID')}}</label>
                                                 <div class="col-md-10">
                                                     <input type="text" name="template_id" value="{{ $sms_template->template_id }}" class="form-control" placeholder="{{translate('Template Id')}}">
-                                                    <small class="form-text text-danger">{{ ('**N.B : Template ID is Required Only for Fast2SMS DLT Manual**') }}</small>
+                                                    <small class="form-text text-danger">{{ ('**N.B : Template ID is Required Only for Fast2SMS & 2factor DLT Manual**') }}</small>
                                                 </div>
                                             </div>
                                             <div class="form-group mb-3 text-right">
