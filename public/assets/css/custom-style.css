@@ -1,1 +1,172 @@
-/*your custom css goes here*/ 
+/*your custom css goes here*/
+
+.custom_button {
+    border-radius: 100px;
+    padding: 9px 32px !important;
+}
+
+.payment_safe_secrtion {
+    background: #363636;
+    padding: 40px 60px;
+    border-radius: 30px;
+}
+
+.payment_boxs {
+    display: flex;
+    gap: 15px;
+}
+
+
+/*--testiminioal css open--*/
+
+#customers-testimonials .item {
+    text-align: center;
+    padding: 0px;
+    margin-bottom: 20px;
+    -webkit-transform: scale3d(0.8, 0.8, 1);
+    transform: scale3d(0.8, 0.8, 1);
+    -webkit-transition: all 0.3s ease-in-out;
+    -moz-transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
+}
+
+#customers-testimonials .slick-center .item {
+    opacity: 1;
+    -webkit-transform: scale3d(1.0, 1.0, 1);
+    transform: scale3d(1.0, 1.0, 1);
+}
+
+#customers-testimonials .slick-slide img {
+    transform-style: preserve-3d;
+    max-width: 70px;
+}
+
+#customers-testimonials .slick-slide {
+    filter: contrast(1) blur(0.7px);
+}
+
+.shadow-effect {
+    background: #fff;
+    padding: 30px 30px 10px 30px;
+    text-align: center;
+    border-radius: 48px;
+}
+
+#customers-testimonials .shadow-effect p {
+    font-weight: 500;
+    text-align: left;
+}
+
+.testimonial-name {
+    margin: -17px auto 0;
+    display: table;
+    width: auto;
+    background: #3190E7;
+    padding: 9px 35px;
+    border-radius: 12px;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 9px 18px rgba(0, 0, 0, 0.12), 0 5px 7px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-effect h4 {
+    font-size: 14px;
+    text-align: left;
+    padding-top: 10px;
+}
+
+.shadow-effect p {
+    line-height: 28px;
+
+}
+
+.quote_icon {
+    position: absolute;
+    right: 23px;
+    top: 0px;
+}
+
+button.slick-prev.slick-arrow {
+    display: none !important;
+}
+
+button.slick-next.slick-arrow {
+    display: none !important;
+}
+
+#customers-testimonials .slick-slide.slick-current.slick-active.slick-center {
+    filter: contrast(1) blur(0px) !important;
+}
+
+#customers-testimonials .rating1 {
+    margin-bottom: 15px;
+}
+
+#customers-testimonials .slick-slide.slick-current.slick-active.slick-center .testimnl_box {
+    background-color: #123498;
+}
+
+#customers-testimonials .slick-slide.slick-current.slick-active.slick-center .rating1 i {
+    color: #123498;
+}
+
+.rating1 i {
+    color: #363636;
+}
+
+.testimnl_box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #363636;
+    border-radius: 50px;
+    padding: 7px 10px;
+}
+
+.testimonials {
+    background-size: cover;
+    background-position: center;
+}
+
+/*--testiminioal css close--*/
+
+
+/*-- accordion css open --*/
+
+.myaccordion {
+    max-width: 500px;
+    margin: 50px auto;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.myaccordion .card,
+.myaccordion .card:last-child .card-header {
+    border: none;
+}
+
+.myaccordion .card-header {
+    border-bottom-color: #EDEFF0;
+    background: transparent;
+}
+
+.myaccordion .fa-stack {
+    font-size: 18px;
+}
+
+.myaccordion .btn {
+    width: 100%;
+    font-weight: bold;
+    color: #004987;
+    padding: 0;
+}
+
+.myaccordion .btn-link:hover,
+.myaccordion .btn-link:focus {
+    text-decoration: none;
+}
+
+.myaccordion li+li {
+    margin-top: 10px;
+}
+
+/*-- accordion css open --*/

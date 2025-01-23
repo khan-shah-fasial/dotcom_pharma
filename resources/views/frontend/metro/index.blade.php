@@ -48,6 +48,360 @@
         </div>
     </div>
 
+
+   <section>
+       <div class="container">
+        <div class="searc_box_product">
+               <form action="{{ route('search') }}" method="GET" class="stop-propagation">
+                    <div class="row">
+                          <div class="col-md-12"><h3>Search Product</h3></div>
+
+                          <div class="col-md-3">
+                              <div class="form-group">
+                                 <select class="form-control form-select" aria-label="Default select example">
+                                    <option selected>All Category</option>
+                                    <option value="1">Ointments</option>
+                                    <option value="2">Sprays</option>
+                                    <option value="3">External Insecticide</option>
+                                  </select>
+                              </div>
+                          </div>
+
+                          <div class="col-md-3">
+                              <div class="form-group">
+                                 <select class="form-control form-select" aria-label="Default select example">
+                                    <option selected>All Brand</option>
+                                    <option value="1">Ointments</option>
+                                    <option value="2">Sprays</option>
+                                    <option value="3">External Insecticide</option>
+                                  </select>
+                              </div>
+                          </div>
+
+                           <div class="col-md-4">
+                              <div class="form-group">
+                               <input type="text" name="" class="form-control" placeholder="Enter Key..." />
+                              </div>
+                          </div>
+
+                           <div class="col-md-2">
+                              <div class="form-group">
+                                 <button value="Search" type="button" class="btn btn-primary custom_button" >Search</button>
+                              </div>
+                          </div>
+
+                    </div>
+              </form>
+        </div>
+       </div>
+   </section>
+
+    <section>
+       <div class="container">
+        <div class="payment_safe_secrtion">
+                    <div class="row">
+                          <div class="col-md-3">
+                              <div class="payment_boxs align-items-center gap-3">
+                                   <img class="" src="{{ static_asset('assets/img/free_delivery_icons.svg') }}" />
+                                   <div class="">
+                                      <h6 class="text-white mb-1">Free Delivery</h6>
+                                      <p class="text-white mb-0 pb-0">Order Over 250.00</p>
+                                   </div>
+                              </div>
+                          </div>
+
+                          <div class="col-md-3">
+                              <div class="payment_boxs align-items-center gap-3">
+                                   <img src="{{ static_asset('assets/img/refund_icons.svg') }}" />
+                                   <div class="">
+                                       <h6 class="text-white mb-1">Get Refund</h6>
+                                      <p class="text-white mb-0 pb-0">Within 30 Days Return</p>
+                                   </div>
+                              </div>
+                          </div>
+
+                           <div class="col-md-3">
+                              <div class="payment_boxs align-items-center gap-3">
+                                   <img src="{{ static_asset('assets/img/safe_payment_icons.svg') }}" />
+                                   <div class="">
+                                       <h6 class="text-white mb-1">Safe Payment</h6>
+                                      <p class="text-white mb-0 pb-0">100% Secure Payment</p>
+                                   </div>
+                              </div>
+                          </div>
+
+                            <div class="col-md-3">
+                              <div class="payment_boxs align-items-center gap-3">
+                                   <img src="{{ static_asset('assets/img/support_icons.svg') }}" />
+                                   <div class="">
+                                      <h6 class="text-white mb-1">24/7 Support</h6>
+                                      <p class="text-white mb-0 pb-0">Feel Free To Call Us</p>
+                                   </div>
+                              </div>
+                          </div>
+
+                    </div>
+        </div>
+       </div>
+   </section>
+
+
+   <section>
+       <div class="container">
+         <div class="row align-items-center">
+               <div class="col-md-6">
+                     <img class="w-100" src="{{ static_asset('assets/img/about_us_images.png') }}" />
+               </div> 
+               
+               <div class="col-md-6">
+                     <p><b>About Us</b></p>
+                     <h3>We Provide Best and Original <span>Medical</span> Product For You</h3>
+                     <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
+                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
+                         ever since the 1500s, when an unknown printe</p>
+                         <ul>
+                            <li><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
+                            <li><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
+                            <li><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
+                            <li><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
+                         </ul>
+
+                         <div class="">
+                            <a href="#" class="btn btn-primary custom_button">Descover More <i class="las la-arrow-right"></i></a>
+                         </div>
+               </div> 
+        </div>
+       </div>
+   </section>
+
+
+   <section class="why_choose_us">
+       <div class="container">
+         <div class="row align-items-center">
+               <div class="col-md-4">
+                     <img class="w-100" src="{{ static_asset('assets/img/why_choose_images.png') }}" />
+               </div> 
+               
+               <div class="col-md-4">
+                     <p><b>About Us</b></p>
+                     <h3>We Provide Best and Original <span>Medical</span> Product For You</h3>
+               </div> 
+
+                <div class="col-md-4">
+                      <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
+                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
+                         ever since the 1500s, when an unknown printe</p>
+               </div> 
+
+                <div class="col-md-4">
+                    <div class="whu_choose_box">
+                        <img class="w-100" src="{{ static_asset('assets/img/original_products.svg') }}" />
+                        <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
+                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
+                         ever since the 1500s, when an unknown printe</p>
+                    </div> 
+               </div> 
+
+               <div class="col-md-4">
+                    <div class="whu_choose_box">
+                        <img class="w-100" src="{{ static_asset('assets/img/affordable_price.svg') }}" />
+                        <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
+                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
+                         ever since the 1500s, when an unknown printe</p>
+                    </div> 
+               </div> 
+
+               <div class="col-md-4">
+                    <div class="whu_choose_box">
+                        <img class="w-100" src="{{ static_asset('assets/img/free_shpping.svg') }}" />
+                        <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
+                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
+                         ever since the 1500s, when an unknown printe</p>
+                    </div> 
+               </div> 
+
+        </div>
+       </div>
+   </section>
+
+
+  <!-- TESTIMONIALS -->
+   <section class="testimonials gray_bg pt-md-5 pb-md-5 pt-4 pb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
+     <div class="container">
+       <div class="text-center">
+        <p class="text-white mb-0">TESTIMONIALS</p>
+         <h3 class="main_heading text_clr_green pb-md-4 pt-3 pb-2 text-white">What Our Client Say’s About Us</h3>
+       </div>
+      
+           <div id="customers-testimonials" class="slick-slider" >
+             <!-- TESTIMONIAL 1 -->
+             <div class="item">
+               <div class="shadow-effect">
+                  <div class="testimnl_box">
+                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <div class="">
+                        <h6 class="mb-2 text-white">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     </div>
+                  </div>
+                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <div class="rating1 text-left">
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                 </div>
+               </div>
+             </div>
+             <!-- TESTIMONIAL 2 -->
+            <div class="item">
+               <div class="shadow-effect">
+                  <div class="testimnl_box">
+                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <div class="">
+                        <h6 class="mb-2 text-white">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     </div>
+                  </div>
+                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <div class="rating1 text-left">
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                 </div>
+               </div>
+             </div>
+             
+             
+             <!-- TESTIMONIAL 3 -->
+            <div class="item">
+               <div class="shadow-effect">
+                  <div class="testimnl_box">
+                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <div class="">
+                        <h6 class="mb-2 text-white">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     </div>
+                  </div>
+                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <div class="rating1 text-left">
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                 </div>
+               </div>
+             </div>
+
+
+              <!-- TESTIMONIAL 4 -->
+            <div class="item">
+               <div class="shadow-effect">
+                  <div class="testimnl_box">
+                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <div class="">
+                         <h6 class="mb-2 text-white">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     </div>
+                  </div>
+                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <div class="rating1 text-left">
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                 </div>
+               </div>
+             </div>
+            
+             <!-- Additional Testimonials as needed -->
+           </div>
+     </div>
+   </section>
+   <!-- testiminial slider close-->
+
+
+
+   <div id="accordion" class="myaccordion">
+  <div class="card">
+    <div class="card-header" id="headingOne">
+      <h2 class="mb-0">
+        <button class="d-flex align-items-center justify-content-between btn btn-link collapsed" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+          Undergraduate Studies
+          <span class="fa-stack fa-sm">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fas fa-plus fa-stack-1x fa-inverse"></i>
+          </span>
+        </button>
+      </h2>
+    </div>
+    <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+      <div class="card-body">
+        <ul>
+          <li>Computer Science</li>
+          <li>Economics</li>
+          <li>Sociology</li>
+          <li>Nursing</li>
+          <li>English</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingTwo">
+      <h2 class="mb-0">
+        <button class="d-flex align-items-center justify-content-between btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+          Postgraduate Studies
+          <span class="fa-stack fa-2x">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fas fa-plus fa-stack-1x fa-inverse"></i>
+          </span>
+        </button>
+      </h2>
+    </div>
+    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+      <div class="card-body">
+        <ul>
+          <li>Informatics</li>
+          <li>Mathematics</li>
+          <li>Greek</li>
+          <li>Biostatistics</li>
+          <li>English</li>
+          <li>Nursing</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingThree">
+      <h2 class="mb-0">
+        <button class="d-flex align-items-center justify-content-between btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+          Research
+          <span class="fa-stack fa-2x">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fas fa-plus fa-stack-1x fa-inverse"></i>
+          </span>
+        </button>
+      </h2>
+    </div>
+    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+      <div class="card-body">
+        <ul>
+          <li>Astrophysics</li>
+          <li>Informatics</li>
+          <li>Criminology</li>
+          <li>Economics</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
     <!-- Flash Deal -->
     @php
         $flash_deal = get_featured_flash_deal();
