@@ -27,7 +27,39 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'address', 'city', 'postal_code', 'phone', 'country', 'provider_id', 'email_verified_at', 'verification_code'
+        'name', 'email', 'password', 'address', 'city', 'postal_code', 'phone', 'phone_code_meta', 'country', 'provider_id', 'email_verified_at',
+        'company_name',        
+        'verification_code',
+        'tel_number',
+        //'land_mark_village',
+        'post',
+        //'address_1',
+        //'address_2',
+        'pincode',
+        'city_id',
+        'state_id',
+        'country_id',
+        //'phone_no_1',
+        //'phone_no_2',
+        'whats_app_no',
+        'whats_app_no_meta',
+        'gst_no',
+        'cc_no',
+        'd_l_no_1',
+        'd_l_no_2',
+        'd_l_no_3',
+        'd_l_exp_Date',
+        'transport',
+        'cargo',
+        'booked_to',
+        'bank_name',
+        'account_no',
+        'branch_no',
+        'branch_code',
+        'ifsc_code',
+        'micr_code',
+        'customer_care_executive',
+        'step'
     ];
 
     /**

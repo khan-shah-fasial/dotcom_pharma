@@ -47,7 +47,7 @@ class ForgotPasswordController extends Controller
     public function sendResetLinkEmail(Request $request)
     {
         
-        $phone = "+{$request['country_code']}{$request['phone']}";
+        $phone = "{$request['country_code']}-{$request['phone']}";
         if (filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
             $user = User::where('email', $request->email)->first();
             if ($user != null) {
@@ -65,7 +65,12 @@ class ForgotPasswordController extends Controller
                 
                 $array['subject'] = $emailSubject;
                 $array['content'] = $email_body;
-                Mail::to($user->email)->queue(new MailManager($array));
+                // Mail::to($user->email)->queue(new MailManager($array));
+
+                $array = ['subject' => $emailSubject, 'content' => $email_body];
+                $emailHtml = (new MailManager($array))->render();
+            
+                sendEmail($user->email, $emailSubject, $emailHtml);
 
                 return view('auth.'.get_setting('authentication_layout_select').'.reset_password');
             }

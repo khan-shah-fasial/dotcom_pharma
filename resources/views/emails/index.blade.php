@@ -20,7 +20,7 @@
                                                         <th style="line-height:0pt; padding:0; margin:0; font-weight:normal;">
                                                             <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                                                 <tr>
-                                                                    <td style="line-height:0pt; text-align:left;"><img src="{{ uploaded_asset($logo) }}" width="" height="26" border="0" alt="" /></td>
+                                                                    <td style="line-height:0pt; text-align:left;"><img src="{{ $logo ? uploaded_asset($logo) : uploaded_asset('/img/logo.png') }}" width="" height="26" border="0" alt="" /></td>
                                                                 </tr>
                                                             </table>
                                                         </th>
@@ -44,7 +44,7 @@
 
                                     <!-- Content -->
                                     <div style="padding: 10px 30px 70px 30px;">
-                                        <p>{!! $content !!}</p>
+                                        <p style="line-height: 20px;">{!! $content !!}</p>
                                     </div>
                                     
                                 </td>

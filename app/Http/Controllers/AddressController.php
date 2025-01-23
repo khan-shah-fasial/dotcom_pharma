@@ -51,7 +51,8 @@ class AddressController extends Controller
         $address->longitude     = $request->longitude;
         $address->latitude      = $request->latitude;
         $address->postal_code   = $request->postal_code;
-        $address->phone         = '+'.$request->country_code.$request->phone;
+        $address->phone         = $request->country_code_phone_code_addr.'-'.$request->phone;
+        $address->phone_meta    = $request->phone_code_addr_meta;
         $address->save();
 
         flash(translate('Address info Stored successfully'))->success();
@@ -104,7 +105,9 @@ class AddressController extends Controller
         $address->longitude     = $request->longitude;
         $address->latitude      = $request->latitude;
         $address->postal_code   = $request->postal_code;
-        $address->phone         = $request->phone;
+        // $address->phone         = $request->phone;
+        $address->phone         = $request->country_code_phone_code_addr_edit.'-'.$request->phone;
+        $address->phone_meta    = $request->phone_code_addr_edit_meta;
 
         $address->save();
 

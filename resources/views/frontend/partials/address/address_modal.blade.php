@@ -112,8 +112,9 @@
                                 <label>{{ translate('Phone')}}</label>
                             </div>
                             <div class="col-md-10">
-                                <input type="tel" id="phone-code" class="form-control rounded-0" placeholder="" name="phone" autocomplete="off" required>
-                                <input type="hidden" name="country_code" value="">
+                                <input type="tel" id="phone_code_addr" class="form-control rounded-0" placeholder="" name="phone" autocomplete="off" required>
+                                <input type="hidden" name="country_code_phone_code_addr" value="">
+                                <input type="hidden" name="phone_code_addr_meta" value="">
                             </div>
                         </div>
 
@@ -145,3 +146,52 @@
         </div>
     </div>
 </div>
+
+
+@section('custome-script')
+    <script>
+        $(document).ready(function() {
+
+            function intil_input(name) {
+                // Select the input element dynamically based on the name parameter
+                var inputElement = document.querySelector(`#${name}`);
+
+                // Initialize the intlTelInput plugin
+                var iti1 = intlTelInput(inputElement, {
+                    separateDialCode: true,
+                    utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
+                    onlyCountries: @php echo json_encode(get_active_countries()->pluck('code')->toArray()) @endphp,
+                    customPlaceholder: function (selectedCountryPlaceholder, selectedCountryData) {
+                        if (selectedCountryData.iso2 === 'bd') {
+                            return "01xxxxxxxxx"; // Custom placeholder for Bangladesh
+                        }
+                        return selectedCountryPlaceholder;
+                    }
+                });
+
+                // // Set default country code to +91 (India)
+                // iti1.setCountry('in'); // 'in' is the ISO2 code for India
+
+                // Set default country code to +91 (India)
+                iti1.setCountry('in'); // 'in' is the ISO2 code for India
+  
+
+                // Update the hidden input with the selected country's dial code
+                var countryData = iti1.getSelectedCountryData();
+                document.querySelector(`input[name="country_code_${name}"]`).value = countryData.dialCode;
+                document.querySelector(`input[name="${name}_meta"]`).value = countryData.iso2;
+
+                // Update the country code when the country changes
+                inputElement.addEventListener("countrychange", function () {
+                    var updatedCountryData = iti1.getSelectedCountryData();
+                    document.querySelector(`input[name="country_code_${name}"]`).value = updatedCountryData.dialCode;
+                    document.querySelector(`input[name="${name}_meta"]`).value = updatedCountryData.iso2;
+                });
+            }
+
+            intil_input('phone_code_addr');
+
+        });
+    </script>
+@endsection
+    

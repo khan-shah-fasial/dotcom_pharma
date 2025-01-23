@@ -1080,7 +1080,75 @@
 <script type="text/javascript">
     $(document).ready(function() {
         warrantySelection();
+
+        // const selectElement = document.getElementById('choice_attributes');
+
+        // if (selectElement) {
+        //     const options = selectElement.options;
+
+        //     // Loop through the options to find the one with the text 'role'
+        //     for (let i = 0; i < options.length; i++) {
+        //         if (options[i].text.trim().toLowerCase() === 'role') {
+        //             options[i].selected = true; // Select the option
+        //             break;
+        //         }
+        //     }
+
+        //     // Refresh the aiz-selectpicker plugin
+        //     if (typeof $.fn.selectpicker !== 'undefined') {
+        //         $(selectElement).selectpicker('refresh');
+
+        //         $('#customer_choice_options').html(null);
+        //         $.each($("#choice_attributes option:selected"), function () {
+        //             add_more_customer_choice_option($(this).val(), $(this).text());
+        //         });
+
+        //         update_sku();
+
+        //         console.dir('working');
+
+        //         setTimeout(function () {
+
+        //             const selectElement_role = document.querySelector('select[name="choice_options_3[]"]');
+
+        //             if (selectElement_role) {
+        //                 const valuesToSelect = ['pts', 'ptr', 'ptd', 'gov', 'expo']; // Values to be selected
+        //                 const options = selectElement_role.options;
+
+        //                 // Loop through the options to select the matching ones
+        //                 for (let j = 0; j < options.length; j++) {
+        //                     if (valuesToSelect.includes(options[i].value)) {
+        //                         options[j].selected = true; // Select the option
+        //                     }
+        //                 }
+
+        //                 // Refresh the aiz-selectpicker plugin
+        //                 if (typeof $.fn.selectpicker !== 'undefined') {
+        //                     $(selectElement_role).selectpicker('refresh');
+
+        //                     console.dir('working 2');
+
+        //                 } else {
+        //                     console.dir('aiz-selectpicker plugin not found.');
+        //                 }
+        //             } else {
+        //                 console.dir('Select element with name "choice_options_3[]" not found.');
+        //             }
+
+        //         }, 300);
+
+        //     } else {
+        //         console.dir('aiz-selectpicker plugin not found.');
+        //     }
+        // } else {
+        //     console.dir('Select element with ID choice_attributes not found.');
+        // }
+
+
+
     });
+
+
 </script>
 
 @endsection

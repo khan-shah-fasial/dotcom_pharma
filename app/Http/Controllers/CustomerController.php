@@ -25,20 +25,66 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        $sort_search = null;
+        $sort_search = $request->search ?? null;
+        $company_name = $request->company_name ?? null;
         $verification_status =  $request->verification_status ?? null;
+        $bank_details =  $request->bank_details ?? null;
+        $license_details =  $request->license_details ?? null;
+        $dl_expiry_Data =  $request->dl_expiry_Data ?? null;
+        $gst_no =  $request->gst_no ?? null;
+        $transport_Details =  $request->transport_Details ?? null;
+
         $users = User::where('user_type', 'customer')->orderBy('created_at', 'desc');
+        // if($verification_status != null){
+        //     $users = $verification_status == 'verified' ? $users->where('email_verified_at', '!=', null) : $users->where('email_verified_at', null);
+        // }
         if($verification_status != null){
-            $users = $verification_status == 'verified' ? $users->where('email_verified_at', '!=', null) : $users->where('email_verified_at', null);
+            $users = $verification_status == 'verified' ? $users->where('approval_Status', 1) : $users->where('approval_Status', 0);
         }
-        if ($request->has('search')){
+        if ($sort_search != null){
             $sort_search = $request->search;
             $users->where(function ($q) use ($sort_search){
-                $q->where('name', 'like', '%'.$sort_search.'%')->orWhere('email', 'like', '%'.$sort_search.'%');
+                $q->where('name', 'like', '%'.$sort_search.'%')->orWhere('email', 'like', '%'.$sort_search.'%')->orWhere('phone', 'like', '%'.$sort_search.'%')->orWhere('tel_number', 'like', '%'.$sort_search.'%');
+            });
+        }
+        if ($company_name != null){
+            $company_name = $request->company_name;
+            $users->where(function ($q) use ($company_name){
+                $q->where('company_name', 'like', '%'.$company_name.'%');
+            });
+        }
+        if ($gst_no != null){
+            $gst_no = $request->gst_no;
+            $users->where(function ($q) use ($gst_no){
+                $q->where('gst_no', 'like', '%'.$gst_no.'%');
+            });
+        }
+        if ($bank_details != null){
+            $bank_details = $request->bank_details;
+            $users->where(function ($q) use ($bank_details){
+                $q->where('bank_name', 'like', '%'.$bank_details.'%')->orWhere('account_no', 'like', '%'.$bank_details.'%')->orWhere('branch_no', 'like', '%'.$bank_details.'%')->orWhere('branch_code', 'like', '%'.$bank_details.'%')->orwhere('ifsc_code', 'like', '%'.$bank_details.'%')->orwhere('micr_code', 'like', '%'.$bank_details.'%')->orwhere('customer_care_executive', 'like', '%'.$bank_details.'%');
+            });
+        }
+        if ($license_details != null){
+            $license_details = $request->license_details;
+            $users->where(function ($q) use ($license_details){
+                $q->where('cc_no', 'like', '%'.$license_details.'%')->orWhere('d_l_no_1', 'like', '%'.$license_details.'%')->orWhere('d_l_no_2', 'like', '%'.$license_details.'%')->orWhere('d_l_no_3', 'like', '%'.$license_details.'%');
+            });
+        }
+        if ($dl_expiry_Data != null){
+            $dl_expiry_Data = $request->dl_expiry_Data;
+            $users->where(function ($q) use ($dl_expiry_Data){
+                $q->where('d_l_exp_Date', $dl_expiry_Data);
+            });
+        }
+        if ($transport_Details != null){
+            $transport_Details = $request->transport_Details;
+            $users->where(function ($q) use ($transport_Details){
+                $q->where('transport', 'like', '%'.$transport_Details.'%')->orWhere('cargo', 'like', '%'.$transport_Details.'%')->orWhere('booked_to', 'like', '%'.$transport_Details.'%');
             });
         }
         $users = $users->paginate(15);
-        return view('backend.customer.customers.index', compact('users', 'sort_search', 'verification_status'));
+        return view('backend.customer.customers.index', compact('users', 'sort_search','company_name','bank_details','license_details','dl_expiry_Data','gst_no','transport_Details','verification_status'));
     }
 
     /**
@@ -227,5 +273,52 @@ class CustomerController extends Controller
         $user->save();
         
         return back();
+    }
+
+
+    public function view($id)
+    {
+        $user = User::findOrFail(decrypt($id));
+        return view('backend.customer.customers.view', compact('user'));
+    }
+
+    public function approval(Request $request) {
+        $user = User::findOrFail($request->id);
+
+        $approval = ($request->approval_status == 'approve') ? '1' : '0';
+
+        if($approval == 1) {
+
+
+            $user->approval_status = 1;
+            $user->note = $request->note;
+            $user->user_subtype = $request->user_subtype;
+
+            $user->save();
+
+            try {
+                EmailUtility::approval_registration_email($user);
+            } catch (\Exception $e) {}
+
+            flash(translate('Customer Approve Successfully'))->success();
+
+        } else {
+
+            $user->approval_status = 2;
+            $user->note = $request->note;
+            $user->user_subtype = $request->user_subtype;
+
+            $user->save();
+
+            try {
+                EmailUtility::approval_reject_email($user);
+            } catch (\Exception $e) {}
+
+            flash(translate('Customer Not Approve Successfully'))->success();
+
+        }
+
+        return back();
+
     }
 }

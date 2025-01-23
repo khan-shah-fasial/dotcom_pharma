@@ -72,7 +72,7 @@ class OTPVerificationController extends Controller
 
     public function reset_password_with_code(Request $request)
     {
-        $phone = "+{$request['country_code']}{$request['phone']}";
+        $phone = "{$request['country_code']}-{$request['phone']}";
         
         if (($user = User::where('phone', $phone)->where('verification_code', $request->code)->first()) != null) {
             if ($request->password == $request->password_confirmation) {

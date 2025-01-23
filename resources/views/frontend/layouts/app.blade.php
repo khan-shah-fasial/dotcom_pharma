@@ -69,6 +69,9 @@
         <link rel="stylesheet" href="{{ static_asset('assets/css/bootstrap-rtl.min.css') }}">
     @endif
     <link rel="stylesheet" href="{{ static_asset('assets/css/aiz-core.css?v=') }}{{ rand(1000, 9999) }}">
+
+    <link rel="stylesheet" href="{{ static_asset('assets/css/intlTelinput.css') }}" />
+
     <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}">
 
 
@@ -222,13 +225,55 @@
 
             $system_language = get_system_language();
         @endphp
-        <!-- Header -->
-        @include('frontend.inc.nav')
 
-        @yield('content')
+        @php
+            $newRegUrl = url(route('user.new_registration'));
+        @endphp
 
-        <!-- footer -->
-        @include('frontend.inc.footer')
+        @if (!Auth::check() && request()->url() != $newRegUrl)
+
+            {{-- - //------------------------------ login and register -----------------------// -- --}}
+
+            <div class="modal fade" id="login_reg_model" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+                aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content py-3">
+                        <div class="modal-header">
+
+                            <a href="{{ route('user.login') }}"
+                            class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block border-right border-soft-light border-width-2 pr-2 ml-3">{{ translate('Login') }}</a>
+                            <a href="{{ route('user.new_registration') }}"
+                                class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block py-2 pl-2">{{ translate('Registration') }}</a>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            {{-- - //------------------------------  login and register -----------------------// -- --}}
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var modalElement = document.getElementById('login_reg_model');
+                    var modalInstance = new bootstrap.Modal(modalElement, {
+                        backdrop: 'static',
+                        keyboard: false
+                    });
+                    modalInstance.show();
+                });
+            </script>
+
+        @endif
+
+
+            <!-- Header -->
+            @include('frontend.inc.nav')
+
+            @yield('content')
+
+            <!-- footer -->
+            @include('frontend.inc.footer')
+
 
     </div>
 
@@ -375,7 +420,12 @@
     <script src="{{ static_asset('assets/js/vendors.js') }}"></script>
     <script src="{{ static_asset('assets/js/aiz-core.js?v=') }}{{ rand(1000, 9999) }}"></script>
 
-
+    <!-- to show country code and flags in mobile view field -->
+    {{-- <script src="{{ static_asset('assets/js/utils.min.js') }}"></script>
+    <script src="{{ static_asset('assets/js/inteliput.min.js') }}"></script> --}}
+    
+    <script src="{{ static_asset('assets/js/jquery.validate.min.js') }}"></script>
+    <script src="{{ static_asset('assets/js/script.js') }}"></script>
 
     @if (get_setting('facebook_chat') == 1)
         <script type="text/javascript">
@@ -822,6 +872,10 @@
                 }
             });
 
+
+            // Set default country code to +91 (India)
+            iti.setCountry('in'); // 'in' is the ISO2 code for India
+
             var country = iti.getSelectedCountryData();
             $('input[name=country_code]').val(country.dialCode);
 
@@ -996,11 +1050,47 @@
         </script>
     @endif
 
+
+
     @yield('script')
+
+
 
     @php
         echo get_setting('footer_script');
     @endphp
+
+    
+    @include('frontend.not_approval_model')
+
+
+    @yield('custome-script')
+
+
+    @if (Session::has('registartion_status'))
+        @php
+            Session::forget('registartion_status');
+        @endphp
+
+        <script>
+            $('#not_approval_model').modal('show');
+        </script>
+    @endif
+
+    @yield('custome-script-addr-edit')
+
+    
+        <!-- Start of LiveChat (www.livechat.com) code -->
+        <script>
+            window.__lc = window.__lc || {};
+            window.__lc.license = 18993779;
+            window.__lc.integration_name = "manual_channels";
+            window.__lc.product_name = "livechat";
+            ;(function(n,t,c){function i(n){return e._h?e._h.apply(null,n):e._q.push(n)}var e={_q:[],_h:null,_v:"2.0",on:function(){i(["on",c.call(arguments)])},once:function(){i(["once",c.call(arguments)])},off:function(){i(["off",c.call(arguments)])},get:function(){if(!e._h)throw new Error("[LiveChatWidget] You can't use getters before load.");return i(["get",c.call(arguments)])},call:function(){i(["call",c.call(arguments)])},init:function(){var n=t.createElement("script");n.async=!0,n.type="text/javascript",n.src="https://cdn.livechatinc.com/tracking.js",t.head.appendChild(n)}};!n.__lc.asyncInit&&e.init(),n.LiveChatWidget=n.LiveChatWidget||e}(window,document,[].slice))
+        </script>
+        <noscript><a href="https://www.livechat.com/chat-with/18993779/" rel="nofollow">Chat with us</a>, powered by <a href="https://www.livechat.com/?welcome" rel="noopener nofollow" target="_blank">LiveChat</a></noscript>
+        <!-- End of LiveChat code -->
+    
 
 </body>
 </html>

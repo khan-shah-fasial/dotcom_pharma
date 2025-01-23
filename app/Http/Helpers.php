@@ -58,6 +58,7 @@ use App\Models\PaymentMethod;
 use App\Models\UserCoupon;
 use App\Models\NotificationType;
 use App\Utility\EmailUtility;
+use App\Models\Address;
 
 //sensSMS function for OTP
 if (!function_exists('sendSMS')) {
@@ -1226,8 +1227,11 @@ if (!function_exists('getBaseURL')) {
     function getBaseURL()
     {
         $root = '//' . $_SERVER['HTTP_HOST'];
-        $root .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
 
+        if(env('ENVIRONMENT') == "Production"){
+            $root .= str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
+        }
+        
         return $root;
     }
 }
@@ -1237,14 +1241,14 @@ if (!function_exists('getFileBaseURL')) {
     function getFileBaseURL()
     {
         if(app()->environment('local')){
-            return getBaseURL() . 'public/';  //for local machine
+            return getBaseURL() . '/';  //for local machine
         }
         
         if (env('FILESYSTEM_DRIVER') != 'local') {
             return env(Str::upper(env('FILESYSTEM_DRIVER')) . '_URL') . '/';
         }
 
-        return getBaseURL() . 'public/';
+        return getBaseURL() . '/public/';
     }
 }
 
@@ -2759,9 +2763,138 @@ if (!function_exists('home_usertype_base_price')) {
                 ->select('price') // Fetch only the price column
                 ->where('variant', 'like', "%$userSubtype%") // Filter by user subtype
                 ->orderBy('price', 'asc')
-                ->value('price'); // Return only the price            
+                ->value('price'); // Return only the price       
+            
+            
+            if(empty($lowest_price)){
+                $lowest_price = $product->unit_price;
+            }
+
+                
         }
             
         return format_price(convert_price($lowest_price));
+    }
+}
+
+if(!function_exists('sendEmail')){
+    function sendEmail($to, $subject, $body, $replyTo = null)
+    {
+    // API endpoint
+    $url = 'https://api.brevo.com/v3/smtp/email';
+    
+    // API key
+    $apiKey = env("BRAVIO_API");
+    
+    // Data to be sent
+    $data = array(
+        "sender" => array(
+            "name" => "Dotcom Pharma",
+            "email" => "info@dotcompharma.com"
+        ),
+        "to" => array(
+            array(
+                "email" => $to,
+            )
+        ),
+        "subject" => $subject,
+        "htmlContent" => $body
+    );
+    // Convert data to JSON format
+    $postData = json_encode($data);
+    
+    // Initialize cURL session
+    $ch = curl_init($url);
+    
+    // Set cURL options
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'accept: application/json',
+        'api-key: ' . $apiKey,
+        'content-type: application/json'
+    ));
+    
+    // Execute cURL session
+    $response = curl_exec($ch);
+
+    // Close cURL session
+    curl_close($ch);
+    
+    }  
+}
+
+
+if(!function_exists('getParticularData')){
+    function getParticularData(string $tableName, string $fieldName, int $id)
+    {
+        return DB::table($tableName)
+            ->where('id', $id)
+            ->value($fieldName);
+    } 
+}
+
+if (!function_exists('getSelectedCountry')) {
+    function getSelectedCountry(string $colName)
+    {
+        // Check if the user is authenticated
+        if (Auth::check()) {
+            // Get the selected country from the authenticated user
+            $data = Auth::user()->$colName;
+            if(!empty($data)){
+                $data = $data;
+            } else {
+                $data = 'null';
+            }
+        } else {
+            // Check if there's a temp user ID in the session
+            if (session()->has('temp_user_id')) {
+                $id = session()->get('temp_user_id');
+
+                // Fetch the selected country for the temp user
+                $user_data = User::where('id', $id)->pluck($colName)->first(); // Corrected dynamic column usage
+
+                // Check if user data was found
+                if ($user_data) {
+                    if(!empty($user_data)){
+                        $data = $user_data;
+                    } else {
+                        $data = 'null';
+                    }
+
+                } else {
+                    $data = 'null'; // Set to null if no data is found
+                }
+            } else {
+                // If no temp user ID, set data to null
+                $data = 'null';
+            }
+        }
+
+        // Return the selected country data
+        return $data;
+    }
+}
+
+
+if (!function_exists('getSelectedCountry_addr')) {
+    function getSelectedCountry_addr(string $colName)
+    {
+        // Initialize $data with 'null' as the default value
+        $data = 'null';
+
+        // Check if the user is authenticated
+        if (Auth::check()) {
+            $id = Auth::user()->id ?? null;
+
+            if ($id !== null) {
+                // Retrieve the value of the specified column for the authenticated user
+                $data = Address::where('user_id', $id)->value($colName) ?? 'null';
+            }
+        }
+
+        // Return the selected country data
+        return $data;
     }
 }

@@ -51,9 +51,9 @@
                                                 @endif
                                             </div>
                                             
-                                            <div class="form-group text-right">
+                                            {{-- <div class="form-group text-right">
                                                 <button class="btn btn-link p-0 text-primary" type="button" onclick="toggleEmailPhone(this)"><i>*{{ translate('Use Email Instead') }}</i></button>
-                                            </div>
+                                            </div> --}}
                                         @else
                                             <div class="form-group">
                                                 <label for="email" class="fs-12 fw-700 text-soft-dark">{{  translate('Email') }}</label>
@@ -77,7 +77,7 @@
                     </div>
                     <!-- Go Back -->
                     <div class="mt-3 mr-4 mr-md-0">
-                        <a href="{{ url()->previous() }}" class="ml-auto fs-14 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
+                        <a href="{{ url(route('user.login')) }}" class="ml-auto fs-14 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
                             <i class="las la-arrow-left fs-20 mr-1"></i>
                             {{ translate('Back to Previous Page')}}
                         </a>

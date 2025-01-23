@@ -40,6 +40,7 @@ use App\Http\Controllers\Payment\SslcommerzController;
 use App\Http\Controllers\Payment\StripeController;
 use App\Http\Controllers\Payment\TapController;
 use App\Http\Controllers\Payment\VoguepayController;
+use App\Http\Controllers\Payment\PayumoneyController;
 use App\Http\Controllers\ProductQueryController;
 use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\ReviewController;
@@ -50,7 +51,7 @@ use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\SizeChartController;
-
+use App\Http\Controllers\Auth\RegisterController;
 /*
   |--------------------------------------------------------------------------
   | Web Routes
@@ -78,6 +79,25 @@ Route::get('/refresh-csrf', function () {
     return csrf_token();
 });
 
+Route::get('/csrf-token', function () {
+    return response()->json(['token' => csrf_token()]);
+});
+
+
+Route::get('/test-otp', function () {
+    $sessionData = Session()->all();
+
+    // Print session data
+    dd($sessionData);
+});
+
+
+Route::get('/clear-session', function () {
+    Session()->flush();
+
+    echo"clear";
+});
+
 // AIZ Uploader
 Route::controller(AizUploadController::class)->group(function () {
     Route::post('/aiz-uploader', 'show_uploader');
@@ -100,6 +120,9 @@ Route::controller(LoginController::class)->group(function () {
     Route::post('/apple-callback', 'handleAppleCallback');
     Route::get('/account-deletion', 'account_deletion')->name('account_delete');
     Route::get('/handle-demo-login', 'handle_demo_login')->name('handleDemoLogin');
+
+    Route::post('/users/login-via-otp', 'login_via_mobile_otp')->name('user.login.via.otp');
+    Route::post('/users/verify-mobile-otp', 'verify_mobile_otp')->name('user.login.via.otp.verify');
 });
 
 Route::controller(VerificationController::class)->group(function () {
@@ -116,6 +139,8 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/deliveryboy/login', 'login')->name('deliveryboy.login')->middleware('handle-demo-login');
     Route::get('/users/registration', 'registration')->name('user.registration')->middleware('handle-demo-login');
     Route::post('/users/login/cart', 'cart_login')->name('cart.login.submit')->middleware('handle-demo-login');
+
+    Route::get('/user/registration', 'new_user_registrations')->name('user.new_registration');
 
     Route::post('/import-data', 'import_data');
 
@@ -162,6 +187,19 @@ Route::controller(HomeController::class)->group(function () {
 
     Route::get('/track-your-order', 'trackOrder')->name('orders.track');
 });
+
+//new user registration
+Route::post('/register/create-new-user-registration', [RegisterController::class, 'new_user_register'])->name('create.new.user.registration')->middleware('handle-demo-login');
+
+Route::get('/get-reg-step', [RegisterController::class, 'get_reg_step'])->name('get-reg-step');
+
+Route::any('/create-account/{param}', [RegisterController::class, 'create_account'])->name('new.user.account.create');
+
+// Route::post('/register/create-new-user-phone-verify', [RegisterController::class, 'verify_otp'])->name('create.new.user.registration.phone.verify')->middleware('handle-demo-login');
+
+Route::post('/register/create-new-user-resend-phone-verify', [RegisterController::class, 'resendOtp'])->name('create.new.user.registration.resend.phone.verify')->middleware('handle-demo-login');
+
+Route::get('/register/previous-reg-form', [RegisterController::class, 'previous_reg_form'])->name('previous.reg.form');
 
 // Language Switch
 Route::post('/language', [LanguageController::class, 'changeLanguage'])->name('language.change');
@@ -255,6 +293,12 @@ Route::group(['middleware' => ['user', 'verified', 'unbanned']], function () {
         Route::post('/new-user-verification', 'new_verify')->name('user.new.verify');
         Route::post('/new-user-email', 'update_email')->name('user.change.email');
         Route::post('/user/update-profile', 'userProfileUpdate')->name('user.profile.update');
+        Route::post('/user/update-bank-details', 'userBankDetailsUpdate')->name('user.bankdetails.update');
+        Route::post('/user/update-license-details', 'userLicenseDetailsUpdate')->name('user.licensedetails.update');
+        Route::post('/user/update-transport-details', 'usertransportDetailsUpdate')->name('user.transportdetails.update');
+
+        Route::post('/user/update-phone-details', 'update_phone_main')->name('user.phone.update');
+        Route::post('/user/update-phone-otp', 'verify_update_phone_otp')->name('user.phone.verify.update');
     });
 
     Route::controller(NotificationController::class)->group(function () {
@@ -393,6 +437,13 @@ Route::controller(VoguepayController::class)->group(function () {
     Route::get('/vogue-pay/success/{id}', 'paymentSuccess');
     Route::get('/vogue-pay/callback', 'handleCallback');
     Route::get('/vogue-pay/failure/{id}', 'paymentFailure');
+});
+
+//Payumoney
+Route::controller(PayumoneyController::class)->group(function () {
+    Route::post('/payumoney/success', 'paymentSuccess')->name('payumoney.success');
+    Route::post('/payumoney/failure', 'paymentFailure')->name('payumoney.failure');
+    Route::any('/payumoney/webhook', 'paymentWebhook')->name('payumoney.webhook');
 });
 
 

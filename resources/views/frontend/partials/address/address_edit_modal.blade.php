@@ -1,5 +1,8 @@
 <form class="form-default" role="form" action="{{ route('addresses.update', $address_data->id) }}" method="POST">
     @csrf
+
+    <input type="hidden" id="phone_meta" value="{{ $address_data->phone_meta }}">
+
     <div class="p-3">
         <!-- Address -->
         <div class="row">
@@ -105,13 +108,25 @@
             </div>
         </div>
 
+
+        
+        @php
+            if(!empty($address_data->phone)){
+                $Phone_parts = explode('-', $address_data->phone);
+                $Phone_parts_number = $Phone_parts[1] ?? ''; 
+            }
+        @endphp
+
         <!-- Phone -->
         <div class="row">
             <div class="col-md-2">
                 <label>{{ translate('Phone')}}</label>
             </div>
             <div class="col-md-10">
-                <input type="text" class="form-control mb-3 rounded-0" placeholder="{{ translate('+880')}}" value="{{ $address_data->phone }}" name="phone" value="" required>
+                <input type="text" id="phone_code_addr_edit" class="form-control mb-3 rounded-0" placeholder="{{ translate('+880')}}" value="{{ $Phone_parts_number }}" name="phone" required>
+
+                <input type="hidden" name="country_code_phone_code_addr_edit" value="">
+                <input type="hidden" name="phone_code_addr_edit_meta" value="">
             </div>
         </div>
 
@@ -121,3 +136,4 @@
         </div>
     </div>
 </form>
+

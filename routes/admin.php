@@ -216,6 +216,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/customers/login/{id}', 'login')->name('customers.login');
         Route::get('/customers/destroy/{id}', 'destroy')->name('customers.destroy');
         Route::post('/bulk-customer-delete', 'bulk_customer_delete')->name('bulk-customer-delete');
+
+        Route::get('/customers_view/{id}', 'view')->name('customers.view');
+        Route::any('/customers_approval', 'approval')->name('customers.approval');
     });
 
     // Newsletter

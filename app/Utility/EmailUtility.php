@@ -33,7 +33,11 @@ class EmailUtility
         $array['subject'] = $emailSubject;
         $array['content'] = $emailBody;
 
-        Mail::to($emailSendTo)->queue(new MailManager($array));
+        // Mail::to($emailSendTo)->queue(new MailManager($array));
+        $array = ['subject' => $emailSubject, 'content' => $emailBody];
+        $emailHtml = (new MailManager($array))->render();
+    
+        sendEmail($emailSendTo, $emailSubject, $emailHtml);
     }
 
     // Seller registration email to Admin & Seller
@@ -61,7 +65,11 @@ class EmailUtility
         $array['subject'] = $emailSubject;
         $array['content'] = $emailBody;
 
-        Mail::to($emailSendTo)->queue(new MailManager($array));
+        // Mail::to($emailSendTo)->queue(new MailManager($array));
+        $array = ['subject' => $emailSubject, 'content' => $emailBody];
+        $emailHtml = (new MailManager($array))->render();
+    
+        sendEmail($emailSendTo, $emailSubject, $emailHtml);
     }
 
     public static function deliveryBoyRegEmail($emailIdentifiers, $user, $password){
@@ -211,7 +219,13 @@ class EmailUtility
         $customer = $refundReqest->user;
         $seller = $refundReqest->seller;
         $productName = $refundReqest->orderDetail->product->getTranslation('name');
-        $shopName = $refundReqest->order->shop->user->user_type == 'seller' ? $refundReqest->order->shop->name : null;
+
+        if(isset($refundReqest->order->shop->user)){
+            $shopName = $refundReqest->order->shop->user->user_type == 'seller' ? $refundReqest->order->shop->name : null;
+        } else {
+            $shopName = null;
+        }
+        
 
         $admin = get_admin();
         foreach($emailIdentifiers as $emailIdentifier){
@@ -254,4 +268,42 @@ class EmailUtility
             }
         }
     }
+
+
+    // Not Approval Email 
+    public static function approval_reject_email($user){
+        $emailSendTo = $user->email;
+        $emailSubject = 'Your Registration Has Not Been Approved by Admin';
+        $emailBody = 'Reason for not approval: '. nl2br($user->note);
+        // $emailBody = nl2br($user->note);
+        
+        $array['subject'] = $emailSubject;
+        $array['content'] = $emailBody;
+
+        // Mail::to($emailSendTo)->queue(new MailManager($array));
+        $array = ['subject' => $emailSubject, 'content' => $emailBody];
+        $emailHtml = (new MailManager($array))->render();
+    
+        sendEmail($emailSendTo, $emailSubject, $emailHtml);
+    }
+
+
+    // Approval Email 
+    public static function approval_registration_email($user){
+        $emailSendTo = $user->email;
+        $emailSubject = 'Your Registration Has Been Approved by Admin';
+        $emailBody = 'You can now browse and use the website.';
+        
+        $array['subject'] = $emailSubject;
+        $array['content'] = $emailBody;
+
+        // Mail::to($emailSendTo)->queue(new MailManager($array));
+        $array = ['subject' => $emailSubject, 'content' => $emailBody];
+        $emailHtml = (new MailManager($array))->render();
+    
+        sendEmail($emailSendTo, $emailSubject, $emailHtml);
+    }
+
+
+
 }
