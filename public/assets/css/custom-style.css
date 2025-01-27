@@ -133,40 +133,32 @@ button.slick-next.slick-arrow {
 
 /*-- accordion css open --*/
 
-.myaccordion {
-    max-width: 500px;
-    margin: 50px auto;
-    box-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+.accordion .card-header:after {
+    font-family: 'FontAwesome';
+    content: "\f068";
+    float: right;
 }
 
-.myaccordion .card,
-.myaccordion .card:last-child .card-header {
-    border: none;
+.accordion .card-header.collapsed:after {
+    /* symbol for "collapsed" panels */
+    content: "\f067";
 }
 
-.myaccordion .card-header {
-    border-bottom-color: #EDEFF0;
-    background: transparent;
+.whu_choose_box {
+    display: flex;
+    align-items: start;
+    gap: 15px;
+    background: #fff;
+    border-radius: 75px 75px 75px 0;
+    padding: 25px 25px;
 }
 
-.myaccordion .fa-stack {
-    font-size: 18px;
+section.why_choose_us {
+    background: #1234981A;
 }
 
-.myaccordion .btn {
-    width: 100%;
-    font-weight: bold;
-    color: #004987;
-    padding: 0;
-}
-
-.myaccordion .btn-link:hover,
-.myaccordion .btn-link:focus {
-    text-decoration: none;
-}
-
-.myaccordion li+li {
-    margin-top: 10px;
+.whu_choose_box img {
+    width: 75px;
 }
 
 /*-- accordion css open --*/

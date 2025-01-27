@@ -175,7 +175,7 @@
    </section>
 
 
-   <section class="why_choose_us">
+   <section class="why_choose_us mt-5 pt-5 pb-5">
        <div class="container">
          <div class="row align-items-center">
                <div class="col-md-4">
@@ -195,29 +195,33 @@
 
                 <div class="col-md-4">
                     <div class="whu_choose_box">
-                        <img class="w-100" src="{{ static_asset('assets/img/original_products.svg') }}" />
-                        <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
-                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
-                         ever since the 1500s, when an unknown printe</p>
+                        <img src="{{ static_asset('assets/img/why_choose_icon1.png') }}" />
+                        <div class="">
+                            <h4>Original Products</h4>
+                             <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  </p>
+                        </div>
+                        
                     </div> 
                </div> 
 
                <div class="col-md-4">
                     <div class="whu_choose_box">
-                        <img class="w-100" src="{{ static_asset('assets/img/affordable_price.svg') }}" />
-                        <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
-                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
-                         ever since the 1500s, when an unknown printe</p>
+                        <img src="{{ static_asset('assets/img/why_choose_icon2.png') }}" />
+                         <div class="">
+                            <h4>Affordable Price</h4>
+                             <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  </p>
+                        </div>
                     </div> 
                </div> 
 
                <div class="col-md-4">
                     <div class="whu_choose_box">
-                        <img class="w-100" src="{{ static_asset('assets/img/free_shpping.svg') }}" />
-                        <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
-                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
-                         ever since the 1500s, when an unknown printe</p>
-                    </div> 
+                        <img src="{{ static_asset('assets/img/why_choose_icon3.png') }}" />
+                         <div class="">
+                            <h4>Free Shipping</h4>
+                             <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  </p>
+                        </div>
+                     </div> 
                </div> 
 
         </div>
@@ -326,80 +330,43 @@
    <!-- testiminial slider close-->
 
 
-
-   <div id="accordion" class="myaccordion">
-  <div class="card">
-    <div class="card-header" id="headingOne">
-      <h2 class="mb-0">
-        <button class="d-flex align-items-center justify-content-between btn btn-link collapsed" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-          Undergraduate Studies
-          <span class="fa-stack fa-sm">
-            <i class="fas fa-circle fa-stack-2x"></i>
-            <i class="fas fa-plus fa-stack-1x fa-inverse"></i>
-          </span>
-        </button>
-      </h2>
+<div class="container">
+    <div id="accordion" class="accordion">
+        <div class="card mb-0">
+            <div class="card-header collapsed" data-toggle="collapse" href="#collapseOne">
+                <a class="card-title">
+                    Item 1
+                </a>
+            </div>
+            <div id="collapseOne" class="card-body collapse" data-parent="#accordion" >
+                <p>Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat
+                    craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+                </p>
+            </div>
+            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+                <a class="card-title">
+                  Item 2
+                </a>
+            </div>
+            <div id="collapseTwo" class="card-body collapse" data-parent="#accordion" >
+                <p>Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat
+                    craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+                </p>
+            </div>
+            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapseThree">
+                <a class="card-title">
+                  Item 3
+                </a>
+            </div>
+            <div id="collapseThree" class="collapse" data-parent="#accordion" >
+                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-      <div class="card-body">
-        <ul>
-          <li>Computer Science</li>
-          <li>Economics</li>
-          <li>Sociology</li>
-          <li>Nursing</li>
-          <li>English</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header" id="headingTwo">
-      <h2 class="mb-0">
-        <button class="d-flex align-items-center justify-content-between btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-          Postgraduate Studies
-          <span class="fa-stack fa-2x">
-            <i class="fas fa-circle fa-stack-2x"></i>
-            <i class="fas fa-plus fa-stack-1x fa-inverse"></i>
-          </span>
-        </button>
-      </h2>
-    </div>
-    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
-      <div class="card-body">
-        <ul>
-          <li>Informatics</li>
-          <li>Mathematics</li>
-          <li>Greek</li>
-          <li>Biostatistics</li>
-          <li>English</li>
-          <li>Nursing</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header" id="headingThree">
-      <h2 class="mb-0">
-        <button class="d-flex align-items-center justify-content-between btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-          Research
-          <span class="fa-stack fa-2x">
-            <i class="fas fa-circle fa-stack-2x"></i>
-            <i class="fas fa-plus fa-stack-1x fa-inverse"></i>
-          </span>
-        </button>
-      </h2>
-    </div>
-    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
-      <div class="card-body">
-        <ul>
-          <li>Astrophysics</li>
-          <li>Informatics</li>
-          <li>Criminology</li>
-          <li>Economics</li>
-        </ul>
-      </div>
-    </div>
-  </div>
 </div>
 
     <!-- Flash Deal -->
