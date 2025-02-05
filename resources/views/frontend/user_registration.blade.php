@@ -12,12 +12,13 @@
 
         {{-- - //------------------------------ Registration 1 modal -----------------------// -- --}}
 
-        <div class="modal fade" id="reg_gst_model" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+        <div class="modal fade login_form_popup" id="reg_gst_model" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
             aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content py-3">
                     <div class="modal-header">
                         <div class="heading">
+                            <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
                             <h5 class="modal-title" id="exampleModalLabel_phone">Company Details</h5>
                         </div>
                         {{-- <div class="purple_btn_close">
@@ -42,7 +43,7 @@
                                     data-dismiss="modal">Close</button>
                             </div> --}}
                             <div class="purple_btn">
-                                <button type="submit" class="btn btn-primary">Next</button>
+                                <button type="submit" class="btn btn-primary">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                             </div>
                         </div>
                     </form>

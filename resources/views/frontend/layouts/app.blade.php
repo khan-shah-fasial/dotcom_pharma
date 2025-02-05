@@ -61,9 +61,7 @@
     <link rel="apple-touch-icon" href="{{ $site_icon }}">
 
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
     <!-- CSS Files -->
     <link rel="stylesheet" href="{{ static_asset('assets/css/vendors.css') }}">
@@ -75,6 +73,8 @@
     <link rel="stylesheet" href="{{ static_asset('assets/css/intlTelinput.css') }}" />
 
     <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
 
 
     <script>
@@ -129,7 +129,7 @@
             --soft-primary: {{ hex2rgba(get_setting('base_color', '#d43533'), 0.15) }};
         }
         body{
-            font-family: 'Public Sans', sans-serif;
+            font-family: "Poppins", serif;
             font-weight: 400;
         }
 
@@ -927,6 +927,68 @@
             document.querySelector('.floating-buttons-section').classList.toggle('show');;
         }
     </script>
+
+    <script>
+   $(document).ready(function(){
+    $('#customers-testimonials').slick({
+        infinite: true,
+        slidesToShow: 3,
+        centerPadding: '0px',
+        slidesToScroll: 1,
+        autoplay: true,
+        autoplaySpeed: 5000,
+        centerMode: true, // Keeps the centered slide
+        focusOnSelect: true,  // Ensures that the selected testimonial is active
+        responsive: [
+            {
+                breakpoint: 1170,
+                settings: {
+                    slidesToShow: 3,
+                     // Add padding for larger screens
+                }
+            },
+            {
+                breakpoint: 768,
+                settings: {
+                    slidesToShow: 1,
+                    centerPadding: '0px', // Add padding for medium screens
+                }
+            },
+             {
+                breakpoint: 992,
+                settings: {
+                    slidesToShow: 3,
+                    centerPadding: '0px', // Add padding for medium screens
+                }
+            },
+            {
+                breakpoint: 480,
+                settings: {
+                    slidesToShow: 1,
+                    centerPadding: '0px', // Add padding for smaller screens
+                }
+            }
+        ]
+    });
+
+    // Apply opacity to inactive items
+    $('#customers-testimonials').on('beforeChange', function(event, slick, currentSlide, nextSlide){
+        var $slides = $(slick.$slides);
+        $slides.each(function(index, slide) {
+            $(slide).css('opacity', 1);  // Set all to opacity 0.5 initially
+        });
+    });
+
+    $('#customers-testimonials').on('afterChange', function(event, slick, currentSlide){
+        var $slides = $(slick.$slides);
+        $slides.each(function(index, slide) {
+            $(slide).css('opacity', 1);  // Reset opacity of all
+        });
+        $($slides[currentSlide]).css('opacity', 1);  // Set opacity of active slide to 1
+    });
+});
+</script>
+
 
     @if (env("DEMO_MODE") == "On")
         <script>

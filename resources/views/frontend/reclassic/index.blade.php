@@ -280,7 +280,7 @@
                                                             title="{{ $flash_deal_product->product->getTranslation('name') }}">{{ $flash_deal_product->product->getTranslation('name') }}</a>
                                                     </h3>
                                                     <!-- Price -->
-                                                    <h4 class="fs-14 d-flex justify-content-center mt-3">
+                                                    <h4 class="fs-14 d-flex justify-content-center mt-1">
                                                         @if ($flash_deal_product->auction_product == 0)
                                                             <!-- Previous price -->
                                                             @if (home_base_price($flash_deal_product->product) != home_discounted_base_price($flash_deal_product->product))

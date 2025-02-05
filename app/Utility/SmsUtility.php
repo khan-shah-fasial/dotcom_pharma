@@ -14,8 +14,10 @@ class SmsUtility
         $sms_body       = str_replace('[[code]]', $user->verification_code, $sms_body);
         $sms_body       = str_replace('[[site_name]]', env('APP_NAME'), $sms_body);
         $template_id    = $sms_template->template_id;
+
+        $cleanedPhone = str_replace('-', '', $user->phone);
         
-        (new SendSmsService())->sendSMS($user->phone, env('APP_NAME'), $sms_body, $template_id);
+        (new SendSmsService())->sendSMS($cleanedPhone, env('APP_NAME'), $sms_body, $template_id);
     }
 
     public static function account_opening($user, $password)
@@ -26,8 +28,10 @@ class SmsUtility
         $sms_body       = str_replace('[[code]]', $user->verification_code, $sms_body);
         $sms_body       = str_replace('[[password]]', $password, $sms_body);
         $template_id    = $sms_template->template_id;
+
+        $cleanedPhone = str_replace('-', '', $user->phone);
         
-        (new SendSmsService())->sendSMS($user->phone, env('APP_NAME'), $sms_body, $template_id);
+        (new SendSmsService())->sendSMS($cleanedPhone, env('APP_NAME'), $sms_body, $template_id);
     }
 
     public static function password_reset($user = '')
@@ -36,8 +40,10 @@ class SmsUtility
         $sms_body       = $sms_template->sms_body;
         $sms_body       = str_replace('[[code]]', $user->verification_code, $sms_body);
         $template_id    = $sms_template->template_id;
+
+        $cleanedPhone = str_replace('-', '', $user->phone);
         
-        (new SendSmsService())->sendSMS($user->phone, env('APP_NAME'), $sms_body, $template_id);
+        (new SendSmsService())->sendSMS($cleanedPhone, env('APP_NAME'), $sms_body, $template_id);
     }
 
     public static function order_placement($phone = '', $order = '')

@@ -952,8 +952,8 @@ class HomeController extends Controller
     {
         $email = $request->email;
         if (isUnique($email)) {
-            // $this->send_email_change_verification_mail($request, $email);
-            flash(translate('You can update this email.'))->success();
+            $this->send_email_change_verification_mail($request, $email);
+            flash(translate('Your email updated Successfully'))->success();
             return back();
         }
 

@@ -36,6 +36,7 @@ class VerifyCsrfToken extends Middleware
         '/lnmo*',
         '/rozer*',
         '/phonepe*',
+        '/payumoney/*',
         '/import-data',
     ];
 }

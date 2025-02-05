@@ -2763,7 +2763,14 @@ if (!function_exists('home_usertype_base_price')) {
                 ->select('price') // Fetch only the price column
                 ->where('variant', 'like', "%$userSubtype%") // Filter by user subtype
                 ->orderBy('price', 'asc')
-                ->value('price'); // Return only the price            
+                ->value('price'); // Return only the price       
+            
+            
+            if(empty($lowest_price)){
+                $lowest_price = $product->unit_price;
+            }
+
+                
         }
             
         return format_price(convert_price($lowest_price));

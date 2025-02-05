@@ -2,12 +2,13 @@
 
 {{-- - //------------------------------ Registration 2 modal -----------------------// -- --}}
 
-<div class="modal fade" id="reg_model_2" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_2" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
+                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
                     <h5 class="modal-title" id="exampleModalLabel_phone">Personal Details</h5>
                 </div>
                 {{-- <div class="purple_btn_close">
@@ -21,34 +22,34 @@
             
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6 mb-4">
 
-                            <div class="form-group">
+                            <div class="form-group mb-1">
                                 <label class="form-label" for="name">Company Name</label>
                                 <input type="text" id="company_name" name="company_name"
-                                    class="form-control form-control-lg" value="{{ $data['company_name'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['company_name'] ?? '' }}" required placeholder="Enter Company Name"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6 mb-4">
 
-                            <div class="form-group">
+                            <div class="form-group mb-1">
                                 <label class="form-label" for="name">Concerned Person Name</label>
                                 <input type="text" id="name" name="name"
-                                    class="form-control form-control-lg" value="{{ $data['name'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['name'] ?? '' }}" required placeholder="Enter Concerned Person Name"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6 mb-4">
 
-                            <div class="form-group">
+                            <div class="form-group mb-1">
                                 <label class="form-label" for="email_id">Email</label>
                                 <input type="email" id="email_id" name="email_id"
-                                    class="form-control form-control-lg" value="{{ $data['email'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['email'] ?? '' }}" required placeholder="Enter Email"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6 mb-4">
 
                             @php
                                 if(!empty($data['phone'])){
@@ -59,7 +60,7 @@
 
                             <div class="form-group phone-form-group mb-1">
                                 <label for="phone-code" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone No') }}</label>
-                                <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="phone" autocomplete="off" 
+                                <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Phone No" name="phone" autocomplete="off" 
                                 value="{{ $Phone_parts_number ?? '' }}" required>
                             </div>
 
@@ -67,17 +68,17 @@
                             <input type="hidden" name="phone_code_meta" value="">
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6 mb-4">
 
                             <div class="form-group phone-form-group mb-1">
                                 <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Telephone No') }}</label>
-                                <input type="tel" id="tel_number" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="tel_number" autocomplete="off" value="{{ $data['tel_number'] ?? '' }}" required>
+                                <input type="tel" id="tel_number" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Telephone No" name="tel_number" autocomplete="off" value="{{ $data['tel_number'] ?? '' }}" required>
                             </div>
 
                             {{-- <input type="hidden" name="country_code_phone_no_2" value=""> --}}
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6 mb-4">
 
                             @php
                                 if(!empty($data['whats_app_no'])){
@@ -88,39 +89,41 @@
 
                             <div class="form-group phone-form-group mb-1">
                                 <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Whats App No') }}</label>
-                                <input type="tel" id="whats_app_no" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="" name="whats_app_no" autocomplete="off" value="{{ $whats_app_no_parts_number ?? '' }}" required>
+                                <input type="tel" id="whats_app_no" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="whats_app_no" autocomplete="off" value="{{ $whats_app_no_parts_number ?? '' }}" required>
                             </div>
 
                             <input type="hidden" name="country_code_whats_app_no" value="">
                             <input type="hidden" name="whats_app_no_meta" value="">
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                       
 
-                            <div class="form-group">
-                                <label class="form-label" for="post">Post</label>
-                                <input type="text" id="post" name="post" value="{{ $data['post'] ?? '' }}"
-                                    class="form-control form-control-lg" />
-                            </div>
+                        <div class="col-md-6 mb-4">
 
-                        </div>
-
-                        <div class="col-md-4 mb-4">
-
-                            <div class="form-group">
+                            <div class="form-group mb-1">
                                 <label class="form-label" for="password">Password</label>
                                 <input type="password" id="password" name="password"
-                                    class="form-control form-control-lg" required />
+                                    class="form-control form-control-lg" required placeholder="Enter Password"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6 mb-4">
 
-                            <div class="form-group">
+                            <div class="form-group mb-1">
                                 <label class="form-label" for="password_confirmation">Conform Password</label>
                                 <input type="password" id="password_confirmation"
                                     name="password_confirmation" class="form-control form-control-lg"
-                                    required />
+                                    required placeholder="Enter Conform Password"/>
+                            </div>
+
+                        </div>
+
+                         <div class="col-md-12 mb-4">
+
+                            <div class="form-group mb-1">
+                                <label class="form-label" for="post">Post</label>
+                                <input type="text" id="post" name="post" value="{{ $data['post'] ?? '' }}"
+                                    class="form-control form-control-lg" placeholder="Enter Post"/>
                             </div>
 
                         </div>
@@ -129,11 +132,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
+                    <div class="blue_btn black_buttons">
+                        <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary">Next</button>
+                        <button type="submit" class="btn btn-primary">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>
@@ -149,12 +152,13 @@
 
 {{-- - //------------------------------ Registration 3 modal -----------------------// -- --}}
 
-    <div class="modal fade" id="reg_model_3" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+    <div class="modal fade login_form_popup" id="reg_model_3" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
         aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content py-3">
                 <div class="modal-header">
                     <div class="heading">
+                        <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
                         <h5 class="modal-title" id="exampleModalLabel_phone">Verify Phone Number</h5>
                     </div>
                     {{-- <div class="purple_btn_close">
@@ -175,15 +179,20 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <div class="blue_btn">
-                            <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
+                        <div class="blue_btn black_buttons">
+                            <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                         </div>
-                        <div class="purple_btn">
-                            <button type="submit" class="btn btn-primary">Verify</button>
-                        </div>
-                        <div class="resend_otp">
+
+                        <div class="display_flexx">
+                             <div class="resend_otp">
                             <a class="ms-4" class="btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
                         </div>
+                             <div class="purple_btn">
+                            <button type="submit" class="btn btn-primary">Verify <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                        </div>
+                       
+                        </div>
+                       
                     </div>
                 </form>
             </div>
@@ -198,13 +207,14 @@
 
 {{-- - //------------------------------ Registration 4 modal -----------------------// -- --}}
 
-<div class="modal fade" id="reg_model_4" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_4" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
-                    <h5 class="modal-title" id="exampleModalLabel_phone">Personal Details</h5>
+                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                    <h5 class="modal-title" id="exampleModalLabel_phone">Address</h5>
                 </div>
                 {{-- <div class="purple_btn_close">
                     <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
@@ -217,15 +227,15 @@
             
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6 mb-12">
+                        <div class="col-md-12 mb-12">
 
                             <div class="form-group">
                                 <label class="form-label" for="address_1">Address</label>
-                                <textarea class="form-control" id="address" name="address" rows="3" required>{{ $data['address'] ?? '' }}</textarea>
+                                <textarea class="form-control" id="address" name="address" rows="3" placeholder="Enter Address" required >{{ $data['address'] ?? '' }}</textarea>
                             </div>
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="country_code">Country Code</label>
@@ -233,7 +243,7 @@
                                     class="form-control form-control-lg" value="{{ $data['country__code'] ?? '' }}" required /> --}}
 
 
-                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" required>
+                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" required>
                                         <option value="">{{ translate('Select your country') }}</option>
                                         @foreach (get_active_countries() as $key => $country)
                                             <option value="{{ $country->id }}">{{ $country->name }}</option>
@@ -243,49 +253,49 @@
                             </div>
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="state">State</label>
                                 {{-- <input type="text" id="state" name="state"
                                     class="form-control form-control-lg" value="{{ $data['state'] ?? '' }}" required /> --}}
 
-                                    <select class="form-control mb-3 aiz-selectpicker rounded-0" data-live-search="true" name="state_id" required>
+                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="state_id" required placeholder="Select State">
 
                                     </select>
                             </div>
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="district">City</label>
                                 {{-- <input type="text" id="district" name="district"
                                     class="form-control form-control-lg" value="{{ $data['district'] ?? '' }}" required /> --}}
 
-                                <select class="form-control mb-3 aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required>
+                                <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City">
 
                                 </select>
                             </div>
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="pincode">Pincode</label>
                                 <input type="text" id="pincode" name="pincode"
-                                    class="form-control form-control-lg" value="{{ $data['pincode'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['pincode'] ?? '' }}" placeholder="Enter Pincode" required />
                             </div>
 
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
+                    <div class="blue_btn black_buttons">
+                        <button type="button" onclick="back_to_prev_reg();" class=""> <img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary">Next</button>
+                        <button type="submit" class="btn btn-primary">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>
@@ -301,12 +311,13 @@
 
 {{-- - //------------------------------ Registration 5 modal -----------------------// -- --}}
 
-<div class="modal fade" id="reg_model_5" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_5" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
+                     <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
                     <h5 class="modal-title" id="exampleModalLabel_phone">Bank Details</h5>
                 </div>
                 {{-- <div class="purple_btn_close">
@@ -321,80 +332,80 @@
                 <div class="modal-body">
                     <div class="row">
 
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="bank_name">Bank Name</label>
                                 <input type="text" id="bank_name" name="bank_name"
-                                    class="form-control form-control-lg" value="{{ $data['bank_name'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['bank_name'] ?? '' }}" required placeholder="Enter Bank Name" />
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="account_no">Account No</label>
                                 <input type="text" id="account_no" name="account_no"
-                                    class="form-control form-control-lg" value="{{ $data['account_no'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['account_no'] ?? '' }}" required placeholder="Enter Account No"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="branch_no">Branch No</label>
                                 <input type="text" id="branch_no" name="branch_no"
-                                    class="form-control form-control-lg" value="{{ $data['branch_no'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['branch_no'] ?? '' }}" required placeholder="Enter Branch No"/>
                             </div>
 
                         </div>
 
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="branch_code">Branch Code</label>
                                 <input type="text" id="branch_code" name="branch_code"
-                                    class="form-control form-control-lg" value="{{ $data['branch_code'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['branch_code'] ?? '' }}" required placeholder="Enter Branch Code"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="ifsc_code">IFSC Code</label>
                                 <input type="text" id="ifsc_code" name="ifsc_code"
-                                    class="form-control form-control-lg" value="{{ $data['ifsc_code'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['ifsc_code'] ?? '' }}" required placeholder="Enter IFSC Code"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="micr_code">MICR Code</label>
                                 <input type="text" id="micr_code" name="micr_code"
-                                    class="form-control form-control-lg" value="{{ $data['micr_code'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['micr_code'] ?? '' }}" required placeholder="Enter MICR Code"/>
                             </div>
 
                         </div>
 
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="customer_care_executive">Customer Care
                                     Executive</label>
                                 <input type="text" id="customer_care_executive"
-                                    name="customer_care_executive" class="form-control form-control-lg" value="{{ $data['customer_care_executive'] ?? '' }}" required/>
+                                    name="customer_care_executive" class="form-control form-control-lg" value="{{ $data['customer_care_executive'] ?? '' }}" required placeholder="Enter Customer Care Executive"/>
                             </div>
 
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
+                    <div class="blue_btn black_buttons">
+                        <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary">Next</button>
+                        <button type="submit" class="btn btn-primary"> Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>
@@ -410,13 +421,14 @@
 
 {{-- - //------------------------------ Registration 6 modal -----------------------// -- --}}
 
-<div class="modal fade" id="reg_model_6" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_6" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
-                    <h5 class="modal-title" id="exampleModalLabel_phone">Bank Details</h5>
+                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                    <h5 class="modal-title" id="exampleModalLabel_phone">License Details</h5>
                 </div>
                 {{-- <div class="purple_btn_close">
                     <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
@@ -429,49 +441,49 @@
             
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="cc_no">CC NO</label>
                                 <input type="text" id="cc_no" name="cc_no"
-                                    class="form-control form-control-lg" value="{{ $data['cc_no'] ?? '' }}" required/>
+                                    class="form-control form-control-lg" value="{{ $data['cc_no'] ?? '' }}" required placeholder="Enter CC.No"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="d_l_no_1">D.L No 1 (Drug Licence)</label>
                                 <input type="text" id="d_l_no_1" name="d_l_no_1"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_no_1'] ?? '' }}" required/>
+                                    class="form-control form-control-lg" value="{{ $data['d_l_no_1'] ?? '' }}" required placeholder="Enter D.L.No.1"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="d_l_no_2">D.L No 2</label>
                                 <input type="text" id="d_l_no_2" name="d_l_no_2"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_no_2'] ?? '' }}" required/>
+                                    class="form-control form-control-lg" value="{{ $data['d_l_no_2'] ?? '' }}" required placeholder="Enter D.L.No.2"/>
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="d_l_no_3">D.L No 3</label>
                                 <input type="text" id="d_l_no_3" name="d_l_no_3"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_no_3'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['d_l_no_3'] ?? '' }}" required placeholder="Enter D.L.No.3"/>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
+                    <div class="blue_btn black_buttons">
+                        <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary">Next</button>
+                        <button type="submit" class="btn btn-primary">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>
@@ -487,13 +499,14 @@
 
 {{-- - //------------------------------ Registration 7 modal -----------------------// -- --}}
 
-<div class="modal fade" id="reg_model_7" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_7" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
-                    <h5 class="modal-title" id="exampleModalLabel_phone">Bank Details</h5>
+                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                    <h5 class="modal-title" id="exampleModalLabel_phone">Transport Details</h5>
                 </div>
                 {{-- <div class="purple_btn_close">
                     <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
@@ -506,7 +519,7 @@
             
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="d_l_exp_Date">D.L Expiry Date</label>
@@ -516,7 +529,7 @@
 
                         </div>
 
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="transport">Transport</label>
@@ -525,7 +538,7 @@
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="cargo">Cargo</label>
@@ -534,7 +547,7 @@
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-6">
 
                             <div class="form-group">
                                 <label class="form-label" for="booked_to">Booked To</label>
@@ -546,11 +559,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <div class="blue_btn">
-                        <button type="button" onclick="back_to_prev_reg();" class="btn btn-secondary">Back</button>
+                    <div class="blue_btn black_buttons">
+                        <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary">Next</button>
+                        <button type="submit" class="btn btn-primary">Sbumit <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>

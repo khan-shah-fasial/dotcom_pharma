@@ -33,8 +33,8 @@
                             <div class="carousel-box">
                                 <a href="{{ isset(json_decode($home_slider_links, true)[$key]) ? json_decode($home_slider_links, true)[$key] : '' }}">
                                     <!-- Image -->
-                                    <div class="d-block mw-100 img-fit overflow-hidden h-180px h-md-320px h-lg-460px h-xl-553px overflow-hidden">
-                                        <img class="img-fit h-100 m-auto has-transition ls-is-cached lazyloaded"
+                                    <div class="d-block mw-100 img-fit overflow-hidden overflow-hidden">
+                                        <img class="img-fit  m-auto has-transition ls-is-cached lazyloaded"
                                         src="{{ $slider ? my_asset($slider->file_name) : static_asset('assets/img/placeholder.jpg') }}"
                                         alt="{{ env('APP_NAME') }} promo"
                                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';">
@@ -48,147 +48,54 @@
         </div>
     </div>
 
-    <!-- Flash Deal -->
-    @php
-        $flash_deal = get_featured_flash_deal();
-        $flash_deal_bg = get_setting('flash_deal_bg_color');
-        $flash_deal_bg_full_width = (get_setting('flash_deal_bg_full_width') == 1) ? true : false;
-        $flash_deal_banner_menu_text = ((get_setting('flash_deal_banner_menu_text') == 'dark') ||  (get_setting('flash_deal_banner_menu_text') == null)) ? 'text-dark' : 'text-white';
 
-    @endphp
-    @if ($flash_deal != null)
-        <section class="mb-2 mb-md-3 mt-2 mt-md-3" style="background: {{ ($flash_deal_bg_full_width && $flash_deal_bg != null) ? $flash_deal_bg : '' }};" id="flash_deal">
-            <div class="container">
-                <!-- Top Section sm to lg -->
-                <div class="d-flex d-lg-none flex-wrap mb-2 mb-md-3 @if ($flash_deal_bg_full_width && $flash_deal_bg != null) pt-2 pt-md-3 @endif align-items-baseline justify-content-between">
-                    <!-- Title -->
-                    <h3 class="fs-16 fs-md-20 fw-700 mb-2 mb-sm-0">
-                        <span class="d-inline-block {{ ($flash_deal_bg_full_width && $flash_deal_bg != null) ? $flash_deal_banner_menu_text : 'text-dark'}}">{{ translate('Flash Sale') }}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 16 24"
-                            class="ml-3">
-                            <path id="Path_28795" data-name="Path 28795"
-                                d="M30.953,13.695a.474.474,0,0,0-.424-.25h-4.9l3.917-7.81a.423.423,0,0,0-.028-.428.477.477,0,0,0-.4-.207H21.588a.473.473,0,0,0-.429.263L15.041,18.151a.423.423,0,0,0,.034.423.478.478,0,0,0,.4.2h4.593l-2.229,9.683a.438.438,0,0,0,.259.5.489.489,0,0,0,.571-.127L30.9,14.164a.425.425,0,0,0,.054-.469Z"
-                                transform="translate(-15 -5)" fill="#fcc201" />
-                        </svg>
-                    </h3>
-                    <!-- Links -->
-                    <div>
-                        <div class="text-dark d-flex align-items-center mb-0">
-                            <a href="{{ route('flash-deals') }}"
-                                class="fs-10 fs-md-12 fw-700 has-transition @if ((get_setting('flash_deal_banner_menu_text') == 'light') && $flash_deal_bg_full_width && $flash_deal_bg != null) text-white opacity-60 hov-opacity-100 animate-underline-white @else text-reset opacity-60 hov-opacity-100 hov-text-primary animate-underline-primary @endif mr-3">{{ translate('View All Flash Sale') }}</a>
-                            <span class=" border-left border-soft-light border-width-2 pl-3">
-                                <a href="{{ route('flash-deal-details', $flash_deal->slug) }}"
-                                    class="fs-10 fs-md-12 fw-700 has-transition @if ((get_setting('flash_deal_banner_menu_text') == 'light') && $flash_deal_bg_full_width && $flash_deal_bg != null) == 'light') text-white opacity-60 hov-opacity-100 animate-underline-white @else text-reset opacity-60 hov-opacity-100 hov-text-primary animate-underline-primary @endif">{{ translate('View All Products from This Flash Sale') }}</a>
-                            </span>
-                        </div>
+   <section>
+       <div class="container">
+        <div class="searc_box_product">
+               <form action="{{ route('search') }}" method="GET" class="stop-propagation">
+                    <div class="row">
+                          <div class="col-md-12"><h3>Search Product</h3></div>
+
+                          <div class="col-md-3">
+                              <div class="form-group">
+                                 <select class="form-control form-select" aria-label="Default select example">
+                                    <option selected>All Category</option>
+                                    <option value="1">Ointments</option>
+                                    <option value="2">Sprays</option>
+                                    <option value="3">External Insecticide</option>
+                                  </select>
+                              </div>
+                          </div>
+
+                          <div class="col-md-3">
+                              <div class="form-group">
+                                 <select class="form-control form-select" aria-label="Default select example">
+                                    <option selected>All Brand</option>
+                                    <option value="1">Ointments</option>
+                                    <option value="2">Sprays</option>
+                                    <option value="3">External Insecticide</option>
+                                  </select>
+                              </div>
+                          </div>
+
+                           <div class="col-md-4">
+                              <div class="form-group">
+                               <input type="text" name="" class="form-control" placeholder="Enter Key..." />
+                              </div>
+                          </div>
+
+                           <div class="col-md-2">
+                              <div class="form-group">
+                                 <button value="Search" type="button" class="btn btn-primary custom_button" >Search</button>
+                              </div>
+                          </div>
+
                     </div>
-                </div>
+              </form>
+        </div>
+       </div>
+   </section>
 
-                <!-- Countdown for small device -->
-                <div class="bg-white mb-3 d-md-none">
-                    <div class="aiz-count-down-circle" end-date="{{ date('Y/m/d H:i:s', $flash_deal->end_date) }}"></div>
-                </div>
-
-                <div class="row no-gutters align-items-center" style="background: {{ $flash_deal_bg }};">
-                    <!-- Flash Deals Baner & Countdown -->
-                    <div class="col-xxl-4 col-lg-5 col-6 h-200px h-md-400px h-lg-475px">
-                        <a href="{{ route('flash-deal-details', $flash_deal->slug) }}">
-                            <div class="h-100 w-100 w-xl-auto"
-                                style="background-image: url('{{ uploaded_asset($flash_deal->banner) }}'); background-size: cover; background-position: center center;">
-                                <div class="py-5 px-md-3 px-xl-5 d-none d-md-block">
-                                    <div class="bg-white">
-                                        <div class="aiz-count-down-circle"
-                                            end-date="{{ date('Y/m/d H:i:s', $flash_deal->end_date) }}"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-
-                    <div class="col-xxl-8 col-lg-7 col-6">
-                        <div class="pl-3 pr-lg-3 pl-xl-2rem pr-xl-2rem">
-                            <!-- Top Section from lg device -->
-                            <div class="d-none d-lg-flex flex-wrap mb-2 mb-md-3 align-items-baseline justify-content-between">
-                                <!-- Title -->
-                                <h3 class="fs-16 fs-md-20 fw-700 mb-2">
-                                    <span class="d-inline-block {{ $flash_deal_banner_menu_text }}">{{ translate('Flash Sale') }}</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="24" viewBox="0 0 16 24"
-                                        class="ml-3">
-                                        <path id="Path_28795" data-name="Path 28795"
-                                            d="M30.953,13.695a.474.474,0,0,0-.424-.25h-4.9l3.917-7.81a.423.423,0,0,0-.028-.428.477.477,0,0,0-.4-.207H21.588a.473.473,0,0,0-.429.263L15.041,18.151a.423.423,0,0,0,.034.423.478.478,0,0,0,.4.2h4.593l-2.229,9.683a.438.438,0,0,0,.259.5.489.489,0,0,0,.571-.127L30.9,14.164a.425.425,0,0,0,.054-.469Z"
-                                            transform="translate(-15 -5)" fill="#fcc201" />
-                                    </svg>
-                                </h3>
-                                <!-- Links -->
-                                <div>
-                                    <div class="text-dark d-flex align-items-center mb-0">
-                                        <a href="{{ route('flash-deals') }}"
-                                            class="fs-10 fs-md-12 fw-700 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') text-white opacity-60 hov-opacity-100 animate-underline-white @else text-reset opacity-60 hov-opacity-100 hov-text-primary animate-underline-primary @endif mr-3">
-                                            {{ translate('View All Flash Sale') }}
-                                        </a>
-                                        <span class=" border-left border-soft-light border-width-2 pl-3">
-                                            <a href="{{ route('flash-deal-details', $flash_deal->slug) }}"
-                                                class="fs-10 fs-md-12 fw-700 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') text-white opacity-60 hov-opacity-100 animate-underline-white @else text-reset opacity-60 hov-opacity-100 hov-text-primary animate-underline-primary @endif">{{ translate('View All Products from This Flash Sale') }}</a>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Flash Deals Products -->
-                            @php
-                                $flash_deal_products = get_flash_deal_products($flash_deal->id);
-                            @endphp
-                            <div class="aiz-carousel border-top @if (count($flash_deal_products) > 8) border-right @endif arrow-inactive-none arrow-x-0"
-                                data-rows="2" data-items="5" data-xxl-items="5" data-xl-items="3.5" data-lg-items="3" data-md-items="2"
-                                data-sm-items="2.5" data-xs-items="1.7" data-arrows="true" data-dots="false">
-                                @foreach ($flash_deal_products as $key => $flash_deal_product)
-                                    <div class="carousel-box bg-white border-left border-bottom">
-                                        @if ($flash_deal_product->product != null && $flash_deal_product->product->published != 0)
-                                            @php
-                                                $product_url = route('product', $flash_deal_product->product->slug);
-                                                if ($flash_deal_product->product->auction_product == 1) {
-                                                    $product_url = route('auction-product', $flash_deal_product->product->slug);
-                                                }
-                                            @endphp
-                                            <div
-                                                class="h-100px h-md-200px h-lg-auto flash-deal-item position-relative text-center has-transition hov-shadow-out z-1">
-                                                <a href="{{ $product_url }}"
-                                                    class="d-block py-md-2 overflow-hidden hov-scale-img"
-                                                    title="{{ $flash_deal_product->product->getTranslation('name') }}">
-                                                    <!-- Image -->
-                                                    <img src="{{ get_image($flash_deal_product->product->thumbnail) }}"
-                                                        class="lazyload h-60px h-md-100px h-lg-120px mw-100 mx-auto has-transition"
-                                                        alt="{{ $flash_deal_product->product->getTranslation('name') }}"
-                                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                                                    <!-- Price -->
-                                                    <div
-                                                        class="fs-10 fs-md-14 mt-md-2 text-center h-md-48px has-transition overflow-hidden pt-md-4 flash-deal-price lh-1-5">
-                                                        <span
-                                                            class="d-block text-primary fw-700">{{ home_discounted_base_price($flash_deal_product->product) }}</span>
-                                                        @if (home_base_price($flash_deal_product->product) != home_discounted_base_price($flash_deal_product->product))
-                                                            <del
-                                                                class="d-block fw-400 text-secondary">{{ home_base_price($flash_deal_product->product) }}</del>
-                                                        @endif
-                                                    </div>
-                                                </a>
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    @endif
-
-    <!-- Today's deal -->
-    @php
-        $todays_deal_section_bg = get_setting('todays_deal_section_bg_color');
-    @endphp
-    <div id="todays_deal" class="mb-2rem mt-2 mt-md-3" @if(get_setting('todays_deal_section_bg') == 1) style="background: {{ $todays_deal_section_bg }};" @endif>
-
-    </div>
 
     <!-- Featured Categories -->
     @if (count($featured_categories) > 0)
@@ -196,47 +103,50 @@
             <div class="container">
                 <div class="bg-white">
                     <!-- Top Section -->
-                    <div class="d-flex mt-2 mt-md-3 mb-2 mb-md-3 align-items-baseline justify-content-between">
+                    <div class=" mt-2 mt-md-3 mb-2 mb-md-4 text-center">
                         <!-- Title -->
-                        <h3 class="fs-16 fs-md-20 fw-700 mb-2 mb-sm-0">
-                            <span class="">{{ translate('Featured Categories') }}</span>
+                        <h3 class="fs-16 fs-md-24 text-center fw-700 pb-2">
+                            <span class="">{{ translate('Top Category') }}</span>
                         </h3>
                     </div>
                 </div>
                 <!-- Categories -->
                 <div class="bg-white px-sm-3">
-                    <div class="aiz-carousel sm-gutters-17" data-items="4" data-xxl-items="4" data-xl-items="3.5"
-                        data-lg-items="3" data-md-items="2" data-sm-items="2" data-xs-items="1" data-arrows="true"
+                    <div class="aiz-carousel sm-gutters-17" data-items="7" data-xxl-items="7" data-xl-items="7"
+                        data-lg-items="7" data-md-items="5" data-sm-items="2" data-xs-items="1" data-arrows="true"
                         data-dots="false" data-autoplay="false" data-infinite="true">
                         @foreach ($featured_categories as $key => $category)
                             @php
                                 $category_name = $category->getTranslation('name');
                             @endphp
-                            <div class="carousel-box position-relative p-0 has-transition border-right border-top border-bottom @if ($key == 0) border-left @endif">
-                                <div class="h-200px h-sm-250px h-md-340px">
-                                    <div class="h-100 w-100 w-xl-auto position-relative hov-scale-img overflow-hidden">
-                                        <div class="position-absolute h-100 w-100 overflow-hidden">
+                            <div class="carousel-box position-relative p-0 has-transition @if ($key == 0) @endif">
+                                <div class="category_boxex_main">
+                                    <div class="w-xl-auto position-relative hov-scale-img overflow-hidden">
+
+                                        <div class="category_borders">
+                                        <div class="category_images">
                                             <img src="{{ isset($category->coverImage->file_name) ? my_asset($category->coverImage->file_name) : static_asset('assets/img/placeholder.jpg') }}"
                                                 alt="{{ $category_name }}"
-                                                class="img-fit h-100 has-transition"
+                                                class="img-fit has-transition"
                                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                                         </div>
-                                        <div class="pb-4 px-4 absolute-bottom-left has-transition h-50 w-100 d-flex flex-column align-items-center justify-content-end"
-                                            style="background: linear-gradient(to top, rgba(0,0,0,0.5) 50%,rgba(0,0,0,0) 100%) !important;">
-                                            <div class="w-100">
-                                                <a class="fs-16 fw-700 text-white animate-underline-white home-category-name d-flex align-items-center hov-column-gap-1"
+                                        </div>
+                                        <div class="w-100 d-flex flex-column align-items-center justify-content-end">
+                                            <div class="w-100 text-center pt-3">
+                                                <a class="w-100 fs-18 fw-500 black_light_clr animate-underline-white home-category-name d-flex align-items-center justify-content-center hov-column-gap-1"
                                                     href="{{ route('products.category', $category->slug) }}"
-                                                    style="width: max-content;">
+                                                    >
                                                     {{ $category_name }}&nbsp;
-                                                    <i class="las la-angle-right"></i>
+                                                    <!-- <i class="las la-angle-right"></i> -->
                                                 </a>
-                                                <div class="d-flex flex-wrap h-50px overflow-hidden mt-2">
+                                                <div class="d-flex flex-wrap overflow-hidden">
                                                     @foreach ($category->childrenCategories->take(6) as $key => $child_category)
-                                                    <a href="{{ route('products.category', $child_category->slug) }}" class="fs-13 fw-300 text-soft-light hov-text-white pr-3 pt-1">
+                                                    <a href="{{ route('products.category', $child_category->slug) }}" class="fs-13 fw-300 black_light_clr hov-text-white pr-3 pt-1">
                                                         {{ $child_category->getTranslation('name') }}
                                                     </a>
                                                     @endforeach
                                                 </div>
+                                                <p class="fs-14 fw-500 blue_light_clr">30 Items</p>
                                             </div>
                                         </div>
                                     </div>
@@ -252,8 +162,8 @@
     <!-- Banner section 1 -->
     @php $homeBanner1Images = get_setting('home_banner1_images', null, $lang);   @endphp
     @if ($homeBanner1Images != null)
-        <div class="pb-2 pb-md-3 pt-2 pt-md-3" style="background: #f5f5fa;">
-            <div class="container mb-2 mb-md-3">
+        <div class="pt-5">
+            <div class="container">
                 @php
                     $banner_1_imags = json_decode($homeBanner1Images);
                     $data_md = count($banner_1_imags) >= 2 ? 2 : 1;
@@ -266,7 +176,7 @@
                         data-md-items="{{ $data_md }}" data-sm-items="1" data-xs-items="1" data-arrows="true"
                         data-dots="false">
                         @foreach ($banner_1_imags as $key => $value)
-                            <div class="carousel-box overflow-hidden hov-scale-img">
+                            <div class="carousel-box overflow-hidden">
                                 <a href="{{ isset(json_decode($home_banner1_links, true)[$key]) ? json_decode($home_banner1_links, true)[$key] : '' }}"
                                     class="d-block text-reset overflow-hidden">
                                     <img src="{{ static_asset('assets/img/placeholder-rect.jpg') }}"
@@ -283,7 +193,7 @@
     @endif
 
     <!-- Featured Products -->
-    <div id="section_featured" class="pt-2 pt-md-3" style="background: #f5f5fa;">
+    <div id="section_featured">
 
     </div>
 
@@ -304,7 +214,7 @@
                     data-dots="false">
                     @foreach ($banner_2_imags as $key => $value)
                         <div class="carousel-box overflow-hidden hov-scale-img">
-                            <a href="{{ isset(json_decode($home_banner2_links, true)[$key]) ? json_decode($home_banner2_links, true)[$key] : '' }}"
+                            <a href="{{ isset(json_decode($home_banner2_links, true)[$key]) ? json_decode($home_banner2_links, true)[$key] : '' }}" style="border-radius:20px;"
                                 class="d-block text-reset overflow-hidden">
                                 <img src="{{ static_asset('assets/img/placeholder-rect.jpg') }}"
                                     data-src="{{ uploaded_asset($value) }}" alt="{{ env('APP_NAME') }} promo"
@@ -318,17 +228,70 @@
         </div>
     @endif
 
+    
     <!-- Best Selling  -->
     <div id="section_best_selling">
 
     </div>
 
+
+
+    <section>
+       <div class="container">
+        <div class="payment_safe_secrtion">
+                    <div class="row">
+                          <div class="col-md-3">
+                              <div class="payment_boxs align-items-center gap-3">
+                                   <img class="" src="{{ static_asset('assets/img/free_delivery_icons.svg') }}" />
+                                   <div class="">
+                                      <h6 class="text-white mb-1">Free Delivery</h6>
+                                      <p class="text-white mb-0 pb-0">Order Over 250.00</p>
+                                   </div>
+                              </div>
+                          </div>
+
+                          <div class="col-md-3">
+                              <div class="payment_boxs align-items-center gap-3">
+                                   <img src="{{ static_asset('assets/img/refund_icons.svg') }}" />
+                                   <div class="">
+                                       <h6 class="text-white mb-1">Get Refund</h6>
+                                      <p class="text-white mb-0 pb-0">Within 30 Days Return</p>
+                                   </div>
+                              </div>
+                          </div>
+
+                           <div class="col-md-3">
+                              <div class="payment_boxs align-items-center gap-3">
+                                   <img src="{{ static_asset('assets/img/safe_payment_icons.svg') }}" />
+                                   <div class="">
+                                       <h6 class="text-white mb-1">Safe Payment</h6>
+                                      <p class="text-white mb-0 pb-0">100% Secure Payment</p>
+                                   </div>
+                              </div>
+                          </div>
+
+                            <div class="col-md-3">
+                              <div class="payment_boxs align-items-center gap-3">
+                                   <img src="{{ static_asset('assets/img/support_icons.svg') }}" />
+                                   <div class="">
+                                      <h6 class="text-white mb-1">24/7 Support</h6>
+                                      <p class="text-white mb-0 pb-0">Feel Free To Call Us</p>
+                                   </div>
+                              </div>
+                          </div>
+
+                    </div>
+        </div>
+       </div>
+   </section>
+
+  
     <!-- New Products -->
     <div id="section_newest">
 
     </div>
 
-    <!-- Banner Section 3 -->
+     <!-- Banner Section 3 -->
     @php $homeBanner3Images = get_setting('home_banner3_images', null, $lang);   @endphp
     @if ($homeBanner3Images != null)
         <div class="mb-2 mb-md-3 mt-2 mt-md-3">
@@ -344,7 +307,7 @@
                     data-md-items="{{ $data_md }}" data-sm-items="1" data-xs-items="1" data-arrows="true"
                     data-dots="false">
                     @foreach ($banner_3_imags as $key => $value)
-                        <div class="carousel-box overflow-hidden hov-scale-img">
+                        <div class="carousel-box overflow-hidden">
                             <a href="{{ isset(json_decode($home_banner3_links, true)[$key]) ? json_decode($home_banner3_links, true)[$key] : '' }}"
                                 class="d-block text-reset overflow-hidden">
                                 <img src="{{ static_asset('assets/img/placeholder-rect.jpg') }}"
@@ -359,6 +322,471 @@
         </div>
     @endif
 
+
+
+      <!-- Today's deal -->
+    @php
+        $todays_deal_section_bg = get_setting('todays_deal_section_bg_color');
+    @endphp
+    <div id="todays_deal" class="mb-2rem mt-2 mt-md-3" @if(get_setting('todays_deal_section_bg') == 1) style="background: {{ $todays_deal_section_bg }};" @endif>
+
+    </div>
+
+
+    <section class="sale_section">
+            <img class="w-100" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="sale_box_main">
+                        @php
+                            $best_selling_products = get_best_selling_products(20);
+                        @endphp
+                        @if (get_setting('best_selling') == 1 && count($best_selling_products) > 0)
+                            <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+                                <div class="container">
+                                    <!-- Top Section -->
+                                    <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">
+                                        <!-- Title -->
+                                        <h3 class="sale_heading sale_blue_a">
+                                            <span class="">{{ translate('On Sale') }}</span>
+                                        </h3>
+                                        <!-- Links -->
+                                        <!-- <div class="d-flex">
+                                            <a type="button" class="arrow-prev slide-arrow link-disable text-secondary mr-2" onclick="clickToSlide('slick-prev','section_best_selling')"><i class="las la-angle-left fs-20 fw-600"></i></a>
+                                            <a type="button" class="arrow-next slide-arrow text-secondary ml-2" onclick="clickToSlide('slick-next','section_best_selling')"><i class="las la-angle-right fs-20 fw-600"></i></a>
+                                        </div> -->
+                                    </div>
+                                    <!-- Product Section -->
+                                    <div class="px-sm-3">
+                                        <div class="aiz-carousel sm-gutters-16 arrow-none vertical-slider" data-items="3" data-xl-items="3" data-lg-items="1"  data-md-items="3" data-sm-items="2" data-xs-items="2" data-arrows='true' data-infinite='false' data-vertical="true">
+                                            @foreach ($best_selling_products as $key => $product)
+                                                <div class="carousel-box px-0 position-relative has-transition @if($key == 0) @endif">
+                                                    @include('frontend.'.get_setting('homepage_select').'.partials.product_box_1',['product' => $product])
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        @endif
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="sale_box_main sales_box_gren">
+                        @php
+                            $best_selling_products = get_best_selling_products(20);
+                        @endphp
+                        @if (get_setting('best_selling') == 1 && count($best_selling_products) > 0)
+                            <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+                                <div class="container">
+                                    <!-- Top Section -->
+                                    <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">
+                                        <!-- Title -->
+                                        <h3 class="sale_heading sale_green_a">
+                                            <span class="">{{ translate('Best Seller') }}</span>
+                                        </h3>
+                                        <!-- Links -->
+                                        <!-- <div class="d-flex">
+                                            <a type="button" class="arrow-prev slide-arrow link-disable text-secondary mr-2" onclick="clickToSlide('slick-prev','section_best_selling')"><i class="las la-angle-left fs-20 fw-600"></i></a>
+                                            <a type="button" class="arrow-next slide-arrow text-secondary ml-2" onclick="clickToSlide('slick-next','section_best_selling')"><i class="las la-angle-right fs-20 fw-600"></i></a>
+                                        </div> -->
+                                    </div>
+                                    <!-- Product Section -->
+                                    <div class="px-sm-3">
+                                        <div class="aiz-carousel sm-gutters-16 arrow-none vertical-slider" data-items="3" data-xl-items="3" data-lg-items="1"  data-md-items="3" data-sm-items="2" data-xs-items="2" data-arrows='true' data-infinite='false' data-vertical="true">
+                                            @foreach ($best_selling_products as $key => $product)
+                                                <div class="carousel-box px-0 position-relative has-transition @if($key == 0) @endif">
+                                                    @include('frontend.'.get_setting('homepage_select').'.partials.product_box_1',['product' => $product])
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        @endif
+                          </div>
+                    </div>
+                   
+                    <div class="col-md-4">
+                        <div class="sale_box_main">
+                        @php
+                            $best_selling_products = get_best_selling_products(20);
+                        @endphp
+                        @if (get_setting('best_selling') == 1 && count($best_selling_products) > 0)
+                            <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+                                <div class="container">
+                                    <!-- Top Section -->
+                                    <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">
+                                        <!-- Title -->
+                                        <h3 class="sale_heading sale_blue_a">
+                                            <span class="">{{ translate('Top Rated') }}</span>
+                                        </h3>
+                                        <!-- Links -->
+                                        <!-- <div class="d-flex">
+                                            <a type="button" class="arrow-prev slide-arrow link-disable text-secondary mr-2" onclick="clickToSlide('slick-prev','section_best_selling')"><i class="las la-angle-left fs-20 fw-600"></i></a>
+                                            <a type="button" class="arrow-next slide-arrow text-secondary ml-2" onclick="clickToSlide('slick-next','section_best_selling')"><i class="las la-angle-right fs-20 fw-600"></i></a>
+                                        </div> -->
+                                    </div>
+                                    <!-- Product Section -->
+                                    <div class="px-sm-3">
+                                        <div class="aiz-carousel sm-gutters-16 arrow-none vertical-slider" data-items="3" data-xl-items="3" data-lg-items="1"  data-md-items="3" data-sm-items="2" data-xs-items="2" data-arrows='true' data-infinite='false' data-vertical="true">
+                                            @foreach ($best_selling_products as $key => $product)
+                                                <div class="carousel-box px-0 position-relative has-transition @if($key == 0) @endif">
+                                                    @include('frontend.'.get_setting('homepage_select').'.partials.product_box_1',['product' => $product])
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        @endif
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+    </section>
+    
+    <!-- Flash Deal -->
+    @php
+        $flash_deal = get_featured_flash_deal();
+        $flash_deal_bg = get_setting('flash_deal_bg_color');
+        $flash_deal_bg_full_width = (get_setting('flash_deal_bg_full_width') == 1) ? true : false;
+        $flash_deal_banner_menu_text = ((get_setting('flash_deal_banner_menu_text') == 'dark') ||  (get_setting('flash_deal_banner_menu_text') == null)) ? 'text-dark' : 'text-white';
+
+    @endphp
+    @if ($flash_deal != null)
+        <section class="flash_deals_section pt-5 pb-5 mb-2 mb-md-3 mt-2 mt-md-3" style="background-image: url('{{ static_asset('assets/img/bg_deals_images.png') }}');" >
+            <div class="container">
+                <div class="row align-items-center">
+
+                <div class="col-md-5">
+                    <p class="fw-600 fs-18 green_light_clr pb-0 mb-0">WEEKLY DEAL</p>
+                     <h3 class="fw-600 headeing_size">Best Deal for This Week</h3>
+                     <p>is simply dummy text of the printing and typesetting industry.
+Lorem Ipsum has been the industry's standard dummy text
+ever since the 1500s, when an unknown printe
+</p>
+
+                          <!-- Countdown for small device -->
+                <div class="mb-3 d-md-none">
+                    <div class="aiz-count-down-circle" end-date="{{ date('Y/m/d H:i:s', $flash_deal->end_date) }}"></div>
+                </div>
+
+                  <!-- Flash Deals Baner & Countdown -->
+                    <div class="col-xxl-4 col-lg-5 col-6 p-md-0">
+                        <a href="{{ route('flash-deal-details', $flash_deal->slug) }}">
+                            <div class="">
+                                <div class="d-none d-md-block">
+                                    <div class="">
+                                        <div class="aiz-count-down-circle"
+                                            end-date="{{ date('Y/m/d H:i:s', $flash_deal->end_date) }}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                     <a href="{{ route('flash-deals') }}"
+                                            class="fs-16 mt-5 fw-500 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') btn btn-success custom_button @endif mr-3">
+                                            {{ translate('View All Flash Sale') }}
+                                        </a>
+
+                </div>
+                <div class="col-md-6">
+                    <img class="w-100 flash_images" src="{{ uploaded_asset($flash_deal->banner) }}" />
+                </div>
+                <div class="col-md-1">
+                    <div class="deal_heading">
+                        <h4>DEAL</h4>
+                    </div>
+                </div>
+
+                </div>
+            </div>
+        </section>
+    @endif
+
+  
+
+   
+   <section>
+       <div class="container">
+         <div class="row align-items-center">
+               <div class="col-md-6">
+                     <img class="w-100" src="{{ static_asset('assets/img/about_us_images.png') }}" />
+               </div> 
+               
+               <div class="col-md-6">
+                     <p class="fw-600 fs-18 blue_light_clr pb-0 mb-0">About Us</p>
+                     <h3 class="fw-600 headeing_size">We Provide Best and Original <span class="blue_light_clr">Medical</span> Product For You</h3>
+                     <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
+                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
+                         ever since the 1500s, when an unknown printe</p>
+                         <ul class="list_none">
+                            <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
+                            <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
+                            <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
+                            <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
+                         </ul>
+
+                         <div class="">
+                            <a href="#" class="btn btn-primary custom_button">Descover More <i class="las la-arrow-right"></i></a>
+                         </div>
+               </div> 
+        </div>
+       </div>
+   </section>
+
+
+   <section class="why_choose_us mt-5 pt-5 pb-5">
+       <div class="container">
+         <div class="row align-items-center">
+               <div class="col-md-4">
+                     <img class="w-100" src="{{ static_asset('assets/img/why_choose_images.png') }}" />
+               </div> 
+               
+               <div class="col-md-4">
+                     <p class="fw-600 fs-18 blue_light_clr pb-0 mb-0">WHY CHOOSE US</p>
+                     <h3 class="fw-600 headeing_size">is simply dummy text of the printing and typesetting</h3>
+               </div> 
+
+                <div class="col-md-4">
+                      <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printeis simply dummy text of the printing and typesetting.</p>
+               </div> 
+
+                <div class="col-md-4">
+                    <div class="whu_choose_box mt-5">
+                        <img src="{{ static_asset('assets/img/why_choose_icon1.png') }}" />
+                        <div class="">
+                            <h4>Original Products</h4>
+                             <p class="mb-0">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  </p>
+                        </div>
+                        
+                    </div> 
+               </div> 
+
+               <div class="col-md-4">
+                    <div class="whu_choose_box mt-5">
+                        <img src="{{ static_asset('assets/img/why_choose_icon2.png') }}" />
+                         <div class="">
+                            <h4>Affordable Price</h4>
+                             <p class="mb-0">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  </p>
+                        </div>
+                    </div> 
+               </div> 
+
+               <div class="col-md-4">
+                    <div class="whu_choose_box mt-5">
+                        <img src="{{ static_asset('assets/img/why_choose_icon3.png') }}" />
+                         <div class="">
+                            <h4>Free Shipping</h4>
+                             <p class="mb-0">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  </p>
+                        </div>
+                     </div> 
+               </div> 
+
+        </div>
+       </div>
+   </section>
+
+
+  <!-- TESTIMONIALS -->
+   <section class="testimonials gray_bg pt-md-5 pb-md-5 pt-4 pb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
+     <div class="container">
+       <div class="text-center">
+        <p class="text-white mb-0">TESTIMONIALS</p>
+         <h3 class="text_clr_green pb-md-4 pt-3 pb-2 text-white headeing_size">What Our Client Say’s About Us</h3>
+       </div>
+      
+           <div id="customers-testimonials" class="slick-slider" >
+             <!-- TESTIMONIAL 1 -->
+             <div class="item">
+               <div class="shadow-effect">
+                  <div class="testimnl_box">
+                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <div class="">
+                        <h6 class="mb-2 text-white">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     </div>
+                  </div>
+                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <div class="rating1 text-left">
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                 </div>
+               </div>
+             </div>
+             <!-- TESTIMONIAL 2 -->
+            <div class="item">
+               <div class="shadow-effect">
+                  <div class="testimnl_box">
+                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <div class="">
+                        <h6 class="mb-2 text-white">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     </div>
+                  </div>
+                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <div class="rating1 text-left">
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                 </div>
+               </div>
+             </div>
+             
+             
+             <!-- TESTIMONIAL 3 -->
+            <div class="item">
+               <div class="shadow-effect">
+                  <div class="testimnl_box">
+                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <div class="">
+                        <h6 class="mb-2 text-white">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     </div>
+                  </div>
+                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <div class="rating1 text-left">
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                 </div>
+               </div>
+             </div>
+
+
+              <!-- TESTIMONIAL 4 -->
+            <div class="item">
+               <div class="shadow-effect">
+                  <div class="testimnl_box">
+                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <div class="">
+                         <h6 class="mb-2 text-white">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     </div>
+                  </div>
+                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <div class="rating1 text-left">
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                   <i class="las la-star"></i>
+                 </div>
+               </div>
+             </div>
+            
+             <!-- Additional Testimonials as needed -->
+           </div>
+     </div>
+   </section>
+   <!-- testiminial slider close-->
+
+
+   <section class="pt-5 pb-5 accordion_section">
+    
+<div class="container">
+    <div class="text-center">
+         <h3 class="headeing_size text_clr_green pb-md-2 pt-3 pb-2 fw-600 text-left">Frequently asked questions</h3>
+       </div>
+    <div id="accordion" class="accordion">
+        <div class="card mb-0">
+            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_1">
+                <a class="card-title">
+                  How to order medicines online from Dotcom Pharma
+                </a>
+            </div>
+            <div id="collapse_1" class="collapse" data-parent="#accordion" >
+                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                </div>
+            </div>
+
+            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_2">
+                <a class="card-title">
+                  Is online medicine delivery safe?
+
+                </a>
+            </div>
+            <div id="collapse_2" class="collapse" data-parent="#accordion" >
+                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                </div>
+            </div>
+
+            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_3">
+                <a class="card-title">
+                  How to order medicines online from Dotcom Pharma
+                </a>
+            </div>
+            <div id="collapse_3" class="collapse" data-parent="#accordion" >
+                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                </div>
+            </div>
+
+             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_4">
+                <a class="card-title">
+                  Can Dotcom Pharma provide express delivery?
+                </a>
+            </div>
+            <div id="collapse_4" class="collapse" data-parent="#accordion" >
+                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                </div>
+            </div>
+
+             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_5">
+                <a class="card-title">
+                  How can I buy Dotcom Pharma products?
+                </a>
+            </div>
+            <div id="collapse_5" class="collapse" data-parent="#accordion" >
+                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                </div>
+            </div>
+
+             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_6">
+                <a class="card-title">
+                  Can I track the delivery status of my order? If yes, how?
+                </a>
+            </div>
+            <div id="collapse_6" class="collapse" data-parent="#accordion" >
+                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                </div>
+            </div>
+
+             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_7">
+                <a class="card-title">
+                  Does Dotcom Pharma provide home delivery of medicines?
+                </a>
+            </div>
+            <div id="collapse_7" class="collapse" data-parent="#accordion" >
+                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
+                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</section>
+
+   
+
     <!-- Auction Product -->
     @if (addon_is_activated('auction'))
         <div id="auction_products">
@@ -367,7 +795,7 @@
     @endif
 
     <!-- Cupon -->
-    @if (get_setting('coupon_system') == 1)
+    <!-- @if (get_setting('coupon_system') == 1)
         <div class=" mt-2 mt-md-3"
             style="background-color: {{ get_setting('cupon_background_color', '#292933') }}">
             <div class="container">
@@ -446,10 +874,10 @@
                 </div>
             </div>
         </div>
-    @endif
+    @endif -->
 
     <!-- Category wise Products -->
-    <div id="section_home_categories" style="background: #f5f5fa;">
+    <div id="section_home_categories">
 
     </div>
 
