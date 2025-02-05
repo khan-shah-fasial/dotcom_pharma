@@ -205,7 +205,7 @@
                     <a class="ml-auto mr-0 text-blue fs-12 fw-700 hov-text-primary" href="{{ route('customer_products.category', $customer_product->category->slug) }}">{{ translate('View More') }}</a>
                 </div>
                 <div class="p-3">
-                    <div class="aiz-carousel gutters-16 half-outside-arrow" data-items="6" data-xl-items="5" data-lg-items="4"  data-md-items="3" data-sm-items="2" data-xs-items="2" data-arrows='true' data-infinite='true'>
+                    <div class="aiz-carousel gutters-16 half-outside-arrow" data-items="5" data-xl-items="5" data-lg-items="4"  data-md-items="3" data-sm-items="2" data-xs-items="2" data-arrows='true' data-infinite='true'>
                         @php
                             $products = get_similiar_classified_products($customer_product->category_id, $customer_product->id, 10);
                         @endphp

@@ -23,7 +23,7 @@
                 <div class="px-sm-3">
                     <div class="aiz-carousel slick-left sm-gutters-16 arrow-none" data-items="6" data-xl-items="5" data-lg-items="4"  data-md-items="3" data-sm-items="2" data-xs-items="2" data-arrows='true' data-infinite='false'>
                         @foreach ($lastViewedProducts as $key => $lastViewedProduct)
-                            <div class="carousel-box px-3 position-relative has-transition hov-animate-outline border-right border-top border-bottom @if($key == 0) border-left @endif">
+                            <div class="carousel-box px-0 position-relative has-transition @if($key == 0)  @endif">
                                 @include('frontend.'.get_setting('homepage_select').'.partials.product_box_1',['product' => $lastViewedProduct->product])
                             </div>
                         @endforeach
@@ -48,7 +48,7 @@
 @endif
 
 <!-- footer top Bar -->
-<section class="bg-light border-top mt-auto">
+<section class="bg-light border-top mt-auto d-none">
     <div class="container px-xs-0">
         <div class="row no-gutters border-left border-soft-light">
             <!-- Terms & conditions -->
@@ -108,24 +108,14 @@
 </section>
 
 <!-- footer subscription & icons -->
-<section class="py-3 text-light footer-widget border-bottom" style="border-color: #3d3d46 !important; background-color: #212129 !important;">
+<section class="gray_light text-light footer-widget" >
     <div class="container">
         <!-- footer logo -->
-        <div class="mt-3 mb-4">
-            <a href="{{ route('home') }}" class="d-block">
-                @if(get_setting('footer_logo') != null)
-                    <img class="lazyload h-45px" src="{{ static_asset('assets/img/placeholder-rect.jpg') }}" data-src="{{ uploaded_asset(get_setting('footer_logo')) }}" alt="{{ env('APP_NAME') }}" height="45">
-                @else
-                    <img class="lazyload h-45px" src="{{ static_asset('assets/img/placeholder-rect.jpg') }}" data-src="{{ static_asset('assets/img/logo.png') }}" alt="{{ env('APP_NAME') }}" height="45">
-                @endif
-            </a>
-        </div>
-        <div class="row">
+       
+        <div class="row d-none">
             <!-- about & subscription -->
             <div class="col-xl-6 col-lg-7">
-                <div class="mb-4 text-secondary text-justify">
-                    {!! get_setting('about_us_description',null,App::getLocale()) !!}
-                </div>
+                
                 <h5 class="fs-14 fw-700 text-soft-light mt-1 mb-3">{{ translate('Subscribe to our newsletter for regular updates about Offers, Coupons & more') }}</h5>
                 <div class="mb-3">
                     <form method="POST" action="{{ route('subscribers.store') }}">
@@ -147,41 +137,7 @@
             <!-- Follow & Apps -->
             <div class="col-xxl-3 col-xl-4 col-lg-4">
                 <!-- Social -->
-                @if ( get_setting('show_social_links') )
-                    <h5 class="fs-14 fw-700 text-secondary text-uppercase mt-3 mt-lg-0">{{ translate('Follow Us') }}</h5>
-                    <ul class="list-inline social colored mb-4">
-                        @if (!empty(get_setting('facebook_link')))
-                            <li class="list-inline-item ml-2 mr-2">
-                                <a href="{{ get_setting('facebook_link') }}" target="_blank"
-                                    class="facebook"><i class="lab la-facebook-f"></i></a>
-                            </li>
-                        @endif
-                        @if (!empty(get_setting('twitter_link')))
-                            <li class="list-inline-item ml-2 mr-2">
-                                <a href="{{ get_setting('twitter_link') }}" target="_blank"
-                                    class="twitter"><i class="lab la-twitter"></i></a>
-                            </li>
-                        @endif
-                        @if (!empty(get_setting('instagram_link')))
-                            <li class="list-inline-item ml-2 mr-2">
-                                <a href="{{ get_setting('instagram_link') }}" target="_blank"
-                                    class="instagram"><i class="lab la-instagram"></i></a>
-                            </li>
-                        @endif
-                        @if (!empty(get_setting('youtube_link')))
-                            <li class="list-inline-item ml-2 mr-2">
-                                <a href="{{ get_setting('youtube_link') }}" target="_blank"
-                                    class="youtube"><i class="lab la-youtube"></i></a>
-                            </li>
-                        @endif
-                        @if (!empty(get_setting('linkedin_link')))
-                            <li class="list-inline-item ml-2 mr-2">
-                                <a href="{{ get_setting('linkedin_link') }}" target="_blank"
-                                    class="linkedin"><i class="lab la-linkedin-in"></i></a>
-                            </li>
-                        @endif
-                    </ul>
-                @endif
+               
 
                 <!-- Apps link -->
                 @if((get_setting('play_store_link') != null) || (get_setting('app_store_link') != null))
@@ -208,14 +164,100 @@
 @php
     $col_values = ((get_setting('vendor_system_activation') == 1) || addon_is_activated('delivery_boy')) ? "col-lg-3 col-md-6 col-sm-6" : "col-md-4 col-sm-6";
 @endphp
-<section class="py-lg-3 text-light footer-widget" style="background-color: #212129 !important;">
+<section class="gray_light text-light footer-widget pt-md-5 pt-4 pb-3">
     <!-- footer widgets ========== [Accordion Fotter widgets are bellow from this]-->
     <div class="container d-none d-lg-block">
         <div class="row">
-            <!-- Quick links -->
-            <div class="{{ $col_values }}">
+
+         <div class="col-md-4 pr-md-4">
+            <a href="{{ route('home') }}" class="d-block">
+                @if(get_setting('footer_logo') != null)
+                    <img class="lazyload h-45px" src="{{ static_asset('assets/img/placeholder-rect.jpg') }}" data-src="{{ uploaded_asset(get_setting('footer_logo')) }}" alt="{{ env('APP_NAME') }}" height="45">
+                @else
+                    <img class="lazyload h-45px" src="{{ static_asset('assets/img/placeholder-rect.jpg') }}" data-src="{{ static_asset('assets/img/logo.png') }}" alt="{{ env('APP_NAME') }}" height="45">
+                @endif
+            </a>
+            <div class="mb-4 black_light_clr fs-16  pt-4">
+                    {!! get_setting('about_us_description',null,App::getLocale()) !!}
+                </div>
+
+                 @if ( get_setting('show_social_links') )
+                    <!-- <h5 class="fs-14 fw-700 text-secondary text-uppercase mt-3 mt-lg-0">{{ translate('Follow Us') }}</h5> -->
+                    <ul class="list-inline social colored mb-4 pl-0 ml-0 social_media">
+                         @if (!empty(get_setting('linkedin_link')))
+                            <li class="list-inline-item ">
+                                <a href="{{ get_setting('linkedin_link') }}" target="_blank"><img src="{{ static_asset('assets/img/linked_icons.svg') }}" /></a>
+                            </li>
+                        @endif
+                         @if (!empty(get_setting('instagram_link')))
+                            <li class="list-inline-item">
+                                <a href="{{ get_setting('instagram_link') }}" target="_blank"><img src="{{ static_asset('assets/img/instagram_icons.svg') }}" /></a>
+                            </li>
+                        @endif
+                           @if (!empty(get_setting('twitter_link')))
+                            <li class="list-inline-item ">
+                                <a href="{{ get_setting('twitter_link') }}" target="_blank"><img src="{{ static_asset('assets/img/x_icons.svg') }}" /></a>
+                            </li>
+                        @endif
+                        @if (!empty(get_setting('facebook_link')))
+                            <li class="list-inline-item">
+                                <a href="{{ get_setting('facebook_link') }}" target="_blank"><img src="{{ static_asset('assets/img/facebook_icons.svg') }}" /></a>
+                            </li>
+                        @endif
+                        @if (!empty(get_setting('youtube_link')))
+                            <li class="list-inline-item">
+                                <a href="{{ get_setting('youtube_link') }}" target="_blank"><img src="{{ static_asset('assets/img/linked_icons.svg') }}" /></a>
+                            </li>
+                        @endif
+                       
+                    </ul>
+                @endif
+        </div>
+
+        <!-- Quick links -->
+            <div class="col-md-2 pl-md-5">
                 <div class="text-center text-sm-left mt-4">
-                    <h4 class="fs-14 text-secondary text-uppercase fw-700 mb-3">
+                   <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-3">{{ translate('Quick Links') }}</h4>
+                    <ul class="list-unstyled">
+                       
+                            <li class="mb-2">
+                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
+                                   Home
+                                </a>
+                            </li>
+
+                             <li class="mb-2">
+                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
+                                   About Us
+                                </a>
+                            </li>
+
+                               <li class="mb-2">
+                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
+                                   Product
+                                </a>
+                            </li>
+
+                             <li class="mb-2">
+                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
+                                   News
+                                </a>
+                            </li>
+
+                             <li class="mb-2">
+                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
+                                   Contact Us
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+
+
+            <!-- Quick links -->
+            <div class="col-md-2">
+                <div class="text-center text-sm-left mt-4">
+                    <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-3">
                         {{ get_setting('widget_one',null,App::getLocale()) }}
                     </h4>
                     <ul class="list-unstyled">
@@ -228,33 +270,35 @@
 								}
 							@endphp
                             <li class="mb-2">
-                                <a href="{{ $widget_one_links }}" class="fs-13 text-soft-light animate-underline-white">
+                                <a href="{{ $widget_one_links }}" class="fs-16 black_light_clr animate-underline-white">
                                     {{ $value }}
                                 </a>
                             </li>
                             @endforeach
                         @endif
                     </ul>
+
+                    
                 </div>
             </div>
 
             <!-- Contacts -->
-            <div class="{{ $col_values }}">
-                <div class="text-center text-sm-left mt-4">
-                    <h4 class="fs-14 text-secondary text-uppercase fw-700 mb-3">{{ translate('Contacts') }}</h4>
+            <div class="col-md-4">
+                <div class="text-center text-sm-left mt-4 footer_address_1">
+                    <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-3">{{ translate('Contacts') }}</h4>
                     <ul class="list-unstyled">
                         <li class="mb-2">
-                            <p  class="fs-13 text-secondary mb-1">{{ translate('Address') }}</p>
-                            <p  class="fs-13 text-soft-light">{{ get_setting('contact_address',null,App::getLocale()) }}</p>
+                             <img src="{{ static_asset('assets/img/envolope_icons.svg') }} "/>
+                            <p  class="fs-16 black_light_clr">{{ get_setting('contact_address',null,App::getLocale()) }}</p>
                         </li>
                         <li class="mb-2">
-                            <p  class="fs-13 text-secondary mb-1">{{ translate('Phone') }}</p>
-                            <p  class="fs-13 text-soft-light">{{ get_setting('contact_phone') }}</p>
+                             <img src="{{ static_asset('assets/img/call_icons.svg') }} "/>
+                            <p  class="fs-16 black_light_clr">{{ get_setting('contact_phone') }}</p>
                         </li>
                         <li class="mb-2">
-                            <p  class="fs-13 text-secondary mb-1">{{ translate('Email') }}</p>
+                            <img src="{{ static_asset('assets/img/location_icons.svg') }} "/>
                             <p  class="">
-                                <a href="mailto:{{ get_setting('contact_email') }}" class="fs-13 text-soft-light hov-text-primary">{{ get_setting('contact_email')  }}</a>
+                                <a href="mailto:{{ get_setting('contact_email') }}" class="fs-16 black_light_clr hov-text-primary">{{ get_setting('contact_email')  }}</a>
                             </p>
                         </li>
                     </ul>
@@ -262,7 +306,7 @@
             </div>
 
             <!-- My Account -->
-            <div class="{{ $col_values }}">
+            <div class="{{ $col_values }} d-none">
                 <div class="text-center text-sm-left mt-4">
                     <h4 class="fs-14 text-secondary text-uppercase fw-700 mb-3">{{ translate('My Account') }}</h4>
                     <ul class="list-unstyled">
@@ -552,18 +596,18 @@
 @endphp
 
 <!-- FOOTER -->
-<footer class="pt-3 pb-7 pb-xl-3 bg-black text-soft-light">
+<footer class="copy_rights_section pt-3 pb-7 pb-xl-3 blue_bg_light_clr text-white text-center">
     <div class="container">
-        <div class="row align-items-center py-3">
+        <div class="row align-items-center">
             <!-- Copyright -->
-            <div class="col-lg-6 order-1 order-lg-0">
-                <div class="text-center text-lg-left fs-14" current-verison="{{get_setting("current_version")}}">
+            <div class="col-lg-12 order-1 order-lg-0">
+                <div class="text-center fs-14 text-white" current-verison="{{get_setting("current_version")}}">
                     {!! get_setting('frontend_copyright_text', null, App::getLocale()) !!}
                 </div>
             </div>
 
             <!-- Payment Method Images -->
-            <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="col-lg-6 mb-4 mb-lg-0 d-none">
                 <div class="text-center text-lg-right">
                     <ul class="list-inline mb-0">
                         @if ( get_setting('payment_method_images') !=  null )

@@ -33,7 +33,7 @@
                             data-xs-items="2" data-arrows='true' data-infinite='false'>
                             @foreach (get_cached_products($category->id) as $product_key => $product)
                                 <div
-                                    class="carousel-box px-3 position-relative has-transition border-right border-top border-bottom @if ($product_key == 0) border-left @endif hov-animate-outline">
+                                    class="carousel-box px-0 position-relative has-transition @if ($product_key == 0) @endif ">
                                     @include('frontend.'.get_setting('homepage_select').'.partials.product_box_1', ['product' => $product])
                                 </div>
                             @endforeach

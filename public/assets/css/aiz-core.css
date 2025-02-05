@@ -7175,7 +7175,7 @@ hr {
 
     .container,
     .container-xxl {
-        max-width: 1400px;
+        max-width: 1270px;
     }
 
     .col-xxl {
@@ -10522,7 +10522,7 @@ input[type="number"] {
 
     /*xxl*/
     .modal-adaptive {
-        max-width: 1400px;
+        max-width: 1270px;
     }
 }
 
@@ -11806,8 +11806,8 @@ div.footable-loader>span.fooicon:after {
 }
 
 .aiz-carousel.gutters-16 .carousel-box {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .aiz-carousel-full * {
