@@ -2,6 +2,10 @@
 
 {{-- - //------------------------------ Registration 2 modal -----------------------// -- --}}
 
+@php
+    $session_data_user = session()->get('user_data') ?? []; 
+@endphp
+
 <div class="modal fade login_form_popup" id="reg_model_2" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -27,7 +31,7 @@
                             <div class="form-group mb-1">
                                 <label class="form-label" for="name">Company Name</label>
                                 <input type="text" id="company_name" name="company_name"
-                                    class="form-control form-control-lg" value="{{ $data['company_name'] ?? '' }}" required placeholder="Enter Company Name"/>
+                                    class="form-control form-control-lg" value="{{ $data['company_name'] ?? $session_data_user['company_name'] ?? '' }}" required placeholder="Enter Company Name"/>
                             </div>
 
                         </div>
@@ -36,7 +40,7 @@
                             <div class="form-group mb-1">
                                 <label class="form-label" for="name">Concerned Person Name</label>
                                 <input type="text" id="name" name="name"
-                                    class="form-control form-control-lg" value="{{ $data['name'] ?? '' }}" required placeholder="Enter Concerned Person Name"/>
+                                    class="form-control form-control-lg" value="{{ $data['name'] ?? $session_data_user['name'] ?? '' }}" required placeholder="Enter Concerned Person Name"/>
                             </div>
 
                         </div>
@@ -45,7 +49,7 @@
                             <div class="form-group mb-1">
                                 <label class="form-label" for="email_id">Email</label>
                                 <input type="email" id="email_id" name="email_id"
-                                    class="form-control form-control-lg" value="{{ $data['email'] ?? '' }}" required placeholder="Enter Email"/>
+                                    class="form-control form-control-lg" value="{{ $data['email'] ?? $session_data_user['email'] ?? '' }}" required placeholder="Enter Email"/>
                             </div>
 
                         </div>
@@ -55,7 +59,7 @@
                                 if(!empty($data['phone'])){
                                     $Phone_parts = explode('-', $data['phone']);
                                     $Phone_parts_number = $Phone_parts[1] ?? ''; 
-                                }
+                                } 
                             @endphp
 
                             <div class="form-group phone-form-group mb-1">
@@ -122,7 +126,7 @@
 
                             <div class="form-group mb-1">
                                 <label class="form-label" for="post">Post</label>
-                                <input type="text" id="post" name="post" value="{{ $data['post'] ?? '' }}"
+                                <input type="text" id="post" name="post" value="{{ $data['post'] ?? $session_data_user['post'] ?? '' }}"
                                     class="form-control form-control-lg" placeholder="Enter Post"/>
                             </div>
 

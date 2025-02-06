@@ -771,6 +771,8 @@ class RegisterController extends Controller
 
         if (session()->has('temp_user_id')) {
 
+            $temp_phone = $request->country_code_phone_code.'-'.$request->phone;
+
             if (filter_var($request->email_id, FILTER_VALIDATE_EMAIL)) {
                 if (User::where('email', $request->email_id)->where('id', '!=', session('temp_user_id'))->first() != null) {
                     return response()->json([
@@ -780,7 +782,7 @@ class RegisterController extends Controller
                 }
             }
 
-            elseif (User::where('phone', $request->country_code_phone_code.$request->phone)->where('id', '!=', session('temp_user_id'))->first() != null) {
+            if (User::where('phone', $temp_phone)->where('id', '!=', session('temp_user_id'))->first() != null) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Phone already exists.'
@@ -788,6 +790,9 @@ class RegisterController extends Controller
             }
     
         } else {
+
+
+            $temp_phone = $request->country_code_phone_code.'-'.$request->phone;
 
             if (filter_var($request->email_id, FILTER_VALIDATE_EMAIL)) {
                 if (User::where('email', $request->email_id)->first() != null) {
@@ -798,7 +803,7 @@ class RegisterController extends Controller
                 }
             }
 
-            elseif (User::where('phone', '+'.$request->country_code_phone_code.'-'.$request->phone)->first() != null) {
+            if (User::where('phone', $temp_phone)->first() != null) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Phone already exists.' 
@@ -840,7 +845,7 @@ class RegisterController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'OTP has been this Phone'. $request->country_code_phone_code.$request->phone,
+            'message' => 'OTP has been this Phone'. $request->country_code_phone_code.' '.$request->phone,
         ], 200);
     }
 
