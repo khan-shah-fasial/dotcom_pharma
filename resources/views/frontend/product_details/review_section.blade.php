@@ -1,11 +1,11 @@
-<div class="bg-white border mb-4">
-    <div class="p-3 p-sm-4">
+<div class="bg-white mb-2">
+    <!-- <div class="p-3 p-sm-4">
         <h3 class="fs-16 fw-700 mb-0">
             <span class="mr-4">{{ translate('Reviews & Ratings') }}</span>
         </h3>
-    </div>
+    </div> -->
     <!-- Ratting -->
-    <div class="px-3 px-sm-4 mb-4">
+    <div class="pt-4 pb-4">
         <div class="border border-secondary-base bg-soft-secondary-base p-3 p-sm-4">
             <div class="row align-items-center">
                 <div class="col-md-8 mb-3">

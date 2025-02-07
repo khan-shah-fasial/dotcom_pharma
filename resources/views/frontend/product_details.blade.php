@@ -88,7 +88,7 @@
             @else
                 <div class="row gutters-16">
                     <!-- Left side -->
-                    <div class="col-lg-3">
+                    <div class="col-lg-3 d-none">
                         <!-- Seller Info -->
                         @include('frontend.product_details.seller_info')
 
@@ -99,16 +99,34 @@
                     </div>
 
                     <!-- Right side -->
-                    <div class="col-lg-9">
+                    <div class="col-lg-12">
                         
-                        <!-- Reviews & Ratings -->
-                        @include('frontend.product_details.review_section')
+                       
+                    <div class="discription_boxex">
+                       <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">description</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="profile-tab" data-toggle="tab" data-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Reviews & Ratings</button>
+                            </li>
+                        </ul>
 
-                        <!-- Description, Video, Downloads -->
-                        @include('frontend.product_details.description')
+                        <div class="tab-content" id="myTabContent">
+                            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                                <!-- Description, Video, Downloads --> @include('frontend.product_details.description')
+                            </div>
+                            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                                <!-- Reviews & Ratings --> @include('frontend.product_details.review_section')
+                            </div>
+                        </div>
+                    </div>
+
+
+                       
                         
                         <!-- Frequently Bought products -->
-                        @include('frontend.product_details.frequently_bought_products')
+                        <!-- @include('frontend.product_details.frequently_bought_products') -->
 
                         <!-- Product Query -->
                         @include('frontend.product_details.product_queries')

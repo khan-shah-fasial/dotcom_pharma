@@ -181,7 +181,7 @@ Route::controller(HomeController::class)->group(function () {
     // Policies
     Route::get('/seller-policy', 'sellerpolicy')->name('sellerpolicy');
     Route::get('/return-policy', 'returnpolicy')->name('returnpolicy');
-    Route::get('/support-policy', 'supportpolicy')->name('supportpolicy');
+    Route::get('/about-us', 'supportpolicy')->name('supportpolicy');
     Route::get('/terms', 'terms')->name('terms');
     Route::get('/privacy-policy', 'privacypolicy')->name('privacypolicy');
 

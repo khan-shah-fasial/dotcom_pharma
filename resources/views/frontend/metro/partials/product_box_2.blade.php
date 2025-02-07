@@ -55,7 +55,7 @@
                 </a>
             </div>
             <!-- add to cart -->
-            <a class="cart-btn absolute-bottom-left w-100 h-35px aiz-p-hov-icon text-white fs-13 fw-700 d-flex flex-column justify-content-center align-items-center @if (in_array($product->id, $cart_added)) active @endif"
+            <a class="@if (in_array($product->id, $cart_added)) active @endif"
                 href="javascript:void(0)"
                 onclick="showAddToCartModal({{ $product->id }})">
                 <span class="cart-btn-text">
@@ -77,7 +77,7 @@
                 $highest_bid = $product->bids->max('amount');
                 $min_bid_amount = $highest_bid != null ? $highest_bid + 1 : $product->starting_bid;
             @endphp
-            <a class="cart-btn absolute-bottom-left w-100 h-35px aiz-p-hov-icon text-white fs-13 fw-700 d-flex flex-column justify-content-center align-items-center @if (in_array($product->id, $cart_added)) active @endif"
+            <a class=" @if (in_array($product->id, $cart_added)) active @endif"
                 href="javascript:void(0)" onclick="bid_single_modal({{ $product->id }}, {{ $min_bid_amount }})">
                 <span class="cart-btn-text">{{ translate('Place Bid') }}</span>
                 <span><i class="las la-2x la-gavel"></i></span>
@@ -91,6 +91,11 @@
             <a href="{{ $product_url }}" class="d-block text-reset hov-text-primary"
                 title="{{ $product->getTranslation('name') }}">{{ $product->getTranslation('name') }}</a>
         </h3>
+
+        <div class="listing_rating rating rating-mr-1">
+                    <i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i>
+                </div>
+
         <div class="fs-14 d-flex justify-content-center mt-2">
             @if ($product->auction_product == 0)
                 <!-- Previous price -->

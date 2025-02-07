@@ -86,7 +86,7 @@
 
                            <div class="col-md-2">
                               <div class="form-group">
-                                 <button value="Search" type="button" class="btn btn-primary custom_button" >Search</button>
+                                 <button value="Search" type="button" class="btn btn-primary custom_button" > <i class="las la-search la-flip-horizontal la-1x" style="color:#fff;"></i>Search</button>
                               </div>
                           </div>
 
@@ -99,13 +99,13 @@
 
     <!-- Featured Categories -->
     @if (count($featured_categories) > 0)
-        <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+        <section class="mb-4 mb-md-5 mt-4 mt-md-5">
             <div class="container">
                 <div class="bg-white">
                     <!-- Top Section -->
-                    <div class=" mt-2 mt-md-3 mb-2 mb-md-4 text-center">
+                    <div class="text-center">
                         <!-- Title -->
-                        <h3 class="fs-16 fs-md-24 text-center fw-700 pb-2">
+                        <h3 class="fs-16 fs-md-24 text-center fw-700 pb-4 pt-0">
                             <span class="">{{ translate('Top Category') }}</span>
                         </h3>
                     </div>
@@ -162,7 +162,7 @@
     <!-- Banner section 1 -->
     @php $homeBanner1Images = get_setting('home_banner1_images', null, $lang);   @endphp
     @if ($homeBanner1Images != null)
-        <div class="pt-5">
+        <div class="pb-4">
             <div class="container">
                 @php
                     $banner_1_imags = json_decode($homeBanner1Images);
@@ -200,7 +200,7 @@
     <!-- Banner Section 2 -->
     @php $homeBanner2Images = get_setting('home_banner2_images', null, $lang);   @endphp
     @if ($homeBanner2Images != null)
-        <div class="mb-2 mb-md-3 mt-2 mt-md-3">
+        <div class="pt-3">
             <div class="container">
                 @php
                     $banner_2_imags = json_decode($homeBanner2Images);
@@ -236,7 +236,7 @@
 
 
 
-    <section>
+    <section class="pt-2 pb-3">
        <div class="container">
         <div class="payment_safe_secrtion">
                     <div class="row">
@@ -244,8 +244,8 @@
                               <div class="payment_boxs align-items-center gap-3">
                                    <img class="" src="{{ static_asset('assets/img/free_delivery_icons.svg') }}" />
                                    <div class="">
-                                      <h6 class="text-white mb-1">Free Delivery</h6>
-                                      <p class="text-white mb-0 pb-0">Order Over 250.00</p>
+                                      <h6 class="text-white mb-1 fw-500 mb-0">Free Delivery</h6>
+                                      <p class="text-white mb-0 pb-0 fs-14 fw-400">Order Over 250.00</p>
                                    </div>
                               </div>
                           </div>
@@ -254,8 +254,8 @@
                               <div class="payment_boxs align-items-center gap-3">
                                    <img src="{{ static_asset('assets/img/refund_icons.svg') }}" />
                                    <div class="">
-                                       <h6 class="text-white mb-1">Get Refund</h6>
-                                      <p class="text-white mb-0 pb-0">Within 30 Days Return</p>
+                                       <h6 class="text-white mb-1 fw-500 mb-0">Get Refund</h6>
+                                      <p class="text-white mb-0 pb-0 fs-14 fw-400">Within 30 Days Return</p>
                                    </div>
                               </div>
                           </div>
@@ -264,8 +264,8 @@
                               <div class="payment_boxs align-items-center gap-3">
                                    <img src="{{ static_asset('assets/img/safe_payment_icons.svg') }}" />
                                    <div class="">
-                                       <h6 class="text-white mb-1">Safe Payment</h6>
-                                      <p class="text-white mb-0 pb-0">100% Secure Payment</p>
+                                       <h6 class="text-white mb-1 fw-500 mb-0">Safe Payment</h6>
+                                      <p class="text-white mb-0 pb-0 fs-14 fw-400">100% Secure Payment</p>
                                    </div>
                               </div>
                           </div>
@@ -274,8 +274,8 @@
                               <div class="payment_boxs align-items-center gap-3">
                                    <img src="{{ static_asset('assets/img/support_icons.svg') }}" />
                                    <div class="">
-                                      <h6 class="text-white mb-1">24/7 Support</h6>
-                                      <p class="text-white mb-0 pb-0">Feel Free To Call Us</p>
+                                      <h6 class="text-white mb-1 fw-500 mb-0">24/7 Support</h6>
+                                      <p class="text-white mb-0 pb-0 fs-14 fw-400">Feel Free To Call Us</p>
                                    </div>
                               </div>
                           </div>
@@ -328,7 +328,7 @@
     @php
         $todays_deal_section_bg = get_setting('todays_deal_section_bg_color');
     @endphp
-    <div id="todays_deal" class="mb-2rem mt-2 mt-md-3" @if(get_setting('todays_deal_section_bg') == 1) style="background: {{ $todays_deal_section_bg }};" @endif>
+    <div id="todays_deal" class="mt-4" @if(get_setting('todays_deal_section_bg') == 1) style="background: {{ $todays_deal_section_bg }};" @endif>
 
     </div>
 
@@ -458,7 +458,7 @@
 
     @endphp
     @if ($flash_deal != null)
-        <section class="flash_deals_section pt-5 pb-5 mb-2 mb-md-3 mt-2 mt-md-3" style="background-image: url('{{ static_asset('assets/img/bg_deals_images.png') }}');" >
+        <section class="flash_deals_section mt-5 pt-5 pb-5 " style="background-image: url('{{ static_asset('assets/img/bg_deals_images.png') }}');" >
             <div class="container">
                 <div class="row align-items-center">
 
@@ -491,7 +491,7 @@ ever since the 1500s, when an unknown printe
 
                      <a href="{{ route('flash-deals') }}"
                                             class="fs-16 mt-5 fw-500 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') btn btn-success custom_button @endif mr-3">
-                                            {{ translate('View All Flash Sale') }}
+                                            {{ translate('View All Flash Sale') }} <i class="las la-angle-double-right"></i>
                                         </a>
 
                 </div>
@@ -512,7 +512,7 @@ ever since the 1500s, when an unknown printe
   
 
    
-   <section>
+   <section class="pt-md-5 pt-4 pb-md-5 pb-4">
        <div class="container">
          <div class="row align-items-center">
                <div class="col-md-6">
@@ -541,7 +541,7 @@ ever since the 1500s, when an unknown printe
    </section>
 
 
-   <section class="why_choose_us mt-5 pt-5 pb-5">
+   <section class="why_choose_us pt-5 pb-5">
        <div class="container">
          <div class="row align-items-center">
                <div class="col-md-4">
@@ -605,11 +605,11 @@ ever since the 1500s, when an unknown printe
              <!-- TESTIMONIAL 1 -->
              <div class="item">
                <div class="shadow-effect">
-                  <div class="testimnl_box">
+                  <div class="testimnl_box ">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
-                     <div class="">
-                        <h6 class="mb-2 text-white">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     <div class="text-left">
+                        <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
                      </div>
                   </div>
                  <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
@@ -627,9 +627,9 @@ ever since the 1500s, when an unknown printe
                <div class="shadow-effect">
                   <div class="testimnl_box">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
-                     <div class="">
-                        <h6 class="mb-2 text-white">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     <div class="text-left">
+                        <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
                      </div>
                   </div>
                  <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
@@ -649,9 +649,9 @@ ever since the 1500s, when an unknown printe
                <div class="shadow-effect">
                   <div class="testimnl_box">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
-                     <div class="">
-                        <h6 class="mb-2 text-white">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     <div class="text-left">
+                        <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
                      </div>
                   </div>
                  <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
@@ -671,9 +671,9 @@ ever since the 1500s, when an unknown printe
                <div class="shadow-effect">
                   <div class="testimnl_box">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
-                     <div class="">
-                         <h6 class="mb-2 text-white">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white">Petr, Belgium</p>
+                     <div class="text-left">
+                         <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
                      </div>
                   </div>
                  <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
@@ -698,7 +698,7 @@ ever since the 1500s, when an unknown printe
     
 <div class="container">
     <div class="text-center">
-         <h3 class="headeing_size text_clr_green pb-md-2 pt-3 pb-2 fw-600 text-left">Frequently asked questions</h3>
+         <h3 class="headeing_size text_clr_green pb-2 fw-600 text-left">Frequently asked questions</h3>
        </div>
     <div id="accordion" class="accordion">
         <div class="card mb-0">
@@ -977,7 +977,7 @@ ever since the 1500s, when an unknown printe
             $best_selers = get_best_sellers(10);
         @endphp
         @if (count($best_selers) > 0)
-        <section class="mb-2 mb-md-3 mt-2 mt-md-3">
+        <section class="mb-2 mb-md-4 mt-2 mt-md-3">
             <div class="container">
                 <!-- Top Section -->
                 <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">

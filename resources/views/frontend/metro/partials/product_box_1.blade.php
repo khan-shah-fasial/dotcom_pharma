@@ -1,8 +1,8 @@
 @php
     $cart_added = [];
 @endphp
-<div class="aiz-card-box h-auto bg-white py-3 hov-scale-img product_img_bg">
-    <div class="position-relative h-140px h-md-200px img-fit overflow-hidden">
+<div class="aiz-card-box h-auto product_img_bg">
+    <div class="position-relative img-fit overflow-hidden">
         @php
             $product_url = route('product', $product->slug);
             if ($product->auction_product == 1) {
@@ -31,7 +31,7 @@
         @endif
         @if ($product->auction_product == 0)
             <!-- wishlisht & compare icons -->
-            <div class="absolute-top-right aiz-p-hov-icon">
+            <div class="absolute-top-right aiz-p-hov-icon d-none">
                 <a href="javascript:void(0)" class="hov-svg-white" onclick="addToWishList({{ $product->id }})"
                     data-toggle="tooltip" data-title="{{ translate('Add to wishlist') }}" data-placement="left">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="14.4" viewBox="0 0 16 14.4">
@@ -55,17 +55,7 @@
                     </svg>
                 </a>
             </div>
-            <!-- add to cart -->
-            @if(is_user_loggedin())
-            <a class="cart-btn absolute-bottom-left w-100 h-35px aiz-p-hov-icon text-white fs-13 fw-700 d-flex flex-column justify-content-center align-items-center @if (in_array($product->id, $cart_added)) active @endif"
-                href="javascript:void(0)"
-                onclick="showAddToCartModal({{ $product->id }})">
-                <span class="cart-btn-text">
-                    {{ translate('Add to Cart') }}
-                </span>
-                <span><i class="las la-2x la-shopping-cart"></i></span>
-            </a>
-            @endif
+           
         @endif
         @if (
             $product->auction_product == 1 &&
@@ -80,7 +70,7 @@
                 $highest_bid = $product->bids->max('amount');
                 $min_bid_amount = $highest_bid != null ? $highest_bid + 1 : $product->starting_bid;
             @endphp
-            <a class="cart-btn absolute-bottom-left w-100 h-35px aiz-p-hov-icon text-white fs-13 fw-700 d-flex flex-column justify-content-center align-items-center @if (in_array($product->id, $cart_added)) active @endif"
+            <a class="@if (in_array($product->id, $cart_added)) active @endif"
                 href="javascript:void(0)" onclick="bid_single_modal({{ $product->id }}, {{ $min_bid_amount }})">
                 <span class="cart-btn-text">{{ translate('Place Bid') }}</span>
                 <span><i class="las la-2x la-gavel"></i></span>
@@ -89,11 +79,19 @@
     </div>
 
     <div class="product_box_mains">
+   
+    <div class="flex_boxex">
         <!-- Product name -->
         <h3 class="fw-500 fs-16 text-truncate-1 lh-1-4 mb-0">
             <a href="{{ $product_url }}" class="d-block text-reset hov-text-primary"
                 title="{{ $product->getTranslation('name') }}">{{ $product->getTranslation('name') }}</a>
         </h3>
+
+
+        <div class="listing_rating rating rating-mr-1">
+                    <i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i>
+                </div>
+
         @if(is_user_loggedin()) <!--display peice to only logged user [by nexgeno]-->
         <div class="fs-16 mt-1">
             @if ($product->auction_product == 0)
@@ -117,5 +115,21 @@
             @endif
         </div>
         @endif
+    </div>
+
+     <div class="flex_boxex">
+         <!-- add to cart -->
+            @if(is_user_loggedin())
+            <a class="@if (in_array($product->id, $cart_added)) active @endif"
+                href="javascript:void(0)"
+                onclick="showAddToCartModal({{ $product->id }})">
+                <!-- <span class="cart-btn-text">
+                    {{ translate('Add to Cart') }}
+                </span> -->
+                <span><i class="las la-shopping-bag la-2x"></i></span>
+            </a>
+            @endif
+    </div>
+        
     </div>
 </div>

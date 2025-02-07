@@ -54,7 +54,7 @@
                                 </div>
 
                                 <!-- Categories -->
-                                <div class="bg-white border mb-3">
+                                <div class=" mb-3 light_bg_gray">
                                     <div class="fs-16 fw-700 p-3">
                                         <a href="#collapse_1" class="dropdown-toggle filter-section text-dark d-flex align-items-center justify-content-between" data-toggle="collapse">
                                             {{ translate('Categories')}}
@@ -105,7 +105,7 @@
                                 </div>
 
                                 <!-- Price range -->
-                                <div class="bg-white border mb-3">
+                                <div class="light_bg_gray mb-3">
                                     <div class="fs-16 fw-700 p-3">
                                         {{ translate('Price range')}}
                                     </div>
@@ -155,7 +155,7 @@
                                 
                                 <!-- Attributes -->
                                 @foreach ($attributes as $attribute)
-                                    <div class="bg-white border mb-3">
+                                    <div class="light_bg_gray mb-3">
                                         <div class="fs-16 fw-700 p-3">
                                             <a href="#" class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between" 
                                                 data-toggle="collapse" data-target="#collapse_{{ str_replace(' ', '_', $attribute->name) }}" style="white-space: normal;">
@@ -191,7 +191,7 @@
                                     
                                 <!-- Color -->
                                 @if (get_setting('color_filter_activation'))
-                                    <div class="bg-white border mb-3">
+                                    <div class="light_bg_gray mb-3">
                                         <div class="fs-16 fw-700 p-3">
                                             <a href="#" class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between" data-toggle="collapse" data-target="#collapse_color">
                                                 {{ translate('Filter by color')}}
@@ -233,7 +233,7 @@
                     <div class="col-xl-9">
                         
                         <!-- Breadcrumb -->
-                        <ul class="breadcrumb bg-transparent py-0 px-1">
+                        <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2">
                             <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100">
                                 <a class="text-reset" href="{{ route('home') }}">{{ translate('Home')}}</a>
                             </li>
@@ -254,7 +254,7 @@
                         </ul>
                         
                         <!-- Top Filters -->
-                        <div class="text-left">
+                        <div class="text-left pl-md-2">
                             <div class="row gutters-5 flex-wrap align-items-center">
                                 <div class="col-lg col-10">
                                     <h1 class="fs-20 fs-md-24 fw-700 text-dark">
@@ -297,9 +297,9 @@
                         
                         <!-- Products -->
                         <div class="px-3">
-                            <div class="row gutters-16 row-cols-xxl-4 row-cols-xl-3 row-cols-lg-4 row-cols-md-3 row-cols-2 border-top border-left">
+                            <div class="row row-cols-xxl-3 row-cols-xl-3 row-cols-lg-3 row-cols-md-3 row-cols-2">
                                 @foreach ($products as $key => $product)
-                                    <div class="col border-right border-bottom has-transition hov-shadow-out z-1">
+                                    <div class="col  has-transition z-1 product_listing_box">
                                         @include('frontend.'.get_setting('homepage_select').'.partials.product_box_1',['product' => $product])
                                     </div>
                                 @endforeach

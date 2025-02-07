@@ -1,6 +1,6 @@
 <div class="text-left">
     <!-- Product Name -->
-    <h2 class="mb-4 fs-16 fw-700 text-dark">
+    <h2 class="mb-3 fs-34 fw-600">
         {{ $detailedProduct->getTranslation('name') }}
     </h2>
 
@@ -21,7 +21,7 @@
         @endif
         <!-- Estimate Shipping Time -->
         @if ($detailedProduct->est_shipping_days)
-            <div class="col-auto fs-14 mt-1">
+            <div class="col-auto fs-14 mt-1 d-none">
                 <small class="mr-1 opacity-50 fs-14">{{ translate('Estimate Shipping Time') }}:</small>
                 <span class="fw-500">{{ $detailedProduct->est_shipping_days }} {{ translate('Days') }}</span>
             </div>
@@ -33,7 +33,9 @@
             </div>
         @endif
     </div>
-    <div class="row align-items-center">
+
+    <p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable.</p>
+    <div class="row align-items-center d-none">
         @if(get_setting('product_query_activation') == 1)
             <!-- Ask about this product -->
             <div class="col-xl-3 col-lg-4 col-md-3 col-sm-4 mb-3">
@@ -78,14 +80,7 @@
     </div>
 
 
-    <!-- Brand Logo & Name -->
-    @if ($detailedProduct->brand != null)
-        <div class="d-flex flex-wrap align-items-center mb-3">
-            <span class="text-secondary fs-14 fw-400 mr-4 w-80px">{{ translate('Brand') }}</span><br>
-            <a href="{{ route('products.brand', $detailedProduct->brand->slug) }}"
-                class="text-reset hov-text-primary fs-14 fw-700">{{ $detailedProduct->brand->name }}</a>
-        </div>
-    @endif
+   
 
     {{-- Warranty --}}
     @if ($detailedProduct->has_warranty == 1 && $detailedProduct->warranty_id != null)
@@ -106,7 +101,7 @@
     @endif
 
     <!-- Seller Info -->
-    <div class="d-flex flex-wrap align-items-center">
+    <div class="align-items-center d-none">
         <div class="d-flex align-items-center mr-4">
             <!-- Shop Name -->
             @if ($detailedProduct->added_by == 'seller' && get_setting('vendor_system_activation') == 1)
@@ -347,6 +342,8 @@
     @endif
     @endif
 
+    
+
     @if ($detailedProduct->auction_product != 1 && is_user_loggedin()) <!--Display price & vairation to only loggedin user [by nexgeno]-->
         <form id="option-choice-form">
             @csrf
@@ -496,6 +493,42 @@
             </div>
         @endif
     @else
+
+
+    
+
+
+     <div class="d-flex flex-wrap align-items-center mb-1">
+            <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Stock') }}</span><br>
+           
+                <p class="text-secondary fs-14 fw-400 pb-0 mb-1">Available</p>
+        </div>
+
+         <div class="d-flex flex-wrap align-items-center mb-1">
+            <span class="fs-14 fw-500 mr-4 w-80px">SKU</span><br>
+            <p class="text-secondary fs-14 fw-400 pb-0 mb-0">000000</p>
+        </div>
+
+         <div class="d-flex flex-wrap align-items-center mb-1">
+            <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Category') }}</span><br>
+                <p class="text-secondary fs-14 fw-400 pb-0 mb-0">Medicine</p>
+        </div>
+
+         <!-- Brand Logo & Name -->
+    @if ($detailedProduct->brand != null)
+        <div class="d-flex flex-wrap align-items-center mb-1">
+            <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Brand') }}</span><br>
+            <a href="{{ route('products.brand', $detailedProduct->brand->slug) }}"
+                class="text-secondary hov-text-primary fs-14 fw-400">{{ $detailedProduct->brand->name }}</a>
+        </div>
+    @endif
+
+        
+          <div class="d-flex flex-wrap align-items-center mb-0">
+            <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Tags') }}</span><br>
+                <p class="text-secondary fs-14 fw-400 pb-0 mb-0">Medicine, Healtcare</p>
+        </div>
+
         <!-- Add to cart & Buy now Buttons -->
         <div class="mt-3" @if(!is_user_loggedin()) style="pointer-events:none;opacity:0.6" @endif>
             @if(!is_user_loggedin()) <p>Please login / register to buy or to get detailed information of the product</p> @endif
@@ -565,7 +598,7 @@
             $refund_sticker = get_setting('refund_sticker');
         @endphp
         @if (addon_is_activated('refund_request'))
-            <div class="row no-gutters mt-3">
+            <div class="row no-gutters mt-3 d-none">
                 <div class="col-sm-2">
                     <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Refund') }}</div>
                 </div>
@@ -590,7 +623,7 @@
         <!-- Seller Guarantees -->
         @if ($detailedProduct->digital == 1)
             @if ($detailedProduct->added_by == 'seller')
-                <div class="row no-gutters mt-3">
+                <div class="row no-gutters mt-3 d-none">
                     <div class="col-2">
                         <div class="text-secondary fs-14 fw-400">{{ translate('Seller Guarantees') }}</div>
                     </div>
@@ -607,7 +640,7 @@
     @endif
 
     <!-- Share -->
-    <div class="row no-gutters mt-4">
+    <div class="row no-gutters mt-4 d-none">
         <div class="col-sm-2">
             <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Share') }}</div>
         </div>

@@ -2,7 +2,7 @@
     $cart_added = [];
 @endphp
 <div class="aiz-card-box h-auto py-3 hov-scale-img product_img_bg">
-    <div class="position-relative h-140px h-md-200px img-fit overflow-hidden">
+    <div class="position-relative img-fit overflow-hidden">
         @php
             $product_url = route('product', $product->slug);
             if ($product->auction_product == 1) {
@@ -56,7 +56,7 @@
                 </a>
             </div>
             <!-- add to cart -->
-            <a class="cart-btn absolute-bottom-left w-100 h-35px aiz-p-hov-icon text-white fs-13 fw-700 d-flex flex-column justify-content-center align-items-center @if (in_array($product->id, $cart_added)) active @endif"
+            <a class="@if (in_array($product->id, $cart_added)) active @endif"
                 href="javascript:void(0)"
                 onclick="showAddToCartModal({{ $product->id }})">
                 <span class="cart-btn-text">
@@ -78,7 +78,7 @@
                 $highest_bid = $product->bids->max('amount');
                 $min_bid_amount = $highest_bid != null ? $highest_bid + 1 : $product->starting_bid;
             @endphp
-            <a class="cart-btn absolute-bottom-left w-100 h-35px aiz-p-hov-icon text-white fs-13 fw-700 d-flex flex-column justify-content-center align-items-center @if (in_array($product->id, $cart_added)) active @endif"
+            <a class=" @if (in_array($product->id, $cart_added)) active @endif"
                 href="javascript:void(0)" onclick="bid_single_modal({{ $product->id }}, {{ $min_bid_amount }})">
                 <span class="cart-btn-text">{{ translate('Place Bid') }}</span>
                 <span><i class="las la-2x la-gavel"></i></span>

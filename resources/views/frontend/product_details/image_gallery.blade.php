@@ -9,7 +9,7 @@
     @endif
     <!-- Gallery Images -->
     <div class="col-12">
-        <div class="aiz-carousel product-gallery arrow-inactive-transparent arrow-lg-none"
+        <div class="aiz-carousel product-gallery arrow-inactive-transparent arrow-lg-none product_dt_img"
             data-nav-for='.product-gallery-thumb' data-fade='true' data-auto-height='true' data-arrows='true'>
             @if ($detailedProduct->digital == 0)
                 @foreach ($detailedProduct->stocks as $key => $stock)

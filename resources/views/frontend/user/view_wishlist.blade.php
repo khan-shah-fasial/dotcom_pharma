@@ -13,7 +13,7 @@
         <div class="row row-cols-xxl-5 row-cols-xl-4 row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2 gutters-16 border-top border-left mx-1 mx-md-0 mb-4">
             @foreach($wishlists as $key => $wishlist)
                 <div class="aiz-card-box col py-3 text-center border-right border-bottom has-transition hov-shadow-out z-1" id="wishlist_{{ $wishlist->id }}">
-                    <div class="position-relative h-140px h-md-200px img-fit overflow-hidden mb-3">
+                    <div class="position-relative img-fit overflow-hidden mb-3">
                         <!-- Image -->
                         <a href="{{ route('product', $wishlist->product->slug) }}" class="d-block h-100">
                             <img src="{{ uploaded_asset($wishlist->product->thumbnail_img) }}" class="lazyload mx-auto img-fit"

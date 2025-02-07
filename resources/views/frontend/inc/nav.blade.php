@@ -29,13 +29,45 @@
     <div class="top-navbar bg-white z-1035 h-35px h-sm-auto">
         <div class="container">
             <div class="row">
+
+              <div class="col-6">
+                      <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
+                            <li class="list-inline-item">
+                                 <a href="mailto:info@example.com" class=" text-secondary fs-12 py-2">
+                                   <img class="w-100" src="{{ static_asset('assets/img/envelope_icons.svg') }}" />Info@example.com
+                                </a>
+                            </li>
+
+                            <li class="list-inline-item">
+                                 <a href="mailto:info@example.com" class=" text-secondary fs-12 py-2">
+                                   <img class="w-100" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
+                                </a>
+                            </li>
+                    </ul> 
+              </div>
+
+
                 <div class="col-lg-6 col">
-                    <ul class="list-inline d-flex justify-content-between justify-content-lg-start mb-0">
+
+
+                    <ul class="list-inline d-flex justify-content-end mb-0">
+
+                     <li class="list-inline-item human_btn">
+                                 <a href="mailto:info@example.com" class=" fs-12 py-2">
+                                   <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
+                                </a>
+                            </li>
+
+                            <li class="list-inline-item veterinary_btn">
+                                 <a href="mailto:info@example.com" class=" fs-12 py-2">
+                                   <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
+                                </a>
+                            </li>
                         <!-- Language switcher -->
                         @if (get_setting('show_language_switcher') == 'on')
                             <li class="list-inline-item dropdown mr-4" id="lang-change">
 
-                                <a href="javascript:void(0)" class="dropdown-toggle text-secondary fs-12 py-2"
+                                <a href="javascript:void(0)" class="black_light_clr dropdown-toggle fs-12 py-2"
                                     data-toggle="dropdown" data-display="static">
                                     <span class="">{{ $system_language->name }}</span>
                                 </a>
@@ -45,7 +77,7 @@
                                             <a href="javascript:void(0)" data-flag="{{ $language->code }}"
                                                 class="dropdown-item @if ($system_language->code == $language->code) active @endif">
                                                 <img src="{{ static_asset('assets/img/placeholder.jpg') }}"
-                                                    data-src="{{ static_asset('assets/img/flags/' . $language->code . '.png') }}"
+                                                    data-src="{{ static_asset('assets/img/flags/' . $language->code . '.png') }} "
                                                     class="mr-1 lazyload" alt="{{ $language->name }}" height="11">
                                                 <span class="language">{{ $language->name }}</span>
                                             </a>
@@ -62,7 +94,7 @@
                                     $system_currency = get_system_currency();
                                 @endphp
 
-                                <a href="javascript:void(0)" class="dropdown-toggle text-secondary fs-12 py-2"
+                                <a href="javascript:void(0)" class="dropdown-toggle black_light_clr fs-12 py-2"
                                     data-toggle="dropdown" data-display="static">
                                     {{ $system_currency->name }}
                                 </a>
@@ -116,7 +148,7 @@
         <!-- Search Bar -->
         <div class="position-relative logo-bar-area border-bottom border-md-nonea z-1025">
             <div class="container">
-                <div class="d-flex align-items-center">
+                <div class="">
                     <!-- top menu sidebar button -->
                     <button type="button" class="btn d-lg-none mr-3 mr-sm-4 p-0 active" data-toggle="class-toggle"
                         data-target=".aiz-top-menu-sidebar">
@@ -131,34 +163,13 @@
                         </svg>
 
                     </button>
-                    <!-- Header Logo -->
-                    <div class="col-auto pl-0 pr-3 d-flex align-items-center">
-                        <a class="d-block py-20px mr-3 ml-0" href="{{ route('home') }}">
-                            @php
-                                $header_logo = get_setting('header_logo');
-                            @endphp
-                            @if ($header_logo != null)
-                                <img src="{{ uploaded_asset($header_logo) }}" alt="{{ env('APP_NAME') }}"
-                                    class="mw-100 h-30px h-md-40px" height="40">
-                            @else
-                                <img src="{{ static_asset('assets/img/logo.png') }}" alt="{{ env('APP_NAME') }}"
-                                    class="mw-100 h-30px h-md-40px" height="40">
-                            @endif
-                        </a>
-                    </div>
-                    <!-- Search Icon for small device -->
-                    <div class="d-lg-none ml-auto mr-0">
-                        <a class="p-2 d-block text-reset" href="javascript:void(0);" data-toggle="class-toggle"
-                            data-target=".front-header-search">
-                            <i class="las la-search la-flip-horizontal la-2x"></i>
-                        </a>
-                    </div>
-                    <!-- Search field -->
+
+<!-- Search field -->
                     <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white mx-xl-5">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
                             <form action="{{ route('search') }}" method="GET" class="stop-propagation">
                                 <div class="d-flex position-relative align-items-center">
-                                    <div class="d-lg-none" data-toggle="class-toggle"
+                                    <div class="" data-toggle="class-toggle"
                                         data-target=".front-header-search">
                                         <button class="btn px-2" type="button"><i
                                                 class="la la-2x la-long-arrow-left"></i></button>
@@ -202,30 +213,123 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Search box -->
-                    <div class="d-none d-lg-none ml-3 mr-0">
-                        <div class="nav-search-box">
-                            <a href="#" class="nav-box-link">
-                                <i class="la la-search la-flip-horizontal d-inline-block nav-box-icon"></i>
-                            </a>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <!-- Header Logo -->
+                                <div class="col-auto pl-0 pr-3 d-flex align-items-center">
+                                    <a class="d-block" href="{{ route('home') }}">
+                                        @php
+                                            $header_logo = get_setting('header_logo');
+                                        @endphp
+                                        @if ($header_logo != null)
+                                            <img class="logo_main" src="{{ uploaded_asset($header_logo) }}" alt="{{ env('APP_NAME') }}"
+                                               >
+                                        @else
+                                            <img class="logo_main" src="{{ static_asset('assets/img/logo.png') }}" alt="{{ env('APP_NAME') }}"
+                                                >
+                                        @endif
+                                    </a>
+                                </div>
+                        </div>
+
+
+                        <div class="col-md-6">
+                            <div class="w-100 logo_menu">
+                                <div class="d-flex align-items-center justify-content-center justify-content-xl-start h-100">
+                                    <ul class="list-inline mb-0 pl-0">
+                                        <!-- Dropdown for Injections -->
+                                        <li class="list-inline-item mr-0 animate-underline-white dropdown">
+                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Injections
+                                            </a>
+                                            <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
+                                                <a class="dropdown-item" href="#">Liquid</a>
+                                                <a class="dropdown-item" href="#">Dry</a>
+                                                <a class="dropdown-item" href="#">Prefilled</a>
+                                                <a class="dropdown-item" href="#">I.V. Fluid</a>
+                                            </div>
+                                        </li>
+
+                                        <li class="list-inline-item mr-0 animate-underline-white dropdown">
+                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Bolus
+                                            </a>
+                                            <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
+                                                <a class="dropdown-item" href="#">Pets</a>
+                                                <a class="dropdown-item" href="#">Large Animal</a>
+                                                <a class="dropdown-item" href="#">Small Animal</a>
+                                            </div>
+                                        </li>
+
+                                        <li class="list-inline-item mr-0 animate-underline-white dropdown">
+                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Tablet & Capsules
+                                            </a>
+                                            <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
+                                                <a class="dropdown-item" href="#">Pets</a>
+                                            </div>
+                                        </li>
+
+                                        <li class="list-inline-item mr-0 animate-underline-white dropdown">
+                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                               Oral
+                                            </a>
+                                            <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
+                                                <a class="dropdown-item" href="#">Powders</a>
+                                                <a class="dropdown-item" href="#">Suspensions</a>
+                                            </div>
+                                        </li>
+
+                                        <li class="list-inline-item mr-0 animate-underline-white dropdown">
+                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                               Intra-Uterine
+                                            </a>
+                                            <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
+                                                <a class="dropdown-item" href="#">Powders</a>
+                                                <a class="dropdown-item" href="#">Suspensions</a>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                        <div class="display_flex1">
+                              <!-- Search Icon for small device -->
+                                <div class="ml-auto mr-0">
+                                    <a class="p-0 d-block" href="javascript:void(0);" data-toggle="class-toggle"
+                                        data-target=".front-header-search">
+                                        <i class="las la-search la-flip-horizontal la-2x pt-1" style="color:#23780E;"></i>
+                                    </a>
+                                </div> 
+
+                                
+                   
+                     <!-- Cart -->
+                    <div class="d-none d-xl-block align-self-stretch has-transition"
+                        data-hover="dropdown">
+                        <div class="nav-cart-box dropdown h-100" id="cart_items" style="width: max-content;">
+                            @include('frontend.partials.cart.cart')
                         </div>
                     </div>
 
-                    @if (Auth::check() && auth()->user()->user_type == 'customer')
+                     @if (Auth::check() && auth()->user()->user_type == 'customer')
                         <!-- Compare -->
-                        <div class="d-none d-lg-block ml-3 mr-0">
+                        <div class="d-none">
                             <div class="" id="compare">
                                 @include('frontend.partials.compare')
                             </div>
                         </div>
                         <!-- Wishlist -->
-                        <div class="d-none d-lg-block mr-3" style="margin-left: 36px;">
+                        <div class="d-none d-lg-block">
                             <div class="" id="wishlist">
                                 @include('frontend.partials.wishlist')
                             </div>
                         </div>
                         <!-- Notifications -->
-                        <ul class="list-inline mb-0 h-100 d-none d-xl-flex justify-content-end align-items-center">
+                        <ul class=" list-inline mb-0 h-100 d-none justify-content-end align-items-center ">
                             <li class="list-inline-item ml-3 mr-3 pr-3 pl-0 dropdown">
                                 <a class="dropdown-toggle no-arrow text-secondary fs-12" data-toggle="dropdown"
                                     href="javascript:void(0);" role="button" aria-haspopup="false"
@@ -239,7 +343,7 @@
                                                 transform="translate(-0.999)" fill="#91919b" />
                                         </svg>
                                         @if (Auth::check() && count($user->unreadNotifications) > 0)
-                                            <span class="badge badge-primary badge-inline badge-pill absolute-top-right--10px unread-notification-count">{{ count($user->unreadNotifications) }}</span>
+                                            <span class="badge badge-secondary  badge-inline badge-pill unread-notification-count">{{ count($user->unreadNotifications) }}</span>
                                         @endif
                                     </span>
                                 </a>
@@ -320,7 +424,7 @@
                         </ul>
                     @endif
 
-                    <div class="d-none d-xl-block ml-auto mr-0">
+                    <div class="d-none d-xl-block padding_25">
                         @auth
                             <span
                                 class="d-flex align-items-center nav-user-info py-20px @if (isAdmin()) ml-5 @endif"
@@ -342,7 +446,7 @@
                             </span>
                         @else
                             <!--Login & Registration -->
-                            <span class="d-flex align-items-center nav-user-info ml-3">
+                            <span class="d-flex align-items-center nav-user-info ml-3 py-20px">
                                 <!-- Image -->
                                 <span
                                     class="size-40px rounded-circle overflow-hidden border d-flex align-items-center justify-content-center nav-user-img">
@@ -359,8 +463,12 @@
                                     class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block py-2 pl-2">{{ translate('Registration') }}</a>
                             </span>
                         @endauth
-                    </div>
-                </div>
+                       </div>
+                   </div>
+
+            </div>
+          </div>
+        </div>
             </div>
 
             <!-- Loged in user Menus -->
@@ -563,12 +671,12 @@
             <div class="container h-100">
                 <div class="d-flex h-100">
                     <!-- Categoty Menu Button -->
-                    <div class="d-none d-xl-block all-category has-transition bg-black-10" id="category-menu-bar">
+                    <div class="d-none all-category has-transition bg-black-10" id="category-menu-bar">
                         <div class="px-3 h-100"
                             style="padding-top: 12px;padding-bottom: 12px; width:270px; cursor: pointer;">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
-                                    <span class="fw-700 fs-16 text-white mr-3">{{ translate('Categories') }}</span>
+                                    <span class="fw-500 fs-16 text-white mr-3">{{ translate('Categories') }}</span>
                                     <a href="{{ route('categories.all') }}" class="text-reset categoriesAll">
                                         <span
                                             class="d-none d-lg-inline-block text-white animate-underline-white">({{ translate('See All') }})</span>
@@ -583,14 +691,14 @@
                     @php
                         $nav_txt_color = ((get_setting('header_nav_menu_text') == 'light') ||  (get_setting('header_nav_menu_text') == null)) ? 'text-white' : 'text-dark';
                     @endphp
-                    <div class="ml-xl-4 w-100 overflow-hidden">
+                    <div class="w-100 full_menu_nav">
                         <div class="d-flex align-items-center justify-content-center justify-content-xl-start h-100">
-                            <ul class="list-inline mb-0 pl-0 hor-swipe c-scrollbar-light">
+                            <ul class="list-inline mb-0 pl-0">
                                 @if (get_setting('header_menu_labels') != null)
                                     @foreach (json_decode(get_setting('header_menu_labels'), true) as $key => $value)
                                         <li class="list-inline-item mr-0 animate-underline-white">
                                             <a href="{{ json_decode(get_setting('header_menu_links'), true)[$key] }}"
-                                                class="fs-13 px-3 py-3 d-inline-block fw-700 {{ $nav_txt_color }} header_menu_links hov-bg-black-10
+                                                class="fs-16 py-3 d-inline-block fw-500 {{ $nav_txt_color }} header_menu_links
                                             @if (url()->current() == json_decode(get_setting('header_menu_links'), true)[$key]) active @endif">
                                                 {{ translate($value) }}
                                             </a>
@@ -600,13 +708,7 @@
                             </ul>
                         </div>
                     </div>
-                    <!-- Cart -->
-                    <div class="d-none d-xl-block align-self-stretch ml-5 mr-0 has-transition bg-black-10"
-                        data-hover="dropdown">
-                        <div class="nav-cart-box dropdown h-100" id="cart_items" style="width: max-content;">
-                            @include('frontend.partials.cart.cart')
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
             <!-- Categoty Menus -->

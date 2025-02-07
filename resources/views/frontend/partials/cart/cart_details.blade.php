@@ -68,7 +68,7 @@
                                         $all_admin_products = false;
                                     }
                                 @endphp
-                                <div class="pt-3 px-0">
+                                <div class="pt-3 px-0 d-none">
                                     <div class="aiz-checkbox-inline">
                                         <label class="aiz-checkbox d-block">
                                             <input type="checkbox" class="check-one check-seller" value="admin" @if($all_admin_products) checked @endif>
