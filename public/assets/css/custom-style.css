@@ -475,9 +475,9 @@ body .form-control:focus {
 }
 
 .login_form_popup h5.modal-title {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 500;
-    padding-top: 20px;
+    padding-top: 13px;
     padding-bottom: 10px;
 }
 
@@ -488,11 +488,13 @@ body .form-control:focus {
     padding-right: 40px;
     padding-bottom: 25px !important;
     padding-top: 30px !important;
+    margin-top: -30px;
 }
 
 .login_form_popup .modal-body {
     padding: 0 !important;
-    overflow-x: hidden;
+    overflow: initial !important;
+    max-height: max-content;
 }
 
 .login_form_popup .modal-footer {
@@ -842,8 +844,8 @@ body .aiz-count-down-circle #time .circle svg circle {
 .front-header-search {
     position: absolute;
     z-index: 111;
-    width: 100%;
-    height: 70%;
+    width: 94%;
+    height: 100%;
     top: -33px;
     right: 0;
     left: 0;
@@ -943,7 +945,7 @@ ul.dropdown-menu {
 .contact_form_boxex {
     background: #3770B40D;
     text-align: center;
-    padding: 40px 30px;
+    padding: 60px 30px;
     border-radius: 20px;
     margin-bottom: 20px;
 }
@@ -1074,3 +1076,80 @@ div#section_newest .product_img_bg {
     margin-left: 15px;
     margin-right: 5px;
 }
+
+.contact_form_boxex .btn {
+    border-radius: 100px !important;
+    padding: 7px 20px !important;
+    width: 120px;
+    margin-right: auto;
+    display: block;
+    font-weight: 500;
+}
+
+.login_heds {
+    font-size: 44px;
+    padding-top: 3px;
+}
+
+.login_border {
+    background: #3636362e;
+    height: 1px;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    margin-top: 30px;
+    margin-bottom: 45px;
+}
+
+body .green_lg_btn a {
+    border-radius: 50px;
+    padding: 10px 35px;
+    background: #23780E;
+    opacity: 1 !important;
+    color: #fff !important;
+    border-color: #23780E !important;
+    font-size: 16px !important;
+}
+
+body .blue_lg_btn a {
+    border-radius: 50px;
+    padding: 10px 35px;
+    background: #123498;
+    opacity: 1 !important;
+    color: #fff !important;
+    border-color: #123498 !important;
+    font-size: 16px !important;
+}
+
+.login_flex {
+    display: flex;
+    justify-content: center;
+    gap: 21px;
+    padding-bottom: 26px;
+}
+
+.login_form_popup .modal-dialog {
+    margin: 0rem auto;
+    height: 100% !important;
+    align-items: center;
+    display: flex;
+}
+
+.login_form_popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    display: none;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    outline: 0;
+    background: rgb(255 255 255 / 65%);
+    backdrop-filter: blur(10px);
+}
+
+/* .modal-backdrop.show {
+    opacity: 0 !important;
+} */

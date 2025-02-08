@@ -37,7 +37,7 @@
                                  minlength="15" maxlength="15" placeholder="Please Enter GST No" required>
                             </div>
                         </div>
-                        <div class="modal-footer">
+                        <div class="modal-footer" style="justify-content: end;">
                             {{-- <div class="blue_btn">
                                 <button type="button" onclick="close_Phone_modal();" class="btn btn-secondary"
                                     data-dismiss="modal">Close</button>

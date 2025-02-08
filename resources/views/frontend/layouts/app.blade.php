@@ -236,16 +236,37 @@
 
             {{-- - //------------------------------ login and register -----------------------// -- --}}
 
-            <div class="modal fade" id="login_reg_model" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+            <div class="modal fade login_form_popup" id="login_reg_model" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
                 aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-                <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-dialog" role="document">
                     <div class="modal-content py-3">
                         <div class="modal-header">
+                          <div class="heading">
+                            <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                            <h5 class="modal-title" id="exampleModalLabel_phone">Welcome to </h5>
+                        </div>
 
-                            <a href="{{ route('user.login') }}"
-                            class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block border-right border-soft-light border-width-2 pr-2 ml-3">{{ translate('Login') }}</a>
-                            <a href="{{ route('user.new_registration') }}"
-                                class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block py-2 pl-2">{{ translate('Registration') }}</a>
+                        <div class="modal-body">
+                            <h3 class="login_heds"><span class="blue_light_clr">Pharmvet</span> - <span class="green_light_clr">Easy</span></h3>
+
+                            <div class="login_border"></div>
+
+
+                            <div class="login_flex">
+                            <div class="green_lg_btn ">
+                           <a href="{{ route('user.login') }}"
+                            class="">{{ translate('Login') }}</a>
+                            </div>
+
+
+                            <div class="blue_lg_btn ">
+                                 <a href="{{ route('user.new_registration') }}"
+                                class="">{{ translate('Registration') }}</a>
+                            </div>
+                           </div>
+                    
+                    </div>
+                           
 
                         </div>
 

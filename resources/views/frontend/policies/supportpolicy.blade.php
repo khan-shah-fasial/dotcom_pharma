@@ -30,7 +30,7 @@
 @endsection
 
 @section('content')
-<section class="pt-4 mb-4 bg_gray">
+<section class="pt-4 bg_gray">
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">
@@ -50,7 +50,7 @@
 </section>
 
 
-<section class="pb-5">
+<section class="pb-md-5 pt-md-5 pt-4 pb-4">
        <div class="container">
          <div class="row align-items-center">
                <div class="col-md-6">
@@ -68,11 +68,7 @@
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
-                         </ul>
-
-                         <div class="">
-                            <a href="#" class="btn btn-primary custom_button">Descover More <i class="las la-arrow-right"></i></a>
-                         </div>
+                         </ul> 
                </div> 
         </div>
        </div>
@@ -128,7 +124,7 @@
 </section>
 
 
-   <section class="testimonials gray_bg pt-md-5 pb-md-5 pt-4 pb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
+   <section class="testimonials gray_bg pt-md-5 pb-md-5 pt-4 pb-4 mt-md-5 mb-md-5 mt-4 mb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
      <div class="container">
        <div class="text-center">
         <p class="text-white mb-0">TESTIMONIALS</p>

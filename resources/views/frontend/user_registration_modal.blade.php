@@ -92,7 +92,7 @@
                             @endphp
 
                             <div class="form-group phone-form-group mb-1">
-                                <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Whats App No') }}</label>
+                                <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Whatsapp No') }}</label>
                                 <input type="tel" id="whats_app_no" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="whats_app_no" autocomplete="off" value="{{ $whats_app_no_parts_number ?? '' }}" required>
                             </div>
 

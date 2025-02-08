@@ -31,7 +31,7 @@
 
 @section('content')
 
-<section class="pt-4 mb-4 bg_gray">
+<section class="pt-4 bg_gray">
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">
@@ -51,7 +51,7 @@
 </section>
 
 
-<section class="">
+<section class="pt-5 pb-4">
     @php
         $lang = str_replace('_', '-', app()->getLocale());
         $content = json_decode($page->getTranslation('content', $lang));
@@ -189,7 +189,7 @@
 </section>
 
 
-<section>
+<section class="pb-5">
     <div class="container">
         <iframe src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d3770.237728636608!2d72.88289367418473!3d19.097224101307916!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1sUnit.No%3A209%2C%20Second%20Floor%2C%20Patel%20Industrial%20Estate%20Co-Society%20Ltd.%20Landmark%3A%20Opp.%20Bachoo%20Garage%20Safed%20Pool%20%2C%20Near%20Sakinaka%20Andheri%20Kurla%20Road%2C%20Kurla%20(W)%20Mumbai-400%20072%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1738821641449!5m2!1sen!2sin" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
