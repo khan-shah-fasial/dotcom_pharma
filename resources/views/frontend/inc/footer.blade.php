@@ -227,13 +227,13 @@
                             </li>
 
                              <li class="mb-2">
-                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
+                                <a href="/about-us" class="fs-16 black_light_clr animate-underline-white">
                                    About Us
                                 </a>
                             </li>
 
                                <li class="mb-2">
-                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
+                                <a href="/search" class="fs-16 black_light_clr animate-underline-white">
                                    Product
                                 </a>
                             </li>
@@ -245,7 +245,7 @@
                             </li>
 
                              <li class="mb-2">
-                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
+                                <a href="/contact-us" class="fs-16 black_light_clr animate-underline-white">
                                    Contact Us
                                 </a>
                             </li>

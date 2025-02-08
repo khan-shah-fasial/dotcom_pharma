@@ -322,7 +322,7 @@
         $custom_alerts = App\Models\CustomAlert::where('status', 1)->orderBy('id', $order)->get();
     @endphp
 
-    <div class="aiz-custom-alert {{ get_setting('custom_alert_location') }}">
+    <div class="aiz-custom-alert {{ get_setting('custom_alert_location') }} d-none">
         @foreach ($custom_alerts as $custom_alert)
             @if($custom_alert->id == 1)
                 <div class="aiz-cookie-alert mb-3" style="box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.24);">
