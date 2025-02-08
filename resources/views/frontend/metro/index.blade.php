@@ -139,7 +139,7 @@
                                                     {{ $category_name }}&nbsp;
                                                     <!-- <i class="las la-angle-right"></i> -->
                                                 </a>
-                                                <div class="d-flex flex-wrap overflow-hidden d-none">
+                                                <div class="d-none">
                                                     @foreach ($category->childrenCategories->take(6) as $key => $child_category)
                                                     <a href="{{ route('products.category', $child_category->slug) }}" class="fs-13 fw-300 black_light_clr hov-text-white pr-3 pt-1">
                                                         {{ $child_category->getTranslation('name') }}
