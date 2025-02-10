@@ -45,6 +45,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Seller', 'prefix' => 'seller'
     Route::controller(ProductBulkUploadController::class)->group(function () {
         Route::get('/product-bulk-upload/index', 'index')->name('product_bulk_upload.index');
         Route::post('/product-bulk-upload/store', 'bulk_upload')->name('bulk_product_upload');
+        Route::post('/product-bulk-upload/store2', 'bulk_upload2')->name('bulk_product_upload2');
         Route::group(['prefix' => 'bulk-upload/download'], function() {
             Route::get('/category', 'pdf_download_category')->name('pdf.download_category');
             Route::get('/brand', 'pdf_download_brand')->name('pdf.download_brand');
@@ -88,7 +89,7 @@ Route::group(['namespace' => 'App\Http\Controllers\Seller', 'prefix' => 'seller'
     Route::controller(ReviewController::class)->group(function () {
         Route::get('/product-reviews', 'index')->name('product-reviews');
         Route::get('/product/detail-reviews/{id}', 'detailReviews')->name('detail-reviews');
-        
+
     });
     // Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews');
 

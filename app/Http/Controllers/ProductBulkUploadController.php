@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Brand;
 use App\Models\User;
 use App\Models\ProductsImport;
+use App\Models\BulkProductVariantImport;
 use App\Models\ProductsExport;
 use PDF;
 use Maatwebsite\Excel\Facades\Excel;
@@ -72,6 +73,15 @@ class ProductBulkUploadController extends Controller
         if ($request->hasFile('bulk_file')) {
             $import = new ProductsImport;
             Excel::import($import, request()->file('bulk_file'));
+        }
+
+        return back();
+    }
+    public function bulk_upload2(Request $request)
+    {
+        if ($request->hasFile('bulk_file_product_variant')) {
+            $import = new BulkProductVariantImport;
+            Excel::import($import, request()->file('bulk_file_product_variant'));
         }
 
         return back();

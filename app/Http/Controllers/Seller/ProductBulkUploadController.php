@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Brand;
 use Auth;
 use App\Models\ProductsImport;
+use App\Models\BulkProductVariantImport;
 use PDF;
 use Excel;
 
@@ -47,7 +48,17 @@ class ProductBulkUploadController extends Controller
             $import = new ProductsImport;
             Excel::import($import, request()->file('bulk_file'));
         }
-        
+
+        return back();
+    }
+
+    public function bulk_upload2(Request $request)
+    {
+        if ($request->hasFile('bulk_file_product_variant')) {
+            $import = new BulkProductVariantImport;
+            Excel::import($import, request()->file('bulk_file_product_variant'));
+        }
+
         return back();
     }
 
