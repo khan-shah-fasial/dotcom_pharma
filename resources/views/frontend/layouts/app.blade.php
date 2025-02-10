@@ -322,7 +322,7 @@
         $custom_alerts = App\Models\CustomAlert::where('status', 1)->orderBy('id', $order)->get();
     @endphp
 
-    <div class="aiz-custom-alert {{ get_setting('custom_alert_location') }} d-none">
+    <div class="aiz-custom-alert {{ get_setting('custom_alert_location') }}">
         @foreach ($custom_alerts as $custom_alert)
             @if($custom_alert->id == 1)
                 <div class="aiz-cookie-alert mb-3" style="box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.24);">
@@ -361,7 +361,7 @@
     @endphp
     @foreach ($dynamic_popups as $key => $dynamic_popup)
         @if($dynamic_popup->id == 1)
-            <div class="modal website-popup removable-session d-none" data-key="website-popup" data-value="removed">
+            <div class="modal website-popup removable-session" data-key="website-popup" data-value="removed">
                 <div class="absolute-full bg-black opacity-60"></div>
                 <div class="modal-dialog modal-dialog-centered modal-dialog-zoom modal-md mx-4 mx-md-auto">
                     <div class="modal-content position-relative border-0 rounded-0">

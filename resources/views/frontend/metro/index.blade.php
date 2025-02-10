@@ -86,7 +86,7 @@
 
                            <div class="col-md-2">
                               <div class="form-group">
-                                 <button value="Search" type="button" class="btn btn-primary custom_button" > <i class="las la-search la-flip-horizontal la-1x" style="color:#fff;"></i>Search</button>
+                                 <button value="Search" type="button" class="animate_button black_buttons" > <i class="las la-search la-flip-horizontal la-1x" style="color:#fff;"></i>Search</button>
                               </div>
                           </div>
 
@@ -488,9 +488,11 @@
                     </div>
 
                      <a href="{{ route('flash-deals') }}"
-                                            class="fs-16 mt-5 fw-500 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') btn btn-success custom_button @endif mr-3">
+                                            class="mt-5 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') animate_button white_buttons @endif mr-3">
                                             {{ translate('View All Flash Sale') }} <i class="las la-angle-double-right"></i>
                                         </a>
+
+                                       
 
                 </div>
                 <div class="col-md-6">
@@ -522,7 +524,7 @@
                      <h3 class="fw-600 headeing_size">Welcome to <span class="blue_light_clr">Pharm Vet Easy</span></h3>
                      <p>At <b>Pharm Vet Easy,</b> we have a strong vision for the future of global pharmaceuticals, with a primary focus on high-quality veterinary formulations. Guided by our core values of <b>PEOPLE – TRUST – VALUE & TECHNOLOGY,</b> we are committed to delivering world-class products and services while ensuring cost-effectiveness.
 </p>
-                     <p>Established in 2000 in Mumbai, the financial hub of India, <b>Pharm Vet Easy</b> has built a reputation as a trusted manufacturer and supplier of premium veterinary formulations. The driving force behind our success is Mr. A.Y. Jaliawala, a Computer Engineer with extensive experience in the pharmaceutical industry, whose expertise and leadership continue to shape our journey toward excellence in animal healthcare.</p>
+                     <p class="mb-3">Established in 2000 in Mumbai, the financial hub of India, <b>Pharm Vet Easy</b> has built a reputation as a trusted manufacturer and supplier of premium veterinary formulations. The driving force behind our success is Mr. A.Y. Jaliawala, a Computer Engineer with extensive experience in the pharmaceutical industry, whose expertise and leadership continue to shape our journey toward excellence in animal healthcare.</p>
                          <!-- <ul class="list_none">
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
@@ -530,8 +532,8 @@
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                          </ul> -->
 
-                         <div class="">
-                            <a href="#" class="btn btn-primary custom_button">Discover More <i class="las la-angle-double-right"></i></a>
+                         <div class="mt-3">
+                            <a href="/about-us" class="animate_button black_buttons">Discover More <i class="las la-angle-double-right"></i></a>
                          </div>
                </div> 
         </div>

@@ -37,6 +37,17 @@
     <link rel="stylesheet" href="{{ static_asset('assets/css/aiz-core.css?v=') }}{{ rand(1000, 9999) }}">
     
     <style>
+        body .form-control:focus {
+    border-width: 1px !important;
+}
+.iti--separate-dial-code .iti__selected-flag, .iti--allow-dropdown .iti__flag-container:hover .iti__selected-flag {
+    background: transparent !important;
+}
+.form-control {
+    border: 1px solid #363636CC;
+    border-radius: 15px !important;
+    height: 45px !important;
+}
         :root{
             --blue: #3490f3;
             --hov-blue: #2e7fd6;
