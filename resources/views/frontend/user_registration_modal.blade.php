@@ -140,7 +140,7 @@
                         <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                        <button type="submit" class="animate_button black1_buttons">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>
@@ -192,7 +192,7 @@
                             <a class="ms-4" class="btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
                         </div>
                              <div class="purple_btn">
-                            <button type="submit" class="btn btn-primary">Verify <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                            <button type="submit" class="animate_button black1_buttons">Verify <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                         </div>
                        
                         </div>
@@ -299,7 +299,7 @@
                         <button type="button" onclick="back_to_prev_reg();" class=""> <img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                        <button type="submit" class="animate_button black1_buttons">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>
@@ -409,7 +409,7 @@
                         <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary"> Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                        <button type="submit" class="animate_button black1_buttons"> Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>
@@ -487,7 +487,7 @@
                         <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                        <button type="submit" class="animate_button black1_buttons">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>
@@ -567,7 +567,7 @@
                         <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                     </div>
                     <div class="purple_btn">
-                        <button type="submit" class="btn btn-primary">Sbumit <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                        <button type="submit" class="animate_button black1_buttons">Sbumit <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
                 </div>
             </form>
@@ -591,29 +591,34 @@
     Session()->forget('step');
 @endphp
 
-<div class="modal fade" id="reg_model_8" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_8" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
 aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content py-3">
             <div class="modal-header">
-                <div class="heading">
-                    <h5 class="modal-title" id="exampleModalLabel_phone">Under Review</h5>
+                 <div class="heading">
+                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                    <h3 class="login_heds thank_head"><span class="blue_light_clr">Pharmvet</span> - <span class="green_light_clr">Easy</span></h3>
                 </div>
-                <div class="purple_btn_close">
+                
+                 {{--<div class="purple_btn_close">
                     <button type="button" onclick="close_and_reload();" class="close p-1 px-3"
                         data-dismiss="modal" aria-label="Close">
                     </button>
-                </div>
+                </div>--}}
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <h3 class="col-form-label form-label">Your account will be reviewed by an administrator and activated within 48 hours</h3>
+                    <img class="thank_you_clas" src="{{ static_asset('assets/img/thank_you_image.svg') }}" />
+                    <h3 class="col-form-label form-label thank_you_label">Your account will be under review and will be activated by an administrator within 48 hours.</h3>
                 </div>
             </div>
-            <div class="modal-footer">
-                <div class="blue_btn">
-                    <button type="button" onclick="close_and_reload_reg();" class="btn btn-secondary"
-                        data-dismiss="modal">OK</button>
+            <div class="modal-footer" style="justify-content: center;">
+                <div class="purple_btn">
+                    <!-- <button type="button" onclick="close_and_reload_reg();" class="animate_button black1_buttons"
+                        data-dismiss="modal">Back to Login</button> -->
+                    <a href="/users/login" class="animate_button black1_buttons"
+                        data-dismiss="modal">Back to Login</a>
                 </div>
             </div>
 

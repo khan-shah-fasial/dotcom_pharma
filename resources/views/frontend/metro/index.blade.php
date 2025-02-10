@@ -86,7 +86,7 @@
 
                            <div class="col-md-2">
                               <div class="form-group">
-                                 <button value="Search" type="button" class="animate_button black_buttons" > <i class="las la-search la-flip-horizontal la-1x" style="color:#fff;"></i>Search</button>
+                                 <button value="Search" type="button" class="animate_button black1_buttons" > <i class="las la-search la-flip-horizontal la-1x" style="color:#fff;"></i>Search</button>
                               </div>
                           </div>
 
@@ -533,7 +533,7 @@
                          </ul> -->
 
                          <div class="mt-3">
-                            <a href="/about-us" class="animate_button black_buttons">Discover More <i class="las la-angle-double-right"></i></a>
+                            <a href="/about-us" class="animate_button black1_buttons">Discover More <i class="las la-angle-double-right"></i></a>
                          </div>
                </div> 
         </div>

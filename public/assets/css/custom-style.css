@@ -502,7 +502,6 @@ body .form-control:focus {
     padding-right: 40px;
     padding-bottom: 25px !important;
     padding-top: 30px !important;
-    margin-top: -30px;
 }
 
 .login_form_popup .modal-body {
@@ -544,10 +543,38 @@ body .form-control:focus {
     color: #363636 !important;
 }
 
+.login_form_popup .animate_button {
+    font-size: 14px;
+}
+
+.thank_you_label {
+    background: rgb(35 120 14 / 8%);
+    border: 1px solid #23780E;
+    text-align: center;
+    border-radius: 20px;
+    color: #23780E;
+    margin: 0px 30px;
+    padding: 7px 13px;
+    margin-bottom: 0 !important;
+}
+
+img.thank_you_clas {
+    width: 99%;
+    margin: 0 auto;
+    display: block;
+    margin-bottom: 10px;
+}
+
+h3.login_heds.thank_head {
+    font-size: 30px;
+    padding-top: 20px;
+}
+
+/* 
 .purple_btn button:hover {
     background: #23780E;
     border-color: #23780E;
-}
+} */
 
 .purple_btn img {
     width: 6px;
@@ -1145,12 +1172,6 @@ body .blue_lg_btn a {
     padding-bottom: 26px;
 }
 
-.login_form_popup .modal-dialog {
-    margin: 0rem auto;
-    height: 100% !important;
-    align-items: center;
-    display: flex;
-}
 
 .login_form_popup {
     position: fixed;
@@ -1164,6 +1185,10 @@ body .blue_lg_btn a {
     outline: 0;
     background: rgb(255 255 255 / 65%);
     backdrop-filter: blur(10px);
+}
+
+.login_form_popup {
+    overflow-y: scroll !important;
 }
 
 .product-gallery .carousel-box img {
@@ -1227,19 +1252,19 @@ body .form-control:focus {
 
 /*-- black button --*/
 
-.black_buttons {
+.black1_buttons {
     z-index: 1;
     color: #fff;
     background-color: #123498;
     border-radius: 50px;
 }
 
-.black_buttons::before,
-.black_buttons::after {
+.black1_buttons::before,
+.black1_buttons::after {
     background: #23780E;
 }
 
-.black_buttons:hover {
+.black1_buttons:hover {
     color: #fff;
 }
 

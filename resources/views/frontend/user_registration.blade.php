@@ -43,7 +43,7 @@
                                     data-dismiss="modal">Close</button>
                             </div> --}}
                             <div class="purple_btn">
-                                <button type="submit" class="btn btn-primary">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                                <button type="submit" class="animate_button black1_buttons">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                             </div>
                         </div>
                     </form>
