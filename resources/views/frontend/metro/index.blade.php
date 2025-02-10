@@ -86,7 +86,7 @@
 
                            <div class="col-md-2">
                               <div class="form-group">
-                                 <button value="Search" type="button" class="btn btn-primary custom_button" > <i class="las la-search la-flip-horizontal la-1x" style="color:#fff;"></i>Search</button>
+                                 <button value="Search" type="button" class="animate_button black_buttons" > <i class="las la-search la-flip-horizontal la-1x" style="color:#fff;"></i>Search</button>
                               </div>
                           </div>
 
@@ -139,7 +139,7 @@
                                                     {{ $category_name }}&nbsp;
                                                     <!-- <i class="las la-angle-right"></i> -->
                                                 </a>
-                                                <div class="d-flex flex-wrap overflow-hidden">
+                                                <div class="d-none">
                                                     @foreach ($category->childrenCategories->take(6) as $key => $child_category)
                                                     <a href="{{ route('products.category', $child_category->slug) }}" class="fs-13 fw-300 black_light_clr hov-text-white pr-3 pt-1">
                                                         {{ $child_category->getTranslation('name') }}
@@ -465,9 +465,7 @@
                 <div class="col-md-5">
                     <p class="fw-600 fs-18 green_light_clr pb-0 mb-0">WEEKLY DEAL</p>
                      <h3 class="fw-600 headeing_size">Best Deal for This Week</h3>
-                     <p>is simply dummy text of the printing and typesetting industry.
-Lorem Ipsum has been the industry's standard dummy text
-ever since the 1500s, when an unknown printe
+                     <p>This week at <b>Pharm Vet Easy,</b> we bring you unbeatable discounts on top-quality veterinary products. Whether you need premium pet supplements, livestock medications, or healthcare essentials, our <b>Best Deal of the Week</b> ensures you get the best value for your money.
 </p>
 
                           <!-- Countdown for small device -->
@@ -490,9 +488,11 @@ ever since the 1500s, when an unknown printe
                     </div>
 
                      <a href="{{ route('flash-deals') }}"
-                                            class="fs-16 mt-5 fw-500 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') btn btn-success custom_button @endif mr-3">
+                                            class="mt-5 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') animate_button white_buttons @endif mr-3">
                                             {{ translate('View All Flash Sale') }} <i class="las la-angle-double-right"></i>
                                         </a>
+
+                                       
 
                 </div>
                 <div class="col-md-6">
@@ -521,19 +521,19 @@ ever since the 1500s, when an unknown printe
                
                <div class="col-md-6">
                      <p class="fw-600 fs-18 blue_light_clr pb-0 mb-0">About Us</p>
-                     <h3 class="fw-600 headeing_size">We Provide Best and Original <span class="blue_light_clr">Medical</span> Product For You</h3>
-                     <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
-                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
-                         ever since the 1500s, when an unknown printe</p>
-                         <ul class="list_none">
+                     <h3 class="fw-600 headeing_size">Welcome to <span class="blue_light_clr">Pharm Vet Easy</span></h3>
+                     <p>At <b>Pharm Vet Easy,</b> we have a strong vision for the future of global pharmaceuticals, with a primary focus on high-quality veterinary formulations. Guided by our core values of <b>PEOPLE – TRUST – VALUE & TECHNOLOGY,</b> we are committed to delivering world-class products and services while ensuring cost-effectiveness.
+</p>
+                     <p class="mb-3">Established in 2000 in Mumbai, the financial hub of India, <b>Pharm Vet Easy</b> has built a reputation as a trusted manufacturer and supplier of premium veterinary formulations. The driving force behind our success is Mr. A.Y. Jaliawala, a Computer Engineer with extensive experience in the pharmaceutical industry, whose expertise and leadership continue to shape our journey toward excellence in animal healthcare.</p>
+                         <!-- <ul class="list_none">
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
-                         </ul>
+                         </ul> -->
 
-                         <div class="">
-                            <a href="#" class="btn btn-primary custom_button">Descover More <i class="las la-arrow-right"></i></a>
+                         <div class="mt-3">
+                            <a href="/about-us" class="animate_button black_buttons">Discover More <i class="las la-angle-double-right"></i></a>
                          </div>
                </div> 
         </div>
@@ -550,11 +550,11 @@ ever since the 1500s, when an unknown printe
                
                <div class="col-md-4">
                      <p class="fw-600 fs-18 blue_light_clr pb-0 mb-0">WHY CHOOSE US</p>
-                     <h3 class="fw-600 headeing_size">is simply dummy text of the printing and typesetting</h3>
+                     <h3 class="fw-600 headeing_size">Your Trusted Partner in Veterinary Healthcare</h3>
                </div> 
 
                 <div class="col-md-4">
-                      <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printeis simply dummy text of the printing and typesetting.</p>
+                      <p>At <b>Pharm Vet Easy,</b> provides top-quality veterinary products for animal health and well-being. We prioritize reliability, innovation, and affordability for veterinarians, pet owners, and farmers.</p>
                </div> 
 
                 <div class="col-md-4">
@@ -562,7 +562,7 @@ ever since the 1500s, when an unknown printe
                         <img src="{{ static_asset('assets/img/why_choose_icon1.png') }}" />
                         <div class="">
                             <h4>Original Products</h4>
-                             <p class="mb-0">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  </p>
+                             <p class="mb-0">Pharm Vet Easy offers 100% authentic veterinary medicines and pet care products for your pet’s health.</p>
                         </div>
                         
                     </div> 
@@ -573,7 +573,7 @@ ever since the 1500s, when an unknown printe
                         <img src="{{ static_asset('assets/img/why_choose_icon2.png') }}" />
                          <div class="">
                             <h4>Affordable Price</h4>
-                             <p class="mb-0">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  </p>
+                             <p class="mb-0">We offer quality pet care at competitive prices, ensuring premium products remain budget-friendly.</p>
                         </div>
                     </div> 
                </div> 
@@ -583,7 +583,7 @@ ever since the 1500s, when an unknown printe
                         <img src="{{ static_asset('assets/img/why_choose_icon3.png') }}" />
                          <div class="">
                             <h4>Free Shipping</h4>
-                             <p class="mb-0">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  </p>
+                             <p class="mb-0">Enjoy free shipping with no hidden fees! Get your pet’s essentials delivered quickly and securely to your doorstep.</p>
                         </div>
                      </div> 
                </div> 
@@ -608,11 +608,11 @@ ever since the 1500s, when an unknown printe
                   <div class="testimnl_box ">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
+                        <h6 class="mb-0 text-white fs-18">Dr. Ananya Mehta</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Veterinarian</p>
                      </div>
                   </div>
-                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <p class="pt-4">Pharm Vet Easy has been our go-to provider for veterinary medicines and supplements. The quality of their products is outstanding, and their prompt delivery ensures our clinic never runs out of essential supplies. Highly recommended!</p>
                  <div class="rating1 text-left">
                    <i class="las la-star"></i>
                    <i class="las la-star"></i>
@@ -628,11 +628,11 @@ ever since the 1500s, when an unknown printe
                   <div class="testimnl_box">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
+                        <h6 class="mb-0 text-white fs-18">Ramesh Patil</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Livestock Farmer</p>
                      </div>
                   </div>
-                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <p class="pt-4">s a livestock farmer, I need reliable and effective veterinary products. Pharm Vet Easy has consistently provided top-notch solutions that keep my animals healthy. Their customer service is excellent, making them a trusted partner in animal care.</p>
                  <div class="rating1 text-left">
                    <i class="las la-star"></i>
                    <i class="las la-star"></i>
@@ -650,11 +650,11 @@ ever since the 1500s, when an unknown printe
                   <div class="testimnl_box">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
+                        <h6 class="mb-0 text-white fs-18">Sneha Kapoor</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Pet Owner</p>
                      </div>
                   </div>
-                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <p class="pt-4">What sets Pharm Vet Easy apart is their knowledgeable team and dedication to customer satisfaction. They helped me choose the right supplements for my pet, and I’ve seen remarkable improvements in my dog's health. Thank you for the great service!</p>
                  <div class="rating1 text-left">
                    <i class="las la-star"></i>
                    <i class="las la-star"></i>
@@ -667,16 +667,16 @@ ever since the 1500s, when an unknown printe
 
 
               <!-- TESTIMONIAL 4 -->
-            <div class="item">
+          <div class="item">
                <div class="shadow-effect">
-                  <div class="testimnl_box">
+                  <div class="testimnl_box ">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                         <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
+                        <h6 class="mb-0 text-white fs-18">Dr. Ananya Mehta</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Veterinarian</p>
                      </div>
                   </div>
-                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <p class="pt-4">Pharm Vet Easy has been our go-to provider for veterinary medicines and supplements. The quality of their products is outstanding, and their prompt delivery ensures our clinic never runs out of essential supplies. Highly recommended!</p>
                  <div class="rating1 text-left">
                    <i class="las la-star"></i>
                    <i class="las la-star"></i>
@@ -704,79 +704,109 @@ ever since the 1500s, when an unknown printe
         <div class="card mb-0">
             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_1">
                 <a class="card-title">
-                  How to order medicines online from Dotcom Pharma
+                  What is Pharm Vet Easy?
                 </a>
             </div>
             <div id="collapse_1" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
-                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                <div class="card-body">Pharm Vet Easy is a trusted provider of high-quality veterinary pharmaceuticals and healthcare solutions. We specialize in finished formulations for pets, livestock, and other animals, ensuring their health and well-being.
+
                 </div>
             </div>
 
             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_2">
                 <a class="card-title">
-                  Is online medicine delivery safe?
-
+                 What types of veterinary products do you offer?
                 </a>
             </div>
             <div id="collapse_2" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
-                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                <div class="card-body">We offer a wide range of veterinary products, including medicines, supplements, nutritional support, and healthcare essentials for various animals.
+
                 </div>
             </div>
 
             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_3">
                 <a class="card-title">
-                  How to order medicines online from Dotcom Pharma
+                  Are your products safe and certified?
                 </a>
             </div>
             <div id="collapse_3" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
-                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                <div class="card-body">Yes, all our products are sourced from reputed manufacturers and comply with international quality and safety standards.
+
                 </div>
             </div>
 
              <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_4">
                 <a class="card-title">
-                  Can Dotcom Pharma provide express delivery?
+                  Do you provide bulk orders for veterinary clinics and farms?
                 </a>
             </div>
             <div id="collapse_4" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
-                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                <div class="card-body">Yes, we cater to veterinary clinics, hospitals, and livestock farms with bulk supply options at competitive prices.
+
                 </div>
             </div>
 
              <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_5">
                 <a class="card-title">
-                  How can I buy Dotcom Pharma products?
+                 How can I place an order?
                 </a>
             </div>
             <div id="collapse_5" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
-                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                <div class="card-body">You can place an order through our website or contact our customer support team for assistance with bulk or customized orders.
+
                 </div>
             </div>
 
              <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_6">
                 <a class="card-title">
-                  Can I track the delivery status of my order? If yes, how?
+                 Do you offer worldwide shipping?
                 </a>
             </div>
             <div id="collapse_6" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
-                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                <div class="card-body">Yes, we provide global shipping options. Delivery times may vary based on location and regulatory approvals.
                 </div>
             </div>
 
              <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_7">
                 <a class="card-title">
-                  Does Dotcom Pharma provide home delivery of medicines?
+                  How can I track my order
                 </a>
             </div>
             <div id="collapse_7" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt
-                    aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. samus labore sustainable VHS.
+                <div class="card-body">Once your order is dispatched, you will receive a tracking ID via email or SMS to monitor the shipment’s status.
+
+                </div>
+            </div>
+
+             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_8">
+                <a class="card-title">
+                 What payment methods do you accept?
+                </a>
+            </div>
+            <div id="collapse_8" class="collapse" data-parent="#accordion" >
+                <div class="card-body">We accept multiple payment methods, including credit/debit cards, net banking, and digital payment gateways.
+
+                </div>
+            </div>
+
+            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_8">
+                <a class="card-title">
+                 Can I return or exchange a product?
+                </a>
+            </div>
+            <div id="collapse_8" class="collapse" data-parent="#accordion" >
+                <div class="card-body">Returns and exchanges are subject to our return policy. Please refer to our return policy section or contact customer support for details.
+
+                </div>
+            </div>
+
+            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_8">
+                <a class="card-title">
+                 How can I contact customer support?
+                </a>
+            </div>
+            <div id="collapse_8" class="collapse" data-parent="#accordion" >
+                <div class="card-body">You can reach our customer support team via email, phone, or our website’s contact form for any queries or assistance.
                 </div>
             </div>
 

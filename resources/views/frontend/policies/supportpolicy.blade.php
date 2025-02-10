@@ -59,17 +59,23 @@
                
                <div class="col-md-6">
                      <p class="fw-600 fs-18 blue_light_clr pb-0 mb-0">About Us</p>
-                     <h3 class="fw-600 headeing_size">We Provide Best and Original <span class="blue_light_clr">Medical</span> Product For You</h3>
-                     <p>is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
-                        when an unknown printeis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text
-                         ever since the 1500s, when an unknown printe</p>
-                         <ul class="list_none">
-                            <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
-                            <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
-                            <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
-                            <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
-                         </ul> 
+                     <h3 class="fw-600 headeing_size">Welcome to <span class="blue_light_clr">Pharm Vet Easy</span></h3>
+                     
+                       <p>At <b>Pharm Vet Easy,</b> we have a strong vision for the future of global pharmaceuticals, with a primary focus on high-quality veterinary formulations. Guided by our core values of <b>PEOPLE – TRUST – VALUE & TECHNOLOGY,</b> we are committed to delivering world-class products and services while ensuring cost-effectiveness.
+</p>
+                     <p>Established in 2000 in Mumbai, the financial hub of India, <b>Pharm Vet Easy</b> has built a reputation as a trusted manufacturer and supplier of premium veterinary formulations. The driving force behind our success is Mr. A.Y. Jaliawala, a Computer Engineer with extensive experience in the pharmaceutical industry, whose expertise and leadership continue to shape our journey toward excellence in animal healthcare.</p>
+                       
                </div> 
+
+
+               <div class="col-md-12">
+
+               <p class="pt-5">At Pharm Vet Easy, our vision is to be recognized as the Partner of Choice by combining manufacturing excellence with a strong commitment to quality. Backed by a team of skilled professionals, we ensure top-tier manufacturing, marketing, and quality assurance in veterinary pharmaceuticals.</p>
+<p>With a well-equipped office in Mumbai and a branch in Bangalore, we provide comprehensive infrastructure and expert personnel to support our operations. Since our inception, we have built a strong foundation, achieving steady growth and earning the trust of customers and business partners globally.</p>
+<p>Through vision, innovation, advanced technology, and efficient supply chain management, we have established ourselves as a leading name in the industry. As a zero-debt company with substantial reserves, we continue to invest in future projects, ensuring sustainable growth and excellence in veterinary healthcare.</p>
+
+
+               </div>
         </div>
        </div>
    </section>
@@ -83,8 +89,8 @@
                     <div class="counter_boxex">
                         <div class="counter_img"><img src="{{ static_asset('assets/img/total_sale.svg') }}" /></div>
                         <div class="counter_content">
-                            <div class="display_flexs"><div class="counter-value" data-count="50">0</div><span>K</span></div>
-                            <p>Total Sales</p>
+                            <div class="display_flexs"><div class="counter-value" data-count="10000">0</div><span>+</span></div>
+                            <p>Happy Clients</p>
                         </div>
                     </div>
                 </div>
@@ -93,8 +99,8 @@
                     <div class="counter_boxex">
                         <div class="counter_img"><img src="{{ static_asset('assets/img/happy_clients.svg') }}" /></div>
                         <div class="counter_content">
-                            <div class="display_flexs"><div class="counter-value" data-count="90">0</div><span>K</span></div>
-                            <p>Happy Clients</p>
+                            <div class="display_flexs"><div class="counter-value" data-count="500">0</div><span>+</span></div>
+                            <p>Veterinary Products</p>
                         </div>
                     </div>
                 </div>
@@ -103,8 +109,8 @@
                     <div class="counter_boxex">
                         <div class="counter_img"><img src="{{ static_asset('assets/img/team_work.svg') }}" /></div>
                         <div class="counter_content">
-                             <div class="display_flexs"><div class="counter-value" data-count="150">0</div><span>K</span></div>
-                            <p>Team Workers</p>
+                             <div class="display_flexs"><div class="counter-value" data-count="25">0</div><span>+</span></div>
+                            <p>Countries Served</p>
                         </div>
                     </div>
                 </div>
@@ -113,8 +119,8 @@
                     <div class="counter_boxex">
                         <div class="counter_img"><img  src="{{ static_asset('assets/img/win_awards.svg') }}" /></div>
                         <div class="counter_content">
-                            <div class="display_flexs"><div class="counter-value" data-count="30">0</div><span>K</span></div>
-                            <p>Win Awards</p>
+                            <div class="display_flexs"><div class="counter-value" data-count="20">0</div><span>+</span></div>
+                            <p>Years – Experience</p>
                         </div>
                     </div>
                 </div>
@@ -124,7 +130,7 @@
 </section>
 
 
-   <section class="testimonials gray_bg pt-md-5 pb-md-5 pt-4 pb-4 mt-md-5 mb-md-5 mt-4 mb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
+   <section class="testimonials gray_bg pt-md-5 pb-md-5 pt-4 pb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
      <div class="container">
        <div class="text-center">
         <p class="text-white mb-0">TESTIMONIALS</p>
@@ -132,17 +138,16 @@
        </div>
       
            <div id="customers-testimonials" class="slick-slider" >
-             <!-- TESTIMONIAL 1 -->
-             <div class="item">
+            <div class="item">
                <div class="shadow-effect">
                   <div class="testimnl_box ">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
+                        <h6 class="mb-0 text-white fs-18">Dr. Ananya Mehta</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Veterinarian</p>
                      </div>
                   </div>
-                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <p class="pt-4">Pharm Vet Easy has been our go-to provider for veterinary medicines and supplements. The quality of their products is outstanding, and their prompt delivery ensures our clinic never runs out of essential supplies. Highly recommended!</p>
                  <div class="rating1 text-left">
                    <i class="las la-star"></i>
                    <i class="las la-star"></i>
@@ -158,11 +163,11 @@
                   <div class="testimnl_box">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
+                        <h6 class="mb-0 text-white fs-18">Ramesh Patil</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Livestock Farmer</p>
                      </div>
                   </div>
-                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <p class="pt-4">s a livestock farmer, I need reliable and effective veterinary products. Pharm Vet Easy has consistently provided top-notch solutions that keep my animals healthy. Their customer service is excellent, making them a trusted partner in animal care.</p>
                  <div class="rating1 text-left">
                    <i class="las la-star"></i>
                    <i class="las la-star"></i>
@@ -180,11 +185,11 @@
                   <div class="testimnl_box">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
+                        <h6 class="mb-0 text-white fs-18">Sneha Kapoor</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Pet Owner</p>
                      </div>
                   </div>
-                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <p class="pt-4">What sets Pharm Vet Easy apart is their knowledgeable team and dedication to customer satisfaction. They helped me choose the right supplements for my pet, and I’ve seen remarkable improvements in my dog's health. Thank you for the great service!</p>
                  <div class="rating1 text-left">
                    <i class="las la-star"></i>
                    <i class="las la-star"></i>
@@ -197,16 +202,16 @@
 
 
               <!-- TESTIMONIAL 4 -->
-            <div class="item">
+          <div class="item">
                <div class="shadow-effect">
-                  <div class="testimnl_box">
+                  <div class="testimnl_box ">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                         <h6 class="mb-0 text-white fs-18">Parkar Nez</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Petr, Belgium</p>
+                        <h6 class="mb-0 text-white fs-18">Dr. Ananya Mehta</h6>
+                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Veterinarian</p>
                      </div>
                   </div>
-                 <p class="pt-4">is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text dummy text  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the</p>
+                 <p class="pt-4">Pharm Vet Easy has been our go-to provider for veterinary medicines and supplements. The quality of their products is outstanding, and their prompt delivery ensures our clinic never runs out of essential supplies. Highly recommended!</p>
                  <div class="rating1 text-left">
                    <i class="las la-star"></i>
                    <i class="las la-star"></i>
