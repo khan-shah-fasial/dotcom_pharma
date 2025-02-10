@@ -37,6 +37,9 @@
     <link rel="stylesheet" href="{{ static_asset('assets/css/aiz-core.css?v=') }}{{ rand(1000, 9999) }}">
     
     <style>
+        button {
+    border-radius: 15px !important;
+}
         body .form-control:focus {
     border-width: 1px !important;
 }
