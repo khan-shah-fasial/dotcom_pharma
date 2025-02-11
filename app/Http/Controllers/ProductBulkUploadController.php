@@ -10,7 +10,9 @@ use App\Models\ProductsImport;
 use App\Models\BulkProductVariantImport;
 use App\Models\ProductsExport;
 use PDF;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Validators\ValidationException;
 use Auth;
 
 class ProductBulkUploadController extends Controller
@@ -77,13 +79,69 @@ class ProductBulkUploadController extends Controller
 
         return back();
     }
-    public function bulk_upload2(Request $request)
-    {
-        if ($request->hasFile('bulk_file_product_variant')) {
-            $import = new BulkProductVariantImport;
-            Excel::import($import, request()->file('bulk_file_product_variant'));
+
+
+
+public function bulk_upload2(Request $request)
+{
+    if ($request->hasFile('bulk_file_product_variant')) {
+
+        // Instantiate the import class.
+        $import = new BulkProductVariantImport;
+
+        // Begin a transaction.
+        DB::beginTransaction();
+
+        // Perform the import.
+        Excel::import($import, $request->file('bulk_file_product_variant'));
+
+        // Retrieve the failures collected by the import.
+        $failures = $import->failures();
+
+        // If there are any failures, roll back the transaction.
+        if ($failures->isNotEmpty()) {
+            DB::rollBack();
+
+            // Group errors by row.
+            $errorMessagesByRow = [];
+            foreach ($failures as $failure) {
+                $row    = $failure->row();
+                $errors = $failure->errors(); // Returns an array of error messages.
+
+                // Build an error message for each row, joining multiple errors with a pipe.
+                if (!isset($errorMessagesByRow[$row])) {
+                    $errorMessagesByRow[$row] = "Row $row: " . implode(' | ', $errors);
+                } else {
+                    $errorMessagesByRow[$row] .= " | " . implode(' | ', $errors);
+                }
+            }
+
+            // Build the final error message as an ordered list.
+            $errorMessages = '<ol style="margin-top:10px; margin-bottom:0;">';
+            foreach ($errorMessagesByRow as $errorMessage) {
+                $errorMessages .= '<li>' . $errorMessage . '</li>';
+            }
+            $errorMessages .= '</ol>';
+
+            // Flash the error messages.
+            flash($errorMessages)->error();
+
+            // Return immediately so no products are imported.
+            return back();
         }
 
+        // If there are no validation failures, commit the transaction.
+        DB::commit();
+
+        flash(translate('Products imported successfully'))->success();
         return back();
     }
+
+    flash(translate('No file selected'))->error();
+    return back();
+}
+
+
+
+
 }

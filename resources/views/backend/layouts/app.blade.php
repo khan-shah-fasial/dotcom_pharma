@@ -148,7 +148,7 @@
 
     <script type="text/javascript">
         @foreach (session('flash_notification', collect())->toArray() as $message)
-            AIZ.plugins.notify('{{ $message['level'] }}', '{{ $message['message'] }}');
+            AIZ.plugins.notify('{{ $message['level'] }}', '{!! $message['message'] !!}');
             @if ($message['message'] == translate('Product has been inserted successfully'))
                 var data_type = ['digital', 'physical', 'auction', 'wholesale'];
                 data_type.forEach(element => {

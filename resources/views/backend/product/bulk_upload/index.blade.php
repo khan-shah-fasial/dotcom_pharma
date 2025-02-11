@@ -17,7 +17,9 @@
             <br>
             <div class="">
                 <a href="{{ static_asset('download/product_bulk_demo.xlsx') }}" download><button class="btn btn-info">{{ translate('Download CSV')}}</button></a>
+                <a href="{{ static_asset('download/product_variant_bulk_demo.xlsx') }}" download><button class="btn btn-info">{{ translate('Download Product Variant CSV')}}</button></a>
             </div>
+            <br>
             <div class="alert" style="color: #004085;background-color: #cce5ff;border-color: #b8daff;margin-bottom:0;margin-top:10px;">
                 <strong>{{translate('Step 2')}}:</strong>
                 <p>1. {{translate('Category and Brand should be in numerical id')}}.</p>
@@ -31,53 +33,72 @@
             <br>
         </div>
     </div>
-
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0 h6"><strong>{{translate('Upload Product File')}}</strong></h5>
-        </div>
-        <div class="card-body">
-            <form class="form-horizontal" action="{{ route('bulk_product_upload') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="form-group row">
-                    <div class="col-sm-9">
-                        <div class="custom-file">
-    						<label class="custom-file-label">
-    							<input type="file" name="bulk_file" class="custom-file-input" required>
-    							<span class="custom-file-name">{{ translate('Choose File')}}</span>
-    						</label>
-    					</div>
+    <div class="row">
+        <div class="col-12">
+            @if(session('flash_notification'))
+            @foreach(session('flash_notification')->toArray() as $message)
+                <div class="alert alert-{{ $message['level'] }}">
+                    @if ($message['level'] == 'danger')
+                        <b>Fix error and re-upload file</b>
+                    @endif
+                        {!! $message['message'] !!}
                     </div>
+                @endforeach
+            @endif
+        </div>
+
+
+        <div class="col-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 h6"><strong>{{translate('Upload Product File')}}</strong></h5>
                 </div>
-                <div class="form-group mb-0">
-                    <button type="submit" class="btn btn-info">{{translate('Upload CSV')}}</button>
+                <div class="card-body">
+                    <form class="form-horizontal" action="{{ route('bulk_product_upload') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="form-group row">
+                            <div class="col-sm-9">
+                                <div class="custom-file">
+                                    <label class="custom-file-label">
+                                        <input type="file" name="bulk_file" class="custom-file-input" required>
+                                        <span class="custom-file-name">{{ translate('Choose File')}}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-info">{{translate('Upload CSV')}}</button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 h6"><strong>{{translate('Upload Product Variant File')}}</strong></h5>
+                </div>
+                <div class="card-body">
+                    <form class="form-horizontal" action="{{ route('bulk_product_upload2') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="form-group row">
+                            <div class="col-sm-9">
+                                <div class="custom-file">
+                                    <label class="custom-file-label">
+                                        <input type="file" name="bulk_file_product_variant" class="custom-file-input" required>
+                                        <span class="custom-file-name">{{ translate('Choose File')}}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-info">{{translate('Upload CSV')}}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0 h6"><strong>{{translate('Upload Product Variant File')}}</strong></h5>
-        </div>
-        <div class="card-body">
-            <form class="form-horizontal" action="{{ route('bulk_product_upload2') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="form-group row">
-                    <div class="col-sm-9">
-                        <div class="custom-file">
-    						<label class="custom-file-label">
-    							<input type="file" name="bulk_file_product_variant" class="custom-file-input" required>
-    							<span class="custom-file-name">{{ translate('Choose File')}}</span>
-    						</label>
-    					</div>
-                    </div>
-                </div>
-                <div class="form-group mb-0">
-                    <button type="submit" class="btn btn-info">{{translate('Upload CSV')}}</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
 @endsection
