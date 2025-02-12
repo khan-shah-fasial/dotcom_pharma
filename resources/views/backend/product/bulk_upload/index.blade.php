@@ -85,7 +85,7 @@
                             <div class="col-sm-9">
                                 <div class="custom-file">
                                     <label class="custom-file-label">
-                                        <input type="file" name="bulk_file_product_variant" class="custom-file-input" required>
+                                        <input type="file" name="bulk_file_product_variant" class="custom-file-input" required accept=".csv, .xlsx, .xls">
                                         <span class="custom-file-name">{{ translate('Choose File')}}</span>
                                     </label>
                                 </div>

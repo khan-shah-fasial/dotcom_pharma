@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Validators\ValidationException;
 use Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+
 
 class ProductBulkUploadController extends Controller
 {
@@ -81,7 +85,81 @@ class ProductBulkUploadController extends Controller
     }
 
 
+    public function bulk_upload2(Request $request)
+    {
+        // 1. Check that a file is selected.
+        if (!$request->hasFile('bulk_file_product_variant')) {
+            flash(translate('No file selected'))->error();
+            return back();
+        }
 
+        $file = $request->file('bulk_file_product_variant');
+
+        // 2. Enforce a file size limit of 10MB.
+        if ($file->getSize() > 10 * 1024 * 1024) { // 10MB in bytes
+            flash(translate('File size exceeds the 10MB limit.'))->error();
+            return back();
+        }
+
+        // 3. Pre-validate the file using the import class.
+        $import = new BulkProductVariantImport;
+        Excel::import($import, $file);
+
+        // 4. Retrieve all row-level validation failures.
+        $failures = $import->failures();
+
+        // 5. Get the count of valid rows (rows that passed validation).
+        $validRows = $import->getRowCount();
+
+        // 6. Build an error log from the failures.
+        $errorMessagesByRow = [];
+        foreach ($failures as $failure) {
+            $row = $failure->row();
+            $errors = $failure->errors(); // returns an array of error messages for this failure
+            if (!isset($errorMessagesByRow[$row])) {
+                $errorMessagesByRow[$row] = $errors;
+            } else {
+                $errorMessagesByRow[$row] = array_merge($errorMessagesByRow[$row], $errors);
+            }
+        }
+        // Remove duplicate error messages for each row.
+        foreach ($errorMessagesByRow as $row => $errors) {
+            $errorMessagesByRow[$row] = array_unique($errors);
+        }
+        // Build the error log content (one error per row).
+        $errorLogContent = "Error Log - " . now()->toDateTimeString() . "\n\n";
+        foreach ($errorMessagesByRow as $row => $errors) {
+            $errorLogContent .= "Row $row: " . implode(' | ', $errors) . "\n";
+        }
+        // Generate a unique file name and store the error log.
+        $errorLogFileName = 'error_log_' . Str::random(10) . '.txt';
+        Storage::put('error_logs/' . $errorLogFileName, $errorLogContent);
+        $downloadUrl = url('error_logs/' . $errorLogFileName);
+
+        // 7. If all rows have errors (i.e. no valid rows), then do not import anything.
+        if ($validRows == 0) {
+            flash(translate("All rows have errors. No products were imported. <br><a href='{$downloadUrl}' download target='_blank'>Download Error Log</a>"))->error();
+            return back();
+        }
+        // ELSE: Some valid rows exist.
+        else {
+            // Begin a transaction.
+            DB::beginTransaction();
+            // Re-run the import so that valid rows are persisted.
+            Excel::import(new BulkProductVariantImport, $file);
+            DB::commit();
+
+            // If there were any failures (even though some rows were valid), show a warning.
+            if ($failures->isNotEmpty()) {
+                flash(translate("Products imported successfully for valid rows. <br>However, some rows had errors. <br><a href='{$downloadUrl}' download target='_blank'>Download Error Log</a>"))->warning();
+            } else {
+                flash(translate('Products imported successfully'))->success();
+            }
+            return back();
+        }
+    }
+
+/*
 public function bulk_upload2(Request $request)
 {
     if ($request->hasFile('bulk_file_product_variant')) {
@@ -140,7 +218,7 @@ public function bulk_upload2(Request $request)
     flash(translate('No file selected'))->error();
     return back();
 }
-
+*/
 
 
 

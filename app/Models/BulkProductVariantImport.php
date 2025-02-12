@@ -10,6 +10,7 @@ use App\Traits\PreventDemoModeChanges;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithMapping; // Allows custom mapping
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
@@ -19,12 +20,81 @@ use Auth;
 use Carbon\Carbon;
 use Storage;
 
-class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithValidation, ToModel, SkipsOnFailure
+class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithValidation, ToModel, SkipsOnFailure, WithMapping
 {
     use PreventDemoModeChanges, SkipsFailures;
 
     private $rows = 0;
 
+    /**
+     * The map method transforms each row from the CSV file into the format your application expects.
+     *
+     * You can define your mapping independent of the column order or exact header names.
+     */
+    public function map($row): array
+    {
+        return [
+            'name'              => $this->getMappingValue($row, ['Product Name', 'Name']),
+            'description'       => $this->getMappingValue($row, ['Product Description', 'Description']),
+            'category_id'       => $this->getMappingValue($row, ['Category Id', 'Category']),
+            'multi_categories'  => $this->getMappingValue($row, ['Categories', 'Multi Categories']),
+            'brand_id'          => $this->getMappingValue($row, ['Brand Id', 'Brand']),
+            'video_provider'    => $this->getMappingValue($row, ['Video Provider']),
+            'video_link'        => $this->getMappingValue($row, ['Video Link']),
+            'tags'              => $this->getMappingValue($row, ['Tags']),
+            'unit_price'        => $this->getMappingValue($row, ['Price', 'Unit Price']),
+            'unit'              => $this->getMappingValue($row, ['Unit']),
+            'slug'              => $this->getMappingValue($row, ['Slug']),
+            'current_stock'     => $this->getMappingValue($row, ['Stock', 'Current Stock']),
+            'est_shipping_days' => $this->getMappingValue($row, ['Shipping Days', 'Est Shipping Days']),
+            'sku'               => $this->getMappingValue($row, ['SKU']),
+            'meta_title'        => $this->getMappingValue($row, ['Meta Title']),
+            'meta_description'  => $this->getMappingValue($row, ['Meta Description']),
+            'thumbnail_img'     => $this->getMappingValue($row, ['Thumbnail', 'Thumbnail Img']),
+            'photos'            => $this->getMappingValue($row, ['Photos']),
+            // Variant fields:
+            'price_pts'         => $this->getMappingValue($row, ['Price Pts', 'price_pts', 'PricePts']),
+            'sku_pts'           => $this->getMappingValue($row, ['SKU Pts', 'sku_pts']),
+            'qty_pts'           => $this->getMappingValue($row, ['Quantity Pts', 'qty_pts']),
+            'price_ptr'         => $this->getMappingValue($row, ['Price Ptr', 'price_ptr']),
+            'sku_ptr'           => $this->getMappingValue($row, ['SKU Ptr', 'sku_ptr']),
+            'qty_ptr'           => $this->getMappingValue($row, ['Quantity Ptr', 'qty_ptr']),
+            'price_ptd'         => $this->getMappingValue($row, ['Price Ptd', 'price_ptd']),
+            'sku_ptd'           => $this->getMappingValue($row, ['SKU Ptd', 'sku_ptd']),
+            'qty_ptd'           => $this->getMappingValue($row, ['Quantity Ptd', 'qty_ptd']),
+            'price_gov'         => $this->getMappingValue($row, ['Price Gov', 'price_gov']),
+            'sku_gov'           => $this->getMappingValue($row, ['SKU Gov', 'sku_gov']),
+            'qty_gov'           => $this->getMappingValue($row, ['Quantity Gov', 'qty_gov']),
+            'price_expo'        => $this->getMappingValue($row, ['Price Expo', 'price_expo']),
+            'sku_expo'          => $this->getMappingValue($row, ['SKU Expo', 'sku_expo']),
+            'qty_expo'          => $this->getMappingValue($row, ['Quantity Expo', 'qty_expo']),
+        ];
+    }
+
+    /**
+     * A helper method to get a value from the row using a list of possible header keys.
+     * The function converts keys to lower case to allow case-insensitive matching.
+     */
+    protected function getMappingValue($row, array $possibleKeys)
+    {
+        // Convert the row keys to lower case for consistent matching.
+        $normalizedRow = [];
+        foreach ($row as $key => $value) {
+            $normalizedRow[strtolower($key)] = $value;
+        }
+        foreach ($possibleKeys as $key) {
+            $keyLower = strtolower($key);
+            if (isset($normalizedRow[$keyLower])) {
+                return $normalizedRow[$keyLower];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The collection method processes each mapped row.
+     * (Invalid rows will be skipped because of the SkipsFailures trait.)
+     */
     public function collection(Collection $rows)
     {
         $canImport = true;
@@ -336,6 +406,53 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
         ];
     }
 
+    public function downloadThumbnail($input)
+    {
+        // If the input is empty, return null.
+        if (empty($input)) {
+            return null;
+        }
+        // If the input is numeric, assume it's already an image ID and return it.
+        if (is_numeric($input)) {
+            return $input;
+        }
+        // Otherwise, treat the input as a URL and try to download the image.
+        try {
+            $upload = new \App\Models\Upload;
+            $upload->external_link = $input;
+            $upload->type = 'image';
+            $upload->save();
+            return $upload->id;
+        } catch (\Exception $e) {
+            // Optionally log the error.
+        }
+        return null;
+    }
+
+    public function downloadGalleryImages($input)
+    {
+        // If the input is empty, return an empty string.
+        if (empty($input)) {
+            return '';
+        }
+        $data = [];
+        // Assume the input is a comma-separated list.
+        $parts = explode(',', str_replace(' ', '', $input));
+        foreach ($parts as $part) {
+            if (empty($part)) {
+                continue;
+            }
+            // If the part is numeric, use it directly; otherwise, process it.
+            if (is_numeric($part)) {
+                $data[] = $part;
+            } else {
+                $data[] = $this->downloadThumbnail($part);
+            }
+        }
+        return implode(',', $data);
+    }
+
+/*
     public function downloadThumbnail($url)
     {
         try {
@@ -359,4 +476,5 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
         }
         return implode(',', $data);
     }
+*/
 }
