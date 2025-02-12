@@ -929,11 +929,18 @@ img.logo_main {
 }
 
 .badge_icons {
-    background: transparent;
-    color: #23780E !important;
-    padding: 0;
+    color: #fff !important;
+    height: 17px;
     position: relative;
     top: -6px;
+    background: #23790e;
+    width: 17px;
+    float: right;
+    line-height: 17px;
+}
+
+img.wishlist_img {
+    margin-right: 2px;
 }
 
 .form-control {

@@ -14,7 +14,7 @@
     <!-- <span class="d-none d-xl-block ml-2 fs-14 fw-700 text-white">{{ single_price($total) }}</span> -->
     <span class="nav-box-text d-none d-xl-block ml-0 text-white fs-12">
 
-        <span class="d-none badge_icons badge badge-secondary badge-inline badge-pill text-white cart-count" style="color:#23780E;">{{count($carts) > 0 ? count($carts) : 0 }}</span>
+        <span class="badge_icons badge badge-success badge-inline badge-pill text-white cart-count">{{count($carts) > 0 ? count($carts) : 0 }}</span>
 
     </span>
 </a>

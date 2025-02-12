@@ -313,7 +313,7 @@
                         <div class="nav-cart-box dropdown h-100" id="cart_items" style="width: max-content;">
                             @include('frontend.partials.cart.cart')
                         </div>
-                    </div>
+                    </div> 
 
                      @if (Auth::check() && auth()->user()->user_type == 'customer')
                         <!-- Compare -->

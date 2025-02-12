@@ -10,10 +10,10 @@
     </div>
 
     @if (count($wishlists) > 0)
-        <div class="row row-cols-xxl-5 row-cols-xl-4 row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2 gutters-16 border-top border-left mx-1 mx-md-0 mb-4">
+        <div class="row row-cols-xxl-3 row-cols-xl3 row-cols-lg-3 row-cols-md-3 row-cols-sm-2 row-cols-2 gutters-16 border-top border-left mx-1 mx-md-0 mb-4 product_listing_box">
             @foreach($wishlists as $key => $wishlist)
-                <div class="aiz-card-box col py-3 text-center border-right border-bottom has-transition hov-shadow-out z-1" id="wishlist_{{ $wishlist->id }}">
-                    <div class="position-relative img-fit overflow-hidden mb-3">
+                <div class="aiz-card-box col p-0 text-center has-transition z-1 product_img_bg" id="wishlist_{{ $wishlist->id }}">
+                    <div class="position-relative img-fit overflow-hidden mb-3 ">
                         <!-- Image -->
                         <a href="{{ route('product', $wishlist->product->slug) }}" class="d-block h-100">
                             <img src="{{ uploaded_asset($wishlist->product->thumbnail_img) }}" class="lazyload mx-auto img-fit"
@@ -25,22 +25,43 @@
                                 <i class="la la-trash"></i>
                             </a>
                         </div>
-                        <!-- add to cart -->
-                        <a class="cart-btn absolute-bottom-left w-100 h-35px aiz-p-hov-icon text-white fs-13 fw-700 d-flex justify-content-center align-items-center" 
-                            href="javascript:void(0)" onclick="showAddToCartModal({{ $wishlist->product->id }})">{{ translate('Add to Cart') }}</a>
+                       
                     </div>
-                    <!-- Product Name -->
-                    <h5 class="fs-14 mb-0 lh-1-5 fw-400 text-truncate-2 mb-3">
-                        <a href="{{ route('product', $wishlist->product->slug) }}" class="text-reset hov-text-primary"
-                            title="{{ $wishlist->product->getTranslation('name') }}">{{ $wishlist->product->getTranslation('name') }}</a>
-                    </h5>
-                    <!-- Price -->
-                    <div class="fs-14">
+
+
+
+                    <div class="product_box_mains">
+   
+    <div class="flex_boxex text-left">
+        <!-- Product Name -->
+        <h5 class="fw-500 fs-16 mb-0 lh-1-5 text-truncate-2 mb-0">
+            <a href="{{ route('product', $wishlist->product->slug) }}" class="text-reset hov-text-primary"
+                title="{{ $wishlist->product->getTranslation('name') }}">{{ $wishlist->product->getTranslation('name') }}</a>
+        </h5>
+
+        <div class="listing_rating rating rating-mr-1">
+                    <i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i>
+                </div>
+
+        <!-- Price -->
+                    <div class="fs-16">
                         <span class="fw-600 text-primary">{{ home_discounted_base_price($wishlist->product) }}</span>
                         @if(home_base_price($wishlist->product) != home_discounted_base_price($wishlist->product))
                             <del class="opacity-60 ml-1">{{ home_base_price($wishlist->product) }}</del>
                         @endif
                     </div>
+    </div>
+
+     <div class="flex_boxex">
+        <!-- add to cart -->
+       <a class=""  href="javascript:void(0)" onclick="showAddToCartModal({{ $wishlist->product->id }})"> <span><i class="las la-shopping-bag la-2x"></i></span></a>
+    </div>
+        
+    </div>
+
+
+                    
+                    
                 </div>
             @endforeach
         </div>
