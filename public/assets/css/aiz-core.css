@@ -238,6 +238,13 @@ fixed-bottom 1030*/
     min-width: 0;
 }
 
+.text-truncate-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+
 .text-truncate-2 {
     overflow: hidden;
     display: -webkit-box;

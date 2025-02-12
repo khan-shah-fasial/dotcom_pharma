@@ -212,7 +212,7 @@ li {
     z-index: 0;
 } */
 .sale_box_main .product_img_bg img {
-    height: auto;
+    height: 80px;
     margin-top: 10px;
     margin-bottom: 10px;
 }
