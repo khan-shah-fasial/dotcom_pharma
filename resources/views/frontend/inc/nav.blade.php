@@ -33,13 +33,13 @@
               <div class="col-6">
                       <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                             <li class="list-inline-item">
-                                 <a href="mailto:info@example.com" class=" text-secondary fs-12 py-2">
-                                   <img class="w-100" src="{{ static_asset('assets/img/envelope_icons.svg') }}" />Info@example.com
+                                 <a href="mailto:care.dotcompharma@gmail.com" class=" text-secondary fs-12 py-2">
+                                   <img class="w-100" src="{{ static_asset('assets/img/envelope_icons.svg') }}" />care.dotcompharma@gmail.com
                                 </a>
                             </li>
 
                             <li class="list-inline-item">
-                                 <a href="mailto:info@example.com" class=" text-secondary fs-12 py-2">
+                                 <a href="mailto:care.dotcompharma@gmail.com" class=" text-secondary fs-12 py-2">
                                    <img class="w-100" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
                                 </a>
                             </li>
@@ -53,13 +53,13 @@
                     <ul class="list-inline d-flex justify-content-end mb-0">
 
                      <li class="list-inline-item human_btn">
-                                 <a href="mailto:info@example.com" class=" fs-12 py-2">
+                                 <a href="/" class=" fs-12 py-2">
                                    <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
                                 </a>
                             </li>
 
                             <li class="list-inline-item veterinary_btn">
-                                 <a href="mailto:info@example.com" class=" fs-12 py-2">
+                                 <a href="/" class=" fs-12 py-2">
                                    <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
                                 </a>
                             </li>
@@ -244,10 +244,10 @@
                                                 Injections
                                             </a>
                                             <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
-                                                <a class="dropdown-item" href="#">Liquid</a>
-                                                <a class="dropdown-item" href="#">Dry</a>
-                                                <a class="dropdown-item" href="#">Prefilled</a>
-                                                <a class="dropdown-item" href="#">I.V. Fluid</a>
+                                                <a class="dropdown-item" href="/search">Liquid</a>
+                                                <a class="dropdown-item" href="/search">Dry</a>
+                                                <a class="dropdown-item" href="/search">Prefilled</a>
+                                                <a class="dropdown-item" href="/search">I.V. Fluid</a>
                                             </div>
                                         </li>
 
@@ -256,9 +256,9 @@
                                                 Bolus
                                             </a>
                                             <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
-                                                <a class="dropdown-item" href="#">Pets</a>
-                                                <a class="dropdown-item" href="#">Large Animal</a>
-                                                <a class="dropdown-item" href="#">Small Animal</a>
+                                                <a class="dropdown-item" href="/search">Pets</a>
+                                                <a class="dropdown-item" href="/search">Large Animal</a>
+                                                <a class="dropdown-item" href="/search">Small Animal</a>
                                             </div>
                                         </li>
 
@@ -267,7 +267,7 @@
                                                 Tablet & Capsules
                                             </a>
                                             <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
-                                                <a class="dropdown-item" href="#">Pets</a>
+                                                <a class="dropdown-item" href="/search">Pets</a>
                                             </div>
                                         </li>
 
@@ -276,8 +276,8 @@
                                                Oral
                                             </a>
                                             <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
-                                                <a class="dropdown-item" href="#">Powders</a>
-                                                <a class="dropdown-item" href="#">Suspensions</a>
+                                                <a class="dropdown-item" href="/search">Powders</a>
+                                                <a class="dropdown-item" href="/search">Suspensions</a>
                                             </div>
                                         </li>
 
@@ -286,8 +286,8 @@
                                                Intra-Uterine
                                             </a>
                                             <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
-                                                <a class="dropdown-item" href="#">Powders</a>
-                                                <a class="dropdown-item" href="#">Suspensions</a>
+                                                <a class="dropdown-item" href="/search">Powders</a>
+                                                <a class="dropdown-item" href="/search">Suspensions</a>
                                             </div>
                                         </li>
                                     </ul>

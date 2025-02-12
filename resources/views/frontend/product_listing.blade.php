@@ -64,7 +64,7 @@
                                         <ul class="p-3 mb-0 list-unstyled">
                                             @if (!isset($category_id))
                                                 @foreach ($categories as $category)
-                                                    <li class="mb-3 text-dark">
+                                                    <li class="mb-1 text-dark">
                                                         <a class="text-reset fs-14 hov-text-primary" href="{{ route('products.category', $category->slug) }}">
                                                             {{ $category->getTranslation('name') }}
                                                         </a>
@@ -107,7 +107,7 @@
                                 <!-- Price range -->
                                 <div class="light_bg_gray mb-3">
                                     <div class="fs-16 fw-700 p-3">
-                                        {{ translate('Price range')}}
+                                        {{ translate('Price Range')}}
                                     </div>
                                     <div class="p-3 mr-3">
                                         @php

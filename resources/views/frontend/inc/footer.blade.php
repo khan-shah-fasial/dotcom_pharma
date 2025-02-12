@@ -238,11 +238,7 @@
                                 </a>
                             </li>
 
-                             <li class="mb-2">
-                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
-                                   News
-                                </a>
-                            </li>
+                           
 
                              <li class="mb-2">
                                 <a href="/contact-us" class="fs-16 black_light_clr animate-underline-white">

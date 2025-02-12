@@ -97,67 +97,59 @@
    </section>
 
 
-    <!-- Featured Categories -->
-    @if (count($featured_categories) > 0)
-        <section class="mb-4 mb-md-5 mt-4 mt-md-5">
-            <div class="container">
-                <div class="bg-white">
-                    <!-- Top Section -->
-                    <div class="text-center">
-                        <!-- Title -->
-                        <h3 class="fs-16 fs-md-24 text-center fw-700 pb-4 pt-0">
-                            <span class="">{{ translate('Top Category') }}</span>
-                        </h3>
-                    </div>
+   <!-- Featured Categories -->
+@if (count($featured_categories) > 0)
+    <section class="mb-4 mb-md-5 mt-4 mt-md-5">
+        <div class="container">
+            <div class="bg-white">
+                <!-- Top Section -->
+                <div class="text-center">
+                    <!-- Title -->
+                    <h3 class="fs-16 fs-md-24 text-center fw-700 pb-4 pt-0">
+                        <span class="">{{ translate('Top Category') }}</span>
+                    </h3>
                 </div>
-                <!-- Categories -->
-                <div class="bg-white px-sm-3">
-                    <div class="aiz-carousel sm-gutters-17" data-items="7" data-xxl-items="7" data-xl-items="7"
-                        data-lg-items="7" data-md-items="5" data-sm-items="2" data-xs-items="1" data-arrows="true"
-                        data-dots="false" data-autoplay="false" data-infinite="true">
-                        @foreach ($featured_categories as $key => $category)
-                            @php
-                                $category_name = $category->getTranslation('name');
-                            @endphp
-                            <div class="carousel-box position-relative p-0 has-transition @if ($key == 0) @endif">
+            </div>
+            <!-- Categories -->
+            <div class="bg-white px-sm-3">
+                <div class="aiz-carousel sm-gutters-17" data-items="7" data-xxl-items="7" data-xl-items="7"
+                    data-lg-items="7" data-md-items="5" data-sm-items="2" data-xs-items="1" data-arrows="true"
+                    data-dots="false" data-autoplay="false" data-infinite="true">
+                    @foreach ($featured_categories as $key => $category)
+                        @php
+                            $category_name = $category->getTranslation('name');
+                        @endphp
+                        <a href="{{ route('products.category', $category->slug) }}" class="d-block text-decoration-none">
+                            <div class="carousel-box position-relative p-0 has-transition">
                                 <div class="category_boxex_main">
                                     <div class="w-xl-auto position-relative hov-scale-img overflow-hidden">
-
                                         <div class="category_borders">
-                                        <div class="category_images">
-                                            <img src="{{ isset($category->coverImage->file_name) ? my_asset($category->coverImage->file_name) : static_asset('assets/img/placeholder.jpg') }}"
-                                                alt="{{ $category_name }}"
-                                                class="img-fit has-transition"
-                                                onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                                        </div>
+                                            <div class="category_images">
+                                                <img src="{{ isset($category->coverImage->file_name) ? my_asset($category->coverImage->file_name) : static_asset('assets/img/placeholder.jpg') }}"
+                                                    alt="{{ $category_name }}"
+                                                    class="img-fit has-transition"
+                                                    onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                            </div>
                                         </div>
                                         <div class="w-100 d-flex flex-column align-items-center justify-content-end">
                                             <div class="w-100 text-center pt-3">
-                                                <a class="w-100 fs-18 fw-500 black_light_clr animate-underline-white home-category-name d-flex align-items-center justify-content-center hov-column-gap-1"
-                                                    href="{{ route('products.category', $category->slug) }}"
-                                                    >
-                                                    {{ $category_name }}&nbsp;
-                                                    <!-- <i class="las la-angle-right"></i> -->
-                                                </a>
-                                                <div class="d-none">
-                                                    @foreach ($category->childrenCategories->take(6) as $key => $child_category)
-                                                    <a href="{{ route('products.category', $child_category->slug) }}" class="fs-13 fw-300 black_light_clr hov-text-white pr-3 pt-1">
-                                                        {{ $child_category->getTranslation('name') }}
-                                                    </a>
-                                                    @endforeach
-                                                </div>
+                                                <p class="pb-0 mb-0 w-100 fs-18 fw-500 black_light_clr animate-underline-white home-category-name d-flex align-items-center justify-content-center hov-column-gap-1">
+                                                    {{ $category_name }}
+                                                </p>
                                                 <p class="fs-14 fw-500 blue_light_clr">30 Items</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
-                    </div>
+                        </a>
+                    @endforeach
                 </div>
             </div>
-        </section>
-    @endif
+        </div>
+    </section>
+@endif
+
 
     <!-- Banner section 1 -->
     @php $homeBanner1Images = get_setting('home_banner1_images', null, $lang);   @endphp
@@ -489,7 +481,7 @@
 
                      <a href="{{ route('flash-deals') }}"
                                             class="mt-5 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') animate_button white_buttons @endif mr-3">
-                                            {{ translate('View All Flash Sale') }} <i class="las la-angle-double-right"></i>
+                                            {{ translate('View All Flash Sale') }} <i class="las la-arrow-right"></i>
                                         </a>
 
                                        
@@ -533,7 +525,7 @@
                          </ul> -->
 
                          <div class="mt-3">
-                            <a href="/about-us" class="animate_button black1_buttons">Discover More <i class="las la-angle-double-right"></i></a>
+                            <a href="/about-us" class="animate_button black1_buttons">Discover More <i class="las la-arrow-right"></i></a>
                          </div>
                </div> 
         </div>
