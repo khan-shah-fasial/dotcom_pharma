@@ -781,23 +781,23 @@
                 </div>
             </div>
 
-            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_8">
+            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_9">
                 <a class="card-title">
                  Can I return or exchange a product?
                 </a>
             </div>
-            <div id="collapse_8" class="collapse" data-parent="#accordion" >
+            <div id="collapse_9" class="collapse" data-parent="#accordion" >
                 <div class="card-body">Returns and exchanges are subject to our return policy. Please refer to our return policy section or contact customer support for details.
 
                 </div>
             </div>
 
-            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_8">
+            <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_10">
                 <a class="card-title">
                  How can I contact customer support?
                 </a>
             </div>
-            <div id="collapse_8" class="collapse" data-parent="#accordion" >
+            <div id="collapse_10" class="collapse" data-parent="#accordion" >
                 <div class="card-body">You can reach our customer support team via email, phone, or our website’s contact form for any queries or assistance.
                 </div>
             </div>
