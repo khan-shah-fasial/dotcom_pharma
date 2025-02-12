@@ -152,6 +152,12 @@
 
                             // Inject dynamic content and show the modal for the given step
                             $('#regModalContainer').html(response.html);
+                            const backdrop = document.querySelector(".modal-backdrop");
+                            if (backdrop) {
+                                backdrop.remove(); // Removes only the backdrop
+                                backdrop.parentElement?.remove(); // Removes the full div if the backdrop is inside another div
+                            }
+
                             $(`#reg_model_${step}`).modal('show');
 
 

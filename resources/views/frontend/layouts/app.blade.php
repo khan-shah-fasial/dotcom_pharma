@@ -278,11 +278,13 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
                     var modalElement = document.getElementById('login_reg_model');
-                    var modalInstance = new bootstrap.Modal(modalElement, {
-                        backdrop: 'static',
-                        keyboard: false
-                    });
-                    modalInstance.show();
+                    if (!window.location.pathname.includes('/user/registration')) {
+                        var modalInstance = new bootstrap.Modal(modalElement, {
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                        modalInstance.show();
+                    }
                 });
             </script>
 
