@@ -1093,6 +1093,11 @@ ul.dropdown-menu {
     border-radius: 50px !important;
 }
 
+.term_condition h5 {
+    margin-bottom: 5px;
+    padding-top: 8px;
+}
+
 .top_positions {
     top: -16px;
     position: relative !important;
