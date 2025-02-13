@@ -690,7 +690,7 @@
     
 <div class="container">
     <div class="text-center">
-         <h3 class="headeing_size text_clr_green pb-2 fw-600 text-left">Frequently asked questions</h3>
+         <h3 class="headeing_size text_clr_green pb-2 fw-600 text-left">Frequently Asked Questions</h3>
        </div>
     <div id="accordion" class="accordion">
         <div class="card mb-0">
