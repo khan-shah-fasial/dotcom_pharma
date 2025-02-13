@@ -26,7 +26,7 @@
             
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-md-4 mb-3">
 
                             <div class="form-group mb-1">
                                 <label class="form-label" for="name">Company Name</label>
@@ -35,7 +35,7 @@
                             </div>
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-md-4 mb-3">
 
                             <div class="form-group mb-1">
                                 <label class="form-label" for="name">Concerned Person Name</label>
@@ -44,7 +44,7 @@
                             </div>
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-md-4 mb-3">
 
                             <div class="form-group mb-1">
                                 <label class="form-label" for="email_id">Email</label>
@@ -53,7 +53,7 @@
                             </div>
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-md-4 mb-3">
 
                             @php
                                 if(!empty($data['phone'])){
@@ -72,7 +72,7 @@
                             <input type="hidden" name="phone_code_meta" value="">
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-md-4 mb-3">
 
                             <div class="form-group phone-form-group mb-1">
                                 <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Telephone No') }}</label>
@@ -82,7 +82,7 @@
                             {{-- <input type="hidden" name="country_code_phone_no_2" value=""> --}}
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-md-4 mb-3">
 
                             @php
                                 if(!empty($data['whats_app_no'])){
@@ -102,7 +102,7 @@
                         </div>
                        
 
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-md-4 mb-3">
 
                             <div class="form-group mb-1">
                                 <label class="form-label" for="password">Password</label>
@@ -111,18 +111,18 @@
                             </div>
 
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-md-4 mb-3">
 
                             <div class="form-group mb-1">
-                                <label class="form-label" for="password_confirmation">Conform Password</label>
+                                <label class="form-label" for="password_confirmation">Confirm Password</label>
                                 <input type="password" id="password_confirmation"
                                     name="password_confirmation" class="form-control form-control-lg"
-                                    required placeholder="Enter Conform Password"/>
+                                    required placeholder="Enter Confirm Password"/>
                             </div>
 
                         </div>
 
-                         <div class="col-md-12 mb-4">
+                         <div class="col-md-12 mb-md-4 mb-3">
 
                             <div class="form-group mb-1">
                                 <label class="form-label" for="post">Post</label>

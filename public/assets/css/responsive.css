@@ -1,0 +1,68 @@
+/*mobile css */
+
+@media(max-width:767px) {
+    .login_form_popup .modal-dialog {
+        padding: 15px;
+        margin: 0;
+    }
+
+    .login_form_popup .modal-content {
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-bottom: 15px !important;
+        padding-top: 20px !important;
+    }
+
+    .login_heds {
+        font-size: 30px;
+        padding-top: 3px;
+    }
+
+    .login_border {
+        margin-top: 20px;
+        margin-bottom: 35px;
+    }
+
+    .login_form_popup h5.modal-title {
+        font-size: 18px;
+    }
+
+    .login_form_popup label {
+        font-size: 14px !important;
+    }
+
+    .login_form_popup .form-control::placeholder {
+        font-size: 13px;
+    }
+
+    .login_form_popup input {
+        height: 42px !important;
+    }
+
+    .login_form_popup .modal-footer {
+        min-height: auto !important;
+    }
+
+    h3.login_heds.thank_head {
+        font-size: 20px;
+        padding-top: 10px;
+    }
+
+    .thank_you_label {
+        margin: 0px 0px;
+        padding: 7px 10px;
+    }
+
+    img.thank_you_clas {
+        width: 240px;
+        margin: 0 auto;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .searc_box_product {
+        margin-top: 10px;
+        padding: 20px 15px 15px 15px;
+        width: 100%;
+    }
+}

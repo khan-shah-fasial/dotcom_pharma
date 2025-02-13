@@ -74,6 +74,39 @@
         border-radius: 50px !important;
     padding: 7px 25px;
 }
+
+@media(max-width:767px)
+{
+.login_form_popup .modal-content {
+    border: 0 !important;
+    border-radius: 40px !important;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 10px !important;
+    padding-top: 20px !important;
+}
+.login_form_popup h5.modal-title {
+    font-size: 18px;
+    font-weight: 500;
+    padding-top: 13px;
+    padding-bottom: 10px;
+}
+.login_form_popup label {
+    font-size: 14px !important;
+}
+.login_form_popup input {
+    border: 1px solid #363636CC;
+    border-radius: 15px !important;
+    height: 42px !important;
+}
+.login_form_popup .form-control::placeholder {
+    font-size: 13px;
+}
+.login_form_popup .modal-footer {
+    min-height: auto !important;
+}
+}
+
 </style>
     <!-- aiz-main-wrapper -->
     <div class="aiz-main-wrapper d-flex flex-column justify-content-md-center bg-white">
@@ -265,7 +298,7 @@
                 <form class="form-default" id="otp-login-customer" role="form" action="{{ route('user.login.via.otp.verify') }}" method="POST">
                 @csrf
                     <div class="modal-body">
-                        <div class="form-group mt-4 adhar_field">
+                        <div class="form-group mt-md-4 mt-2 adhar_field">
                             <label class="pb-2">Verify OTP *</label>
                             <input type="text" class="form-control" name="otp" pattern="[0-9]+" minlength="6"
                                 maxlength="6" placeholder="Please Enter OTP" required />
