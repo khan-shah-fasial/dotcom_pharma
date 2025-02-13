@@ -4,38 +4,44 @@ namespace App\Models;
 
 use App\Models\Product;
 use App\Models\ProductStock;
-use App\Models\ProductCategory;
+// use App\Models\ProductCategory;
 use App\Models\User;
+use App\Models\Category; // for verifying related IDs
+use App\Models\Brand;
 use App\Traits\PreventDemoModeChanges;
 use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithMapping; // Allows custom mapping
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Auth;
 use Carbon\Carbon;
 use Storage;
 
-class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithValidation, ToModel, SkipsOnFailure, WithMapping
+// Disable the automatic heading formatting so we get raw header values.
+HeadingRowFormatter::default('none');
+
+class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel, WithValidation, WithMapping, SkipsOnFailure
 {
     use PreventDemoModeChanges, SkipsFailures;
 
     private $rows = 0;
 
     /**
-     * The map method transforms each row from the CSV file into the format your application expects.
-     *
-     * You can define your mapping independent of the column order or exact header names.
+     * Map each row from the CSV into an array of internal keys.
+     * Note: The description field is processed through formatDescription().
      */
     public function map($row): array
     {
         return [
             'name'              => $this->getMappingValue($row, ['Product Name', 'Name']),
-            'description'       => $this->getMappingValue($row, ['Product Description', 'Description']),
+            // Process the description value into HTML.
+            'description'       => $this->formatDescription($this->getMappingValue($row, ['Product Description', 'Description'])),
             'category_id'       => $this->getMappingValue($row, ['Category Id', 'Category']),
             'multi_categories'  => $this->getMappingValue($row, ['Categories', 'Multi Categories']),
             'brand_id'          => $this->getMappingValue($row, ['Brand Id', 'Brand']),
@@ -72,12 +78,11 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
     }
 
     /**
-     * A helper method to get a value from the row using a list of possible header keys.
-     * The function converts keys to lower case to allow case-insensitive matching.
+     * Helper method to retrieve a value from a row using possible header keys.
+     * It normalizes the keys to lowercase for case-insensitive matching.
      */
     protected function getMappingValue($row, array $possibleKeys)
     {
-        // Convert the row keys to lower case for consistent matching.
         $normalizedRow = [];
         foreach ($row as $key => $value) {
             $normalizedRow[strtolower($key)] = $value;
@@ -92,179 +97,231 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
     }
 
     /**
-     * The collection method processes each mapped row.
-     * (Invalid rows will be skipped because of the SkipsFailures trait.)
+     * Format a product description string into HTML.
+     *
+     * Convention:
+     * - The first block of text (up to the first completely blank line) is treated as table data.
+     *   Within this block, each key/value pair is separated by a semicolon (;)
+     *   and the key and value are separated by the first colon (:).
+     * - Any text after the first blank line is appended as additional description.
+     * - Within the table, literal "\n" or actual newlines are replaced by HTML <br> tags.
+     *
+     * @param string $description Raw description from Excel.
+     * @return string HTML markup.
+     */
+    protected function formatDescription($description)
+    {
+    // Trim and normalize newlines.
+    $description = str_replace(["\r\n", "\r"], "\n", trim($description));
+    if (empty($description)) {
+        return '';
+    }
+
+    // Split the description into blocks by one or more blank lines.
+    $blocks = preg_split('/\n\s*\n/', $description);
+
+    // Check if the first block contains a colon.
+    if (strpos($blocks[0], ':') !== false) {
+        // The first block is considered a table.
+        $tableBlock = trim($blocks[0]);
+        $html = $this->convertTableBlockToHTML($tableBlock);
+
+        // If there is extra text after the table block, append it as a paragraph.
+        if (count($blocks) > 1) {
+            $extraText = trim(implode("\n", array_slice($blocks, 1)));
+            if (!empty($extraText)) {
+                $html .= '<p>' . nl2br(htmlspecialchars($extraText)) . '</p>';
+            }
+        }
+        return $html;
+    } else {
+        // No colon found in the first block: treat the entire text as free description.
+        return '<p>' . nl2br(htmlspecialchars($description)) . '</p>';
+    }
+    }
+
+    /**
+     * Convert a block of key/value pairs into an HTML table.
+     *
+     * Each pair is separated by a semicolon (;). Within each pair, the key and value
+     * are separated by the first colon (:). Literal "\n" and actual newlines in values
+     * are replaced with <br>.
+     *
+     * @param string $tableBlock The raw table block.
+     * @return string HTML table markup.
+     */
+    protected function convertTableBlockToHTML($tableBlock)
+    {
+        $rows = explode(';', $tableBlock);
+        $html = '<table class="table table-bordered"><tbody>';
+        foreach ($rows as $row) {
+            $row = trim($row);
+            if (empty($row)) {
+                continue;
+            }
+            $parts = explode(':', $row, 2);
+            if (count($parts) == 2) {
+                $key = trim($parts[0]);
+                $value = trim($parts[1]);
+                // Replace literal "\n" with <br> and convert actual newlines.
+                $value = str_replace('\n', '<br>', $value);
+                $value = nl2br($value);
+                $html .= "<tr><td><strong>" . htmlspecialchars($key) . "</strong></td><td>" . $value . "</td></tr>";
+            } else {
+                $html .= "<tr><td colspan='2'>" . htmlspecialchars($row) . "</td></tr>";
+            }
+        }
+        $html .= '</tbody></table>';
+        return $html;
+    }
+
+    /**
+     * Process each mapped row.
+     * (Invalid rows are skipped thanks to the SkipsFailures trait.)
      */
     public function collection(Collection $rows)
     {
-        $canImport = true;
-        $user      = Auth::user();
+        $user = Auth::user();
+        $approved = ($user->user_type == 'seller' && get_setting('product_approve_by_admin') == 1) ? 0 : 1;
 
-        if ($user->user_type == 'seller' && addon_is_activated('seller_subscription')) {
-            if ((count($rows) + $user->products()->count()) > $user->shop->product_upload_limit
-                || $user->shop->package_invalid_at == null
-                || Carbon::now()->diffInDays(Carbon::parse($user->shop->package_invalid_at), false) < 0
-            ) {
-                $canImport = false;
-                flash(translate('Please upgrade your package.'))->warning();
+        foreach ($rows as $row) {
+            // Verify related IDs exist (if needed).
+            if (!Category::find($row['category_id'])) {
+                continue;
             }
-        }
+            if (!Brand::find($row['brand_id'])) {
+                continue;
+            }
 
-        if ($canImport) {
-            foreach ($rows as $row) {
+            // Process image fields.
+            $row['thumbnail_img'] = $this->downloadThumbnail($row['thumbnail_img']);
+            $row['photos'] = $this->downloadGalleryImages($row['photos']);
 
-                $approved = ($user->user_type == 'seller' && get_setting('product_approve_by_admin') == 1) ? 0 : 1;
+            // Prepare product data.
+            $productData = [
+                'name'              => $row['name'],
+                'description'       => $row['description'],
+                'added_by'          => $user->user_type == 'seller' ? 'seller' : 'admin',
+                'user_id'           => $user->user_type == 'seller' ? $user->id : User::where('user_type', 'admin')->first()->id,
+                'approved'          => $approved,
+                'category_id'       => $row['category_id'],
+                'brand_id'          => $row['brand_id'],
+                'video_provider'    => $row['video_provider'],
+                'video_link'        => $row['video_link'],
+                'tags'              => $row['tags'],
+                'unit_price'        => $row['unit_price'],
+                'unit'              => $row['unit'],
+                'meta_title'        => $row['meta_title'],
+                'meta_description'  => $row['meta_description'],
+                'est_shipping_days' => $row['est_shipping_days'],
+                'colors'            => json_encode([]),
+                'choice_options'    => json_encode([]),
+                'variations'        => json_encode([]),
+                'slug'              => $row['slug'] ? $row['slug'] : preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', strtolower($row['name']))) . '-' . Str::random(5),
+                'thumbnail_img'     => $row['thumbnail_img'],
+                'photos'            => $row['photos'],
+            ];
 
-                // Prepare the common product data.
-                $productData = [
-                    'name'              => $row['name'],
-                    'description'       => $row['description'],
-                    'added_by'          => $user->user_type == 'seller' ? 'seller' : 'admin',
-                    'user_id'           => $user->user_type == 'seller'
-                                            ? $user->id
-                                            : User::where('user_type', 'admin')->first()->id,
-                    'approved'          => $approved,
-                    'category_id'       => $row['category_id'],
-                    'brand_id'          => $row['brand_id'],
-                    'video_provider'    => $row['video_provider'],
-                    'video_link'        => $row['video_link'],
-                    'tags'              => $row['tags'],
-                    'unit_price'        => $row['unit_price'],
-                    'unit'              => $row['unit'],
-                    'meta_title'        => $row['meta_title'],
-                    'meta_description'  => $row['meta_description'],
-                    'est_shipping_days' => $row['est_shipping_days'],
-                    // Initially empty arrays for colors, choice_options and variations.
-                    'colors'            => json_encode([]),
-                    'choice_options'    => json_encode([]),
-                    'variations'        => json_encode([]),
-                    // Use the provided slug, or generate one.
-                    'slug'              => $row['slug']
-                                            ? $row['slug']
-                                            : preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', strtolower($row['name']))) . '-' . Str::random(5),
-                    'thumbnail_img'     => $this->downloadThumbnail($row['thumbnail_img']),
-                    'photos'            => $this->downloadGalleryImages($row['photos']),
-                ];
-
-                // Check if a product with the same slug exists.
-                $existingProduct = Product::where('slug', $productData['slug'])->first();
-
-                if ($existingProduct) {
-                    // Update existing product.
-                    $existingProduct->update(attributes: $productData);
-                    $product = $existingProduct;
-
-                    // Update categories: remove existing categories and re-attach new ones.
-                    \DB::table('product_categories')->where('product_id', $product->id)->delete();
-                    if (!empty($row['multi_categories'])) {
-                        foreach (explode(',', $row['multi_categories']) as $category_id) {
-                            \DB::table('product_categories')->insert([
-                                "product_id"  => $product->id,
-                                "category_id" => trim($category_id)
-                            ]);
-                        }
-                    }
-
-                    // Remove existing product stocks.
-                    ProductStock::where('product_id', $product->id)->delete();
-                } else {
-                    // Create a new product.
-                    $product = Product::create($productData);
-                    if (!empty($row['multi_categories'])) {
-                        foreach (explode(',', $row['multi_categories']) as $category_id) {
-                            \DB::table('product_categories')->insert([
-                                "product_id"  => $product->id,
-                                "category_id" => trim($category_id)
-                            ]);
-                        }
-                    }
-                }
-
-                /**
-                 * Check for variant data.
-                 * We assume that if the "price_pts" column is not empty, then the product is a variant product.
-                 *
-                 * Note: Because of the default heading row formatter, the keys are lowercased.
-                 */
-                if (isset($row['price_pts']) && $row['price_pts'] !== '') {
-                    // Define the fixed variant keys (in lowercase).
-                    $variantKeys = ['pts', 'ptr', 'ptd', 'gov', 'expo'];
-                    $collectedVariants = [];
-
-                    foreach ($variantKeys as $key) {
-                        $priceKey = 'price_' . $key;
-                        $skuKey   = 'sku_' . $key;
-                        $qtyKey   = 'qty_' . $key;
-                        // We ignore variant image columns (if any) – they remain null.
-                        if (
-                            isset($row[$priceKey]) && $row[$priceKey] !== '' &&
-                            isset($row[$qtyKey]) && $row[$qtyKey] !== ''
-                        ) {
-
-                            // Format the variant key with only the first letter capitalized.
-                            $formattedKey = ucfirst($key);
-
-                            ProductStock::create([
-                                'product_id' => $product->id,
-                                'price'      => $row[$priceKey],
-                                'sku'        => isset($row[$skuKey]) ? $row[$skuKey] : '',
-                                'qty'        => $row[$qtyKey],
-                                // Save the variant identifier as uppercase (e.g. "Pts")
-                                'variant'    => $formattedKey,
-                            ]);
-                            $collectedVariants[] = $formattedKey;
-                        }
-                    }
-
-                    // If any variants were found, automatically set the attribute and choice_options fields.
-                    if (count($collectedVariants) > 0) {
-                        //Enable variant product
-                        $product->variant_product = 1;
-                        // Set the "attributes" column to ["3"]
-                        $product->attributes = json_encode(["3"]);
-                        // Set "choice_options" to the required JSON structure.
-                        $product->choice_options = json_encode([
-                            [
-                                "attribute_id" => "3",
-                                "values"       => $collectedVariants
-                            ]
+            // Check for existing product by slug.
+            $existingProduct = Product::where('slug', $productData['slug'])->first();
+            if ($existingProduct) {
+                $existingProduct->update($productData);
+                $product = $existingProduct;
+                \DB::table('product_categories')->where('product_id', $product->id)->delete();
+                if (!empty($row['multi_categories'])) {
+                    foreach (explode(',', $row['multi_categories']) as $category_id) {
+                        \DB::table('product_categories')->insert([
+                            "product_id"  => $product->id,
+                            "category_id" => trim($category_id)
                         ]);
-                        $product->save();
                     }
-                } else {
-                    // Otherwise, create a single (default) stock entry.
-                    ProductStock::create([
-                        'product_id' => $product->id,
-                        'qty'        => $row['current_stock'],
-                        'price'      => $row['unit_price'],
-                        'sku'        => $row['sku'],
-                        'variant'    => '',
-                    ]);
                 }
-
-                ++$this->rows;
+                ProductStock::where('product_id', $product->id)->delete();
+            } else {
+                $product = Product::create($productData);
+                if (!empty($row['multi_categories'])) {
+                    foreach (explode(',', $row['multi_categories']) as $category_id) {
+                        \DB::table('product_categories')->insert([
+                            "product_id"  => $product->id,
+                            "category_id" => trim($category_id)
+                        ]);
+                    }
+                }
             }
 
+            // Process variant data.
+            if (isset($row['price_pts']) && $row['price_pts'] !== '') {
+                $variantKeys = ['pts', 'ptr', 'ptd', 'gov', 'expo'];
+                $collectedVariants = [];
+                foreach ($variantKeys as $key) {
+                    $priceKey = 'price_' . $key;
+                    $skuKey   = 'sku_' . $key;
+                    $qtyKey   = 'qty_' . $key;
+                    if (isset($row[$priceKey]) && $row[$priceKey] !== '' &&
+                        isset($row[$qtyKey]) && $row[$qtyKey] !== ''
+                    ) {
+                        $formattedKey = ucfirst($key);
+                        ProductStock::create([
+                            'product_id' => $product->id,
+                            'price'      => $row[$priceKey],
+                            'sku'        => isset($row[$skuKey]) ? $row[$skuKey] : '',
+                            'qty'        => $row[$qtyKey],
+                            'variant'    => $formattedKey,
+                        ]);
+                        $collectedVariants[] = $formattedKey;
+                    }
+                }
+                if (count($collectedVariants) > 0) {
+                    $product->variant_product = 1;
+                    $product->attributes = json_encode(["3"]);
+                    $product->choice_options = json_encode([
+                        [
+                            "attribute_id" => "3",
+                            "values"       => $collectedVariants
+                        ]
+                    ]);
+                    $product->save();
+                }
+            } else {
+                ProductStock::create([
+                    'product_id' => $product->id,
+                    'qty'        => $row['current_stock'],
+                    'price'      => $row['unit_price'],
+                    'sku'        => $row['sku'],
+                    'variant'    => '',
+                ]);
+            }
+
+            ++$this->rows;
         }
     }
 
+    /**
+     * Dummy method to satisfy the ToModel interface.
+     */
     public function model(array $row)
     {
         ++$this->rows;
     }
 
+    /**
+     * Return the number of valid rows processed.
+     */
     public function getRowCount(): int
     {
         return $this->rows;
     }
 
+    /**
+     * Closure-based validation rules.
+     */
     public function rules(): array
     {
         return [
-            // Common product fields
+            // Common product fields.
             '*.name' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
-                    $onFailure('The name field is required.');
+                    $onFailure('The product name field is required.');
                 }
             },
             '*.description' => function ($attribute, $value, $onFailure) {
@@ -298,7 +355,6 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
                     $onFailure('The slug field is required.');
                 }
             },
-
             // Variant fields for "Pts"
             '*.price_pts' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
@@ -319,7 +375,6 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
                     $onFailure('Quantity for variant Pts must be numeric.');
                 }
             },
-
             // Variant fields for "Ptr"
             '*.price_ptr' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
@@ -340,7 +395,6 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
                     $onFailure('Quantity for variant Ptr must be numeric.');
                 }
             },
-
             // Variant fields for "Ptd"
             '*.price_ptd' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
@@ -361,7 +415,6 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
                     $onFailure('Quantity for variant Ptd must be numeric.');
                 }
             },
-
             // Variant fields for "Gov"
             '*.price_gov' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
@@ -382,7 +435,6 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
                     $onFailure('Quantity for variant Gov must be numeric.');
                 }
             },
-
             // Variant fields for "Expo"
             '*.price_expo' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
@@ -406,17 +458,20 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
         ];
     }
 
+    /**
+     * Process an image field.
+     * If the input is empty, returns null.
+     * If the input is numeric, returns it directly.
+     * Otherwise, treats the input as a URL, downloads the image, and returns the new upload ID.
+     */
     public function downloadThumbnail($input)
     {
-        // If the input is empty, return null.
         if (empty($input)) {
             return null;
         }
-        // If the input is numeric, assume it's already an image ID and return it.
         if (is_numeric($input)) {
             return $input;
         }
-        // Otherwise, treat the input as a URL and try to download the image.
         try {
             $upload = new \App\Models\Upload;
             $upload->external_link = $input;
@@ -429,52 +484,28 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, WithVali
         return null;
     }
 
+    /**
+     * Process a comma-separated list of image fields.
+     * For each value, if numeric returns it directly; otherwise, processes as a URL.
+     */
     public function downloadGalleryImages($input)
     {
-        // If the input is empty, return an empty string.
         if (empty($input)) {
             return '';
         }
         $data = [];
-        // Assume the input is a comma-separated list.
-        $parts = explode(',', str_replace(' ', '', $input));
+        $parts = explode(',', $input);
         foreach ($parts as $part) {
-            if (empty($part)) {
+            $trimmed = trim($part);
+            if (empty($trimmed)) {
                 continue;
             }
-            // If the part is numeric, use it directly; otherwise, process it.
-            if (is_numeric($part)) {
-                $data[] = $part;
+            if (is_numeric($trimmed)) {
+                $data[] = $trimmed;
             } else {
-                $data[] = $this->downloadThumbnail($part);
+                $data[] = $this->downloadThumbnail($trimmed);
             }
         }
         return implode(',', $data);
     }
-
-/*
-    public function downloadThumbnail($url)
-    {
-        try {
-            $upload = new \App\Models\Upload;
-            $upload->external_link = $url;
-            $upload->type = 'image';
-            $upload->save();
-
-            return $upload->id;
-        } catch (\Exception $e) {
-            // Optionally log the error.
-        }
-        return null;
-    }
-
-    public function downloadGalleryImages($urls)
-    {
-        $data = [];
-        foreach (explode(',', str_replace(' ', '', $urls)) as $url) {
-            $data[] = $this->downloadThumbnail($url);
-        }
-        return implode(',', $data);
-    }
-*/
 }

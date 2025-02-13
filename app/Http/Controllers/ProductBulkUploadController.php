@@ -101,6 +101,45 @@ class ProductBulkUploadController extends Controller
             return back();
         }
 
+        // // 2.5. Pre-check that required columns exist.
+        // // We'll load the first row from the file to get the headers.
+        // // Ensure that you have disabled the default heading formatter if you need raw headers:
+        // // HeadingRowFormatter::default('none'); (set in your import class or globally)
+        // // $dataArray = Excel::toArray([], $file);
+        // $dataArray = Excel::toArray(new BulkProductVariantImport, $file);
+        // // dd($dataArray[0]);
+
+        // if (empty($dataArray) || !isset($dataArray[0][0])) {
+        //     flash(translate('The file appears to be empty or invalid.'))->error();
+        //     return back();
+        // }
+
+        // // Get the header keys from the first row.
+        // $rawHeaders = array_keys($dataArray[0][0]);
+        // // dd($rawHeaders);
+        // // Define required columns for critical fields, using possible header names.
+        // $requiredColumnsMapping = [
+        //     'Product Name' => ['Product Name', 'Name'],
+        //     'description' => ['Product Description', 'Description'],
+        //     'category_id' => ['Category Id', 'Category'],
+        //     'brand_id' => ['Brand Id', 'Brand'],
+        //     'unit_price' => ['Unit Price', 'Price'],
+        //     'slug' => ['Slug']
+        // ];
+        // foreach ($requiredColumnsMapping as $internal => $possibilities) {
+        //     $found = false;
+        //     foreach ($possibilities as $headerName) {
+        //         if (in_array($headerName, $rawHeaders)) {
+        //             $found = true;
+        //             break;
+        //         }
+        //     }
+        //     if (!$found) {
+        //         flash(translate("The column for '{$internal}' is missing. Please include any one of name mentioned: " . implode(', ', $possibilities)))->error();
+        //         return back();
+        //     }
+        // }
+
         // 3. Pre-validate the file using the import class.
         $import = new BulkProductVariantImport;
         Excel::import($import, $file);

@@ -17,7 +17,8 @@
             <br>
             <div class="">
                 <a href="{{ static_asset('download/product_bulk_demo.xlsx') }}" download><button class="btn btn-info">{{ translate('Download CSV')}}</button></a>
-                <a href="{{ static_asset('download/product_variant_bulk_demo.xlsx') }}" download><button class="btn btn-info">{{ translate('Download Product Variant CSV')}}</button></a>
+                {{-- <a href="{{ static_asset('download/product_variant_bulk_demo.xlsx') }}" download><button class="btn btn-info">{{ translate('Download Product Variant CSV')}}</button></a> --}}
+                <a href="{{ static_asset('download/product_variant_bulk_demo_2.xlsx') }}" download><button class="btn btn-info">{{ translate('Download Product Variant CSV')}}</button></a>
             </div>
             <br>
             <div class="alert" style="color: #004085;background-color: #cce5ff;border-color: #b8daff;margin-bottom:0;margin-top:10px;">
