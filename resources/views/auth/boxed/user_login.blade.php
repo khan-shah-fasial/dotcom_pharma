@@ -1,6 +1,80 @@
 @extends('auth.layouts.authentication')
 
 @section('content')
+
+<style>
+    .login_form_popup input {
+    border: 1px solid #363636CC;
+    border-radius: 15px !important;
+    height: 45px !important;
+}
+
+
+.login_form_popup textarea,
+.login_form_popup .dropdown-toggle {
+    border: 1px solid #363636CC;
+    border-radius: 15px !important;
+}
+
+.login_form_popup .form-control::placeholder {
+    font-size: 14px;
+}
+
+.login_form_popup .iti__selected-flag {
+    background: transparent !important;
+    border: 0 !important;
+}
+
+.login_form_popup .iti--allow-dropdown input {
+    padding-left: 80px !important;
+}
+
+.login_form_popup label {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: #363636;
+}
+
+.login_form_popup .modal-header {
+    border: 0;
+    padding: 0;
+    text-align: center;
+    display: block;
+}
+
+.login_form_popup h5.modal-title {
+    font-size: 24px;
+    font-weight: 500;
+    padding-top: 13px;
+    padding-bottom: 10px;
+}
+
+.login_form_popup .modal-content {
+    border: 0 !important;
+    border-radius: 40px !important;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-bottom: 25px !important;
+    padding-top: 30px !important;
+}
+
+.login_form_popup .modal-body {
+    padding: 0 !important;
+    overflow: initial !important;
+    max-height: max-content;
+}
+
+.login_form_popup .modal-footer {
+    border-top: 0 !important;
+    padding: 0;
+    justify-content: space-between;
+}
+.proceed_btn
+{
+        border-radius: 50px !important;
+    padding: 7px 25px;
+}
+</style>
     <!-- aiz-main-wrapper -->
     <div class="aiz-main-wrapper d-flex flex-column justify-content-md-center bg-white">
         <section class="bg-white overflow-hidden">
@@ -154,7 +228,7 @@
                                     <!-- Register Now -->
                                     <p class="fs-12 text-gray mb-0">
                                         {{ translate('Dont have an account?')}}
-                                        <a href="{{ route('user.registration') }}" class="ml-2 fs-14 fw-700 animate-underline-primary">{{ translate('Register Now')}}</a>
+                                        <a href="{{ route('user.new_registration') }}" class="ml-2 fs-14 fw-700 animate-underline-primary">{{ translate('Register Now')}}</a>
                                     </p>
                                 </div>
                             </div>
@@ -175,14 +249,18 @@
 
     {{--/* otp popup  */ --}}
 
-    <div class="modal" id="otp-modal" tabindex="-1" role="dialog">
+    <div class="modal login_form_popup" id="otp-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Mobile OTP Verify</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
                 </button>
+                 <div class="heading">
+                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                    <h5 class="modal-title" id="exampleModalLabel_phone">Mobile OTP Verify</h5>
+                </div>
+              
             </div>
                 <form class="form-default" id="otp-login-customer" role="form" action="{{ route('user.login.via.otp.verify') }}" method="POST">
                 @csrf
@@ -193,9 +271,12 @@
                                 maxlength="6" placeholder="Please Enter OTP" required />
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Proceed</button>
-                        <button type="button" class="btn btn-secondary" onclick="closeOtpModal()">Close</button>
+                    <div class="modal-footer " style="justify-content: end; !important">
+                        <div class="purple_btn">
+                            <button type="submit" class="btn btn-primary proceed_btn">Proceed</button>
+                        </div>
+                        
+                        <!-- <button type="button" class="btn btn-secondary" onclick="closeOtpModal()">Close</button> -->
                     </div>
                 </form>
             

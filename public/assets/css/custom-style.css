@@ -635,8 +635,8 @@ body .accordion_section .card {
 }
 
 .accordion_section .card-body {
-    font-size: 16px;
-    line-height: 28px;
+    font-size: 14px;
+    line-height: 26px;
     padding: 0;
     padding-top: 17px;
     border-bottom: 1px solid #36363680;
@@ -972,12 +972,22 @@ ul.dropdown-menu {
     padding-right: 15px;
 }
 
+.terms_li {
+    float: right;
+    margin-bottom: 0;
+}
+
+.terms_li li {
+    float: left;
+    margin-left: 11px;
+}
+
 .contact_boxex {
     background: #3770B40D;
     text-align: center;
-    padding: 20px;
+    padding: 20px 15px;
     border-radius: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .contact_icons {
@@ -1076,7 +1086,24 @@ ul.dropdown-menu {
 }
 
 .sales_box_gren i.las.la-shopping-bag {
-    background: #23780E;
+    background: #23780E !important;
+}
+
+.border-radius-50 {
+    border-radius: 50px !important;
+}
+
+.top_positions {
+    top: -16px;
+    position: relative !important;
+}
+
+body .product_listing_box .product_img_bg span.fw-700.text-primary {
+    color: #23780E !important;
+}
+
+body .product_listing_box .product_img_bg i.las.la-shopping-bag.la-2x {
+    background-color: #23780E !important;
 }
 
 .listing_rating i.las.la-star {

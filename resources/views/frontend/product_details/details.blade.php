@@ -501,7 +501,7 @@
      <div class="d-flex flex-wrap align-items-center mb-1">
             <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Stock') }}</span><br>
            
-                <p class="text-secondary fs-14 fw-400 pb-0 mb-1">Available</p>
+                <p class="text-secondary fs-14 fw-400 pb-0 mb-0">Available</p>
         </div>
 
          <div class="d-flex flex-wrap align-items-center mb-1">
@@ -541,25 +541,25 @@
                     </a>
                 @else
                     <button type="button"
-                        class="btn btn-secondary-base mr-2 add-to-cart fw-600 min-w-150px rounded-0 text-white"
+                        class="btn btn-success mr-3 add-to-cart fw-600 min-w-150px rounded-0 text-white border-radius-50"
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
                     </button>
-                    <button type="button" class="btn btn-primary buy-now fw-600 add-to-cart min-w-150px rounded-0"
+                    <button type="button" class="btn btn-primary buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50"
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
                     </button>
                 @endif
-                <button type="button" class="btn btn-secondary out-of-stock fw-600 d-none" disabled>
+                <button type="button" class="btn btn-secondary out-of-stock fw-600 d-none border-radius-50" disabled>
                     <i class="la la-cart-arrow-down"></i> {{ translate('Out of Stock') }}
                 </button>
             @elseif ($detailedProduct->digital == 1)
                 <button type="button"
-                    class="btn btn-secondary-base mr-2 add-to-cart fw-600 min-w-150px rounded-0 text-white"
+                    class="btn btn-success mr-3 add-to-cart fw-600 min-w-150px rounded-0 text-white border-radius-50"
                     @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                     <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
                 </button>
-                <button type="button" class="btn btn-primary buy-now fw-600 add-to-cart min-w-150px rounded-0"
+                <button type="button" class="btn btn-primary buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50"
                     @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                     <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
                 </button>

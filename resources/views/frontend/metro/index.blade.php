@@ -700,7 +700,7 @@
                 </a>
             </div>
             <div id="collapse_1" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Pharm Vet Easy is a trusted provider of high-quality veterinary pharmaceuticals and healthcare solutions. We specialize in finished formulations for pets, livestock, and other animals, ensuring their health and well-being.
+                <div class="card-body fs-14">Pharm Vet Easy is a trusted provider of high-quality veterinary pharmaceuticals and healthcare solutions. We specialize in finished formulations for pets, livestock, and other animals, ensuring their health and well-being.
 
                 </div>
             </div>
@@ -711,7 +711,7 @@
                 </a>
             </div>
             <div id="collapse_2" class="collapse" data-parent="#accordion" >
-                <div class="card-body">We offer a wide range of veterinary products, including medicines, supplements, nutritional support, and healthcare essentials for various animals.
+                <div class="card-body fs-14">We offer a wide range of veterinary products, including medicines, supplements, nutritional support, and healthcare essentials for various animals.
 
                 </div>
             </div>
@@ -722,7 +722,7 @@
                 </a>
             </div>
             <div id="collapse_3" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Yes, all our products are sourced from reputed manufacturers and comply with international quality and safety standards.
+                <div class="card-body fs-14">Yes, all our products are sourced from reputed manufacturers and comply with international quality and safety standards.
 
                 </div>
             </div>
@@ -733,7 +733,7 @@
                 </a>
             </div>
             <div id="collapse_4" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Yes, we cater to veterinary clinics, hospitals, and livestock farms with bulk supply options at competitive prices.
+                <div class="card-body fs-14">Yes, we cater to veterinary clinics, hospitals, and livestock farms with bulk supply options at competitive prices.
 
                 </div>
             </div>
@@ -744,7 +744,7 @@
                 </a>
             </div>
             <div id="collapse_5" class="collapse" data-parent="#accordion" >
-                <div class="card-body">You can place an order through our website or contact our customer support team for assistance with bulk or customized orders.
+                <div class="card-body fs-14">You can place an order through our website or contact our customer support team for assistance with bulk or customized orders.
 
                 </div>
             </div>
@@ -755,7 +755,7 @@
                 </a>
             </div>
             <div id="collapse_6" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Yes, we provide global shipping options. Delivery times may vary based on location and regulatory approvals.
+                <div class="card-body fs-14">Yes, we provide global shipping options. Delivery times may vary based on location and regulatory approvals.
                 </div>
             </div>
 
@@ -765,7 +765,7 @@
                 </a>
             </div>
             <div id="collapse_7" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Once your order is dispatched, you will receive a tracking ID via email or SMS to monitor the shipment’s status.
+                <div class="card-body fs-14">Once your order is dispatched, you will receive a tracking ID via email or SMS to monitor the shipment’s status.
 
                 </div>
             </div>
@@ -776,7 +776,7 @@
                 </a>
             </div>
             <div id="collapse_8" class="collapse" data-parent="#accordion" >
-                <div class="card-body">We accept multiple payment methods, including credit/debit cards, net banking, and digital payment gateways.
+                <div class="card-body fs-14">We accept multiple payment methods, including credit/debit cards, net banking, and digital payment gateways.
 
                 </div>
             </div>
@@ -787,7 +787,7 @@
                 </a>
             </div>
             <div id="collapse_9" class="collapse" data-parent="#accordion" >
-                <div class="card-body">Returns and exchanges are subject to our return policy. Please refer to our return policy section or contact customer support for details.
+                <div class="card-body fs-14">Returns and exchanges are subject to our return policy. Please refer to our return policy section or contact customer support for details.
 
                 </div>
             </div>
@@ -798,7 +798,7 @@
                 </a>
             </div>
             <div id="collapse_10" class="collapse" data-parent="#accordion" >
-                <div class="card-body">You can reach our customer support team via email, phone, or our website’s contact form for any queries or assistance.
+                <div class="card-body fs-14">You can reach our customer support team via email, phone, or our website’s contact form for any queries or assistance.
                 </div>
             </div>
 

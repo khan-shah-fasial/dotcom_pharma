@@ -51,6 +51,12 @@
     border-radius: 15px !important;
     height: 45px !important;
 }
+button.btn.btn-primary.btn-block.fw-700.fs-14.rounded-0
+{
+    border-radius:50px !important;
+}button.btn.btn-primary.btn-block.fw-600.rounded-0 {
+    border-radius: 50px !important;
+}
         :root{
             --blue: #3490f3;
             --hov-blue: #2e7fd6;

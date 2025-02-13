@@ -596,10 +596,42 @@
     <div class="container">
         <div class="row align-items-center">
             <!-- Copyright -->
-            <div class="col-lg-12 order-1 order-lg-0">
-                <div class="text-center fs-14 text-white" current-verison="{{get_setting("current_version")}}">
+            <div class="col-lg-6">
+                <div class="text-left fs-14 text-white" current-verison="{{get_setting("current_version")}}">
                     {!! get_setting('frontend_copyright_text', null, App::getLocale()) !!}
                 </div>
+            </div>
+
+            <!-- term condition -->
+            <div class="col-lg-6">
+               <ul class="list-unstyled terms_li">
+                       
+                            <li class="">
+                                <a href="/privacy-policy" class="fs-14 black_light_clr">
+                                   Privacy Policy
+                                </a>
+                            </li>
+
+                            <li class="">
+                              |
+                            </li>
+
+                             <li class="">
+                                <a href="/terms" class="fs-14 black_light_clr">
+                                   Terms & Conditions
+                                </a>
+                            </li>
+
+                             <li class="">
+                              |
+                            </li>
+
+                               <li class="">
+                                <a href="/return-policy" class="fs-14 black_light_clr">
+                                   Refund Policy
+                                </a>
+                            </li>
+                    </ul>
             </div>
 
             <!-- Payment Method Images -->

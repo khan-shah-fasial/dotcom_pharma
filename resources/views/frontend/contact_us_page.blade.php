@@ -41,7 +41,7 @@
                         <a class="text-reset" href="{{ route('home') }}">{{ translate('Home')}}</a>
                     </li>
                     <li class="text-dark fw-600 breadcrumb-item">
-                        "{{ translate('Contact Us') }}"
+                        {{ translate('Contact Us') }}
                     </li>
                 </ul>
             </div>
@@ -64,7 +64,7 @@
                         
                         <!-- <p class="fs-16 fw-400 mb-5">{{ $content->description }}</p> -->
                         <div class="row">
-                             <div class="col-md-12">
+                             <div class="col-md-12 pr-md-0">
                                    <div class="contact_boxex">
                                         <span class="contact_icons d-flex align-items-center justify-content-center blue_bg_light_clr rounded-content">
                                             <i class="la-2x las la-map-marker text-white font_icons1"></i>
@@ -76,7 +76,7 @@
                                    </div>
                              </div>
 
-                             <div class="col-md-6">
+                             <div class="col-md-6 pr-md-0">
                                    <div class="contact_boxex">
                                        <span class="contact_icons d-flex align-items-center justify-content-center blue_bg_light_clr rounded-content">
                                             <i class="las la-2x la-phone text-white font_icons1"></i>
@@ -88,7 +88,7 @@
                                    </div>
                              </div>
 
-                             <div class="col-md-6">
+                             <div class="col-md-6 pr-md-0">
                                    <div class="contact_boxex">
                                         <span class="contact_icons d-flex align-items-center justify-content-center blue_bg_light_clr rounded-content">
                                             <i class="las la-2x la-envelope text-white font_icons1"></i>

@@ -33,13 +33,13 @@
               <div class="col-6">
                       <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                             <li class="list-inline-item">
-                                 <a href="mailto:care.dotcompharma@gmail.com" class=" text-secondary fs-12 py-2">
-                                   <img class="w-100" src="{{ static_asset('assets/img/envelope_icons.svg') }}" />care.dotcompharma@gmail.com
+                                 <a href="mailto:info@dotcompharmaindia.com" class=" text-secondary fs-12 py-2">
+                                   <img class="w-100" src="{{ static_asset('assets/img/envelope_icons.svg') }}" />info@dotcompharmaindia.com
                                 </a>
                             </li>
 
                             <li class="list-inline-item">
-                                 <a href="mailto:care.dotcompharma@gmail.com" class=" text-secondary fs-12 py-2">
+                                 <a href="mailto:info@dotcompharmaindia.com" class=" text-secondary fs-12 py-2">
                                    <img class="w-100" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
                                 </a>
                             </li>
@@ -474,7 +474,7 @@
             <!-- Loged in user Menus -->
             <div class="hover-user-top-menu position-absolute top-100 left-0 right-0 z-3">
                 <div class="container">
-                    <div class="position-static float-right">
+                    <div class="position-static float-right top_positions">
                         <div class="aiz-user-top-menu bg-white rounded-0 border-top shadow-sm" style="width:220px;">
                             <ul class="list-unstyled no-scrollbar mb-0 text-left">
                                 @if (isAdmin())

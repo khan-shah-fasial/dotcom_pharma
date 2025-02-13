@@ -18,7 +18,7 @@
                                     </a>
                                 </li>
                                 <li class="text-dark fw-600 breadcrumb-item">
-                                    "{{ translate('Flash Deals') }}"
+                                    {{ translate('Flash Deals') }}
                                 </li>
                             </ul>
                         </div>
