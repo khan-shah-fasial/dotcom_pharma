@@ -142,7 +142,7 @@
                                                 
                                             <!-- password -->
                                             <div class="form-group">
-                                                <label for="password" class="fs-12 fw-700 text-soft-dark">{{  translate('Password') }}</label>
+                                                <label for="password" class="fs-12 fw-700 text-soft-dark pt-3">{{  translate('Password') }}</label>
                                                 <div class="position-relative">
                                                     <input type="password" class="form-control rounded-0 {{ $errors->has('password') ? ' is-invalid' : '' }}" placeholder="{{ translate('Password')}}" name="password" id="password">
                                                     <i class="password-toggle las la-2x la-eye"></i>
