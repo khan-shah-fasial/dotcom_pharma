@@ -317,6 +317,7 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
      */
     public function rules(): array
     {
+        $duplicateSlugs = [];  // Array to store duplicates
         return [
             // Common product fields.
             '*.name' => function ($attribute, $value, $onFailure) {
@@ -336,13 +337,27 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                     $onFailure('The category id must be numeric.');
                 }
             },
-            '*.brand_id' => function ($attribute, $value, $onFailure) {
+            '*.multi_categories' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
-                    $onFailure('The brand id field is required.');
-                } elseif (!is_numeric($value)) {
-                    $onFailure('The brand id must be numeric.');
+                    $onFailure('The Multi Categories field is required.');
+                } else {
+                    // Split the string by commas and check if each value is numeric
+                    $categories = explode(',', $value);
+                    foreach ($categories as $category) {
+                        if (!is_numeric(trim($category))) {
+                            $onFailure('Each Multi Category must be numeric.');
+                            return;
+                        }
+                    }
                 }
             },
+            // '*.brand_id' => function ($attribute, $value, $onFailure) {
+            //     if (empty($value)) {
+            //         $onFailure('The brand id field is required.');
+            //     } elseif (!is_numeric($value)) {
+            //         $onFailure('The brand id must be numeric.');
+            //     }
+            // },
             '*.unit_price' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
                     $onFailure('The unit price field is required.');
@@ -350,6 +365,46 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                     $onFailure('Unit price is not numeric.');
                 }
             },
+            '*.unit' => function ($attribute, $value, $onFailure) {
+                if (empty($value)) {
+                    $onFailure('The unit price field is required.');
+                }
+            },
+            '*.current_stock' => function ($attribute, $value, $onFailure) {
+                if (empty($value)) {
+                    $onFailure('The unit price field is required.');
+                } elseif (!is_numeric($value)) {
+                    $onFailure('Unit price is not numeric.');
+                }
+            },
+            // '*.slug' => function ($attribute, $value, $onFailure) use (&$duplicateSlugs) {
+            //     // Get the actual row number (strip away the '.slug' part from the attribute)
+            //     $row = explode('.', $attribute)[0]; // Get the row number
+
+            //     // Check if the slug is empty
+            //     if (empty($value)) {
+            //         $onFailure('The slug field is required.');
+            //     } else {
+            //         // If the slug has been seen before, record the current row
+            //         if (isset($duplicateSlugs[$value])) {
+            //             // Add the current row number to the list of rows with the duplicate slug
+            //             $duplicateSlugs[$value][] = $row;
+            //         } else {
+            //             // Otherwise, add this slug to the tracking array with the current row
+            //             $duplicateSlugs[$value] = [$row];
+            //         }
+
+            //         // If more than one row contains this slug, trigger the duplicate error
+            //         if (count($duplicateSlugs[$value]) > 1) {
+            //             // Collect all the row numbers where this duplicate slug appears
+            //             $rows = implode(', ', $duplicateSlugs[$value]);
+
+            //             // Trigger the error message with the rows where the slug is repeated
+            //             $onFailure("Slug '{$value}' is repeated in rows: {$rows}");
+            //         }
+            //     }
+            // },
+
             '*.slug' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
                     $onFailure('The slug field is required.');
@@ -363,11 +418,11 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                     $onFailure('Price for variant Pts must be numeric.');
                 }
             },
-            '*.sku_pts' => function ($attribute, $value, $onFailure) {
-                if (empty($value)) {
-                    $onFailure('SKU for variant Pts is required.');
-                }
-            },
+            // '*.sku_pts' => function ($attribute, $value, $onFailure) {
+            //     if (empty($value)) {
+            //         $onFailure('SKU for variant Pts is required.');
+            //     }
+            // },
             '*.qty_pts' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
                     $onFailure('Quantity for variant Pts is required.');
@@ -383,11 +438,11 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                     $onFailure('Price for variant Ptr must be numeric.');
                 }
             },
-            '*.sku_ptr' => function ($attribute, $value, $onFailure) {
-                if (empty($value)) {
-                    $onFailure('SKU for variant Ptr is required.');
-                }
-            },
+            // '*.sku_ptr' => function ($attribute, $value, $onFailure) {
+            //     if (empty($value)) {
+            //         $onFailure('SKU for variant Ptr is required.');
+            //     }
+            // },
             '*.qty_ptr' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
                     $onFailure('Quantity for variant Ptr is required.');
@@ -403,11 +458,11 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                     $onFailure('Price for variant Ptd must be numeric.');
                 }
             },
-            '*.sku_ptd' => function ($attribute, $value, $onFailure) {
-                if (empty($value)) {
-                    $onFailure('SKU for variant Ptd is required.');
-                }
-            },
+            // '*.sku_ptd' => function ($attribute, $value, $onFailure) {
+            //     if (empty($value)) {
+            //         $onFailure('SKU for variant Ptd is required.');
+            //     }
+            // },
             '*.qty_ptd' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
                     $onFailure('Quantity for variant Ptd is required.');
@@ -423,11 +478,11 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                     $onFailure('Price for variant Gov must be numeric.');
                 }
             },
-            '*.sku_gov' => function ($attribute, $value, $onFailure) {
-                if (empty($value)) {
-                    $onFailure('SKU for variant Gov is required.');
-                }
-            },
+            // '*.sku_gov' => function ($attribute, $value, $onFailure) {
+            //     if (empty($value)) {
+            //         $onFailure('SKU for variant Gov is required.');
+            //     }
+            // },
             '*.qty_gov' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
                     $onFailure('Quantity for variant Gov is required.');
@@ -443,11 +498,11 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                     $onFailure('Price for variant Expo must be numeric.');
                 }
             },
-            '*.sku_expo' => function ($attribute, $value, $onFailure) {
-                if (empty($value)) {
-                    $onFailure('SKU for variant Expo is required.');
-                }
-            },
+            // '*.sku_expo' => function ($attribute, $value, $onFailure) {
+            //     if (empty($value)) {
+            //         $onFailure('SKU for variant Expo is required.');
+            //     }
+            // },
             '*.qty_expo' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
                     $onFailure('Quantity for variant Expo is required.');

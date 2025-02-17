@@ -150,6 +150,71 @@ class ProductBulkUploadController extends Controller
         // 5. Get the count of valid rows (rows that passed validation).
         $validRows = $import->getRowCount();
 
+
+/* new code of row slug duplicate prevention an log in error file*/
+/*
+        // 6. Track duplicate slugs and other errors.
+        $duplicateSlugs = [];
+        $otherErrorsByRow = [];
+
+        // Track duplicate slugs and other errors.
+        foreach ($failures as $failure) {
+            $row = $failure->row();
+            $errors = $failure->errors();
+
+            // Track the 'slug' duplicates
+            foreach ($errors as $error) {
+                if (strpos($error, 'Slug') !== false) {
+                    // Clean up the redundant 'Slug' word and strip extra quotes or spaces
+                    $slug = trim(str_replace(['Slug ', "'", '"'], '', $error));
+
+                    // Collect rows for each slug
+                    if (!isset($duplicateSlugs[$slug])) {
+                        $duplicateSlugs[$slug] = [];
+                    }
+                    if (!in_array($row, $duplicateSlugs[$slug])) {
+                        $duplicateSlugs[$slug][] = $row;
+                    }
+                } else {
+                    // Track other errors (e.g., required fields)
+                    if (!isset($otherErrorsByRow[$row])) {
+                        $otherErrorsByRow[$row] = [];
+                    }
+                    $otherErrorsByRow[$row] = array_merge($otherErrorsByRow[$row], [$error]);
+                }
+            }
+        }
+
+        // Track duplicate slugs and their respective rows without repetition
+        $slugRowMessages = [];
+
+        foreach ($duplicateSlugs as $slug => $rows) {
+            $rows = array_unique($rows);  // Ensure each row is listed only once
+            sort($rows);  // Sort the rows in ascending order
+
+            // Store slug with unique sorted rows
+            $slugRowMessages[$slug] = $rows;
+        }
+
+        // Build the error log content (one error per row)
+        $errorLogContent = "Error Log - " . now()->toDateTimeString() . "\n\n";
+
+        // Add the specific validation errors (e.g., required fields)
+        foreach ($otherErrorsByRow as $row => $errors) {
+            $errorLogContent .= "Row $row: " . implode(' | ', array_unique($errors)) . "\n";
+        }
+
+        // Add the merged slug messages (now properly formatted) at the end
+        foreach ($slugRowMessages as $slug => $rows) {
+            $errorLogContent .= "Slug '{$slug}' is repeated in rows: " . implode(', ', $rows) . "\n";
+        }
+
+        // Generate a unique file name and store the error log
+        $errorLogFileName = 'error_log_' . Str::random(10) . '.txt';
+        Storage::put('error_logs/' . $errorLogFileName, $errorLogContent);
+        $downloadUrl = url('error_logs/' . $errorLogFileName);
+        */
+
         // 6. Build an error log from the failures.
         $errorMessagesByRow = [];
         foreach ($failures as $failure) {
