@@ -74,6 +74,38 @@
 	<div style="border-bottom:1px solid #eceff4;margin: 0 1.5rem;"></div>
 
     <div style="padding: 1.5rem;">
+        @php
+        function renderCategoryTree($categories, $depth = 0) {
+            foreach ($categories as $category) {
+                echo '<tr>';
+                echo '<td style="padding-left: '.($depth * 20).'px;">';
+                echo str_repeat('— ', $depth) . $category->getTranslation('name');
+                echo '</td>';
+                echo '<td>' . $category->id . '</td>';
+                echo '</tr>';
+
+                // Use childrenCategories method to access children
+                if ($category->childrenCategories && $category->childrenCategories->count()) {
+                    renderCategoryTree($category->childrenCategories, $depth + 1);
+                }
+            }
+        }
+    @endphp
+
+    <table class="padding text-left small border-bottom">
+        <thead>
+            <tr class="gry-color" style="background: #eceff4;">
+                <th width="50%">{{ translate('Category Name') }}</th>
+                <th width="50%">{{ translate('ID') }}</th>
+            </tr>
+        </thead>
+        <tbody class="strong">
+            @php renderCategoryTree($categories) @endphp
+        </tbody>
+    </table>
+
+	</div>
+    {{-- <div style="padding: 1.5rem;">
 		<table class="padding text-left small border-bottom">
 			<thead>
                 <tr class="gry-color" style="background: #eceff4;">
@@ -90,6 +122,6 @@
 				@endforeach
             </tbody>
 		</table>
-	</div>
+	</div> --}}
 
 </div>

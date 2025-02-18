@@ -49,7 +49,11 @@ class ProductBulkUploadController extends Controller
 
     public function pdf_download_category()
     {
-        $categories = Category::all();
+        // $categories = Category::all();
+        $categories = Category::where('parent_id', 0)
+            ->where('digital', 0)
+            ->with('childrenCategories')
+            ->get();
 
         return PDF::loadView('backend.downloads.category', [
             'categories' => $categories,
@@ -215,6 +219,72 @@ class ProductBulkUploadController extends Controller
         $downloadUrl = url('error_logs/' . $errorLogFileName);
         */
 
+/*
+// 6. Build an error log from the failures.
+        $errorMessagesByRow = [];
+        foreach ($failures as $failure) {
+            $row = $failure->row();
+            $errors = $failure->errors(); // returns an array of error messages for this failure
+            if (!isset($errorMessagesByRow[$row])) {
+                $errorMessagesByRow[$row] = $errors;
+            } else {
+                $errorMessagesByRow[$row] = array_merge($errorMessagesByRow[$row], $errors);
+            }
+        }
+        // Remove duplicate error messages for each row.
+        foreach ($errorMessagesByRow as $row => $errors) {
+            $errorMessagesByRow[$row] = array_unique($errors);
+        }
+
+        // // Separate out duplicate slug errors.
+        // $duplicateSlugErrors = [];
+        // foreach ($errorMessagesByRow as $row => $errors) {
+        //     foreach ($errors as $error) {
+        //         // Our duplicate slug error is expected to be in the format:
+        //         // "Slug 'demo-variant-prod1' is repeated in rows: 2, 5"
+        //         if (preg_match("/^Slug '(.+)' is repeated in rows: (.+)$/", $error, $matches)) {
+        //             $slug = $matches[1];
+        //             $rowsList = array_map('trim', explode(',', $matches[2]));
+        //             if (!isset($duplicateSlugErrors[$slug])) {
+        //                 $duplicateSlugErrors[$slug] = $rowsList;
+        //             } else {
+        //                 // Merge with existing row numbers
+        //                 $duplicateSlugErrors[$slug] = array_unique(array_merge($duplicateSlugErrors[$slug], $rowsList));
+        //             }
+        //         }
+        //     }
+        // }
+
+        // // Remove duplicate slug errors from individual row errors.
+        // foreach ($errorMessagesByRow as $row => $errors) {
+        //     $errorMessagesByRow[$row] = array_filter($errors, function($error) {
+        //         return !preg_match("/^Slug '.+' is repeated in rows: .+$/", $error);
+        //     });
+        // }
+
+        // Build the error log content (one error per row).
+        // Build the final error log content.
+        $errorLogContent = "Error Log - " . now()->toDateTimeString() . "\n\n";
+
+        // Append errors for individual rows.
+        foreach ($errorMessagesByRow as $row => $errors) {
+            if (!empty($errors)) {
+                $errorLogContent .= "Row $row: " . implode(' | ', $errors) . "\n";
+            }
+        }
+
+        // // Append one combined message for each duplicate slug.
+        // foreach ($duplicateSlugErrors as $slug => $rowsArr) {
+        //     $errorLogContent .= "Slug '{$slug}' is repeated in rows: " . implode(', ', $rowsArr) . "\n";
+        // }
+
+        // Generate a unique file name and store the error log.
+        $errorLogFileName = 'error_log_' . Str::random(10) . '.txt';
+        Storage::put('error_logs/' . $errorLogFileName, $errorLogContent);
+        $downloadUrl = url('error_logs/' . $errorLogFileName);
+
+*/
+
         // 6. Build an error log from the failures.
         $errorMessagesByRow = [];
         foreach ($failures as $failure) {
@@ -230,11 +300,15 @@ class ProductBulkUploadController extends Controller
         foreach ($errorMessagesByRow as $row => $errors) {
             $errorMessagesByRow[$row] = array_unique($errors);
         }
+
+        ksort($errorMessagesByRow);
+
         // Build the error log content (one error per row).
         $errorLogContent = "Error Log - " . now()->toDateTimeString() . "\n\n";
         foreach ($errorMessagesByRow as $row => $errors) {
             $errorLogContent .= "Row $row: " . implode(' | ', $errors) . "\n";
         }
+
         // Generate a unique file name and store the error log.
         $errorLogFileName = 'error_log_' . Str::random(10) . '.txt';
         Storage::put('error_logs/' . $errorLogFileName, $errorLogContent);

@@ -31,7 +31,8 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
     use PreventDemoModeChanges, SkipsFailures;
 
     private $rows = 0;
-
+    // public static $slugTracker = [];
+    private $duplicateSlugs = []; // Array to track duplicate slugs
     /**
      * Map each row from the CSV into an array of internal keys.
      * Note: The description field is processed through formatDescription().
@@ -61,19 +62,19 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
             // Variant fields:
             'price_pts'         => $this->getMappingValue($row, ['Price Pts', 'price_pts', 'PricePts']),
             'sku_pts'           => $this->getMappingValue($row, ['SKU Pts', 'sku_pts']),
-            'qty_pts'           => $this->getMappingValue($row, ['Quantity Pts', 'qty_pts']),
+            'qty_pts'           => $this->getMappingValue($row, ['Quantity Pts', 'Stock Pts', 'qty_pts']),
             'price_ptr'         => $this->getMappingValue($row, ['Price Ptr', 'price_ptr']),
             'sku_ptr'           => $this->getMappingValue($row, ['SKU Ptr', 'sku_ptr']),
-            'qty_ptr'           => $this->getMappingValue($row, ['Quantity Ptr', 'qty_ptr']),
+            'qty_ptr'           => $this->getMappingValue($row, ['Quantity Ptr', 'Stock Ptr', 'qty_ptr']),
             'price_ptd'         => $this->getMappingValue($row, ['Price Ptd', 'price_ptd']),
             'sku_ptd'           => $this->getMappingValue($row, ['SKU Ptd', 'sku_ptd']),
-            'qty_ptd'           => $this->getMappingValue($row, ['Quantity Ptd', 'qty_ptd']),
+            'qty_ptd'           => $this->getMappingValue($row, ['Quantity Ptd', 'Stock Ptd', 'qty_ptd']),
             'price_gov'         => $this->getMappingValue($row, ['Price Gov', 'price_gov']),
             'sku_gov'           => $this->getMappingValue($row, ['SKU Gov', 'sku_gov']),
-            'qty_gov'           => $this->getMappingValue($row, ['Quantity Gov', 'qty_gov']),
+            'qty_gov'           => $this->getMappingValue($row, ['Quantity Gov', 'Stock Gov', 'qty_gov']),
             'price_expo'        => $this->getMappingValue($row, ['Price Expo', 'price_expo']),
             'sku_expo'          => $this->getMappingValue($row, ['SKU Expo', 'sku_expo']),
-            'qty_expo'          => $this->getMappingValue($row, ['Quantity Expo', 'qty_expo']),
+            'qty_expo'          => $this->getMappingValue($row, ['Quantity Expo', 'Stock Expo', 'qty_expo']),
         ];
     }
 
@@ -185,6 +186,19 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
         $approved = ($user->user_type == 'seller' && get_setting('product_approve_by_admin') == 1) ? 0 : 1;
 
         foreach ($rows as $row) {
+
+            // Normalize slug for comparison
+            $slug = strtolower(trim($row['slug']));
+
+            // Check for duplicates
+            if (in_array($slug, $this->duplicateSlugs)) {
+                // Log or handle duplicate slug case
+                continue; // Skip processing this row
+            }
+
+            // Add slug to the tracking array
+            $this->duplicateSlugs[] = $slug;
+
             // Verify related IDs exist (if needed).
             if (!Category::find($row['category_id'])) {
                 continue;
@@ -217,7 +231,8 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                 'colors'            => json_encode([]),
                 'choice_options'    => json_encode([]),
                 'variations'        => json_encode([]),
-                'slug'              => $row['slug'] ? $row['slug'] : preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', strtolower($row['name']))) . '-' . Str::random(5),
+                // 'slug'              => $row['slug'] ? $row['slug'] : preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', strtolower($row['name']))) . '-' . Str::random(5),
+                'slug'              => empty($slug) ? preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', strtolower($row['name']))) . '-' . Str::random(5) : $slug,
                 'thumbnail_img'     => $row['thumbnail_img'],
                 'photos'            => $row['photos'],
             ];
@@ -312,12 +327,20 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
         return $this->rows;
     }
 
+    private function isDuplicate($value, $row): bool
+    {
+        if (isset($this->duplicateSlugs[$value])) {
+            $this->duplicateSlugs[$value][] = $row;
+            return true;
+        }
+        $this->duplicateSlugs[$value] = [$row];
+        return false;
+    }
     /**
      * Closure-based validation rules.
      */
     public function rules(): array
     {
-        $duplicateSlugs = [];  // Array to store duplicates
         return [
             // Common product fields.
             '*.name' => function ($attribute, $value, $onFailure) {
@@ -377,39 +400,52 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                     $onFailure('Unit price is not numeric.');
                 }
             },
-            // '*.slug' => function ($attribute, $value, $onFailure) use (&$duplicateSlugs) {
-            //     // Get the actual row number (strip away the '.slug' part from the attribute)
-            //     $row = explode('.', $attribute)[0]; // Get the row number
+            '*.slug' => function ($attribute, $value, $onFailure) use (&$duplicateSlugs) {
+                // Get the actual row number (strip away the '.slug' part from the attribute)
+                $row = explode('.', $attribute)[0]; // Get the row index
+                $excelRow = $row; // Convert to actual Excel row (assuming headers in row 1)
 
-            //     // Check if the slug is empty
-            //     if (empty($value)) {
-            //         $onFailure('The slug field is required.');
-            //     } else {
-            //         // If the slug has been seen before, record the current row
-            //         if (isset($duplicateSlugs[$value])) {
-            //             // Add the current row number to the list of rows with the duplicate slug
-            //             $duplicateSlugs[$value][] = $row;
-            //         } else {
-            //             // Otherwise, add this slug to the tracking array with the current row
-            //             $duplicateSlugs[$value] = [$row];
-            //         }
-
-            //         // If more than one row contains this slug, trigger the duplicate error
-            //         if (count($duplicateSlugs[$value]) > 1) {
-            //             // Collect all the row numbers where this duplicate slug appears
-            //             $rows = implode(', ', $duplicateSlugs[$value]);
-
-            //             // Trigger the error message with the rows where the slug is repeated
-            //             $onFailure("Slug '{$value}' is repeated in rows: {$rows}");
-            //         }
-            //     }
-            // },
-
-            '*.slug' => function ($attribute, $value, $onFailure) {
+                // Check if the slug is empty
                 if (empty($value)) {
                     $onFailure('The slug field is required.');
+                    return;
                 }
+
+                // Check if slug is duplicated using helper function
+                if ($this->isDuplicate($value, $excelRow)) {
+                    $onFailure("Slug '{$value}' is repeated ");
+                }
+
+                // if (isset($duplicateSlugs[$value])) {
+                //     $duplicateSlugs[$value][] = $excelRow;
+                //     $onFailure("Slug '{$value}' is repeated in rows: " . implode(', ', $duplicateSlugs[$value]));
+                // } else {
+                //     $duplicateSlugs[$value] = [$excelRow];
+                // }
             },
+            // '*.slug' => function ($attribute, $value, $onFailure) {
+            //     if (empty($value)) {
+            //         $onFailure('The slug field is required.');
+            //     }
+            //     // Duplicate slug check using a static tracker.
+            //     // The $attribute is in the form "0.slug", "1.slug", etc.
+            //     $parts = explode('.', $attribute);
+            //     $rowIndex = (int)$parts[0]; // 0-based index
+            //     $excelRow = $rowIndex ; // assuming header is row 1
+            //     if (!isset(self::$slugTracker[$value])) {
+            //         self::$slugTracker[$value] = [$excelRow];
+            //     } else {
+            //         self::$slugTracker[$value][] = $excelRow;
+            //     }
+            //     if (count(self::$slugTracker[$value]) > 1) {
+            //         $onFailure("Slug '{$value}' is repeated in rows: " . implode(', ', self::$slugTracker[$value]));
+            //     }
+            // },
+            // '*.slug' => function ($attribute, $value, $onFailure) {
+            //     if (empty($value)) {
+            //         $onFailure('The slug field is required.');
+            //     }
+            // },
             // Variant fields for "Pts"
             '*.price_pts' => function ($attribute, $value, $onFailure) {
                 if (empty($value)) {
