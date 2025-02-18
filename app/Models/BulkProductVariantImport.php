@@ -374,6 +374,21 @@ class BulkProductVariantImport implements ToCollection, WithHeadingRow, ToModel,
                     }
                 }
             },
+            // Thumbnail image field: optional but validate if provided.
+            '*.thumbnail_img' => function ($attribute, $value, $onFailure) {
+                // If the thumbnail_img field is provided (not empty), validate it.
+                if (!empty($value)) {
+                    // Check if the value is numeric
+                    if (!is_numeric($value)) {
+                        $onFailure('The thumbnail image must be a valid numeric value.');
+                    }
+
+                    // Check if the numeric value exists in the images table (assuming images table exists)
+                    if (!\App\Models\Upload::where('id', $value)->exists()) {
+                        $onFailure('The thumbnail image ID must exist in the images table.');
+                    }
+                }
+            },
             // '*.brand_id' => function ($attribute, $value, $onFailure) {
             //     if (empty($value)) {
             //         $onFailure('The brand id field is required.');

@@ -43,7 +43,7 @@
                 <button type="submit" class="btn btn-primary">{{ translate('Search') }}</button>
             </div>
         </div>
-    
+
 		<div class="card-body">
 			<div class="form-group">
 				<div class="aiz-checkbox-inline">
@@ -67,7 +67,7 @@
 						if($file->external_link) {
 							$file_path = $file->external_link;
 						}
-						
+
 					@endphp
 					<div class="col-auto w-140px w-lg-220px">
 						<div class="aiz-file-box">
@@ -88,6 +88,10 @@
 										<i class="las la-clipboard mr-2"></i>
 										<span>{{ translate('Copy Link') }}</span>
 									</a>
+                                    <a href="javascript:void(0)" class="dropdown-item" onclick="copyImageId(this)" data-id="{{ $file->id }}">
+                                        <i class="las la-clipboard mr-2"></i>
+                                        <span>{{ translate('Copy Image ID') }}</span>
+                                    </a>
 									<a href="javascript:void(0)" class="dropdown-item confirm-delete" data-href="{{ route('uploaded-files.destroy', $file->id ) }}" data-target="#delete-modal">
 										<i class="las la-trash mr-2"></i>
 										<span>{{ translate('Delete') }}</span>
@@ -208,6 +212,20 @@
 			}
 		    $temp.remove();
 		}
+        function copyImageId(e) {
+            var imageId = $(e).data('id');
+            var $temp = $("<input>");
+            $("body").append($temp);
+            $temp.val(imageId).select();
+            try {
+                document.execCommand("copy");
+                AIZ.plugins.notify('success', '{{ translate('Image ID copied to clipboard') }}');
+            } catch (err) {
+                AIZ.plugins.notify('danger', '{{ translate('Oops, unable to copy') }}');
+            }
+            $temp.remove();
+        }
+
         function sort_uploads(el){
             $('#sort_uploads').submit();
         }
