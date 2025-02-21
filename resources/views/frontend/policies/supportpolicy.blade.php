@@ -53,7 +53,7 @@
 <section class="pb-md-5 pt-md-5 pt-4 pb-4">
        <div class="container">
          <div class="row align-items-center">
-               <div class="col-md-6">
+               <div class="col-md-6 mb-md-0 mb-4">
                      <img class="w-100" src="{{ static_asset('assets/img/about_us_images.png') }}" />
                </div> 
                
@@ -70,9 +70,9 @@
 
                <div class="col-md-12">
 
-               <p class="pt-5">At Pharm Vet Easy, our vision is to be recognized as the Partner of Choice by combining manufacturing excellence with a strong commitment to quality. Backed by a team of skilled professionals, we ensure top-tier manufacturing, marketing, and quality assurance in veterinary pharmaceuticals.</p>
+               <p class="pt-md-5">At Pharm Vet Easy, our vision is to be recognized as the Partner of Choice by combining manufacturing excellence with a strong commitment to quality. Backed by a team of skilled professionals, we ensure top-tier manufacturing, marketing, and quality assurance in veterinary pharmaceuticals.</p>
 <p>With a well-equipped office in Mumbai and a branch in Bangalore, we provide comprehensive infrastructure and expert personnel to support our operations. Since our inception, we have built a strong foundation, achieving steady growth and earning the trust of customers and business partners globally.</p>
-<p>Through vision, innovation, advanced technology, and efficient supply chain management, we have established ourselves as a leading name in the industry. As a zero-debt company with substantial reserves, we continue to invest in future projects, ensuring sustainable growth and excellence in veterinary healthcare.</p>
+<p class="mb-0">Through vision, innovation, advanced technology, and efficient supply chain management, we have established ourselves as a leading name in the industry. As a zero-debt company with substantial reserves, we continue to invest in future projects, ensuring sustainable growth and excellence in veterinary healthcare.</p>
 
 
                </div>
@@ -81,11 +81,11 @@
    </section>
 
 
-   <section class="green_bg_clr pt-5 pb-5">
+   <section class="green_bg_clr pt-md-5 pt-4 pb-md-5">
     <div class="container">
         <div id="counter">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-3 col-6">
                     <div class="counter_boxex">
                         <div class="counter_img"><img src="{{ static_asset('assets/img/total_sale.svg') }}" /></div>
                         <div class="counter_content">
@@ -95,7 +95,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-3 col-6">
                     <div class="counter_boxex">
                         <div class="counter_img"><img src="{{ static_asset('assets/img/happy_clients.svg') }}" /></div>
                         <div class="counter_content">
@@ -105,7 +105,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-3 col-6">
                     <div class="counter_boxex">
                         <div class="counter_img"><img src="{{ static_asset('assets/img/team_work.svg') }}" /></div>
                         <div class="counter_content">
@@ -115,12 +115,12 @@
                     </div>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-3 col-6">
                     <div class="counter_boxex">
                         <div class="counter_img"><img  src="{{ static_asset('assets/img/win_awards.svg') }}" /></div>
                         <div class="counter_content">
                             <div class="display_flexs"><div class="counter-value" data-count="20">0</div><span>+</span></div>
-                            <p>Years – Experience</p>
+                            <p>Years - Experience</p>
                         </div>
                     </div>
                 </div>
@@ -232,11 +232,11 @@
             <img class="w-100" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
 </section>
 
-   <section class="pt-5 pb-5">
+   <section class="pt-md-5 pb-md-5 pt-4 pb-4">
        <div class="container">
         <div class="payment_safe_secrtion">
                     <div class="row">
-                          <div class="col-md-3">
+                          <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
                                    <img class="" src="{{ static_asset('assets/img/free_delivery_icons.svg') }}" />
                                    <div class="">
@@ -246,7 +246,7 @@
                               </div>
                           </div>
 
-                          <div class="col-md-3">
+                          <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
                                    <img src="{{ static_asset('assets/img/refund_icons.svg') }}" />
                                    <div class="">
@@ -256,7 +256,7 @@
                               </div>
                           </div>
 
-                           <div class="col-md-3">
+                           <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
                                    <img src="{{ static_asset('assets/img/safe_payment_icons.svg') }}" />
                                    <div class="">
@@ -266,7 +266,7 @@
                               </div>
                           </div>
 
-                            <div class="col-md-3">
+                            <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
                                    <img src="{{ static_asset('assets/img/support_icons.svg') }}" />
                                    <div class="">

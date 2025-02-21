@@ -30,7 +30,7 @@
         <div class="container">
             <div class="row">
 
-              <div class="col-6">
+              <div class="col-6 d-md-block d-none">
                       <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                             <li class="list-inline-item">
                                  <a href="mailto:info@dotcompharmaindia.com" class=" text-secondary fs-12 py-2">
@@ -65,7 +65,7 @@
                             </li>
                         <!-- Language switcher -->
                         @if (get_setting('show_language_switcher') == 'on')
-                            <li class="list-inline-item dropdown mr-4" id="lang-change">
+                            <li class="list-inline-item dropdown mr-md-4 mr-2" id="lang-change">
 
                                 <a href="javascript:void(0)" class="black_light_clr dropdown-toggle fs-12 py-2"
                                     data-toggle="dropdown" data-display="static">
@@ -150,7 +150,7 @@
             <div class="container">
                 <div class="">
                     <!-- top menu sidebar button -->
-                    <button type="button" class="btn d-lg-none mr-3 mr-sm-4 p-0 active" data-toggle="class-toggle"
+                    <!-- <button type="button" class="btn d-lg-none mr-3 mr-sm-4 p-0 active" data-toggle="class-toggle"
                         data-target=".aiz-top-menu-sidebar">
                         <svg id="Component_43_1" data-name="Component 43 – 1" xmlns="http://www.w3.org/2000/svg"
                             width="16" height="16" viewBox="0 0 16 16">
@@ -162,7 +162,7 @@
                                 transform="translate(0 14)" fill="#919199" />
                         </svg>
 
-                    </button>
+                    </button> -->
 
 <!-- Search field -->
                     <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white mx-xl-5">
@@ -215,9 +215,26 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-3">
+
+                    <div class="col-lg-3 col-md-4 col-2 d-lg-none d-block">
+                         <!-- top menu sidebar button -->
+                    <button type="button" class="btn d-lg-none mr-3 mr-sm-4 p-0 active mobile_icons_menus" data-toggle="class-toggle"
+                        data-target=".aiz-top-menu-sidebar">
+                        <svg id="Component_43_1" data-name="Component 43 – 1" xmlns="http://www.w3.org/2000/svg"
+                            width="20" height="20" viewBox="0 0 20 20">
+                            <rect id="Rectangle_19062" data-name="Rectangle 19062" width="20" height="2"
+                                transform="translate(0 7)" fill="#919199" />
+                            <rect id="Rectangle_19063" data-name="Rectangle 19063" width="20" height="2"
+                                fill="#919199" />
+                            <rect id="Rectangle_19064" data-name="Rectangle 19064" width="20" height="2"
+                                transform="translate(0 14)" fill="#919199" />
+                        </svg>
+
+                    </button>
+                    </div>
+                        <div class="col-lg-3 col-md-4 col-8">
                             <!-- Header Logo -->
-                                <div class="col-auto pl-0 pr-3 d-flex align-items-center">
+                                <div class="col-auto pl-0 pr-lg-3 pr-md-0 d-flex align-items-center">
                                     <a class="d-block" href="{{ route('home') }}">
                                         @php
                                             $header_logo = get_setting('header_logo');
@@ -234,7 +251,7 @@
                         </div>
 
 
-                        <div class="col-md-6">
+                        <div class="col-md-6 d-lg-block d-none">
                             <div class="w-100 logo_menu">
                                 <div class="d-flex align-items-center justify-content-center justify-content-xl-start h-100">
                                     <ul class="list-inline mb-0 pl-0">
@@ -295,7 +312,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-lg-3 col-md-4 col-2">
                         <div class="display_flex1">
                               <!-- Search Icon for small device -->
                                 <div class="ml-auto mr-0">
@@ -308,7 +325,7 @@
                                 
                    
                      <!-- Cart -->
-                    <div class="d-none d-xl-block align-self-stretch has-transition"
+                    <div class="d-none d-lg-block d-xl-block align-self-stretch has-transition"
                         data-hover="dropdown">
                         <div class="nav-cart-box dropdown h-100" id="cart_items" style="width: max-content;">
                             @include('frontend.partials.cart.cart')
@@ -424,10 +441,10 @@
                         </ul>
                     @endif
 
-                    <div class="d-none d-xl-block padding_25">
+                    <div class="d-none d-lg-block d-xl-block padding_25">
                         @auth
                             <span
-                                class="d-flex align-items-center nav-user-info py-20px @if (isAdmin()) ml-5 @endif"
+                                class="d-flex align-items-center nav-user-info py-20px @if (isAdmin()) ml-xl-5 ml-lg-0 @endif"
                                 id="nav-user-info">
                                 <!-- Image -->
                                 <span

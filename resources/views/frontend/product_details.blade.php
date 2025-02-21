@@ -56,7 +56,7 @@
 @endsection
 
 @section('content')
-    <section class="mb-4 pt-3">
+    <section class="mb-md-4 pt-3">
         <div class="container">
             <div class="bg-white py-3">
                 <div class="row">
@@ -132,7 +132,7 @@
                         @include('frontend.product_details.product_queries')
                         
                         <!-- Top Selling Products -->
-                        <div class="d-lg-none">
+                        <div class="d-none">
                              @include('frontend.product_details.top_selling_products')
                         </div>
 

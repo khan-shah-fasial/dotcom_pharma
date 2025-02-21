@@ -1,6 +1,6 @@
 <div class="text-left">
     <!-- Product Name -->
-    <h2 class="mb-3 fs-34 fw-600">
+    <h2 class="mb-3 fs-md-34 fs-24 fw-600">
         {{ $detailedProduct->getTranslation('name') }}
     </h2>
 

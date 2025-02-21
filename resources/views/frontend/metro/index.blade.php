@@ -54,7 +54,7 @@
         <div class="searc_box_product">
                <form action="{{ route('search') }}" method="GET" class="stop-propagation">
                     <div class="row">
-                          <div class="col-md-12"><h3>Search Product</h3></div>
+                          <div class="col-md-12 mb-lg-0 mb-md-2"><h3>Search Product</h3></div>
 
                           <div class="col-md-3">
                               <div class="form-group">
@@ -99,13 +99,13 @@
 
    <!-- Featured Categories -->
 @if (count($featured_categories) > 0)
-    <section class="mb-4 mb-md-5 mt-4 mt-md-5">
+    <section class="mb-4 mb-lg-5 mb-md-4 mt-4 mt-lg-5 mt-md-4">
         <div class="container">
             <div class="bg-white">
                 <!-- Top Section -->
                 <div class="text-center">
                     <!-- Title -->
-                    <h3 class="fs-16 fs-md-24 text-center fw-700 pb-4 pt-0">
+                    <h3 class="fs-18 fs-md-24 pb-xl-3 pb-lg-2 pb-md-3 text-center fw-700 pb-2 pt-0">
                         <span class="">{{ translate('Top Category') }}</span>
                     </h3>
                 </div>
@@ -113,7 +113,7 @@
             <!-- Categories -->
             <div class="bg-white px-sm-3">
                 <div class="aiz-carousel sm-gutters-17" data-items="7" data-xxl-items="7" data-xl-items="7"
-                    data-lg-items="7" data-md-items="5" data-sm-items="2" data-xs-items="1" data-arrows="true"
+                    data-lg-items="5" data-md-items="4" data-sm-items="2" data-xs-items="2" data-arrows="true"
                     data-dots="false" data-autoplay="false" data-infinite="true">
                     @foreach ($featured_categories as $key => $category)
                         @php
@@ -136,7 +136,7 @@
                                                 <p class="pb-0 mb-0 w-100 fs-18 fw-500 black_light_clr animate-underline-white home-category-name d-flex align-items-center justify-content-center hov-column-gap-1">
                                                     {{ $category_name }}
                                                 </p>
-                                                <p class="fs-14 fw-500 blue_light_clr">30 Items</p>
+                                                <p class="fs-14 fw-500 blue_light_clr mb-2">30 Items</p>
                                             </div>
                                         </div>
                                     </div>
@@ -154,7 +154,7 @@
     <!-- Banner section 1 -->
     @php $homeBanner1Images = get_setting('home_banner1_images', null, $lang);   @endphp
     @if ($homeBanner1Images != null)
-        <div class="pb-4">
+        <div class="pb-4 d-lg-block d-none">
             <div class="container">
                 @php
                     $banner_1_imags = json_decode($homeBanner1Images);
@@ -192,7 +192,7 @@
     <!-- Banner Section 2 -->
     @php $homeBanner2Images = get_setting('home_banner2_images', null, $lang);   @endphp
     @if ($homeBanner2Images != null)
-        <div class="pt-3">
+        <div class="pt-md-3 pt-0">
             <div class="container">
                 @php
                     $banner_2_imags = json_decode($homeBanner2Images);
@@ -232,7 +232,7 @@
        <div class="container">
         <div class="payment_safe_secrtion">
                     <div class="row">
-                          <div class="col-md-3">
+                          <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
                                    <img class="" src="{{ static_asset('assets/img/free_delivery_icons.svg') }}" />
                                    <div class="">
@@ -242,7 +242,7 @@
                               </div>
                           </div>
 
-                          <div class="col-md-3">
+                          <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
                                    <img src="{{ static_asset('assets/img/refund_icons.svg') }}" />
                                    <div class="">
@@ -252,7 +252,7 @@
                               </div>
                           </div>
 
-                           <div class="col-md-3">
+                           <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
                                    <img src="{{ static_asset('assets/img/safe_payment_icons.svg') }}" />
                                    <div class="">
@@ -262,7 +262,7 @@
                               </div>
                           </div>
 
-                            <div class="col-md-3">
+                            <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
                                    <img src="{{ static_asset('assets/img/support_icons.svg') }}" />
                                    <div class="">
@@ -286,7 +286,7 @@
      <!-- Banner Section 3 -->
     @php $homeBanner3Images = get_setting('home_banner3_images', null, $lang);   @endphp
     @if ($homeBanner3Images != null)
-        <div class="mb-2 mb-md-3 mt-2 mt-md-3">
+        <div class="mb-2 mb-md-3 mt-2 mt-md-3 d-md-block d-none">
             <div class="container">
                 @php
                     $banner_3_imags = json_decode($homeBanner3Images);
@@ -320,16 +320,16 @@
     @php
         $todays_deal_section_bg = get_setting('todays_deal_section_bg_color');
     @endphp
-    <div id="todays_deal" class="mt-4" @if(get_setting('todays_deal_section_bg') == 1) style="background: {{ $todays_deal_section_bg }};" @endif>
+    <div id="todays_deal" class="mt-md-4" @if(get_setting('todays_deal_section_bg') == 1) style="background: {{ $todays_deal_section_bg }};" @endif>
 
     </div>
 
 
     <section class="sale_section">
-            <img class="w-100" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
+            <img class="w-100 mb-md-0 mb-4" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
             <div class="container">
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-lg-4 col-md-6">
                         <div class="sale_box_main">
                         @php
                             $best_selling_products = get_best_selling_products(20);
@@ -365,7 +365,7 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-4">
+                    <div class="col-lg-4 col-md-6">
                         <div class="sale_box_main sales_box_gren">
                         @php
                             $best_selling_products = get_best_selling_products(20);
@@ -401,7 +401,7 @@
                           </div>
                     </div>
                    
-                    <div class="col-md-4">
+                    <div class="col-lg-4 col-md-6">
                         <div class="sale_box_main">
                         @php
                             $best_selling_products = get_best_selling_products(20);
@@ -450,11 +450,11 @@
 
     @endphp
     @if ($flash_deal != null)
-        <section class="flash_deals_section mt-5 pt-5 pb-5 " style="background-image: url('{{ static_asset('assets/img/bg_deals_images.png') }}');" >
+        <section class="flash_deals_section mt-md-5 mt-2 pt-md-5 pt-4 pb-md-5 pb-4 " style="background-image: url('{{ static_asset('assets/img/bg_deals_images.png') }}');" >
             <div class="container">
                 <div class="row align-items-center">
 
-                <div class="col-md-5">
+                <div class="col-lg-5 col-md-12">
                     <p class="fw-600 fs-18 green_light_clr pb-0 mb-0">WEEKLY DEAL</p>
                      <h3 class="fw-600 headeing_size">Best Deal for This Week</h3>
                      <p>This week at <b>Pharm Vet Easy,</b> we bring you unbeatable discounts on top-quality veterinary products. Whether you need premium pet supplements, livestock medications, or healthcare essentials, our <b>Best Deal of the Week</b> ensures you get the best value for your money.
@@ -480,14 +480,14 @@
                     </div>
 
                      <a href="{{ route('flash-deals') }}"
-                                            class="mt-5 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') animate_button white_buttons @endif mr-3">
+                                            class="mt-lg-5 mt-md-4 mt-2 has-transition {{ $flash_deal_banner_menu_text }} @if (get_setting('flash_deal_banner_menu_text') == 'light') animate_button white_buttons @endif mr-3">
                                             {{ translate('View All Flash Sale') }} <i class="las la-arrow-right"></i>
                                         </a>
 
                                        
 
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6 d-none d-md-none d-lg-block">
                     <img class="w-100 flash_images" src="{{ uploaded_asset($flash_deal->banner) }}" />
                 </div>
                 <div class="col-md-1">
@@ -507,12 +507,12 @@
    <section class="pt-md-5 pt-4 pb-md-5 pb-4">
        <div class="container">
          <div class="row align-items-center">
-               <div class="col-md-6">
+               <div class="col-md-6 mb-md-0 mb-4">
                      <img class="w-100" src="{{ static_asset('assets/img/about_us_images.png') }}" />
                </div> 
                
                <div class="col-md-6">
-                     <p class="fw-600 fs-18 blue_light_clr pb-0 mb-0">About Us</p>
+                     <p class="fw-600 blue_light_clr pb-0 mb-0">About Us</p>
                      <h3 class="fw-600 headeing_size">Welcome to <span class="blue_light_clr">Pharm Vet Easy</span></h3>
                      <p>At <b>Pharm Vet Easy,</b> we have a strong vision for the future of global pharmaceuticals, with a primary focus on high-quality veterinary formulations. Guided by our core values of <b>PEOPLE – TRUST – VALUE & TECHNOLOGY,</b> we are committed to delivering world-class products and services while ensuring cost-effectiveness.
 </p>
@@ -533,15 +533,15 @@
    </section>
 
 
-   <section class="why_choose_us pt-5 pb-5">
+   <section class="why_choose_us pt-md-5 pb-md-5 pt-4 pb-4">
        <div class="container">
          <div class="row align-items-center">
-               <div class="col-md-4">
+               <div class="col-md-4 mb-md-0 mb-4">
                      <img class="w-100" src="{{ static_asset('assets/img/why_choose_images.png') }}" />
                </div> 
                
                <div class="col-md-4">
-                     <p class="fw-600 fs-18 blue_light_clr pb-0 mb-0">WHY CHOOSE US</p>
+                     <p class="fw-600 fs-16 blue_light_clr pb-0 mb-0">WHY CHOOSE US</p>
                      <h3 class="fw-600 headeing_size">Your Trusted Partner in Veterinary Healthcare</h3>
                </div> 
 
@@ -550,7 +550,7 @@
                </div> 
 
                 <div class="col-md-4">
-                    <div class="whu_choose_box mt-5">
+                    <div class="whu_choose_box mt-md-5 mt-3">
                         <img src="{{ static_asset('assets/img/why_choose_icon1.png') }}" />
                         <div class="">
                             <h4>Original Products</h4>
@@ -561,7 +561,7 @@
                </div> 
 
                <div class="col-md-4">
-                    <div class="whu_choose_box mt-5">
+                    <div class="whu_choose_box mt-md-5 mt-3">
                         <img src="{{ static_asset('assets/img/why_choose_icon2.png') }}" />
                          <div class="">
                             <h4>Affordable Price</h4>
@@ -571,7 +571,7 @@
                </div> 
 
                <div class="col-md-4">
-                    <div class="whu_choose_box mt-5">
+                    <div class="whu_choose_box mt-md-5 mt-3">
                         <img src="{{ static_asset('assets/img/why_choose_icon3.png') }}" />
                          <div class="">
                             <h4>Free Shipping</h4>
@@ -590,7 +590,7 @@
      <div class="container">
        <div class="text-center">
         <p class="text-white mb-0">TESTIMONIALS</p>
-         <h3 class="text_clr_green pb-md-4 pt-3 pb-2 text-white headeing_size">What Our Client Say’s About Us</h3>
+         <h3 class="text_clr_green pb-md-4 pt-md-3 pb-2 text-white headeing_size">What Our Client Say’s About Us</h3>
        </div>
       
            <div id="customers-testimonials" class="slick-slider" >
@@ -686,7 +686,7 @@
    <!-- testiminial slider close-->
 
 
-   <section class="pt-5 pb-5 accordion_section">
+   <section class="pt-4 pb-4 pt-md-5 pb-md-5 accordion_section">
     
 <div class="container">
     <div class="text-center">
