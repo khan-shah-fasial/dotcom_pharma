@@ -709,7 +709,12 @@
 
                         $('#option-choice-form #chosen_price_div').removeClass('d-none');
                         $('#option-choice-form #chosen_price_div #chosen_price').html(data.price);
+                        $('#sku-product-details').html(data?.sku ?? '-');
                         $('#available-quantity').html(data.quantity);
+                        
+                        let qnt = data?.quantity ?? 0;
+                        $('#qnt-product-details').html(qnt > 0 ? 'Available' : 'Not Available');
+
                         $('.input-number').prop('max', data.max_limit);
                         if(parseInt(data.in_stock) == 0 && data.digital  == 0){
                            $('.buy-now').addClass('d-none');

@@ -123,6 +123,15 @@
                                                 <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="{{translate('Product Name')}}" value="{{ $product->getTranslation('name', $lang) }}">
                                             </div>
                                         </div>
+
+                                        <!-- Product short description -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Description')}} <span class="text-danger">*</span></label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="short_description" placeholder="{{translate('Product Description')}}" value="{{ $product->short_description }}">
+                                            </div>
+                                        </div>
+
                                         <!-- Brand -->
                                         <div class="form-group row" id="brand">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Brand')}}</label>
@@ -830,7 +839,7 @@
                             <h5 class="mb-3 pb-3 fs-17 fw-700">{{translate('Frequently Bought')}}</h5>
                             <div class="w-100">
                                 <div class="d-flex mb-4">
-                                    <div class="radio mar-btm mr-5 d-flex align-items-center">
+                                    {{-- <div class="radio mar-btm mr-5 d-flex align-items-center">
                                         <input
                                             id="fq_bought_select_products"
                                             type="radio"
@@ -840,7 +849,7 @@
                                             @if($product->frequently_bought_selection_type == 'product') checked @endif
                                         >
                                         <label for="fq_bought_select_products" class="fs-14 fw-700 mb-0 ml-2">{{translate('Select Product')}}</label>
-                                    </div>
+                                    </div> --}}
                                     <div class="radio mar-btm mr-3 d-flex align-items-center">
                                         <input
                                             id="fq_bought_select_category"
@@ -848,7 +857,8 @@
                                             name="frequently_bought_selection_type"
                                             value="category"
                                             onchange="fq_bought_product_selection_type()"
-                                            @if($product->frequently_bought_selection_type == 'category') checked @endif
+                                            {{-- @if($product->frequently_bought_selection_type == 'category') checked @endif --}}
+                                            checked
                                         >
                                         <label for="fq_bought_select_category" class="fs-14 fw-700 mb-0 ml-2">{{translate('Select Category')}}</label>
                                     </div>

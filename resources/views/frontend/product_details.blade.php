@@ -123,11 +123,13 @@
                     </div>
 
 
-                       
+
                         
                         <!-- Frequently Bought products -->
-                        <!-- @include('frontend.product_details.frequently_bought_products') -->
-
+                        @if(count(get_frequently_bought_products($detailedProduct)) > 0)
+                            @include('frontend.product_details.frequently_bought_products')
+                        @endif
+                        
                         <!-- Product Query -->
                         @include('frontend.product_details.product_queries')
                         

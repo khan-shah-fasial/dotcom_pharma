@@ -121,6 +121,15 @@
                                                 <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" placeholder="{{ translate('Product Name') }}" onchange="update_sku()" required>
                                             </div>
                                         </div>
+
+                                        <!-- Product short description -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Description')}} <span class="text-danger">*</span></label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="short_description" placeholder="{{translate('Product Description')}}" required>
+                                            </div>
+                                        </div>
+
                                         <!-- Brand -->
                                         <div class="form-group row" id="brand">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Brand')}}</label>

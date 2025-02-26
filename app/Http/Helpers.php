@@ -2898,3 +2898,21 @@ if (!function_exists('getSelectedCountry_addr')) {
         return $data;
     }
 }
+
+if (!function_exists('product_details_sku_stock')) {
+    function product_details_sku_stock($productID)
+    {
+        $userSubtype = get_user_subtype();
+        
+        if ($userSubtype) {
+            $product_stocks_details = ProductStock::where('product_id', $productID)
+                ->where('variant', $userSubtype)
+                ->select('variant', 'sku', 'price', 'qty')
+                ->first();
+        } else {
+            $product_stocks_details = null;
+        }
+        
+        return $product_stocks_details;
+    }
+}

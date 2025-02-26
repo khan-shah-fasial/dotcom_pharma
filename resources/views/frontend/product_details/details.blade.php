@@ -34,7 +34,8 @@
         @endif
     </div>
 
-    <p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable.</p>
+    <p>{{ $detailedProduct->short_description ?? '-' }}</p>
+
     <div class="row align-items-center d-none">
         @if(get_setting('product_query_activation') == 1)
             <!-- Ask about this product -->
@@ -500,18 +501,17 @@
 
      <div class="d-flex flex-wrap align-items-center mb-1">
             <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Stock') }}</span><br>
-           
-                <p class="text-secondary fs-14 fw-400 pb-0 mb-0">Available</p>
+            <p id="qnt-product-details" class="text-secondary fs-14 fw-400 pb-0 mb-0"></p>
         </div>
 
          <div class="d-flex flex-wrap align-items-center mb-1">
             <span class="fs-14 fw-500 mr-4 w-80px">SKU</span><br>
-            <p class="text-secondary fs-14 fw-400 pb-0 mb-0">000000</p>
+            <p id="sku-product-details" class="text-secondary fs-14 fw-400 pb-0 mb-0"></p>
         </div>
 
          <div class="d-flex flex-wrap align-items-center mb-1">
             <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Category') }}</span><br>
-                <p class="text-secondary fs-14 fw-400 pb-0 mb-0">Medicine</p>
+                <p class="text-secondary fs-14 fw-400 pb-0 mb-0">{{ ucfirst($category_name) }}</p>
         </div>
 
          <!-- Brand Logo & Name -->
@@ -523,10 +523,10 @@
         </div>
     @endif
 
-        
+
           <div class="d-flex flex-wrap align-items-center mb-0">
             <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Tags') }}</span><br>
-                <p class="text-secondary fs-14 fw-400 pb-0 mb-0">Medicine, Healtcare</p>
+                <p class="text-secondary fs-14 fw-400 pb-0 mb-0">{{ str_replace(',', ', ', $detailedProduct->tags) }}</p>
         </div>
 
         <!-- Add to cart & Buy now Buttons -->
@@ -648,4 +648,6 @@
             <div class="aiz-share"></div>
         </div>
     </div>
+
+
 </div>

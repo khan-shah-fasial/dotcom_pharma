@@ -657,7 +657,9 @@ class HomeController extends Controller
                 lastViewedProducts($detailedProduct->id, auth()->user()->id);
             }
 
-            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status'));
+            $category_name = Category::where('id', $detailedProduct->category_id)->pluck('name')->first() ?? '';
+
+            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name'));
         }
         abort(404);
     }
@@ -800,6 +802,7 @@ class HomeController extends Controller
         $product = Product::find($request->id);
         $str = '';
         $quantity = 0;
+        $sku = '-';
         $tax = 0;
         $max_limit = 0;
 
@@ -820,6 +823,7 @@ class HomeController extends Controller
         $product_stock = $product->stocks->where('variant', $str)->first();
 
         $price = $product_stock->price;
+        $sku = $product_stock->sku;
 
 
         if ($product->wholesale_product) {
@@ -881,6 +885,7 @@ class HomeController extends Controller
         return array(
             'price' => single_price($price * $request->quantity),
             'quantity' => $quantity,
+            'sku' => $sku,
             'digital' => $product->digital,
             'variation' => $str,
             'max_limit' => $max_limit,
