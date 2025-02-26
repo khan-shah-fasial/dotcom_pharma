@@ -296,7 +296,7 @@
                         </div>
                         
                         <!-- Products -->
-                        <div class="px-3">
+                        <div class="px-md-3">
                             <div class="row row-cols-xxl-3 row-cols-xl-3 row-cols-lg-3 row-cols-md-3 row-cols-2">
                                 @foreach ($products as $key => $product)
                                     <div class="col  has-transition z-1 product_listing_box">

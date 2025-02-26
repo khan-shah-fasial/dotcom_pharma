@@ -2,7 +2,7 @@
     $best_selling_products = get_best_selling_products(20);
 @endphp
 @if (get_setting('best_selling') == 1 && count($best_selling_products) > 0)
-    <section class="pt-4 pt-md-5 pb-4 pb-md-4">
+    <section class="pt-4 pt-md-5 pb-0 pb-md-4">
         <div class="container">
             <!-- Top Section -->
             <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">

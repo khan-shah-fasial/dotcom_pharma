@@ -10,7 +10,7 @@
                 <!-- Top Section -->
                 <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">
                     <!-- Title -->
-                    <h3 class="fs-16 fw-700 mb-2 mb-sm-0">
+                    <h3 class="fs-md-16 fw-700 mb-2 mb-sm-0">
                         <span class="">{{ translate('Last Viewed Products') }}</span>
                     </h3>
                     <!-- Links -->
@@ -166,10 +166,10 @@
 @endphp
 <section class="gray_light text-light footer-widget pt-md-5 pt-4 pb-3">
     <!-- footer widgets ========== [Accordion Fotter widgets are bellow from this]-->
-    <div class="container d-none d-lg-block">
+    <div class="container d-lg-block">
         <div class="row">
 
-         <div class="col-md-4 pr-md-4">
+         <div class="col-lg-4 col-md-5 pr-md-4">
             <a href="{{ route('home') }}" class="d-block">
                 @if(get_setting('footer_logo') != null)
                     <img class="lazyload h-45px" src="{{ static_asset('assets/img/placeholder-rect.jpg') }}" data-src="{{ uploaded_asset(get_setting('footer_logo')) }}" alt="{{ env('APP_NAME') }}" height="45">
@@ -177,13 +177,13 @@
                     <img class="lazyload h-45px" src="{{ static_asset('assets/img/placeholder-rect.jpg') }}" data-src="{{ static_asset('assets/img/logo.png') }}" alt="{{ env('APP_NAME') }}" height="45">
                 @endif
             </a>
-            <div class="mb-4 black_light_clr fs-16  pt-4">
+            <div class="mb-4 black_light_clr fs-md-16  pt-4">
                     {!! get_setting('about_us_description',null,App::getLocale()) !!}
                 </div>
 
                  @if ( get_setting('show_social_links') )
                     <!-- <h5 class="fs-14 fw-700 text-secondary text-uppercase mt-3 mt-lg-0">{{ translate('Follow Us') }}</h5> -->
-                    <ul class="list-inline social colored mb-4 pl-0 ml-0 social_media">
+                    <ul class="list-inline social colored mb-md-4 mb-0 pl-0 ml-0 social_media">
                          @if (!empty(get_setting('linkedin_link')))
                             <li class="list-inline-item ">
                                 <a href="{{ get_setting('linkedin_link') }}" target="_blank"><img src="{{ static_asset('assets/img/linked_icons.svg') }}" /></a>
@@ -215,33 +215,33 @@
         </div>
 
         <!-- Quick links -->
-            <div class="col-md-2 pl-md-5">
-                <div class="text-center text-sm-left mt-4">
-                   <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-3">{{ translate('Quick Links') }}</h4>
+            <div class="col-lg-2 col-md-3 pl-md-5 col-6">
+                <div class="text-left mt-4">
+                   <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-md-3 mb-1">{{ translate('Quick Links') }}</h4>
                     <ul class="list-unstyled">
                        
-                            <li class="mb-2">
-                                <a href="/" class="fs-16 black_light_clr animate-underline-white">
+                            <li class="mb-md-2 mb-1">
+                                <a href="/" class="fs-md-16 black_light_clr animate-underline-white">
                                    Home
                                 </a>
                             </li>
 
-                             <li class="mb-2">
-                                <a href="/about-us" class="fs-16 black_light_clr animate-underline-white">
+                             <li class="mb-md-2 mb-1">
+                                <a href="/about-us" class="fs-md-16 black_light_clr animate-underline-white">
                                    About Us
                                 </a>
                             </li>
 
-                               <li class="mb-2">
-                                <a href="/search" class="fs-16 black_light_clr animate-underline-white">
+                               <li class="mb-md-2 mb-1">
+                                <a href="/search" class="fs-md-16 black_light_clr animate-underline-white">
                                    Product
                                 </a>
                             </li>
 
                            
 
-                             <li class="mb-2">
-                                <a href="/contact-us" class="fs-16 black_light_clr animate-underline-white">
+                             <li class="mb-md-2 mb-1">
+                                <a href="/contact-us" class="fs-md-16 black_light_clr animate-underline-white">
                                    Contact Us
                                 </a>
                             </li>
@@ -251,9 +251,9 @@
 
 
             <!-- Quick links -->
-            <div class="col-md-2">
-                <div class="text-center text-sm-left mt-4">
-                    <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-3">
+            <div class="col-lg-2 col-md-3 col-6">
+                <div class="text-left mt-4">
+                    <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-md-3 mb-1">
                         {{ get_setting('widget_one',null,App::getLocale()) }}
                     </h4>
                     <ul class="list-unstyled">
@@ -265,8 +265,8 @@
 									$widget_one_links = json_decode(get_setting('widget_one_links'), true)[$key];
 								}
 							@endphp
-                            <li class="mb-2">
-                                <a href="{{ $widget_one_links }}" class="fs-16 black_light_clr animate-underline-white">
+                            <li class="mb-md-2 mb-1">
+                                <a href="{{ $widget_one_links }}" class="fs-md-16 black_light_clr animate-underline-white">
                                     {{ $value }}
                                 </a>
                             </li>
@@ -279,22 +279,22 @@
             </div>
 
             <!-- Contacts -->
-            <div class="col-md-4">
-                <div class="text-center text-sm-left mt-4 footer_address_1">
-                    <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-3">{{ translate('Contacts') }}</h4>
+            <div class="col-lg-4 col-md-12">
+                <div class="text-left mt-md-4 mt-1 footer_address_1">
+                    <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-md-3 mb-1">{{ translate('Contacts') }}</h4>
                     <ul class="list-unstyled">
-                        <li class="mb-2">
+                        <li class="mb-md-2 mb-0">
                              <img src="{{ static_asset('assets/img/envolope_icons.svg') }} "/>
-                            <p  class="fs-16 black_light_clr">{{ get_setting('contact_address',null,App::getLocale()) }}</p>
+                            <p  class="fs-md-16 black_light_clr">{{ get_setting('contact_address',null,App::getLocale()) }}</p>
                         </li>
-                        <li class="mb-2">
+                        <li class="mb-md-2 mb-0">
                              <img src="{{ static_asset('assets/img/call_icons.svg') }} "/>
-                            <p  class="fs-16 black_light_clr">{{ get_setting('contact_phone') }}</p>
+                            <p  class="fs-md-16 black_light_clr">{{ get_setting('contact_phone') }}</p>
                         </li>
-                        <li class="mb-2">
+                        <li class="mb-md-2 mb-0">
                             <img src="{{ static_asset('assets/img/location_icons.svg') }} "/>
-                            <p  class="">
-                                <a href="mailto:{{ get_setting('contact_email') }}" class="fs-16 black_light_clr hov-text-primary">{{ get_setting('contact_email')  }}</a>
+                            <p  class="mb-0">
+                                <a href="mailto:{{ get_setting('contact_email') }}" class="fs-md-16 black_light_clr hov-text-primary">{{ get_setting('contact_email')  }}</a>
                             </p>
                         </li>
                     </ul>
@@ -303,39 +303,39 @@
 
             <!-- My Account -->
             <div class="{{ $col_values }} d-none">
-                <div class="text-center text-sm-left mt-4">
+                <div class="text-left mt-4">
                     <h4 class="fs-14 text-secondary text-uppercase fw-700 mb-3">{{ translate('My Account') }}</h4>
                     <ul class="list-unstyled">
                         @if (Auth::check())
-                            <li class="mb-2">
+                            <li class="mb-md-2 mb-0">
                                 <a class="fs-13 text-soft-light animate-underline-white" href="{{ route('logout') }}">
                                     {{ translate('Logout') }}
                                 </a>
                             </li>
                         @else
-                            <li class="mb-2">
+                            <li class="mb-md-2 mb-0">
                                 <a class="fs-13 text-soft-light animate-underline-white" href="{{ route('user.login') }}">
                                     {{ translate('Login') }}
                                 </a>
                             </li>
                         @endif
-                        <li class="mb-2">
+                        <li class="mb-md-2 mb-0">
                             <a class="fs-13 text-soft-light animate-underline-white" href="{{ route('purchase_history.index') }}">
                                 {{ translate('Order History') }}
                             </a>
                         </li>
-                        <li class="mb-2">
+                        <li class="mb-md-2 mb-0">
                             <a class="fs-13 text-soft-light animate-underline-white" href="{{ route('wishlists.index') }}">
                                 {{ translate('My Wishlist') }}
                             </a>
                         </li>
-                        <li class="mb-2">
+                        <li class="mb-md-2 mb-0">
                             <a class="fs-13 text-soft-light animate-underline-white" href="{{ route('orders.track') }}">
                                 {{ translate('Track Order') }}
                             </a>
                         </li>
                         @if (addon_is_activated('affiliate_system'))
-                            <li class="mb-2">
+                            <li class="mb-md-2 mb-0">
                                 <a class="fs-13 text-soft-light animate-underline-white" href="{{ route('affiliate.apply') }}">
                                     {{ translate('Be an affiliate partner')}}
                                 </a>
@@ -348,26 +348,26 @@
             <!-- Seller & Delivery Boy -->
             @if ((get_setting('vendor_system_activation') == 1) || addon_is_activated('delivery_boy'))
             <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="text-center text-sm-left mt-4">
+                <div class="text-left mt-4">
                     <!-- Seller -->
                     @if (get_setting('vendor_system_activation') == 1)
                         <h4 class="fs-14 text-secondary text-uppercase fw-700 mb-3">{{ translate('Seller Zone') }}</h4>
                         <ul class="list-unstyled">
-                            <li class="mb-2">
+                            <li class="mb-md-2 mb-0">
                                 <p class="fs-13 text-soft-light mb-0">
                                     {{ translate('Become A Seller') }}
                                     <a href="{{ route('shops.create') }}" class="fs-13 fw-700 text-secondary-base ml-2">{{ translate('Apply Now') }}</a>
                                 </p>
                             </li>
                             @guest
-                                <li class="mb-2">
+                                <li class="mb-md-2 mb-0">
                                     <a class="fs-13 text-soft-light animate-underline-white" href="{{ route('seller.login') }}">
                                         {{ translate('Login to Seller Panel') }}
                                     </a>
                                 </li>
                             @endguest
                             @if(get_setting('seller_app_link'))
-                                <li class="mb-2">
+                                <li class="mb-md-2 mb-0">
                                     <a class="fs-13 text-soft-light animate-underline-white" target="_blank" href="{{ get_setting('seller_app_link')}}">
                                         {{ translate('Download Seller App') }}
                                     </a>
@@ -404,7 +404,7 @@
     </div>
 
     <!-- Accordion Fotter widgets -->
-    <div class="d-lg-none bg-transparent">
+    <div class="d-none bg-transparent">
         <!-- Quick links -->
         <div class="aiz-accordion-wrap bg-black">
             <div class="aiz-accordion-heading container bg-black">
@@ -597,7 +597,7 @@
         <div class="row align-items-center">
             <!-- Copyright -->
             <div class="col-lg-6">
-                <div class="text-left fs-14 text-white" current-verison="{{get_setting("current_version")}}">
+                <div class="text-lg-left text-md-center text-left fs-14 text-white" current-verison="{{get_setting("current_version")}}">
                     {!! get_setting('frontend_copyright_text', null, App::getLocale()) !!}
                 </div>
             </div>

@@ -1327,3 +1327,25 @@ body .form-control:focus {
     height: 100%;
     width: 145%;
 }
+
+body div#section_newest .product_listing_box .product_img_bg i.las.la-shopping-bag.la-2x {
+
+    background-color: #123498 !important;
+}
+
+body div#section_newest .product_listing_box .product_img_bg span.fw-700.text-primary {
+    color: #123498 !important;
+}
+
+body #section_best_selling .product_listing_box .product_img_bg i.las.la-shopping-bag.la-2x {
+
+    background-color: #123498 !important;
+}
+
+body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text-primary {
+    color: #123498 !important;
+}
+
+.fs-md-34 {
+    font-size: 32px !important;
+}

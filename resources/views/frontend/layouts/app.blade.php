@@ -986,7 +986,7 @@
              {
                 breakpoint: 992,
                 settings: {
-                    slidesToShow: 3,
+                    slidesToShow: 1,
                     centerPadding: '0px', // Add padding for medium screens
                 }
             },
