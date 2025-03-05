@@ -50,7 +50,14 @@ class HomeController extends Controller
             return Category::with('bannerImage')->where('featured', 1)->get();
         });
 
-        return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories', 'lang'));
+        $categories = Category::where('parent_id', 0)
+        ->where('digital', 0)
+        ->with('childrenCategories')
+        ->get();
+
+        $Brands = Brand::select(['id', 'name'])->get();
+
+        return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories', 'lang', 'categories','Brands'));
     }
 
     public function load_todays_deal_section()

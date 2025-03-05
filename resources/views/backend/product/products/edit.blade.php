@@ -885,26 +885,28 @@
                                                             </thead>
                                                             <tbody>
                                                                 @foreach($fq_bought_products as $fQBproduct)
-                                                                    <tr class="remove-parent">
-                                                                        <input type="hidden" name="fq_bought_product_ids[]" value="{{ $fQBproduct->frequently_bought_product->id }}">
-                                                                        <td class="w-150px pl-0" style="vertical-align: middle;">
-                                                                            <p class="d-block size-48px">
-                                                                                <img src="{{ uploaded_asset($fQBproduct->frequently_bought_product->thumbnail_img) }}" alt="{{ translate('Image')}}"
-                                                                                    class="h-100 img-fit lazyload" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                                                                            </p>
-                                                                        </td>
-                                                                        <td style="vertical-align: middle;">
-                                                                            <p class="d-block fs-13 fw-700 hov-text-primary mb-1 text-dark" title="{{ translate('Product Name') }}">
-                                                                                {{ $fQBproduct->frequently_bought_product->getTranslation('name') }}
-                                                                            </p>
-                                                                        </td>
-                                                                        <td style="vertical-align: middle;">{{ $fQBproduct->frequently_bought_product->main_category->name ?? translate('Category Not Found') }}</td>
-                                                                        <td class="text-right pr-0" style="vertical-align: middle;">
-                                                                            <button type="button" class="mt-1 btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".remove-parent">
-                                                                                <i class="las la-trash"></i>
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
+                                                                    @isset($fQBproduct->frequently_bought_product->id)
+                                                                        <tr class="remove-parent">
+                                                                            <input type="hidden" name="fq_bought_product_ids[]" value="{{ $fQBproduct->frequently_bought_product->id }}">
+                                                                            <td class="w-150px pl-0" style="vertical-align: middle;">
+                                                                                <p class="d-block size-48px">
+                                                                                    <img src="{{ uploaded_asset($fQBproduct->frequently_bought_product->thumbnail_img) }}" alt="{{ translate('Image')}}"
+                                                                                        class="h-100 img-fit lazyload" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                                                                </p>
+                                                                            </td>
+                                                                            <td style="vertical-align: middle;">
+                                                                                <p class="d-block fs-13 fw-700 hov-text-primary mb-1 text-dark" title="{{ translate('Product Name') }}">
+                                                                                    {{ $fQBproduct->frequently_bought_product->getTranslation('name') }}
+                                                                                </p>
+                                                                            </td>
+                                                                            <td style="vertical-align: middle;">{{ $fQBproduct->frequently_bought_product->main_category->name ?? translate('Category Not Found') }}</td>
+                                                                            <td class="text-right pr-0" style="vertical-align: middle;">
+                                                                                <button type="button" class="mt-1 btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".remove-parent">
+                                                                                    <i class="las la-trash"></i>
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endisset
                                                                 @endforeach
                                                             </tbody>
                                                         </table>
