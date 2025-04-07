@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use ZipArchive;
+use Illuminate\Support\Facades\Session;
 
 class HomeController extends Controller
 {
@@ -46,9 +47,20 @@ class HomeController extends Controller
     public function index()
     {
         $lang = get_system_language() ? get_system_language()->code : null;
-        $featured_categories = Cache::rememberForever('featured_categories', function () {
-            return Category::with('bannerImage')->where('featured', 1)->get();
-        });
+        // $featured_categories = Cache::rememberForever('featured_categories', function () {
+        //     return Category::with('bannerImage')->where('featured', 1)->get();
+        // });
+
+        $featured_categories = null;
+
+        if (!Session::has('web_type')) {
+            $category = Category::whereRaw('LOWER(name) = ?', [strtolower('Human')])->first();
+            if ($category) {
+                Session::put('web_type', $category->id);
+                session()->put('web_type_name', strtolower($category->name));
+                Cache::flush();
+            }
+        }
 
         $categories = Category::where('parent_id', 0)
         ->where('digital', 0)
@@ -1124,5 +1136,27 @@ class HomeController extends Controller
         Artisan::call('cache:clear');
         $sql_path = base_path('public/uploads/demo_data.sql');
         DB::unprepared(file_get_contents($sql_path));
+    }
+
+
+    public function setWebType(Request $request)
+    {
+        $categoryName = $request->input('type');
+
+        $category = Category::whereRaw('LOWER(name) = ?', [strtolower($categoryName)])->first();
+
+        if ($category) {
+            // Store in session
+            session()->put('web_type', $category->id);
+            session()->put('web_type_name', strtolower($category->name));
+
+            Cache::flush();
+
+            return response()->json(['success' => true]);
+        }
+
+
+
+        return response()->json(['success' => false]);
     }
 }

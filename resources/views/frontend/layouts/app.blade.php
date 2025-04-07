@@ -484,6 +484,8 @@
         @endforeach
     </script>
 
+    @yield('custom-script-section')
+
     <script>
         @if (Route::currentRouteName() == 'home' || Route::currentRouteName() == '/')
 
@@ -1085,7 +1087,6 @@
 
     @yield('custome-script')
 
-
     @if (Session::has('registartion_status'))
         @php
             Session::forget('registartion_status');
@@ -1155,6 +1156,5 @@ $(window).scroll(function() {
         });
     });
 </script>
-
 </body>
 </html>

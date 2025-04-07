@@ -148,6 +148,50 @@
 							{{ translate('Top Brands') }}
 						</a>
 					</li>
+					<!-- Top Category -->
+					<li class="nav-item">
+						<a class="nav-link" id="top-categories-tab" href="#top_categories"
+							data-toggle="tab" data-target="#top_categories" type="button" role="tab" aria-controls="top_categories" aria-selected="false">
+							{{ translate('Top Category') }}
+						</a>
+					</li>
+					<!-- Trending Items -->
+					<li class="nav-item">
+						<a class="nav-link" id="top-categories-tab" href="#trending_items"
+							data-toggle="tab" data-target="#trending_items" type="button" role="tab" aria-controls="trending_items" aria-selected="false">
+							{{ translate('Trending Items') }}
+						</a>
+					</li>
+					<!-- popular_items_categories -->
+					<li class="nav-item">
+						<a class="nav-link" id="top-categories-tab" href="#popular_items_categories"
+							data-toggle="tab" data-target="#popular_items_categories" type="button" role="tab" aria-controls="popular_items_categories" aria-selected="false">
+							{{ translate('Popular Items Categories') }}
+						</a>
+					</li>
+					<!-- About us -->
+					<li class="nav-item">
+						<a class="nav-link" id="about-us-tab" href="#about_us"
+							data-toggle="tab" data-target="#about_us" type="button" role="tab" aria-controls="about_us" aria-selected="false">
+							{{ translate('About Us') }}
+						</a>
+					</li>
+
+					<!-- About us -->
+					<li class="nav-item">
+						<a class="nav-link" id="why-choose-us-tab" href="#why_choose_us"
+							data-toggle="tab" data-target="#why_choose_us" type="button" role="tab" aria-controls="why_choose_us" aria-selected="false">
+							{{ translate('Why Choose Us') }}
+						</a>
+					</li>
+
+					<!-- Faq -->
+					<li class="nav-item">
+						<a class="nav-link" id="faq-section-tab" href="#faq_section"
+							data-toggle="tab" data-target="#faq_section" type="button" role="tab" aria-controls="faq_section" aria-selected="false">
+							{{ translate('Faq') }}
+						</a>
+					</li>
 				</ul>
 			</div>
 
@@ -177,6 +221,8 @@
 							<input type="hidden" name="types[][{{ $lang }}]" value="home_slider_images">
 							<input type="hidden" name="types[][{{ $lang }}]" value="home_slider_links">
 
+							<input type="hidden" name="types[][{{ $lang }}]" value="home_slider_mobile_images"> 
+
 							<div class="bg-white p-3 p-sm-2rem">
 								<div class="w-100">
 									<!-- Information -->
@@ -199,6 +245,9 @@
 									<div class="home-slider-target">
 										@php
 											$home_slider_images = get_setting('home_slider_images', null, $lang);
+
+											$home_slider_mobile_images = get_setting('home_slider_mobile_images', null, $lang);
+
 											$home_slider_links = get_setting('home_slider_links', null, $lang);
 										@endphp
 										@if ($home_slider_images != null)
@@ -206,8 +255,9 @@
 												<div class="p-3 p-md-4 mb-3 mb-md-2rem remove-parent" style="border: 1px dashed #e4e5eb;">
 													<div class="row gutters-5">
 														<!-- Image -->
-														<div class="col-md-5">
+														<div class="col-md-3">
 															<div class="form-group mb-md-0">
+																<label>{{ translate('Desktop Image') }}</label>
 																<div class="input-group" data-toggle="aizuploader" data-type="image">
 																	<div class="input-group-prepend">
 																		<div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse')}}</div>
@@ -219,9 +269,26 @@
 																</div>
 															</div>
 														</div>
+
+														<div class="col-md-3">
+															<div class="form-group mb-md-0">
+																<label>{{ translate('Mobile Image') }}</label>
+																<div class="input-group" data-toggle="aizuploader" data-type="image">
+																	<div class="input-group-prepend">
+																		<div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse')}}</div>
+																	</div>
+																	<div class="form-control file-amount">{{ translate('Choose File') }}</div>
+																	<input type="hidden" name="home_slider_mobile_images[]" class="selected-files" value="{{ json_decode($home_slider_mobile_images, true)[$key] ?? '' }}">
+																</div>
+																<div class="file-preview box sm">
+																</div>
+															</div>
+														</div>
+
 														<!-- link -->
 														<div class="col-md">
 															<div class="form-group mb-md-0">
+																<label>{{ translate('Link') }}</label>
 																<input type="text" class="form-control" placeholder="http://" name="home_slider_links[]" value="{{ isset(json_decode($home_slider_links, true)[$key]) ? json_decode($home_slider_links, true)[$key] : '' }}">
 															</div>
 														</div>
@@ -247,10 +314,11 @@
 											data-toggle="add-more"
 											data-content='
 											<div class="p-3 p-md-4 mb-3 mb-md-2rem remove-parent" style="border: 1px dashed #e4e5eb;">
-												<div class="row gutters-5">
+												<div class="row gutters-3">
 													<!-- Image -->
 													<div class="col-md-5">
 														<div class="form-group mb-md-0">
+															<label>{{ translate('Desktop Image') }}</label>
 															<div class="input-group" data-toggle="aizuploader" data-type="image">
 																<div class="input-group-prepend">
 																	<div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse')}}</div>
@@ -262,9 +330,26 @@
 															</div>
 														</div>
 													</div>
+
+													<div class="col-md-3">
+														<div class="form-group mb-md-0">
+															<label>{{ translate('Mobile Image') }}</label>
+															<div class="input-group" data-toggle="aizuploader" data-type="image">
+																<div class="input-group-prepend">
+																	<div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse')}}</div>
+																</div>
+																<div class="form-control file-amount">{{ translate('Choose File') }}</div>
+																<input type="hidden" name="home_slider_mobile_images[]" class="selected-files" value="">
+															</div>
+															<div class="file-preview box sm">
+															</div>
+														</div>
+													</div>
+
 													<!-- link -->
 													<div class="col-md">
 														<div class="form-group mb-md-0">
+															<label>{{ translate('Link') }}</label>
 															<input type="text" class="form-control" placeholder="http://" name="home_slider_links[]" value="">
 														</div>
 													</div>
@@ -285,7 +370,7 @@
 									</div>
 								</div>
 								<!-- Save Button -->
-								<div class="mt-4 text-right">
+								<div class="mt-5 text-right">
 									<button type="submit" class="btn btn-success w-230px btn-md rounded-2 fs-14 fw-700 shadow-success">{{ translate('Save') }}</button>
 								</div>
 							</div>
@@ -1057,6 +1142,353 @@
 							</div>
 						</form>
 					</div>
+
+					<!-- Top Category  -->
+					<div class="tab-pane fade" id="top_categories" role="tabpanel" aria-labelledby="top-categories-tab">
+						<form action="{{ route('business_settings.update') }}" method="POST" enctype="multipart/form-data">
+							@csrf
+							<input type="hidden" name="tab" value="top_categories">
+							<div class="bg-white p-3 p-sm-2rem">
+								<div class="w-100">
+									<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Top Categories For Human (Max 12)') }}</label>
+									<!-- Brands -->
+									<div class="form-group">
+										<input type="hidden" name="types[]" value="top_categories_human">
+										<select class="form-control aiz-selectpicker" name="top_categories_human[]" multiple data-max-options="12" data-live-search="true" data-selected="{{ get_setting('top_categories_human') }}" required>
+											@foreach (\App\Models\Category::where('parent_id', 0)->with('childrenCategories')->get() as $category)
+												<option value="{{ $category->id }}">{{ $category->getTranslation('name') }}</option>
+												@foreach ($category->childrenCategories as $childCategory)
+													@include('categories.child_category', ['child_category' => $childCategory])
+												@endforeach
+											@endforeach
+										</select>
+									</div>
+								</div>
+
+								<div class="w-100">
+									<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Top Categories For Veterinary (Max 12)') }}</label>
+									<!-- Brands -->
+									<div class="form-group">
+										<input type="hidden" name="types[]" value="top_categories_veterinary">
+										<select class="form-control aiz-selectpicker" name="top_categories_veterinary[]" multiple data-max-options="12" data-live-search="true" data-selected="{{ get_setting('top_categories_veterinary') }}" required>
+											@foreach (\App\Models\Category::where('parent_id', 0)->with('childrenCategories')->get() as $category)
+												<option value="{{ $category->id }}">{{ $category->getTranslation('name') }}</option>
+												@foreach ($category->childrenCategories as $childCategory)
+													@include('categories.child_category', ['child_category' => $childCategory])
+												@endforeach
+											@endforeach
+										</select>
+									</div>
+								</div>
+
+								<!-- Save Button -->
+								<div class="mt-4 text-right">
+									<button type="submit" class="btn btn-success w-230px btn-md rounded-2 fs-14 fw-700 shadow-success">{{ translate('Save') }}</button>
+								</div>
+							</div>
+						</form>
+					</div>
+
+
+					<!-- trending_items  -->
+					<div class="tab-pane fade" id="trending_items" role="tabpanel" aria-labelledby="top-categories-tab">
+						<form action="{{ route('business_settings.update') }}" method="POST" enctype="multipart/form-data">
+							@csrf
+							<input type="hidden" name="tab" value="trending_items">
+							<div class="bg-white p-3 p-sm-2rem">
+								<div class="w-100">
+									<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Trending Items For Human (Max 12)') }}</label>
+									<!-- Brands -->
+									<div class="form-group">
+										<input type="hidden" name="types[]" value="trending_items_human">
+										<select class="form-control aiz-selectpicker" name="trending_items_human[]" multiple data-max-options="12" data-live-search="true" data-selected="{{ get_setting('trending_items_human') }}" required>
+											@foreach (\App\Models\Product::orderBy('num_of_sale', 'desc')->get() as $product)
+												<option value="{{ $product->id }}">{{ $product->getTranslation('name') }}</option>
+											@endforeach
+										</select>
+									</div>
+								</div>
+
+								<div class="w-100">
+									<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Trending Items For Veterinary (Max 12)') }}</label>
+									<!-- Brands -->
+									<div class="form-group">
+										<input type="hidden" name="types[]" value="trending_items_veterinary">
+										<select class="form-control aiz-selectpicker" name="trending_items_veterinary[]" multiple data-max-options="12" data-live-search="true" data-selected="{{ get_setting('trending_items_veterinary') }}" required>
+											@foreach (\App\Models\Product::orderBy('num_of_sale', 'desc')->get() as $product)
+												<option value="{{ $product->id }}">{{ $product->getTranslation('name') }}</option>
+											@endforeach
+										</select>
+									</div>
+								</div>
+
+								<!-- Save Button -->
+								<div class="mt-4 text-right">
+									<button type="submit" class="btn btn-success w-230px btn-md rounded-2 fs-14 fw-700 shadow-success">{{ translate('Save') }}</button>
+								</div>
+							</div>
+						</form>
+					</div>
+
+
+					<!-- Popular Items Categories  -->
+					<div class="tab-pane fade" id="popular_items_categories" role="tabpanel" aria-labelledby="popular-items-categories-tab">
+						<form action="{{ route('business_settings.update') }}" method="POST" enctype="multipart/form-data">
+							@csrf
+							<input type="hidden" name="tab" value="popular_items_categories">
+							<div class="bg-white p-3 p-sm-2rem">
+								<div class="w-100">
+									<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Popular Items Categories For Human (Max 6)') }}</label>
+									<!-- Brands -->
+									<div class="form-group">
+										<input type="hidden" name="types[]" value="popular_items_categories_human">
+										<select class="form-control aiz-selectpicker" name="popular_items_categories_human[]" multiple data-max-options="6" data-live-search="true" data-selected="{{ get_setting('popular_items_categories_human') }}" required>
+											@foreach (\App\Models\Category::where('parent_id', 0)->with('childrenCategories')->get() as $category)
+												<option value="{{ $category->id }}">{{ $category->getTranslation('name') }}</option>
+												@foreach ($category->childrenCategories as $childCategory)
+													@include('categories.child_category', ['child_category' => $childCategory])
+												@endforeach
+											@endforeach
+										</select>
+									</div>
+								</div>
+
+								<div class="w-100">
+									<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Popular Items Categories For Veterinary (Max 6)') }}</label>
+									<!-- Brands -->
+									<div class="form-group">
+										<input type="hidden" name="types[]" value="popular_items_categories_veterinary">
+										<select class="form-control aiz-selectpicker" name="popular_items_categories_veterinary[]" multiple data-max-options="6" data-live-search="true" data-selected="{{ get_setting('popular_items_categories_veterinary') }}" required>
+											@foreach (\App\Models\Category::where('parent_id', 0)->with('childrenCategories')->get() as $category)
+												<option value="{{ $category->id }}">{{ $category->getTranslation('name') }}</option>
+												@foreach ($category->childrenCategories as $childCategory)
+													@include('categories.child_category', ['child_category' => $childCategory])
+												@endforeach
+											@endforeach
+										</select>
+									</div>
+								</div>
+
+								<!-- Save Button -->
+								<div class="mt-4 text-right">
+									<button type="submit" class="btn btn-success w-230px btn-md rounded-2 fs-14 fw-700 shadow-success">{{ translate('Save') }}</button>
+								</div>
+							</div>
+						</form>
+					</div>
+
+
+					<!-- About US -->
+					<div class="tab-pane fade" id="about_us" role="tabpanel" aria-labelledby="about-us">
+						<form action="{{ route('business_settings.update') }}" method="POST" enctype="multipart/form-data">
+							@csrf
+							<input type="hidden" name="tab" value="about_us">
+							<input type="hidden" name="types[][{{ $lang }}]" value="about_us_desc">
+
+							<div class="bg-white p-3 p-sm-2rem">
+								<div class="w-100">
+									<label class="col-from-label fs-13 fw-500 mb-0">{{ translate('About Us') }}</label>
+                                    <div class="small text-muted mb-3">{{ translate("Minimum dimensions required: 1370px width X 420px height (If use a single banner).") }}</div>
+
+									<!-- Images & links -->
+									<div class="about-us-target">
+										@php
+											$about_us_desc = get_setting('about_us_desc', null, $lang);
+										@endphp
+
+										<div class="p-3 p-md-4 mb-3 mb-md-2rem remove-parent" style="border: 1px dashed #e4e5eb;">
+											<div class="row gutters-5">
+												<!-- Image -->
+												<div class="col-lg-6">
+													<div class="form-group">
+														<div class="input-group " data-toggle="aizuploader" data-type="image">
+															<div class="input-group-prepend">
+																<div class="input-group-text bg-soft-secondary">{{ translate('Browse') }}</div>
+															</div>
+															<div class="form-control file-amount">{{ translate('Choose File') }}</div>
+															<input type="hidden" name="types[][{{ $lang }}]" value="about_us_images">
+															<input type="hidden" name="about_us_images" value="{{ get_setting('about_us_images', null, $lang) }}" class="selected-files">
+														</div>
+														<div class="file-preview box"></div>
+													</div>
+												</div>
+
+												<div class="col-md">
+													<div class="form-group mb-md-0">
+														<textarea class="aiz-text-editor" name="about_us_desc">{{ $about_us_desc ? $about_us_desc : '' }}</textarea>
+													</div>
+												</div>
+											</div>
+										</div>
+
+
+									</div>
+								</div>
+								<!-- Save Button -->
+								<div class="mt-4 text-right">
+									<button type="submit" class="btn btn-success w-230px btn-md rounded-2 fs-14 fw-700 shadow-success">{{ translate('Save') }}</button>
+								</div>
+							</div>
+						</form>
+					</div>
+
+
+
+					<!-- Why Choose US -->
+					<div class="tab-pane fade" id="why_choose_us" role="tabpanel" aria-labelledby="why-choose-us">
+						<form action="{{ route('business_settings.update') }}" method="POST" enctype="multipart/form-data">
+							@csrf
+							<input type="hidden" name="tab" value="why_choose_us">
+							<input type="hidden" name="types[][{{ $lang }}]" value="why_choose_us">
+
+							<input type="hidden" name="types[][{{ $lang }}]" value="why_choose_us_title">
+							<input type="hidden" name="types[][{{ $lang }}]" value="why_choose_us_dec">
+
+							<div class="bg-white p-3 p-sm-2rem">
+								<div class="w-100">
+									<label class="col-from-label fs-13 fw-500 mb-0">{{ translate('Why Choose Us') }}</label>
+									<div class="small text-muted mb-3">{{ translate("Minimum dimensions required: 1370px width X 420px height (If use a single banner).") }}</div>
+
+									<!-- Images & links -->
+									<div class="about-us-target">
+										@php
+											$why_choose_us_title = get_setting('why_choose_us_title', null, $lang);
+											$why_choose_us_dec = get_setting('why_choose_us_dec', null, $lang);
+										@endphp
+
+										<div class="p-3 p-md-4 mb-3 mb-md-2rem remove-parent" style="border: 1px dashed #e4e5eb;">
+											<div class="row gutters-5">
+												<!-- Image -->
+												<div class="col-lg-6">
+													<div class="form-group">
+														<div class="input-group " data-toggle="aizuploader" data-type="image">
+															<div class="input-group-prepend">
+																<div class="input-group-text bg-soft-secondary">{{ translate('Browse') }}</div>
+															</div>
+															<div class="form-control file-amount">{{ translate('Choose File') }}</div>
+															<input type="hidden" name="types[][{{ $lang }}]" value="why_choose_us_images">
+															<input type="hidden" name="why_choose_us_images" value="{{ get_setting('why_choose_us_images', null, $lang) }}" class="selected-files">
+														</div>
+														<div class="file-preview box"></div>
+													</div>
+												</div>
+
+												<div class="col-md-5">
+													<div class="form-group mb-md-0">
+														<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Title') }}</label>
+														<textarea class="aiz-text-editor" name="why_choose_us_title">{{ $why_choose_us_title ? $why_choose_us_title : '' }}</textarea>
+													</div>
+												</div>
+
+												<div class="col-md-5">
+													<div class="form-group mb-md-0">
+														<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Description') }}</label>
+														<textarea class="aiz-text-editor" name="why_choose_us_dec">{{ $why_choose_us_dec ? $why_choose_us_dec : '' }}</textarea>
+													</div>
+												</div>
+											</div>
+										</div>
+
+
+									</div>
+								</div>
+								<!-- Save Button -->
+								<div class="mt-4 text-right">
+									<button type="submit" class="btn btn-success w-230px btn-md rounded-2 fs-14 fw-700 shadow-success">{{ translate('Save') }}</button>
+								</div>
+							</div>
+						</form>
+					</div>
+
+
+
+
+					<!-- FAQ Section -->
+					<div class="tab-pane fade" id="faq_section" role="tabpanel" aria-labelledby="faq-tab">
+						<form action="{{ route('business_settings.update') }}" method="POST" enctype="multipart/form-data">
+							@csrf
+							<input type="hidden" name="tab" value="faq_section">
+							<div class="bg-white p-3 p-sm-2rem">
+								<div class="w-100">
+									<label class="col-form-label fs-13 fw-500 mb-3">{{ translate('FAQs') }}</label>
+									<div class="faq-items-target">
+										<input type="hidden" name="types[]" value="faq_section">
+										@php $faqs = get_setting('faq_section'); 
+										@endphp
+										@if ($faqs != null)
+											@foreach (json_decode($faqs, true) as $key => $faq)
+												<div class="p-3 p-md-4 mb-3 mb-md-2rem remove-parent" style="border: 1px dashed #e4e5eb;">
+													<div class="row gutters-5">
+														<div class="col-md-5">
+															<div class="form-group">
+																<label>{{ translate('Question') }}</label>
+																<input type="text" class="form-control" name="faq_questions[]" value="{{ $faq['question'] ?? '' }}" required>
+															</div>
+														</div>
+														<div class="col-md-6">
+															<div class="form-group">
+																<label>{{ translate('Answer') }}</label>
+																<textarea class="form-control" name="faq_answers[]" required>{{ $faq['answer'] ?? '' }}</textarea>
+															</div>
+														</div>
+														<div class="col-md-1 d-flex align-items-center">
+															<button type="button" class="btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".remove-parent">
+																<i class="las la-times"></i>
+															</button>
+														</div>
+													</div>
+												</div>
+											@endforeach
+										@endif
+									</div>
+
+									<!-- Add FAQ Button -->
+									<div class="">
+										<button
+											type="button"
+											class="btn btn-block border hov-bg-soft-secondary fs-14 rounded-0 d-flex align-items-center justify-content-center"
+											style="background: #fcfcfc;"
+											data-toggle="add-more"
+											data-content='
+											<div class="p-4 mb-3 mb-md-2rem remove-parent" style="border: 1px dashed #e4e5eb;">
+												<div class="row gutters-5">
+													<div class="col-md-5">
+														<div class="form-group">
+															<label>{{ translate('Question') }}</label>
+															<input type="text" class="form-control" name="faq_questions[]" required>
+														</div>
+													</div>
+													<div class="col-md-6">
+														<div class="form-group">
+															<label>{{ translate('Answer') }}</label>
+															<textarea class="form-control" name="faq_answers[]" required></textarea>
+														</div>
+													</div>
+													<div class="col-md-1 d-flex align-items-center">
+														<button type="button" class="btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".remove-parent">
+															<i class="las la-times"></i>
+														</button>
+													</div>
+												</div>
+											</div>'
+											data-target=".faq-items-target">
+											<i class="las la-2x text-success la-plus-circle"></i>
+											<span class="ml-2">{{ translate('Add New') }}</span>
+										</button>
+									</div>
+								</div>
+
+								<!-- Save Button -->
+								<div class="mt-4 text-right">
+									<button type="submit" class="btn btn-success w-230px btn-md rounded-2 fs-14 fw-700 shadow-success">{{ translate('Save') }}</button>
+								</div>
+							</div>
+						</form>
+					</div>
+
+
+
+
 
 				</div>
 			</div>

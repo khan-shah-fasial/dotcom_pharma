@@ -100,6 +100,26 @@
 
 
    <!-- Featured Categories -->
+   @php
+   use App\Models\Category;
+   
+   if (session('web_type_name') == 'human') {
+       $top_cat_human = json_decode(get_setting('top_categories_human'), true); // Convert to array
+       $featured_categories = Category::select('id', 'parent_id', 'name','slug')
+           ->whereIn('id', $top_cat_human)
+           ->get();
+   } elseif (session('web_type_name') == 'veterinary') {
+       $top_cat_veterinary = json_decode(get_setting('top_categories_veterinary'), true);
+       $featured_categories = Category::select('id', 'parent_id', 'name','slug')
+           ->whereIn('id', $top_cat_veterinary ?? [])
+           ->get();
+   } else {
+       $featured_categories = null;
+   }
+   @endphp
+
+
+
 @if (count($featured_categories) > 0)
     <section class="mb-4 mb-lg-5 mb-md-4 mt-4 mt-lg-5 mt-md-4">
         <div class="container">
@@ -520,12 +540,12 @@
                      <p>At <b>Pharm Vet Easy,</b> we have a strong vision for the future of global pharmaceuticals, with a primary focus on high-quality veterinary formulations. Guided by our core values of <b>PEOPLE – TRUST – VALUE & TECHNOLOGY,</b> we are committed to delivering world-class products and services while ensuring cost-effectiveness.
 </p>
                      <p class="mb-3">Established in 2000 in Mumbai, the financial hub of India, <b>Pharm Vet Easy</b> has built a reputation as a trusted manufacturer and supplier of premium veterinary formulations. The driving force behind our success is Mr. A.Y. Jaliawala, a Computer Engineer with extensive experience in the pharmaceutical industry, whose expertise and leadership continue to shape our journey toward excellence in animal healthcare.</p>
-                         <!-- <ul class="list_none">
+                         {{-- <!-- <ul class="list_none">
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
                             <li class="fw-600"><img src="{{ static_asset('assets/img/checked_icons.png') }}" /> Streamlined Shipping Experience</li>
-                         </ul> -->
+                         </ul> --> --}}
 
                          <div class="mt-3">
                             <a href="/about-us" class="animate_button black1_buttons">Discover More <i class="las la-arrow-right"></i></a>

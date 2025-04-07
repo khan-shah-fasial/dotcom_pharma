@@ -53,13 +53,13 @@
                     <ul class="list-inline d-flex justify-content-end mb-0">
 
                      <li class="list-inline-item human_btn">
-                                 <a href="/" class=" fs-12 py-2">
+                                 <a href="javascript:void(0)" class=" fs-12 py-2">
                                    <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
                                 </a>
                             </li>
 
                             <li class="list-inline-item veterinary_btn">
-                                 <a href="/" class=" fs-12 py-2">
+                                 <a href="javascript:void(0)" class=" fs-12 py-2">
                                    <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
                                 </a>
                             </li>
@@ -256,19 +256,58 @@
                                 <div class="d-flex align-items-center justify-content-center justify-content-xl-start h-100">
                                     <ul class="list-inline mb-0 pl-0">
                                         <!-- Dropdown for Injections -->
-                                        <li class="list-inline-item mr-0 animate-underline-white dropdown">
-                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Injections
-                                            </a>
-                                            <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
-                                                <a class="dropdown-item" href="/search">Liquid</a>
-                                                <a class="dropdown-item" href="/search">Dry</a>
-                                                <a class="dropdown-item" href="/search">Prefilled</a>
-                                                <a class="dropdown-item" href="/search">I.V. Fluid</a>
-                                            </div>
-                                        </li>
 
-                                        <li class="list-inline-item mr-0 animate-underline-white dropdown">
+                                    @php
+                                        use App\Models\Category;
+                                    
+                                        if (session()->has('web_type')) {
+                                            $web_type = session()->get('web_type');
+                                        } else {
+                                            $cat_data = Category::whereRaw('LOWER(name) = ?', [strtolower('Human')])->first(['id', 'name']);
+                                    
+                                            if ($cat_data) {
+                                                session()->put('web_type', $cat_data->id);
+                                                session()->put('web_type_name', strtolower($cat_data->name));
+                                            }
+                                        }
+                                    
+                                        $cat_human_id = [58, 43, 70, 68, 72]; // Ensure IDs are integers
+                                        $cat_veterinary_id = [85, 86, 87, 88, 89];
+
+                                        if (session('web_type_name') == 'human') {
+                                            $category_top_menu = Category::select('id', 'parent_id', 'name')
+                                                ->whereIn('id', $cat_human_id)
+                                                ->where('parent_id', session('web_type'))
+                                                ->with('childrenCategories') 
+                                                ->orderByRaw("FIELD(id, " . implode(',', $cat_human_id) . ")") // Maintain order
+                                                ->get();
+                                        } elseif (session('web_type_name') == 'veterinary') {
+                                            $category_top_menu = Category::select('id', 'parent_id', 'name')
+                                                ->whereIn('id', $cat_veterinary_id)
+                                                ->where('parent_id', session('web_type'))
+                                                ->with('childrenCategories') 
+                                                ->orderByRaw("FIELD(id, " . implode(',', $cat_veterinary_id) . ")") // Maintain order
+                                                ->get();
+                                        } else {
+                                            $category_top_menu = collect();
+                                        }
+                                    @endphp
+
+                                        @foreach ($category_top_menu as $cat)
+                                            <li class="list-inline-item mr-0 animate-underline-white dropdown">
+                                                <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" 
+                                                id="injectionsDropdown_{{ $cat->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    {{ $cat->name }}
+                                                </a>
+                                                <div class="dropdown-menu" aria-labelledby="injectionsDropdown_{{ $cat->id }}">
+                                                    @foreach ($cat->childrenCategories as $childCategory)
+                                                        <a class="dropdown-item" href="/search">{{ $childCategory->name }}</a>
+                                                    @endforeach
+                                                </div>
+                                            </li>
+                                        @endforeach
+
+                                        {{-- <li class="list-inline-item mr-0 animate-underline-white dropdown">
                                             <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 Bolus
                                             </a>
@@ -306,7 +345,7 @@
                                                 <a class="dropdown-item" href="/search">Powders</a>
                                                 <a class="dropdown-item" href="/search">Suspensions</a>
                                             </div>
-                                        </li>
+                                        </li> --}}
                                     </ul>
                                 </div>
                             </div>
@@ -711,7 +750,49 @@
                     <div class="w-100 full_menu_nav">
                         <div class="d-flex align-items-center justify-content-center justify-content-xl-start h-100">
                             <ul class="list-inline mb-0 pl-0">
-                                @if (get_setting('header_menu_labels') != null)
+
+                                @php
+ 
+                                    $cat_human_id = [46]; // Ensure IDs are integers
+                                    $cat_veterinary_id = [88];
+
+                                    if (session('web_type_name') == 'human') {
+                                        $category_menu = Category::select('id', 'parent_id', 'name')
+                                            ->whereIn('id', $cat_human_id)
+                                            ->where('parent_id', session('web_type'))
+                                            ->with('childrenCategories') 
+                                            ->orderByRaw("FIELD(id, " . implode(',', $cat_human_id) . ")") // Maintain order
+                                            ->get();
+
+                                    } elseif (session('web_type_name') == 'veterinary') {
+                                        $category_menu = Category::select('id', 'parent_id', 'name')
+                                            ->whereIn('id', $cat_veterinary_id)
+                                            ->where('parent_id', session('web_type'))
+                                            ->with('childrenCategories') 
+                                            ->orderByRaw("FIELD(id, " . implode(',', $cat_veterinary_id) . ")") // Maintain order
+                                            ->get();
+                                    } else {
+                                        $category_menu = collect();
+
+                                    }
+                                @endphp
+
+                                @foreach ($category_menu as $cat)
+                                    <li class="list-inline-item mr-0 animate-underline-white">
+                                        <a href=""
+                                            class="fs-16 py-3 d-inline-block fw-500 {{ $nav_txt_color }} header_menu_links
+                                        {{--@if (url()->current() == json_decode(get_setting('header_menu_links'), true)[$key]) active @endif--}}">
+                                            {{ $cat->name }}
+                                        </a>
+                                        <div class="dropdown-menu" aria-labelledby="injectionsDropdown_{{ $cat->id }}">
+                                            @foreach ($cat->childrenCategories as $childCategory)
+                                                <a class="dropdown-item" href="/search">{{ $childCategory->name }}</a>
+                                            @endforeach
+                                        </div>
+                                    </li>
+                                @endforeach
+                                
+                                {{-- @if (get_setting('header_menu_labels') != null)
                                     @foreach (json_decode(get_setting('header_menu_labels'), true) as $key => $value)
                                         <li class="list-inline-item mr-0 animate-underline-white">
                                             <a href="{{ json_decode(get_setting('header_menu_links'), true)[$key] }}"
@@ -721,7 +802,7 @@
                                             </a>
                                         </li>
                                     @endforeach
-                                @endif
+                                @endif --}}
                             </ul>
                         </div>
                     </div>
@@ -885,5 +966,34 @@
                     AIZ.plugins.bootstrapSelect('refresh');
                 });
             }
+        </script>
+        <script>
+            $(document).ready(function() {
+                $(".human_btn, .veterinary_btn").click(function(e) {
+                    e.preventDefault();
+        
+                    let type = $(this).hasClass("human_btn") ? "Human" : "Veterinary";
+                    var home = "{{ route('home') }}"; 
+        
+                    $.ajax({
+                        url: "{{ route('set.web.type') }}", 
+                        type: "POST",
+                        data: {
+                            type: type,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                location.reload(); 
+                            } else {
+                                window.location.href = home;
+                            }
+                        },
+                        error: function() {
+                            window.location.href = home;
+                        }
+                    });
+                });
+            });
         </script>
     @endsection
