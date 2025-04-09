@@ -191,4 +191,9 @@ class User extends Authenticatable implements MustVerifyEmail
     public function userCoupon(){
         return $this->hasOne(UserCoupon::class);
     }
+
+    public function details()
+    {
+        return $this->hasOne(UserDetails::class);
+    }
 }
