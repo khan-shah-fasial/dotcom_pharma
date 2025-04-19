@@ -64,11 +64,95 @@
     <script>
         $(document).ready(function() {
 
+            // ---------------- Gst verify --------------------------- //
+
+            function appendVerifyButton() {
+                const verifyBtnId = 'verify-gst-btn';
+
+                if ($('#' + verifyBtnId).length === 0) {
+                    const verifyBtn = $('<button>')
+                        .attr('type', 'button')
+                        .attr('id', verifyBtnId)
+                        .attr('onclick', 'verifyGST()')
+                        .addClass('btn btn-success btn-sm ml-2')
+                        .text('Verify');
+
+                    $('#gst_no').after(verifyBtn);
+                }
+            }
+
+            function checkAndAppendButton() {
+                const verifyBtnId = 'verify-gst-btn';
+                const val = $('#gst_no').val();
+                if (val.length === 15) {
+                    appendVerifyButton();
+                } else {
+                    $('#' + verifyBtnId).remove();
+                }
+            }
+
+            // Run on input/paste/change
+            $('body').on('input keyup keydown change paste', '#gst_no', function () {
+                setTimeout(checkAndAppendButton, 50); // delay for paste to take effect
+            });
+
+
+            // ---------------- Gst verify --------------------------- //
+
+            // ---------------- IEC verify --------------------------- //
+
+            function appendVerifyIECButton() {
+                const verifyBtnId = 'verify-iec-btn';
+
+                if ($('#' + verifyBtnId).length === 0) {
+                    const verifyBtn = $('<button>')
+                        .attr('type', 'button')
+                        .attr('id', verifyBtnId)
+                        .attr('onclick', 'verifyIEC()')
+                        .addClass('btn btn-success btn-sm ml-2')
+                        .text('Verify');
+
+                    $('#iec_no').after(verifyBtn);
+                }
+            }
+
+            function checkAndAppendIECButton() {
+                const verifyBtnId = 'verify-iec-btn';
+                const val = $('#iec_no').val().trim();
+                if (val.length === 10) {
+                    appendVerifyIECButton();
+                } else {
+                    $('#' + verifyBtnId).remove();
+                }
+            }
+
+            // Watch changes on IEC input
+            $('body').on('input keyup keydown change paste', '#iec_no', function () {
+                setTimeout(checkAndAppendIECButton, 50); // wait for paste/input value
+            });
+
+
+            // ---------------- ICE verify --------------------------- //
+
             function toggleLocalityFields() {
                 const isDomestic = document.getElementById('domestic').checked;
 
                 const domesticDivs = document.querySelectorAll('.locality-base-domestic');
                 const internationalDivs = document.querySelectorAll('.locality-base-international');
+
+                let content = document.getElementById('content-base_type');
+
+                if (content) {  // Make sure the element exists
+                    if (isDomestic) {
+                        content.innerHTML = 'GSTIN Status / Current Status *';
+
+                    } else {
+                        content.innerHTML = 'UIN Status / Current Status *';
+
+                    }
+                } else {
+                    console.error("Element with id 'content-base_type' not found.");
+                }
 
                 domesticDivs.forEach(div => {
                     if (isDomestic) {
@@ -77,6 +161,7 @@
                     } else {
                         div.classList.add('d-none');
                         div.querySelectorAll('input').forEach(input => input.required = false);
+
                     }
                 });
 
@@ -192,11 +277,23 @@
 
                             intil_input('phone_code');
                             intil_input('whats_app_no');
-                            intil_input('alternate_mob_no_business');
-                            intil_input('alternate_whats_app_no_business');
+
 
                             if(step == 2){
+                                intil_input('alternate_mob_no_business');
+                                intil_input('alternate_whats_app_no_business');
                                 toggleLocalityFields();
+
+                                const isDomestic = document.getElementById('domestic').checked;
+                                if (isDomestic) {
+                                    checkAndAppendButton();
+                                } else {
+                                    checkAndAppendIECButton();
+                                }
+                                
+                            } else if (step == 3) {
+                                intil_input('alternate_mob_no_personal');
+                                intil_input('alternate_whats_app_no_personal');
                             }
 
 
@@ -507,8 +604,116 @@
             });
         }
 
+        function getCsrfToken() {
+            return $.get("/csrf-token"); // An endpoint that returns a new CSRF token
+        }
 
-        
+        function verifyGST() {
+            const gstInput = $('#gst_no');
+            const gstNo = gstInput.val().trim();
+            const submitBtn = $('#reg_model_form_2 button[type="submit"]'); // Adjust selector if needed
+            const verifyBtnId = 'verify-gst-btn';
+            const verifyBtn = $('#' + verifyBtnId);
+
+            if (gstNo.length !== 15) {
+                AIZ.plugins.notify('danger', 'GST No must be 15 characters');
+                return;
+            }
+
+            // Show loading text
+            const originalText = verifyBtn.text();
+            verifyBtn.text('Verifying...').prop('disabled', true);
+
+
+
+            getCsrfToken()
+                .done(function (response) {
+                    const token = response.token;
+
+                    $.ajax({
+                        url: '{{ route('new.user.account.create', ['param' => 'gst-validate']) }}',
+                        method: 'POST',
+                        data: {
+                            gst_no: gstNo,
+                            _token: token
+                        },
+                        success: function (response) {
+                            if (response.status === "success") {
+                                AIZ.plugins.notify('success', response.message);
+                                $('#' + verifyBtnId).remove();
+                                // submitBtn.prop('disabled', false);
+                            } else {
+                                AIZ.plugins.notify('danger', response.message);
+                            }
+                        },
+                        error: function () {
+                            alert('Error verifying GST.');
+                        },
+                        complete: function () {
+                            verifyBtn.text(originalText).prop('disabled', false);
+                        }
+                    });
+                })
+                .fail(function () {
+                    alert('Could not fetch CSRF token.');
+                    verifyBtn.text(originalText).prop('disabled', false);
+                });
+        }
+
+
+        function verifyIEC() {
+            const iecInput = $('#iec_no');
+            const iecNo = iecInput.val().trim();
+            const submitBtn = $('#reg_model_form_2 button[type="submit"]'); // Adjust selector if needed
+            const verifyBtnId = 'verify-iec-btn';
+            const verifyBtn = $('#' + verifyBtnId);
+
+            if (iecNo.length !== 10) {
+                AIZ.plugins.notify('danger', 'GST No must be 10 characters');
+                return;
+            }
+
+            // Show loading text
+            const originalText = verifyBtn.text();
+            verifyBtn.text('Verifying...').prop('disabled', true);
+
+
+
+            getCsrfToken()
+                .done(function (response) {
+                    const token = response.token;
+
+                    $.ajax({
+                        url: '{{ route('new.user.account.create', ['param' => 'iec-validate']) }}',
+                        method: 'POST',
+                        data: {
+                            iec_no: iecNo,
+                            _token: token
+                        },
+                        success: function (response) {
+                            if (response.status === "success") {
+                                AIZ.plugins.notify('success', response.message);
+                                $('#' + verifyBtnId).remove();
+                                // submitBtn.prop('disabled', false);
+                            } else {
+                                AIZ.plugins.notify('danger', response.message);
+                            }
+                        },
+                        error: function () {
+                            AIZ.plugins.notify('danger', 'Error verifying IEC.');
+                        },
+                        complete: function () {
+                            verifyBtn.text(originalText).prop('disabled', false);
+                        }
+                    });
+                })
+                .fail(function () {
+                    AIZ.plugins.notify('danger', 'Somthing Went Wrong.');
+                    verifyBtn.text(originalText).prop('disabled', false);
+                });
+        }
+
+
 
     </script>
 @endsection

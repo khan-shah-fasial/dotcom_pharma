@@ -20,6 +20,8 @@ use App\Utility\EmailUtility;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use App\Models\UserDetails;
 
 use function Ramsey\Uuid\v1;
 
@@ -605,9 +607,9 @@ class RegisterController extends Controller
         $step = session()->get('step');
         $step = $step - 1;
 
-        if($step == 3){
-            $step = 2;
-        }
+        // if($step == 3){
+        //     $step = 2;
+        // }
 
         if (session()->has('temp_user_id')) {
             // Retrieve the user data for the temporary user ID from the session
@@ -651,9 +653,17 @@ class RegisterController extends Controller
 
             $rsp_msg = $this->registration_personal_details($request);
 
-        } elseif ($param == "gst") {
+        } elseif ($param == "registration-license-details") {
 
-            $rsp_msg = $this->store_gst($request);
+            $rsp_msg = $this->registration_license_details($request);
+
+        } elseif ($param == "gst-validate") {
+
+            $rsp_msg = $this->gst_validate($request);
+
+        } elseif ($param == "iec-validate") {
+
+            $rsp_msg = $this->iec_validate($request);
 
         } elseif ($param == "personal-details") {
 
@@ -662,22 +672,6 @@ class RegisterController extends Controller
         } elseif ($param == "verify-phone") {
 
             $rsp_msg = $this->verify_otp($request);
-
-        } elseif ($param == "personal-address") {
-
-            $rsp_msg = $this->store_personal_address($request);
-
-        } elseif ($param == "bank-details") {
-
-            $rsp_msg = $this->store_bank_details($request);
-
-        } elseif ($param == "license-details") {
-
-            $rsp_msg = $this->store_license_details($request);
-
-        } elseif ($param == "transport-details") {
-
-            $rsp_msg = $this->store_transport_details($request);
 
         } else {
             return response()->json([
@@ -711,7 +705,7 @@ class RegisterController extends Controller
         $rules = [
             'registration_date' => ['required'],
             'const_of_business' => ['required'],
-            'gstin_uin_current_status' => ['required'],
+            
             'con_person_name' => ['required', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
             'company_name' => ['required', 'string', 'min:1', 'max:150'],
             'street_add_first_business' => ['required', 'string', 'min:1', 'max:150'],
@@ -752,18 +746,23 @@ class RegisterController extends Controller
 
             $rules['gst_no'] = ['required', 'regex:/^[0-9A-Z]{15}$/i'];
             $rules['gst_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf'];
+            $rules['gstin_current_status'] = 'required';
+
 
         } elseif ($request->input('type_option') === 'international') {
 
-            $rules['iec_no'] = ['required', 'regex:/^[0-9A-Z]{15}$/i'];
+            $rules['iec_no'] = ['required', 'regex:/^[0-9A-Z]{10}$/i'];
             $rules['iec_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf'];
+            $rules['uin_current_status'] = 'required';
 
         }
 
         $messages = [
             'registration_date.required' => 'Registration date is required.',
             'const_of_business.required' => 'Constitution of business is required.',
-            'gstin_uin_current_status.required' => 'GSTIN/UIN current status is required.',
+
+            'gstin_current_status.required' => 'GSTIN current status is required.',
+            'uin_current_status.required' => 'UIN current status is required.',
         
             'con_person_name.required' => 'Contact person name is required.',
             'con_person_name.regex' => 'Contact person name can only contain letters and spaces.',
@@ -848,13 +847,23 @@ class RegisterController extends Controller
         }
 
 
-        $data = User::where('gst_no', $request->gst_no)->first();
+        $data_gst = User::where('gst_no', $request->gst_no)->first();
 
-        if($data){
-            if($data->approval_status != 0){
+        if($data_gst){
+            if($data_gst->approval_status != 0){
                 return response()->json([
                     'status' => 'error',
                     'message' => 'GST No Already registered',
+                ], 200);
+            }
+        }
+
+        $data_iec = User::where('iec_no', $request->iec_no)->first();
+        if($data_iec){
+            if($data_iec->approval_status != 0){
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'IEC No Already registered',
                 ], 200);
             }
         }
@@ -911,7 +920,8 @@ class RegisterController extends Controller
 
             'registration_date' => $request->registration_date,
             'const_of_business' => $request->const_of_business,
-            'gstin_uin_current_status' => $request->gstin_uin_current_status,
+            'gstin_current_status' => $request->gstin_current_status,
+            'uin_current_status' => $request->uin_current_status,
             'con_person_name' => $request->con_person_name,
             'company_name' => $request->company_name,
 
@@ -956,6 +966,7 @@ class RegisterController extends Controller
 
         // Store user data in session
         Session::put('user_data_business', $user_data_business);
+        session::forget('reg_locality');
 
         Session::put('step', 3);
 
@@ -966,56 +977,706 @@ class RegisterController extends Controller
 
     }
 
-    // public function store_gst($request)
-    // {
 
-    //     $validator = Validator::make($request->all(), [
-    //         'gst_no' => [
-    //             'required', 
-    //             'regex:/^[0-9A-Z]{15}$/i' // Allows alphanumeric (uppercase and lowercase)
-    //         ], 
-    //     ], [
-    //         'gst_no.required' => 'The GST Number is required.',
-    //         'gst_no.regex' => 'The GST Number format is invalid.',
-    //     ]);
+    public function registration_personal_details($request){
+
+        $rules = [
+            'photo_file' => ['required', 'mimes:jpg,jpeg,webp,png'],
+            'name' => ['required', 'string', 'min:1', 'max:150'],
+            'father_name' => ['required', 'string', 'min:1', 'max:150'],
+            'dob' => ['required'],
+
+            'street_add_first_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'street_add_sec_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'locality_land_mark_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'village_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'post_personal' => ['required', 'string', 'min:1', 'max:150'],
+            
+            'district_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'country_code_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'pincode_personal' => ['required', 'regex:/^\d{6}$/'], 
+
+            'city_id' => ['required', 'string', 'max:100'],
+            'state_id' => ['required', 'string', 'max:100'],
+            'country_id' => 'required',
+
+            'phone' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+            'alternate_mob_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+            'whats_app_no' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+            'alternate_whats_app_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+
+            'prim_email_personal' => ['required', 'email'],
+            'alt_email_personal' => ['nullable', 'email'],
+
+            'bank_name_personal' => ['required', 'string', 'max:255'],
+            'account_no_personal' => ['required', 'regex:/^\d+$/', 'max:20'],
+            'account_name_personal' => ['required', 'string', 'max:255'],
+            'branch_code_personal' => ['required', 'string', 'max:50'],
+            'branch_name_personal' => ['required', 'string', 'max:255'],
+            'branch_address_personal' => ['required', 'string', 'max:255'],
+            'ifsc_code_personal' => ['required', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'micr_code_personal' => ['required', 'regex:/^\d{9}$/'], 
+            'ad_code_personal' => ['required', 'string', 'max:255'],
+
+        ];
+
+        if ($request->input('type_option') === 'domestic') {
+
+            $rules['aadhaar_no'] = ['required', 'regex:/^[0-9]{12}$/i'];
+            $rules['aadhaar_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf'];
+            $rules['pan_no'] = ['required', 'regex:/^[0-9A-Z]{10}$/i'];
+            $rules['pan_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf'];
+
+        } elseif ($request->input('type_option') === 'international') {
+
+            $rules['passport_no'] = ['required', 'regex:/^[0-9A-Z]{8}$/i'];
+            $rules['passport_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf'];
+
+        }
+
+        $messages = [
+            'photo_file.required' => 'Photo file is required.',
+            'photo_file.mimes' => 'Photo file must be a file of type: jpg, jpeg, webp, png.',
         
-    //     if ($validator->fails()) {
-
-    //         $errors = $validator->errors()->all();
-
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => $errors
-    //         ], 200);
-    //     }
-
-    //     $data = User::where('gst_no', $request->gst_no)->first();
-
-    //     if($data){
-    //         if($data->approval_status == 0){
-    //             Session::put('temp_user_id', $data->id);
-    //         } else {
-    //             return response()->json([
-    //                 'status' => 'error',
-    //                 'message' => 'GST No Already registered',
-    //             ], 200);
-    //         }
-    //     }
-
-    //     $user_data = [
-    //         'gst_no' => $request->gst_no,
-    //     ];
+            'name.required' => 'Name is required.',
+            'father_name.required' => 'Father name is required.',
+            'dob.required' => 'Date of birth is required.',
         
-    //     // Store user data in session
-    //     Session::put('user_data', $user_data);
+            'street_add_first_personal.required' => 'Street address (line 1) is required.',
+            'street_add_sec_personal.required' => 'Street address (line 2) is required.',
+            'locality_land_mark_personal.required' => 'Locality/Landmark is required.',
+            'village_personal.required' => 'Village is required.',
+            'post_personal.required' => 'Post is required.',
+        
+            'district_personal.required' => 'District is required.',
+            'country_code_personal.required' => 'Country code is required.',
+            'pincode_personal.required' => 'Pincode is required.',
+            'pincode_personal.regex' => 'Pincode must be a 6-digit number.',
+        
+            'city_id.required' => 'City is required.',
+            'state_id.required' => 'State is required.',
+            'country_id.required' => 'Country is required.',
+        
+            'phone.required' => 'Phone number is required.',
+            'phone.regex' => 'Phone number format is invalid.',
+            'phone.min' => 'Phone number must be at least 5 digits.',
+        
+            'alternate_mob_no_personal.regex' => 'Alternate mobile number format is invalid.',
+            'alternate_mob_no_personal.min' => 'Alternate mobile number must be at least 5 digits.',
+        
+            'whats_app_no.required' => 'WhatsApp number is required.',
+            'whats_app_no.regex' => 'WhatsApp number format is invalid.',
+            'whats_app_no.min' => 'WhatsApp number must be at least 5 digits.',
+        
+            'alternate_whats_app_no_personal.regex' => 'Alternate WhatsApp number format is invalid.',
+            'alternate_whats_app_no_personal.min' => 'Alternate WhatsApp number must be at least 5 digits.',
+        
+            'prim_email_personal.required' => 'Primary email is required.',
+            'prim_email_personal.email' => 'Primary email must be a valid email address.',
+            'alt_email_personal.email' => 'Alternate email must be a valid email address.',
+        
+            'bank_name_personal.required' => 'Bank name is required.',
+            'account_no_personal.required' => 'Account number is required.',
+            'account_no_personal.regex' => 'Account number must be numeric.',
+            'account_no_personal.max' => 'Account number may not be greater than 20 digits.',
+            'account_name_personal.required' => 'Account holder name is required.',
+            'branch_code_personal.required' => 'Branch code is required.',
+            'branch_name_business.required' => 'Branch name is required.',
+            'branch_address_personal.required' => 'Branch address is required.',
+            'ifsc_code_personal.required' => 'IFSC code is required.',
+            'ifsc_code_personal.regex' => 'IFSC code format is invalid.',
+            'micr_code_personal.required' => 'MICR code is required.',
+            'micr_code_personal.regex' => 'MICR code must be a 9-digit number.',
+            'ad_code_personal.required' => 'AD code is required.',
+        
+            // Domestic specific
+            'aadhaar_no.required' => 'Aadhaar number is required.',
+            'aadhaar_no.regex' => 'Aadhaar number must be a 12-digit number.',
+            'aadhaar_no_file.required' => 'Aadhaar file is required.',
+            'aadhaar_no_file.mimes' => 'Aadhaar file must be of type: jpg, jpeg, webp, png, pdf.',
+        
+            'pan_no.required' => 'PAN number is required.',
+            'pan_no.regex' => 'PAN number format is invalid.',
+            'pan_no_file.required' => 'PAN file is required.',
+            'pan_no_file.mimes' => 'PAN file must be of type: jpg, jpeg, webp, png, pdf.',
+        
+            // International specific
+            'passport_no.required' => 'Passport number is required.',
+            'passport_no.regex' => 'Passport number format is invalid.',
+            'passport_no_file.required' => 'Passport file is required.',
+            'passport_no_file.mimes' => 'Passport file must be of type: jpg, jpeg, webp, png, pdf.',
+        ];
 
-    //     Session::put('step', 2);
+        $validator = Validator::make($request->all(), $rules, $messages);
 
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'GST No Save Successfully',
-    //     ], 200);
-    // }
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $errors
+            ], 200);
+        }
+
+
+        $data_aadhar = User::where('aadhaar_no', $request->aadhaar_no)->first();
+
+        if($data_aadhar){
+            if($data_aadhar->approval_status != 0){
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Aadhaar No Already registered',
+                ], 200);
+            }
+        }
+
+        $data_pan_no = User::where('pan_no', $request->pan_no)->first();
+        if($data_pan_no){
+            if($data_pan_no->approval_status != 0){
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Pan Card No Already registered',
+                ], 200);
+            }
+        }
+
+        $data_passport_no = User::where('passport_no', $request->passport_no)->first();
+        if($data_passport_no){
+            if($data_passport_no->approval_status != 0){
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Passport No Already registered',
+                ], 200);
+            }
+        }
+
+
+        $aadhaar_no_file = null;
+        $pan_no_file = null;
+        $passport_no_file = null;
+        $photo_file = null;
+        
+        $documentPath = public_path('uploads/document');
+        if (!File::exists($documentPath)) {
+            File::makeDirectory($documentPath, 0777, true, true);
+        }
+        
+        if ($request->hasFile('aadhaar_no_file')) {
+            $file = $request->file('aadhaar_no_file');
+            $document_name = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $document_name);
+            $aadhaar_no_file = 'uploads/document/' . $document_name;
+        }
+        
+        if ($request->hasFile('pan_no_file')) {
+            $file = $request->file('pan_no_file');
+            $document_name = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $document_name);
+            $pan_no_file = 'uploads/document/' . $document_name;
+        }
+        
+        if ($request->hasFile('passport_no_file')) {
+            $file = $request->file('passport_no_file');
+            $document_name = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $document_name);
+            $passport_no_file = 'uploads/document/' . $document_name;
+        }
+        
+        if ($request->hasFile('photo_file')) {
+            $file = $request->file('photo_file');
+            $document_name = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $document_name);
+            $photo_file = 'uploads/document/' . $document_name;
+        }
+
+
+        $user_data_personal = [
+            'photo_file' => $photo_file,
+            'name' => $request->name,
+            'father_name' => $request->father_name,
+            'dob' => $request->dob,
+        
+            'street_add_first_personal' => $request->street_add_first_personal,
+            'street_add_sec_personal' => $request->street_add_sec_personal,
+            'locality_land_mark_personal' => $request->locality_land_mark_personal,
+            'village_personal' => $request->village_personal,
+            'post_personal' => $request->post_personal,
+            'district_personal' => $request->district_personal,
+            'country_code_personal' => $request->country_code_personal,
+            'pincode_personal' => $request->pincode_personal,
+        
+            'city_id' => $request->city_id,
+            'state_id' => $request->state_id,
+            'country_id' => $request->country_id,
+        
+            'phone' => $request->phone,
+            'alternate_mob_no_personal' => $request->alternate_mob_no_personal,
+            'whats_app_no' => $request->whats_app_no,
+            'alternate_whats_app_no_personal' => $request->alternate_whats_app_no_personal,
+        
+            'prim_email_personal' => $request->prim_email_personal,
+            'alt_email_personal' => $request->alt_email_personal,
+        
+            'bank_name_personal' => $request->bank_name_personal,
+            'account_no_personal' => $request->account_no_personal,
+            'account_name_personal' => $request->account_name_personal,
+            'branch_code_personal' => $request->branch_code_personal,
+            'branch_name_personal' => $request->branch_name_personal,
+            'branch_address_personal' => $request->branch_address_personal,
+            'ifsc_code_personal' => $request->ifsc_code_personal,
+            'micr_code_personal' => $request->micr_code_personal,
+            'ad_code_personal' => $request->ad_code_personal,
+
+            'aadhaar_no' => $request->aadhaar_no ?? null,
+            'aadhaar_no_file' => $aadhaar_no_file ?? null,
+            'pan_no' => $request->pan_no ?? null,
+            'pan_no_file' => $pan_no_file ?? null,
+            'passport_no' => $request->passport_no ?? null,
+            'passport_no_file' => $passport_no_file ?? null,
+        ];
+        
+        // Store user data in session
+        Session::put('user_data_personal', $user_data_personal);
+
+        Session::put('step', 4);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Personal Related Details Save Successfully',
+        ], 200);
+
+    }
+
+
+    public function registration_license_details($request){
+
+        $rules = [
+            'd_l_no_1' => ['required', 'string', 'max:255'],
+            'd_l_no_1_file' => ['required', 'file', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+        
+            'doctor_hospital_reg_no' => ['required', 'string', 'max:255'],
+            'doctor_hospital_reg_no_file' => ['required', 'file', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+        
+            'd_l_no_2' => ['required', 'string', 'max:255'],
+            'd_l_no_2_file' => ['required', 'file', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+        
+            'dairy_trust_ngo_reg_no' => ['required', 'string', 'max:255'],
+            'dairy_trust_ngo_reg_no_file' => ['required', 'file', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+        
+            'd_l_no_3' => ['nullable', 'string', 'max:255'],
+            'd_l_no_3_file' => ['required', 'file', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+        
+            'cc_mdl_reg_no' => ['required', 'string', 'max:255'],
+            'cc_mdl_reg_no_file' => ['required', 'file', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+        ];
+
+        $messages = [
+            'd_l_no_1.required' => 'Drug / Pharmacy Licence No 1 is required.',
+            'd_l_no_1_file.required' => 'Please upload Drug / Pharmacy Licence No 1 file.',
+            'd_l_no_1_file.mimes' => 'The file must be a type of: jpg, jpeg, webp, png, pdf.',
+        
+            'doctor_hospital_reg_no.required' => 'Doctor / Pharmacist / Hospital Reg. No is required.',
+            'doctor_hospital_reg_no_file.required' => 'Please upload Doctor / Pharmacist / Hospital Reg. No file.',
+            'doctor_hospital_reg_no_file.mimes' => 'The file must be a type of: jpg, jpeg, webp, png, pdf.',
+        
+            'd_l_no_2.required' => 'Drug / Pharmacy Licence No 2 is required.',
+            'd_l_no_2_file.required' => 'Please upload Drug / Pharmacy Licence No 2 file.',
+            'd_l_no_2_file.mimes' => 'The file must be a type of: jpg, jpeg, webp, png, pdf.',
+        
+            'dairy_trust_ngo_reg_no.required' => 'Dairy / Trust / NGO / Other Reg. No is required.',
+            'dairy_trust_ngo_reg_no_file.required' => 'Please upload Dairy / Trust / NGO / Other Reg. No file.',
+            'dairy_trust_ngo_reg_no_file.mimes' => 'The file must be a type of: jpg, jpeg, webp, png, pdf.',
+        
+            'd_l_no_3_file.required' => 'Please upload Drug / Pharmacy Licence No 3 file.',
+            'd_l_no_3_file.mimes' => 'The file must be a type of: jpg, jpeg, webp, png, pdf.',
+        
+            'cc_mdl_reg_no.required' => 'CC / MDL Registration No is required.',
+            'cc_mdl_reg_no_file.required' => 'Please upload CC / MDL Registration No file.',
+            'cc_mdl_reg_no_file.mimes' => 'The file must be a type of: jpg, jpeg, webp, png, pdf.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $errors
+            ], 200);
+        }
+
+        $data_business = session()->get('user_data_business');
+        $data_personal = session()->get('user_data_personal');
+
+        $gst_no_file = $data_business['gst_no_file'];
+        $iec_no_file = $data_business['iec_no_file'];
+
+        $photo_file = $data_personal['photo_file'];
+        $aadhaar_no_file = $data_personal['aadhaar_no_file'];
+        $pan_no_file = $data_personal['pan_no_file'];
+        $passport_no_file = $data_personal['passport_no_file'];
+ 
+        $filesToMove = [
+            'gst_no_file' => $gst_no_file,
+            'iec_no_file' => $iec_no_file,
+            'photo_file' => $photo_file,
+            'aadhaar_no_file' => $aadhaar_no_file,
+            'pan_no_file' => $pan_no_file,
+            'passport_no_file' => $passport_no_file,
+        ];
+        
+        $destinationDir = 'uploads/all/';
+        
+        // Create destination directory if it doesn't exist
+        if (!file_exists($destinationDir)) {
+            mkdir($destinationDir, 0777, true);
+        }
+        
+        foreach ($filesToMove as $key => $filePath) {
+            if (!empty($filePath) && file_exists($filePath)) {
+                $fileName = basename($filePath);
+                $newPath = $destinationDir . $fileName;
+                rename($filePath, $newPath);
+                $$key = $newPath;
+            }
+        }
+
+
+        $documentPath = public_path('uploads/all');
+
+        // Initialize file fields with null
+        $fileFields = [
+            'd_l_no_1_file' => null,
+            'doctor_hospital_reg_no_file' => null,
+            'd_l_no_2_file' => null,
+            'dairy_trust_ngo_reg_no_file' => null,
+            'd_l_no_3_file' => null,
+            'cc_mdl_reg_no_file' => null,
+        ];
+
+        // Handle uploads
+        foreach ($fileFields as $field => $value) {
+            if ($request->hasFile($field)) {
+                $file = $request->file($field);
+                $document_name = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+                $file->move($documentPath, $document_name);
+                $fileFields[$field] = 'uploads/all/' . $document_name;
+            }
+        }
+
+        $user = User::create([
+            'type_option' => $data_business['type_option'],
+            'name' => $data_business['con_person_name'],
+            'email' => $data_business['prim_email_business'],
+            'phone' => '+' . $data_business['phone_business'],
+            'phone_code_meta' => $data_business['phone_business_meta'],
+
+            'password' => bcrypt(Str::random(8)),
+
+            'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
+
+            'postal_code' => $data_business['pincode_business'],
+            'city_id' => $data_business['city_id_business'],
+            'state_id' => $data_business['state_id_business'],
+            'country_id' => $data_business['country_id_business'],
+
+            'avatar' => $photo_file,
+            'avatar_original' => $photo_file,
+
+            'whats_app_no' => $data_business['whats_app_no_business'],
+            'whats_app_no_meta' =>$data_business['whats_app_no_business_meta'],
+
+            'gst_no' => $data_business['gst_no'],
+            'iec_no' => $data_business['iec_no'],
+
+            'aadhaar_no' => $data_personal['aadhaar_no'],
+            'pan_no' => $data_personal['pan_no'],
+            'passport_no' => $data_personal['passport_no'],
+            'step' => '4',
+        ]);
+
+        if (session()->has('temp_user_id')) {
+            $user_Address = Address::where('user_id', session()->get('temp_user_id'))->first();
+
+            if ($user_Address) {
+                $address = DB::table('addresses')
+                    ->where('user_id', session()->get('temp_user_id'))
+                    ->update([
+                        'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
+    
+                        'postal_code' => $data_business['pincode_business'],
+                        'city_id' => $data_business['city_id_business'],
+                        'state_id' => $data_business['state_id_business'],
+                        'country_id' => $data_business['country_id_business'],
+
+                        'phone' => '+' . $data_business['phone_business'],
+                        'updated_at' => now(), // Update timestamp if your table uses it
+                    ]);
+            } else {
+                $address = DB::table('addresses')->insert([
+                    'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
+    
+                    'postal_code' => $data_business['pincode_business'],
+                    'city_id' => $data_business['city_id_business'],
+                    'state_id' => $data_business['state_id_business'],
+                    'country_id' => $data_business['country_id_business'],
+
+                    'phone' => '+' . $data_business['phone_business'],
+
+                    'user_id' => session()->get('temp_user_id'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        } else {
+            $address = DB::table('addresses')->insert([
+                'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
+
+                'postal_code' => $data_business['pincode_business'],
+                'city_id' => $data_business['city_id_business'],
+                'state_id' => $data_business['state_id_business'],
+                'country_id' => $data_business['country_id_business'],
+
+                'phone' => '+' . $data_business['phone_business'],
+                'user_id' => $user->id,
+                'created_at' => now(), // Add timestamps if your table uses them
+                'updated_at' => now(),
+            ]);
+        } 
+        
+
+
+        UserDetails::create([
+            'user_id' => $user->id,
+            'type_option' => $data_business['type_option'],
+            'gst_no' => $data_business['gst_no'],
+
+            'gst_no_file' => $gst_no_file,
+            'iec_no_file' => $iec_no_file,
+
+            'iec_no' => $data_business['iec_no'],
+            'registration_date' => $data_business['registration_date'],
+            'const_of_business' => $data_business['const_of_business'],
+            'gstin_current_status' => $data_business['gstin_current_status'],
+            'uin_current_status' => $data_business['uin_current_status'],
+            'con_person_name' => $data_business['con_person_name'],
+            'company_name' => $data_business['company_name'],
+            'street_add_first_business' => $data_business['street_add_first_business'],
+            'street_add_sec_business' => $data_business['street_add_sec_business'],
+            'locality_land_mark_business' => $data_business['locality_land_mark_business'],
+            'village_business' => $data_business['village_business'],
+            'post_business' => $data_business['post_business'],
+            'city_id_business' => $data_business['city_id_business'],
+            'district_business' => $data_business['district_business'],
+            'state_id_business' => $data_business['state_id_business'],
+            'pincode_business' => $data_business['pincode_business'],
+            'country_id_business' => $data_business['country_id_business'],
+            'country_code_business' => $data_business['country_code_business'],
+        
+            'prim_mobile_no_business' => $data_business['phone_business'],
+            'prim_mobile_no_business_meta' => $data_business['phone_business_meta'],
+
+            'alt_mobile_no_business' => $data_business['alternate_mob_no_business'],
+            'alt_mobile_no_business_meta' => $data_business['alternate_mob_no_business_meta'],
+
+            'prim_whats_app_no_business' => $data_business['whats_app_no_business'],
+            'prim_whats_app_no_business_meta' => $data_business['whats_app_no_business_meta'],
+
+            'alternate_whats_app_no_business' => $data_business['alternate_whats_app_no_business'],
+            'alternate_whats_app_no_business_meta' => $data_business['alternate_whats_app_no_business_meta'],
+        
+            'prim_email_business' => $data_business['prim_email_business'],
+            'alt_email_business' => $data_business['alt_email_business'],
+            'website_business' => $data_business['website_business'],
+
+            'bank_name_business' => $data_business['bank_name_business'],
+            'account_no_business' => $data_business['account_no_business'],
+            'account_name_business' => $data_business['account_name_business'],
+            'branch_code_business' => $data_business['branch_code_business'],
+            'branch_name_business' => $data_business['branch_name_business'],
+            'branch_address_business' => $data_business['branch_address_business'],
+            'ifsc_code_business' => $data_business['ifsc_code_business'],
+            'micr_code_business' => $data_business['micr_code_business'],
+            'ad_code_business' => $data_business['ad_code_business'],
+        
+            'aadhaar_no' => $data_personal['aadhaar_no'],
+            'aadhaar_no_file' => $aadhaar_no_file,
+            'pan_no' => $data_personal['pan_no'],
+            'pan_no_file' => $pan_no_file,
+            'passport_no' => $data_personal['passport_no'],
+            'passport_no_file' => $passport_no_file,
+            'photo_file' => $photo_file,
+            'name' => $data_personal['name'],
+            'father_name' => $data_personal['father_name'],
+            'dob' => $data_personal['dob'],
+            'street_add_first' => $data_personal['street_add_first_personal'],
+            'street_add_sec' => $data_personal['street_add_sec_personal'],
+            'locality_land_mark' => $data_personal['locality_land_mark_personal'],
+            'village' => $data_personal['village_personal'],
+            'post' => $data_personal['post_personal'],
+            'city_id' => $data_personal['city_id'],
+            'district' => $data_personal['district_personal'],
+            'state_id' => $data_personal['state_id'],
+            'pincode' => $data_personal['pincode_personal'],
+            'country_id' => $data_personal['country_id'],
+            'country_code' => $data_personal['country_code_personal'],
+        
+            'prim_mobile_no' => $data_personal['phone'],
+            'prim_mobile_no_meta' => $data_personal[''] ?? '',
+            'alt_mobile_no' => $data_personal['alternate_mob_no_personal'],
+            'alt_mobile_no_meta' => $data_personal[''] ?? '',
+
+            'prim_whats_app_no' => $data_personal['whats_app_no'],
+            'prim_whats_app_no_meta' => $data_personal[''] ?? '',
+            'alt_whats_app_no' => $data_personal['alternate_whats_app_no_personal'],
+            'alt_whats_app_no_meta' => $data_personal[''] ?? '',
+        
+            'prim_email_personal' => $data_personal['prim_email_personal'],
+            'alt_email_personal' => $data_personal['alt_email_personal'],
+        
+            'bank_name_personal' => $data_personal['bank_name_personal'],
+            'account_no_personal' => $data_personal['account_no_personal'],
+            'account_name_personal' => $data_personal['account_name_personal'],
+            'branch_code_personal' => $data_personal['branch_code_personal'],
+            'branch_name_personal' => $data_personal['branch_name_personal'] ?? '',
+            'branch_address_personal' => $data_personal['branch_address_personal'],
+            'ifsc_code_personal' => $data_personal['ifsc_code_personal'],
+            'micr_code_personal' => $data_personal['micr_code_personal'],
+            'ad_code_personal' => $data_personal['ad_code_personal'],
+        
+            'd_l_no_1' => $request->d_l_no_1,
+            'd_l_no_1_file' => $fileFields['d_l_no_1_file'],
+        
+            'doctor_hospital_reg_no' => $request->doctor_hospital_reg_no,
+            'doctor_hospital_reg_no_file' => $fileFields['doctor_hospital_reg_no_file'],
+        
+            'd_l_no_2' => $request->d_l_no_2,
+            'd_l_no_2_file' => $fileFields['d_l_no_2_file'],
+        
+            'dairy_trust_ngo_reg_no' => $request->dairy_trust_ngo_reg_no,
+            'dairy_trust_ngo_reg_no_file' => $fileFields['dairy_trust_ngo_reg_no_file'],
+        
+            'd_l_no_3' => $request->d_l_no_3,
+            'd_l_no_3_file' => $fileFields['d_l_no_3_file'],
+        
+            'cc_mdl_reg_no' => $request->cc_mdl_reg_no,
+            'cc_mdl_reg_no_file' => $fileFields['cc_mdl_reg_no_file'],
+        ]);
+
+
+        Session::put('step', 5);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'License Related Details Save Successfully',
+        ], 200);
+
+    }
+
+
+
+    public function gst_validate($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'gst_no' => [
+                'required', 
+                'regex:/^[0-9A-Z]{15}$/i'
+            ], 
+        ], [
+            'gst_no.required' => 'The GST Number is required.',
+            'gst_no.regex' => 'The GST Number format is invalid.',
+        ]);
+        
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $errors
+            ], 200);
+        }
+
+        $data = User::where('gst_no', $request->gst_no)->first();
+
+        if($data){
+            if($data->approval_status == 0){
+                Session::put('temp_user_id', $data->id);
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'GST No Already registered',
+                ], 200);
+            }
+        }
+
+        $user_data = [
+            'gst_no' => $request->gst_no,
+        ];
+        
+        // Store user data in session
+        Session::put('user_data', $user_data);
+
+        Session::put('step', 2);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'GST No Save Successfully',
+        ], 200);
+    }
+
+    public function iec_validate($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'iec_no' => [
+                'required', 
+                'regex:/^[0-9A-Z]{10}$/i'
+            ], 
+        ], [
+            'iec_no.required' => 'The IEC Number is required.',
+            'iec_no.regex' => 'The IEC Number format is invalid.',
+        ]);
+        
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $errors
+            ], 200);
+        }
+
+        $data = User::where('iec_no', $request->iec_no)->first();
+
+        if($data){
+            if($data->approval_status == 0){
+                Session::put('temp_user_id', $data->id);
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'ICE No Already registered',
+                ], 200);
+            }
+        }
+
+        $user_data = [
+            'iec_no' => $request->iec_no,
+        ];
+        
+        // Store user data in session
+        Session::put('user_data', $user_data);
+
+        Session::put('step', 2);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'ICE No Save Successfully',
+        ], 200);
+    }
 
 
     public function store_personal_details($request)

@@ -114,7 +114,7 @@
            ->whereIn('id', $top_cat_veterinary ?? [])
            ->get();
    } else {
-       $featured_categories = null;
+       $featured_categories = 0;
    }
    @endphp
 
