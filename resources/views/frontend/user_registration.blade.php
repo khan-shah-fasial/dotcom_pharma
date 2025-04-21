@@ -66,33 +66,34 @@
 
             // ---------------- Gst verify --------------------------- //
 
-            function appendVerifyButton() {
-                const verifyBtnId = 'verify-gst-btn';
+            // function appendVerifyButton() {
+            //     const verifyBtnId = 'verify-gst-btn';
 
-                if ($('#' + verifyBtnId).length === 0) {
-                    const verifyBtn = $('<button>')
-                        .attr('type', 'button')
-                        .attr('id', verifyBtnId)
-                        .attr('onclick', 'verifyGST()')
-                        .addClass('btn btn-success btn-sm ml-2')
-                        .text('Verify');
+            //     if ($('#' + verifyBtnId).length === 0) {
+            //         const verifyBtn = $('<button>')
+            //             .attr('type', 'button')
+            //             .attr('id', verifyBtnId)
+            //             .attr('onclick', 'verifyGST()')
+            //             .addClass('btn btn-success btn-sm ml-2')
+            //             .text('Verify');
 
-                    $('#gst_no').after(verifyBtn);
-                }
-            }
+            //         $('#gst_no').after(verifyBtn);
+            //     }
+            // }
 
             function checkAndAppendButton() {
                 const verifyBtnId = 'verify-gst-btn';
                 const val = $('#gst_no').val();
                 if (val.length === 15) {
-                    appendVerifyButton();
-                } else {
-                    $('#' + verifyBtnId).remove();
+                    verifyGST();
+                    // appendVerifyButton();
+                // } else {
+                //     $('#' + verifyBtnId).remove();
                 }
             }
 
             // Run on input/paste/change
-            $('body').on('input keyup keydown change paste', '#gst_no', function () {
+            $('body').on('input', '#gst_no', function () {
                 setTimeout(checkAndAppendButton, 50); // delay for paste to take effect
             });
 
@@ -101,38 +102,91 @@
 
             // ---------------- IEC verify --------------------------- //
 
-            function appendVerifyIECButton() {
-                const verifyBtnId = 'verify-iec-btn';
+            // function appendVerifyIECButton() {
+            //     const verifyBtnId = 'verify-iec-btn';
 
-                if ($('#' + verifyBtnId).length === 0) {
-                    const verifyBtn = $('<button>')
-                        .attr('type', 'button')
-                        .attr('id', verifyBtnId)
-                        .attr('onclick', 'verifyIEC()')
-                        .addClass('btn btn-success btn-sm ml-2')
-                        .text('Verify');
+            //     if ($('#' + verifyBtnId).length === 0) {
+            //         const verifyBtn = $('<button>')
+            //             .attr('type', 'button')
+            //             .attr('id', verifyBtnId)
+            //             .attr('onclick', 'verifyIEC()')
+            //             .addClass('btn btn-success btn-sm ml-2')
+            //             .text('Verify');
 
-                    $('#iec_no').after(verifyBtn);
-                }
-            }
+            //         $('#iec_no').after(verifyBtn);
+            //     }
+            // }
 
             function checkAndAppendIECButton() {
                 const verifyBtnId = 'verify-iec-btn';
                 const val = $('#iec_no').val().trim();
                 if (val.length === 10) {
-                    appendVerifyIECButton();
-                } else {
-                    $('#' + verifyBtnId).remove();
+                    verifyIEC();
+                //     appendVerifyIECButton();
+                // } else {
+                //     $('#' + verifyBtnId).remove();
                 }
             }
 
             // Watch changes on IEC input
-            $('body').on('input keyup keydown change paste', '#iec_no', function () {
+            $('body').on('input', '#iec_no', function () {
                 setTimeout(checkAndAppendIECButton, 50); // wait for paste/input value
             });
 
 
             // ---------------- ICE verify --------------------------- //
+
+            // ---------------- aadhaar_no verify --------------------------- //
+
+            function checkAndAppendaadhaarButton() {
+                const val = $('#aadhaar_no').val().trim();
+                if (val.length === 12) {
+                    verifyDocument('aadhaar_no', 'aadhaar-validate', 12);
+                }
+            }
+
+            // Watch changes on IEC input
+            $('body').on('input', '#aadhaar_no', function () {
+                setTimeout(checkAndAppendaadhaarButton, 50); // wait for paste/input value
+            });
+
+
+            // ---------------- aadhaar_no verify --------------------------- //
+
+            // ---------------- pan_no verify --------------------------- //
+
+            function checkAndAppendpan_noButton() {
+                const val = $('#pan_no').val().trim();
+                if (val.length === 10) {
+                    // verifyDocument('pan_no', 'pan-validate', 10, /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i);
+                    verifyDocument('pan_no', 'pan-validate', 10);
+                }
+            }
+
+            // Watch changes on IEC input
+            $('body').on('input', '#pan_no', function () {
+                setTimeout(checkAndAppendpan_noButton, 50); // wait for paste/input value
+            });
+
+
+            // ---------------- pan_no verify --------------------------- //
+
+            // ---------------- passport_no verify --------------------------- //
+
+            function checkAndAppendpassport_noButton() {
+                const val = $('#passport_no').val().trim();
+                if (val.length === 8 || val.length === 9) {
+                    verifyDocument('passport_no', 'passport-validate', null, /^[A-Z0-9]{1,9}$/i);
+                }
+            }
+
+            // Watch changes on IEC input
+            $('body').on('input', '#passport_no', function () {
+                setTimeout(checkAndAppendpassport_noButton, 50); // wait for paste/input value
+            });
+
+
+            // ---------------- passport_no verify --------------------------- //
 
             function toggleLocalityFields() {
                 const isDomestic = document.getElementById('domestic').checked;
@@ -226,9 +280,28 @@
                 // iti1.setCountry('in'); // 'in' is the ISO2 code for India
 
                 if(name === 'whats_app_no'){
+
                     var country_selected = "{{ getSelectedCountry('whats_app_no_meta') }}";
+
+                    if(country_selected == 'null' || country_selected == ''){
+                        var country_selected = "{{ getSelectedCountry('whats_app_no_business_meta') }}";
+                    }
+
+                } else if (name === 'alternate_mob_no_business') { 
+                    var country_selected = "{{ getSelectedCountry('alternate_mob_no_business_meta') }}";
+                } else if (name === 'alternate_whats_app_no_business') { 
+                    var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
+                } else if (name === 'alternate_mob_no_personal') { 
+                    var country_selected = "{{ getSelectedCountry('alternate_mob_no_personal_meta') }}";
+                } else if (name === 'alternate_whats_app_no_business') { 
+                    var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
                 } else {
                     var country_selected = "{{ getSelectedCountry('phone_code_meta') }}"; 
+
+                    if(country_selected == 'null' || country_selected == ''){
+                        var country_selected = "{{ getSelectedCountry('phone_business_meta') }}";
+                    }
+
                 }
 
 
@@ -669,7 +742,7 @@
             const verifyBtn = $('#' + verifyBtnId);
 
             if (iecNo.length !== 10) {
-                AIZ.plugins.notify('danger', 'GST No must be 10 characters');
+                AIZ.plugins.notify('danger', 'IEC No must be 10 characters');
                 return;
             }
 
@@ -709,6 +782,62 @@
                 })
                 .fail(function () {
                     AIZ.plugins.notify('danger', 'Somthing Went Wrong.');
+                    verifyBtn.text(originalText).prop('disabled', false);
+                });
+        }
+
+
+        function verifyDocument(fieldId, routeParam, requiredLength = null, pattern = null) {
+            const input = $('#' + fieldId);
+            const value = input.val().trim();
+            const submitBtn = $('#reg_model_form_2 button[type="submit"]');
+            const verifyBtnId = `verify-${fieldId}-btn`;
+            const verifyBtn = $('#' + verifyBtnId);
+
+            // Basic validation
+            if (requiredLength && value.length !== requiredLength) {
+                AIZ.plugins.notify('danger', `${fieldId.replace(/_/g, ' ').toUpperCase()} must be ${requiredLength} characters`);
+                return;
+            }
+
+            if (pattern && !pattern.test(value)) {
+                AIZ.plugins.notify('danger', `Invalid ${fieldId.replace(/_/g, ' ')}`);
+                return;
+            }
+
+            const originalText = verifyBtn.text();
+            verifyBtn.text('Verifying...').prop('disabled', true);
+
+            getCsrfToken()
+                .done(function (response) {
+                    const token = response.token;
+
+                    $.ajax({
+                        url: `{{ route('new.user.account.create', ['param' => '__param__']) }}`.replace('__param__', routeParam),
+                        method: 'POST',
+                        data: {
+                            [fieldId]: value,
+                            _token: token
+                        },
+                        success: function (response) {
+                            if (response.status === "success") {
+                                AIZ.plugins.notify('success', response.message);
+                                verifyBtn.remove();
+                                // submitBtn.prop('disabled', false);
+                            } else {
+                                AIZ.plugins.notify('danger', response.message);
+                            }
+                        },
+                        error: function () {
+                            AIZ.plugins.notify('danger', `Error verifying ${fieldId.replace(/_/g, ' ')}`);
+                        },
+                        complete: function () {
+                            verifyBtn.text(originalText).prop('disabled', false);
+                        }
+                    });
+                })
+                .fail(function () {
+                    AIZ.plugins.notify('danger', 'Something went wrong.');
                     verifyBtn.text(originalText).prop('disabled', false);
                 });
         }

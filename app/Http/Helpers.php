@@ -2847,6 +2847,17 @@ if (!function_exists('getSelectedCountry')) {
             } else {
                 $data = 'null';
             }
+        } elseif(Session()->has('user_data_business')) {
+
+            $session_data_user = session()->get('user_data_business') ?? [];
+            $data = $session_data_user[$colName] ?? null;
+            
+
+        } elseif(Session()->has('user_data_personal')) {
+
+            $session_data_user = session()->get('user_data_personal') ?? [];
+            $data = $session_data_user[$colName] ?? null;
+
         } else {
             // Check if there's a temp user ID in the session
             if (session()->has('temp_user_id')) {

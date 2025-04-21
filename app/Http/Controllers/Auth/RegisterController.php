@@ -665,6 +665,18 @@ class RegisterController extends Controller
 
             $rsp_msg = $this->iec_validate($request);
 
+        } elseif ($param == "aadhaar-validate") {
+
+            $rsp_msg = $this->aadhaar_validate($request);
+
+        } elseif ($param == "pan-validate") {
+
+            $rsp_msg = $this->pan_validate($request);
+        
+        } elseif ($param == "passport-validate") {
+
+            $rsp_msg = $this->passport_validate($request);
+
         } elseif ($param == "personal-details") {
 
             $rsp_msg = $this->store_personal_details($request);
@@ -846,27 +858,26 @@ class RegisterController extends Controller
             ], 200);
         }
 
+        if (
+            $request->input('type_option') == 'domestic' &&
+            (!Session::has('gst_validate') || Session::get('gst_validate') != "True")
+        ) {
 
-        $data_gst = User::where('gst_no', $request->gst_no)->first();
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please Provide a valid GST Number',
+            ], 200);
 
-        if($data_gst){
-            if($data_gst->approval_status != 0){
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'GST No Already registered',
-                ], 200);
-            }
+        } elseif (
+            $request->input('type_option') == 'international' &&
+            (!Session::has('iec_validate') || Session::get('iec_validate') != "True")
+        ) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please Provide a valid IEC Number',
+            ], 200);
         }
 
-        $data_iec = User::where('iec_no', $request->iec_no)->first();
-        if($data_iec){
-            if($data_iec->approval_status != 0){
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'IEC No Already registered',
-                ], 200);
-            }
-        }
 
         $temp_phone = $request->country_code_phone_code.'-'.$request->phone;
 
@@ -1029,7 +1040,7 @@ class RegisterController extends Controller
 
         } elseif ($request->input('type_option') === 'international') {
 
-            $rules['passport_no'] = ['required', 'regex:/^[0-9A-Z]{8}$/i'];
+            $rules['passport_no'] = ['required', 'regex:/^[0-9A-Z]{1,9}$/i'];
             $rules['passport_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf'];
 
         }
@@ -1120,35 +1131,38 @@ class RegisterController extends Controller
         }
 
 
-        $data_aadhar = User::where('aadhaar_no', $request->aadhaar_no)->first();
+        $prev_form = Session::get('user_data_personal');
 
-        if($data_aadhar){
-            if($data_aadhar->approval_status != 0){
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Aadhaar No Already registered',
-                ], 200);
-            }
-        }
+        if (
+            $prev_form['type_option'] == 'domestic' &&
+            (!Session::has('aadhaar_validate') || Session::get('aadhaar_validate') != "True")
+        ) {
 
-        $data_pan_no = User::where('pan_no', $request->pan_no)->first();
-        if($data_pan_no){
-            if($data_pan_no->approval_status != 0){
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Pan Card No Already registered',
-                ], 200);
-            }
-        }
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please Provide a valid Aadhaar Number',
+            ], 200);
 
-        $data_passport_no = User::where('passport_no', $request->passport_no)->first();
-        if($data_passport_no){
-            if($data_passport_no->approval_status != 0){
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Passport No Already registered',
-                ], 200);
-            }
+        } elseif (
+            $prev_form['type_option'] == 'domestic' &&
+            (!Session::has('pan_validate') || Session::get('pan_validate') != "True")
+        ) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please Provide a valid Pan Number',
+            ], 200);
+
+        } elseif (
+            $prev_form['type_option'] == 'international' &&
+            (!Session::has('passport_validate') || Session::get('passport_validate') != "True")
+        ) {
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please Provide a valid Passport Number',
+            ], 200);
+            
         }
 
 
@@ -1211,9 +1225,16 @@ class RegisterController extends Controller
             'country_id' => $request->country_id,
         
             'phone' => $request->phone,
-            'alternate_mob_no_personal' => $request->alternate_mob_no_personal,
+            'phone_code_meta' => $request->phone_code_meta,
+
             'whats_app_no' => $request->whats_app_no,
+            'whats_app_no_meta' => $request->whats_app_no_meta,
+
+            'alternate_mob_no_personal' => $request->alternate_mob_no_personal,
+            'alternate_mob_no_personal_meta' => $request->alternate_mob_no_personal_meta,
+            
             'alternate_whats_app_no_personal' => $request->alternate_whats_app_no_personal,
+            'alternate_whats_app_no_personal_meta' => $request->alternate_whats_app_no_personal_meta,
         
             'prim_email_personal' => $request->prim_email_personal,
             'alt_email_personal' => $request->alt_email_personal,
@@ -1308,44 +1329,7 @@ class RegisterController extends Controller
             ], 200);
         }
 
-        $data_business = session()->get('user_data_business');
-        $data_personal = session()->get('user_data_personal');
-
-        $gst_no_file = $data_business['gst_no_file'];
-        $iec_no_file = $data_business['iec_no_file'];
-
-        $photo_file = $data_personal['photo_file'];
-        $aadhaar_no_file = $data_personal['aadhaar_no_file'];
-        $pan_no_file = $data_personal['pan_no_file'];
-        $passport_no_file = $data_personal['passport_no_file'];
- 
-        $filesToMove = [
-            'gst_no_file' => $gst_no_file,
-            'iec_no_file' => $iec_no_file,
-            'photo_file' => $photo_file,
-            'aadhaar_no_file' => $aadhaar_no_file,
-            'pan_no_file' => $pan_no_file,
-            'passport_no_file' => $passport_no_file,
-        ];
-        
-        $destinationDir = 'uploads/all/';
-        
-        // Create destination directory if it doesn't exist
-        if (!file_exists($destinationDir)) {
-            mkdir($destinationDir, 0777, true);
-        }
-        
-        foreach ($filesToMove as $key => $filePath) {
-            if (!empty($filePath) && file_exists($filePath)) {
-                $fileName = basename($filePath);
-                $newPath = $destinationDir . $fileName;
-                rename($filePath, $newPath);
-                $$key = $newPath;
-            }
-        }
-
-
-        $documentPath = public_path('uploads/all');
+        $documentPath = public_path('uploads/document');
 
         // Initialize file fields with null
         $fileFields = [
@@ -1367,186 +1351,7 @@ class RegisterController extends Controller
             }
         }
 
-        $user = User::create([
-            'type_option' => $data_business['type_option'],
-            'name' => $data_business['con_person_name'],
-            'email' => $data_business['prim_email_business'],
-            'phone' => '+' . $data_business['phone_business'],
-            'phone_code_meta' => $data_business['phone_business_meta'],
-
-            'password' => bcrypt(Str::random(8)),
-
-            'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
-
-            'postal_code' => $data_business['pincode_business'],
-            'city_id' => $data_business['city_id_business'],
-            'state_id' => $data_business['state_id_business'],
-            'country_id' => $data_business['country_id_business'],
-
-            'avatar' => $photo_file,
-            'avatar_original' => $photo_file,
-
-            'whats_app_no' => $data_business['whats_app_no_business'],
-            'whats_app_no_meta' =>$data_business['whats_app_no_business_meta'],
-
-            'gst_no' => $data_business['gst_no'],
-            'iec_no' => $data_business['iec_no'],
-
-            'aadhaar_no' => $data_personal['aadhaar_no'],
-            'pan_no' => $data_personal['pan_no'],
-            'passport_no' => $data_personal['passport_no'],
-            'step' => '4',
-        ]);
-
-        if (session()->has('temp_user_id')) {
-            $user_Address = Address::where('user_id', session()->get('temp_user_id'))->first();
-
-            if ($user_Address) {
-                $address = DB::table('addresses')
-                    ->where('user_id', session()->get('temp_user_id'))
-                    ->update([
-                        'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
-    
-                        'postal_code' => $data_business['pincode_business'],
-                        'city_id' => $data_business['city_id_business'],
-                        'state_id' => $data_business['state_id_business'],
-                        'country_id' => $data_business['country_id_business'],
-
-                        'phone' => '+' . $data_business['phone_business'],
-                        'updated_at' => now(), // Update timestamp if your table uses it
-                    ]);
-            } else {
-                $address = DB::table('addresses')->insert([
-                    'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
-    
-                    'postal_code' => $data_business['pincode_business'],
-                    'city_id' => $data_business['city_id_business'],
-                    'state_id' => $data_business['state_id_business'],
-                    'country_id' => $data_business['country_id_business'],
-
-                    'phone' => '+' . $data_business['phone_business'],
-
-                    'user_id' => session()->get('temp_user_id'),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        } else {
-            $address = DB::table('addresses')->insert([
-                'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
-
-                'postal_code' => $data_business['pincode_business'],
-                'city_id' => $data_business['city_id_business'],
-                'state_id' => $data_business['state_id_business'],
-                'country_id' => $data_business['country_id_business'],
-
-                'phone' => '+' . $data_business['phone_business'],
-                'user_id' => $user->id,
-                'created_at' => now(), // Add timestamps if your table uses them
-                'updated_at' => now(),
-            ]);
-        } 
-        
-
-
-        UserDetails::create([
-            'user_id' => $user->id,
-            'type_option' => $data_business['type_option'],
-            'gst_no' => $data_business['gst_no'],
-
-            'gst_no_file' => $gst_no_file,
-            'iec_no_file' => $iec_no_file,
-
-            'iec_no' => $data_business['iec_no'],
-            'registration_date' => $data_business['registration_date'],
-            'const_of_business' => $data_business['const_of_business'],
-            'gstin_current_status' => $data_business['gstin_current_status'],
-            'uin_current_status' => $data_business['uin_current_status'],
-            'con_person_name' => $data_business['con_person_name'],
-            'company_name' => $data_business['company_name'],
-            'street_add_first_business' => $data_business['street_add_first_business'],
-            'street_add_sec_business' => $data_business['street_add_sec_business'],
-            'locality_land_mark_business' => $data_business['locality_land_mark_business'],
-            'village_business' => $data_business['village_business'],
-            'post_business' => $data_business['post_business'],
-            'city_id_business' => $data_business['city_id_business'],
-            'district_business' => $data_business['district_business'],
-            'state_id_business' => $data_business['state_id_business'],
-            'pincode_business' => $data_business['pincode_business'],
-            'country_id_business' => $data_business['country_id_business'],
-            'country_code_business' => $data_business['country_code_business'],
-        
-            'prim_mobile_no_business' => $data_business['phone_business'],
-            'prim_mobile_no_business_meta' => $data_business['phone_business_meta'],
-
-            'alt_mobile_no_business' => $data_business['alternate_mob_no_business'],
-            'alt_mobile_no_business_meta' => $data_business['alternate_mob_no_business_meta'],
-
-            'prim_whats_app_no_business' => $data_business['whats_app_no_business'],
-            'prim_whats_app_no_business_meta' => $data_business['whats_app_no_business_meta'],
-
-            'alternate_whats_app_no_business' => $data_business['alternate_whats_app_no_business'],
-            'alternate_whats_app_no_business_meta' => $data_business['alternate_whats_app_no_business_meta'],
-        
-            'prim_email_business' => $data_business['prim_email_business'],
-            'alt_email_business' => $data_business['alt_email_business'],
-            'website_business' => $data_business['website_business'],
-
-            'bank_name_business' => $data_business['bank_name_business'],
-            'account_no_business' => $data_business['account_no_business'],
-            'account_name_business' => $data_business['account_name_business'],
-            'branch_code_business' => $data_business['branch_code_business'],
-            'branch_name_business' => $data_business['branch_name_business'],
-            'branch_address_business' => $data_business['branch_address_business'],
-            'ifsc_code_business' => $data_business['ifsc_code_business'],
-            'micr_code_business' => $data_business['micr_code_business'],
-            'ad_code_business' => $data_business['ad_code_business'],
-        
-            'aadhaar_no' => $data_personal['aadhaar_no'],
-            'aadhaar_no_file' => $aadhaar_no_file,
-            'pan_no' => $data_personal['pan_no'],
-            'pan_no_file' => $pan_no_file,
-            'passport_no' => $data_personal['passport_no'],
-            'passport_no_file' => $passport_no_file,
-            'photo_file' => $photo_file,
-            'name' => $data_personal['name'],
-            'father_name' => $data_personal['father_name'],
-            'dob' => $data_personal['dob'],
-            'street_add_first' => $data_personal['street_add_first_personal'],
-            'street_add_sec' => $data_personal['street_add_sec_personal'],
-            'locality_land_mark' => $data_personal['locality_land_mark_personal'],
-            'village' => $data_personal['village_personal'],
-            'post' => $data_personal['post_personal'],
-            'city_id' => $data_personal['city_id'],
-            'district' => $data_personal['district_personal'],
-            'state_id' => $data_personal['state_id'],
-            'pincode' => $data_personal['pincode_personal'],
-            'country_id' => $data_personal['country_id'],
-            'country_code' => $data_personal['country_code_personal'],
-        
-            'prim_mobile_no' => $data_personal['phone'],
-            'prim_mobile_no_meta' => $data_personal[''] ?? '',
-            'alt_mobile_no' => $data_personal['alternate_mob_no_personal'],
-            'alt_mobile_no_meta' => $data_personal[''] ?? '',
-
-            'prim_whats_app_no' => $data_personal['whats_app_no'],
-            'prim_whats_app_no_meta' => $data_personal[''] ?? '',
-            'alt_whats_app_no' => $data_personal['alternate_whats_app_no_personal'],
-            'alt_whats_app_no_meta' => $data_personal[''] ?? '',
-        
-            'prim_email_personal' => $data_personal['prim_email_personal'],
-            'alt_email_personal' => $data_personal['alt_email_personal'],
-        
-            'bank_name_personal' => $data_personal['bank_name_personal'],
-            'account_no_personal' => $data_personal['account_no_personal'],
-            'account_name_personal' => $data_personal['account_name_personal'],
-            'branch_code_personal' => $data_personal['branch_code_personal'],
-            'branch_name_personal' => $data_personal['branch_name_personal'] ?? '',
-            'branch_address_personal' => $data_personal['branch_address_personal'],
-            'ifsc_code_personal' => $data_personal['ifsc_code_personal'],
-            'micr_code_personal' => $data_personal['micr_code_personal'],
-            'ad_code_personal' => $data_personal['ad_code_personal'],
-        
+        $user_data_license = [
             'd_l_no_1' => $request->d_l_no_1,
             'd_l_no_1_file' => $fileFields['d_l_no_1_file'],
         
@@ -1564,15 +1369,220 @@ class RegisterController extends Controller
         
             'cc_mdl_reg_no' => $request->cc_mdl_reg_no,
             'cc_mdl_reg_no_file' => $fileFields['cc_mdl_reg_no_file'],
-        ]);
+        ];
 
-
+        Session::put('user_data_license', $user_data_license);
         Session::put('step', 5);
 
         return response()->json([
             'status' => 'success',
             'message' => 'License Related Details Save Successfully',
         ], 200);
+
+
+
+        // $data_business = session()->get('user_data_business');
+        // $data_personal = session()->get('user_data_personal');
+
+        // $gst_no_file = $data_business['gst_no_file'];
+        // $iec_no_file = $data_business['iec_no_file'];
+
+        // $photo_file = $data_personal['photo_file'];
+        // $aadhaar_no_file = $data_personal['aadhaar_no_file'];
+        // $pan_no_file = $data_personal['pan_no_file'];
+        // $passport_no_file = $data_personal['passport_no_file'];
+ 
+        // $filesToMove = [
+        //     'gst_no_file' => $gst_no_file,
+        //     'iec_no_file' => $iec_no_file,
+        //     'photo_file' => $photo_file,
+        //     'aadhaar_no_file' => $aadhaar_no_file,
+        //     'pan_no_file' => $pan_no_file,
+        //     'passport_no_file' => $passport_no_file,
+        // ];
+        
+        // $destinationDir = 'uploads/all/';
+        
+        // // Create destination directory if it doesn't exist
+        // if (!file_exists($destinationDir)) {
+        //     mkdir($destinationDir, 0777, true);
+        // }
+        
+        // foreach ($filesToMove as $key => $filePath) {
+        //     if (!empty($filePath) && file_exists($filePath)) {
+        //         $fileName = basename($filePath);
+        //         $newPath = $destinationDir . $fileName;
+        //         rename($filePath, $newPath);
+        //         $$key = $newPath;
+        //     }
+        // }
+
+        // $user = User::create([
+        //     'type_option' => $data_business['type_option'],
+        //     'name' => $data_business['con_person_name'],
+        //     'email' => $data_business['prim_email_business'],
+        //     'phone' => '+' . $data_business['phone_business'],
+        //     'phone_code_meta' => $data_business['phone_business_meta'],
+
+        //     'password' => bcrypt(Str::random(8)),
+
+        //     'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
+
+        //     'postal_code' => $data_business['pincode_business'],
+        //     'city_id' => $data_business['city_id_business'],
+        //     'state_id' => $data_business['state_id_business'],
+        //     'country_id' => $data_business['country_id_business'],
+
+        //     'avatar' => $photo_file,
+        //     'avatar_original' => $photo_file,
+
+        //     'whats_app_no' => $data_business['whats_app_no_business'],
+        //     'whats_app_no_meta' =>$data_business['whats_app_no_business_meta'],
+
+        //     'gst_no' => $data_business['gst_no'],
+        //     'iec_no' => $data_business['iec_no'],
+
+        //     'aadhaar_no' => $data_personal['aadhaar_no'],
+        //     'pan_no' => $data_personal['pan_no'],
+        //     'passport_no' => $data_personal['passport_no'],
+        //     'step' => '4',
+        // ]);
+
+
+        // $address = DB::table('addresses')->insert([
+        //     'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
+
+        //     'postal_code' => $data_business['pincode_business'],
+        //     'city_id' => $data_business['city_id_business'],
+        //     'state_id' => $data_business['state_id_business'],
+        //     'country_id' => $data_business['country_id_business'],
+
+        //     'phone' => '+' . $data_business['phone_business'],
+        //     'user_id' => $user->id,
+        //     'created_at' => now(), // Add timestamps if your table uses them
+        //     'updated_at' => now(),
+        // ]);
+
+        
+        // $userDetails = UserDetails::create([
+        //     'user_id' => $user->id,
+        //     'type_option' => $data_business['type_option'],
+        //     'gst_no' => $data_business['gst_no'],
+
+        //     'gst_no_file' => $gst_no_file,
+        //     'iec_no_file' => $iec_no_file,
+
+        //     'iec_no' => $data_business['iec_no'],
+        //     'registration_date' => $data_business['registration_date'],
+        //     'const_of_business' => $data_business['const_of_business'],
+        //     'gstin_current_status' => $data_business['gstin_current_status'],
+        //     'uin_current_status' => $data_business['uin_current_status'],
+        //     'con_person_name' => $data_business['con_person_name'],
+        //     'company_name' => $data_business['company_name'],
+        //     'street_add_first_business' => $data_business['street_add_first_business'],
+        //     'street_add_sec_business' => $data_business['street_add_sec_business'],
+        //     'locality_land_mark_business' => $data_business['locality_land_mark_business'],
+        //     'village_business' => $data_business['village_business'],
+        //     'post_business' => $data_business['post_business'],
+        //     'city_id_business' => $data_business['city_id_business'],
+        //     'district_business' => $data_business['district_business'],
+        //     'state_id_business' => $data_business['state_id_business'],
+        //     'pincode_business' => $data_business['pincode_business'],
+        //     'country_id_business' => $data_business['country_id_business'],
+        //     'country_code_business' => $data_business['country_code_business'],
+        
+        //     'prim_mobile_no_business' => $data_business['phone_business'],
+        //     'prim_mobile_no_business_meta' => $data_business['phone_business_meta'],
+
+        //     'alt_mobile_no_business' => $data_business['alternate_mob_no_business'],
+        //     'alt_mobile_no_business_meta' => $data_business['alternate_mob_no_business_meta'],
+
+        //     'prim_whats_app_no_business' => $data_business['whats_app_no_business'],
+        //     'prim_whats_app_no_business_meta' => $data_business['whats_app_no_business_meta'],
+
+        //     'alternate_whats_app_no_business' => $data_business['alternate_whats_app_no_business'],
+        //     'alternate_whats_app_no_business_meta' => $data_business['alternate_whats_app_no_business_meta'],
+        
+        //     'prim_email_business' => $data_business['prim_email_business'],
+        //     'alt_email_business' => $data_business['alt_email_business'],
+        //     'website_business' => $data_business['website_business'],
+
+        //     'bank_name_business' => $data_business['bank_name_business'],
+        //     'account_no_business' => $data_business['account_no_business'],
+        //     'account_name_business' => $data_business['account_name_business'],
+        //     'branch_code_business' => $data_business['branch_code_business'],
+        //     'branch_name_business' => $data_business['branch_name_business'],
+        //     'branch_address_business' => $data_business['branch_address_business'],
+        //     'ifsc_code_business' => $data_business['ifsc_code_business'],
+        //     'micr_code_business' => $data_business['micr_code_business'],
+        //     'ad_code_business' => $data_business['ad_code_business'],
+        
+        //     'aadhaar_no' => $data_personal['aadhaar_no'],
+        //     'aadhaar_no_file' => $aadhaar_no_file,
+        //     'pan_no' => $data_personal['pan_no'],
+        //     'pan_no_file' => $pan_no_file,
+        //     'passport_no' => $data_personal['passport_no'],
+        //     'passport_no_file' => $passport_no_file,
+        //     'photo_file' => $photo_file,
+        //     'name' => $data_personal['name'],
+        //     'father_name' => $data_personal['father_name'],
+        //     'dob' => $data_personal['dob'],
+        //     'street_add_first' => $data_personal['street_add_first_personal'],
+        //     'street_add_sec' => $data_personal['street_add_sec_personal'],
+        //     'locality_land_mark' => $data_personal['locality_land_mark_personal'],
+        //     'village' => $data_personal['village_personal'],
+        //     'post' => $data_personal['post_personal'],
+        //     'city_id' => $data_personal['city_id'],
+        //     'district' => $data_personal['district_personal'],
+        //     'state_id' => $data_personal['state_id'],
+        //     'pincode' => $data_personal['pincode_personal'],
+        //     'country_id' => $data_personal['country_id'],
+        //     'country_code' => $data_personal['country_code_personal'],
+        
+        //     'prim_mobile_no' => $data_personal['phone'],
+        //     'prim_mobile_no_meta' => $data_personal['phone_code_meta'] ?? '',
+
+        //     'alt_mobile_no' => $data_personal['alternate_mob_no_personal'],
+        //     'alt_mobile_no_meta' => $data_personal['alternate_mob_no_personal_meta'] ?? '',
+
+        //     'prim_whats_app_no' => $data_personal['whats_app_no'],
+        //     'prim_whats_app_no_meta' => $data_personal['whats_app_no_meta'] ?? '',
+
+        //     'alt_whats_app_no' => $data_personal['alternate_whats_app_no_personal'],
+        //     'alt_whats_app_no_meta' => $data_personal['alternate_whats_app_no_personal_meta'] ?? '',
+        
+        //     'prim_email_personal' => $data_personal['prim_email_personal'],
+        //     'alt_email_personal' => $data_personal['alt_email_personal'],
+        
+        //     'bank_name_personal' => $data_personal['bank_name_personal'],
+        //     'account_no_personal' => $data_personal['account_no_personal'],
+        //     'account_name_personal' => $data_personal['account_name_personal'],
+        //     'branch_code_personal' => $data_personal['branch_code_personal'],
+        //     'branch_name_personal' => $data_personal['branch_name_personal'] ?? '',
+        //     'branch_address_personal' => $data_personal['branch_address_personal'],
+        //     'ifsc_code_personal' => $data_personal['ifsc_code_personal'],
+        //     'micr_code_personal' => $data_personal['micr_code_personal'],
+        //     'ad_code_personal' => $data_personal['ad_code_personal'],
+        
+        //     'd_l_no_1' => $request->d_l_no_1,
+        //     'd_l_no_1_file' => $fileFields['d_l_no_1_file'],
+        
+        //     'doctor_hospital_reg_no' => $request->doctor_hospital_reg_no,
+        //     'doctor_hospital_reg_no_file' => $fileFields['doctor_hospital_reg_no_file'],
+        
+        //     'd_l_no_2' => $request->d_l_no_2,
+        //     'd_l_no_2_file' => $fileFields['d_l_no_2_file'],
+        
+        //     'dairy_trust_ngo_reg_no' => $request->dairy_trust_ngo_reg_no,
+        //     'dairy_trust_ngo_reg_no_file' => $fileFields['dairy_trust_ngo_reg_no_file'],
+        
+        //     'd_l_no_3' => $request->d_l_no_3,
+        //     'd_l_no_3_file' => $fileFields['d_l_no_3_file'],
+        
+        //     'cc_mdl_reg_no' => $request->cc_mdl_reg_no,
+        //     'cc_mdl_reg_no_file' => $fileFields['cc_mdl_reg_no_file'],
+        // ]);
+
 
     }
 
@@ -1603,28 +1613,21 @@ class RegisterController extends Controller
         $data = User::where('gst_no', $request->gst_no)->first();
 
         if($data){
-            if($data->approval_status == 0){
-                Session::put('temp_user_id', $data->id);
-            } else {
+            // if($data->approval_status == 0){
+            //     Session::put('temp_user_id', $data->id);
+            // } else {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'GST No Already registered',
                 ], 200);
-            }
+            // }
         }
 
-        $user_data = [
-            'gst_no' => $request->gst_no,
-        ];
-        
-        // Store user data in session
-        Session::put('user_data', $user_data);
-
-        Session::put('step', 2);
+        Session::put('gst_validate', 'True');
 
         return response()->json([
             'status' => 'success',
-            'message' => 'GST No Save Successfully',
+            'message' => 'GST No Validate Successfully',
         ], 200);
     }
 
@@ -1653,28 +1656,149 @@ class RegisterController extends Controller
         $data = User::where('iec_no', $request->iec_no)->first();
 
         if($data){
-            if($data->approval_status == 0){
-                Session::put('temp_user_id', $data->id);
-            } else {
+            // if($data->approval_status == 0){
+            //     Session::put('temp_user_id', $data->id);
+            // } else {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'ICE No Already registered',
                 ], 200);
-            }
+            // }
         }
 
-        $user_data = [
-            'iec_no' => $request->iec_no,
-        ];
+        // $user_data = [
+        //     'iec_no' => $request->iec_no,
+        // ];
         
-        // Store user data in session
-        Session::put('user_data', $user_data);
-
-        Session::put('step', 2);
+        Session::put('iec_validate', 'True');
 
         return response()->json([
             'status' => 'success',
-            'message' => 'ICE No Save Successfully',
+            'message' => 'ICE No Validate Successfully',
+        ], 200);
+    }
+
+
+    public function aadhaar_validate($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'aadhaar_no' => [
+                'required', 
+                'regex:/^[0-9A-Z]{12}$/i'
+            ], 
+        ], [
+            'aadhaar_no.required' => 'The Aadhaar Number is required.',
+            'aadhaar_no.regex' => 'The Aadhaar Number format is invalid.',
+        ]);
+        
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $errors
+            ], 200);
+        }
+
+        $data = User::where('aadhaar_no', $request->aadhaar_no)->first();
+
+        if($data){
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Aadhaar Number Already registered',
+                ], 200);
+        }
+
+
+        Session::put('aadhaar_validate', 'True');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Aadhaar No Validate Successfully',
+        ], 200);
+    }
+
+    public function pan_validate($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'pan_no' => [
+                'required', 
+                'regex:/^[0-9A-Z]{10}$/i'
+            ], 
+        ], [
+            'pan_no.required' => 'The Pan Number is required.',
+            'pan_no.regex' => 'The Pan Number format is invalid.',
+        ]);
+        
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $errors
+            ], 200);
+        }
+
+        $data = User::where('pan_no', $request->pan_no)->first();
+
+        if($data){
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Pan Number Already registered',
+                ], 200);
+        }
+
+
+        Session::put('pan_validate', 'True');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pan No Validate Successfully',
+        ], 200);
+    }
+
+    public function passport_validate($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'passport_no' => [
+                'required', 
+                'regex:/^[0-9A-Z]{1,9}$/i'
+            ], 
+        ], [
+            'passport_no.required' => 'The Pan Number is required.',
+            'passport_no.regex' => 'The Pan Number format is invalid.',
+        ]);
+        
+        if ($validator->fails()) {
+
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => $errors
+            ], 200);
+        }
+
+        $data = User::where('passport_no', $request->passport_no)->first();
+
+        if($data){
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Passport Number Already registered',
+                ], 200);
+        }
+
+
+        Session::put('passport_validate', 'True');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Passport No Validate Successfully',
         ], 200);
     }
 
