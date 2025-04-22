@@ -391,23 +391,35 @@ class RegisterController extends Controller
     public function resendOtp(Request $request)
     {
 
-        $data = Session::get('user_data');
+        // $data = Session::get('user_data');
     
-        // Ensure $data exists
-        if (!$data) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'User data not found. Please start the process again.',
-            ], 200);
-        }
+        // // Ensure $data exists
+        // if (!$data) {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'User data not found. Please start the process again.',
+        //     ], 200);
+        // }
 
         // $otp = mt_rand(100000, 999999);
         $otp = '123456';
-        Session::put('otp', $otp);
+        $timestamp = date('Y-m-d H:i:s');
 
-        $timestamp = date('Y-m-d H:i:s'); // Use PHP's native date() function for timestamp
-        Session::put('otp_timestamp', $timestamp);
-
+        if($request->phonetype == "business"){
+            Session::put('otp_business', $otp);
+            Session::put('otp_business_timestamp', $timestamp);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'OTP has been Resend no this Phone : ' . $request->phone_no,
+            ], 200);
+        } elseif($request->phonetype == "personal") {
+            Session::put('otp_personal', $otp);
+            Session::put('otp_personal_timestamp', $timestamp);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'OTP has been Resend no this Phone : ' . $request->phone_no,
+            ], 200);
+        }
 
         // $user = [
         //     'name' => $data['name'],
@@ -420,11 +432,6 @@ class RegisterController extends Controller
         // $otpController->send_code($user);
 
 
-        // Return a success response
-        return response()->json([
-            'status' => 'success',
-            'message' => 'OTP has been Resend no this Phone : ' . $data['phone'],
-        ], 200);
     }
 
 
@@ -681,7 +688,7 @@ class RegisterController extends Controller
 
             $rsp_msg = $this->store_personal_details($request);
         
-        } elseif ($param == "verify-phone") {
+        } elseif ($param == "verify-otps") {
 
             $rsp_msg = $this->verify_otp($request);
 
@@ -1131,7 +1138,7 @@ class RegisterController extends Controller
         }
 
 
-        $prev_form = Session::get('user_data_personal');
+        $prev_form = Session::get('user_data_business');
 
         if (
             $prev_form['type_option'] == 'domestic' &&
@@ -1224,16 +1231,16 @@ class RegisterController extends Controller
             'state_id' => $request->state_id,
             'country_id' => $request->country_id,
         
-            'phone' => $request->phone,
+            'phone' => $request->country_code_phone_code.'-'.$request->phone,
             'phone_code_meta' => $request->phone_code_meta,
 
-            'whats_app_no' => $request->whats_app_no,
+            'whats_app_no' => $request->country_code_whats_app_no.'-'.$request->whats_app_no,
             'whats_app_no_meta' => $request->whats_app_no_meta,
 
-            'alternate_mob_no_personal' => $request->alternate_mob_no_personal,
+            'alternate_mob_no_personal' => $request->country_code_alternate_mob_no_personal.'-'.$request->alternate_mob_no_personal,
             'alternate_mob_no_personal_meta' => $request->alternate_mob_no_personal_meta,
             
-            'alternate_whats_app_no_personal' => $request->alternate_whats_app_no_personal,
+            'alternate_whats_app_no_personal' => $request->country_code_alternate_whats_app_no_personal.'-'.$request->alternate_whats_app_no_personal,
             'alternate_whats_app_no_personal_meta' => $request->alternate_whats_app_no_personal_meta,
         
             'prim_email_personal' => $request->prim_email_personal,
@@ -1372,6 +1379,18 @@ class RegisterController extends Controller
         ];
 
         Session::put('user_data_license', $user_data_license);
+
+
+        $otp = '123456';
+        $timestamp = date('Y-m-d H:i:s');
+
+        Session::put('otp_business', $otp);
+        Session::put('otp_business_timestamp', $timestamp);
+
+        Session::put('otp_personal', $otp);
+        Session::put('otp_personal_timestamp', $timestamp);
+
+
         Session::put('step', 5);
 
         return response()->json([
@@ -1786,7 +1805,7 @@ class RegisterController extends Controller
         $data = User::where('passport_no', $request->passport_no)->first();
 
         if($data){
-
+                Session::put('passport_validate', 'False');
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Passport Number Already registered',
@@ -1803,150 +1822,151 @@ class RegisterController extends Controller
     }
 
 
-    public function store_personal_details($request)
-    {
+    // public function store_personal_details($request)
+    // {
 
-        $validator = Validator::make($request->all(), [
+    //     $validator = Validator::make($request->all(), [
 
-            'name' => ['required', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
-            'company_name' => ['required', 'string', 'min:1', 'max:150'],
-            'email_id' => ['required', 'email'],
-            'phone' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
-            'tel_number' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
-            'post' => ['nullable', 'string', 'max:255'],
-            'whats_app_no' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+    //         'name' => ['required', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
+    //         'company_name' => ['required', 'string', 'min:1', 'max:150'],
+    //         'email_id' => ['required', 'email'],
+    //         'phone' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+    //         'tel_number' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+    //         'post' => ['nullable', 'string', 'max:255'],
+    //         'whats_app_no' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
 
-            'password' => [
-                'required',
-                'string',
-                'min:8', // Minimum length of 8 characters
-                'regex:/[A-Z]/', // At least one uppercase letter
-                'regex:/[!@#$%^&*(),.?":{}|<>]/', // At least one special character
-                'confirmed' // Ensures password and confirm_password match
-            ],
-            'password_confirmation' => ['required', 'string', 'min:8'], // Confirmation field
-        ], [
+    //         'password' => [
+    //             'required',
+    //             'string',
+    //             'min:8', // Minimum length of 8 characters
+    //             'regex:/[A-Z]/', // At least one uppercase letter
+    //             'regex:/[!@#$%^&*(),.?":{}|<>]/', // At least one special character
+    //             'confirmed' // Ensures password and confirm_password match
+    //         ],
+    //         'password_confirmation' => ['required', 'string', 'min:8'], // Confirmation field
+    //     ], [
 
-            'name.required' => 'The Name field is required.',
-            'name.string' => 'The Name must be a string.',
-            'name.regex' => 'The Name must only contain letters and spaces.',
-            'name.min' => 'The Name must be at least 1 character.',
-            'name.max' => 'The Name may not be greater than 50 characters.',
+    //         'name.required' => 'The Name field is required.',
+    //         'name.string' => 'The Name must be a string.',
+    //         'name.regex' => 'The Name must only contain letters and spaces.',
+    //         'name.min' => 'The Name must be at least 1 character.',
+    //         'name.max' => 'The Name may not be greater than 50 characters.',
         
-            'email_id.required' => 'The Email field is required.',
-            'email_id.email' => 'The Email must be a valid email address.',
+    //         'email_id.required' => 'The Email field is required.',
+    //         'email_id.email' => 'The Email must be a valid email address.',
         
-            'phone.required' => 'The Phone Number field is required.',
-            'phone.regex' => 'The Phone Number format is invalid.',
-            'phone.min' => 'The Phone Number must be at least 5 characters.',
+    //         'phone.required' => 'The Phone Number field is required.',
+    //         'phone.regex' => 'The Phone Number format is invalid.',
+    //         'phone.min' => 'The Phone Number must be at least 5 characters.',
         
-            'tel_number.regex' => 'The Tel Number format is invalid.',
-            'tel_number.min' => 'The Tel Number must be at least 5 characters.',
+    //         'tel_number.regex' => 'The Tel Number format is invalid.',
+    //         'tel_number.min' => 'The Tel Number must be at least 5 characters.',
 
-            'whats_app_no.required' => 'The Whatsapp Number field is required.',
+    //         'whats_app_no.required' => 'The Whatsapp Number field is required.',
         
-            'password.required' => 'The Password field is required.',
-            'password.min' => 'The Password must be at least 8 characters long.',
-            'password.regex' => 'The Password must contain at least one uppercase letter and one special character.',
+    //         'password.required' => 'The Password field is required.',
+    //         'password.min' => 'The Password must be at least 8 characters long.',
+    //         'password.regex' => 'The Password must contain at least one uppercase letter and one special character.',
 
-            'password.confirmed' => 'The Password and Confirm Password do not match.',
-            'password_confirmation.required' => 'The Confirm Password field is required.',
-        ]);
+    //         'password.confirmed' => 'The Password and Confirm Password do not match.',
+    //         'password_confirmation.required' => 'The Confirm Password field is required.',
+    //     ]);
         
-        if ($validator->fails()) {
+    //     if ($validator->fails()) {
 
-            $errors = $validator->errors()->all();
+    //         $errors = $validator->errors()->all();
 
-            return response()->json([
-                'status' => 'error',
-                'message' => $errors
-            ], 200);
-        }
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => $errors
+    //         ], 200);
+    //     }
 
-        if (session()->has('temp_user_id')) {
+    //     if (session()->has('temp_user_id')) {
 
-            $temp_phone = $request->country_code_phone_code.'-'.$request->phone;
+    //         $temp_phone = $request->country_code_phone_code.'-'.$request->phone;
 
-            if (filter_var($request->email_id, FILTER_VALIDATE_EMAIL)) {
-                if (User::where('email', $request->email_id)->where('id', '!=', session('temp_user_id'))->first() != null) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Email already exists.',
-                    ], 200);
-                }
-            }
+    //         if (filter_var($request->email_id, FILTER_VALIDATE_EMAIL)) {
+    //             if (User::where('email', $request->email_id)->where('id', '!=', session('temp_user_id'))->first() != null) {
+    //                 return response()->json([
+    //                     'status' => 'error',
+    //                     'message' => 'Email already exists.',
+    //                 ], 200);
+    //             }
+    //         }
 
-            if (User::where('phone', $temp_phone)->where('id', '!=', session('temp_user_id'))->first() != null) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Phone already exists.'
-                ], 200);
-            }
+    //         if (User::where('phone', $temp_phone)->where('id', '!=', session('temp_user_id'))->first() != null) {
+    //             return response()->json([
+    //                 'status' => 'error',
+    //                 'message' => 'Phone already exists.'
+    //             ], 200);
+    //         }
     
-        } else {
+    //     } else {
 
 
-            $temp_phone = $request->country_code_phone_code.'-'.$request->phone;
+    //         $temp_phone = $request->country_code_phone_code.'-'.$request->phone;
 
-            if (filter_var($request->email_id, FILTER_VALIDATE_EMAIL)) {
-                if (User::where('email', $request->email_id)->first() != null) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Email already exists.',
-                    ], 200);
-                }
-            }
+    //         if (filter_var($request->email_id, FILTER_VALIDATE_EMAIL)) {
+    //             if (User::where('email', $request->email_id)->first() != null) {
+    //                 return response()->json([
+    //                     'status' => 'error',
+    //                     'message' => 'Email already exists.',
+    //                 ], 200);
+    //             }
+    //         }
 
-            if (User::where('phone', $temp_phone)->first() != null) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Phone already exists.' 
-                ], 200);
-            }
+    //         if (User::where('phone', $temp_phone)->first() != null) {
+    //             return response()->json([
+    //                 'status' => 'error',
+    //                 'message' => 'Phone already exists.' 
+    //             ], 200);
+    //         }
 
-        }
+    //     }
 
-        // Assuming existing user_data in the session
-        $existing_user_data = session('user_data', []);  // Fetch existing session data or an empty array if not set
+    //     // Assuming existing user_data in the session
+    //     $existing_user_data = session('user_data', []);  // Fetch existing session data or an empty array if not set
 
-        $new_user_data = [
-            'company_name' => $request->company_name,
-            'name' => $request->name,
-            'email' => $request->email_id,
-            'phone' => $request->country_code_phone_code.'-'.$request->phone,
-            'phone_code_meta' => $request->phone_code_meta,
-            'tel_number' => $request->tel_number,
-            'whats_app_no' => $request->country_code_whats_app_no.'-'.$request->whats_app_no,
-            'whats_app_no_meta' => $request->whats_app_no_meta,
-            'post' => $request->post,
-            'password'  => Hash::make($request->password),
-        ];
+    //     $new_user_data = [
+    //         'company_name' => $request->company_name,
+    //         'name' => $request->name,
+    //         'email' => $request->email_id,
+    //         'phone' => $request->country_code_phone_code.'-'.$request->phone,
+    //         'phone_code_meta' => $request->phone_code_meta,
+    //         'tel_number' => $request->tel_number,
+    //         'whats_app_no' => $request->country_code_whats_app_no.'-'.$request->whats_app_no,
+    //         'whats_app_no_meta' => $request->whats_app_no_meta,
+    //         'post' => $request->post,
+    //         'password'  => Hash::make($request->password),
+    //     ];
 
-        // Merge the existing user data with the new user data
-        $combined_user_data = array_merge($existing_user_data, $new_user_data);
+    //     // Merge the existing user data with the new user data
+    //     $combined_user_data = array_merge($existing_user_data, $new_user_data);
         
-        // Store user data in session
-        Session::put('user_data', $combined_user_data);
+    //     // Store user data in session
+    //     Session::put('user_data', $combined_user_data);
 
-        // $otp = mt_rand(100000, 999999);
-        $otp = '123456';
-        Session::put('otp', $otp);
+    //     // $otp = mt_rand(100000, 999999);
+    //     $otp = '123456';
+    //     Session::put('otp', $otp);
 
-        $timestamp = date('Y-m-d H:i:s'); // Use PHP's native date() function for timestamp
-        Session::put('otp_timestamp', $timestamp);
+    //     $timestamp = date('Y-m-d H:i:s'); // Use PHP's native date() function for timestamp
+    //     Session::put('otp_timestamp', $timestamp);
 
-        Session::put('step', 3);
+    //     Session::put('step', 3);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'OTP has been this Phone'. $request->country_code_phone_code.' '.$request->phone,
-        ], 200);
-    }
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'OTP has been this Phone'. $request->country_code_phone_code.' '.$request->phone,
+    //     ], 200);
+    // }
 
     public function verify_otp($request)
     {
         $validator = Validator::make($request->all(), [
-            'otp' => 'required|digits:6',
+            'otp_business' => 'required|digits:6',
+            'otp_personal' => 'required|digits:6',
         ]);
     
         if ($validator->fails()) {
@@ -1956,84 +1976,245 @@ class RegisterController extends Controller
             ], 200);
         }
     
-        $otp = Session::get('otp');
-        $timestamp = Session::get('otp_timestamp');
+        $otp_business = Session::get('otp_business');
+        $otp_personal = Session::get('otp_personal');
+
+        $timestamp_business = Session::get('otp_business_timestamp');
+        $timestamp_personal = Session::get('otp_personal_timestamp');
     
         // Check if OTP and timestamp exist
-        if (!$otp || !$timestamp) {
+        if (!$otp_business || !$otp_personal || !$timestamp_business || !$timestamp_personal) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'OTP not found. Please request a new one.',
             ], 200);
         }
     
-        // Check if OTP has expired (2 minutes)
-        $timestamp = new \DateTime($timestamp);
-        $current_time = new \DateTime();
-        $interval = $current_time->getTimestamp() - $timestamp->getTimestamp();
+        // // Check if OTP has expired (2 minutes)
+        // $timestamp = new \DateTime($timestamp);
+        // $current_time = new \DateTime();
+        // $interval = $current_time->getTimestamp() - $timestamp->getTimestamp();
     
-        if ($interval > 120) { // 2 minutes = 120 seconds
-            return response()->json([
-                'status' => 'error',
-                'message' => 'OTP has expired. Please request a new one.',
-            ], 200);
-        }
+        // if ($interval > 120) 
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'OTP has expired. Please request a new one.',
+        //     ], 200);
+        // }
     
-        if ($request->otp == $otp) {
-            $data = Session::get('user_data');
-    
-            // Ensure $data exists
-            if (!$data) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'User data not found. Please start the process again.',
-                ], 200);
-            }
+        if ($request->otp_business == $otp_business &&  $request->otp_personal == $otp_personal) {
+
+            $data_business = session()->get('user_data_business');
+            $data_personal = session()->get('user_data_personal');
+            $data_license  = session()->get('user_data_license');
+
+            $gst_no_file = $data_business['gst_no_file'];
+            $iec_no_file = $data_business['iec_no_file'];
+
+            $photo_file = $data_personal['photo_file'];
+            $aadhaar_no_file = $data_personal['aadhaar_no_file'];
+            $pan_no_file = $data_personal['pan_no_file'];
+            $passport_no_file = $data_personal['passport_no_file'];
 
 
-            if (!session()->has('temp_user_id')) {
-                // Create user
-                $user = User::create([
-                    'name' => $data['name'],
-                    'company_name' => $data['company_name'],
-                    'email' => $data['email'],
-                    'email_verified_at' => now(),
-                    'phone' => $data['phone'],
-                    'phone_code_meta' => $data['phone_code_meta'],
-                    'password' => $data['password'], // Hash password before saving
-                    'tel_number' => $data['tel_number'],
-                    'post' => $data['post'],
-                    'whats_app_no' => $data['whats_app_no'],
-                    'whats_app_no_meta' => $data['whats_app_no_meta'],
-                    'gst_no' => $data['gst_no'],
-                    'step' => 4,
-                ]);
-                Session::put('temp_user_id', $user->id);
-            } else {
-                $user = User::where('id', session()->get('temp_user_id'))->update([
-                    'name' => $data['name'],
-                    'company_name' => $data['company_name'],
-                    'email' => $data['email'],
-                    'email_verified_at' => now(),
-                    'phone' => $data['phone'],
-                    'phone_code_meta' => $data['phone_code_meta'],
-                    'password' => $data['password'], // Hash password before saving
-                    'tel_number' => $data['tel_number'],
-                    'post' => $data['post'],
-                    'whats_app_no' => $data['whats_app_no'],
-                    'whats_app_no_meta' => $data['whats_app_no_meta'],
-                    'gst_no' => $data['gst_no'],
-                    'step' => 4,
-                ]);
-            }
 
-            Session::put('step', 4);
+            // $filesToMove = [
+            //     'gst_no_file' => $gst_no_file,
+            //     'iec_no_file' => $iec_no_file,
+            //     'photo_file' => $photo_file,
+            //     'aadhaar_no_file' => $aadhaar_no_file,
+            //     'pan_no_file' => $pan_no_file,
+            //     'passport_no_file' => $passport_no_file,
+            // ];
+            
+            // $destinationDir = 'uploads/all/';
+            
+            // // Create destination directory if it doesn't exist
+            // if (!file_exists($destinationDir)) {
+            //     mkdir($destinationDir, 0777, true);
+            // }
+            
+            // foreach ($filesToMove as $key => $filePath) {
+            //     if (!empty($filePath) && file_exists($filePath)) {
+            //         $fileName = basename($filePath);
+            //         $newPath = $destinationDir . $fileName;
+            //         rename($filePath, $newPath);
+            //         $$key = $newPath;
+            //     }
+            // }
+
+            $user = User::create([
+                'type_option' => $data_business['type_option'],
+                'name' => $data_business['con_person_name'],
+                'email' => $data_business['prim_email_business'],
+                'phone' => '+' . $data_business['phone_business'],
+                'phone_code_meta' => $data_business['phone_business_meta'],
+
+                'password' => bcrypt(Str::random(8)),
+
+                'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
+
+                'postal_code' => $data_business['pincode_business'],
+                'city_id' => $data_business['city_id_business'],
+                'state_id' => $data_business['state_id_business'],
+                'country_id' => $data_business['country_id_business'],
+
+                'avatar' => $photo_file,
+                'avatar_original' => $photo_file,
+
+                'whats_app_no' => $data_business['whats_app_no_business'],
+                'whats_app_no_meta' =>$data_business['whats_app_no_business_meta'],
+
+                'gst_no' => $data_business['gst_no'],
+                'iec_no' => $data_business['iec_no'],
+
+                'aadhaar_no' => $data_personal['aadhaar_no'],
+                'pan_no' => $data_personal['pan_no'],
+                'passport_no' => $data_personal['passport_no'],
+                'step' => '4',
+            ]);
+
+
+            $address = DB::table('addresses')->insert([
+                'address' => $data_business['street_add_first_business'] . ',' . $data_business['street_add_sec_business'] . ',' . $data_business['locality_land_mark_business'] . ',' . $data_business['village_business'],
+
+                'postal_code' => $data_business['pincode_business'],
+                'city_id' => $data_business['city_id_business'],
+                'state_id' => $data_business['state_id_business'],
+                'country_id' => $data_business['country_id_business'],
+
+                'phone' => '+' . $data_business['phone_business'],
+                'user_id' => $user->id,
+                'created_at' => now(), // Add timestamps if your table uses them
+                'updated_at' => now(),
+            ]);
+
+            
+            $userDetails = UserDetails::create([
+                'user_id' => $user->id,
+                'type_option' => $data_business['type_option'],
+                'gst_no' => $data_business['gst_no'],
+
+                'gst_no_file' => $gst_no_file,
+                'iec_no_file' => $iec_no_file,
+
+                'iec_no' => $data_business['iec_no'],
+                'registration_date' => $data_business['registration_date'],
+                'const_of_business' => $data_business['const_of_business'],
+                'gstin_current_status' => $data_business['gstin_current_status'],
+                'uin_current_status' => $data_business['uin_current_status'],
+                'con_person_name' => $data_business['con_person_name'],
+                'company_name' => $data_business['company_name'],
+                'street_add_first_business' => $data_business['street_add_first_business'],
+                'street_add_sec_business' => $data_business['street_add_sec_business'],
+                'locality_land_mark_business' => $data_business['locality_land_mark_business'],
+                'village_business' => $data_business['village_business'],
+                'post_business' => $data_business['post_business'],
+                'city_id_business' => $data_business['city_id_business'],
+                'district_business' => $data_business['district_business'],
+                'state_id_business' => $data_business['state_id_business'],
+                'pincode_business' => $data_business['pincode_business'],
+                'country_id_business' => $data_business['country_id_business'],
+                'country_code_business' => $data_business['country_code_business'],
+            
+                'prim_mobile_no_business' => $data_business['phone_business'],
+                'prim_mobile_no_business_meta' => $data_business['phone_business_meta'],
+
+                'alt_mobile_no_business' => $data_business['alternate_mob_no_business'],
+                'alt_mobile_no_business_meta' => $data_business['alternate_mob_no_business_meta'],
+
+                'prim_whats_app_no_business' => $data_business['whats_app_no_business'],
+                'prim_whats_app_no_business_meta' => $data_business['whats_app_no_business_meta'],
+
+                'alternate_whats_app_no_business' => $data_business['alternate_whats_app_no_business'],
+                'alternate_whats_app_no_business_meta' => $data_business['alternate_whats_app_no_business_meta'],
+            
+                'prim_email_business' => $data_business['prim_email_business'],
+                'alt_email_business' => $data_business['alt_email_business'],
+                'website_business' => $data_business['website_business'],
+
+                'bank_name_business' => $data_business['bank_name_business'],
+                'account_no_business' => $data_business['account_no_business'],
+                'account_name_business' => $data_business['account_name_business'],
+                'branch_code_business' => $data_business['branch_code_business'],
+                'branch_name_business' => $data_business['branch_name_business'],
+                'branch_address_business' => $data_business['branch_address_business'],
+                'ifsc_code_business' => $data_business['ifsc_code_business'],
+                'micr_code_business' => $data_business['micr_code_business'],
+                'ad_code_business' => $data_business['ad_code_business'],
+            
+                'aadhaar_no' => $data_personal['aadhaar_no'],
+                'aadhaar_no_file' => $aadhaar_no_file,
+                'pan_no' => $data_personal['pan_no'],
+                'pan_no_file' => $pan_no_file,
+                'passport_no' => $data_personal['passport_no'],
+                'passport_no_file' => $passport_no_file,
+                'photo_file' => $photo_file,
+                'name' => $data_personal['name'],
+                'father_name' => $data_personal['father_name'],
+                'dob' => $data_personal['dob'],
+                'street_add_first' => $data_personal['street_add_first_personal'],
+                'street_add_sec' => $data_personal['street_add_sec_personal'],
+                'locality_land_mark' => $data_personal['locality_land_mark_personal'],
+                'village' => $data_personal['village_personal'],
+                'post' => $data_personal['post_personal'],
+                'city_id' => $data_personal['city_id'],
+                'district' => $data_personal['district_personal'],
+                'state_id' => $data_personal['state_id'],
+                'pincode' => $data_personal['pincode_personal'],
+                'country_id' => $data_personal['country_id'],
+                'country_code' => $data_personal['country_code_personal'],
+            
+                'prim_mobile_no' => $data_personal['phone'],
+                'prim_mobile_no_meta' => $data_personal['phone_code_meta'] ?? '',
+
+                'alt_mobile_no' => $data_personal['alternate_mob_no_personal'],
+                'alt_mobile_no_meta' => $data_personal['alternate_mob_no_personal_meta'] ?? '',
+
+                'prim_whats_app_no' => $data_personal['whats_app_no'],
+                'prim_whats_app_no_meta' => $data_personal['whats_app_no_meta'] ?? '',
+
+                'alt_whats_app_no' => $data_personal['alternate_whats_app_no_personal'],
+                'alt_whats_app_no_meta' => $data_personal['alternate_whats_app_no_personal_meta'] ?? '',
+            
+                'prim_email_personal' => $data_personal['prim_email_personal'],
+                'alt_email_personal' => $data_personal['alt_email_personal'],
+            
+                'bank_name_personal' => $data_personal['bank_name_personal'],
+                'account_no_personal' => $data_personal['account_no_personal'],
+                'account_name_personal' => $data_personal['account_name_personal'],
+                'branch_code_personal' => $data_personal['branch_code_personal'],
+                'branch_name_personal' => $data_personal['branch_name_personal'] ?? '',
+                'branch_address_personal' => $data_personal['branch_address_personal'],
+                'ifsc_code_personal' => $data_personal['ifsc_code_personal'],
+                'micr_code_personal' => $data_personal['micr_code_personal'],
+                'ad_code_personal' => $data_personal['ad_code_personal'],
+            
+                'd_l_no_1' => $data_license['d_l_no_1'],
+                'd_l_no_1_file' => $data_license['d_l_no_1_file'],
+            
+                'doctor_hospital_reg_no' => $data_license['doctor_hospital_reg_no'],
+                'doctor_hospital_reg_no_file' => $data_license['doctor_hospital_reg_no_file'],
+            
+                'd_l_no_2' => $data_license['d_l_no_2'],
+                'd_l_no_2_file' => $data_license['d_l_no_2_file'],
+            
+                'dairy_trust_ngo_reg_no' => $data_license['dairy_trust_ngo_reg_no'],
+                'dairy_trust_ngo_reg_no_file' => $data_license['dairy_trust_ngo_reg_no_file'],
+            
+                'd_l_no_3' => $data_license['d_l_no_3'],
+                'd_l_no_3_file' => $data_license['d_l_no_3_file'],
+            
+                'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
+                'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
+            ]);
+
+            Session::put('step', 6);
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'OTP has been verified.',
             ], 200);
-
 
         } else {
             return response()->json([

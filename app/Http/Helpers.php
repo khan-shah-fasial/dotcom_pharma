@@ -2835,6 +2835,17 @@ if(!function_exists('getParticularData')){
     } 
 }
 
+if(!function_exists('custom_file')){
+    function custom_file($url)
+    {
+        if(app()->environment('local')){
+            return $url;
+        }
+
+        return 'public/' . $url;
+    }
+}
+
 if (!function_exists('getSelectedCountry')) {
     function getSelectedCountry(string $colName)
     {
@@ -2849,14 +2860,13 @@ if (!function_exists('getSelectedCountry')) {
             }
         } elseif(Session()->has('user_data_business')) {
 
-            $session_data_user = session()->get('user_data_business') ?? [];
-            $data = $session_data_user[$colName] ?? null;
-            
-
-        } elseif(Session()->has('user_data_personal')) {
-
-            $session_data_user = session()->get('user_data_personal') ?? [];
-            $data = $session_data_user[$colName] ?? null;
+            if(Session()->has('step') && Session()->get('step') == 2) { 
+                $session_data_user = session()->get('user_data_business') ?? [];
+                $data = $session_data_user[$colName] ?? null;
+            } else {
+                $session_data_user = session()->get('user_data_personal') ?? [];
+                $data = $session_data_user[$colName] ?? null;
+            }
 
         } else {
             // Check if there's a temp user ID in the session

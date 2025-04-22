@@ -85,7 +85,7 @@
                 const verifyBtnId = 'verify-gst-btn';
                 const val = $('#gst_no').val();
                 if (val.length === 15) {
-                    verifyGST();
+                    verifyDocument('gst_no', 'gst-validate', 15);
                     // appendVerifyButton();
                 // } else {
                 //     $('#' + verifyBtnId).remove();
@@ -102,26 +102,11 @@
 
             // ---------------- IEC verify --------------------------- //
 
-            // function appendVerifyIECButton() {
-            //     const verifyBtnId = 'verify-iec-btn';
-
-            //     if ($('#' + verifyBtnId).length === 0) {
-            //         const verifyBtn = $('<button>')
-            //             .attr('type', 'button')
-            //             .attr('id', verifyBtnId)
-            //             .attr('onclick', 'verifyIEC()')
-            //             .addClass('btn btn-success btn-sm ml-2')
-            //             .text('Verify');
-
-            //         $('#iec_no').after(verifyBtn);
-            //     }
-            // }
-
             function checkAndAppendIECButton() {
                 const verifyBtnId = 'verify-iec-btn';
                 const val = $('#iec_no').val().trim();
                 if (val.length === 10) {
-                    verifyIEC();
+                    verifyDocument('iec_no', 'iec-validate', 10);
                 //     appendVerifyIECButton();
                 // } else {
                 //     $('#' + verifyBtnId).remove();
@@ -293,8 +278,8 @@
                     var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
                 } else if (name === 'alternate_mob_no_personal') { 
                     var country_selected = "{{ getSelectedCountry('alternate_mob_no_personal_meta') }}";
-                } else if (name === 'alternate_whats_app_no_business') { 
-                    var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
+                } else if (name === 'alternate_whats_app_no_personal') { 
+                    var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_personal_meta') }}";
                 } else {
                     var country_selected = "{{ getSelectedCountry('phone_code_meta') }}"; 
 
@@ -305,7 +290,7 @@
                 }
 
 
-                if(country_selected !== 'null'){
+                if(country_selected !== 'null' && country_selected !== ''){
                     iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
                 } else {
                     // Set default country code to +91 (India)
@@ -415,8 +400,29 @@
             // toggleLocalityFields();
 
         });
+// ---------------------------------------------------------------------------------------------------------------//
 
+        function checkAndAppendButton() {
+            const verifyBtnId = 'verify-gst-btn';
+            const val = $('#gst_no').val();
+            if (val.length === 15) {
+                verifyDocument('gst_no', 'gst-validate', 15);
+                // appendVerifyButton();
+            // } else {
+            //     $('#' + verifyBtnId).remove();
+            }
+        }
 
+        function checkAndAppendIECButton() {
+            const verifyBtnId = 'verify-iec-btn';
+            const val = $('#iec_no').val().trim();
+            if (val.length === 10) {
+                verifyDocument('iec_no', 'iec-validate', 10);
+            //     appendVerifyIECButton();
+            // } else {
+            //     $('#' + verifyBtnId).remove();
+            }
+        }
 
         function validate_form(step) {
             // Initialize validation for the specific form step
@@ -468,13 +474,34 @@
             // iti1.setCountry('in'); // 'in' is the ISO2 code for India
 
             if(name === 'whats_app_no'){
-                var country_selected = "{{ getSelectedCountry('whats_app_no_meta') }}"; 
+
+                var country_selected = "{{ getSelectedCountry('whats_app_no_meta') }}";
+
+                if(country_selected == 'null' || country_selected == ''){
+                    var country_selected = "{{ getSelectedCountry('whats_app_no_business_meta') }}";
+                }
+
+            } else if (name === 'alternate_mob_no_business') { 
+                var country_selected = "{{ getSelectedCountry('alternate_mob_no_business_meta') }}";
+            } else if (name === 'alternate_whats_app_no_business') { 
+                var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
+            } else if (name === 'alternate_mob_no_personal') { 
+                var country_selected = "{{ getSelectedCountry('alternate_mob_no_personal_meta') }}";
+            } else if (name === 'alternate_whats_app_no_personal') { 
+                var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_personal_meta') }}";
             } else {
                 var country_selected = "{{ getSelectedCountry('phone_code_meta') }}"; 
+
+                if(country_selected == 'null' || country_selected == ''){
+                    var country_selected = "{{ getSelectedCountry('phone_business_meta') }}";
+                }
+
             }
 
 
-            if(country_selected !== 'null'){
+            console.dir(country_selected);
+
+            if(country_selected !== 'null' && country_selected !== ''){
                 iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
             } else {
                 // Set default country code to +91 (India)
@@ -513,9 +540,6 @@
                         $(`#reg_model_${step}`).modal('show');
 
                         validate_form(step);
-                        intil_input('phone_code');
-                        intil_input('whats_app_no');
-
 
                     } else {
                         console.error('Error:', response.message || 'An error occurred.');
@@ -577,13 +601,26 @@
 
 
                         validate_form(step);
+
                         intil_input('phone_code');
                         intil_input('whats_app_no');
-                        intil_input('alternate_mob_no_business');
-                        intil_input('alternate_whats_app_no_business');
+
 
                         if(step == 2){
+                            intil_input('alternate_mob_no_business');
+                            intil_input('alternate_whats_app_no_business');
                             toggleLocalityFields();
+
+                            const isDomestic = document.getElementById('domestic').checked;
+                            if (isDomestic) {
+                                checkAndAppendButton();
+                            } else {
+                                checkAndAppendIECButton();
+                            }
+                            
+                        } else if (step == 3) {
+                            intil_input('alternate_mob_no_personal');
+                            intil_input('alternate_whats_app_no_personal');
                         }
 
                     } else {
@@ -597,11 +634,15 @@
         }
         
 
-        function resendOTPButton_Phone() {
+        function resendOTPButton_Phone(phonetype, phone_no) {
             var csrfToken = '{{ csrf_token() }}';
             $.ajax({
                 url: "{{ route('create.new.user.registration.resend.phone.verify') }}",
                 type: "Post",
+                data: {
+                    phonetype  : phonetype,
+                    phone_no   : phone_no
+                },
                 headers: {
                     'X-CSRF-TOKEN': csrfToken
                 },
@@ -681,111 +722,112 @@
             return $.get("/csrf-token"); // An endpoint that returns a new CSRF token
         }
 
-        function verifyGST() {
-            const gstInput = $('#gst_no');
-            const gstNo = gstInput.val().trim();
-            const submitBtn = $('#reg_model_form_2 button[type="submit"]'); // Adjust selector if needed
-            const verifyBtnId = 'verify-gst-btn';
-            const verifyBtn = $('#' + verifyBtnId);
+        {{--
+        // function verifyGST() {
+        //     const gstInput = $('#gst_no');
+        //     const gstNo = gstInput.val().trim();
+        //     const submitBtn = $('#reg_model_form_2 button[type="submit"]'); // Adjust selector if needed
+        //     const verifyBtnId = 'verify-gst-btn';
+        //     const verifyBtn = $('#' + verifyBtnId);
 
-            if (gstNo.length !== 15) {
-                AIZ.plugins.notify('danger', 'GST No must be 15 characters');
-                return;
-            }
+        //     if (gstNo.length !== 15) {
+        //         AIZ.plugins.notify('danger', 'GST No must be 15 characters');
+        //         return;
+        //     }
 
-            // Show loading text
-            const originalText = verifyBtn.text();
-            verifyBtn.text('Verifying...').prop('disabled', true);
-
-
-
-            getCsrfToken()
-                .done(function (response) {
-                    const token = response.token;
-
-                    $.ajax({
-                        url: '{{ route('new.user.account.create', ['param' => 'gst-validate']) }}',
-                        method: 'POST',
-                        data: {
-                            gst_no: gstNo,
-                            _token: token
-                        },
-                        success: function (response) {
-                            if (response.status === "success") {
-                                AIZ.plugins.notify('success', response.message);
-                                $('#' + verifyBtnId).remove();
-                                // submitBtn.prop('disabled', false);
-                            } else {
-                                AIZ.plugins.notify('danger', response.message);
-                            }
-                        },
-                        error: function () {
-                            alert('Error verifying GST.');
-                        },
-                        complete: function () {
-                            verifyBtn.text(originalText).prop('disabled', false);
-                        }
-                    });
-                })
-                .fail(function () {
-                    alert('Could not fetch CSRF token.');
-                    verifyBtn.text(originalText).prop('disabled', false);
-                });
-        }
-
-
-        function verifyIEC() {
-            const iecInput = $('#iec_no');
-            const iecNo = iecInput.val().trim();
-            const submitBtn = $('#reg_model_form_2 button[type="submit"]'); // Adjust selector if needed
-            const verifyBtnId = 'verify-iec-btn';
-            const verifyBtn = $('#' + verifyBtnId);
-
-            if (iecNo.length !== 10) {
-                AIZ.plugins.notify('danger', 'IEC No must be 10 characters');
-                return;
-            }
-
-            // Show loading text
-            const originalText = verifyBtn.text();
-            verifyBtn.text('Verifying...').prop('disabled', true);
+        //     // Show loading text
+        //     const originalText = verifyBtn.text();
+        //     verifyBtn.text('Verifying...').prop('disabled', true);
 
 
 
-            getCsrfToken()
-                .done(function (response) {
-                    const token = response.token;
+        //     getCsrfToken()
+        //         .done(function (response) {
+        //             const token = response.token;
 
-                    $.ajax({
-                        url: '{{ route('new.user.account.create', ['param' => 'iec-validate']) }}',
-                        method: 'POST',
-                        data: {
-                            iec_no: iecNo,
-                            _token: token
-                        },
-                        success: function (response) {
-                            if (response.status === "success") {
-                                AIZ.plugins.notify('success', response.message);
-                                $('#' + verifyBtnId).remove();
-                                // submitBtn.prop('disabled', false);
-                            } else {
-                                AIZ.plugins.notify('danger', response.message);
-                            }
-                        },
-                        error: function () {
-                            AIZ.plugins.notify('danger', 'Error verifying IEC.');
-                        },
-                        complete: function () {
-                            verifyBtn.text(originalText).prop('disabled', false);
-                        }
-                    });
-                })
-                .fail(function () {
-                    AIZ.plugins.notify('danger', 'Somthing Went Wrong.');
-                    verifyBtn.text(originalText).prop('disabled', false);
-                });
-        }
+        //             $.ajax({
+        //                 url: '{{ route('new.user.account.create', ['param' => 'gst-validate']) }}',
+        //                 method: 'POST',
+        //                 data: {
+        //                     gst_no: gstNo,
+        //                     _token: token
+        //                 },
+        //                 success: function (response) {
+        //                     if (response.status === "success") {
+        //                         AIZ.plugins.notify('success', response.message);
+        //                         $('#' + verifyBtnId).remove();
+        //                         // submitBtn.prop('disabled', false);
+        //                     } else {
+        //                         AIZ.plugins.notify('danger', response.message);
+        //                     }
+        //                 },
+        //                 error: function () {
+        //                     alert('Error verifying GST.');
+        //                 },
+        //                 complete: function () {
+        //                     verifyBtn.text(originalText).prop('disabled', false);
+        //                 }
+        //             });
+        //         })
+        //         .fail(function () {
+        //             alert('Could not fetch CSRF token.');
+        //             verifyBtn.text(originalText).prop('disabled', false);
+        //         });
+        // }
 
+
+        // function verifyIEC() {
+        //     const iecInput = $('#iec_no');
+        //     const iecNo = iecInput.val().trim();
+        //     const submitBtn = $('#reg_model_form_2 button[type="submit"]'); // Adjust selector if needed
+        //     const verifyBtnId = 'verify-iec-btn';
+        //     const verifyBtn = $('#' + verifyBtnId);
+
+        //     if (iecNo.length !== 10) {
+        //         AIZ.plugins.notify('danger', 'IEC No must be 10 characters');
+        //         return;
+        //     }
+
+        //     // Show loading text
+        //     const originalText = verifyBtn.text();
+        //     verifyBtn.text('Verifying...').prop('disabled', true);
+
+
+
+        //     getCsrfToken()
+        //         .done(function (response) {
+        //             const token = response.token;
+
+        //             $.ajax({
+        //                 url: '{{ route('new.user.account.create', ['param' => 'iec-validate']) }}',
+        //                 method: 'POST',
+        //                 data: {
+        //                     iec_no: iecNo,
+        //                     _token: token
+        //                 },
+        //                 success: function (response) {
+        //                     if (response.status === "success") {
+        //                         AIZ.plugins.notify('success', response.message);
+        //                         $('#' + verifyBtnId).remove();
+        //                         // submitBtn.prop('disabled', false);
+        //                     } else {
+        //                         AIZ.plugins.notify('danger', response.message);
+        //                     }
+        //                 },
+        //                 error: function () {
+        //                     AIZ.plugins.notify('danger', 'Error verifying IEC.');
+        //                 },
+        //                 complete: function () {
+        //                     verifyBtn.text(originalText).prop('disabled', false);
+        //                 }
+        //             });
+        //         })
+        //         .fail(function () {
+        //             AIZ.plugins.notify('danger', 'Somthing Went Wrong.');
+        //             verifyBtn.text(originalText).prop('disabled', false);
+        //         });
+        // }
+        --}}
 
         function verifyDocument(fieldId, routeParam, requiredLength = null, pattern = null) {
             const input = $('#' + fieldId);
@@ -793,6 +835,13 @@
             const submitBtn = $('#reg_model_form_2 button[type="submit"]');
             const verifyBtnId = `verify-${fieldId}-btn`;
             const verifyBtn = $('#' + verifyBtnId);
+
+            // const sessionData = @json(session()->has(str_replace('-', '_', '$routeParam')));
+
+            // // If session data exists, return early
+            // if (sessionData) {
+            //     return;
+            // }
 
             // Basic validation
             if (requiredLength && value.length !== requiredLength) {

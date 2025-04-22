@@ -133,7 +133,7 @@
                                     <div class="form-group">
                                         <label for="iec_no" class="col-form-label form-label">IEC.No: *</label>
                                         <input type="text" class="form-control form-control-lg" id="iec_no" name="iec_no"
-                                        minlength="15" maxlength="10" placeholder="Please Enter IEC.No" value="{{ $data['iec_no'] ?? $session_data_user['iec_no'] ?? '' }}" >
+                                        minlength="10" maxlength="10" placeholder="Please Enter IEC.No" value="{{ $data['iec_no'] ?? $session_data_user['iec_no'] ?? '' }}" >
                                     </div>
                                 </div>
 
@@ -153,7 +153,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="registration_date">Registration Date *</label>
                                 <input type="date" id="registration_date" name="registration_date"
-                                    class="form-control form-control-lg" value="{{ old('registration_date', $data['registration_date'] ?? '') }}" required />
+                                    class="form-control form-control-lg" value="{{ old('registration_date', $data['registration_date'] ?? $session_data_user['registration_date'] ?? '') }}" required />
                             </div>
 
                         </div>
@@ -665,7 +665,7 @@
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">PAN.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="pan_no" name="pan_no"
-                                            minlength="12" maxlength="12" placeholder="Please Enter PAN No" value="{{ $data['pan_no'] ?? $session_data_user['pan_no'] ?? '' }}" required>
+                                            minlength="12" maxlength="12" placeholder="Please Enter PAN No" value="{{ $session_data_user['pan_no'] ?? '' }}" required>
                                         </div>
                                     </div>
         
@@ -687,7 +687,9 @@
                                         <div class="form-group">
                                             <label for="iec_no" class="col-form-label form-label">Passport No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="passport_no" name="passport_no"
-                                            minlength="15" maxlength="15" placeholder="Please Enter Passport No" vlaue="{{ $data['passport_no'] ?? $session_data_user['passport_no'] ?? '' }}" >
+                                            minlength="8" maxlength="9" placeholder="Please Enter Passport No" value="{{ $session_data_user['passport_no'] ?? '' }}" 
+                                            @if($session_data_bussines['type_option'] != "domestic") required @endif
+                                            >
                                         </div>
                                     </div>
 
@@ -696,6 +698,7 @@
                                             <label for="gst_no" class="col-form-label form-label">Passport Upload : *</label>
                                             <input type="file" class="form-control form-control-lg" id="passport_no_file" name="passport_no_file"
                                             accept=".jpg, .jpeg, .webp, .png, .pdf"
+                                            @if($session_data_bussines['type_option'] != "domestic") required @endif
                                             >
                                         </div>
                                     </div>
@@ -738,7 +741,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="registration_date">D.O.B *</label>
                                 <input type="date" id="dob" name="dob"
-                                    class="form-control form-control-lg" value="{{ $data['dob'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['dob'] ?? $session_data_user['dob'] ?? '' }}" required />
                             </div>
 
                         </div>
@@ -878,9 +881,9 @@
                         <div class="col-md-3 mb-md-4 mb-3">
 
                             @php
-                                if(!empty($session_data_user['phone_personal'])){
-                                    $Phone_parts = explode('-', $session_data_user['phone_personal']);
-                                    $Phone_parts_number = $Phone_parts[1] ?? ''; 
+                                if(!empty($session_data_user['phone'])){
+                                    $Phone_parts = explode('-', $session_data_user['phone']);
+                                    $Phone_parts_number = $Phone_parts[1] ?? '';
                                 } 
                             @endphp
 
@@ -897,8 +900,8 @@
                         <div class="col-md-3 mb-md-4 mb-3">
 
                             @php
-                                if(!empty($session_data_user['whats_app_no_personal'])){
-                                    $whats_app_no_parts = explode('-', $session_data_user['whats_app_no_personal']);
+                                if(!empty($session_data_user['whats_app_no'])){
+                                    $whats_app_no_parts = explode('-', $session_data_user['whats_app_no']);
                                     $whats_app_no_parts_number = $whats_app_no_parts[1] ?? ''; 
                                 }
                             @endphp
@@ -1189,7 +1192,7 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="d_l_no_3">Drug / Pharmacy Licence No 3 *</label>
+                                <label class="form-label" for="d_l_no_3">Drug / Pharmacy Licence No 3 </label>
                                 <input type="text" id="d_l_no_3" name="d_l_no_3"
                                     class="form-control form-control-lg" value="{{ $data['d_l_no_3'] ?? '' }}" placeholder="Enter D.L.No.3"/>
                             </div>
@@ -1199,7 +1202,7 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="d_l_no_3">Upload Drug / Pharmacy Licence No 3 *</label>
+                                <label class="form-label" for="d_l_no_3">Upload Drug / Pharmacy Licence No 3 </label>
                                 <input type="file" id="d_l_no_3"
                                     class="form-control form-control-lg" name="d_l_no_3_file"
                                     accept=".jpg, .jpeg, .webp, .png, .pdf" required/>
@@ -1247,10 +1250,79 @@
 
 @endif
 
+{{-- - //------------------------------  verification  5 modal -----------------------// -- --}}
 
-@if (Session::has('step') && Session::get('step') == 5)
+ @if (Session::has('step') && Session::get('step') == 5)
 
-{{-- - //------------------------------ Registration 5 modal -----------------------// -- --}}
+@php
+    $session_data_personal = session()->get('user_data_personal') ?? [];
+    $session_data_bussines = session()->get('user_data_business') ?? []; 
+@endphp
+
+
+    <div class="modal fade login_form_popup" id="reg_model_5" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content py-3">
+                <div class="modal-header">
+                    <div class="heading">
+                        <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                        <h5 class="modal-title" id="exampleModalLabel_phone">Verify Phone Number</h5>
+                    </div>
+
+                </div>
+                <form id="reg_model_form_5" action="{{ url(route('new.user.account.create', ['param' => 'verify-otps'])) }}"
+                    method="post">
+                    @csrf
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label form-label">Verification Code For this Business Number {{ $session_data_bussines['phone_business'] }}:</label>
+                            <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp_business"
+                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label form-label">Verification Code For this Personal Number {{ $session_data_personal['phone'] }}:</label>
+                            <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp_personal"
+                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="blue_btn black_buttons">
+                            <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
+                        </div>
+
+                        <div class="display_flexx">
+                             <div class="resend_otp">
+                                <a class="ms-4" class="btn btn-primary" onclick="resendOTPButton_Phone('business','{{ $session_data_bussines['phone_business'] }}');">Resend OTP for Business Number</a>
+                             </div>
+                             <div class="resend_otp">
+                                <a class="ms-4" class="btn btn-primary" onclick="resendOTPButton_Phone('personal','{{ $session_data_personal['phone'] }}');">Resend OTP for Business Number</a>
+                             </div>
+                             <div class="purple_btn">
+                            <button type="submit" class="animate_button black1_buttons">Verify <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                        </div>
+                       
+                        </div>
+                       
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+@endif --}}
+
+
+
+
+@if (Session::has('step') && Session::get('step') == 6)
+
+{{-- - //------------------------------ Registration 6 modal -----------------------// -- --}}
 
 @php
     session()->forget('temp_user_id');
@@ -1260,7 +1332,7 @@
     Session()->forget('step');
 @endphp
 
-<div class="modal fade login_form_popup" id="reg_model_5" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_6" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
 aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content py-3">
@@ -1295,7 +1367,7 @@ aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     </div>
 </div>
 
-{{-- - //------------------------------  Registration 5 modal -----------------------// -- --}}
+{{-- - //------------------------------  Registration 6 modal -----------------------// -- --}}
 
 @endif
 

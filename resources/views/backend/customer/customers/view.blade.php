@@ -10,26 +10,81 @@
                 <br>
 
                 <div class="card p-3">
-                    <h5> GST Details </h5>
+                    <h5> Business Details </h5>
                     <hr>
                     <br>
                     <div class="row">
+
+                        @if($user->type_option == 'domestic')
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">GST No</label>
+                                    <p>{{ $user->gst_no ?? "-" }}</p>
+                                    <br>
+                                    <a href="{{ asset(custom_file($user->gst_no_file)) }}" target="_blank">
+                                        view
+                                    </a>
+                                </div>
+
+                            </div>
+                        @else 
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">IEC.No</label>
+                                    <p>{{ $user->iec_no ?? "-" }}</p>
+                                    <br>
+                                    <a href="{{ asset(custom_file($user->iec_no_file)) }}" target="_blank">
+                                        view
+                                    </a>
+                                </div>
+
+                            </div>
+                        @endif
+
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="name">GST No</label>
-                                <p>{{ $user->gst_no ?? "-" }}</p>
+                                <label class="form-label" for="name">Registration Date</label>
+                                <p>{{ $user->registration_date ?? "-" }}</p>
                             </div>
 
                         </div>
-                    </div>
-                </div>
 
-                <div class="card p-3">
-                    <h5> Personal Details </h5>
-                    <hr>
-                    <br>
-                    <div class="row">
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Constitution of Business</label>
+                                <p>{{ $user->const_of_business ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+                            @if($user->type_option == 'domestic')
+                                <div class="form-group">
+                                    <label class="form-label" for="name">GSTIN Status / Current Status</label>
+                                    <p>{{ $user->gstin_current_status ?? "-" }}</p>
+                                </div>
+                            @else
+                                <div class="form-group">
+                                    <label class="form-label" for="name">UIN Status / Current Status</label>
+                                    <p>{{ $user->uin_current_status ?? "-" }}</p>
+                                </div>
+                            @endif
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Concerned Person Name</label>
+                                <p>{{ $user->con_person_name ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
@@ -38,77 +93,71 @@
                             </div>
 
                         </div>
-                        <div class="col-md-4 mb-4">
 
-                            <div class="form-group">
-                                <label class="form-label" for="email_id">Concerned Person Name</label>
-                                <p>{{ $user->name ?? "-" }}</p>
-                            </div>
-
-                        </div>
-                        <div class="col-md-4 mb-4">
-
-                            <div class="form-group">
-                                <label class="form-label" for="phone">Email</label>
-                                <p> {{ $user->email ?? "-" }}</p>
-                            </div>
-
-                        </div>
-                        <div class="col-md-4 mb-4">
-
-                            <div class="form-group">
-                                <label class="form-label" for="phone">Phone No</label>
-                                <p> {{ $user->phone ?? "-" }}</p>
-                            </div>
-
-                        </div>
-                        <div class="col-md-4 mb-4">
-
-                            <div class="form-group">
-                                <label class="form-label" for="phone">Telephone No</label>
-                                <p> {{ $user->tel_number ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-
-                            <div class="form-group">
-                                <label class="form-label" for="phone">Whatsapp No</label>
-                                <p> {{ $user->whats_app_no ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-
-                            <div class="form-group">
-                                <label class="form-label" for="phone">Post</label>
-                                <p> {{ $user->post ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                    </div>
-                </div>
-
-
-                <div class="card p-3">
-                    <h5> Address Details </h5>
-                    <hr>
-                    <br>
-                    <div class="row">
 
                         <div class="col-md-12 mb-4">
+                            <h5> Address </h5>
+                        </div>
+
+                        <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="phone">Address</label>
-                                <p> {{ $user->address ?? "-" }}</p>
+                                <label class="form-label" for="name">Street Address 1</label>
+                                <p>{{ $user->street_add_first_business ?? "-" }}</p>
                             </div>
 
                         </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Street Address 2</label>
+                                <p>{{ $user->street_add_sec_business ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Locality/Suburb/Land Mark</label>
+                                <p>{{ $user->locality_land_mark_business ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Village</label>
+                                <p>{{ $user->village_business ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Post</label>
+                                <p>{{ $user->post_business ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Post</label>
+                                <p>{{ $user->post_business ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
                                 <label class="form-label" for="country__code">Country</label>
-                                <p> {{ getParticularData('countries','name',$user->country_id) ?? "-" }}</p>
+                                <p> {{ getParticularData('countries','name',$user->country_id_business ?? 0) ?? "-" }}</p>
                             </div>
     
                         </div>
@@ -116,7 +165,7 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="country__code">state</label>
-                                <p> {{ getParticularData('states','name',$user->state_id) ?? "-" }}</p>
+                                <p> {{ getParticularData('states','name',$user->state_id_business ?? 0) ?? "-" }}</p>
                             </div>
     
                         </div>
@@ -124,10 +173,354 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="country__code">City</label>
-                                <p> {{ getParticularData('cities','name',$user->city_id) ?? "-" }}</p>
+                                <p> {{ getParticularData('cities','name',$user->city_id_business ?? 0) ?? "-" }}</p>
                             </div>
     
                         </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">District</label>
+                                <p> {{ $user->district_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Pincode</label>
+                                <p> {{ $user->pincode_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Country Code</label>
+                                <p> {{ $user->country_code_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Primary Mobile (this number is user for your Login details)</label>
+                                <p> {{ $user->prim_mobile_no_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Primary Whatapp No</label>
+                                <p> {{ $user->prim_whats_app_no_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Alternate Mobile (contact Person)</label>
+                                <p> {{ $user->alt_mobile_no_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Alternate Whatapp No</label>
+                                <p> {{ $user->alternate_whats_app_no_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Primary E-mail * (this eamil is user for login details)</label>
+                                <p> {{ $user->prim_email_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Alternate E-mail</label>
+                                <p> {{ $user->alt_email_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Website</label>
+                                <p> {{ $user->website_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-12 mb-4">
+                            <h5> Bank Details </h5>
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Bank Name</label>
+                                <p> {{ $user->bank_name_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Account No</label>
+                                <p> {{ $user->account_no_business ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Account Name</label>
+                                <p> {{ $user->account_name_business ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Branch Code</label>
+                                <p> {{ $user->branch_code_business ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Branch Name</label>
+                                <p> {{ $user->branch_name_business ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Branch Address</label>
+                                <p> {{ $user->branch_address_business ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">IFSC Code</label>
+                                <p> {{ $user->ifsc_code_business ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">MICR Code</label>
+                                <p> {{ $user->micr_code_business ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">AD code</label>
+                                <p> {{ $user->ad_code_business ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                    </div>
+                </div>
+
+
+
+                <div class="card p-3">
+                    <h5> Personal Details </h5>
+                    <hr>
+                    <br>
+                    <div class="row">
+
+                        @if($user->type_option == 'domestic')
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Aadhaar.No</label>
+                                    <p>{{ $user->aadhaar_no ?? "-" }}</p>
+                                    <br>
+                                    <a href="{{ asset(custom_file($user->aadhaar_no_file)) }}" target="_blank">
+                                        view
+                                    </a>
+                                </div>
+
+                            </div>
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">PAN.No</label>
+                                    <p>{{ $user->pan_no ?? "-" }}</p>
+                                    <br>
+                                    <a href="{{ asset(custom_file($user->pan_no_file)) }}" target="_blank">
+                                        view
+                                    </a>
+                                </div>
+
+                            </div>
+                        @else 
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Passport No</label>
+                                    <p>{{ $user->passport_no ?? "-" }}</p>
+                                    <br>
+                                    <a href="{{ asset(custom_file($user->passport_no_file)) }}" target="_blank">
+                                        view
+                                    </a>
+                                </div>
+
+                            </div>
+                        @endif
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Photo Upload</label>
+                                <br>
+                                <a href="{{ asset(custom_file($user->photo_file)) }}" target="_blank">
+                                    view
+                                </a>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Name</label>
+                                <p>{{ $user->name ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Father Name</label>
+                                <p>{{ $user->father_name ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">D.O.B</label>
+                                <p>{{ $user->dob ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-12 mb-4">
+                            <h5> Address </h5>
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Street Address 1</label>
+                                <p>{{ $user->street_add_first ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Street Address 2</label>
+                                <p>{{ $user->street_add_sec ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Locality/Suburb/Land Mark</label>
+                                <p>{{ $user->locality_land_mark ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Village</label>
+                                <p>{{ $user->village ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Post</label>
+                                <p>{{ $user->post ?? "-" }}</p>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="country__code">Country</label>
+                                <p> {{ getParticularData('countries','name',$user->country_id ?? 0) ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="country__code">state</label>
+                                <p> {{ getParticularData('states','name',$user->state_id ?? 0) ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="country__code">City</label>
+                                <p> {{ getParticularData('cities','name',$user->city_id ?? 0) ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">District</label>
+                                <p> {{ $user->district ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
@@ -136,151 +529,235 @@
                             </div>
     
                         </div> 
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Country Code</label>
+                                <p> {{ $user->country_code ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Primary Mobile</label>
+                                <p> {{ $user->prim_mobile_no ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Primary Whatapp No</label>
+                                <p> {{ $user->prim_whats_app_no ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Alternate Mobile</label>
+                                <p> {{ $user->alt_mobile_no ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Alternate Whatapp No</label>
+                                <p> {{ $user->alt_whats_app_no ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Primary E-mail</label>
+                                <p> {{ $user->prim_email_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Alternate E-mail</label>
+                                <p> {{ $user->alt_email_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-12 mb-4">
+                            <h5> Personal Bank Details </h5>
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Bank Name</label>
+                                <p> {{ $user->bank_name_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Account No</label>
+                                <p> {{ $user->account_no_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div> 
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Account Name</label>
+                                <p> {{ $user->account_name_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Branch Code</label>
+                                <p> {{ $user->branch_code_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Branch Name</label>
+                                <p> {{ $user->branch_name_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Branch Address</label>
+                                <p> {{ $user->branch_address_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">IFSC Code</label>
+                                <p> {{ $user->ifsc_code_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">MICR Code</label>
+                                <p> {{ $user->micr_code_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">AD code</label>
+                                <p> {{ $user->ad_code_personal ?? "-" }}</p>
+                            </div>
+    
+                        </div>
+
                     </div>
                 </div>
 
-
-                <div class="card p-3">
-                    <h5> Bank Details </h5>
-                    <hr>
-                    <br>
-                    <div class="row">
-                        <div class="col-md-4 mb-4">
-
-                            <div class="form-group">
-                                <label class="form-label" for="bank_name">Bank Name</label>
-                                <p> {{ $user->bank_name ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-    
-                            <div class="form-group">
-                                <label class="form-label" for="account_no">Account No</label>
-                                <p> {{ $user->account_no ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-    
-                            <div class="form-group">
-                                <label class="form-label" for="branch_no">Branch No</label>
-                                <p> {{ $user->branch_no ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-    
-                            <div class="form-group">
-                                <label class="form-label" for="branch_code">Branch Code</label>
-                                <p> {{ $user->branch_code ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-    
-                            <div class="form-group">
-                                <label class="form-label" for="ifsc_code">IFSC Code</label>
-                                <p> {{ $user->ifsc_code ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-    
-                            <div class="form-group">
-                                <label class="form-label" for="micr_code">MICR Code</label>
-                                <p> {{ $user->micr_code ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-    
-                            <div class="form-group">
-                                <label class="form-label" for="customer_care_executive">Customer Care Executive</label>
-                                <p> {{ $user->customer_care_executive ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                    </div>
-                </div>
 
                 <div class="card p-3">
                     <h5> License Details </h5>
                     <hr>
                     <br>
                     <div class="row">
+
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="cc_no">CC NO</label>
-                                <p> {{ $user->cc_no ?? "-" }}</p>
+                                <label class="form-label" for="name">Drug / Pharmacy Licence No 1 </label>
+                                <p>{{ $user->d_l_no_1 ?? "-" }}</p>
+                                <br>
+                                <a href="{{ asset(custom_file($user->d_l_no_1_file)) }}" target="_blank">
+                                    view
+                                </a>
                             </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-    
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_1">D.L No 1 (Drug Licence)</label>
-                                <p> {{ $user->d_l_no_1 ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-    
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_2">D.L No 2</label>
-                                <p> {{ $user->d_l_no_2 ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                        <div class="col-md-4 mb-4">
-    
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_3">D.L No 3</label>
-                                <p> {{ $user->d_l_no_3 ?? "-" }}</p>
-                            </div>
-    
-                        </div>
-                    </div>
-                </div>
 
-                
-                <div class="card p-3">
-                    <h5> Transport Details </h5>
-                    <hr>
-                    <br>
-                    <div class="row">
+                        </div>
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="d_l_exp_Date">D.L Expiry Date</label>
-                                <p> {{ $user->d_l_exp_Date ?? "-" }}</p>
+                                <label class="form-label" for="name">Drug / Pharmacy Licence No 2 </label>
+                                <p>{{ $user->d_l_no_2 ?? "-" }}</p>
+                                <br>
+                                <a href="{{ asset(custom_file($user->d_l_no_2_file)) }}" target="_blank">
+                                    view
+                                </a>
                             </div>
-    
+
                         </div>
                         <div class="col-md-4 mb-4">
-    
+
                             <div class="form-group">
-                                <label class="form-label" for="transport">Transport</label>
-                                <p> {{ $user->transport ?? "-" }}</p>
+                                <label class="form-label" for="name">Drug / Pharmacy Licence No 3 </label>
+                                <p>{{ $user->d_l_no_2 ?? "-" }}</p>
+                                <br>
+                                <a href="{{ asset(custom_file($user->d_l_no_3_file)) }}" target="_blank">
+                                    view
+                                </a>
                             </div>
-    
+
                         </div>
                         <div class="col-md-4 mb-4">
-    
+
                             <div class="form-group">
-                                <label class="form-label" for="cargo">Cargo</label>
-                                <p> {{ $user->cargo ?? "-" }}</p>
+                                <label class="form-label" for="name">Doctor / Pharmacist / Hospital Reg.No </label>
+                                <p>{{ $user->doctor_hospital_reg_no ?? "-" }}</p>
+                                <br>
+                                <a href="{{ asset(custom_file($user->doctor_hospital_reg_no_file)) }}" target="_blank">
+                                    view
+                                </a>
                             </div>
-    
+
                         </div>
                         <div class="col-md-4 mb-4">
-    
+
                             <div class="form-group">
-                                <label class="form-label" for="booked_to">Booked To</label>
-                                <p> {{ $user->booked_to ?? "-" }}</p>
+                                <label class="form-label" for="name">Dairy / Trust / NGO / Other Reg.No </label>
+                                <p>{{ $user->dairy_trust_ngo_reg_no ?? "-" }}</p>
+                                <br>
+                                <a href="{{ asset(custom_file($user->dairy_trust_ngo_reg_no_file)) }}" target="_blank">
+                                    view
+                                </a>
                             </div>
-    
+
+                        </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">CC / MDL Registration No </label>
+                                <p>{{ $user->cc_mdl_reg_no ?? "-" }}</p>
+                                <br>
+                                <a href="{{ asset(custom_file($user->cc_mdl_reg_no_file)) }}" target="_blank">
+                                    view
+                                </a>
+                            </div>
+
                         </div>
                     </div>
                 </div>
