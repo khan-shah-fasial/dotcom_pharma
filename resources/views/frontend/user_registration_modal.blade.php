@@ -111,7 +111,7 @@
                                     <div class="form-group">
                                         <label for="gst_no" class="col-form-label form-label">GST No: *</label>
                                         <input type="text" class="form-control form-control-lg" id="gst_no" name="gst_no"
-                                        minlength="10" maxlength="15" placeholder="Please Enter GST No" value="{{ $data['gst_no'] ?? $session_data_user['gst_no'] ?? '' }}" required>
+                                        minlength="10" maxlength="15" placeholder="Please Enter GST No Ex: 22AAAAA0000A1Z5 " value="{{ $data['gst_no'] ?? $session_data_user['gst_no'] ?? '' }}" required>
                                     </div>
                                 </div>
     
@@ -133,7 +133,7 @@
                                     <div class="form-group">
                                         <label for="iec_no" class="col-form-label form-label">IEC.No: *</label>
                                         <input type="text" class="form-control form-control-lg" id="iec_no" name="iec_no"
-                                        minlength="10" maxlength="10" placeholder="Please Enter IEC.No" value="{{ $data['iec_no'] ?? $session_data_user['iec_no'] ?? '' }}" >
+                                        minlength="10" maxlength="10" placeholder="Please Enter IEC.No Ex: 1234567890" value="{{ $data['iec_no'] ?? $session_data_user['iec_no'] ?? '' }}" >
                                     </div>
                                 </div>
 
@@ -231,7 +231,7 @@
                             <div class="form-group mb-1">
                                 <label class="form-label" for="street_add_sec_business">Street Address 2 *</label>
                                 <input type="text" id="street_add_sec_business" name="street_add_sec_business"
-                                    class="form-control form-control-lg" value="{{ $data['street_add_sec_business'] ?? $session_data_user['street_add_sec_business'] ?? '' }}" required placeholder="Enter Street Address"/>
+                                    class="form-control form-control-lg" value="{{ $data['street_add_sec_business'] ?? $session_data_user['street_add_sec_business'] ?? '' }}" required placeholder="Enter Street Address 2"/>
                             </div>
 
                         </div>
@@ -485,7 +485,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="branch_code_business">Branch Code *</label>
                                 <input type="text" id="branch_code_business" name="branch_code_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['branch_code_business'] ?? '' }}" required placeholder="Enter Branch Code"/>
+                                    class="form-control form-control-lg" value="{{ $session_data_user['branch_code_business'] ?? '' }}" required placeholder="Enter Branch Code Ex: 99922"/>
                             </div>
 
                         </div>
@@ -512,7 +512,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="ifsc_code_business">IFSC Code *</label>
                                 <input type="text" id="ifsc_code_business" name="ifsc_code_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_business'] ?? '' }}" required placeholder="Enter IFSC Code"/>
+                                    class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_business'] ?? '' }}" required placeholder="Enter IFSC Code Ex: AAAA0000000"/>
                             </div>
 
                         </div>
@@ -521,7 +521,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="micr_code_business">MICR Code *</label>
                                 <input type="text" id="micr_code_business" name="micr_code_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['micr_code_business'] ?? '' }}" required placeholder="Enter MICR Code"/>
+                                    class="form-control form-control-lg" value="{{ $session_data_user['micr_code_business'] ?? '' }}" required placeholder="Enter MICR Code Ex: 600002025"/>
                             </div>
 
                         </div>
@@ -530,7 +530,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="ad_code_business">AD code *</label>
                                 <input type="text" id="ad_code_business" name="ad_code_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['ad_code_business'] ?? '' }}" required placeholder="Enter MICR Code"/>
+                                    class="form-control form-control-lg" value="{{ $session_data_user['ad_code_business'] ?? '' }}" required placeholder="Enter AD Code"/>
                             </div>
 
                         </div>
@@ -648,7 +648,7 @@
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">Aadhaar.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="aadhaar_no" name="aadhaar_no"
-                                            minlength="12" maxlength="12" placeholder="Please Enter Aadhaar No" value="{{ $data['aadhaar_no'] ?? $session_data_user['aadhaar_no'] ?? '' }}" required>
+                                            minlength="12" maxlength="12" placeholder="Please Enter Aadhaar No Ex: 123456789012" value="{{ $data['aadhaar_no'] ?? $session_data_user['aadhaar_no'] ?? '' }}" required>
                                         </div>
                                     </div>
         
@@ -665,7 +665,7 @@
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">PAN.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="pan_no" name="pan_no"
-                                            minlength="12" maxlength="12" placeholder="Please Enter PAN No" value="{{ $session_data_user['pan_no'] ?? '' }}" required>
+                                            minlength="12" maxlength="12" placeholder="Please Enter PAN No Ex: 3WEKY5JOR4" value="{{ $session_data_user['pan_no'] ?? '' }}" required>
                                         </div>
                                     </div>
         
@@ -687,7 +687,7 @@
                                         <div class="form-group">
                                             <label for="iec_no" class="col-form-label form-label">Passport No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="passport_no" name="passport_no"
-                                            minlength="8" maxlength="9" placeholder="Please Enter Passport No" value="{{ $session_data_user['passport_no'] ?? '' }}" 
+                                            minlength="8" maxlength="9" placeholder="Please Enter Passport No Ex: 1234567890" value="{{ $session_data_user['passport_no'] ?? '' }}" 
                                             @if($session_data_bussines['type_option'] != "domestic") required @endif
                                             >
                                         </div>
@@ -1124,9 +1124,9 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="doctor_hospital_reg_no">Doctor / Pharmacist / Hospital Reg.No *</label>
+                                <label class="form-label" for="doctor_hospital_reg_no">Doctor / Pharmacist / Hospital Reg.No </label>
                                 <input type="text" id="doctor_hospital_reg_no" name="doctor_hospital_reg_no"
-                                    class="form-control form-control-lg" value="{{ $data['doctor_hospital_reg_no'] ?? '' }}" required placeholder="Enter D.L.No.2"/>
+                                    class="form-control form-control-lg" value="{{ $data['doctor_hospital_reg_no'] ?? '' }}" placeholder="Enter D.L.No.2"/>
                             </div>
 
                         </div>
@@ -1134,10 +1134,10 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="doctor_hospital_reg_no_file">Upload Doctor / Pharmacist / Hospital Reg.No *</label>
+                                <label class="form-label" for="doctor_hospital_reg_no_file">Upload Doctor / Pharmacist / Hospital Reg.No </label>
                                 <input type="file" id="doctor_hospital_reg_no_file"
                                     class="form-control form-control-lg" name="doctor_hospital_reg_no_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf" required/>
+                                    accept=".jpg, .jpeg, .webp, .png, .pdf"/>
                             </div>
 
                         </div>
@@ -1168,9 +1168,9 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="dairy_trust_ngo_reg_no">Dairy / Trust / NGO / Other Reg.No *</label>
+                                <label class="form-label" for="dairy_trust_ngo_reg_no">Dairy / Trust / NGO / Other Reg.No </label>
                                 <input type="text" id="dairy_trust_ngo_reg_no" name="dairy_trust_ngo_reg_no"
-                                    class="form-control form-control-lg" value="{{ $data['dairy_trust_ngo_reg_no'] ?? '' }}" required placeholder="Enter D.L.No.2"/>
+                                    class="form-control form-control-lg" value="{{ $data['dairy_trust_ngo_reg_no'] ?? '' }}" placeholder="Enter D.L.No.2"/>
                             </div>
 
                         </div>
@@ -1178,10 +1178,10 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="dairy_trust_ngo_reg_no_file">Upload Doctor / Pharmacist / Hospital Reg.No *</label>
+                                <label class="form-label" for="dairy_trust_ngo_reg_no_file">Upload Dairy / Trust / NGO / Other Reg.No</label>
                                 <input type="file" id="dairy_trust_ngo_reg_no_file"
                                     class="form-control form-control-lg" name="dairy_trust_ngo_reg_no_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf" required/>
+                                    accept=".jpg, .jpeg, .webp, .png, .pdf" />
                             </div>
 
                         </div>
@@ -1205,7 +1205,7 @@
                                 <label class="form-label" for="d_l_no_3">Upload Drug / Pharmacy Licence No 3 </label>
                                 <input type="file" id="d_l_no_3"
                                     class="form-control form-control-lg" name="d_l_no_3_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf" required/>
+                                    accept=".jpg, .jpeg, .webp, .png, .pdf"/>
                             </div>
 
                         </div>
@@ -1213,9 +1213,9 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="cc_mdl_reg_no">CC / MDL Registration No *</label>
+                                <label class="form-label" for="cc_mdl_reg_no">CC / MDL Registration No </label>
                                 <input type="text" id="cc_mdl_reg_no" name="cc_mdl_reg_no"
-                                    class="form-control form-control-lg" value="{{ $data['cc_mdl_reg_no'] ?? '' }}" required placeholder="Enter D.L.No.2"/>
+                                    class="form-control form-control-lg" value="{{ $data['cc_mdl_reg_no'] ?? '' }}" placeholder="Enter D.L.No.2"/>
                             </div>
 
                         </div>
@@ -1223,10 +1223,10 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="cc_mdl_reg_no_file">Upload Doctor / Pharmacist / Hospital Reg.No *</label>
+                                <label class="form-label" for="cc_mdl_reg_no_file">Upload CC / MDL Registration No </label>
                                 <input type="file" id="cc_mdl_reg_no_file"
                                     class="form-control form-control-lg" name="cc_mdl_reg_no_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf" required/>
+                                    accept=".jpg, .jpeg, .webp, .png, .pdf" />
                             </div>
 
                         </div>
@@ -1358,7 +1358,7 @@ aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
                 <div class="purple_btn">
                     <!-- <button type="button" onclick="close_and_reload_reg();" class="animate_button black1_buttons"
                         data-dismiss="modal">Back to Login</button> -->
-                    <a href="{{ route('user.login') }}" class="animate_button black1_buttons"
+                    <a href="{{ route('user.login') }}" id="back_login" class="animate_button black1_buttons"
                         data-dismiss="modal">Back to Login</a>
                 </div>
             </div>

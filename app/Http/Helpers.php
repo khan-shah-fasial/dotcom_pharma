@@ -2858,15 +2858,13 @@ if (!function_exists('getSelectedCountry')) {
             } else {
                 $data = 'null';
             }
+
         } elseif(Session()->has('user_data_business')) {
 
-            if(Session()->has('step') && Session()->get('step') == 2) { 
-                $session_data_user = session()->get('user_data_business') ?? [];
-                $data = $session_data_user[$colName] ?? null;
-            } else {
-                $session_data_user = session()->get('user_data_personal') ?? [];
-                $data = $session_data_user[$colName] ?? null;
-            }
+
+            $session_data_user = session()->get('user_data_business') ?? [];
+            $data = $session_data_user[$colName] ?? null;
+           
 
         } else {
             // Check if there's a temp user ID in the session
@@ -2894,6 +2892,23 @@ if (!function_exists('getSelectedCountry')) {
         }
 
         // Return the selected country data
+        return $data;
+    }
+}
+
+
+if (!function_exists('getSelectedCountry_form2')) {
+    function getSelectedCountry_form2(string $colName)
+    {
+        if (Session()->has('user_data_personal')) {
+
+            $session_data_user = session()->get('user_data_personal') ?? [];
+            $data = $session_data_user[$colName] ?? null;
+
+        } else {
+            $data = null;
+        }
+
         return $data;
     }
 }
