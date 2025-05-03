@@ -162,7 +162,7 @@
                             <div class="form-group mb-1">
                                 <label class="form-label" for="const_of_business">Constitution of Business *</label>
                                 <input type="text" id="const_of_business" name="const_of_business"
-                                    class="form-control form-control-lg" value="{{ $data['const_of_business'] ?? $session_data_user['const_of_business'] ?? '' }}" required placeholder="Enter Constitution of Business"/>
+                                    class="form-control form-control-lg" value="{{ $data['const_of_business'] ?? $session_data_user['const_of_business'] ?? '' }}" required placeholder="Enter Constitution of Business Ex: ABCD"/>
                             </div>
 
                         </div>
@@ -173,7 +173,7 @@
                                 <div class="form-group mb-1">
                                     <label class="form-label" for="gstin_current_status">GSTIN Status / Current Status *</label>
                                     <input type="text" id="gstin_current_status" name="gstin_current_status"
-                                        class="form-control form-control-lg" value="{{ $data['gstin_current_status'] ?? $session_data_user['gstin_current_status'] ?? '' }}" required placeholder="Enter GSTIN Status / Current Status"/>
+                                        class="form-control form-control-lg" value="{{ $data['gstin_current_status'] ?? $session_data_user['gstin_current_status'] ?? '' }}" required placeholder="Enter GSTIN Status / Current Status Ex: Active"/>
                                 </div>
 
                             </div>
@@ -185,7 +185,7 @@
                                 <div class="form-group mb-1">
                                     <label class="form-label" for="uin_current_status">UIN Status / Current Status *</label>
                                     <input type="text" id="uin_current_status" name="uin_current_status"
-                                        class="form-control form-control-lg" value="{{ $data['uin_current_status'] ?? $session_data_user['uin_current_status'] ?? '' }}" placeholder="Enter UIN Status / Current Status"/>
+                                        class="form-control form-control-lg" value="{{ $data['uin_current_status'] ?? $session_data_user['uin_current_status'] ?? '' }}" placeholder="Enter UIN Status / Current Status Ex: Active"/>
                                 </div>
 
                             </div>
@@ -197,7 +197,7 @@
                             <div class="form-group mb-1">
                                 <label class="form-label" for="name">Concerned Person Name *</label>
                                 <input type="text" id="con_person_name" name="con_person_name"
-                                    class="form-control form-control-lg" value="{{ $data['con_person_name'] ?? $session_data_user['con_person_name'] ?? '' }}" required placeholder="Enter Concerned Person Name"/>
+                                    class="form-control form-control-lg" value="{{ $data['con_person_name'] ?? $session_data_user['con_person_name'] ?? '' }}" required placeholder="Enter Concerned Person Name Ex: ABCD"/>
                             </div>
 
                         </div>
@@ -338,7 +338,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="country_code_business">Country Code *</label>
                                 <input type="text" id="country_code_business" name="country_code_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['country_code_business'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $session_data_user['country_code_business'] ?? '' }}" placeholder="Enter Country Code Ex: 91" required />
                             </div>
 
                         </div>
@@ -467,7 +467,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="account_no_business">Account No *</label>
                                 <input type="text" id="account_no_business" name="account_no_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['account_no_business'] ?? '' }}" required placeholder="Enter Account No"/>
+                                    class="form-control form-control-lg" value="{{ $session_data_user['account_no_business'] ?? '' }}" required placeholder="Enter Account No EX: 123456..."/>
                             </div>
 
                         </div>
@@ -665,7 +665,7 @@
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">PAN.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="pan_no" name="pan_no"
-                                            minlength="12" maxlength="12" placeholder="Please Enter PAN No Ex: 3WEKY5JOR4" value="{{ $session_data_user['pan_no'] ?? '' }}" required>
+                                            minlength="10" maxlength="10" placeholder="Please Enter PAN No Ex: 3WEKY5JOR4" value="{{ $session_data_user['pan_no'] ?? '' }}" required>
                                         </div>
                                     </div>
         
@@ -687,7 +687,7 @@
                                         <div class="form-group">
                                             <label for="iec_no" class="col-form-label form-label">Passport No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="passport_no" name="passport_no"
-                                            minlength="8" maxlength="9" placeholder="Please Enter Passport No Ex: 1234567890" value="{{ $session_data_user['passport_no'] ?? '' }}" 
+                                            minlength="8" maxlength="9" placeholder="Please Enter Passport No Ex: HYDA089153811" value="{{ $session_data_user['passport_no'] ?? '' }}" 
                                             @if($session_data_bussines['type_option'] != "domestic") required @endif
                                             >
                                         </div>
@@ -1038,7 +1038,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="ifsc_code_personal">IFSC Code *</label>
                                 <input type="text" id="ifsc_code_personal" name="ifsc_code_personal"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_personal'] ?? '' }}" required placeholder="Enter IFSC Code"/>
+                                    class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_personal'] ?? '' }}" required placeholder="Enter IFSC Code Ex: ICIC0000269"/>
                             </div>
 
                         </div>
@@ -1047,7 +1047,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="micr_code_personal">MICR Code *</label>
                                 <input type="text" id="micr_code_personal" name="micr_code_personal"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['micr_code_personal'] ?? '' }}" required placeholder="Enter MICR Code"/>
+                                    class="form-control form-control-lg" value="{{ $session_data_user['micr_code_personal'] ?? '' }}" required placeholder="Enter MICR Code Ex: 123456789"/>
                             </div>
 
                         </div>
@@ -1056,7 +1056,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="ad_code_personal">AD code *</label>
                                 <input type="text" id="ad_code_personal" name="ad_code_personal"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['ad_code_personal'] ?? '' }}" required placeholder="Enter MICR Code"/>
+                                    class="form-control form-control-lg" value="{{ $session_data_user['ad_code_personal'] ?? '' }}" required placeholder="Enter MICR Code Ex: 123456"/>
                             </div>
 
                         </div>
@@ -1325,11 +1325,7 @@
 {{-- - //------------------------------ Registration 6 modal -----------------------// -- --}}
 
 @php
-    session()->forget('temp_user_id');
-    session()->forget('otp');
-    session()->forget('user_data');
-    session()->forget('otp_timestamp');
-    Session()->forget('step');
+    session()->flush();
 @endphp
 
 <div class="modal fade login_form_popup" id="reg_model_6" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
@@ -1358,7 +1354,7 @@ aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
                 <div class="purple_btn">
                     <!-- <button type="button" onclick="close_and_reload_reg();" class="animate_button black1_buttons"
                         data-dismiss="modal">Back to Login</button> -->
-                    <a href="{{ route('user.login') }}" id="back_login" class="animate_button black1_buttons"
+                    <a href="javascript:void(0);" onclick="close_and_reload_reg();" class="animate_button black1_buttons"
                         data-dismiss="modal">Back to Login</a>
                 </div>
             </div>

@@ -62,6 +62,17 @@
 
 @section('custome-script')
     <script>
+
+        const metaData = {
+            whats_app_no_meta: 'null',
+            phone_business_meta: 'null',
+            phone_code_meta: 'null',
+            alternate_whats_app_no_business_meta: 'null',
+            alternate_mob_no_business_meta: 'null',
+            alternate_whats_app_no_personal_meta: 'null',
+            alternate_mob_no_personal_meta: 'null'
+        };
+
         $(document).ready(function() {
 
             // ---------------- Gst verify --------------------------- //
@@ -264,6 +275,7 @@
                 // // Set default country code to +91 (India)
                 // iti1.setCountry('in'); // 'in' is the ISO2 code for India
 
+
                 if(name === 'whats_app_no'){
 
                     var country_selected = "{{ getSelectedCountry('whats_app_no_meta') }}";
@@ -285,6 +297,7 @@
 
                 }
 
+                console.dir('test');
 
                 if(country_selected !== 'null' && country_selected !== ''){
                     iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
@@ -303,6 +316,8 @@
                     var updatedCountryData = iti1.getSelectedCountryData();
                     document.querySelector(`input[name="country_code_${name}"]`).value = updatedCountryData.dialCode;
                     document.querySelector(`input[name="${name}_meta"]`).value = updatedCountryData.iso2;
+
+                    metaData[`${name}_meta`] = iti1.getSelectedCountryData().iso2;
                 });
             }
 
@@ -357,6 +372,8 @@
                     var updatedCountryData = iti1.getSelectedCountryData();
                     document.querySelector(`input[name="country_code_${name}"]`).value = updatedCountryData.dialCode;
                     document.querySelector(`input[name="${name}_meta"]`).value = updatedCountryData.iso2;
+
+                    metaData[`${name}_meta`] = iti1.getSelectedCountryData().iso2;
                 });
             }
 
@@ -381,6 +398,7 @@
 
 
                             validate_form(step);
+                            console.dir(step);
 
                             if(step == 2){
                                 intil_input('phone_code');
@@ -526,27 +544,35 @@
 
             if(name === 'whats_app_no'){
 
-                var country_selected = "{{ getSelectedCountry('whats_app_no_meta') }}";
+                var country_selected = "{{ getSelectedCountry('whats_app_no_business_meta') }}";
 
                 if(country_selected == 'null' || country_selected == ''){
-                    var country_selected = "{{ getSelectedCountry('whats_app_no_business_meta') }}";
+                    country_selected = metaData.whats_app_no_business_meta;
                 }
 
             } else if (name === 'alternate_mob_no_business') { 
                 var country_selected = "{{ getSelectedCountry('alternate_mob_no_business_meta') }}";
-            } else if (name === 'alternate_whats_app_no_business') { 
-                var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
-            } else {
-                var country_selected = "{{ getSelectedCountry('phone_code_meta') }}"; 
 
                 if(country_selected == 'null' || country_selected == ''){
-                    var country_selected = "{{ getSelectedCountry('phone_business_meta') }}";
+                    country_selected = metaData.alternate_mob_no_business_meta;
+                }
+
+            } else if (name === 'alternate_whats_app_no_business') { 
+                var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
+
+                if(country_selected == 'null' || country_selected == ''){
+                    country_selected = metaData.alternate_whats_app_no_business_meta;
+                }
+
+
+            } else {
+                var country_selected = "{{ getSelectedCountry('phone_business_meta') }}";
+
+                if(country_selected == 'null' || country_selected == ''){
+                    country_selected = metaData.phone_business_meta;
                 }
 
             }
-
-
-            console.dir(country_selected);
 
             if(country_selected !== 'null' && country_selected !== ''){
                 iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
@@ -589,18 +615,37 @@
 
                 var country_selected = "{{ getSelectedCountry_form2('whats_app_no_meta') }}";
 
+                if(country_selected == 'null' || country_selected == ''){
+                    country_selected = metaData.whats_app_no_meta;
+                }
+
             } else if (name === 'alternate_mob_no_personal') { 
                 var country_selected = "{{ getSelectedCountry_form2('alternate_mob_no_personal_meta') }}";
+
+                if(country_selected == 'null' || country_selected == ''){
+                    country_selected = metaData.alternate_mob_no_personal_meta;
+                }
+
             } else if (name === 'alternate_whats_app_no_personal') { 
                 var country_selected = "{{ getSelectedCountry_form2('alternate_whats_app_no_personal_meta') }}";
+
+                if(country_selected == 'null' || country_selected == ''){
+                    country_selected = metaData.alternate_whats_app_no_personal_meta;
+                }
+
             } else {
                 var country_selected = "{{ getSelectedCountry_form2('phone_code_meta') }}"; 
 
+                if(country_selected == 'null' || country_selected == ''){
+                    country_selected = metaData.phone_code_meta;
+                }
+
             }
 
+            console.dir('vegiata');
             console.dir(country_selected);
 
-            if(country_selected !== 'null' && country_selected !== ''){
+            if(country_selected !== 'null' && country_selected !== '' && country_selected != null){
                 iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
             } else {
                 // Set default country code to +91 (India)
@@ -639,6 +684,29 @@
                         $(`#reg_model_${step}`).modal('show');
 
                         validate_form(step);
+                        console.dir("goku");
+
+                        if(step == 2){
+                            intil_input('phone_code');
+                            intil_input('whats_app_no');
+                            intil_input('alternate_mob_no_business');
+                            intil_input('alternate_whats_app_no_business');
+                            toggleLocalityFields();
+
+                            const isDomestic = document.getElementById('domestic').checked;
+                            if (isDomestic) {
+                                checkAndAppendButton();
+                            } else {
+                                checkAndAppendIECButton();
+                            }
+                            
+                        } else if (step == 3) {
+                            console.dir(step);
+                            intil_input_form2('phone_code');
+                            intil_input_form2('whats_app_no');
+                            intil_input_form2('alternate_mob_no_personal');
+                            intil_input_form2('alternate_whats_app_no_personal');
+                        }
 
                     } else {
                         console.error('Error:', response.message || 'An error occurred.');
@@ -989,11 +1057,6 @@
                     verifyBtn.text(originalText).prop('disabled', false);
                 });
         }
-
-        document.getElementById('back_login').addEventListener('click', function (e) {
-            e.preventDefault();
-            window.location.href = "{{ route('user.login') }}";
-        });
 
     </script>
 @endsection
