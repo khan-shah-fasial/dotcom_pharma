@@ -58,6 +58,52 @@
     <div id="regModalContainer"></div>
 
 
+    {{--- //------------------------------ aadhar verify modal -----------------------// ----}}
+
+    <div class="modal fade" id="aadhar_otp_model" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content py-3">
+                <div class="modal-header">
+                    <div class="heading">
+                        <h5 class="modal-title" id="exampleModalLabel">Verify aadhar</h5>
+                    </div>
+                    <div class="purple_btn_close">
+                        <button type="button" onclick="close_Emai_modal();" class="close p-1 px-3" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true" style="font-size: 24px;">&times;</span>
+                        </button>
+                    </div>
+                </div>
+                <form id="aadhar-verify-otp" action="{{ url(route('new.user.account.create', ['param' => 'aadhar-otp-verify'])) }}"
+                    method="post">
+                    @csrf
+
+                    <div class="modal-body">
+                            <div class="form-group">
+                                <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
+                                <input type="number" class="form-control" id="recipient-name" name="otp" pattern="[0-9]+" minlength="6"
+                                maxlength="6" placeholder="Please Enter Code" required>
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="blue_btn">
+                            <button type="button" onclick="close_aadhar_modal();" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                        <div class="purple_btn">
+                            <button type="submit" class="btn btn-primary">Verify</button>
+                        </div>
+                        {{-- <div class="resend_otp">
+                            <a class="ms-4" class="btn btn-primary" id="resendOTPButton" style="display: none; cursor: pointer;">Resend OTP</a>
+                        </div> --}}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{--- //------------------------------  aadhar verify modal -----------------------// ----}}
+
+
 @endsection
 
 @section('custome-script')
@@ -168,19 +214,19 @@
             // ---------------- pan_no verify --------------------------- //
 
             // ---------------- passport_no verify --------------------------- //
-
+            let dob;
             function checkAndAppendpassport_noButton() {
                 const val = $('#passport_no').val().trim();
-                if (val.length === 8 || val.length === 9) {
-                    verifyDocument('passport_no', 'passport-validate', null, /^[A-Z0-9]{1,9}$/i);
+                if (val.length === 9 || val.length === 15) {
+                    verifyDocument('passport_no', 'passport-validate', null, /^[A-Z0-9]{1,15}$/i);
                 }
             }
 
             // Watch changes on IEC input
             $('body').on('input', '#passport_no', function () {
+                dob = $('#dob').val().trim();
                 setTimeout(checkAndAppendpassport_noButton, 50); // wait for paste/input value
             });
-
 
             // ---------------- passport_no verify --------------------------- //
 
@@ -999,16 +1045,9 @@
         function verifyDocument(fieldId, routeParam, requiredLength = null, pattern = null) {
             const input = $('#' + fieldId);
             const value = input.val().trim();
-            const submitBtn = $('#reg_model_form_2 button[type="submit"]');
-            const verifyBtnId = `verify-${fieldId}-btn`;
-            const verifyBtn = $('#' + verifyBtnId);
-
-            // const sessionData = @json(session()->has(str_replace('-', '_', '$routeParam')));
-
-            // // If session data exists, return early
-            // if (sessionData) {
-            //     return;
-            // }
+            const dob = $('#dob').val();
+            // const verifyBtnId = `verify-${fieldId}-btn`;
+            // const verifyBtn = $('#' + verifyBtnId);
 
             // Basic validation
             if (requiredLength && value.length !== requiredLength) {
@@ -1021,8 +1060,16 @@
                 return;
             }
 
-            const originalText = verifyBtn.text();
-            verifyBtn.text('Verifying...').prop('disabled', true);
+
+            if (fieldId == "passport_no") {
+                if (!dob) { // This checks if dob is empty, null, or undefined
+                    AIZ.plugins.notify('danger', "To validate your Passport, you need to select DOB too");
+                    return;
+                }
+            }
+
+            // const originalText = verifyBtn.text();
+            // verifyBtn.text('Verifying...').prop('disabled', true);
 
             getCsrfToken()
                 .done(function (response) {
@@ -1033,12 +1080,59 @@
                         method: 'POST',
                         data: {
                             [fieldId]: value,
+                            dob: dob,
                             _token: token
                         },
                         success: function (response) {
                             if (response.status === "success") {
                                 AIZ.plugins.notify('success', response.message);
-                                verifyBtn.remove();
+
+                                let data = response.data ? response.data : response;
+
+                                if (fieldId == "gst_no") {
+                                    $('#street_add_first_business').val(data.contact_details.principal.address);
+                                    $('#registration_date').val(data.date_of_registration);
+                                    $('#const_of_business').val(data.constitution_of_business);
+                                    $('#gstin_current_status').val(data.gstin_status);
+                                    $('#company_name').val(data.business_name);
+                                    $('#phone_code').val(data.contact_details.principal.mobile);
+                                    $('#whats_app_no').val(data.contact_details.principal.mobile);
+                                    $('#prim_email_business').val(data.contact_details.principal.email);
+
+                                    // Correctly accessing the first promoter, or showing an empty string if it doesn't exist
+                                    $('#con_person_name').val(data.promoters.length > 0 ? data.promoters[0] : '');
+                                } 
+
+                                if (fieldId == "iec_no") {
+                                    $('#street_add_first_business').val(data.address);
+                                    $('#registration_date').val(data.iec_issuance_date);
+
+                                    // $('#const_of_business').val(data.constitution_of_business);
+
+                                    $('#uin_current_status').val(data.iec_status);
+                                    $('#company_name').val(data.firm_name);
+                                    $('#phone_code').val(data.firm_mobile_no);
+                                    $('#whats_app_no').val(data.firm_mobile_no);
+                                    $('#prim_email_business').val(data.firm_email_id);
+
+                                    // Correctly accessing the first promoter, or showing an empty string if it doesn't exist
+                                    $('#con_person_name').val(data.director_details.length > 0 ? data.director_details[0].name : '');
+                                }
+
+                                if (fieldId == "aadhaar_no" && data == "open") {
+                                    setTimeout(function () {
+                                        // location.reload();
+                                        $('#aadhar_otp_model').modal('show');
+                                    }, 100);
+                                }
+
+                                if (fieldId === "passport_no") {
+                                    $('#name').val(data.full_name);
+                                }
+
+
+                                // console.dir(response.data);
+                                // verifyBtn.remove();
                                 // submitBtn.prop('disabled', false);
                             } else {
                                 AIZ.plugins.notify('danger', response.message);
@@ -1048,15 +1142,57 @@
                             AIZ.plugins.notify('danger', `Error verifying ${fieldId.replace(/_/g, ' ')}`);
                         },
                         complete: function () {
-                            verifyBtn.text(originalText).prop('disabled', false);
+                            // verifyBtn.text(originalText).prop('disabled', false);
                         }
                     });
                 })
                 .fail(function () {
                     AIZ.plugins.notify('danger', 'Something went wrong.');
-                    verifyBtn.text(originalText).prop('disabled', false);
+                    // verifyBtn.text(originalText).prop('disabled', false);
                 });
         }
+
+
+
+
+        /*--------------------- Aadhar otp ------------------*/ 
+
+            initValidate('#aadhar-verify-otp');
+
+            $('#aadhar-verify-otp').on('submit', function(e){
+                var form = $(this);
+                ajax_form_submit(e, form, responseHandler_aadhar_verify_otp);
+            });
+
+            var responseHandler_aadhar_verify_otp = function (response) {
+                var form = $('#aadhar-verify-otp'); 
+                
+                form.find("input[type=text]").val("");
+
+                $('#aadhar_otp_model').modal('toggle');
+
+                if(response.status == "success"){
+                    let data = response.data;
+                    var address = data.address.house + ',' + data.address.street + ',' + data.address.landmark + ',' + data.address.loc + ',' + data.address.dist + ',' + data.address.state + ',' + data.address.country;
+
+                    $('#street_add_first_personal').val(address);
+                    $('#locality_land_mark_personal').val(data.address.landmark);
+                    $('#dob').val(data.dob);
+                    $('#name').val(data.full_name);
+
+                    $('#pincode_personal').val(data.zip);
+                    $('#district_personal').val(data.address.dist);
+                } else {
+                    $('#aadhaar_no').val('');
+                }
+
+            };
+
+            function close_aadhar_modal() {
+                $('#aadhar_otp_model').modal('toggle');
+            };
+
+         /*--------------------- email verify otp ------------------*/ 
 
     </script>
 @endsection

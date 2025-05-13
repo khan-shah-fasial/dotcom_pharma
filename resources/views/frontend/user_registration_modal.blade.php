@@ -616,7 +616,8 @@
 
 @php
     $session_data_user = session()->get('user_data_personal') ?? [];
-    $session_data_bussines = session()->get('user_data_business') ?? []; 
+    $session_data_bussines = session()->get('user_data_business') ?? [];
+    $pan_no =  session()->get('pan_no') ?? '';
 @endphp
 
 <div class="modal fade login_form_popup" id="reg_model_3" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
@@ -665,7 +666,7 @@
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">PAN.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="pan_no" name="pan_no"
-                                            minlength="10" maxlength="10" placeholder="Please Enter PAN No Ex: 3WEKY5JOR4" value="{{ $session_data_user['pan_no'] ?? '' }}" required>
+                                            minlength="10" maxlength="10" placeholder="Please Enter PAN No Ex: 3WEKY5JOR4" value="{{ $session_data_user['pan_no'] ?? $pan_no }}" required>
                                         </div>
                                     </div>
         
@@ -685,9 +686,9 @@
                                 <div class="row">
                                     <div class="col-md-5 mb-md-4 mb-3">
                                         <div class="form-group">
-                                            <label for="iec_no" class="col-form-label form-label">Passport No: *</label>
+                                            <label for="iec_no" class="col-form-label form-label">Passport File No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="passport_no" name="passport_no"
-                                            minlength="8" maxlength="9" placeholder="Please Enter Passport No Ex: HYDA089153811" value="{{ $session_data_user['passport_no'] ?? '' }}" 
+                                            minlength="9" maxlength="15" placeholder="Please Enter Passport No Ex: HYDA089153811" value="{{ $session_data_user['passport_no'] ?? '' }}" 
                                             @if($session_data_bussines['type_option'] != "domestic") required @endif
                                             >
                                         </div>
