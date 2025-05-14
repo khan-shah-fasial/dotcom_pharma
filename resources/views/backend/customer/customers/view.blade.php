@@ -22,9 +22,14 @@
                                     <label class="form-label" for="name">GST No</label>
                                     <p>{{ $user->gst_no ?? "-" }}</p>
                                     <br>
-                                    <a href="{{ asset(custom_file($user->gst_no_file)) }}" target="_blank">
-                                        view
-                                    </a>
+
+                                    @if (!empty($user->gst_no_file) && file_exists(public_path(custom_file($user->gst_no_file))))
+
+                                        <a href="{{ asset(custom_file($user->gst_no_file)) }}" target="_blank">
+                                            view
+                                        </a>
+
+                                    @endif
                                 </div>
 
                             </div>
@@ -35,9 +40,14 @@
                                     <label class="form-label" for="name">IEC.No</label>
                                     <p>{{ $user->iec_no ?? "-" }}</p>
                                     <br>
-                                    <a href="{{ asset(custom_file($user->iec_no_file)) }}" target="_blank">
-                                        view
-                                    </a>
+
+                                    @if (!empty($user->iec_no_file) && file_exists(public_path(custom_file($user->iec_no_file))))
+
+                                        <a href="{{ asset(custom_file($user->iec_no_file)) }}" target="_blank">
+                                            view
+                                        </a>
+                                    
+                                    @endif
                                 </div>
 
                             </div>
@@ -368,9 +378,14 @@
                                     <label class="form-label" for="name">Aadhaar.No</label>
                                     <p>{{ $user->aadhaar_no ?? "-" }}</p>
                                     <br>
-                                    <a href="{{ asset(custom_file($user->aadhaar_no_file)) }}" target="_blank">
-                                        view
-                                    </a>
+
+                                    @if (!empty($user->aadhaar_no_file) && file_exists(public_path(custom_file($user->aadhaar_no_file))))
+
+                                        <a href="{{ asset(custom_file($user->aadhaar_no_file)) }}" target="_blank">
+                                            view
+                                        </a>
+                                    
+                                    @endif
                                 </div>
 
                             </div>
@@ -380,9 +395,14 @@
                                     <label class="form-label" for="name">PAN.No</label>
                                     <p>{{ $user->pan_no ?? "-" }}</p>
                                     <br>
-                                    <a href="{{ asset(custom_file($user->pan_no_file)) }}" target="_blank">
-                                        view
-                                    </a>
+
+                                    @if (!empty($user->pan_no_file) && file_exists(public_path(custom_file($user->pan_no_file))))
+
+                                        <a href="{{ asset(custom_file($user->pan_no_file)) }}" target="_blank">
+                                            view
+                                        </a>
+
+                                    @endif
                                 </div>
 
                             </div>
@@ -393,9 +413,14 @@
                                     <label class="form-label" for="name">Passport No</label>
                                     <p>{{ $user->passport_no ?? "-" }}</p>
                                     <br>
-                                    <a href="{{ asset(custom_file($user->passport_no_file)) }}" target="_blank">
-                                        view
-                                    </a>
+
+                                    @if (!empty($user->passport_no_file) && file_exists(public_path(custom_file($user->passport_no_file))))
+
+                                        <a href="{{ asset(custom_file($user->passport_no_file)) }}" target="_blank">
+                                            view
+                                        </a>
+
+                                    @endif
                                 </div>
 
                             </div>
@@ -406,9 +431,14 @@
                             <div class="form-group">
                                 <label class="form-label" for="name">Photo Upload</label>
                                 <br>
-                                <a href="{{ asset(custom_file($user->photo_file)) }}" target="_blank">
-                                    view
-                                </a>
+
+                                @if (!empty($user->photo_file) && file_exists(public_path(custom_file($user->photo_file))))
+
+                                    <a href="{{ asset(custom_file($user->photo_file)) }}" target="_blank">
+                                        view
+                                    </a>
+
+                                @endif
                             </div>
 
                         </div>
@@ -693,9 +723,14 @@
                                 <label class="form-label" for="name">Drug / Pharmacy Licence No 1 </label>
                                 <p>{{ $user->d_l_no_1 ?? "-" }}</p>
                                 <br>
-                                <a href="{{ asset(custom_file($user->d_l_no_1_file)) }}" target="_blank">
-                                    view
-                                </a>
+
+                                @if (!empty($user->d_l_no_1_file) && file_exists(public_path(custom_file($user->d_l_no_1_file))))
+
+                                    <a href="{{ asset(custom_file($user->d_l_no_1_file)) }}" target="_blank">
+                                        view
+                                    </a>
+
+                                @endif
                             </div>
 
                         </div>
@@ -705,9 +740,14 @@
                                 <label class="form-label" for="name">Drug / Pharmacy Licence No 2 </label>
                                 <p>{{ $user->d_l_no_2 ?? "-" }}</p>
                                 <br>
-                                <a href="{{ asset(custom_file($user->d_l_no_2_file)) }}" target="_blank">
-                                    view
-                                </a>
+
+                                @if (!empty($user->d_l_no_2_file) && file_exists(public_path(custom_file($user->d_l_no_2_file))))
+
+                                    <a href="{{ asset(custom_file($user->d_l_no_2_file)) }}" target="_blank">
+                                        view
+                                    </a>
+
+                                @endif
                             </div>
 
                         </div>
@@ -717,9 +757,14 @@
                                 <label class="form-label" for="name">Drug / Pharmacy Licence No 3 </label>
                                 <p>{{ $user->d_l_no_2 ?? "-" }}</p>
                                 <br>
-                                <a href="{{ asset(custom_file($user->d_l_no_3_file)) }}" target="_blank">
-                                    view
-                                </a>
+
+                                @if (!empty($user->d_l_no_3_file) && file_exists(public_path(custom_file($user->d_l_no_3_file))))
+
+                                    <a href="{{ asset(custom_file($user->d_l_no_3_file)) }}" target="_blank">
+                                        view
+                                    </a>
+
+                                @endif
                             </div>
 
                         </div>
@@ -729,9 +774,14 @@
                                 <label class="form-label" for="name">Doctor / Pharmacist / Hospital Reg.No </label>
                                 <p>{{ $user->doctor_hospital_reg_no ?? "-" }}</p>
                                 <br>
-                                <a href="{{ asset(custom_file($user->doctor_hospital_reg_no_file)) }}" target="_blank">
-                                    view
-                                </a>
+
+                                @if (!empty($user->doctor_hospital_reg_no_file) && file_exists(public_path(custom_file($user->doctor_hospital_reg_no_file))))
+
+                                    <a href="{{ asset(custom_file($user->doctor_hospital_reg_no_file)) }}" target="_blank">
+                                        view
+                                    </a>
+
+                                @endif
                             </div>
 
                         </div>
@@ -741,9 +791,14 @@
                                 <label class="form-label" for="name">Dairy / Trust / NGO / Other Reg.No </label>
                                 <p>{{ $user->dairy_trust_ngo_reg_no ?? "-" }}</p>
                                 <br>
-                                <a href="{{ asset(custom_file($user->dairy_trust_ngo_reg_no_file)) }}" target="_blank">
-                                    view
-                                </a>
+
+                                @if (!empty($user->dairy_trust_ngo_reg_no_file) && file_exists(public_path(custom_file($user->dairy_trust_ngo_reg_no_file))))
+
+                                    <a href="{{ asset(custom_file($user->dairy_trust_ngo_reg_no_file)) }}" target="_blank">
+                                        view
+                                    </a>
+                                
+                                @endif    
                             </div>
 
                         </div>
@@ -753,9 +808,14 @@
                                 <label class="form-label" for="name">CC / MDL Registration No </label>
                                 <p>{{ $user->cc_mdl_reg_no ?? "-" }}</p>
                                 <br>
-                                <a href="{{ asset(custom_file($user->cc_mdl_reg_no_file)) }}" target="_blank">
-                                    view
-                                </a>
+
+                                @if (!empty($user->cc_mdl_reg_no_file) && file_exists(public_path(custom_file($user->cc_mdl_reg_no_file))))
+
+                                    <a href="{{ asset(custom_file($user->cc_mdl_reg_no_file)) }}" target="_blank">
+                                        view
+                                    </a>
+
+                                @endif
                             </div>
 
                         </div>

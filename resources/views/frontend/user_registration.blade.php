@@ -1142,13 +1142,11 @@
                             AIZ.plugins.notify('danger', `Error verifying ${fieldId.replace(/_/g, ' ')}`);
                         },
                         complete: function () {
-                            // verifyBtn.text(originalText).prop('disabled', false);
                         }
                     });
                 })
                 .fail(function () {
                     AIZ.plugins.notify('danger', 'Something went wrong.');
-                    // verifyBtn.text(originalText).prop('disabled', false);
                 });
         }
 

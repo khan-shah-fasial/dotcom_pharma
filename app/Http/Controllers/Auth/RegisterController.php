@@ -1164,17 +1164,21 @@ class RegisterController extends Controller
                 'message' => 'Please Provide a valid Aadhaar Number',
             ], 200);
 
-        } elseif (
-            $prev_form['type_option'] == 'domestic' &&
-            (!Session::has('pan_validate') || Session::get('pan_validate') != "True")
-        ) {
+        } 
+        
+        // elseif (
+        //     $prev_form['type_option'] == 'domestic' &&
+        //     (!Session::has('pan_validate') || Session::get('pan_validate') != "True")
+        // ) {
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Please Provide a valid Pan Number',
-            ], 200);
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'Please Provide a valid Pan Number',
+        //     ], 200);
 
-        } elseif (
+        // } 
+        
+        elseif (
             $prev_form['type_option'] == 'international' &&
             (!Session::has('passport_validate') || Session::get('passport_validate') != "True")
         ) {
@@ -1386,7 +1390,7 @@ class RegisterController extends Controller
                 $file = $request->file($field);
                 $document_name = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
                 $file->move($documentPath, $document_name);
-                $fileFields[$field] = 'uploads/all/' . $document_name;
+                $fileFields[$field] = 'uploads/document/' . $document_name;
             }
         }
 
