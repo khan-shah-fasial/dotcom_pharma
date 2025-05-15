@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use ZipArchive;
 use Illuminate\Support\Facades\Session;
+use App\Models\ProductCategory;
 
 class HomeController extends Controller
 {
@@ -678,7 +679,17 @@ class HomeController extends Controller
 
             $category_name = Category::where('id', $detailedProduct->category_id)->pluck('name')->first() ?? '';
 
-            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name'));
+            $subCategoryIds = ProductCategory::where('product_id', $detailedProduct->id)
+                ->pluck('category_id'); // Use pluck to get plain array
+
+            // Get category names if there are IDs
+            $subCategoryNames = [];
+            if ($subCategoryIds->isNotEmpty()) {
+                $subCategoryNames = Category::whereIn('id', $subCategoryIds)->pluck('name')->toArray();
+            }
+
+
+            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name','subCategoryNames'));
         }
         abort(404);
     }

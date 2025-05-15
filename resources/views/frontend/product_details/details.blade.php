@@ -4,7 +4,16 @@
         {{ $detailedProduct->getTranslation('name') }}
     </h2>
 
+
+
+
     <div class="row align-items-center mb-3">
+
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Drug Name') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->drug_name ?? '-' }}</span>
+        </div>
+
         <!-- Review -->
         @if ($detailedProduct->auction_product != 1)
             <div class="col-12">
@@ -19,6 +28,73 @@
                     {{ translate('reviews') }})</span>
             </div>
         @endif
+
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Brand / Mfg') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->brand->name ?? '-' }}</span>
+        </div>
+
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Pharma Categories') }}:</small>
+            <span class="fw-500">
+                @if(!empty($subCategoryNames))
+                    {{ implode(', ', array_map('ucfirst', $subCategoryNames)) }}
+                @else
+                    -
+                @endif
+            </span>
+        </div>
+
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Product Form') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_form ?? '-' }}</span>
+        </div>
+                
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Prescription Required') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
+        </div>
+
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Type') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_type  ?? '-' }}</span>
+        </div>
+
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Material') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_material  ?? '-' }}</span>
+        </div>
+
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Country of Origin') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_origin ?? '-' }}</span>
+        </div>
+
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Minimum Pack Size') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_min_pack_size ?? '-' }}</span>
+        </div>
+
+        <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Expiry Date') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_exp_date ?? '-' }}</span>
+        </div>
+
+                <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('HSN / HS Code') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_hsn ?? '-' }}</span>
+        </div>
+
+                <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Dimentions') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_dimentions ?? '-' }}</span>
+        </div>
+
+                <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Weight / Volume') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_weight_vol ?? '-' }}</span>
+        </div>
+
         <!-- Estimate Shipping Time -->
         @if ($detailedProduct->est_shipping_days)
             <div class="col-auto fs-14 mt-1 d-none">

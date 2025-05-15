@@ -122,6 +122,22 @@
                                             </div>
                                         </div>
 
+                                        <!-- Drug Name -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Drug Name')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('drug_name') is-invalid @enderror" name="drug_name" value="{{ old('drug_name') }}" placeholder="{{ translate('Drug Name') }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Form -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Form')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_form') is-invalid @enderror" name="product_form" value="{{ old('product_form') }}" placeholder="{{ translate('Product Form') }}">
+                                            </div>
+                                        </div>
+
                                         <!-- Product short description -->
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Description')}} <span class="text-danger">*</span></label>
@@ -165,6 +181,9 @@
                                                 <small class="text-muted">{{translate("The minimum quantity needs to be purchased by your customer.")}}</small>
                                             </div>
                                         </div>
+
+
+
                                         <!-- Tags -->
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Tags')}}</label>
@@ -196,6 +215,94 @@
                                             </div>
                                         </div>
                                         @endif
+
+                                        <!------- Prescription required --------->
+                                        <div class="form-group row">
+                                            <label class="col-md-3 col-from-label">{{translate('Prescription Required')}}</label>
+                                            <div class="col-md-9">
+                                                <label class="aiz-switch aiz-switch-success mb-0 d-block">
+                                                    <input type="checkbox" name="prescription_req" value="1">
+                                                    <span></span>
+                                                </label>
+                                                <small class="text-muted">{{ translate('If you enable this, a prescription will be required for this product.') }}</small>
+                                            </div>
+                                        </div>
+
+
+                                        <!-- Product type -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Type')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_type') is-invalid @enderror" name="product_type" value="{{ old('product_type') }}" placeholder="{{ translate('Product Type') }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product count -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Count')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_count') is-invalid @enderror" name="product_count" value="{{ old('product_count') }}" placeholder="{{ translate('Product Count') }}">
+                                            </div>
+                                        </div>
+
+
+                                        <!-- Product Material -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Material')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_material') is-invalid @enderror" name="product_material" value="{{ old('product_material') }}" placeholder="{{ translate('Product Material') }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Country of Origin -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Country of Origin')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_origin') is-invalid @enderror" name="product_origin" value="{{ old('product_origin') }}" placeholder="{{ translate('Product Country of Origin') }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Minimum Pack Size  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Minimum Pack Size ')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_min_pack_size') is-invalid @enderror" name="product_min_pack_size" value="{{ old('product_min_pack_size') }}" placeholder="{{ translate('Product Minimum Pack Size') }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Expiry Date  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Expiry Date')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_exp_date') is-invalid @enderror" name="product_exp_date" value="{{ old('product_exp_date') }}" placeholder="{{ translate('Product Expiry Date') }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product HSN / HS Code  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product HSN / HS Code')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_hsn') is-invalid @enderror" name="product_hsn" value="{{ old('product_hsn') }}" placeholder="{{ translate('Product HSN / HS Code') }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Dimentions  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Dimentions')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_dimentions') is-invalid @enderror" name="product_dimentions" value="{{ old('product_dimentions') }}" placeholder="{{ translate('Product Dimentions') }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product weight / volume  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Weight / Volume')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_weight_vol') is-invalid @enderror" name="product_weight_vol" value="{{ old('product_weight_vol') }}" placeholder="{{ translate('Product Weight / Volume') }}">
+                                            </div>
+                                        </div>
+
+
                                     </div>
 
                                     <!-- Product Category -->
