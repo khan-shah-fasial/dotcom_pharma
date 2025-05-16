@@ -715,7 +715,9 @@
                         $('#available-quantity').html(data.quantity);
                         
                         let qnt = data?.quantity ?? 0;
-                        $('#qnt-product-details').html(qnt > 0 ? 'Available' : 'Not Available');
+                        $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
+
+                        $('#per-piece-price-product-details').html(data?.per_piece_price ?? '-');
 
                         $('.input-number').prop('max', data.max_limit);
                         if(parseInt(data.in_stock) == 0 && data.digital  == 0){

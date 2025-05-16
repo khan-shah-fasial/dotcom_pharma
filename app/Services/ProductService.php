@@ -90,6 +90,7 @@ class ProductService
                 $str = ProductUtility::get_combination_string($combination, $collection);
 
                 unset($collection['price_' . str_replace('.', '_', $str)]);
+                unset($collection['per_piece_price_' . str_replace('.', '_', $str)]);
                 unset($collection['sku_' . str_replace('.', '_', $str)]);
                 unset($collection['qty_' . str_replace('.', '_', $str)]);
                 unset($collection['img_' . str_replace('.', '_', $str)]);
@@ -150,6 +151,29 @@ class ProductService
 
         $collection['has_warranty'] = isset($collection['has_warranty']) ? 1 : 0;
 
+        //Tab content
+        $iterations = $collection->get('itration', []);
+        $titles = $collection->get('tab_title', []);
+        $contents = $collection->get('tab_content', []);
+    
+        $tabs = [];
+        
+        foreach ($iterations as $index => $iteration) {
+            // Fallback to empty string if missing
+            $title = $titles[$index] ?? '';
+            $content = $contents[$index] ?? '';
+                $tabs[] = [
+                    'iteration' => $iteration,
+                    'title' => $title,
+                    'content' => $content,
+                ];
+        }
+        unset($collection['itration']);
+        unset($collection['tab_title']);
+        unset($collection['tab_content']);
+        $collection['contents'] = json_encode($tabs);
+        //Tab content        
+
         $data = $collection->merge(compact(
             'user_id',
             'approved',
@@ -169,6 +193,8 @@ class ProductService
     public function update(array $data, Product $product)
     {
         $collection = collect($data);
+
+
 
         $slug = Str::slug($collection['name']);
         $slug = $collection['slug'] ? Str::slug($collection['slug']) : Str::slug($collection['name']);
@@ -258,6 +284,7 @@ class ProductService
                 $str = ProductUtility::get_combination_string($combination, $collection);
 
                 unset($collection['price_' . str_replace('.', '_', $str)]);
+                unset($collection['per_piece_price_' . str_replace('.', '_', $str)]);
                 unset($collection['sku_' . str_replace('.', '_', $str)]);
                 unset($collection['qty_' . str_replace('.', '_', $str)]);
                 unset($collection['img_' . str_replace('.', '_', $str)]);
@@ -298,6 +325,29 @@ class ProductService
         $collection['has_warranty'] = isset($collection['has_warranty']) ? 1 : 0;
         
         unset($collection['button']);
+
+        //Tab content
+        $iterations = $collection->get('itration', []);
+        $titles = $collection->get('tab_title', []);
+        $contents = $collection->get('tab_content', []);
+    
+        $tabs = [];
+        
+        foreach ($iterations as $index => $iteration) {
+            // Fallback to empty string if missing
+            $title = $titles[$index] ?? '';
+            $content = $contents[$index] ?? '';
+                $tabs[] = [
+                    'iteration' => $iteration,
+                    'title' => $title,
+                    'content' => $content,
+                ];
+        }
+        unset($collection['itration']);
+        unset($collection['tab_title']);
+        unset($collection['tab_content']);
+        $collection['contents'] = json_encode($tabs);
+        //Tab content        
         
         $data = $collection->merge(compact(
             'discount_start_date',

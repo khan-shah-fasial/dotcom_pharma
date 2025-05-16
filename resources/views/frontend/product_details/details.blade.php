@@ -56,6 +56,11 @@
         </div>
 
         <div class="col-auto fs-14 mt-1">
+            <small class="mr-1 opacity-50 fs-14">{{ translate('Count') }}:</small>
+            <span class="fw-500">{{ $detailedProduct->product_count ?? '-' }}</span>
+        </div>
+
+        <div class="col-auto fs-14 mt-1">
             <small class="mr-1 opacity-50 fs-14">{{ translate('Type') }}:</small>
             <span class="fw-500">{{ $detailedProduct->product_type  ?? '-' }}</span>
         </div>
@@ -576,13 +581,18 @@
 
 
      <div class="d-flex flex-wrap align-items-center mb-1">
-            <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Stock') }}</span><br>
+            <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Stock Available') }}</span><br>
             <p id="qnt-product-details" class="text-secondary fs-14 fw-400 pb-0 mb-0"></p>
         </div>
 
          <div class="d-flex flex-wrap align-items-center mb-1">
             <span class="fs-14 fw-500 mr-4 w-80px">SKU</span><br>
             <p id="sku-product-details" class="text-secondary fs-14 fw-400 pb-0 mb-0"></p>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center mb-1">
+            <span class="fs-14 fw-500 mr-4 w-80px">Per Piece Price</span><br>
+            <p id="per-piece-price-product-details" class="text-secondary fs-14 fw-400 pb-0 mb-0"></p>
         </div>
 
          <div class="d-flex flex-wrap align-items-center mb-1">

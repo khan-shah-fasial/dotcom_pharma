@@ -341,6 +341,48 @@
                                         <textarea class="aiz-text-editor" name="description">{{ old('description') }}</textarea>
                                     </div>
                                 </div>
+
+
+                                <div class="form-group">
+                                    <label class="fs-13">{{translate('Tabs Contents')}}</label>
+                                    <div class="content-target"></div>
+                                    <!-- Add button -->
+                                    <button
+                                        type="button"
+                                        class="btn btn-block border hov-bg-soft-secondary fs-14 rounded-0 d-flex align-items-center justify-content-center" style="background: #fcfcfc;"
+                                        data-toggle="add-more"
+                                        data-content='
+                                        <div class="p-3 p-md-4 mb-3 mb-md-2rem remove-parent" style="border: 1px dashed #e4e5eb;">
+                                            <div class="row gutters-5">
+                                                <input type="hidden" class="form-control" name="itration[]" value="1" required>
+                                                <!-- link -->
+                                                <div class="col-md-12">
+                                                    <div class="form-group mb-md-0">
+                                                        <input type="text" class="form-control" placeholder="Enter Title" name="tab_title[]" value="" required>
+                                                    </div>
+                                                </div>					
+                                                <!-- Image -->
+                                                <div class="col-md">
+                                                    <div class="form-group mt-2">
+                                                        <textarea name="tab_content[]" rows="8" class="form-control aiz-text-editor" required></textarea>
+                                                    </div>
+                                                </div>
+                                                <!-- remove parent button -->
+                                                <div class="col-md-auto">
+                                                    <div class="form-group mb-md-0">
+                                                        <button type="button" class="mt-1 btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".remove-parent">
+                                                            <i class="las la-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>'
+                                        data-target=".content-target">
+                                        <i class="las la-2x text-success la-plus-circle"></i>
+                                        <span class="ml-2">{{ translate('Add New') }}</span>
+                                    </button> 
+                                </div>
+
                             </div>
 
                             <!-- Status -->
