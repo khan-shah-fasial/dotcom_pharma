@@ -18,6 +18,19 @@ class SearchController extends Controller
     public function index(Request $request, $category_id = null, $brand_id = null)
     {
         $query = $request->keyword;
+
+        $category_id = ($request->has('category') && $request->category != 'All Category' && !empty($request->category)) 
+        ? $request->category 
+        : null;
+
+        $brand_id = ($request->has('brand') && $request->brand != 'All Brand' && !empty($request->brand)) 
+        ? $request->brand 
+        : null;
+
+        $product_query = ($request->has('product') && !empty($request->product)) 
+        ? $request->product 
+        : null;
+
         $sort_by = $request->sort_by;
         $min_price = $request->min_price;
         $max_price = $request->max_price;
@@ -134,10 +147,28 @@ class SearchController extends Controller
             });
         }
 
+        if ($product_query != null) {
+
+            $products->where(function ($q) use ($product_query) {
+
+                $q->where('name', 'like', '%' . $product_query . '%')
+                    ->orWhere('tags', 'like', '%' . $product_query . '%')
+                    ->orWhereHas('product_translations', function ($q) use ($product_query) {
+                        $q->where('name', 'like', '%' . $product_query . '%');
+                    })
+                    ->orWhereHas('stocks', function ($q) use ($product_query) {
+                        $q->where('sku', 'like', '%' . $product_query . '%');
+                    });
+
+            });
+        }
+
         $products = filter_products($products)->with('taxes')->paginate(24)->appends(request()->query());
 
         return view('frontend.product_listing', compact('products', 'query', 'category', 'categories', 'category_id', 'brand_id', 'sort_by', 'seller_id', 'min_price', 'max_price', 'attributes', 'selected_attribute_values', 'colors', 'selected_color'));
     }
+
+
 
     public function listing(Request $request)
     {

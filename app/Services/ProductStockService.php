@@ -27,6 +27,9 @@ class ProductStockService
                 $product_stock->product_id = $product->id;
                 $product_stock->variant = $str;
                 $product_stock->price = request()['price_' . str_replace('.', '_', $str)];
+
+                $product_stock->per_piece_price = request()->get('per_piece_price_' . str_replace('.', '_', $str), null);
+
                 $product_stock->sku = request()['sku_' . str_replace('.', '_', $str)];
                 $product_stock->qty = request()['qty_' . str_replace('.', '_', $str)];
                 $product_stock->image = request()['img_' . str_replace('.', '_', $str)];
@@ -38,7 +41,7 @@ class ProductStockService
             $price = $collection['unit_price'];
             unset($collection['current_stock']);
 
-            $data = $collection->merge(compact('variant', 'qty', 'price'))->toArray();
+            $data = $collection->merge(compact('variant', 'qty', 'price', 'per_piece_price'))->toArray();
             
             ProductStock::create($data);
         }

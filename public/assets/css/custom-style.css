@@ -1349,3 +1349,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .fs-md-34 {
     font-size: 32px !important;
 }
+
+.login_form_popup  .modal-dialog.modal-lg {
+    max-width: 80% !important;
+}

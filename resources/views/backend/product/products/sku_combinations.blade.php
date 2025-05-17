@@ -8,6 +8,9 @@
 			<td class="text-center">
 				{{translate('Variant Price')}}
 			</td>
+			<td class="text-center">
+				{{translate('Per Piece Price')}}
+			</td>
 			<td class="text-center" data-breakpoints="lg">
 				{{translate('SKU')}}
 			</td>
@@ -53,6 +56,9 @@
 				</td>
 				<td>
 					<input type="number" lang="en" name="price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required>
+				</td>
+				<td>
+					<input type="number" lang="en" name="per_piece_price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required>
 				</td>
 				<td>
 					<input type="text" name="sku_{{ $str }}" value="" class="form-control">

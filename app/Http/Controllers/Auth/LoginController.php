@@ -402,7 +402,7 @@ class LoginController extends Controller
             ], 200);
         }
 
-        $user = User::where('phone', $request->input('country_code').'-'.$request->input('phone'))->first();
+        $user = User::where('phone', '+'.$request->input('country_code').'-'.$request->input('phone'))->first();
 
         if($user != null){
 

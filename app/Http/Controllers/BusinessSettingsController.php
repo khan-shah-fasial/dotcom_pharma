@@ -392,6 +392,33 @@ class BusinessSettingsController extends Controller
     public function update(Request $request)
     {
         foreach ($request->types as $key => $type) {
+
+            if ($type == 'faq_section') {
+
+                $faq_questions = $request->faq_questions ?? [];
+                $faq_answers = $request->faq_answers ?? [];
+        
+                // Prepare data in key-value format
+                $faq_data = [];
+                foreach ($faq_questions as $index => $question) {
+                    $faq_data[] = [
+                        'question' => $question,
+                        'answer'   => $faq_answers[$index] ?? '',
+                    ];
+                }
+
+                BusinessSetting::updateOrCreate(
+                    ['type' => $type], // Search criteria
+                    ['value' => json_encode($faq_data), 'lang' => null]
+                );
+
+                Artisan::call('cache:clear');
+
+                flash(translate("Settings updated successfully"))->success();
+                return redirect()->back();
+            }
+
+
             if ($type == 'site_name') {
                 $this->overWriteEnvFile('APP_NAME', $request[$type]);
             }

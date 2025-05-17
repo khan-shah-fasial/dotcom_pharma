@@ -2835,6 +2835,17 @@ if(!function_exists('getParticularData')){
     } 
 }
 
+if(!function_exists('custom_file')){
+    function custom_file($url)
+    {
+        if(app()->environment('local')){
+            return $url;
+        }
+
+        return 'public/' . $url;
+    }
+}
+
 if (!function_exists('getSelectedCountry')) {
     function getSelectedCountry(string $colName)
     {
@@ -2847,6 +2858,14 @@ if (!function_exists('getSelectedCountry')) {
             } else {
                 $data = 'null';
             }
+
+        } elseif(Session()->has('user_data_business')) {
+
+
+            $session_data_user = session()->get('user_data_business') ?? [];
+            $data = $session_data_user[$colName] ?? null;
+           
+
         } else {
             // Check if there's a temp user ID in the session
             if (session()->has('temp_user_id')) {
@@ -2878,6 +2897,23 @@ if (!function_exists('getSelectedCountry')) {
 }
 
 
+if (!function_exists('getSelectedCountry_form2')) {
+    function getSelectedCountry_form2(string $colName)
+    {
+        if (Session()->has('user_data_personal')) {
+
+            $session_data_user = session()->get('user_data_personal') ?? [];
+            $data = $session_data_user[$colName] ?? null;
+
+        } else {
+            $data = null;
+        }
+
+        return $data;
+    }
+}
+
+
 if (!function_exists('getSelectedCountry_addr')) {
     function getSelectedCountry_addr(string $colName)
     {
@@ -2896,5 +2932,207 @@ if (!function_exists('getSelectedCountry_addr')) {
 
         // Return the selected country data
         return $data;
+    }
+}
+
+if (!function_exists('product_details_sku_stock')) {
+    function product_details_sku_stock($productID)
+    {
+        $userSubtype = get_user_subtype();
+        
+        if ($userSubtype) {
+            $product_stocks_details = ProductStock::where('product_id', $productID)
+                ->where('variant', $userSubtype)
+                ->select('variant', 'sku', 'price', 'qty')
+                ->first();
+        } else {
+            $product_stocks_details = null;
+        }
+        
+        return $product_stocks_details;
+    }
+}
+
+
+if (!function_exists('fetchGstinDetails')) {
+    function fetchGstinDetails($gstin)
+    {
+
+        $bearer_token = env('SUREPASS_API_TOKEN');
+
+        $URL = "https://sandbox.surepass.io";
+        // $URL ="https://kyc-api.surepass.io";
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => ''.$URL.'/api/v1/corporate/gstin-advanced',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS =>'{
+                "id_number": "'.$gstin.'"
+            }',
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'Authorization: Bearer '.$bearer_token.''
+            ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        return $response;
+    }
+}
+
+if (!function_exists('fetchIECDetails')) {
+    function fetchIECDetails($iec_no)
+    {
+
+        $bearer_token = env('SUREPASS_API_TOKEN');
+
+        $URL = "https://sandbox.surepass.io";
+        // $URL ="https://kyc-api.surepass.io";
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => ''.$URL.'/api/v1/corporate/iec-advanced',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS =>'{
+                "iec_number": "'.$iec_no.'"
+            }',
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'Authorization: Bearer '.$bearer_token.''
+            ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        return $response;
+    }
+}
+
+
+if (!function_exists('requestOtpAadhar')) {
+    function requestOtpAadhar($aadhar_no)
+    {
+
+        $bearer_token = env('SUREPASS_API_TOKEN');
+
+        $URL = "https://sandbox.surepass.io";
+        // $URL ="https://kyc-api.surepass.io";
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => ''.$URL.'/api/v1/aadhaar-v2/generate-otp',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS =>'{
+                "id_number": "'.$aadhar_no.'"
+            }',
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'Authorization: Bearer '.$bearer_token.''
+            ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        return $response;
+    }
+}
+
+if (!function_exists('validateOtpAadhar')) {
+    function validateOtpAadhar($otp, $clientId)
+    {
+
+        $bearer_token = env('SUREPASS_API_TOKEN');
+
+        $URL = "https://sandbox.surepass.io";
+        // $URL ="https://kyc-api.surepass.io";
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => ''.$URL.'/api/v1/aadhaar-v2/submit-otp',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS =>'{
+                "client_id": "'.$clientId.'",
+                "otp": "'.$otp.'"
+            }',
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'Authorization: Bearer '.$bearer_token.''
+            ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        return $response;
+    }
+}
+
+if (!function_exists('passport_details')) {
+    function passport_details($file_no, $dob)
+    {
+
+        $bearer_token = env('SUREPASS_API_TOKEN');
+
+        $URL = "https://sandbox.surepass.io";
+        // $URL ="https://kyc-api.surepass.io";
+
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => ''.$URL.'/api/v1/passport/passport/passport-details',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS =>'{
+                "id_number": "'.$file_no.'",
+                "dob": "'.$dob.'"
+            }',
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'Authorization: Bearer '.$bearer_token.''
+            ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        return $response;
     }
 }

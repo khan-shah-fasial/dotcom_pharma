@@ -1,6 +1,22 @@
 @php
-    $best_selling_products = get_best_selling_products(20);
+    // $best_selling_products = get_best_selling_products(20);
+
+   use App\Models\Product;
+   
+   if (session('web_type_name') == 'human') {
+       $trending_items_human = json_decode(get_setting('trending_items_human'), true); // Convert to array
+       $best_selling_products = Product::whereIn('id', $trending_items_human)
+           ->get();
+   } elseif (session('web_type_name') == 'veterinary') {
+       $trending_items_veterinary = json_decode(get_setting('trending_items_veterinary'), true);
+       $best_selling_products = Product::whereIn('id', $trending_items_veterinary ?? [])
+           ->get();
+   } else {
+       $best_selling_products = null;
+   }
+   
 @endphp
+
 @if (get_setting('best_selling') == 1 && count($best_selling_products) > 0)
     <section class="pt-4 pt-md-5 pb-0 pb-md-4">
         <div class="container">

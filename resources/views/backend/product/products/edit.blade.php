@@ -123,6 +123,32 @@
                                                 <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="{{translate('Product Name')}}" value="{{ $product->getTranslation('name', $lang) }}">
                                             </div>
                                         </div>
+
+                                        <!-- Drug Name -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Drug Name')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('drug_name') is-invalid @enderror" name="drug_name" value="{{ old('drug_name') }}" placeholder="{{ translate('Drug Name') }}" value="{{ $product->drug_name }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Form -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Form')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_form') is-invalid @enderror" name="product_form" value="{{ old('product_form') }}" placeholder="{{ translate('Product Form') }}" value="{{ $product->product_form }}">
+                                            </div>
+                                        </div>
+
+
+                                        <!-- Product short description -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Description')}} <span class="text-danger">*</span></label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="short_description" placeholder="{{translate('Product Description')}}" value="{{ $product->short_description }}">
+                                            </div>
+                                        </div>
+
                                         <!-- Brand -->
                                         <div class="form-group row" id="brand">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Brand')}}</label>
@@ -189,6 +215,95 @@
                                             </div>
                                         </div>
                                         @endif
+
+
+                                        <!------- Prescription required --------->
+                                        <div class="form-group row">
+                                            <label class="col-md-3 col-from-label">{{translate('Prescription Required')}}</label>
+                                            <div class="col-md-9">
+                                                <label class="aiz-switch aiz-switch-success mb-0 d-block">
+                                                    <input type="checkbox" name="prescription_req" @if ($product->prescription_req == 1) checked @endif value="1">
+                                                    <span></span>
+                                                </label>
+                                                <small class="text-muted">{{ translate('If you enable this, a prescription will be required for this product.') }}</small>
+                                            </div>
+                                        </div>
+
+
+                                        <!-- Product type -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Type')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_type') is-invalid @enderror" name="product_type" value="{{ old('product_type') }}" placeholder="{{ translate('Product Type') }}" value="{{ $product->product_type }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product count -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Count')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_count') is-invalid @enderror" name="product_count" value="{{ old('product_count') }}" placeholder="{{ translate('Product Count') }}" value="{{ $product->product_count }}">
+                                            </div>
+                                        </div>
+
+
+                                        <!-- Product Material -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Material')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_material') is-invalid @enderror" name="product_material" value="{{ old('product_material') }}" placeholder="{{ translate('Product Material') }}" value="{{ $product->product_material }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Country of Origin -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Country of Origin')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_origin') is-invalid @enderror" name="product_origin" value="{{ old('product_origin') }}" placeholder="{{ translate('Product Country of Origin') }}" value="{{ $product->product_origin }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Minimum Pack Size  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Minimum Pack Size ')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_min_pack_size') is-invalid @enderror" name="product_min_pack_size" value="{{ old('product_min_pack_size') }}" placeholder="{{ translate('Product Minimum Pack Size') }}" value="{{ $product->product_min_pack_size }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Expiry Date  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Expiry Date')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_exp_date') is-invalid @enderror" name="product_exp_date" value="{{ old('product_exp_date') }}" placeholder="{{ translate('Product Expiry Date') }}" value="{{ $product->product_exp_date }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product HSN / HS Code  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product HSN / HS Code')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_hsn') is-invalid @enderror" name="product_hsn" value="{{ old('product_hsn') }}" placeholder="{{ translate('Product HSN / HS Code') }}" value="{{ $product->product_hsn }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Dimentions  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Dimentions')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_dimentions') is-invalid @enderror" name="product_dimentions" value="{{ old('product_dimentions') }}" placeholder="{{ translate('Product Dimentions') }}" value="{{ $product->product_dimentions }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product weight / volume  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Weight / Volume')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_weight_vol') is-invalid @enderror" name="product_weight_vol" value="{{ old('product_weight_vol') }}" placeholder="{{ translate('Product Weight / Volume') }}" value="{{ $product->product_weight_vol }}">
+                                            </div>
+                                        </div>
+
+
                                     </div>
 
                                     <!-- Product Category -->
@@ -230,6 +345,85 @@
                                         <textarea class="aiz-text-editor" name="description">{{ $product->getTranslation('description', $lang) }}</textarea>
                                     </div>
                                 </div>
+
+                                <div class="form-group">
+                                    <label class="fs-13">{{translate('Tabs Contents')}}</label>
+                                    @php
+                                        $storedTabs = json_decode($product->contents, true) ?? [];
+                                    @endphp
+                                    <div class="content-target">
+                                        @if (!empty($storedTabs))
+                                            @foreach ($storedTabs as $tab)
+                                                <div class="p-3 p-md-4 mb-3 mb-md-2rem remove-parent" style="border: 1px dashed #e4e5eb;">
+                                                    <div class="row gutters-5">
+                                                        <!-- iteration (hidden) -->
+                                                        <input type="hidden" class="form-control" name="itration[]" value="{{ $tab['iteration'] ?? 1 }}" required>
+
+                                                        <!-- Title -->
+                                                        <div class="col-md-12">
+                                                            <div class="form-group mb-md-0">
+                                                                <input type="text" class="form-control" placeholder="Enter Title" name="tab_title[]" value="{{ $tab['title'] ?? '' }}" required>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Content (textarea) -->
+                                                        <div class="col-md">
+                                                            <div class="form-group mt-2">
+                                                                <textarea name="tab_content[]" rows="8" class="form-control aiz-text-editor" required>{!! $tab['content'] ?? '' !!}</textarea>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Remove Button -->
+                                                        <div class="col-md-auto">
+                                                            <div class="form-group mb-md-0">
+                                                                <button type="button" class="mt-1 btn btn-icon btn-circle btn-sm btn-soft-danger"
+                                                                    data-toggle="remove-parent" data-parent=".remove-parent">
+                                                                    <i class="las la-times"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        @endif
+                                    </div>  
+                                    <!-- Add button -->
+                                    <button
+                                        type="button"
+                                        class="btn btn-block border hov-bg-soft-secondary fs-14 rounded-0 d-flex align-items-center justify-content-center" style="background: #fcfcfc;"
+                                        data-toggle="add-more"
+                                        data-content='
+                                        <div class="p-3 p-md-4 mb-3 mb-md-2rem remove-parent" style="border: 1px dashed #e4e5eb;">
+                                            <div class="row gutters-5">
+                                                <input type="hidden" class="form-control" name="itration[]" value="1" required>
+                                                <!-- link -->
+                                                <div class="col-md-12">
+                                                    <div class="form-group mb-md-0">
+                                                        <input type="text" class="form-control" placeholder="Enter Title" name="tab_title[]" value="" required>
+                                                    </div>
+                                                </div>					
+                                                <!-- Image -->
+                                                <div class="col-md">
+                                                    <div class="form-group mt-2">
+                                                        <textarea name="tab_content[]" rows="8" class="form-control aiz-text-editor" required></textarea>
+                                                    </div>
+                                                </div>
+                                                <!-- remove parent button -->
+                                                <div class="col-md-auto">
+                                                    <div class="form-group mb-md-0">
+                                                        <button type="button" class="mt-1 btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".remove-parent">
+                                                            <i class="las la-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>'
+                                        data-target=".content-target">
+                                        <i class="las la-2x text-success la-plus-circle"></i>
+                                        <span class="ml-2">{{ translate('Add New') }}</span>
+                                    </button>   
+                                </div>
+
                             </div>
 
                             <!-- Status -->
@@ -830,7 +1024,7 @@
                             <h5 class="mb-3 pb-3 fs-17 fw-700">{{translate('Frequently Bought')}}</h5>
                             <div class="w-100">
                                 <div class="d-flex mb-4">
-                                    <div class="radio mar-btm mr-5 d-flex align-items-center">
+                                    {{-- <div class="radio mar-btm mr-5 d-flex align-items-center">
                                         <input
                                             id="fq_bought_select_products"
                                             type="radio"
@@ -840,7 +1034,7 @@
                                             @if($product->frequently_bought_selection_type == 'product') checked @endif
                                         >
                                         <label for="fq_bought_select_products" class="fs-14 fw-700 mb-0 ml-2">{{translate('Select Product')}}</label>
-                                    </div>
+                                    </div> --}}
                                     <div class="radio mar-btm mr-3 d-flex align-items-center">
                                         <input
                                             id="fq_bought_select_category"
@@ -848,7 +1042,8 @@
                                             name="frequently_bought_selection_type"
                                             value="category"
                                             onchange="fq_bought_product_selection_type()"
-                                            @if($product->frequently_bought_selection_type == 'category') checked @endif
+                                            {{-- @if($product->frequently_bought_selection_type == 'category') checked @endif --}}
+                                            checked
                                         >
                                         <label for="fq_bought_select_category" class="fs-14 fw-700 mb-0 ml-2">{{translate('Select Category')}}</label>
                                     </div>
@@ -875,26 +1070,28 @@
                                                             </thead>
                                                             <tbody>
                                                                 @foreach($fq_bought_products as $fQBproduct)
-                                                                    <tr class="remove-parent">
-                                                                        <input type="hidden" name="fq_bought_product_ids[]" value="{{ $fQBproduct->frequently_bought_product->id }}">
-                                                                        <td class="w-150px pl-0" style="vertical-align: middle;">
-                                                                            <p class="d-block size-48px">
-                                                                                <img src="{{ uploaded_asset($fQBproduct->frequently_bought_product->thumbnail_img) }}" alt="{{ translate('Image')}}"
-                                                                                    class="h-100 img-fit lazyload" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                                                                            </p>
-                                                                        </td>
-                                                                        <td style="vertical-align: middle;">
-                                                                            <p class="d-block fs-13 fw-700 hov-text-primary mb-1 text-dark" title="{{ translate('Product Name') }}">
-                                                                                {{ $fQBproduct->frequently_bought_product->getTranslation('name') }}
-                                                                            </p>
-                                                                        </td>
-                                                                        <td style="vertical-align: middle;">{{ $fQBproduct->frequently_bought_product->main_category->name ?? translate('Category Not Found') }}</td>
-                                                                        <td class="text-right pr-0" style="vertical-align: middle;">
-                                                                            <button type="button" class="mt-1 btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".remove-parent">
-                                                                                <i class="las la-trash"></i>
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
+                                                                    @isset($fQBproduct->frequently_bought_product->id)
+                                                                        <tr class="remove-parent">
+                                                                            <input type="hidden" name="fq_bought_product_ids[]" value="{{ $fQBproduct->frequently_bought_product->id }}">
+                                                                            <td class="w-150px pl-0" style="vertical-align: middle;">
+                                                                                <p class="d-block size-48px">
+                                                                                    <img src="{{ uploaded_asset($fQBproduct->frequently_bought_product->thumbnail_img) }}" alt="{{ translate('Image')}}"
+                                                                                        class="h-100 img-fit lazyload" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                                                                </p>
+                                                                            </td>
+                                                                            <td style="vertical-align: middle;">
+                                                                                <p class="d-block fs-13 fw-700 hov-text-primary mb-1 text-dark" title="{{ translate('Product Name') }}">
+                                                                                    {{ $fQBproduct->frequently_bought_product->getTranslation('name') }}
+                                                                                </p>
+                                                                            </td>
+                                                                            <td style="vertical-align: middle;">{{ $fQBproduct->frequently_bought_product->main_category->name ?? translate('Category Not Found') }}</td>
+                                                                            <td class="text-right pr-0" style="vertical-align: middle;">
+                                                                                <button type="button" class="mt-1 btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".remove-parent">
+                                                                                    <i class="las la-trash"></i>
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endisset
                                                                 @endforeach
                                                             </tbody>
                                                         </table>

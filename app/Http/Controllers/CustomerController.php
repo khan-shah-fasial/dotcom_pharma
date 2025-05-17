@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\UserDetails;
 use App\Utility\EmailUtility;
 use Hash;
 
@@ -278,7 +279,7 @@ class CustomerController extends Controller
 
     public function view($id)
     {
-        $user = User::findOrFail(decrypt($id));
+        $user = UserDetails::where('user_id', decrypt($id))->first();
         return view('backend.customer.customers.view', compact('user'));
     }
 

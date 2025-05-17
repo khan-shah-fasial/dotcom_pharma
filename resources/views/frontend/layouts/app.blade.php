@@ -484,6 +484,8 @@
         @endforeach
     </script>
 
+    @yield('custom-script-section')
+
     <script>
         @if (Route::currentRouteName() == 'home' || Route::currentRouteName() == '/')
 
@@ -709,7 +711,14 @@
 
                         $('#option-choice-form #chosen_price_div').removeClass('d-none');
                         $('#option-choice-form #chosen_price_div #chosen_price').html(data.price);
+                        $('#sku-product-details').html(data?.sku ?? '-');
                         $('#available-quantity').html(data.quantity);
+                        
+                        let qnt = data?.quantity ?? 0;
+                        $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
+
+                        $('#per-piece-price-product-details').html(data?.per_piece_price ?? '-');
+
                         $('.input-number').prop('max', data.max_limit);
                         if(parseInt(data.in_stock) == 0 && data.digital  == 0){
                            $('.buy-now').addClass('d-none');
@@ -1080,7 +1089,6 @@
 
     @yield('custome-script')
 
-
     @if (Session::has('registartion_status'))
         @php
             Session::forget('registartion_status');
@@ -1150,6 +1158,5 @@ $(window).scroll(function() {
         });
     });
 </script>
-
 </body>
 </html>

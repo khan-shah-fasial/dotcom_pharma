@@ -35,6 +35,8 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use ZipArchive;
+use Illuminate\Support\Facades\Session;
+use App\Models\ProductCategory;
 
 class HomeController extends Controller
 {
@@ -46,11 +48,29 @@ class HomeController extends Controller
     public function index()
     {
         $lang = get_system_language() ? get_system_language()->code : null;
-        $featured_categories = Cache::rememberForever('featured_categories', function () {
-            return Category::with('bannerImage')->where('featured', 1)->get();
-        });
+        // $featured_categories = Cache::rememberForever('featured_categories', function () {
+        //     return Category::with('bannerImage')->where('featured', 1)->get();
+        // });
 
-        return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories', 'lang'));
+        $featured_categories = null;
+
+        if (!Session::has('web_type')) {
+            $category = Category::whereRaw('LOWER(name) = ?', [strtolower('Human')])->first();
+            if ($category) {
+                Session::put('web_type', $category->id);
+                session()->put('web_type_name', strtolower($category->name));
+                Cache::flush();
+            }
+        }
+
+        $categories = Category::where('parent_id', 0)
+        ->where('digital', 0)
+        ->with('childrenCategories')
+        ->get();
+
+        $Brands = Brand::select(['id', 'name'])->get();
+
+        return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories', 'lang', 'categories','Brands'));
     }
 
     public function load_todays_deal_section()
@@ -657,7 +677,19 @@ class HomeController extends Controller
                 lastViewedProducts($detailedProduct->id, auth()->user()->id);
             }
 
-            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status'));
+            $category_name = Category::where('id', $detailedProduct->category_id)->pluck('name')->first() ?? '';
+
+            $subCategoryIds = ProductCategory::where('product_id', $detailedProduct->id)
+                ->pluck('category_id'); // Use pluck to get plain array
+
+            // Get category names if there are IDs
+            $subCategoryNames = [];
+            if ($subCategoryIds->isNotEmpty()) {
+                $subCategoryNames = Category::whereIn('id', $subCategoryIds)->pluck('name')->toArray();
+            }
+
+
+            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name','subCategoryNames'));
         }
         abort(404);
     }
@@ -800,6 +832,7 @@ class HomeController extends Controller
         $product = Product::find($request->id);
         $str = '';
         $quantity = 0;
+        $sku = '-';
         $tax = 0;
         $max_limit = 0;
 
@@ -820,6 +853,8 @@ class HomeController extends Controller
         $product_stock = $product->stocks->where('variant', $str)->first();
 
         $price = $product_stock->price;
+        $sku = $product_stock->sku;
+        $per_piece_price = $product_stock->per_piece_price;
 
 
         if ($product->wholesale_product) {
@@ -881,10 +916,12 @@ class HomeController extends Controller
         return array(
             'price' => single_price($price * $request->quantity),
             'quantity' => $quantity,
+            'sku' => $sku,
             'digital' => $product->digital,
             'variation' => $str,
             'max_limit' => $max_limit,
-            'in_stock' => $in_stock
+            'in_stock' => $in_stock,
+            'per_piece_price' => $per_piece_price
         );
     }
 
@@ -1112,5 +1149,27 @@ class HomeController extends Controller
         Artisan::call('cache:clear');
         $sql_path = base_path('public/uploads/demo_data.sql');
         DB::unprepared(file_get_contents($sql_path));
+    }
+
+
+    public function setWebType(Request $request)
+    {
+        $categoryName = $request->input('type');
+
+        $category = Category::whereRaw('LOWER(name) = ?', [strtolower($categoryName)])->first();
+
+        if ($category) {
+            // Store in session
+            session()->put('web_type', $category->id);
+            session()->put('web_type_name', strtolower($category->name));
+
+            Cache::flush();
+
+            return response()->json(['success' => true]);
+        }
+
+
+
+        return response()->json(['success' => false]);
     }
 }
