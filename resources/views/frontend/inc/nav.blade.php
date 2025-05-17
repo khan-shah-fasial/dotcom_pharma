@@ -149,22 +149,7 @@
         <div class="position-relative logo-bar-area border-bottom border-md-nonea z-1025">
             <div class="container">
                 <div class="">
-                    <!-- top menu sidebar button -->
-                    <!-- <button type="button" class="btn d-lg-none mr-3 mr-sm-4 p-0 active" data-toggle="class-toggle"
-                        data-target=".aiz-top-menu-sidebar">
-                        <svg id="Component_43_1" data-name="Component 43 – 1" xmlns="http://www.w3.org/2000/svg"
-                            width="16" height="16" viewBox="0 0 16 16">
-                            <rect id="Rectangle_19062" data-name="Rectangle 19062" width="16" height="2"
-                                transform="translate(0 7)" fill="#919199" />
-                            <rect id="Rectangle_19063" data-name="Rectangle 19063" width="16" height="2"
-                                fill="#919199" />
-                            <rect id="Rectangle_19064" data-name="Rectangle 19064" width="16" height="2"
-                                transform="translate(0 14)" fill="#919199" />
-                        </svg>
-
-                    </button> -->
-
-<!-- Search field -->
+                 
                     <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white mx-xl-5">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
                             <form action="{{ route('search') }}" method="GET" class="stop-propagation">
@@ -324,13 +309,13 @@
 
                                 
                    
-                     <!-- Cart -->
-                    <div class="d-none d-lg-block d-xl-block align-self-stretch has-transition"
-                        data-hover="dropdown">
-                        <div class="nav-cart-box dropdown h-100" id="cart_items" style="width: max-content;">
-                            @include('frontend.partials.cart.cart')
-                        </div>
-                    </div> 
+                                <!-- Cart -->
+                                <div class="d-none d-lg-block d-xl-block align-self-stretch has-transition"
+                                    data-hover="dropdown">
+                                    <div class="nav-cart-box dropdown h-100" id="cart_items" style="width: max-content;">
+                                        @include('frontend.partials.cart.cart')
+                                    </div>
+                                </div> 
 
                      @if (Auth::check() && auth()->user()->user_type == 'customer')
                         <!-- Compare -->
