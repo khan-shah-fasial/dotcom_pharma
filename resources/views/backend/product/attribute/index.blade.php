@@ -35,28 +35,30 @@
                                         @endforeach
                                     </td>
                                     <td class="text-right w-140px">
-                                        @can('view_product_attribute_values')
-                                            <a class="btn btn-soft-info btn-icon btn-circle btn-sm"
-                                                href="{{ route('attributes.show', $attribute->id) }}"
-                                                title="{{ translate('Attribute values') }}">
-                                                <i class="las la-cog"></i>
-                                            </a>
-                                        @endcan
-                                        @can('edit_product_attribute')
-                                            <a class="btn btn-soft-primary btn-icon btn-circle btn-sm"
-                                                href="{{ route('attributes.edit', ['id' => $attribute->id, 'lang' => env('DEFAULT_LANGUAGE')]) }}"
-                                                title="{{ translate('Edit') }}">
-                                                <i class="las la-edit"></i>
-                                            </a>
-                                        @endcan
-                                        @can('delete_product_attribute')
-                                            <a href="#"
-                                                class="btn btn-soft-danger btn-icon btn-circle btn-sm confirm-delete"
-                                                data-href="{{ route('attributes.destroy', $attribute->id) }}"
-                                                title="{{ translate('Delete') }}">
-                                                <i class="las la-trash"></i>
-                                            </a>
-                                        @endcan
+                                        @if(strtolower($attribute->name) != "role")
+                                            @can('view_product_attribute_values')
+                                                <a class="btn btn-soft-info btn-icon btn-circle btn-sm"
+                                                    href="{{ route('attributes.show', $attribute->id) }}"
+                                                    title="{{ translate('Attribute values') }}">
+                                                    <i class="las la-cog"></i>
+                                                </a>
+                                            @endcan
+                                            @can('edit_product_attribute')
+                                                <a class="btn btn-soft-primary btn-icon btn-circle btn-sm"
+                                                    href="{{ route('attributes.edit', ['id' => $attribute->id, 'lang' => env('DEFAULT_LANGUAGE')]) }}"
+                                                    title="{{ translate('Edit') }}">
+                                                    <i class="las la-edit"></i>
+                                                </a>
+                                            @endcan
+                                            @can('delete_product_attribute')
+                                                <a href="#"
+                                                    class="btn btn-soft-danger btn-icon btn-circle btn-sm confirm-delete"
+                                                    data-href="{{ route('attributes.destroy', $attribute->id) }}"
+                                                    title="{{ translate('Delete') }}">
+                                                    <i class="las la-trash"></i>
+                                                </a>
+                                            @endcan
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
