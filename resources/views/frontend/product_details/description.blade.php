@@ -6,7 +6,7 @@
 
 <div class="pt-4 pb-4">
     <!-- Tabs -->
-    <div class="nav aiz-nav-tabs d-none">
+    <div class="nav aiz-nav-tabs">
 
         @if ($detailedProduct->description != null && !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->description))))) )
 
