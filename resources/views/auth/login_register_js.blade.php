@@ -106,12 +106,16 @@
                 $('.phone-form-group').addClass('d-none');
                 $('.email-form-group').removeClass('d-none');
                 $('input[name=phone]').val(null);
+                $('input[name=phone]').removeAttr('required');
+                $('input[name=email]').attr('required', true);
                 isPhoneShown = false;
                 $(el).html('*{{ translate('Use Phone Number Instead') }}');
             } else {
                 $('.phone-form-group').removeClass('d-none');
                 $('.email-form-group').addClass('d-none');
                 $('input[name=email]').val(null);
+                $('input[name=email]').removeAttr('required');
+                $('input[name=phone]').attr('required', true);
                 isPhoneShown = true;
                 $(el).html('<i>*{{ translate('Use Email Instead') }}</i>');
             }

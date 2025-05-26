@@ -32,7 +32,7 @@
                                             <!-- Name -->
                                             <div class="form-group">
                                                 <label for="name" class="fs-12 fw-700 text-soft-dark">{{  translate('Full Name') }}</label>
-                                                <input type="text" class="form-control rounded-0{{ $errors->has('name') ? ' is-invalid' : '' }}" value="{{ old('name') }}" placeholder="{{  translate('Full Name') }}" name="name">
+                                                <input type="text" class="form-control rounded-0{{ $errors->has('name') ? ' is-invalid' : '' }}" value="{{ old('name') }}" placeholder="{{  translate('Full Name') }}" name="name" required>
                                                 @if ($errors->has('name'))
                                                     <span class="invalid-feedback" role="alert">
                                                         <strong>{{ $errors->first('name') }}</strong>
@@ -78,7 +78,7 @@
                                             <div class="form-group mb-0">
                                                 <label for="password" class="fs-12 fw-700 text-soft-dark pt-3">{{  translate('Password') }}</label>
                                                 <div class="position-relative">
-                                                    <input type="password" class="form-control rounded-0{{ $errors->has('password') ? ' is-invalid' : '' }}" placeholder="{{  translate('Password') }}" name="password">
+                                                    <input type="password" class="form-control rounded-0{{ $errors->has('password') ? ' is-invalid' : '' }}" placeholder="{{  translate('Password') }}" name="password" required>
                                                     <i class="password-toggle las la-2x la-eye"></i>
                                                 </div>
                                                 <div class="text-right mt-1">
@@ -95,7 +95,7 @@
                                             <div class="form-group">
                                                 <label for="password_confirmation" class="fs-12 fw-700 text-soft-dark">{{  translate('Confirm Password') }}</label>
                                                 <div class="position-relative">
-                                                    <input type="password" class="form-control rounded-0" placeholder="{{  translate('Confirm Password') }}" name="password_confirmation">
+                                                    <input type="password" class="form-control rounded-0" placeholder="{{  translate('Confirm Password') }}" name="password_confirmation" required>
                                                     <i class="password-toggle las la-2x la-eye"></i>
                                                 </div>
                                             </div>
@@ -113,7 +113,7 @@
                                             @endif
 
                                             <!-- Terms and Conditions -->
-                                            <div class="mb-3">
+                                            <div class="form-group mb-3">
                                                 <label class="aiz-checkbox">
                                                     <input type="checkbox" name="checkbox_example_1" required>
                                                     <span class="">{{ translate('By signing up you agree to our ')}} <a href="{{ route('terms') }}" class="fw-500">{{ translate('terms and conditions.') }}</a></span>
@@ -170,6 +170,11 @@
                                         {{ translate('Already have an account?')}}
                                         <a href="{{ route('user.login') }}" class="ml-2 fs-14 fw-700 animate-underline-primary">{{ translate('Log In')}}</a>
                                     </p>
+
+                                    <p class="fs-12 text-gray mb-0">
+                                        {{ translate('Buying for work?')}}
+                                        <a href="{{ route('user.new_registration') }}" class="ml-2 fs-14 fw-700 animate-underline-primary">{{ translate('Create a Business Account')}}</a>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -191,13 +196,20 @@
     @if(get_setting('google_recaptcha') == 1)
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     @endif
-
+    <script src="{{ static_asset('assets/js/jquery.validate.min.js') }}"></script>
+    <script src="{{ static_asset('assets/js/script.js') }}"></script>
     <script type="text/javascript">
         @if(get_setting('google_recaptcha') == 1)
         // making the CAPTCHA  a required field for form submission
         $(document).ready(function(){
+            initValidate('#reg-form');
             $("#reg-form").on("submit", function(evt)
             {
+
+                if (!$("#reg-form").valid()) {
+                    return false; // Stop if the form is not valid
+                }
+
                 var response = grecaptcha.getResponse();
                 if(response.length == 0)
                 {
@@ -211,6 +223,19 @@
                 $("#reg-form").submit();
             });
         });
+        @else
+            $(document).ready(function() {
+                initValidate('#reg-form');
+                $("#reg-form").on("submit", function(evt){
+
+                    if (!$("#reg-form").valid()) {
+                        return false; 
+                    }
+                    $("#reg-form").submit();
+                });
+            });
         @endif
+
     </script>
+
 @endsection

@@ -95,7 +95,8 @@ class RegisterController extends Controller
                     'name' => $data['name'],
                     'phone' => '+'.$data['country_code'].$data['phone'],
                     'password' => Hash::make($data['password']),
-                    'verification_code' => rand(100000, 999999)
+                    // 'verification_code' => rand(100000, 999999)
+                    'verification_code' => '123456'
                 ]);
 
                 $otpController = new OTPVerificationController;
@@ -198,241 +199,244 @@ class RegisterController extends Controller
         }
     }
 
-    public function new_user_register(Request $request){
 
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
-            'email_id' => ['required', 'email'],
-            'phone' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
-            'ad_contact_number' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
-            'land_mark_village' => ['nullable', 'string', 'max:255'],
-            'post' => ['nullable', 'string', 'max:255'],
-            'address_1' => ['required', 'string', 'max:255'],
-            'address_2' => ['nullable', 'string', 'max:255'],
-            'pincode' => ['required', 'regex:/^\d{6}$/'], // Assuming Indian pincode format
-            'district' => ['required', 'string', 'max:100'],
-            'state' => ['required', 'string', 'max:100'],
-            'country_code' => 'nullable', // ISO 3166-1 alpha-2
-            'phone_no_1' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
-            'phone_no_2' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
-            'whats_app_no' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
-            'gst_no' => ['nullable', 'regex:/^[0-9]{15}$/'], // Assuming GSTIN format
-            'cc_no' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
-            'd_l_no_1' => ['nullable', 'string', 'max:50'],
-            'd_l_no_2' => ['nullable', 'string', 'max:50'],
-            'd_l_no_3' => ['nullable', 'string', 'max:50'],
-            'd_l_exp_Date' => ['nullable', 'date'],
-            'transport' => ['nullable', 'string', 'max:255'],
-            'cargo' => ['nullable', 'string', 'max:255'],
-            'booked_to' => ['nullable', 'string', 'max:255'],
-            'bank_name' => ['nullable', 'string', 'max:255'],
-            'account_no' => ['nullable', 'regex:/^\d+$/', 'max:20'], // Numeric only
-            'branch_no' => ['nullable', 'string', 'max:50'],
-            'branch_code' => ['nullable', 'string', 'max:50'],
-            'ifsc_code' => ['nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'], // IFSC code format
-            'micr_code' => ['nullable', 'regex:/^\d{9}$/'], // MICR code format
-            'customer_care_executive' => ['nullable', 'string', 'max:255'],
-            'password' => [
-                'required',
-                'string',
-                'min:8', // Minimum length of 8 characters
-                'regex:/[A-Z]/', // At least one uppercase letter
-                'regex:/[!@#$%^&*(),.?":{}|<>]/', // At least one special character
-                'confirmed' // Ensures password and confirm_password match
-            ],
-            'password_confirmation' => ['required', 'string', 'min:8'], // Confirmation field
-        ], [
-            'name.required' => 'The Name field is required.',
-            'name.string' => 'The Name must be a string.',
-            'name.regex' => 'The Name must only contain letters and spaces.',
-            'name.min' => 'The Name must be at least 1 character.',
-            'name.max' => 'The Name may not be greater than 50 characters.',
-        
-            'email_id.required' => 'The Email field is required.',
-            'email_id.email' => 'The Email must be a valid email address.',
-        
-            'phone.required' => 'The Phone Number field is required.',
-            'phone.regex' => 'The Phone Number format is invalid.',
-            'phone.min' => 'The Phone Number must be at least 5 characters.',
-        
-            'ad_contact_number.regex' => 'The AD Contact Number format is invalid.',
-            'ad_contact_number.min' => 'The AD Contact Number must be at least 5 characters.',
-        
-            'land_mark_village.string' => 'The Landmark/Village must be a string.',
-            'land_mark_village.max' => 'The Landmark/Village may not be greater than 255 characters.',
-        
-            'address_1.required' => 'The Address 1 field is required.',
-            'address_1.string' => 'The Address 1 must be a string.',
-            'address_1.max' => 'The Address 1 may not be greater than 255 characters.',
-        
-            'pincode.required' => 'The Pincode field is required.',
-            'pincode.regex' => 'The Pincode format is invalid.',
-        
-            'district.required' => 'The District field is required.',
-            'district.string' => 'The District must be a string.',
-            'district.max' => 'The District may not be greater than 100 characters.',
-        
-            'state.required' => 'The State field is required.',
-            'state.string' => 'The State must be a string.',
-            'state.max' => 'The State may not be greater than 100 characters.',
-        
-            'country_code.required' => 'The Country Code field is required.',
-        
-            'gst_no.regex' => 'The GST Number format is invalid.',
-            'ifsc_code.regex' => 'The IFSC Code format is invalid.',
-            'micr_code.regex' => 'The MICR Code format is invalid.',
+    //--------------------------------- not use registration -------------------------------
 
-            'password.required' => 'The Password field is required.',
-            'password.min' => 'The Password must be at least 8 characters long.',
-            'password.regex' => 'The Password must contain at least one uppercase letter and one special character.',
+    // public function new_user_register(Request $request){
 
-            'password.confirmed' => 'The Password and Confirm Password do not match.',
-            'password_confirmation.required' => 'The Confirm Password field is required.',
-        ]);
+    //     $validator = Validator::make($request->all(), [
+    //         'name' => ['required', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
+    //         'email_id' => ['required', 'email'],
+    //         'phone' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+    //         'ad_contact_number' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+    //         'land_mark_village' => ['nullable', 'string', 'max:255'],
+    //         'post' => ['nullable', 'string', 'max:255'],
+    //         'address_1' => ['required', 'string', 'max:255'],
+    //         'address_2' => ['nullable', 'string', 'max:255'],
+    //         'pincode' => ['required', 'regex:/^\d{6}$/'], // Assuming Indian pincode format
+    //         'district' => ['required', 'string', 'max:100'],
+    //         'state' => ['required', 'string', 'max:100'],
+    //         'country_code' => 'nullable', // ISO 3166-1 alpha-2
+    //         'phone_no_1' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+    //         'phone_no_2' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+    //         'whats_app_no' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+    //         'gst_no' => ['nullable', 'regex:/^[0-9]{15}$/'], // Assuming GSTIN format
+    //         'cc_no' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5'],
+    //         'd_l_no_1' => ['nullable', 'string', 'max:50'],
+    //         'd_l_no_2' => ['nullable', 'string', 'max:50'],
+    //         'd_l_no_3' => ['nullable', 'string', 'max:50'],
+    //         'd_l_exp_Date' => ['nullable', 'date'],
+    //         'transport' => ['nullable', 'string', 'max:255'],
+    //         'cargo' => ['nullable', 'string', 'max:255'],
+    //         'booked_to' => ['nullable', 'string', 'max:255'],
+    //         'bank_name' => ['nullable', 'string', 'max:255'],
+    //         'account_no' => ['nullable', 'regex:/^\d+$/', 'max:20'], // Numeric only
+    //         'branch_no' => ['nullable', 'string', 'max:50'],
+    //         'branch_code' => ['nullable', 'string', 'max:50'],
+    //         'ifsc_code' => ['nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'], // IFSC code format
+    //         'micr_code' => ['nullable', 'regex:/^\d{9}$/'], // MICR code format
+    //         'customer_care_executive' => ['nullable', 'string', 'max:255'],
+    //         'password' => [
+    //             'required',
+    //             'string',
+    //             'min:8', // Minimum length of 8 characters
+    //             'regex:/[A-Z]/', // At least one uppercase letter
+    //             'regex:/[!@#$%^&*(),.?":{}|<>]/', // At least one special character
+    //             'confirmed' // Ensures password and confirm_password match
+    //         ],
+    //         'password_confirmation' => ['required', 'string', 'min:8'], // Confirmation field
+    //     ], [
+    //         'name.required' => 'The Name field is required.',
+    //         'name.string' => 'The Name must be a string.',
+    //         'name.regex' => 'The Name must only contain letters and spaces.',
+    //         'name.min' => 'The Name must be at least 1 character.',
+    //         'name.max' => 'The Name may not be greater than 50 characters.',
+        
+    //         'email_id.required' => 'The Email field is required.',
+    //         'email_id.email' => 'The Email must be a valid email address.',
+        
+    //         'phone.required' => 'The Phone Number field is required.',
+    //         'phone.regex' => 'The Phone Number format is invalid.',
+    //         'phone.min' => 'The Phone Number must be at least 5 characters.',
+        
+    //         'ad_contact_number.regex' => 'The AD Contact Number format is invalid.',
+    //         'ad_contact_number.min' => 'The AD Contact Number must be at least 5 characters.',
+        
+    //         'land_mark_village.string' => 'The Landmark/Village must be a string.',
+    //         'land_mark_village.max' => 'The Landmark/Village may not be greater than 255 characters.',
+        
+    //         'address_1.required' => 'The Address 1 field is required.',
+    //         'address_1.string' => 'The Address 1 must be a string.',
+    //         'address_1.max' => 'The Address 1 may not be greater than 255 characters.',
+        
+    //         'pincode.required' => 'The Pincode field is required.',
+    //         'pincode.regex' => 'The Pincode format is invalid.',
+        
+    //         'district.required' => 'The District field is required.',
+    //         'district.string' => 'The District must be a string.',
+    //         'district.max' => 'The District may not be greater than 100 characters.',
+        
+    //         'state.required' => 'The State field is required.',
+    //         'state.string' => 'The State must be a string.',
+    //         'state.max' => 'The State may not be greater than 100 characters.',
+        
+    //         'country_code.required' => 'The Country Code field is required.',
+        
+    //         'gst_no.regex' => 'The GST Number format is invalid.',
+    //         'ifsc_code.regex' => 'The IFSC Code format is invalid.',
+    //         'micr_code.regex' => 'The MICR Code format is invalid.',
+
+    //         'password.required' => 'The Password field is required.',
+    //         'password.min' => 'The Password must be at least 8 characters long.',
+    //         'password.regex' => 'The Password must contain at least one uppercase letter and one special character.',
+
+    //         'password.confirmed' => 'The Password and Confirm Password do not match.',
+    //         'password_confirmation.required' => 'The Confirm Password field is required.',
+    //     ]);
         
         
 
-        if ($validator->fails()) {
+    //     if ($validator->fails()) {
 
-            $errors = $validator->errors()->all();
+    //         $errors = $validator->errors()->all();
 
-            return response()->json([
-                'status' => 'error',
-                'message' => $errors
-            ], 200);
-        }
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => $errors
+    //         ], 200);
+    //     }
 
-        if (filter_var($request->email_id, FILTER_VALIDATE_EMAIL)) {
-            if(User::where('email', $request->email_id)->first() != null){
-                flash(translate('Email or Phone already exists.'));
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Email already exists.',
-                ], 200);
-            }
-        }
-        elseif (User::where('phone', '+'.$request->country__code.$request->phone)->first() != null) {
-            flash(translate('Phone already exists.'));
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Phone already exists.'
-            ], 200);
-        }
-
-
-        // $otp = mt_rand(100000, 999999); // Generate random 6-digit OTP
-        $otp = '123456';
-        $timestamp = date('Y-m-d H:i:s'); // Use PHP's native date() function for timestamp
-        
-        // Store OTP and timestamp in session
-        Session::put('otp', $otp);
-        Session::put('otp_timestamp', $timestamp);
-        
-        // Prepare user data array
-        $user_data = [
-            'name' => $request->name,
-            'email' => $request->email_id,
-            'phone' => $request->country_code . $request->phone,
-            // 'phone' => str_replace(' ', '', $request->phone),
-            'ad_contact_number' => $request->country_code_ad_contact_number . $request->ad_contact_number,
-            'land_mark_village' => $request->land_mark_village,
-            'post' => $request->post,
-            'address_1' => $request->address_1,
-            'address_2' => $request->address_2,
-            'pincode' => $request->pincode,
-            'district' => $request->district,
-            'state' => $request->state,
-            'country__code' => $request->country_code,
-            'phone_no_1' => $request->country_code_phone_no_1 . $request->phone_no_1,
-            'phone_no_2' => $request->country_code_phone_no_2 . $request->phone_no_2,
-            'whats_app_no' => $request->country_code_whats_app_no . $request->whats_app_no,
-            'gst_no' => $request->gst_no,
-            'cc_no' => $request->cc_no,
-            'd_l_no_1' => $request->d_l_no_1,
-            'd_l_no_2' => $request->d_l_no_2,
-            'd_l_no_3' => $request->d_l_no_3,
-            'd_l_exp_Date' => $request->d_l_exp_Date,
-            'transport' => $request->transport,
-            'cargo' => $request->cargo,
-            'booked_to' => $request->booked_to,
-            'bank_name' => $request->bank_name,
-            'account_no' => $request->account_no,
-            'branch_no' => $request->branch_no,
-            'branch_code' => $request->branch_code,
-            'ifsc_code' => $request->ifsc_code,
-            'micr_code' => $request->micr_code,
-            'customer_care_executive' => $request->customer_care_executive,
-            'password'  => Hash::make($request->password),
-        ];
-        
-        // Store user data in session
-        Session::put('user_data', $user_data);
+    //     if (filter_var($request->email_id, FILTER_VALIDATE_EMAIL)) {
+    //         if(User::where('email', $request->email_id)->first() != null){
+    //             flash(translate('Email or Phone already exists.'));
+    //             return response()->json([
+    //                 'status' => 'error',
+    //                 'message' => 'Email already exists.',
+    //             ], 200);
+    //         }
+    //     }
+    //     elseif (User::where('phone', '+'.$request->country__code.$request->phone)->first() != null) {
+    //         flash(translate('Phone already exists.'));
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Phone already exists.'
+    //         ], 200);
+    //     }
 
 
-        // $user = [
-        //     'name' => $user_data['name'],
-        //     'phone' => '+'.$user_data['phone'],
-        //     'password' => $user_data['password'],
-        //     'verification_code' => $otp,
-        // ];
-
-        // $otpController = new OTPVerificationController;
-        // $otpController->send_code($user);
+    //     // $otp = mt_rand(100000, 999999); // Generate random 6-digit OTP
+    //     $otp = '123456';
+    //     $timestamp = date('Y-m-d H:i:s'); // Use PHP's native date() function for timestamp
         
-        // Return a success response
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Please verify your Phone Number: ' . $request->country__code . $request->phone,
-        ], 200);
+    //     // Store OTP and timestamp in session
+    //     Session::put('otp', $otp);
+    //     Session::put('otp_timestamp', $timestamp);
+        
+    //     // Prepare user data array
+    //     $user_data = [
+    //         'name' => $request->name,
+    //         'email' => $request->email_id,
+    //         'phone' => $request->country_code . $request->phone,
+    //         // 'phone' => str_replace(' ', '', $request->phone),
+    //         'ad_contact_number' => $request->country_code_ad_contact_number . $request->ad_contact_number,
+    //         'land_mark_village' => $request->land_mark_village,
+    //         'post' => $request->post,
+    //         'address_1' => $request->address_1,
+    //         'address_2' => $request->address_2,
+    //         'pincode' => $request->pincode,
+    //         'district' => $request->district,
+    //         'state' => $request->state,
+    //         'country__code' => $request->country_code,
+    //         'phone_no_1' => $request->country_code_phone_no_1 . $request->phone_no_1,
+    //         'phone_no_2' => $request->country_code_phone_no_2 . $request->phone_no_2,
+    //         'whats_app_no' => $request->country_code_whats_app_no . $request->whats_app_no,
+    //         'gst_no' => $request->gst_no,
+    //         'cc_no' => $request->cc_no,
+    //         'd_l_no_1' => $request->d_l_no_1,
+    //         'd_l_no_2' => $request->d_l_no_2,
+    //         'd_l_no_3' => $request->d_l_no_3,
+    //         'd_l_exp_Date' => $request->d_l_exp_Date,
+    //         'transport' => $request->transport,
+    //         'cargo' => $request->cargo,
+    //         'booked_to' => $request->booked_to,
+    //         'bank_name' => $request->bank_name,
+    //         'account_no' => $request->account_no,
+    //         'branch_no' => $request->branch_no,
+    //         'branch_code' => $request->branch_code,
+    //         'ifsc_code' => $request->ifsc_code,
+    //         'micr_code' => $request->micr_code,
+    //         'customer_care_executive' => $request->customer_care_executive,
+    //         'password'  => Hash::make($request->password),
+    //     ];
+        
+    //     // Store user data in session
+    //     Session::put('user_data', $user_data);
 
-    }
+
+    //     // $user = [
+    //     //     'name' => $user_data['name'],
+    //     //     'phone' => '+'.$user_data['phone'],
+    //     //     'password' => $user_data['password'],
+    //     //     'verification_code' => $otp,
+    //     // ];
+
+    //     // $otpController = new OTPVerificationController;
+    //     // $otpController->send_code($user);
+        
+    //     // Return a success response
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Please verify your Phone Number: ' . $request->country__code . $request->phone,
+    //     ], 200);
+
+    // }
 
 
-    public function resendOtp(Request $request)
-    {
+    // public function resendOtp(Request $request)
+    // {
 
-        // $data = Session::get('user_data');
+    //     // $data = Session::get('user_data');
     
-        // // Ensure $data exists
-        // if (!$data) {
-        //     return response()->json([
-        //         'status' => 'error',
-        //         'message' => 'User data not found. Please start the process again.',
-        //     ], 200);
-        // }
+    //     // // Ensure $data exists
+    //     // if (!$data) {
+    //     //     return response()->json([
+    //     //         'status' => 'error',
+    //     //         'message' => 'User data not found. Please start the process again.',
+    //     //     ], 200);
+    //     // }
 
-        // $otp = mt_rand(100000, 999999);
-        $otp = '123456';
-        $timestamp = date('Y-m-d H:i:s');
+    //     // $otp = mt_rand(100000, 999999);
+    //     $otp = '123456';
+    //     $timestamp = date('Y-m-d H:i:s');
 
-        if($request->phonetype == "business"){
-            Session::put('otp_business', $otp);
-            Session::put('otp_business_timestamp', $timestamp);
-            return response()->json([
-                'status' => 'success',
-                'message' => 'OTP has been Resend no this Phone : ' . $request->phone_no,
-            ], 200);
-        } elseif($request->phonetype == "personal") {
-            Session::put('otp_personal', $otp);
-            Session::put('otp_personal_timestamp', $timestamp);
-            return response()->json([
-                'status' => 'success',
-                'message' => 'OTP has been Resend no this Phone : ' . $request->phone_no,
-            ], 200);
-        }
+    //     if($request->phonetype == "business"){
+    //         Session::put('otp_business', $otp);
+    //         Session::put('otp_business_timestamp', $timestamp);
+    //         return response()->json([
+    //             'status' => 'success',
+    //             'message' => 'OTP has been Resend no this Phone : ' . $request->phone_no,
+    //         ], 200);
+    //     } elseif($request->phonetype == "personal") {
+    //         Session::put('otp_personal', $otp);
+    //         Session::put('otp_personal_timestamp', $timestamp);
+    //         return response()->json([
+    //             'status' => 'success',
+    //             'message' => 'OTP has been Resend no this Phone : ' . $request->phone_no,
+    //         ], 200);
+    //     }
 
-        // $user = [
-        //     'name' => $data['name'],
-        //     'phone' => '+'.$data['phone'],
-        //     'password' => $data['password'],
-        //     'verification_code' => $otp,
-        // ];
+    //     // $user = [
+    //     //     'name' => $data['name'],
+    //     //     'phone' => '+'.$data['phone'],
+    //     //     'password' => $data['password'],
+    //     //     'verification_code' => $otp,
+    //     // ];
 
-        // $otpController = new OTPVerificationController;
-        // $otpController->send_code($user);
+    //     // $otpController = new OTPVerificationController;
+    //     // $otpController->send_code($user);
 
 
-    }
+    // }
 
 
     // public function verify_otp(Request $request)
@@ -578,6 +582,9 @@ class RegisterController extends Controller
     //         ], 200);
     //     }
     // }
+
+
+    //--------------------------------- not use registration -------------------------------
 
     //--------------------------------- new registration -------------------------------
 

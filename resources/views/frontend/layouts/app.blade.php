@@ -229,13 +229,13 @@
             $system_language = get_system_language();
         @endphp
 
-        @php
+        {{-- @php
             $newRegUrl = url(route('user.new_registration'));
         @endphp
 
         @if (!Auth::check() && request()->url() != $newRegUrl)
 
-            {{-- - //------------------------------ login and register -----------------------// -- --}}
+            {{-- - //------------------------------ login and register -----------------------// -- 
 
             <div class="modal fade login_form_popup" id="login_reg_model" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
                 aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
@@ -275,7 +275,7 @@
                 </div>
             </div>
 
-            {{-- - //------------------------------  login and register -----------------------// -- --}}
+            {{-- - //------------------------------  login and register -----------------------// -- -
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
                     var modalElement = document.getElementById('login_reg_model');
@@ -289,7 +289,7 @@
                 });
             </script>
 
-        @endif
+        @endif --}}
 
 
             <!-- Header -->

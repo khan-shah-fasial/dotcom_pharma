@@ -140,7 +140,7 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/users/registration', 'registration')->name('user.registration')->middleware('handle-demo-login');
     Route::post('/users/login/cart', 'cart_login')->name('cart.login.submit')->middleware('handle-demo-login');
 
-    Route::get('/user/registration', 'new_user_registrations')->name('user.new_registration');
+    Route::get('/business/registration', 'new_user_registrations')->name('user.new_registration');
 
     Route::post('/import-data', 'import_data');
 
@@ -191,14 +191,12 @@ Route::controller(HomeController::class)->group(function () {
 
 //new user registration
 Route::post('/register/create-new-user-registration', [RegisterController::class, 'new_user_register'])->name('create.new.user.registration')->middleware('handle-demo-login');
-
 Route::get('/get-reg-step', [RegisterController::class, 'get_reg_step'])->name('get-reg-step');
-
 Route::any('/create-account/{param}', [RegisterController::class, 'create_account'])->name('new.user.account.create');
 
 // Route::post('/register/create-new-user-phone-verify', [RegisterController::class, 'verify_otp'])->name('create.new.user.registration.phone.verify')->middleware('handle-demo-login');
 
-Route::post('/register/create-new-user-resend-phone-verify', [RegisterController::class, 'resendOtp'])->name('create.new.user.registration.resend.phone.verify')->middleware('handle-demo-login');
+// Route::post('/register/create-new-user-resend-phone-verify', [RegisterController::class, 'resendOtp'])->name('create.new.user.registration.resend.phone.verify')->middleware('handle-demo-login');
 
 Route::get('/register/previous-reg-form', [RegisterController::class, 'previous_reg_form'])->name('previous.reg.form');
 
