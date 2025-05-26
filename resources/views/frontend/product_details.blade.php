@@ -103,7 +103,7 @@
                         
                        
                     <div class="discription_boxex">
-                       <ul class="nav nav-tabs" id="myTab" role="tablist">
+                       <ul class="nav nav-tabs d-none" id="myTab" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">description</button>
                             </li>
