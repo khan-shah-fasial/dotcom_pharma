@@ -5,53 +5,8 @@
     @if (!Session::has('step') || Session::get('step') == 1)
 
         @php
-            session()->forget('temp_user_id');
-            session()->forget('otp');
             Session()->put('step', 1);
         @endphp
-
-        {{-- - //------------------------------ Registration 1 modal -----------------------// -- --}}
-
-        {{-- <div class="modal fade login_form_popup" id="reg_model_1" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
-            aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content py-3">
-                    <div class="modal-header">
-                        <div class="heading">
-                            <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
-                            <h5 class="modal-title" id="exampleModalLabel_phone">Company Details</h5>
-                        </div>
-                        <div class="purple_btn_close">
-                            <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
-                                data-dismiss="modal" aria-label="Close"> v 
-                            </button>
-                        </div>
-                    </div>
-                    <form id="reg_gst" action="{{ url(route('new.user.account.create', ['param' => 'gst'])) }}"
-                        method="post">
-                    
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="gst_no" class="col-form-label form-label">GST No:</label>
-                                <input type="text" class="form-control form-control-lg" id="gst_no" name="gst_no"
-                                 minlength="15" maxlength="15" placeholder="Please Enter GST No" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer" style="justify-content: end;">
-                            <div class="blue_btn">
-                                <button type="button" onclick="close_Phone_modal();" class="btn btn-secondary"
-                                    data-dismiss="modal">Close</button>
-                            </div>
-                            <div class="purple_btn">
-                                <button type="submit" class="animate_button black1_buttons">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div> --}}
-
-    {{-- - //------------------------------  Registration 1 modal -----------------------// -- --}}
 
     @endif
 
@@ -123,29 +78,11 @@
 
             // ---------------- Gst verify --------------------------- //
 
-            // function appendVerifyButton() {
-            //     const verifyBtnId = 'verify-gst-btn';
-
-            //     if ($('#' + verifyBtnId).length === 0) {
-            //         const verifyBtn = $('<button>')
-            //             .attr('type', 'button')
-            //             .attr('id', verifyBtnId)
-            //             .attr('onclick', 'verifyGST()')
-            //             .addClass('btn btn-success btn-sm ml-2')
-            //             .text('Verify');
-
-            //         $('#gst_no').after(verifyBtn);
-            //     }
-            // }
-
             function checkAndAppendButton() {
                 const verifyBtnId = 'verify-gst-btn';
                 const val = $('#gst_no').val();
                 if (val.length === 15) {
                     verifyDocument('gst_no', 'gst-validate', 15);
-                    // appendVerifyButton();
-                // } else {
-                //     $('#' + verifyBtnId).remove();
                 }
             }
 
@@ -164,9 +101,6 @@
                 const val = $('#iec_no').val().trim();
                 if (val.length === 10) {
                     verifyDocument('iec_no', 'iec-validate', 10);
-                //     appendVerifyIECButton();
-                // } else {
-                //     $('#' + verifyBtnId).remove();
                 }
             }
 
@@ -349,7 +283,15 @@
                     iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
                 } else {
                     // Set default country code to +91 (India)
-                    iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                    let country = new URLSearchParams(window.location.search).get('type') || 'null';
+
+                    if (country === "domestic") {
+                        iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                    } else if (country === "international") {
+                        iti1.setCountry('us'); // set to 'us' for international
+                    } else {
+                        iti1.setCountry('in'); // default fallback
+                    }
                 }
 
                 // Update the hidden input with the selected country's dial code
@@ -405,7 +347,15 @@
                     iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
                 } else {
                     // Set default country code to +91 (India)
-                    iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                    let country = new URLSearchParams(window.location.search).get('type') || 'null';
+
+                    if (country === "domestic") {
+                        iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                    } else if (country === "international") {
+                        iti1.setCountry('us'); // set to 'us' for international
+                    } else {
+                        iti1.setCountry('in'); // default fallback
+                    }
                 }
 
                 // Update the hidden input with the selected country's dial code
@@ -446,7 +396,12 @@
                             validate_form(step);
                             console.dir(step);
 
+                            
                             if(step == 2){
+                                intil_input('phone_code');
+                            }
+
+                            if(step == 5){
                                 intil_input('phone_code');
                                 intil_input('whats_app_no');
                                 intil_input('alternate_mob_no_business');
@@ -460,7 +415,7 @@
                                     checkAndAppendIECButton();
                                 }
                                 
-                            } else if (step == 3) {
+                            } else if (step == 6) {
                                 intil_input_form2('phone_code');
                                 intil_input_form2('whats_app_no');
                                 intil_input_form2('alternate_mob_no_personal');
@@ -624,7 +579,16 @@
                 iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
             } else {
                 // Set default country code to +91 (India)
-                iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                let country = new URLSearchParams(window.location.search).get('type') || 'null';
+
+                if (country === "domestic") {
+                    iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                } else if (country === "international") {
+                    iti1.setCountry('us'); // set to 'us' for international
+                } else {
+                    iti1.setCountry('in'); // default fallback
+                }
+                
             }
 
             // Update the hidden input with the selected country's dial code
@@ -695,7 +659,15 @@
                 iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
             } else {
                 // Set default country code to +91 (India)
-                iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                let country = new URLSearchParams(window.location.search).get('type') || 'null';
+
+                if (country === "domestic") {
+                    iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                } else if (country === "international") {
+                    iti1.setCountry('us'); // set to 'us' for international
+                } else {
+                    iti1.setCountry('in'); // default fallback
+                }
             }
 
             // Update the hidden input with the selected country's dial code
@@ -734,6 +706,10 @@
 
                         if(step == 2){
                             intil_input('phone_code');
+                        }
+
+                        if(step == 5){
+                            intil_input('phone_code');
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_business');
                             intil_input('alternate_whats_app_no_business');
@@ -746,7 +722,7 @@
                                 checkAndAppendIECButton();
                             }
                             
-                        } else if (step == 3) {
+                        } else if (step == 6) {
                             console.dir(step);
                             intil_input_form2('phone_code');
                             intil_input_form2('whats_app_no');
@@ -815,7 +791,7 @@
 
                         validate_form(step);
 
-                        if(step == 2){
+                        if(step == 5){
                             intil_input('phone_code');
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_business');
@@ -829,7 +805,7 @@
                                 checkAndAppendIECButton();
                             }
                             
-                        } else if (step == 3) {
+                        } else if (step == 6) {
                             intil_input_form2('phone_code');
                             intil_input_form2('whats_app_no');
                             intil_input_form2('alternate_mob_no_personal');
@@ -847,15 +823,15 @@
         }
         
 
-        function resendOTPButton_Phone(phonetype, phone_no) {
+        function resendOTPButton_Phone(phonetype = null, phone_no = null) {
             var csrfToken = '{{ csrf_token() }}';
             $.ajax({
                 url: "{{ route('create.new.user.registration.resend.phone.verify') }}",
                 type: "Post",
-                data: {
-                    phonetype  : phonetype,
-                    phone_no   : phone_no
-                },
+                // data: {
+                //     phonetype  : phonetype,
+                //     phone_no   : phone_no
+                // },
                 headers: {
                     'X-CSRF-TOKEN': csrfToken
                 },

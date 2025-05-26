@@ -196,7 +196,7 @@ Route::any('/create-account/{param}', [RegisterController::class, 'create_accoun
 
 // Route::post('/register/create-new-user-phone-verify', [RegisterController::class, 'verify_otp'])->name('create.new.user.registration.phone.verify')->middleware('handle-demo-login');
 
-// Route::post('/register/create-new-user-resend-phone-verify', [RegisterController::class, 'resendOtp'])->name('create.new.user.registration.resend.phone.verify')->middleware('handle-demo-login');
+Route::post('/register/create-new-user-resend-phone-verify', [RegisterController::class, 'resendOtp'])->name('create.new.user.registration.resend.phone.verify')->middleware('handle-demo-login');
 
 Route::get('/register/previous-reg-form', [RegisterController::class, 'previous_reg_form'])->name('previous.reg.form');
 

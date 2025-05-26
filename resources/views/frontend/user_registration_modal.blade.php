@@ -32,7 +32,8 @@
                         </div>
 
                 </div>
-                <div class="modal-footer">
+
+                <div class="modal-footer d-none">
                     <div class="purple_btn d-none">
                         <button type="submit" id="reg_model_form_1_submit" class="animate_button black1_buttons">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
@@ -41,11 +42,25 @@
                 <script>
                     document.querySelectorAll('input[name="type_option"]').forEach(function(radio) {
                         radio.addEventListener('change', function () {
+                            // document.getElementById('reg_type').value = this.value;
+                            // document.getElementById('reg_model_form_1_submit').click();
+
+                            const selectedValue = this.value;
+
+                            // Build new URL with updated query parameter
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('type', selectedValue);
+
+                            // Update the URL without reloading the page
+                            window.history.replaceState({}, '', url);
+
                             document.getElementById('reg_type').value = this.value;
                             document.getElementById('reg_model_form_1_submit').click();
+
                         });
                     });
                 </script>
+
             </form>
 
         </div>
@@ -56,14 +71,190 @@
 @endif
 
 @if (Session::has('step') && Session::get('step') == 2)
+{{-- - //------------------------------ Registration 2 modal -----------------------// -- --}}
+
+    <div class="modal fade login_form_popup" id="reg_model_2" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content py-3">
+                <div class="modal-header">
+                    <div class="heading">
+                        <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                        <h5 class="modal-title" id="exampleModalLabel_phone">Verify Phone Number</h5>
+                    </div>
+
+                </div>
+                <form id="reg_model_form_2" action="{{ url(route('new.user.account.create', ['param' => 'verify-phone'])) }}"
+                    method="post">
+                    @csrf
+
+                    <div class="modal-body">
+                        <div class="row">
+                                <div class="col-md-12 mb-md-4 mb-3">
+
+                                <div class="form-group phone-form-group mb-1">
+                                    <label for="phone-code" class="fs-12 fw-700 text-soft-dark">Mobile No *</label>
+                                    <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Mobile No" name="phone" autocomplete="off" 
+                                    value="{{ $Phone_parts_number ?? '' }}" required>
+                                </div>
+
+                                <input type="hidden" name="country_code_phone_code" value="">
+                                <input type="hidden" name="phone_code_meta" value="">
+
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                            <div class="blue_btn black_buttons">
+                                <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
+                            </div>
+
+                            <div class="display_flexx">
+                                <div class="purple_btn">
+                                <button type="submit" class="animate_button black1_buttons">Verify <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                            </div>  
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 {{-- - //------------------------------ Registration 2 modal -----------------------// -- --}}
+@endif
+
+@if (Session::has('step') && Session::get('step') == 3)
+{{-- - //------------------------------ Registration 3 modal -----------------------// -- --}}
+
+    <div class="modal fade login_form_popup" id="reg_model_3" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content py-3">
+                <div class="modal-header">
+                    <div class="heading">
+                        <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                        <h5 class="modal-title" id="exampleModalLabel_phone">Verify Phone OTP</h5>
+                    </div>
+
+                </div>
+                <form id="reg_model_form_3" action="{{ url(route('new.user.account.create', ['param' => 'verify-phone-otp'])) }}"
+                    method="post">
+                    @csrf
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
+                            <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp"
+                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="blue_btn black_buttons">
+                            <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
+                        </div>
+
+                        <div class="display_flexx">
+                             <div class="resend_otp">
+                            <a class="ms-4" class="btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
+                        </div>
+                             <div class="purple_btn">
+                            <button type="submit" class="animate_button black1_buttons">Verify <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                        </div>
+                       
+                        </div>
+                       
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{{-- - //------------------------------ Registration 3 modal -----------------------// -- --}}
+@endif
+
+@if (Session::has('step') && Session::get('step') == 4)
+{{-- - //------------------------------ Registration 4 modal -----------------------// -- --}}
+
+<div class="modal fade login_form_popup" id="reg_model_4" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+    aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content py-3">
+            <div class="modal-header">
+                <div class="heading">
+                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
+                    <h5 class="modal-title" id="exampleModalLabel_phone">How Would you wish to proceed with</h5>
+                    <hr>
+                </div>
+            </div>
+            @php
+                $formAction = route('new.user.account.create', ['param' => 'registration-from']);
+            @endphp
+            <form id="reg_model_form_4" action="{{ url($formAction) }}" method="POST">
+                <div class="modal-body row">
+
+                        <input type="hidden" name="type" id="reg_from" value="">
+                        @if(Session::get('reg_locality') == "domestic")
+                            <div class="btn-group w-100 d-flex" role="group" aria-label="Type selection">
+
+                                <label class="btn btn-success w-100 mx-3" for="gst">
+                                <input type="radio" class="btn-check" name="type_option" id="gst" value="gst" autocomplete="off">
+                                GST</label>
+                        
+                                <label class="btn btn-primary w-100 mx-3" for="aadhaar">
+                                <input type="radio" class="btn-check" name="type_option" id="aadhaar" value="aadhaar" autocomplete="off">
+                                Aadhaar</label>
+
+                            </div>
+                        @else 
+                            <div class="btn-group w-100 d-flex" role="group" aria-label="Type selection">
+
+                                <label class="btn btn-success w-100 mx-3" for="iec">
+                                <input type="radio" class="btn-check" name="type_option" id="iec" value="iec" autocomplete="off">
+                                IEC</label>
+                        
+                                <label class="btn btn-primary w-100 mx-3" for="passport">
+                                <input type="radio" class="btn-check" name="type_option" id="passport" value="passport" autocomplete="off">
+                                Passport</label>
+
+                            </div>
+                        @endif
+
+                </div>
+
+                <div class="modal-footer d-none">
+                    <div class="purple_btn d-none">
+                        <button type="submit" id="reg_model_form_4_submit" class="animate_button black1_buttons">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
+                    </div>
+                </div>
+
+
+                <script>
+                    document.querySelectorAll('input[name="type_option"]').forEach(function(radio) {
+                        radio.addEventListener('change', function () {
+                            document.getElementById('reg_from').value = this.value;
+                            document.getElementById('reg_model_form_4_submit').click();
+                        });
+                    });
+                </script>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{{-- - //------------------------------ Registration 4 modal -----------------------// -- --}}
+@endif
+
+@if (Session::has('step') && Session::get('step') == 5)
+
+{{-- - //------------------------------ Registration 5 modal -----------------------// -- --}}
 
 @php
     $session_data_user = session()->get('user_data_business') ?? []; 
 @endphp
 
-<div class="modal fade login_form_popup" id="reg_model_2" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_5" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content py-3">
@@ -73,12 +264,13 @@
                     <h5 class="modal-title" id="exampleModalLabel_phone">Registration Details</h5>
                 </div>
             </div>
-            <form id="reg_model_form_2" action="{{ url(route('new.user.account.create', ['param' => 'registration-bussiness-details'])) }}"
+            <form id="reg_model_form_5" action="{{ url(route('new.user.account.create', ['param' => 'registration-bussiness-details'])) }}"
                 method="post">
             
                 <div class="modal-body">
 
-                    <div class="btn-group d-flex" role="group" aria-label="Type selection">
+                    {{--
+                    <!-- <div class="btn-group d-flex d-none" role="group" aria-label="Type selection">
 
                         <label class="btn btn-success mx-3" for="domestic">
                         <input type="radio" class="btn-check" name="type_option" id="domestic" value="domestic" 
@@ -96,7 +288,9 @@
                         onclick="toggleLocalityFields();">
                         International</label>
 
-                    </div>
+                    </div> -->
+                    --}}
+
 
                     <div class="row">
 
@@ -104,49 +298,51 @@
                             <h3>Business Details</h3>
                         </div>
 
-                        <div class="locality-base-domestic col-md-12">
-                            <div class="row">
+                        @if(session()->get('reg_locality') == "domestic")
+                            <div class="locality-base-domestic col-md-12">
+                                <div class="row">
 
-                                <div class="col-md-5 mb-md-4 mb-3">
-                                    <div class="form-group">
-                                        <label for="gst_no" class="col-form-label form-label">GST No: *</label>
-                                        <input type="text" class="form-control form-control-lg" id="gst_no" name="gst_no"
-                                        minlength="10" maxlength="15" placeholder="Please Enter GST No Ex: 22AAAAA0000A1Z5 " value="{{ $data['gst_no'] ?? $session_data_user['gst_no'] ?? '' }}" required>
+                                    <div class="col-md-5 mb-md-4 mb-3">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">GST No: *</label>
+                                            <input type="text" class="form-control form-control-lg" id="gst_no" name="gst_no"
+                                            minlength="10" maxlength="15" placeholder="Please Enter GST No Ex: 22AAAAA0000A1Z5 " value="{{ $data['gst_no'] ?? $session_data_user['gst_no'] ?? '' }}" required>
+                                        </div>
                                     </div>
-                                </div>
-    
-                                <div class="col-md-5 mb-md-4 mb-3">
-                                    <div class="form-group">
-                                        <label for="gst_no" class="col-form-label form-label">GST No Upload : *</label>
-                                        <input type="file" class="form-control form-control-lg" id="gst_no_file" name="gst_no_file"
-                                        accept=".jpg, .jpeg, .webp, .png, .pdf"
-                                        required>
+        
+                                    <div class="col-md-5 mb-md-4 mb-3">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">GST No Upload : *</label>
+                                            <input type="file" class="form-control form-control-lg" id="gst_no_file" name="gst_no_file"
+                                            accept=".jpg, .jpeg, .webp, .png, .pdf"
+                                            required>
+                                        </div>
                                     </div>
-                                </div>
 
-                            </div> 
-                        </div>
-
-                        <div class="locality-base-international col-md-12 d-none">
-                            <div class="row">
-                                <div class="col-md-5 mb-md-4 mb-3">
-                                    <div class="form-group">
-                                        <label for="iec_no" class="col-form-label form-label">IEC.No: *</label>
-                                        <input type="text" class="form-control form-control-lg" id="iec_no" name="iec_no"
-                                        minlength="10" maxlength="10" placeholder="Please Enter IEC.No Ex: 1234567890" value="{{ $data['iec_no'] ?? $session_data_user['iec_no'] ?? '' }}" >
+                                </div> 
+                            </div>
+                        @else
+                            <div class="locality-base-international col-md-12">
+                                <div class="row">
+                                    <div class="col-md-5 mb-md-4 mb-3">
+                                        <div class="form-group">
+                                            <label for="iec_no" class="col-form-label form-label">IEC.No: *</label>
+                                            <input type="text" class="form-control form-control-lg" id="iec_no" name="iec_no"
+                                            minlength="10" maxlength="10" placeholder="Please Enter IEC.No Ex: 1234567890" value="{{ $data['iec_no'] ?? $session_data_user['iec_no'] ?? '' }}" required>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="col-md-5 mb-md-4 mb-3">
-                                    <div class="form-group">
-                                        <label for="gst_no" class="col-form-label form-label">IEC.No Upload : *</label>
-                                        <input type="file" class="form-control form-control-lg" id="iec_no_file" name="iec_no_file"
-                                        accept=".jpg, .jpeg, .webp, .png, .pdf"
-                                        >
+                                    <div class="col-md-5 mb-md-4 mb-3">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">IEC.No Upload : *</label>
+                                            <input type="file" class="form-control form-control-lg" id="iec_no_file" name="iec_no_file"
+                                            accept=".jpg, .jpeg, .webp, .png, .pdf"
+                                            required>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
 
                         <div class="col-md-3">
 
@@ -167,30 +363,31 @@
 
                         </div>
 
-                        <div class="locality-base-domestic"> 
-                            <div class="col-md-12 mb-md-4 mb-3">
+                        @if(session()->get('reg_locality') == "domestic")
+                            <div class="locality-base-domestic"> 
+                                <div class="col-md-12 mb-md-4 mb-3">
 
-                                <div class="form-group mb-1">
-                                    <label class="form-label" for="gstin_current_status">GSTIN Status / Current Status *</label>
-                                    <input type="text" id="gstin_current_status" name="gstin_current_status"
-                                        class="form-control form-control-lg" value="{{ $data['gstin_current_status'] ?? $session_data_user['gstin_current_status'] ?? '' }}" required placeholder="Enter GSTIN Status / Current Status Ex: Active"/>
+                                    <div class="form-group mb-1">
+                                        <label class="form-label" for="gstin_current_status">GSTIN Status / Current Status *</label>
+                                        <input type="text" id="gstin_current_status" name="gstin_current_status"
+                                            class="form-control form-control-lg" value="{{ $data['gstin_current_status'] ?? $session_data_user['gstin_current_status'] ?? '' }}" required placeholder="Enter GSTIN Status / Current Status Ex: Active"/>
+                                    </div>
+
                                 </div>
-
                             </div>
-                        </div>
+                        @else
+                            <div class="locality-base-international"> 
+                                <div class="col-md-12 mb-md-4 mb-3">
 
-                        <div class="locality-base-international d-none"> 
-                            <div class="col-md-12 mb-md-4 mb-3">
+                                    <div class="form-group mb-1">
+                                        <label class="form-label" for="uin_current_status">UIN Status / Current Status *</label>
+                                        <input type="text" id="uin_current_status" name="uin_current_status"
+                                            class="form-control form-control-lg" value="{{ $data['uin_current_status'] ?? $session_data_user['uin_current_status'] ?? '' }}" required placeholder="Enter UIN Status / Current Status Ex: Active"/>
+                                    </div>
 
-                                <div class="form-group mb-1">
-                                    <label class="form-label" for="uin_current_status">UIN Status / Current Status *</label>
-                                    <input type="text" id="uin_current_status" name="uin_current_status"
-                                        class="form-control form-control-lg" value="{{ $data['uin_current_status'] ?? $session_data_user['uin_current_status'] ?? '' }}" placeholder="Enter UIN Status / Current Status Ex: Active"/>
                                 </div>
-
                             </div>
-                        </div>
-
+                        @endif
 
                         <div class="col-md-3 mb-md-4 mb-3">
 
@@ -516,24 +713,29 @@
                             </div>
 
                         </div>
-                        <div class="col-md-3">
 
-                            <div class="form-group">
-                                <label class="form-label" for="micr_code_business">MICR Code *</label>
-                                <input type="text" id="micr_code_business" name="micr_code_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['micr_code_business'] ?? '' }}" required placeholder="Enter MICR Code Ex: 600002025"/>
+                        @if(session()->get('reg_locality') != "domestic")
+                            <div class="col-md-3">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="micr_code_business">MICR Code *</label>
+                                    <input type="text" id="micr_code_business" name="micr_code_business"
+                                        class="form-control form-control-lg" value="{{ $session_data_user['micr_code_business'] ?? '' }}" required placeholder="Enter MICR Code Ex: 600002025"/>
+                                </div>
+
                             </div>
+                            <div class="col-md-3">
 
-                        </div>
-                        <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="form-label" for="ad_code_business">AD code *</label>
+                                    <input type="text" id="ad_code_business" name="ad_code_business"
+                                        class="form-control form-control-lg" value="{{ $session_data_user['ad_code_business'] ?? '' }}" required placeholder="Enter AD Code"/>
+                                </div>
 
-                            <div class="form-group">
-                                <label class="form-label" for="ad_code_business">AD code *</label>
-                                <input type="text" id="ad_code_business" name="ad_code_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['ad_code_business'] ?? '' }}" required placeholder="Enter AD Code"/>
                             </div>
+                        @endif
 
-                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -549,78 +751,22 @@
     </div>
 </div>
 
-{{-- - //------------------------------  Registration 2 modal -----------------------// -- --}}
+{{-- - //------------------------------  Registration 5 modal -----------------------// -- --}}
 
 @endif
 
 
-{{-- @if (Session::has('step') && Session::get('step') == 3)
+@if (Session::has('step') && Session::get('step') == 6)
 
-
-
-    <div class="modal fade login_form_popup" id="reg_model_3" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
-        aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content py-3">
-                <div class="modal-header">
-                    <div class="heading">
-                        <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
-                        <h5 class="modal-title" id="exampleModalLabel_phone">Verify Phone Number</h5>
-                    </div>
-
-                </div>
-                <form id="reg_model_form_3" action="{{ url(route('new.user.account.create', ['param' => 'verify-phone'])) }}"
-                    method="post">
-                    @csrf
-
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
-                            <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp"
-                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <div class="blue_btn black_buttons">
-                            <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
-                        </div>
-
-                        <div class="display_flexx">
-                             <div class="resend_otp">
-                            <a class="ms-4" class="btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
-                        </div>
-                             <div class="purple_btn">
-                            <button type="submit" class="animate_button black1_buttons">Verify <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
-                        </div>
-                       
-                        </div>
-                       
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-
-
-@endif --}}
-
-
-
-
-{{-- - //------------------------------ Registration 1 modal -----------------------// -- --}}
-
-@if (Session::has('step') && Session::get('step') == 3)
-
-{{-- - //------------------------------ Registration 3 modal -----------------------// -- --}}
+{{-- - //------------------------------ Registration 6 modal -----------------------// -- --}}
 
 @php
-    $session_data_user = session()->get('user_data_personal') ?? [];
-    $session_data_bussines = session()->get('user_data_business') ?? [];
+    $session_data_use = session()->get('userr_data_personal') ?? [];
+    $reg_locality = session()->get('reg_locality');
     $pan_no =  session()->get('pan_no') ?? '';
 @endphp
 
-<div class="modal fade login_form_popup" id="reg_model_3" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_6" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content py-3">
@@ -630,7 +776,7 @@
                     <h5 class="modal-title" id="exampleModalLabel_phone">Registration Details</h5>
                 </div>
             </div>
-            <form id="reg_model_form_3" action="{{ url(route('new.user.account.create', ['param' => 'registration-personal-details'])) }}"
+            <form id="reg_model_form_6" action="{{ url(route('new.user.account.create', ['param' => 'registration-personal-details'])) }}"
                 method="post">
             
                 <div class="modal-body">
@@ -641,7 +787,7 @@
                             <h3>Personal Details</h3>
                         </div>
 
-                        @if($session_data_bussines['type_option'] == "domestic")
+                        @if($reg_locality == "domestic")
                             <div class="locality-base-domestic col-md-12">
                                 <div class="row">
 
@@ -689,8 +835,7 @@
                                             <label for="iec_no" class="col-form-label form-label">Passport File No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="passport_no" name="passport_no"
                                             minlength="9" maxlength="15" placeholder="Please Enter Passport No Ex: HYDA089153811" value="{{ $session_data_user['passport_no'] ?? '' }}" 
-                                            @if($session_data_bussines['type_option'] != "domestic") required @endif
-                                            >
+                                             required>
                                         </div>
                                     </div>
 
@@ -698,9 +843,7 @@
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">Passport Upload : *</label>
                                             <input type="file" class="form-control form-control-lg" id="passport_no_file" name="passport_no_file"
-                                            accept=".jpg, .jpeg, .webp, .png, .pdf"
-                                            @if($session_data_bussines['type_option'] != "domestic") required @endif
-                                            >
+                                            accept=".jpg, .jpeg, .webp, .png, .pdf" required>
                                         </div>
                                     </div>
                                 </div>
@@ -1043,24 +1186,27 @@
                             </div>
 
                         </div>
-                        <div class="col-md-3">
 
-                            <div class="form-group">
-                                <label class="form-label" for="micr_code_personal">MICR Code *</label>
-                                <input type="text" id="micr_code_personal" name="micr_code_personal"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['micr_code_personal'] ?? '' }}" required placeholder="Enter MICR Code Ex: 123456789"/>
+                        @if(session()->get('reg_locality') != "domestic")
+                            <div class="col-md-3">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="micr_code_personal">MICR Code *</label>
+                                    <input type="text" id="micr_code_personal" name="micr_code_personal"
+                                        class="form-control form-control-lg" value="{{ $session_data_user['micr_code_personal'] ?? '' }}" required placeholder="Enter MICR Code Ex: 123456789"/>
+                                </div>
+
                             </div>
+                            <div class="col-md-3">
 
-                        </div>
-                        <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="form-label" for="ad_code_personal">AD code *</label>
+                                    <input type="text" id="ad_code_personal" name="ad_code_personal"
+                                        class="form-control form-control-lg" value="{{ $session_data_user['ad_code_personal'] ?? '' }}" required placeholder="Enter MICR Code Ex: 123456"/>
+                                </div>
 
-                            <div class="form-group">
-                                <label class="form-label" for="ad_code_personal">AD code *</label>
-                                <input type="text" id="ad_code_personal" name="ad_code_personal"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['ad_code_personal'] ?? '' }}" required placeholder="Enter MICR Code Ex: 123456"/>
                             </div>
-
-                        </div>
+                        @endif
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1076,16 +1222,16 @@
     </div>
 </div>
 
-{{-- - //------------------------------  Registration 2 modal -----------------------// -- --}}
+{{-- - //------------------------------  Registration 6 modal -----------------------// -- --}}
 
 @endif
 
 
-@if (Session::has('step') && Session::get('step') == 4)
+@if (Session::has('step') && Session::get('step') == 7)
 
-{{-- - //------------------------------ Registration 4 modal -----------------------// -- --}}
+{{-- - //------------------------------ Registration 7 modal -----------------------// -- --}}
 
-<div class="modal fade login_form_popup" id="reg_model_4" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_7" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content py-3">
@@ -1095,141 +1241,30 @@
                     <h5 class="modal-title" id="exampleModalLabel_phone">License Details</h5>
                 </div>
             </div>
-            <form id="reg_model_form_4" action="{{ url(route('new.user.account.create', ['param' => 'registration-license-details'])) }}"
+            <form id="reg_model_form_7" action="{{ url(route('new.user.account.create', ['param' => 'registration-license-details'])) }}"
                 method="post">
             
                 <div class="modal-body">
+                    @error('at_least_one_combination')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
                     <div class="row">
 
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_1">Drug / Pharmacy Licence No 1 *</label>
-                                <input type="text" id="d_l_no_1" name="d_l_no_1"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_no_1'] ?? '' }}" required placeholder="Enter D.L.No.1"/>
-                            </div>
-
+                        <div class="form-group col-md-12">
+                            <label for="field_selector">Select Field to Add</label>
+                            <select id="field_selector" class="form-control">
+                                <option value="">-- Select Field --</option>
+                                <option value="d_l_no_1">Drug / Pharmacy Licence No 1</option>
+                                <option value="doctor_hospital_reg_no">Doctor / Pharmacist / Hospital Reg. No</option>
+                                <option value="d_l_no_2">Drug / Pharmacy Licence No 2</option>
+                                <option value="dairy_trust_ngo_reg_no">Dairy / Trust / NGO / Other Reg. No</option>
+                                <option value="d_l_no_3">Drug / Pharmacy Licence No 3</option>
+                                <option value="cc_mdl_reg_no">CC / MDL Registration No</option>
+                            </select>
                         </div>
 
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_1">Upload Drug / Pharmacy Licence No 1 *</label>
-                                <input type="file" id="d_l_no_1"
-                                    class="form-control form-control-lg" name="d_l_no_1_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf" required/>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="doctor_hospital_reg_no">Doctor / Pharmacist / Hospital Reg.No </label>
-                                <input type="text" id="doctor_hospital_reg_no" name="doctor_hospital_reg_no"
-                                    class="form-control form-control-lg" value="{{ $data['doctor_hospital_reg_no'] ?? '' }}" placeholder="Enter D.L.No.2"/>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="doctor_hospital_reg_no_file">Upload Doctor / Pharmacist / Hospital Reg.No </label>
-                                <input type="file" id="doctor_hospital_reg_no_file"
-                                    class="form-control form-control-lg" name="doctor_hospital_reg_no_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf"/>
-                            </div>
-
-                        </div>
-
-                {{-- ------------------------------------------------------------------------------------- --}}
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_2">Drug / Pharmacy Licence No 2 *</label>
-                                <input type="text" id="d_l_no_2" name="d_l_no_2"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_no_2'] ?? '' }}" required placeholder="Enter D.L.No.2"/>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_2">Upload Drug / Pharmacy Licence No 2 *</label>
-                                <input type="file" id="d_l_no_2"
-                                    class="form-control form-control-lg" name="d_l_no_2_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf" required/>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="dairy_trust_ngo_reg_no">Dairy / Trust / NGO / Other Reg.No </label>
-                                <input type="text" id="dairy_trust_ngo_reg_no" name="dairy_trust_ngo_reg_no"
-                                    class="form-control form-control-lg" value="{{ $data['dairy_trust_ngo_reg_no'] ?? '' }}" placeholder="Enter D.L.No.2"/>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="dairy_trust_ngo_reg_no_file">Upload Dairy / Trust / NGO / Other Reg.No</label>
-                                <input type="file" id="dairy_trust_ngo_reg_no_file"
-                                    class="form-control form-control-lg" name="dairy_trust_ngo_reg_no_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf" />
-                            </div>
-
-                        </div>
-
-                {{-----------------------------------------------------------------------------------------------}}
-
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_3">Drug / Pharmacy Licence No 3 </label>
-                                <input type="text" id="d_l_no_3" name="d_l_no_3"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_no_3'] ?? '' }}" placeholder="Enter D.L.No.3"/>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_3">Upload Drug / Pharmacy Licence No 3 </label>
-                                <input type="file" id="d_l_no_3"
-                                    class="form-control form-control-lg" name="d_l_no_3_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf"/>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="cc_mdl_reg_no">CC / MDL Registration No </label>
-                                <input type="text" id="cc_mdl_reg_no" name="cc_mdl_reg_no"
-                                    class="form-control form-control-lg" value="{{ $data['cc_mdl_reg_no'] ?? '' }}" placeholder="Enter D.L.No.2"/>
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="cc_mdl_reg_no_file">Upload CC / MDL Registration No </label>
-                                <input type="file" id="cc_mdl_reg_no_file"
-                                    class="form-control form-control-lg" name="cc_mdl_reg_no_file"
-                                    accept=".jpg, .jpeg, .webp, .png, .pdf" />
-                            </div>
-
+                        <div id="dynamic_fields" class="row mt-3">
+                            <!-- Dynamically added input+file fields will appear here -->
                         </div>
 
                     </div>
@@ -1247,89 +1282,92 @@
     </div>
 </div>
 
-{{-- - //------------------------------  Registration 4 modal -----------------------// -- --}}
+
+<script>
+    const fieldsData = {
+        d_l_no_1: {
+            label: "Drug / Pharmacy Licence No 1",
+            name: "d_l_no_1",
+            fileName: "d_l_no_1_file"
+        },
+        doctor_hospital_reg_no: {
+            label: "Doctor / Pharmacist / Hospital Reg. No",
+            name: "doctor_hospital_reg_no",
+            fileName: "doctor_hospital_reg_no_file"
+        },
+        d_l_no_2: {
+            label: "Drug / Pharmacy Licence No 2",
+            name: "d_l_no_2",
+            fileName: "d_l_no_2_file"
+        },
+        dairy_trust_ngo_reg_no: {
+            label: "Dairy / Trust / NGO / Other Reg. No",
+            name: "dairy_trust_ngo_reg_no",
+            fileName: "dairy_trust_ngo_reg_no_file"
+        },
+        d_l_no_3: {
+            label: "Drug / Pharmacy Licence No 3",
+            name: "d_l_no_3",
+            fileName: "d_l_no_3_file"
+        },
+        cc_mdl_reg_no: {
+            label: "CC / MDL Registration No",
+            name: "cc_mdl_reg_no",
+            fileName: "cc_mdl_reg_no_file"
+        }
+    };
+
+    document.getElementById('field_selector').addEventListener('change', function () {
+        const selected = this.value;
+
+        // Prevent adding the same field again
+        if (!selected || document.getElementById(selected + '_wrapper')) return;
+
+        const field = fieldsData[selected];
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'col-md-6 position-relative mb-3';
+        wrapper.id = selected + '_wrapper';
+
+        wrapper.innerHTML = `
+            <div class="border p-3 rounded">
+                <button type="button" class="btn-close position-absolute top-0 end-0" aria-label="Remove" title="Remove field"></button>
+
+                <div class="form-group">
+                    <label>${field.label} *</label>
+                    <input type="text" name="${field.name}" class="form-control form-control-lg" placeholder="Enter ${field.label}" required>
+                </div>
+
+                <div class="form-group mt-2">
+                    <label>Upload ${field.label} *</label>
+                    <input type="file" name="${field.fileName}" class="form-control form-control-lg" accept=".jpg, .jpeg, .webp, .png, .pdf" required>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('dynamic_fields').appendChild(wrapper);
+
+        // Attach event to remove button
+        wrapper.querySelector('.btn-close').addEventListener('click', function () {
+            wrapper.remove();
+        });
+    });
+</script>
+
+{{-- - //------------------------------  Registration 7 modal -----------------------// -- --}}
 
 @endif
 
-{{-- - //------------------------------  verification  5 modal -----------------------// -- --}}
 
- @if (Session::has('step') && Session::get('step') == 5)
+@if (Session::has('step') && Session::get('step') == 8)
 
-@php
-    $session_data_personal = session()->get('user_data_personal') ?? [];
-    $session_data_bussines = session()->get('user_data_business') ?? []; 
-@endphp
-
-
-    <div class="modal fade login_form_popup" id="reg_model_5" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
-        aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content py-3">
-                <div class="modal-header">
-                    <div class="heading">
-                        <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
-                        <h5 class="modal-title" id="exampleModalLabel_phone">Verify Phone Number</h5>
-                    </div>
-
-                </div>
-                <form id="reg_model_form_5" action="{{ url(route('new.user.account.create', ['param' => 'verify-otps'])) }}"
-                    method="post">
-                    @csrf
-
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="recipient-name" class="col-form-label form-label">Verification Code For this Business Number {{ $session_data_bussines['phone_business'] }}:</label>
-                            <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp_business"
-                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
-                        </div>
-                    </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label for="recipient-name" class="col-form-label form-label">Verification Code For this Personal Number {{ $session_data_personal['phone'] }}:</label>
-                            <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp_personal"
-                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <div class="blue_btn black_buttons">
-                            <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
-                        </div>
-
-                        <div class="display_flexx">
-                             <div class="resend_otp">
-                                <a class="ms-4" class="btn btn-primary" onclick="resendOTPButton_Phone('business','{{ $session_data_bussines['phone_business'] }}');">Resend OTP for Business Number</a>
-                             </div>
-                             <div class="resend_otp">
-                                <a class="ms-4" class="btn btn-primary" onclick="resendOTPButton_Phone('personal','{{ $session_data_personal['phone'] }}');">Resend OTP for Business Number</a>
-                             </div>
-                             <div class="purple_btn">
-                            <button type="submit" class="animate_button black1_buttons">Verify <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
-                        </div>
-                       
-                        </div>
-                       
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-
-
-@endif --}}
-
-
-
-
-@if (Session::has('step') && Session::get('step') == 6)
-
-{{-- - //------------------------------ Registration 6 modal -----------------------// -- --}}
+{{-- - //------------------------------ Registration 8 modal -----------------------// -- --}}
 
 @php
     session()->flush();
 @endphp
 
-<div class="modal fade login_form_popup" id="reg_model_6" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade login_form_popup" id="reg_model_8" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
 aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content py-3">
@@ -1369,220 +1407,4 @@ aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
 @endif
 
 
-
-
-
-@if (Session::has('step') && Session::get('step') == 15)
-
-{{-- - //------------------------------ Registration 5 modal -----------------------// -- --}}
-
-<div class="modal fade login_form_popup" id="reg_model_5" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
-    aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content py-3">
-            <div class="modal-header">
-                <div class="heading">
-                     <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
-                    <h5 class="modal-title" id="exampleModalLabel_phone">Bank Details</h5>
-                </div>
-                {{-- <div class="purple_btn_close">
-                    <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
-                        data-dismiss="modal" aria-label="Close">
-                    </button>
-                </div> --}}
-            </div>
-            <form id="reg_model_form_5" action="{{ url(route('new.user.account.create', ['param' => 'bank-details'])) }}"
-                method="post">
-            
-                <div class="modal-body">
-                    <div class="row">
-
-
-
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="form-label" for="customer_care_executive">Customer Care
-                                    Executive</label>
-                                <input type="text" id="customer_care_executive"
-                                    name="customer_care_executive" class="form-control form-control-lg" value="{{ $data['customer_care_executive'] ?? '' }}" required placeholder="Enter Customer Care Executive"/>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="blue_btn black_buttons">
-                        <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
-                    </div>
-                    <div class="purple_btn">
-                        <button type="submit" class="animate_button black1_buttons"> Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{{-- - //------------------------------  Registration 5 modal -----------------------// -- --}}
-
-@endif
-
-@if (Session::has('step') && Session::get('step') == 16)
-
-{{-- - //------------------------------ Registration 6 modal -----------------------// -- --}}
-
-<div class="modal fade login_form_popup" id="reg_model_6" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
-    aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content py-3">
-            <div class="modal-header">
-                <div class="heading">
-                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
-                    <h5 class="modal-title" id="exampleModalLabel_phone">License Details</h5>
-                </div>
-                {{-- <div class="purple_btn_close">
-                    <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
-                        data-dismiss="modal" aria-label="Close">
-                    </button>
-                </div> --}}
-            </div>
-            <form id="reg_model_form_6" action="{{ url(route('new.user.account.create', ['param' => 'license-details'])) }}"
-                method="post">
-            
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="form-label" for="cc_no">CC NO</label>
-                                <input type="text" id="cc_no" name="cc_no"
-                                    class="form-control form-control-lg" value="{{ $data['cc_no'] ?? '' }}" required placeholder="Enter CC.No"/>
-                            </div>
-
-                        </div>
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_1">D.L No 1 (Drug Licence)</label>
-                                <input type="text" id="d_l_no_1" name="d_l_no_1"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_no_1'] ?? '' }}" required placeholder="Enter D.L.No.1"/>
-                            </div>
-
-                        </div>
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_2">D.L No 2</label>
-                                <input type="text" id="d_l_no_2" name="d_l_no_2"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_no_2'] ?? '' }}" required placeholder="Enter D.L.No.2"/>
-                            </div>
-
-                        </div>
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_no_3">D.L No 3</label>
-                                <input type="text" id="d_l_no_3" name="d_l_no_3"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_no_3'] ?? '' }}" required placeholder="Enter D.L.No.3"/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="blue_btn black_buttons">
-                        <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
-                    </div>
-                    <div class="purple_btn">
-                        <button type="submit" class="animate_button black1_buttons">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{{-- - //------------------------------  Registration 6 modal -----------------------// -- --}}
-
-@endif
-
-@if (Session::has('step') && Session::get('step') == 17)
-
-{{-- - //------------------------------ Registration 7 modal -----------------------// -- --}}
-
-<div class="modal fade login_form_popup" id="reg_model_7" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
-    aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content py-3">
-            <div class="modal-header">
-                <div class="heading">
-                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
-                    <h5 class="modal-title" id="exampleModalLabel_phone">Transport Details</h5>
-                </div>
-                {{-- <div class="purple_btn_close">
-                    <button type="button" onclick="close_Phone_modal();" class="close p-1 px-3"
-                        data-dismiss="modal" aria-label="Close">
-                    </button>
-                </div> --}}
-            </div>
-            <form id="reg_model_form_7" action="{{ url(route('new.user.account.create', ['param' => 'transport-details'])) }}"
-                method="post">
-            
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="form-label" for="d_l_exp_Date">D.L Expiry Date</label>
-                                <input type="date" id="d_l_exp_Date" name="d_l_exp_Date"
-                                    class="form-control form-control-lg" value="{{ $data['d_l_exp_Date'] ?? '' }}" required />
-                            </div>
-
-                        </div>
-
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="form-label" for="transport">Transport</label>
-                                <input type="text" id="transport" name="transport"
-                                    class="form-control form-control-lg"  value="{{ $data['transport'] ?? '' }}" required/>
-                            </div>
-
-                        </div>
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="form-label" for="cargo">Cargo</label>
-                                <input type="text" id="cargo" name="cargo"
-                                    class="form-control form-control-lg" value="{{ $data['cargo'] ?? '' }}" required />
-                            </div>
-
-                        </div>
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="form-label" for="booked_to">Booked To</label>
-                                <input type="text" id="booked_to" name="booked_to"
-                                    class="form-control form-control-lg" value="{{ $data['booked_to'] ?? '' }}" required />
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <div class="blue_btn black_buttons">
-                        <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
-                    </div>
-                    <div class="purple_btn">
-                        <button type="submit" class="animate_button black1_buttons">Sbumit <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{{-- - //------------------------------  Registration 7 modal -----------------------// -- --}}
-
-@endif
 
