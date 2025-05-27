@@ -468,23 +468,18 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="city_id_business">City / Town *</label>
-                                {{-- <input type="text" id="district" name="district"
-                                    class="form-control form-control-lg" value="{{ $data['district'] ?? '' }}" required /> --}}
+                                <label class="form-label" for="country_business">Country *</label>
+                                {{-- <input type="text" id="country_code" name="country_code"
+                                    class="form-control form-control-lg" value="{{ $data['country__code'] ?? '' }}" required /> --}}
 
-                                <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City">
 
-                                </select>
-                            </div>
+                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" required>
+                                        <option value="">{{ translate('Select your country') }}</option>
+                                        @foreach (get_active_countries() as $key => $country)
+                                            <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                        @endforeach
+                                    </select>
 
-                        </div>
-
-                        <div class="col-md-3 mb-md-4 mb-3">
-
-                            <div class="form-group mb-1">
-                                <label class="form-label" for="district_business">District *</label>
-                                <input type="text" id="district_business" name="district_business" value="{{ $data['district_business'] ?? $session_data_user['district_business'] ?? '' }}"
-                                    class="form-control form-control-lg" placeholder="Enter District" required/>
                             </div>
 
                         </div>
@@ -503,12 +498,12 @@
 
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-md-3 mb-md-4 mb-3">
 
-                            <div class="form-group">
-                                <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
-                                <input type="text" id="pincode_business" name="pincode_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_business'] ?? '' }}" placeholder="Enter Pincode Or Postal Code" required />
+                            <div class="form-group mb-1">
+                                <label class="form-label" for="district_business">District *</label>
+                                <input type="text" id="district_business" name="district_business" value="{{ $data['district_business'] ?? $session_data_user['district_business'] ?? '' }}"
+                                    class="form-control form-control-lg" placeholder="Enter District" required/>
                             </div>
 
                         </div>
@@ -516,18 +511,24 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="country_business">Country *</label>
-                                {{-- <input type="text" id="country_code" name="country_code"
-                                    class="form-control form-control-lg" value="{{ $data['country__code'] ?? '' }}" required /> --}}
+                                <label class="form-label" for="city_id_business">City / Town *</label>
+                                {{-- <input type="text" id="district" name="district"
+                                    class="form-control form-control-lg" value="{{ $data['district'] ?? '' }}" required /> --}}
+
+                                <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City">
+
+                                </select>
+                            </div>
+
+                        </div>
 
 
-                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" required>
-                                        <option value="">{{ translate('Select your country') }}</option>
-                                        @foreach (get_active_countries() as $key => $country)
-                                            <option value="{{ $country->id }}">{{ $country->name }}</option>
-                                        @endforeach
-                                    </select>
+                        <div class="col-md-3">
 
+                            <div class="form-group">
+                                <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
+                                <input type="text" id="pincode_business" name="pincode_business"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_business'] ?? '' }}" placeholder="Enter Pincode Or Postal Code" required />
                             </div>
 
                         </div>
@@ -654,6 +655,17 @@
                             <h3>Bank Details</h3>
                         </div>
 
+
+                        <div class="col-md-3">
+
+                            <div class="form-group">
+                                <label class="form-label" for="ifsc_code_business">IFSC Code *</label>
+                                <input type="text" id="ifsc_code_business" name="ifsc_code_business"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_business'] ?? '' }}" required placeholder="Enter IFSC Code Ex: AAAA0000000"/>
+                            </div>
+
+                        </div>
+
                         <div class="col-md-3">
 
                             <div class="form-group">
@@ -708,15 +720,7 @@
                             </div>
 
                         </div>
-                        <div class="col-md-3">
 
-                            <div class="form-group">
-                                <label class="form-label" for="ifsc_code_business">IFSC Code *</label>
-                                <input type="text" id="ifsc_code_business" name="ifsc_code_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_business'] ?? '' }}" required placeholder="Enter IFSC Code Ex: AAAA0000000"/>
-                            </div>
-
-                        </div>
 
                         @if(session()->get('reg_locality') != "domestic")
                             <div class="col-md-3">
@@ -952,23 +956,18 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="city_id_personal">City / Town *</label>
-                                {{-- <input type="text" id="district" name="district"
-                                    class="form-control form-control-lg" value="{{ $data['district'] ?? '' }}" required /> --}}
+                                <label class="form-label" for="country_personal">Country *</label>
+                                {{-- <input type="text" id="country_code" name="country_code"
+                                    class="form-control form-control-lg" value="{{ $data['country__code'] ?? '' }}" required /> --}}
 
-                                <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City">
 
-                                </select>
-                            </div>
+                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" required>
+                                        <option value="">{{ translate('Select your country') }}</option>
+                                        @foreach (get_active_countries() as $key => $country)
+                                            <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                        @endforeach
+                                    </select>
 
-                        </div>
-
-                        <div class="col-md-3 mb-md-4 mb-3">
-
-                            <div class="form-group mb-1">
-                                <label class="form-label" for="district_personal">District *</label>
-                                <input type="text" id="district_personal" name="district_personal" value="{{ $data['district_personal'] ?? $session_data_user['district_personal'] ?? '' }}"
-                                    class="form-control form-control-lg" placeholder="Enter District" required/>
                             </div>
 
                         </div>
@@ -987,6 +986,30 @@
 
                         </div>
 
+                        <div class="col-md-3 mb-md-4 mb-3">
+
+                            <div class="form-group mb-1">
+                                <label class="form-label" for="district_personal">District *</label>
+                                <input type="text" id="district_personal" name="district_personal" value="{{ $data['district_personal'] ?? $session_data_user['district_personal'] ?? '' }}"
+                                    class="form-control form-control-lg" placeholder="Enter District" required/>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <div class="form-group">
+                                <label class="form-label" for="city_id_personal">City / Town *</label>
+                                {{-- <input type="text" id="district" name="district"
+                                    class="form-control form-control-lg" value="{{ $data['district'] ?? '' }}" required /> --}}
+
+                                <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City">
+
+                                </select>
+                            </div>
+
+                        </div>
+
                         <div class="col-md-3">
 
                             <div class="form-group">
@@ -997,25 +1020,7 @@
 
                         </div>
 
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="country_personal">Country *</label>
-                                {{-- <input type="text" id="country_code" name="country_code"
-                                    class="form-control form-control-lg" value="{{ $data['country__code'] ?? '' }}" required /> --}}
-
-
-                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" required>
-                                        <option value="">{{ translate('Select your country') }}</option>
-                                        @foreach (get_active_countries() as $key => $country)
-                                            <option value="{{ $country->id }}">{{ $country->name }}</option>
-                                        @endforeach
-                                    </select>
-
-                            </div>
-
-                        </div>
-
+ 
                         <div class="col-md-3">
 
                             <div class="form-group">
@@ -1132,6 +1137,16 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
+                                <label class="form-label" for="ifsc_code_personal">IFSC Code *</label>
+                                <input type="text" id="ifsc_code_personal" name="ifsc_code_personal"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_personal'] ?? '' }}" required placeholder="Enter IFSC Code Ex: ICIC0000269"/>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <div class="form-group">
                                 <label class="form-label" for="bank_name_personal">Bank Name *</label>
                                 <input type="text" id="bank_name_personal" name="bank_name_personal"
                                     class="form-control form-control-lg" value="{{ $session_data_user['bank_name_personal'] ?? '' }}" required placeholder="Enter Bank Name" />
@@ -1183,15 +1198,6 @@
                             </div>
 
                         </div>
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="ifsc_code_personal">IFSC Code *</label>
-                                <input type="text" id="ifsc_code_personal" name="ifsc_code_personal"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_personal'] ?? '' }}" required placeholder="Enter IFSC Code Ex: ICIC0000269"/>
-                            </div>
-
-                        </div>
 
                         @if(session()->get('reg_locality') != "domestic")
                             <div class="col-md-3">
@@ -1208,7 +1214,7 @@
                                 <div class="form-group">
                                     <label class="form-label" for="ad_code_personal">AD code *</label>
                                     <input type="text" id="ad_code_personal" name="ad_code_personal"
-                                        class="form-control form-control-lg" value="{{ $session_data_user['ad_code_personal'] ?? '' }}" required placeholder="Enter MICR Code Ex: 123456"/>
+                                        class="form-control form-control-lg" value="{{ $session_data_user['ad_code_personal'] ?? '' }}" required placeholder="Enter AD Code Ex: 123456"/>
                                 </div>
 
                             </div>

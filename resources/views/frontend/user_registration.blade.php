@@ -160,7 +160,8 @@
             });
 
             // ---------------- passport_no verify --------------------------- //
-
+            
+            {{--
             // function toggleLocalityFields() {
             //     const isDomestic = document.getElementById('domestic').checked;
 
@@ -202,6 +203,7 @@
             //         }
             //     });
             // }
+            --}}
 
             function validate_form(step) {
                 // Initialize validation for the specific form step
@@ -855,7 +857,7 @@
             });
         }
         
-
+        {{--
         // function toggleLocalityFields() {
         //     const isDomestic = document.getElementById('domestic').checked;
 
@@ -882,6 +884,7 @@
         //         }
         //     });
         // }
+        --}}
 
         function back_to_prev_reg() {
             var csrfToken = '{{ csrf_token() }}';

@@ -734,7 +734,7 @@ class RegisterController extends Controller
 
         if (User::where('phone', '+' . $temp_phone)
                 ->where('approval_status', 1)
-                ->whereNotNull('user_subtype')   
+                ->whereNotNull('user_subtype')
                 ->exists()) {
             return response()->json([
                 'status' => 'error',
