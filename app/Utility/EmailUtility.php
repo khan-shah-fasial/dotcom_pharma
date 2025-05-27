@@ -25,7 +25,9 @@ class EmailUtility
         $emailBody = str_replace('[[admin_name]]', $admin->name, $emailBody);
         $emailBody = str_replace('[[customer_name]]', $user->name, $emailBody);
         $emailBody = str_replace('[[email]]', $user->email, $emailBody);
-        $emailBody = str_replace('[[password]]', $password, $emailBody);
+        $emailBody = str_replace( '[[password]]',
+                                    $password ? $password : 'Same as your Previous Password',
+                                    $emailBody);
         $emailBody = str_replace('[[email/phone]]', $email_or_phone, $emailBody);
         $emailBody = str_replace('[[date]]', date('d-m-Y', strtotime($user->created_at)), $emailBody);
         $emailBody = str_replace('[[admin_email]]', $admin->email, $emailBody);

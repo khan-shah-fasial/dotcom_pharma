@@ -133,30 +133,27 @@
                 <div class="modal-header">
                     <div class="heading">
                         <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
-                        <h5 class="modal-title" id="exampleModalLabel_phone">Verify Phone OTP</h5>
+                        <h5 class="modal-title" id="exampleModalLabel_phone">Verify Email</h5>
                     </div>
 
                 </div>
-                <form id="reg_model_form_3" action="{{ url(route('new.user.account.create', ['param' => 'verify-phone-otp'])) }}"
+                <form id="reg_model_form_3" action="{{ url(route('new.user.account.create', ['param' => 'verify-email'])) }}"
                     method="post">
                     @csrf
 
                     <div class="modal-body">
                         <div class="form-group">
-                            <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
-                            <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp"
-                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
+                                <label class="form-label" for="email">E-mail *</label>
+                                <input type="email" id="email" name="email"
+                                    class="form-control form-control-lg" value="{{ $data['email'] ?? $data['email'] ?? '' }}" required placeholder="Enter E-mail"/>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <div class="blue_btn black_buttons">
-                            <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
+                            {{-- <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button> --}}
                         </div>
 
                         <div class="display_flexx">
-                             <div class="resend_otp">
-                            <a class="ms-4" class="btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
-                        </div>
                              <div class="purple_btn">
                             <button type="submit" class="animate_button black1_buttons">Verify <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                         </div>
@@ -221,7 +218,12 @@
 
                 </div>
 
-                <div class="modal-footer d-none">
+                <div class="modal-footer">
+
+                    <div class="blue_btn black_buttons">
+                        <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
+                    </div>
+
                     <div class="purple_btn d-none">
                         <button type="submit" id="reg_model_form_4_submit" class="animate_button black1_buttons">Next <img src="{{ static_asset('assets/img/arrow_left.svg') }}" /></button>
                     </div>
@@ -543,10 +545,11 @@
                         <div class="col-md-3 mb-md-4 mb-3">
 
                             @php
-                                if(!empty($session_data_user['phone_business'])){
-                                    $Phone_parts = explode('-', $session_data_user['phone_business']);
-                                    $Phone_parts_number = $Phone_parts[1] ?? ''; 
-                                } 
+                                if (!empty($session_data_user['phone_business']) || Session::has('phone')) {
+                                    $phone = $session_data_user['phone_business'] ?? Session::get('phone');
+                                    $Phone_parts = explode('-', $phone);
+                                    $Phone_parts_number = $Phone_parts[1] ?? '';
+                                }
                             @endphp
 
                             <div class="form-group phone-form-group mb-1">
@@ -562,9 +565,10 @@
                         <div class="col-md-3 mb-md-4 mb-3">
 
                             @php
-                                if(!empty($session_data_user['whats_app_no_business'])){
-                                    $whats_app_no_parts = explode('-', $session_data_user['whats_app_no_business']);
-                                    $whats_app_no_parts_number = $whats_app_no_parts[1] ?? ''; 
+                                if (!empty($session_data_user['whats_app_no_business']) || Session::has('phone')) {
+                                    $whats_app_no = $session_data_user['whats_app_no_business'] ?? Session::get('phone');
+                                    $whats_app_no_parts = explode('-', $whats_app_no);
+                                    $whats_app_no_parts_number = $whats_app_no_parts[1] ?? '';
                                 }
                             @endphp
 
@@ -619,9 +623,9 @@
                         <div class="col-md-3 mb-md-4 mb-3">
 
                             <div class="form-group mb-1">
-                                <label class="form-label" for="prim_email_business">Primary E-mail * (this eamil is user for login details)</label>
+                                <label class="form-label" for="email">Primary E-mail *</label>
                                 <input type="email" id="prim_email_business" name="prim_email_business"
-                                    class="form-control form-control-lg" value="{{ $data['prim_email_business'] ?? $session_data_user['prim_email_business'] ?? '' }}" required placeholder="Enter Primary E-mail"/>
+                                    class="form-control form-control-lg" value="{{ $data['email'] ?? $session_data_user['email'] ?? Session::get('email') ?? '' }}" required placeholder="Enter Primary E-mail"/>
                             </div>
 
                         </div>
@@ -1025,10 +1029,11 @@
                         <div class="col-md-3 mb-md-4 mb-3">
 
                             @php
-                                if(!empty($session_data_user['phone'])){
-                                    $Phone_parts = explode('-', $session_data_user['phone']);
+                                if (!empty($session_data_user['phone']) || Session::has('phone')) {
+                                    $phone = $session_data_user['phone'] ?? Session::get('phone');
+                                    $Phone_parts = explode('-', $phone);
                                     $Phone_parts_number = $Phone_parts[1] ?? '';
-                                } 
+                                }
                             @endphp
 
                             <div class="form-group phone-form-group mb-1">
@@ -1044,9 +1049,10 @@
                         <div class="col-md-3 mb-md-4 mb-3">
 
                             @php
-                                if(!empty($session_data_user['whats_app_no'])){
-                                    $whats_app_no_parts = explode('-', $session_data_user['whats_app_no']);
-                                    $whats_app_no_parts_number = $whats_app_no_parts[1] ?? ''; 
+                                if (!empty($session_data_user['whats_app_no']) || Session::has('phone')) {
+                                    $whats_app_no = $session_data_user['whats_app_no'] ?? Session::get('phone');
+                                    $whats_app_no_parts = explode('-', $whats_app_no);
+                                    $whats_app_no_parts_number = $whats_app_no_parts[1] ?? '';
                                 }
                             @endphp
 
@@ -1103,7 +1109,7 @@
                             <div class="form-group mb-1">
                                 <label class="form-label" for="prim_email_personal">Primary E-mail *</label>
                                 <input type="email" id="prim_email_personal" name="prim_email_personal"
-                                    class="form-control form-control-lg" value="{{ $data['prim_email_personal'] ?? $session_data_user['prim_email_personal'] ?? '' }}" required placeholder="Enter Primary E-mail"/>
+                                    class="form-control form-control-lg" value="{{ $data['prim_email_personal'] ?? $session_data_user['prim_email_personal'] ?? Session::get('email') ?? '' }}" required placeholder="Enter Primary E-mail"/>
                             </div>
 
                         </div>

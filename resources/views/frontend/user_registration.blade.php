@@ -47,9 +47,6 @@
                         <div class="purple_btn">
                             <button type="submit" class="btn btn-primary">Verify</button>
                         </div>
-                        {{-- <div class="resend_otp">
-                            <a class="ms-4" class="btn btn-primary" id="resendOTPButton" style="display: none; cursor: pointer;">Resend OTP</a>
-                        </div> --}}
                     </div>
                 </form>
             </div>
@@ -164,47 +161,47 @@
 
             // ---------------- passport_no verify --------------------------- //
 
-            function toggleLocalityFields() {
-                const isDomestic = document.getElementById('domestic').checked;
+            // function toggleLocalityFields() {
+            //     const isDomestic = document.getElementById('domestic').checked;
 
-                const domesticDivs = document.querySelectorAll('.locality-base-domestic');
-                const internationalDivs = document.querySelectorAll('.locality-base-international');
+            //     const domesticDivs = document.querySelectorAll('.locality-base-domestic');
+            //     const internationalDivs = document.querySelectorAll('.locality-base-international');
 
-                let content = document.getElementById('content-base_type');
+            //     let content = document.getElementById('content-base_type');
 
-                if (content) {  // Make sure the element exists
-                    if (isDomestic) {
-                        content.innerHTML = 'GSTIN Status / Current Status *';
+            //     if (content) {  // Make sure the element exists
+            //         if (isDomestic) {
+            //             content.innerHTML = 'GSTIN Status / Current Status *';
 
-                    } else {
-                        content.innerHTML = 'UIN Status / Current Status *';
+            //         } else {
+            //             content.innerHTML = 'UIN Status / Current Status *';
 
-                    }
-                } else {
-                    console.error("Element with id 'content-base_type' not found.");
-                }
+            //         }
+            //     } else {
+            //         console.error("Element with id 'content-base_type' not found.");
+            //     }
 
-                domesticDivs.forEach(div => {
-                    if (isDomestic) {
-                        div.classList.remove('d-none');
-                        div.querySelectorAll('input').forEach(input => input.required = true);
-                    } else {
-                        div.classList.add('d-none');
-                        div.querySelectorAll('input').forEach(input => input.required = false);
+            //     domesticDivs.forEach(div => {
+            //         if (isDomestic) {
+            //             div.classList.remove('d-none');
+            //             div.querySelectorAll('input').forEach(input => input.required = true);
+            //         } else {
+            //             div.classList.add('d-none');
+            //             div.querySelectorAll('input').forEach(input => input.required = false);
 
-                    }
-                });
+            //         }
+            //     });
 
-                internationalDivs.forEach(div => {
-                    if (!isDomestic) {
-                        div.classList.remove('d-none');
-                        div.querySelectorAll('input').forEach(input => input.required = true);
-                    } else {
-                        div.classList.add('d-none');
-                        div.querySelectorAll('input').forEach(input => input.required = false);
-                    }
-                });
-            }
+            //     internationalDivs.forEach(div => {
+            //         if (!isDomestic) {
+            //             div.classList.remove('d-none');
+            //             div.querySelectorAll('input').forEach(input => input.required = true);
+            //         } else {
+            //             div.classList.add('d-none');
+            //             div.querySelectorAll('input').forEach(input => input.required = false);
+            //         }
+            //     });
+            // }
 
             function validate_form(step) {
                 // Initialize validation for the specific form step
@@ -220,7 +217,78 @@
 
                 // Define the response handler function
                 function responseHandler(step, response) {
-                    modelRendStep(); // Perform the required step rendering
+                    if (response.phone_otp === true || response.phone_otp === 'true') {
+
+                        // Create OTP HTML block
+                        const otpHtml = `
+                            <div class="form-group">
+                                <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
+                                <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp"
+                                    pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
+                            </div>
+                            <div class="resend_otp">
+                                <a class="ms-4 btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
+                            </div>
+                        `;
+
+                        // Select the correct form
+                        const formSelector = `#reg_model_form_${step}`;
+                        const form = document.querySelector(formSelector);
+
+                        if (form) {
+                            // Append OTP HTML to modal-body inside the form
+                            const modalBody = form.querySelector('.modal-body');
+                            if (modalBody) {
+                                modalBody.innerHTML += otpHtml;
+                            }
+
+                            // Update the form action
+                            form.setAttribute('action', "{{ url(route('new.user.account.create', ['param' => 'verify-phone-otp'])) }}");
+
+                            const phoneInput = form.querySelector('#phone_code');
+                            if (phoneInput) {
+                                phoneInput.value = response.phone;
+                            }
+                        }
+
+                    } else if (response.email_otp === true || response.email_otp === 'true') {  
+
+                        // Create OTP HTML block
+                        const otpHtml = `
+                            <div class="form-group">
+                                <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
+                                <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp"
+                                    pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
+                            </div>
+                            <div class="resend_otp">
+                                <a class="ms-4 btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
+                            </div>
+                        `;
+
+                        // Select the correct form
+                        const formSelector = `#reg_model_form_${step}`;
+                        const form = document.querySelector(formSelector);
+
+                        if (form) {
+                            // Append OTP HTML to modal-body inside the form
+                            const modalBody = form.querySelector('.modal-body');
+                            if (modalBody) {
+                                modalBody.innerHTML += otpHtml;
+                            }
+
+                            // Update the form action
+                            form.setAttribute('action', "{{ url(route('new.user.account.create', ['param' => 'verify-email-otp'])) }}");
+
+                            const emailInput = form.querySelector('#email');
+                            if (emailInput) {
+                                emailInput.value = response.email;
+                            }
+                        }
+
+                    } else {
+                        modelRendStep(); 
+                    }
+
                 }
 
                 ['phone-code', 'tel_number', 'whats_app_no'].forEach(function (id) {
@@ -276,8 +344,6 @@
                     }
 
                 }
-
-                console.dir('test');
 
                 if(country_selected !== 'null' && country_selected !== ''){
                     iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
@@ -341,8 +407,6 @@
 
                 }
 
-                console.dir(country_selected);
-
                 if(country_selected !== 'null' && country_selected !== ''){
                     iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
                 } else {
@@ -392,11 +456,8 @@
 
                             $(`#reg_model_${step}`).modal('show');
 
-
                             validate_form(step);
-                            console.dir(step);
 
-                            
                             if(step == 2){
                                 intil_input('phone_code');
                             }
@@ -406,7 +467,7 @@
                                 intil_input('whats_app_no');
                                 intil_input('alternate_mob_no_business');
                                 intil_input('alternate_whats_app_no_business');
-                                toggleLocalityFields();
+                                // toggleLocalityFields();
 
                                 const isDomestic = document.getElementById('domestic').checked;
                                 if (isDomestic) {
@@ -442,14 +503,7 @@
                     success: function (response) {
                         if (response.success) {
                             const step = response.step;
-
-                            // if (step === 1) {
-                            //     // Show the first modal if the step is 1
-                            //     $('#reg_model_1').modal('show');
-                            // } else {
-                                // Call modelRendStep for other steps
                                 modelRendStep();
-                            // }
                         } else {
                             console.error('Error:', response.message || 'An error occurred.');
                         }
@@ -463,11 +517,6 @@
             // Initial check when the document is ready
             checkRegStep();
 
-
-
-            // // Run on page load
-            // toggleLocalityFields();
-
         });
 
 // ---------------------------------------------------------------------------------------------------------------//
@@ -477,9 +526,6 @@
             const val = $('#gst_no').val();
             if (val.length === 15) {
                 verifyDocument('gst_no', 'gst-validate', 15);
-                // appendVerifyButton();
-            // } else {
-            //     $('#' + verifyBtnId).remove();
             }
         }
 
@@ -488,9 +534,6 @@
             const val = $('#iec_no').val().trim();
             if (val.length === 10) {
                 verifyDocument('iec_no', 'iec-validate', 10);
-            //     appendVerifyIECButton();
-            // } else {
-            //     $('#' + verifyBtnId).remove();
             }
         }
 
@@ -508,7 +551,79 @@
 
             // Define the response handler function
             function responseHandler(step, response) {
-                modelRendStep(); // Perform the required step rendering gfdgdfg
+
+                if (response.phone_otp === true || response.phone_otp === 'true') {
+
+                    // Create OTP HTML block
+                    const otpHtml = `
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
+                            <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp"
+                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
+                        </div>
+                        <div class="resend_otp">
+                            <a class="ms-4 btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
+                        </div>
+                    `;
+
+                    // Select the correct form
+                    const formSelector = `#reg_model_form_${step}`;
+                    const form = document.querySelector(formSelector);
+
+                    if (form) {
+                        // Append OTP HTML to modal-body inside the form
+                        const modalBody = form.querySelector('.modal-body');
+                        if (modalBody) {
+                            modalBody.innerHTML += otpHtml;
+                        }
+
+                        // Update the form action
+                        form.setAttribute('action', "{{ url(route('new.user.account.create', ['param' => 'verify-phone-otp'])) }}");
+
+                        const phoneInput = form.querySelector('#phone_code');
+                        if (phoneInput) {
+                            phoneInput.value = response.phone;
+                        }
+                    }
+
+                } else if (response.email_otp === true || response.email_otp === 'true') {
+
+                    // Create OTP HTML block
+                    const otpHtml = `
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
+                            <input type="number" class="form-control form-control-lg" id="recipient-name" name="otp"
+                                pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
+                        </div>
+                        <div class="resend_otp">
+                            <a class="ms-4 btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
+                        </div>
+                    `;
+
+                    // Select the correct form
+                    const formSelector = `#reg_model_form_${step}`;
+                    const form = document.querySelector(formSelector);
+
+                    if (form) {
+                        // Append OTP HTML to modal-body inside the form
+                        const modalBody = form.querySelector('.modal-body');
+                        if (modalBody) {
+                            modalBody.innerHTML += otpHtml;
+                        }
+
+                        // Update the form action
+                        form.setAttribute('action', "{{ url(route('new.user.account.create', ['param' => 'verify-email-otp'])) }}");
+
+                        const emailInput = form.querySelector('#email');
+                        if (emailInput) {
+                            emailInput.value = response.email;
+                        }
+                    }
+
+                } else {
+
+                    modelRendStep(); // Perform the required step rendering gfdgdfg
+                }
             }
 
             ['phone-code', 'tel_number', 'whats_app_no'].forEach(function (id) {
@@ -713,7 +828,7 @@
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_business');
                             intil_input('alternate_whats_app_no_business');
-                            toggleLocalityFields();
+                            // toggleLocalityFields();
 
                             const isDomestic = document.getElementById('domestic').checked;
                             if (isDomestic) {
@@ -741,32 +856,32 @@
         }
         
 
-        function toggleLocalityFields() {
-            const isDomestic = document.getElementById('domestic').checked;
+        // function toggleLocalityFields() {
+        //     const isDomestic = document.getElementById('domestic').checked;
 
-            const domesticDivs = document.querySelectorAll('.locality-base-domestic');
-            const internationalDivs = document.querySelectorAll('.locality-base-international');
+        //     const domesticDivs = document.querySelectorAll('.locality-base-domestic');
+        //     const internationalDivs = document.querySelectorAll('.locality-base-international');
 
-            domesticDivs.forEach(div => {
-                if (isDomestic) {
-                    div.classList.remove('d-none');
-                    div.querySelectorAll('input').forEach(input => input.required = true);
-                } else {
-                    div.classList.add('d-none');
-                    div.querySelectorAll('input').forEach(input => input.required = false);
-                }
-            });
+        //     domesticDivs.forEach(div => {
+        //         if (isDomestic) {
+        //             div.classList.remove('d-none');
+        //             div.querySelectorAll('input').forEach(input => input.required = true);
+        //         } else {
+        //             div.classList.add('d-none');
+        //             div.querySelectorAll('input').forEach(input => input.required = false);
+        //         }
+        //     });
 
-            internationalDivs.forEach(div => {
-                if (!isDomestic) {
-                    div.classList.remove('d-none');
-                    div.querySelectorAll('input').forEach(input => input.required = true);
-                } else {
-                    div.classList.add('d-none');
-                    div.querySelectorAll('input').forEach(input => input.required = false);
-                }
-            });
-        }
+        //     internationalDivs.forEach(div => {
+        //         if (!isDomestic) {
+        //             div.classList.remove('d-none');
+        //             div.querySelectorAll('input').forEach(input => input.required = true);
+        //         } else {
+        //             div.classList.add('d-none');
+        //             div.querySelectorAll('input').forEach(input => input.required = false);
+        //         }
+        //     });
+        // }
 
         function back_to_prev_reg() {
             var csrfToken = '{{ csrf_token() }}';
@@ -1106,10 +1221,6 @@
                                     $('#name').val(data.full_name);
                                 }
 
-
-                                // console.dir(response.data);
-                                // verifyBtn.remove();
-                                // submitBtn.prop('disabled', false);
                             } else {
                                 AIZ.plugins.notify('danger', response.message);
                             }
@@ -1153,6 +1264,8 @@
                     $('#locality_land_mark_personal').val(data.address.landmark);
                     $('#dob').val(data.dob);
                     $('#name').val(data.full_name);
+
+                    $('#post_personal').val(data.address.po);
 
                     $('#pincode_personal').val(data.zip);
                     $('#district_personal').val(data.address.dist);
