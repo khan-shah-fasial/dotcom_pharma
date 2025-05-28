@@ -307,7 +307,7 @@ class CustomerController extends Controller
 
             $user->approval_status = 2;
             $user->note = $request->note;
-            $user->user_subtype = $request->user_subtype;
+            $user->user_subtype = null;
 
             $user->save();
 

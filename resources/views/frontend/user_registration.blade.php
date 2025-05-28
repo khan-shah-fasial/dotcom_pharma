@@ -250,6 +250,7 @@
                             const phoneInput = form.querySelector('#phone_code');
                             if (phoneInput) {
                                 phoneInput.value = response.phone;
+                                phoneInput.disabled = true;
                             }
                         }
 
@@ -284,6 +285,7 @@
                             const emailInput = form.querySelector('#email');
                             if (emailInput) {
                                 emailInput.value = response.email;
+                                phoneInput.disabled = true;
                             }
                         }
 
@@ -471,12 +473,12 @@
                                 intil_input('alternate_whats_app_no_business');
                                 // toggleLocalityFields();
 
-                                const isDomestic = document.getElementById('domestic').checked;
-                                if (isDomestic) {
-                                    checkAndAppendButton();
-                                } else {
-                                    checkAndAppendIECButton();
-                                }
+                                // const isDomestic = document.getElementById('domestic').checked;
+                                // if (isDomestic) {
+                                //     checkAndAppendButton();
+                                // } else {
+                                //     checkAndAppendIECButton();
+                                // }
                                 
                             } else if (step == 6) {
                                 intil_input_form2('phone_code');
@@ -585,6 +587,7 @@
                         const phoneInput = form.querySelector('#phone_code');
                         if (phoneInput) {
                             phoneInput.value = response.phone;
+                            phoneInput.disabled = true;
                         }
                     }
 
@@ -619,6 +622,7 @@
                         const emailInput = form.querySelector('#email');
                         if (emailInput) {
                             emailInput.value = response.email;
+                            phoneInput.disabled = true;
                         }
                     }
 
@@ -660,34 +664,24 @@
             // // Set default country code to +91 (India)
             // iti1.setCountry('in'); // 'in' is the ISO2 code for India
 
+
             if(name === 'whats_app_no'){
 
-                var country_selected = "{{ getSelectedCountry('whats_app_no_business_meta') }}";
+                var country_selected = "{{ getSelectedCountry('whats_app_no_meta') }}";
 
                 if(country_selected == 'null' || country_selected == ''){
-                    country_selected = metaData.whats_app_no_business_meta;
+                    var country_selected = "{{ getSelectedCountry('whats_app_no_business_meta') }}";
                 }
 
             } else if (name === 'alternate_mob_no_business') { 
                 var country_selected = "{{ getSelectedCountry('alternate_mob_no_business_meta') }}";
-
-                if(country_selected == 'null' || country_selected == ''){
-                    country_selected = metaData.alternate_mob_no_business_meta;
-                }
-
             } else if (name === 'alternate_whats_app_no_business') { 
                 var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
-
-                if(country_selected == 'null' || country_selected == ''){
-                    country_selected = metaData.alternate_whats_app_no_business_meta;
-                }
-
-
             } else {
-                var country_selected = "{{ getSelectedCountry('phone_business_meta') }}";
+                var country_selected = "{{ getSelectedCountry('phone_code_meta') }}"; 
 
                 if(country_selected == 'null' || country_selected == ''){
-                    country_selected = metaData.phone_business_meta;
+                    var country_selected = "{{ getSelectedCountry('phone_business_meta') }}";
                 }
 
             }
@@ -705,7 +699,6 @@
                 } else {
                     iti1.setCountry('in'); // default fallback
                 }
-                
             }
 
             // Update the hidden input with the selected country's dial code
@@ -718,6 +711,8 @@
                 var updatedCountryData = iti1.getSelectedCountryData();
                 document.querySelector(`input[name="country_code_${name}"]`).value = updatedCountryData.dialCode;
                 document.querySelector(`input[name="${name}_meta"]`).value = updatedCountryData.iso2;
+
+                metaData[`${name}_meta`] = iti1.getSelectedCountryData().iso2;
             });
         }
 
@@ -742,37 +737,16 @@
 
                 var country_selected = "{{ getSelectedCountry_form2('whats_app_no_meta') }}";
 
-                if(country_selected == 'null' || country_selected == ''){
-                    country_selected = metaData.whats_app_no_meta;
-                }
-
             } else if (name === 'alternate_mob_no_personal') { 
                 var country_selected = "{{ getSelectedCountry_form2('alternate_mob_no_personal_meta') }}";
-
-                if(country_selected == 'null' || country_selected == ''){
-                    country_selected = metaData.alternate_mob_no_personal_meta;
-                }
-
             } else if (name === 'alternate_whats_app_no_personal') { 
                 var country_selected = "{{ getSelectedCountry_form2('alternate_whats_app_no_personal_meta') }}";
-
-                if(country_selected == 'null' || country_selected == ''){
-                    country_selected = metaData.alternate_whats_app_no_personal_meta;
-                }
-
             } else {
                 var country_selected = "{{ getSelectedCountry_form2('phone_code_meta') }}"; 
 
-                if(country_selected == 'null' || country_selected == ''){
-                    country_selected = metaData.phone_code_meta;
-                }
-
             }
 
-            console.dir('vegiata');
-            console.dir(country_selected);
-
-            if(country_selected !== 'null' && country_selected !== '' && country_selected != null){
+            if(country_selected !== 'null' && country_selected !== ''){
                 iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
             } else {
                 // Set default country code to +91 (India)
@@ -797,6 +771,8 @@
                 var updatedCountryData = iti1.getSelectedCountryData();
                 document.querySelector(`input[name="country_code_${name}"]`).value = updatedCountryData.dialCode;
                 document.querySelector(`input[name="${name}_meta"]`).value = updatedCountryData.iso2;
+
+                metaData[`${name}_meta`] = iti1.getSelectedCountryData().iso2;
             });
         }
 
@@ -819,7 +795,6 @@
                         $(`#reg_model_${step}`).modal('show');
 
                         validate_form(step);
-                        console.dir("goku");
 
                         if(step == 2){
                             intil_input('phone_code');
@@ -832,15 +807,14 @@
                             intil_input('alternate_whats_app_no_business');
                             // toggleLocalityFields();
 
-                            const isDomestic = document.getElementById('domestic').checked;
-                            if (isDomestic) {
-                                checkAndAppendButton();
-                            } else {
-                                checkAndAppendIECButton();
-                            }
+                            // const isDomestic = document.getElementById('domestic').checked;
+                            // if (isDomestic) {
+                            //     checkAndAppendButton();
+                            // } else {
+                            //     checkAndAppendIECButton();
+                            // }
                             
                         } else if (step == 6) {
-                            console.dir(step);
                             intil_input_form2('phone_code');
                             intil_input_form2('whats_app_no');
                             intil_input_form2('alternate_mob_no_personal');
@@ -914,14 +888,14 @@
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_business');
                             intil_input('alternate_whats_app_no_business');
-                            toggleLocalityFields();
+                            // toggleLocalityFields();
 
-                            const isDomestic = document.getElementById('domestic').checked;
-                            if (isDomestic) {
-                                checkAndAppendButton();
-                            } else {
-                                checkAndAppendIECButton();
-                            }
+                            // const isDomestic = document.getElementById('domestic').checked;
+                            // if (isDomestic) {
+                            //     checkAndAppendButton();
+                            // } else {
+                            //     checkAndAppendIECButton();
+                            // }
                             
                         } else if (step == 6) {
                             intil_input_form2('phone_code');

@@ -587,6 +587,10 @@
                                         </a>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
+                                        <a href="{{ route('create.new.user.registration') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                        <span class="user-top-menu-name has-transition ml-3">{{ translate('Create a free business account') }}</span>
+                                    </li>
+                                    <li class="user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('digital_purchase_history.index') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16.001" height="16"

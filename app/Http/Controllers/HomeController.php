@@ -159,7 +159,9 @@ class HomeController extends Controller
     public function new_user_registrations(Request $request)
     {
         if (Auth::check()) {
-            return redirect()->route('home');
+            session()->flush();
+            auth()->guard()->logout();
+            return view('frontend.user_registration');
         }
         return view('frontend.user_registration');
     }

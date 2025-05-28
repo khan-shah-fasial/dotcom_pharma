@@ -586,7 +586,6 @@ class RegisterController extends Controller
 
     public function get_reg_step()
     {
-
         $step = session()->get('step');
 
         $html = view('frontend.user_registration_modal', compact('step'))->render();
@@ -948,7 +947,7 @@ class RegisterController extends Controller
             'con_person_name' => ['required', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
             'company_name' => ['required', 'string', 'min:1', 'max:150'],
             'street_add_first_business' => ['required', 'string', 'min:1', 'max:150'],
-            'street_add_sec_business' => ['required', 'string', 'min:1', 'max:150'],
+            'street_add_sec_business' => ['nullable', 'string', 'min:1', 'max:150'],
             'locality_land_mark_business' => ['required', 'string', 'min:1', 'max:150'],
             'village_business' => ['required', 'string', 'min:1', 'max:150'],
             'post_business' => ['required', 'string', 'min:1', 'max:150'],
@@ -969,13 +968,13 @@ class RegisterController extends Controller
 
             'website_business' => ['nullable'],
 
-            'bank_name_business' => ['required', 'string', 'max:255'],
-            'account_no_business' => ['required', 'regex:/^\d+$/', 'max:20'],
-            'account_name_business' => ['required', 'string', 'max:255'],
-            'branch_code_business' => ['required', 'string', 'max:50'],
-            'branch_name_business' => ['required', 'string', 'max:255'],
-            'branch_address_business' => ['required', 'string', 'max:255'],
-            'ifsc_code_business' => ['required', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'bank_name_business' => ['nullable', 'string', 'max:255'],
+            'account_no_business' => ['nullable', 'regex:/^\d+$/', 'max:20'],
+            'account_name_business' => ['nullable', 'string', 'max:255'],
+            'branch_code_business' => ['nullable', 'string', 'max:50'],
+            'branch_name_business' => ['nullable', 'string', 'max:255'],
+            'branch_address_business' => ['nullable', 'string', 'max:255'],
+            'ifsc_code_business' => ['nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
         ];
 
         if (Session::get('reg_locality') === 'domestic') {
@@ -1010,7 +1009,7 @@ class RegisterController extends Controller
             'company_name.max' => 'Company name may not be greater than 150 characters.',
         
             'street_add_first_business.required' => 'Street address (line 1) is required.',
-            'street_add_sec_business.required' => 'Street address (line 2) is required.',
+            // 'street_add_sec_business.required' => 'Street address (line 2) is required.',
             'locality_land_mark_business.required' => 'Locality/Landmark is required.',
             'village_business.required' => 'Village is required.',
             'post_business.required' => 'Post is required.',
@@ -1230,7 +1229,7 @@ class RegisterController extends Controller
             'dob' => ['required'],
 
             'street_add_first_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'street_add_sec_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'street_add_sec_personal' => ['nullable', 'string', 'min:1', 'max:150'],
             'locality_land_mark_personal' => ['required', 'string', 'min:1', 'max:150'],
             'village_personal' => ['required', 'string', 'min:1', 'max:150'],
             'post_personal' => ['required', 'string', 'min:1', 'max:150'],
@@ -1251,13 +1250,13 @@ class RegisterController extends Controller
             'prim_email_personal' => ['required', 'email'],
             'alt_email_personal' => ['nullable', 'email'],
 
-            'bank_name_personal' => ['required', 'string', 'max:255'],
-            'account_no_personal' => ['required', 'regex:/^\d+$/', 'max:20'],
-            'account_name_personal' => ['required', 'string', 'max:255'],
-            'branch_code_personal' => ['required', 'string', 'max:50'],
-            'branch_name_personal' => ['required', 'string', 'max:255'],
-            'branch_address_personal' => ['required', 'string', 'max:255'],
-            'ifsc_code_personal' => ['required', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'bank_name_personal' => ['nullable', 'string', 'max:255'],
+            'account_no_personal' => ['nullable', 'regex:/^\d+$/', 'max:20'],
+            'account_name_personal' => ['nullable', 'string', 'max:255'],
+            'branch_code_personal' => ['nullable', 'string', 'max:50'],
+            'branch_name_personal' => ['nullable', 'string', 'max:255'],
+            'branch_address_personal' => ['nullable', 'string', 'max:255'],
+            'ifsc_code_personal' => ['nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
         ];
 
         if (Session::get('reg_locality') === 'domestic') {
@@ -1285,7 +1284,7 @@ class RegisterController extends Controller
             'dob.required' => 'Date of birth is required.',
         
             'street_add_first_personal.required' => 'Street address (line 1) is required.',
-            'street_add_sec_personal.required' => 'Street address (line 2) is required.',
+            // 'street_add_sec_personal.required' => 'Street address (line 2) is required.',
             'locality_land_mark_personal.required' => 'Locality/Landmark is required.',
             'village_personal.required' => 'Village is required.',
             'post_personal.required' => 'Post is required.',
@@ -1636,8 +1635,8 @@ class RegisterController extends Controller
         $data_personal = session()->get('user_data_personal');
         $data_license  = $user_data_license;
 
-        $gst_no_file = $data_business['gst_no_file'];
-        $iec_no_file = $data_business['iec_no_file'];
+        $gst_no_file = $data_business['gst_no_file'] ?? Null;
+        $iec_no_file = $data_business['iec_no_file'] ?? Null;
 
         $photo_file = $data_personal['photo_file'];
         $aadhaar_no_file = $data_personal['aadhaar_no_file'];
@@ -1654,33 +1653,33 @@ class RegisterController extends Controller
                 $password = null;
 
                 $user->update([
-                    'type_option' => $data_business['type_option'],
-                    'name' => $data_business['con_person_name'],
-                    'email' => $data_business['prim_email_business'],
-                    'phone' => '+' . $data_business['phone_business'],
-                    'phone_code_meta' => $data_business['phone_business_meta'],
+                    'type_option' => $data_business['type_option'] ?? Session::get('reg_locality'),
+                    'name' => $data_personal['name'],
+                    'email' => $data_personal['prim_email_personal'],
+                    'phone' => '+' . str_replace(' ', '', $data_personal['phone']),
+                    'phone_code_meta' => $data_personal['phone_code_meta'],
 
                     'email_verified_at' => now(),
                     // password is intentionally NOT updated
 
-                    'address' => $data_business['street_add_first_business'] . ',' .
-                                $data_business['street_add_sec_business'] . ',' .
-                                $data_business['locality_land_mark_business'] . ',' .
-                                $data_business['village_business'],
+                    'address' => $data_personal['street_add_first_personal'] . ',' .
+                                $data_personal['street_add_sec_personal'] . ',' .
+                                $data_personal['locality_land_mark_personal'] . ',' .
+                                $data_personal['village_personal'],
 
-                    'postal_code' => $data_business['pincode_business'],
-                    'city_id' => $data_business['city_id_business'],
-                    'state_id' => $data_business['state_id_business'],
-                    'country_id' => $data_business['country_id_business'],
+                    'postal_code' => $data_business['pincode_business'] ?? $data_personal['pincode_personal'],
+                    'city_id' => $data_business['city_id_business'] ?? $data_personal['city_id'],
+                    'state_id' => $data_business['state_id_business'] ?? $data_personal['state_id'],
+                    'country_id' => $data_business['country_id_business'] ?? $data_personal['country_id'],
 
                     'avatar' => $photo_file,
                     'avatar_original' => $photo_file,
 
-                    'whats_app_no' => $data_business['whats_app_no_business'],
-                    'whats_app_no_meta' => $data_business['whats_app_no_business_meta'],
+                    'whats_app_no' => $data_business['whats_app_no_business'] ?? $data_personal['whats_app_no'],
+                    'whats_app_no_meta' => $data_business['whats_app_no_business_meta'] ?? $data_personal['whats_app_no_meta'],
 
-                    'gst_no' => $data_business['gst_no'],
-                    'iec_no' => $data_business['iec_no'],
+                    'gst_no' => $data_business['gst_no'] ?? Null,
+                    'iec_no' => $data_business['iec_no'] ?? Null,
 
                     'aadhaar_no' => $data_personal['aadhaar_no'],
                     'pan_no' => $data_personal['pan_no'],
@@ -1693,39 +1692,39 @@ class RegisterController extends Controller
             $password = Str::random(8);
 
             $user = User::create([
-                'type_option' => $data_business['type_option'],
-                'name' => $data_business['con_person_name'],
-                'email' => $data_business['prim_email_business'],
-                'phone' => '+' . $data_business['phone_business'],
-                'phone_code_meta' => $data_business['phone_business_meta'],
+                'type_option' => $data_business['type_option'] ?? Session::get('reg_locality'),
+                'name' => $data_personal['name'],
+                'email' => $data_personal['prim_email_personal'],
+                'phone' => '+' . str_replace(' ', '', $data_personal['phone']),
+                'phone_code_meta' => $data_personal['phone_code_meta'],
 
                 'email_verified_at' => now(),
 
                 'password' => bcrypt($password), // only on creation
 
-                'address' => $data_business['street_add_first_business'] . ',' .
-                            $data_business['street_add_sec_business'] . ',' .
-                            $data_business['locality_land_mark_business'] . ',' .
-                            $data_business['village_business'],
+                'address' => $data_personal['street_add_first_personal'] . ',' .
+                            $data_personal['street_add_sec_personal'] . ',' .
+                            $data_personal['locality_land_mark_personal'] . ',' .
+                            $data_personal['village_personal'],
 
-                'postal_code' => $data_business['pincode_business'],
-                'city_id' => $data_business['city_id_business'],
-                'state_id' => $data_business['state_id_business'],
-                'country_id' => $data_business['country_id_business'],
+                'postal_code' => $data_business['pincode_business'] ?? $data_personal['pincode_personal'],
+                'city_id' => $data_business['city_id_business'] ?? $data_personal['city_id'],
+                'state_id' => $data_business['state_id_business'] ?? $data_personal['state_id'],
+                'country_id' => $data_business['country_id_business'] ?? $data_personal['country_id'],
 
                 'avatar' => $photo_file,
                 'avatar_original' => $photo_file,
 
-                'whats_app_no' => $data_business['whats_app_no_business'],
-                'whats_app_no_meta' => $data_business['whats_app_no_business_meta'],
+                'whats_app_no' => $data_business['whats_app_no_business'] ?? $data_personal['whats_app_no'],
+                'whats_app_no_meta' => $data_business['whats_app_no_business_meta'] ?? $data_personal['whats_app_no_meta'],
 
-                'gst_no' => $data_business['gst_no'],
-                'iec_no' => $data_business['iec_no'],
+                'gst_no' => $data_business['gst_no'] ?? Null,
+                'iec_no' => $data_business['iec_no'] ?? Null,
 
                 'aadhaar_no' => $data_personal['aadhaar_no'],
                 'pan_no' => $data_personal['pan_no'],
                 'passport_no' => $data_personal['passport_no'],
-                'step' => '4',
+                'step' => '8',
             ]);
         }
 
@@ -1746,56 +1745,56 @@ class RegisterController extends Controller
 
         $userDetails = UserDetails::create([
             'user_id' => $user->id,
-            'type_option' => $data_business['type_option'],
-            'gst_no' => $data_business['gst_no'],
+            'type_option' => $data_business['type_option'] ?? Null,
+            'gst_no' => $data_business['gst_no'] ?? Null,
 
             'gst_no_file' => $gst_no_file,
             'iec_no_file' => $iec_no_file,
 
-            'iec_no' => $data_business['iec_no'],
-            'registration_date' => $data_business['registration_date'],
-            'const_of_business' => $data_business['const_of_business'],
-            'gstin_current_status' => $data_business['gstin_current_status'],
-            'uin_current_status' => $data_business['uin_current_status'],
-            'con_person_name' => $data_business['con_person_name'],
-            'company_name' => $data_business['company_name'],
-            'street_add_first_business' => $data_business['street_add_first_business'],
-            'street_add_sec_business' => $data_business['street_add_sec_business'],
-            'locality_land_mark_business' => $data_business['locality_land_mark_business'],
-            'village_business' => $data_business['village_business'],
-            'post_business' => $data_business['post_business'],
-            'city_id_business' => $data_business['city_id_business'],
-            'district_business' => $data_business['district_business'],
-            'state_id_business' => $data_business['state_id_business'],
-            'pincode_business' => $data_business['pincode_business'],
-            'country_id_business' => $data_business['country_id_business'],
-            'country_code_business' => $data_business['country_code_business'],
+            'iec_no' => $data_business['iec_no'] ?? Null,
+            'registration_date' => $data_business['registration_date'] ?? Null,
+            'const_of_business' => $data_business['const_of_business'] ?? Null,
+            'gstin_current_status' => $data_business['gstin_current_status'] ?? Null,
+            'uin_current_status' => $data_business['uin_current_status'] ?? Null,
+            'con_person_name' => $data_business['con_person_name'] ?? Null,
+            'company_name' => $data_business['company_name'] ?? Null,
+            'street_add_first_business' => $data_business['street_add_first_business'] ?? Null,
+            'street_add_sec_business' => $data_business['street_add_sec_business'] ?? Null,
+            'locality_land_mark_business' => $data_business['locality_land_mark_business'] ?? Null,
+            'village_business' => $data_business['village_business'] ?? Null,
+            'post_business' => $data_business['post_business'] ?? Null,
+            'city_id_business' => $data_business['city_id_business'] ?? Null,
+            'district_business' => $data_business['district_business'] ?? Null,
+            'state_id_business' => $data_business['state_id_business'] ?? Null,
+            'pincode_business' => $data_business['pincode_business'] ?? Null,
+            'country_id_business' => $data_business['country_id_business'] ?? Null,
+            'country_code_business' => $data_business['country_code_business'] ?? Null,
         
-            'prim_mobile_no_business' => $data_business['phone_business'],
-            'prim_mobile_no_business_meta' => $data_business['phone_business_meta'],
+            'prim_mobile_no_business' => $data_business['phone_business'] ?? Null,
+            'prim_mobile_no_business_meta' => $data_business['phone_business_meta'] ?? Null,
 
-            'alt_mobile_no_business' => $data_business['alternate_mob_no_business'],
-            'alt_mobile_no_business_meta' => $data_business['alternate_mob_no_business_meta'],
+            'alt_mobile_no_business' => $data_business['alternate_mob_no_business'] ?? Null,
+            'alt_mobile_no_business_meta' => $data_business['alternate_mob_no_business_meta'] ?? Null,
 
-            'prim_whats_app_no_business' => $data_business['whats_app_no_business'],
-            'prim_whats_app_no_business_meta' => $data_business['whats_app_no_business_meta'],
+            'prim_whats_app_no_business' => $data_business['whats_app_no_business'] ?? Null,
+            'prim_whats_app_no_business_meta' => $data_business['whats_app_no_business_meta'] ?? Null,
 
-            'alternate_whats_app_no_business' => $data_business['alternate_whats_app_no_business'],
-            'alternate_whats_app_no_business_meta' => $data_business['alternate_whats_app_no_business_meta'],
+            'alternate_whats_app_no_business' => $data_business['alternate_whats_app_no_business'] ?? Null,
+            'alternate_whats_app_no_business_meta' => $data_business['alternate_whats_app_no_business_meta'] ?? Null,
         
-            'prim_email_business' => $data_business['prim_email_business'],
-            'alt_email_business' => $data_business['alt_email_business'],
-            'website_business' => $data_business['website_business'],
+            'prim_email_business' => $data_business['prim_email_business'] ?? Null,
+            'alt_email_business' => $data_business['alt_email_business'] ?? Null,
+            'website_business' => $data_business['website_business'] ?? Null,
 
-            'bank_name_business' => $data_business['bank_name_business'],
-            'account_no_business' => $data_business['account_no_business'],
-            'account_name_business' => $data_business['account_name_business'],
-            'branch_code_business' => $data_business['branch_code_business'],
-            'branch_name_business' => $data_business['branch_name_business'],
-            'branch_address_business' => $data_business['branch_address_business'],
-            'ifsc_code_business' => $data_business['ifsc_code_business'],
-            'micr_code_business' => $data_business['micr_code_business'],
-            'ad_code_business' => $data_business['ad_code_business'],
+            'bank_name_business' => $data_business['bank_name_business'] ?? Null,
+            'account_no_business' => $data_business['account_no_business'] ?? Null,
+            'account_name_business' => $data_business['account_name_business'] ?? Null,
+            'branch_code_business' => $data_business['branch_code_business'] ?? Null,
+            'branch_name_business' => $data_business['branch_name_business'] ?? Null,
+            'branch_address_business' => $data_business['branch_address_business'] ?? Null,
+            'ifsc_code_business' => $data_business['ifsc_code_business'] ?? Null,
+            'micr_code_business' => $data_business['micr_code_business'] ?? Null,
+            'ad_code_business' => $data_business['ad_code_business'] ?? Null,
         
             'aadhaar_no' => $data_personal['aadhaar_no'],
             'aadhaar_no_file' => $aadhaar_no_file,
@@ -1868,7 +1867,7 @@ class RegisterController extends Controller
         $this->guard()->login($user);
 
         try {
-            EmailUtility::customer_registration_email('registration_email_to_customer', $user, $password);
+            EmailUtility::customer_registration_email('registration_from_system_email_to_customer', $user, $password);
         } catch (\Exception $e) {}
 
         try {
@@ -2191,7 +2190,9 @@ class RegisterController extends Controller
             ], 200);
         }
 
-        $data = User::where('gst_no', $request->gst_no)->first();
+        $data = User::where('gst_no', $request->gst_no)
+                ->where('approval_status', 1)
+                ->whereNotNull('user_subtype')->first();
 
         if($data){
             // if($data->approval_status == 0){
@@ -2255,7 +2256,9 @@ class RegisterController extends Controller
             ], 200);
         }
 
-        $data = User::where('iec_no', $request->iec_no)->first();
+        $data = User::where('iec_no', $request->iec_no)
+                ->where('approval_status', 1)
+                ->whereNotNull('user_subtype')->first();
 
         if($data){
 
@@ -2316,7 +2319,9 @@ class RegisterController extends Controller
             ], 200);
         }
 
-        $data = User::where('aadhaar_no', $request->aadhaar_no)->first();
+        $data = User::where('aadhaar_no', $request->aadhaar_no)
+                ->where('approval_status', 1)
+                ->whereNotNull('user_subtype')->first();
 
         if($data){
 
@@ -2422,7 +2427,9 @@ class RegisterController extends Controller
             ], 200);
         }
 
-        $data = User::where('pan_no', $request->pan_no)->first();
+        $data = User::where('pan_no', $request->pan_no)
+                ->where('approval_status', 1)
+                ->whereNotNull('user_subtype')->first();
 
         if($data){
 
@@ -2464,7 +2471,9 @@ class RegisterController extends Controller
             ], 200);
         }
 
-        $data = User::where('passport_no', $request->passport_no)->first();
+        $data = User::where('passport_no', $request->passport_no)
+                ->where('approval_status', 1)
+                ->whereNotNull('user_subtype')->first();
 
         if($data){
                 Session::put('passport_validate', 'False');
