@@ -1,9 +1,9 @@
 @if (Session::has('step') && Session::get('step') == 1)
 {{-- - //------------------------------ Registration 1 modal -----------------------// -- --}}
 
-<div class="modal fade login_form_popup" id="reg_model_1" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+{{-- <div class="modal fade login_form_popup" id="reg_model_1" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog" role="document"> --}}
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
@@ -64,8 +64,9 @@
             </form>
 
         </div>
-    </div>
-</div>
+
+    {{-- </div>
+</div> --}}
 
 {{-- - //------------------------------ Registration 1 modal -----------------------// -- --}}
 @endif
@@ -73,9 +74,10 @@
 @if (Session::has('step') && Session::get('step') == 2)
 {{-- - //------------------------------ Registration 2 modal -----------------------// -- --}}
 
-    <div class="modal fade login_form_popup" id="reg_model_2" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+    {{-- <div class="modal fade login_form_popup" id="reg_model_2" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
         aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog" role="document"> --}}
+
             <div class="modal-content py-3">
                 <div class="modal-header">
                     <div class="heading">
@@ -117,8 +119,9 @@
                     </div>
                 </form>
             </div>
-        </div>
-    </div>
+
+        {{-- </div>
+    </div> --}}
 
 {{-- - //------------------------------ Registration 2 modal -----------------------// -- --}}
 @endif
@@ -126,9 +129,10 @@
 @if (Session::has('step') && Session::get('step') == 3)
 {{-- - //------------------------------ Registration 3 modal -----------------------// -- --}}
 
-    <div class="modal fade login_form_popup" id="reg_model_3" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+    {{-- <div class="modal fade login_form_popup" id="reg_model_3" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
         aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog" role="document"> --}}
+
             <div class="modal-content py-3">
                 <div class="modal-header">
                     <div class="heading">
@@ -163,8 +167,9 @@
                     </div>
                 </form>
             </div>
-        </div>
-    </div>
+
+        {{-- </div>
+    </div> --}}
 
 {{-- - //------------------------------ Registration 3 modal -----------------------// -- --}}
 @endif
@@ -172,9 +177,10 @@
 @if (Session::has('step') && Session::get('step') == 4)
 {{-- - //------------------------------ Registration 4 modal -----------------------// -- --}}
 
-<div class="modal fade login_form_popup" id="reg_model_4" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+{{-- <div class="modal fade login_form_popup" id="reg_model_4" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog" role="document"> --}}
+
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
@@ -242,8 +248,9 @@
             </form>
 
         </div>
-    </div>
-</div>
+
+    {{-- </div>
+</div> --}}
 
 {{-- - //------------------------------ Registration 4 modal -----------------------// -- --}}
 @endif
@@ -256,9 +263,10 @@
     $session_data_user = session()->get('user_data_business') ?? []; 
 @endphp
 
-<div class="modal fade login_form_popup" id="reg_model_5" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+{{-- <div class="modal fade login_form_popup" id="reg_model_5" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg" role="document"> --}}
+
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
@@ -758,8 +766,9 @@
                 </div>
             </form>
         </div>
-    </div>
-</div>
+
+    {{-- </div>
+</div> --}}
 
 {{-- - //------------------------------  Registration 5 modal -----------------------// -- --}}
 
@@ -776,9 +785,10 @@
     $pan_no =  session()->get('pan_no') ?? '';
 @endphp
 
-<div class="modal fade login_form_popup" id="reg_model_6" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+{{-- <div class="modal fade login_form_popup" id="reg_model_6" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg" role="document"> --}}
+
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
@@ -1233,8 +1243,9 @@
                 </div>
             </form>
         </div>
-    </div>
-</div>
+
+    {{-- </div>
+</div> --}}
 
 {{-- - //------------------------------  Registration 6 modal -----------------------// -- --}}
 
@@ -1245,9 +1256,10 @@
 
 {{-- - //------------------------------ Registration 7 modal -----------------------// -- --}}
 
-<div class="modal fade login_form_popup" id="reg_model_7" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+{{-- <div class="modal fade login_form_popup" id="reg_model_7" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
     aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-lg" role="document"> --}}
+
         <div class="modal-content py-3">
             <div class="modal-header">
                 <div class="heading">
@@ -1293,8 +1305,9 @@
                 </div>
             </form>
         </div>
-    </div>
-</div>
+
+    {{-- </div>
+</div> --}}
 
 
 <script>
@@ -1381,9 +1394,10 @@
     session()->flush();
 @endphp
 
-<div class="modal fade login_form_popup" id="reg_model_8" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+{{-- <div class="modal fade login_form_popup" id="reg_model_8" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
 aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog" role="document"> --}}
+
         <div class="modal-content py-3">
             <div class="modal-header">
                  <div class="heading">
@@ -1413,8 +1427,9 @@ aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
             </div>
 
         </div>
-    </div>
-</div>
+
+    {{-- </div>
+</div> --}}
 
 {{-- - //------------------------------  Registration 6 modal -----------------------// -- --}}
 

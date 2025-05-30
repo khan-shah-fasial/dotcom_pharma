@@ -10,8 +10,14 @@
 
     @endif
 
-    <div id="regModalContainer"></div>
+    <div class="modal fade login_form_popup" id="reg_model_1" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalLabel_phone" aria-hidden="true">
+        <div class="modal-dialog" role="document">
 
+            <div id="regModalContainer"></div>
+
+        </div>
+    </div>
 
     {{--- //------------------------------ aadhar verify modal -----------------------// ----}}
 
@@ -73,7 +79,7 @@
 
         $(document).ready(function() {
 
-            // ---------------- Gst verify --------------------------- //
+        {{-- // ---------------- Gst verify --------------------------- // --}}
 
             function checkAndAppendButton() {
                 const verifyBtnId = 'verify-gst-btn';
@@ -83,15 +89,15 @@
                 }
             }
 
-            // Run on input/paste/change
+        {{--    // Run on input/paste/change  --}}
             $('body').on('input', '#gst_no', function () {
                 setTimeout(checkAndAppendButton, 50); // delay for paste to take effect
             });
 
 
-            // ---------------- Gst verify --------------------------- //
+        {{--    // ---------------- Gst verify --------------------------- //  --}}
 
-            // ---------------- IEC verify --------------------------- //
+        {{--    // ---------------- IEC verify --------------------------- //  --}}
 
             function checkAndAppendIECButton() {
                 const verifyBtnId = 'verify-iec-btn';
@@ -101,15 +107,15 @@
                 }
             }
 
-            // Watch changes on IEC input
+        {{--    // Watch changes on IEC input  --}}
             $('body').on('input', '#iec_no', function () {
                 setTimeout(checkAndAppendIECButton, 50); // wait for paste/input value
             });
 
 
-            // ---------------- ICE verify --------------------------- //
+        {{--    // ---------------- ICE verify --------------------------- // --}}
 
-            // ---------------- aadhaar_no verify --------------------------- //
+        {{--    // ---------------- aadhaar_no verify --------------------------- // --}}
 
             function checkAndAppendaadhaarButton() {
                 const val = $('#aadhaar_no').val().trim();
@@ -285,7 +291,7 @@
                             const emailInput = form.querySelector('#email');
                             if (emailInput) {
                                 emailInput.value = response.email;
-                                phoneInput.disabled = true;
+                                emailInput.disabled = true;
                             }
                         }
 
@@ -324,8 +330,9 @@
                     }
                 });
 
+                {{--
                 // // Set default country code to +91 (India)
-                // iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                // iti1.setCountry('in'); // 'in' is the ISO2 code for India --}}
 
 
                 if(name === 'whats_app_no'){
@@ -452,13 +459,35 @@
 
                             // Inject dynamic content and show the modal for the given step
                             $('#regModalContainer').html(response.html);
-                            const backdrop = document.querySelector(".modal-backdrop");
-                            if (backdrop) {
-                                backdrop.remove(); // Removes only the backdrop
-                                backdrop.parentElement?.remove(); // Removes the full div if the backdrop is inside another div
+
+                            {{--
+                            // const backdrop = document.querySelector(".modal-backdrop");
+                            // if (backdrop) {
+                            //     backdrop.remove(); // Removes only the backdrop
+                            //     backdrop.parentElement?.remove(); // Removes the full div if the backdrop is inside another div
+                            // }
+                            --}}
+
+                            // $(`#reg_model_${step}`).modal('show');
+                            if (!$('#reg_model_1').hasClass('show')) {
+                                $('#reg_model_1').modal('show');
                             }
 
-                            $(`#reg_model_${step}`).modal('show');
+                            if ([5, 6, 7].includes(step)) {
+                                const $dialog = $('#reg_model_1 .modal-dialog');
+                                if (!$dialog.hasClass('modal-lg')) {
+                                    $dialog.addClass('modal-lg');
+                                    $('#reg_model_1').modal('handleUpdate');
+                                }
+                            } else {
+                                const $dialog = $('#reg_model_1 .modal-dialog');
+                                if ($dialog.hasClass('modal-lg')) {
+                                    $dialog.removeClass('modal-lg');
+                                    $('#reg_model_1').modal('handleUpdate');
+                                }
+                            }
+
+
 
                             validate_form(step);
 
@@ -471,6 +500,7 @@
                                 intil_input('whats_app_no');
                                 intil_input('alternate_mob_no_business');
                                 intil_input('alternate_whats_app_no_business');
+                                {{--
                                 // toggleLocalityFields();
 
                                 // const isDomestic = document.getElementById('domestic').checked;
@@ -479,6 +509,7 @@
                                 // } else {
                                 //     checkAndAppendIECButton();
                                 // }
+                                --}}
                                 
                             } else if (step == 6) {
                                 intil_input_form2('phone_code');
@@ -622,7 +653,7 @@
                         const emailInput = form.querySelector('#email');
                         if (emailInput) {
                             emailInput.value = response.email;
-                            phoneInput.disabled = true;
+                            emailInput.disabled = true;
                         }
                     }
 
@@ -661,8 +692,9 @@
                 }
             });
 
+            {{--
             // // Set default country code to +91 (India)
-            // iti1.setCountry('in'); // 'in' is the ISO2 code for India
+            // iti1.setCountry('in'); // 'in' is the ISO2 code for India --}}
 
 
             if(name === 'whats_app_no'){
@@ -786,13 +818,33 @@
 
                         // Inject dynamic content and show the modal for the given step
                         $('#regModalContainer').html(response.html);
-                        const backdrop = document.querySelector(".modal-backdrop");
-                        if (backdrop) {
-                            backdrop.remove(); // Removes only the backdrop
-                            backdrop.parentElement?.remove(); // Removes the full div if the backdrop is inside another div
+
+                        {{--
+                        // const backdrop = document.querySelector(".modal-backdrop");
+                        // if (backdrop) {
+                        //     backdrop.remove(); // Removes only the backdrop
+                        //     backdrop.parentElement?.remove(); // Removes the full div if the backdrop is inside another div
+                        // }
+                        --}}
+
+                        // $(`#reg_model_${step}`).modal('show');
+                        if (!$('#reg_model_1').hasClass('show')) {
+                            $('#reg_model_1').modal('show');
                         }
 
-                        $(`#reg_model_${step}`).modal('show');
+                        if ([5, 6, 7].includes(step)) {
+                            const $dialog = $('#reg_model_1 .modal-dialog');
+                            if (!$dialog.hasClass('modal-lg')) {
+                                $dialog.addClass('modal-lg');
+                                $('#reg_model_1').modal('handleUpdate');
+                            }
+                        } else {
+                            const $dialog = $('#reg_model_1 .modal-dialog');
+                            if ($dialog.hasClass('modal-lg')) {
+                                $dialog.removeClass('modal-lg');
+                                $('#reg_model_1').modal('handleUpdate');
+                            }
+                        }
 
                         validate_form(step);
 
@@ -805,6 +857,8 @@
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_business');
                             intil_input('alternate_whats_app_no_business');
+
+                            {{--
                             // toggleLocalityFields();
 
                             // const isDomestic = document.getElementById('domestic').checked;
@@ -813,6 +867,7 @@
                             // } else {
                             //     checkAndAppendIECButton();
                             // }
+                            --}}
                             
                         } else if (step == 6) {
                             intil_input_form2('phone_code');
@@ -872,14 +927,32 @@
 
                         // Inject dynamic content and show the modal for the given step
                         $('#regModalContainer').html(response.html);
-                        const backdrop = document.querySelector(".modal-backdrop");
-                        if (backdrop) {
-                            backdrop.remove(); // Removes only the backdrop
-                            backdrop.parentElement?.remove(); // Removes the full div if the backdrop is inside another div
+                        {{--
+                        // const backdrop = document.querySelector(".modal-backdrop");
+                        // if (backdrop) {
+                        //     backdrop.remove(); // Removes only the backdrop
+                        //     backdrop.parentElement?.remove(); // Removes the full div if the backdrop is inside another div
+                        // }
+                        --}}
+
+                        // $(`#reg_model_${step}`).modal('show');
+                        if (!$('#reg_model_1').hasClass('show')) {
+                            $('#reg_model_1').modal('show');
                         }
 
-                        $(`#reg_model_${step}`).modal('show');
-
+                        if ([5, 6, 7].includes(step)) {
+                            const $dialog = $('#reg_model_1 .modal-dialog');
+                            if (!$dialog.hasClass('modal-lg')) {
+                                $dialog.addClass('modal-lg');
+                                $('#reg_model_1').modal('handleUpdate');
+                            }
+                        } else {
+                            const $dialog = $('#reg_model_1 .modal-dialog');
+                            if ($dialog.hasClass('modal-lg')) {
+                                $dialog.removeClass('modal-lg');
+                                $('#reg_model_1').modal('handleUpdate');
+                            }
+                        }
 
                         validate_form(step);
 
@@ -888,6 +961,8 @@
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_business');
                             intil_input('alternate_whats_app_no_business');
+
+                            {{--
                             // toggleLocalityFields();
 
                             // const isDomestic = document.getElementById('domestic').checked;
@@ -896,6 +971,7 @@
                             // } else {
                             //     checkAndAppendIECButton();
                             // }
+                            --}}
                             
                         } else if (step == 6) {
                             intil_input_form2('phone_code');
@@ -1114,8 +1190,11 @@
             const input = $('#' + fieldId);
             const value = input.val().trim();
             const dob = $('#dob').val();
+
+            {{--
             // const verifyBtnId = `verify-${fieldId}-btn`;
             // const verifyBtn = $('#' + verifyBtnId);
+            --}}
 
             // Basic validation
             if (requiredLength && value.length !== requiredLength) {
@@ -1136,8 +1215,10 @@
                 }
             }
 
+            {{--
             // const originalText = verifyBtn.text();
             // verifyBtn.text('Verifying...').prop('disabled', true);
+            --}}
 
             getCsrfToken()
                 .done(function (response) {
