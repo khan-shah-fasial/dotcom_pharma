@@ -476,7 +476,7 @@ body .form-control:focus {
 }
 
 .login_form_popup label {
-    font-size: 16px !important;
+    font-size: 14px !important;
     font-weight: 500 !important;
     color: #363636;
 }
@@ -964,12 +964,13 @@ ul.dropdown-menu {
     padding-top: 11px;
     padding-bottom: 10px;
     border-bottom: 1px solid #123498;
+    font-size: 14px;
 }
 
 .logo_menu a {
     height: 100%;
     padding-top: 30px;
-    padding-right: 15px;
+    padding-right: 10px;
 }
 
 .terms_li {
@@ -1350,6 +1351,31 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     font-size: 32px !important;
 }
 
-.login_form_popup  .modal-dialog.modal-lg {
+.login_form_popup .modal-dialog.modal-lg {
     max-width: 80% !important;
+}
+
+.dmst_btn label {
+    border-radius: 100px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    color: #fff !important;
+    padding: 0 !important;
+}
+
+.resend_otp a {
+    color: #000;
+    display: inline-block;
+}
+
+.remove_btns {
+    padding: 0 6px;
+    box-shadow: none !important;
+    border: 0px;
+    float: right;
+    text-align: right;
+    right: 20px;
+    margin-top: 5px;
 }

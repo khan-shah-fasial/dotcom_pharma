@@ -282,6 +282,13 @@
         height: 90px;
     }
 
+    .login_form_popup .modal-dialog.modal-lg {
+        max-width: 100% !important;
+    }
+
+    .login_form_popup {
+        padding-left: 0px !important;
+    }
 
 }
 

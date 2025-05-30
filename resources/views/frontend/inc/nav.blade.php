@@ -280,7 +280,7 @@
 
                                         @foreach ($category_top_menu as $cat)
                                             <li class="list-inline-item mr-0 animate-underline-white dropdown">
-                                                <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" 
+                                                <a href="#" class="fs-14 d-inline-block fw-500 header_menu_links dropdown-toggle" 
                                                 id="injectionsDropdown_{{ $cat->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                     {{ $cat->name }}
                                                 </a>
@@ -293,7 +293,7 @@
                                         @endforeach
 
                                         {{-- <li class="list-inline-item mr-0 animate-underline-white dropdown">
-                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <a href="#" class="fs-14 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 Bolus
                                             </a>
                                             <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
@@ -304,7 +304,7 @@
                                         </li>
 
                                         <li class="list-inline-item mr-0 animate-underline-white dropdown">
-                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <a href="#" class="fs-14 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 Tablet & Capsules
                                             </a>
                                             <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
@@ -313,7 +313,7 @@
                                         </li>
 
                                         <li class="list-inline-item mr-0 animate-underline-white dropdown">
-                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <a href="#" class="fs-14 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                Oral
                                             </a>
                                             <div class="dropdown-menu" aria-labelledby="injectionsDropdown">
@@ -323,7 +323,7 @@
                                         </li>
 
                                         <li class="list-inline-item mr-0 animate-underline-white dropdown">
-                                            <a href="#" class="fs-16 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <a href="#" class="fs-14 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                Intra-Uterine
                                             </a>
                                             <div class="dropdown-menu" aria-labelledby="injectionsDropdown">

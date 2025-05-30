@@ -229,7 +229,7 @@
                                     pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
                             </div>
                             <div class="resend_otp">
-                                <a class="ms-4 btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
+                                <a class="" onclick="resendOTPButton_Phone();">Resend OTP</a>
                             </div>
                         `;
 
@@ -264,7 +264,7 @@
                                     pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
                             </div>
                             <div class="resend_otp">
-                                <a class="ms-4 btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
+                                <a class="" onclick="resendOTPButton_Phone();">Resend OTP</a>
                             </div>
                         `;
 
@@ -566,7 +566,7 @@
                                 pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
                         </div>
                         <div class="resend_otp">
-                            <a class="ms-4 btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
+                            <a class="" onclick="resendOTPButton_Phone();">Resend OTP</a>
                         </div>
                     `;
 
@@ -601,7 +601,7 @@
                                 pattern="[0-9]+" minlength="6" maxlength="6" placeholder="Please Enter Code" required>
                         </div>
                         <div class="resend_otp">
-                            <a class="ms-4 btn btn-primary" onclick="resendOTPButton_Phone();">Resend OTP</a>
+                            <a class="" onclick="resendOTPButton_Phone();">Resend OTP</a>
                         </div>
                     `;
 

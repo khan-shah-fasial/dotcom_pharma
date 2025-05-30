@@ -19,13 +19,13 @@
                 <div class="modal-body row">
 
                         <input type="hidden" name="type" id="reg_type" value="">
-                        <div class="btn-group w-100 d-flex" role="group" aria-label="Type selection">
+                        <div class="btn-group w-100 d-flex dmst_btn purple_btn mt-4 mb-3" role="group" aria-label="Type selection">
 
-                            <label class="btn btn-success w-100 mx-3" for="domestic">
+                            <label class="btn btn-success w-100 ml-3 mr-2 animate_button white_buttons" for="domestic">
                             <input type="radio" class="btn-check" name="type_option" id="domestic" value="domestic" autocomplete="off">
                             Domestic</label>
                     
-                            <label class="btn btn-primary w-100 mx-3" for="international">
+                            <label class="btn btn-primary w-100 mr-3 ml-2 animate_button black1_buttons" for="international">
                             <input type="radio" class="btn-check" name="type_option" id="international" value="international" autocomplete="off">
                             International</label>
 
@@ -90,9 +90,9 @@
 
                     <div class="modal-body">
                         <div class="row">
-                                <div class="col-md-12 mb-md-4 mb-3">
+                                <div class="col-md-12">
 
-                                <div class="form-group phone-form-group mb-1">
+                                <div class="form-group phone-form-group">
                                     <label for="phone-code" class="fs-12 fw-700 text-soft-dark">Mobile No *</label>
                                     <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Mobile No" name="phone" autocomplete="off" 
                                     value="{{ $Phone_parts_number ?? '' }}" required>
@@ -150,7 +150,7 @@
                     </div>
                     <div class="modal-footer">
                         <div class="blue_btn black_buttons">
-                            {{-- <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button> --}}
+                            <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
                         </div>
 
                         <div class="display_flexx">
@@ -191,25 +191,25 @@
 
                         <input type="hidden" name="type" id="reg_from" value="">
                         @if(Session::get('reg_locality') == "domestic")
-                            <div class="btn-group w-100 d-flex" role="group" aria-label="Type selection">
+                            <div class="btn-group w-100 d-flex dmst_btn purple_btn mt-4 mb-3" role="group" aria-label="Type selection">
 
-                                <label class="btn btn-success w-100 mx-3" for="gst">
+                                <label class="btn btn-success w-100 ml-3 mr-2 animate_button white_buttons" for="gst">
                                 <input type="radio" class="btn-check" name="type_option" id="gst" value="gst" autocomplete="off">
                                 GST</label>
                         
-                                <label class="btn btn-primary w-100 mx-3" for="aadhaar">
+                                <label class="btn btn-primary w-100 mr-3 ml-2 animate_button black1_buttons" for="aadhaar">
                                 <input type="radio" class="btn-check" name="type_option" id="aadhaar" value="aadhaar" autocomplete="off">
                                 Aadhaar</label>
 
                             </div>
                         @else 
-                            <div class="btn-group w-100 d-flex" role="group" aria-label="Type selection">
+                            <div class="btn-group w-100 d-flex dmst_btn purple_btn mt-4 mb-3" role="group" aria-label="Type selection">
 
-                                <label class="btn btn-success w-100 mx-3" for="iec">
+                                <label class="btn btn-success w-100 ml-3 mr-2 animate_button white_buttons" for="iec">
                                 <input type="radio" class="btn-check" name="type_option" id="iec" value="iec" autocomplete="off">
                                 IEC</label>
                         
-                                <label class="btn btn-primary w-100 mx-3" for="passport">
+                                <label class="btn btn-primary w-100 mr-3 ml-2 animate_button black1_buttons" for="passport">
                                 <input type="radio" class="btn-check" name="type_option" id="passport" value="passport" autocomplete="off">
                                 Passport</label>
 
@@ -297,14 +297,13 @@
                     <div class="row">
 
                         <div class="col-md-12 mb-3 text-center">
-                            <h3>Business Details</h3>
+                            <h3 class="fs-20 pt-3">Business Details</h3>
                         </div>
 
                         @if(session()->get('reg_locality') == "domestic")
-                            <div class="locality-base-domestic col-md-12">
-                                <div class="row">
+                          
 
-                                    <div class="col-md-5 mb-md-4 mb-3">
+                                    <div class="col-md-3 mb-md-24 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">GST No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="gst_no" name="gst_no"
@@ -312,7 +311,7 @@
                                         </div>
                                     </div>
         
-                                    <div class="col-md-5 mb-md-4 mb-3">
+                                    <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">GST No Upload : *</label>
                                             <input type="file" class="form-control form-control-lg" id="gst_no_file" name="gst_no_file"
@@ -321,12 +320,10 @@
                                         </div>
                                     </div>
 
-                                </div> 
-                            </div>
+                               
                         @else
-                            <div class="locality-base-international col-md-12">
-                                <div class="row">
-                                    <div class="col-md-5 mb-md-4 mb-3">
+                            
+                                    <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="iec_no" class="col-form-label form-label">IEC.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="iec_no" name="iec_no"
@@ -334,7 +331,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-5 mb-md-4 mb-3">
+                                    <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">IEC.No Upload : *</label>
                                             <input type="file" class="form-control form-control-lg" id="iec_no_file" name="iec_no_file"
@@ -342,8 +339,6 @@
                                             required>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
                         @endif
 
                         <div class="col-md-3">
@@ -355,9 +350,9 @@
                             </div>
 
                         </div>
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="const_of_business">Constitution of Business *</label>
                                 <input type="text" id="const_of_business" name="const_of_business"
                                     class="form-control form-control-lg" value="{{ $data['const_of_business'] ?? $session_data_user['const_of_business'] ?? '' }}" required placeholder="Enter Constitution of Business Ex: ABCD"/>
@@ -365,44 +360,43 @@
 
                         </div>
 
-                        @if(session()->get('reg_locality') == "domestic")
-                            <div class="locality-base-domestic"> 
-                                <div class="col-md-12 mb-md-4 mb-3">
+                       
 
-                                    <div class="form-group mb-1">
+                        @if(session()->get('reg_locality') == "domestic")
+                            <div class="col-md-12 mb-md-2 mb-2">
+
+                                    <div class="form-group">
                                         <label class="form-label" for="gstin_current_status">GSTIN Status / Current Status *</label>
                                         <input type="text" id="gstin_current_status" name="gstin_current_status"
                                             class="form-control form-control-lg" value="{{ $data['gstin_current_status'] ?? $session_data_user['gstin_current_status'] ?? '' }}" required placeholder="Enter GSTIN Status / Current Status Ex: Active"/>
                                     </div>
 
                                 </div>
-                            </div>
                         @else
-                            <div class="locality-base-international"> 
-                                <div class="col-md-12 mb-md-4 mb-3">
+                            
+                                <div class="col-md-3 mb-md-2 mb-2">
 
-                                    <div class="form-group mb-1">
+                                    <div class="form-group">
                                         <label class="form-label" for="uin_current_status">UIN Status / Current Status *</label>
                                         <input type="text" id="uin_current_status" name="uin_current_status"
                                             class="form-control form-control-lg" value="{{ $data['uin_current_status'] ?? $session_data_user['uin_current_status'] ?? '' }}" required placeholder="Enter UIN Status / Current Status Ex: Active"/>
                                     </div>
 
                                 </div>
-                            </div>
                         @endif
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="name">Concerned Person Name *</label>
                                 <input type="text" id="con_person_name" name="con_person_name"
                                     class="form-control form-control-lg" value="{{ $data['con_person_name'] ?? $session_data_user['con_person_name'] ?? '' }}" required placeholder="Enter Concerned Person Name Ex: ABCD"/>
                             </div>
 
                         </div>
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="name">Company Name *</label>
                                 <input type="text" id="company_name" name="company_name"
                                     class="form-control form-control-lg" value="{{ $data['company_name'] ?? $session_data_user['company_name'] ?? '' }}" required placeholder="Enter Company Name"/>
@@ -410,14 +404,16 @@
 
                         </div>
 
-
                         <div class="col-md-12 mb-3 text-center">
-                            <h3>Address</h3>
+                            <hr>
+                        </div>
+                        <div class="col-md-12 mb-3 text-center">
+                            <h3 class="fs-20">Address</h3>
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="street_add_first_business">Street Address 1 *</label>
                                 <input type="text" id="street_add_first_business" name="street_add_first_business"
                                     class="form-control form-control-lg" value="{{ $data['street_add_first_business'] ?? $session_data_user['street_add_first_business'] ?? '' }}" required placeholder="Enter Street Address"/>
@@ -425,9 +421,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="street_add_sec_business">Street Address 2 </label>
                                 <input type="text" id="street_add_sec_business" name="street_add_sec_business"
                                     class="form-control form-control-lg" value="{{ $data['street_add_sec_business'] ?? $session_data_user['street_add_sec_business'] ?? '' }}" placeholder="Enter Street Address 2"/>
@@ -435,9 +431,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="locality_land_mark_business">Locality/Suburb/Land Mark *</label>
                                 <input type="text" id="locality_land_mark_business" name="locality_land_mark_business"
                                     class="form-control form-control-lg" value="{{ $data['locality_land_mark_business'] ?? $session_data_user['locality_land_mark_business'] ?? '' }}" required placeholder="Enter Locality/Suburb/Land Mark"/>
@@ -445,9 +441,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="village_business">Village *</label>
                                 <input type="text" id="village_business" name="village_business"
                                     class="form-control form-control-lg" value="{{ $data['village_business'] ?? $session_data_user['village_business'] ?? '' }}" required placeholder="Enter Village"/>
@@ -455,9 +451,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="post_business">Post *</label>
                                 <input type="text" id="post_business" name="post_business" value="{{ $data['post_business'] ?? $session_data_user['post_business'] ?? '' }}"
                                     class="form-control form-control-lg" placeholder="Enter Post" required/>
@@ -498,9 +494,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="district_business">District *</label>
                                 <input type="text" id="district_business" name="district_business" value="{{ $data['district_business'] ?? $session_data_user['district_business'] ?? '' }}"
                                     class="form-control form-control-lg" placeholder="Enter District" required/>
@@ -543,7 +539,7 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
                             @php
                                 if (!empty($session_data_user['phone_business']) || Session::has('phone')) {
@@ -553,7 +549,7 @@
                                 }
                             @endphp
 
-                            <div class="form-group phone-form-group mb-1">
+                            <div class="form-group phone-form-group">
                                 <label for="phone-code" class="fs-12 fw-700 text-soft-dark">Primary Mobile (this number is user for your Login details) *</label>
                                 <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Phone No" name="phone" autocomplete="off" 
                                 value="{{ $Phone_parts_number ?? '' }}" required>
@@ -563,7 +559,7 @@
                             <input type="hidden" name="phone_code_meta" value="">
 
                         </div>
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
                             @php
                                 if (!empty($session_data_user['whats_app_no_business']) || Session::has('phone')) {
@@ -573,7 +569,7 @@
                                 }
                             @endphp
 
-                            <div class="form-group phone-form-group mb-1">
+                            <div class="form-group phone-form-group">
                                 <label for="phone" class="fs-12 fw-700 text-soft-dark">Primary Whatapp No *</label>
                                 <input type="tel" id="whats_app_no" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="whats_app_no" autocomplete="off" value="{{ $whats_app_no_parts_number ?? '' }}" required>
                             </div>
@@ -583,7 +579,7 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
                             @php
                                 if(!empty($session_data_user['alternate_mob_no_business'])){
@@ -592,8 +588,8 @@
                                 }
                             @endphp
 
-                            <div class="form-group phone-form-group mb-1">
-                                <label for="phone" class="fs-12 fw-700 text-soft-dark">Alternate Mobile (contact Person)</label>
+                            <div class="form-group phone-form-group">
+                                <label for="phone" class="fs-12 fw-700 text-soft-dark">Alternate No. (contact Person)</label>
                                 <input type="tel" id="alternate_mob_no_business" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Alternate Mobile No" name="alternate_mob_no_business" autocomplete="off" value="{{ $alternate_mob_no_business_number ?? '' }}" >
                             </div>
 
@@ -602,7 +598,7 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
                             @php
                                 if(!empty($session_data_user['alternate_whats_app_no_business'])){
@@ -611,7 +607,7 @@
                                 }
                             @endphp
 
-                            <div class="form-group phone-form-group mb-1">
+                            <div class="form-group phone-form-group">
                                 <label for="phone" class="fs-12 fw-700 text-soft-dark">Alternate Whatapp No</label>
                                 <input type="tel" id="alternate_whats_app_no_business" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="alternate_whats_app_no_business" autocomplete="off" value="{{ $alternate_whats_app_no_parts_number ?? '' }}" >
                             </div>
@@ -621,9 +617,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="email">Primary E-mail *</label>
                                 <input type="email" id="prim_email_business" name="prim_email_business"
                                     class="form-control form-control-lg" value="{{ $data['email'] ?? $session_data_user['email'] ?? Session::get('email') ?? '' }}" required placeholder="Enter Primary E-mail"/>
@@ -631,9 +627,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="alt_email_business">Alternate E-mail</label>
                                 <input type="email" id="alt_email_business" name="alt_email_business"
                                     class="form-control form-control-lg" value="{{ $data['alt_email_business'] ?? $session_data_user['alt_email_business'] ?? '' }}" placeholder="Enter Alternate E-mail"/>
@@ -641,9 +637,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="website_business">Website</label>
                                 <input type="url" id="website_business" name="website_business"
                                     class="form-control form-control-lg" value="{{ $data['website_business'] ?? $session_data_user['website_business'] ?? '' }}"  placeholder="Enter Website URL"/>
@@ -651,8 +647,14 @@
 
                         </div>
 
+
                         <div class="col-md-12 mb-3 text-center">
-                            <h3>Bank Details</h3>
+                            <hr>
+                        </div>
+
+
+                        <div class="col-md-12 mb-3 text-center">
+                            <h3 class="fs-20">Bank Details</h3>
                         </div>
 
 
@@ -790,16 +792,16 @@
                 <div class="modal-body">
 
                     <div class="row">
+                        
 
                         <div class="col-md-12 mb-3 text-center">
-                            <h3>Personal Details</h3>
+                            <h3 class="fs-20 pt-3">Personal Details</h3>
                         </div>
 
                         @if($reg_locality == "domestic")
-                            <div class="locality-base-domestic col-md-12">
-                                <div class="row">
 
-                                    <div class="col-md-5 mb-md-4 mb-3">
+
+                                    <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">Aadhaar.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="aadhaar_no" name="aadhaar_no"
@@ -807,7 +809,7 @@
                                         </div>
                                     </div>
         
-                                    <div class="col-md-5 mb-md-4 mb-3">
+                                    <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">Aadhaar Upload : *</label>
                                             <input type="file" class="form-control form-control-lg" id="aadhaar_no_file" name="aadhaar_no_file"
@@ -816,7 +818,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-5 mb-md-4 mb-3">
+                                    <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">PAN.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="pan_no" name="pan_no"
@@ -824,7 +826,7 @@
                                         </div>
                                     </div>
         
-                                    <div class="col-md-5 mb-md-4 mb-3">
+                                    <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">Pan Upload : *</label>
                                             <input type="file" class="form-control form-control-lg" id="pan_no_file" name="pan_no_file"
@@ -833,12 +835,8 @@
                                         </div>
                                     </div>
 
-                                </div> 
-                            </div>
                         @else
-                            <div class="locality-base-international col-md-12">
-                                <div class="row">
-                                    <div class="col-md-5 mb-md-4 mb-3">
+                              <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="iec_no" class="col-form-label form-label">Passport File No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="passport_no" name="passport_no"
@@ -847,15 +845,13 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-5 mb-md-4 mb-3">
+                                    <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">Passport Upload : *</label>
                                             <input type="file" class="form-control form-control-lg" id="passport_no_file" name="passport_no_file"
                                             accept=".jpg, .jpeg, .webp, .png, .pdf" required>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
                         @endif
 
                         <div class="col-md-3">
@@ -869,18 +865,18 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="name">Name *</label>
                                 <input type="text" id="name" name="name"
                                     class="form-control form-control-lg" value="{{ $data['name'] ?? $session_data_user['name'] ?? '' }}" required placeholder="Enter Name"/>
                             </div>
 
                         </div>
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="name">Father Name *</label>
                                 <input type="text" id="father_name" name="father_name"
                                     class="form-control form-control-lg" value="{{ $data['father_name'] ?? $session_data_user['father_name'] ?? '' }}" required placeholder="Enter Father Name"/>
@@ -898,14 +894,16 @@
 
                         </div>
 
-
                         <div class="col-md-12 mb-3 text-center">
-                            <h3>Address</h3>
+                            <hr>
+                        </div>
+                        <div class="col-md-12 mb-3 text-center">
+                            <h3 class="fs-20">Address</h3>
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="street_add_first_personal">Street Address 1 *</label>
                                 <input type="text" id="street_add_first_personal" name="street_add_first_personal"
                                     class="form-control form-control-lg" value="{{ $data['street_add_first_personal'] ?? $session_data_user['street_add_first_personal'] ?? '' }}" required placeholder="Enter Street Address"/>
@@ -913,9 +911,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="street_add_sec_personal">Street Address 2 </label>
                                 <input type="text" id="street_add_sec_personal" name="street_add_sec_personal"
                                     class="form-control form-control-lg" value="{{ $data['street_add_sec_personal'] ?? $session_data_user['street_add_sec_personal'] ?? '' }}" placeholder="Enter Street Address"/>
@@ -923,9 +921,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="locality_land_mark_personal">Locality/Suburb/Land Mark *</label>
                                 <input type="text" id="locality_land_mark_personal" name="locality_land_mark_personal"
                                     class="form-control form-control-lg" value="{{ $data['locality_land_mark_personal'] ?? $session_data_user['locality_land_mark_personal'] ?? '' }}" required placeholder="Enter Locality/Suburb/Land Mark"/>
@@ -933,9 +931,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="village_personal">Village *</label>
                                 <input type="text" id="village_personal" name="village_personal"
                                     class="form-control form-control-lg" value="{{ $data['village_personal'] ?? $session_data_user['village_personal'] ?? '' }}" required placeholder="Enter Village"/>
@@ -943,9 +941,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="post_personal">Post *</label>
                                 <input type="text" id="post_personal" name="post_personal" value="{{ $data['post_personal'] ?? $session_data_user['post_personal'] ?? '' }}"
                                     class="form-control form-control-lg" placeholder="Enter Post" required/>
@@ -986,9 +984,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="district_personal">District *</label>
                                 <input type="text" id="district_personal" name="district_personal" value="{{ $data['district_personal'] ?? $session_data_user['district_personal'] ?? '' }}"
                                     class="form-control form-control-lg" placeholder="Enter District" required/>
@@ -1031,7 +1029,7 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
                             @php
                                 if (!empty($session_data_user['phone']) || Session::has('phone')) {
@@ -1041,7 +1039,7 @@
                                 }
                             @endphp
 
-                            <div class="form-group phone-form-group mb-1">
+                            <div class="form-group phone-form-group">
                                 <label for="phone-code" class="fs-12 fw-700 text-soft-dark">Primary Mobile *</label>
                                 <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Phone No" name="phone" autocomplete="off" 
                                 value="{{ $Phone_parts_number ?? '' }}" required>
@@ -1051,7 +1049,7 @@
                             <input type="hidden" name="phone_code_meta" value="">
 
                         </div>
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
                             @php
                                 if (!empty($session_data_user['whats_app_no']) || Session::has('phone')) {
@@ -1061,7 +1059,7 @@
                                 }
                             @endphp
 
-                            <div class="form-group phone-form-group mb-1">
+                            <div class="form-group phone-form-group">
                                 <label for="phone" class="fs-12 fw-700 text-soft-dark">Primary Whatapp No *</label>
                                 <input type="tel" id="whats_app_no" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="whats_app_no" autocomplete="off" value="{{ $whats_app_no_parts_number ?? '' }}" required>
                             </div>
@@ -1071,7 +1069,7 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
                             @php
                                 if(!empty($session_data_user['alternate_mob_no_personal'])){
@@ -1080,8 +1078,8 @@
                                 }
                             @endphp
 
-                            <div class="form-group phone-form-group mb-1">
-                                <label for="phone" class="fs-12 fw-700 text-soft-dark">Alternate Mobile (contact Person)</label>
+                            <div class="form-group phone-form-group">
+                                <label for="phone" class="fs-12 fw-700 text-soft-dark">Alternate No. (contact Person)</label>
                                 <input type="tel" id="alternate_mob_no_personal" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Alternate Mobile No" name="alternate_mob_no_personal" autocomplete="off" value="{{ $alternate_mob_no_personal_number ?? '' }}" >
                             </div>
 
@@ -1090,7 +1088,7 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
                             @php
                                 if(!empty($session_data_user['alternate_whats_app_no_personal'])){
@@ -1099,7 +1097,7 @@
                                 }
                             @endphp
 
-                            <div class="form-group phone-form-group mb-1">
+                            <div class="form-group phone-form-group">
                                 <label for="phone" class="fs-12 fw-700 text-soft-dark">Alternate Whatapp No</label>
                                 <input type="tel" id="alternate_whats_app_no_personal" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="alternate_whats_app_no_personal" autocomplete="off" value="{{ $alternate_whats_app_no_parts_number ?? '' }}" >
                             </div>
@@ -1109,9 +1107,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="prim_email_personal">Primary E-mail *</label>
                                 <input type="email" id="prim_email_personal" name="prim_email_personal"
                                     class="form-control form-control-lg" value="{{ $data['prim_email_personal'] ?? $session_data_user['prim_email_personal'] ?? Session::get('email') ?? '' }}" required placeholder="Enter Primary E-mail"/>
@@ -1119,9 +1117,9 @@
 
                         </div>
 
-                        <div class="col-md-3 mb-md-4 mb-3">
+                        <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group mb-1">
+                            <div class="form-group">
                                 <label class="form-label" for="alt_email_personal">Alternate E-mail</label>
                                 <input type="email" id="alt_email_personal" name="alt_email_personal"
                                     class="form-control form-control-lg" value="{{ $data['alt_email_personal'] ?? $session_data_user['alt_email_personal'] ?? '' }}" placeholder="Enter Alternate E-mail"/>
@@ -1131,7 +1129,11 @@
 
 
                         <div class="col-md-12 mb-3 text-center">
-                            <h3>Personal Bank Details</h3>
+                            <hr>
+                        </div>
+
+                        <div class="col-md-12 mb-3 text-center">
+                            <h3 class="fs-20">Personal Bank Details</h3>
                         </div>
 
                         <div class="col-md-3">
@@ -1260,9 +1262,9 @@
                     @error('at_least_one_combination')
                         <div class="text-danger">{{ $message }}</div>
                     @enderror
-                    <div class="row">
+                    <div class="">
 
-                        <div class="form-group col-md-12">
+                        <div class="form-group">
                             <label for="field_selector">Select Field to Add</label>
                             <select id="field_selector" class="form-control">
                                 <option value="">-- Select Field --</option>
@@ -1343,7 +1345,7 @@
 
         wrapper.innerHTML = `
             <div class="border p-3 rounded">
-                <button type="button" class="btn-close position-absolute top-0 end-0" aria-label="Remove" title="Remove field"></button>
+                <button type="button" class="remove_btns btn-sm btn-danger btn-close position-absolute top-0 end-0" aria-label="Remove" title="Remove field"><i class="las la-minus"></i></button>
 
                 <div class="form-group">
                     <label>${field.label} *</label>

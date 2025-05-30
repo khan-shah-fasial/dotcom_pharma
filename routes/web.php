@@ -91,6 +91,14 @@ Route::get('/test-otp', function () {
     dd($sessionData);
 });
 
+Route::any('/dummy-test', function () {
+    $step = Session()->get('step');
+
+     $step = $step + 1;
+
+    Session()->put('step', $step);
+});
+
 
 Route::get('/clear-session', function () {
     Session()->flush();
