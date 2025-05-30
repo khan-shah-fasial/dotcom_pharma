@@ -465,7 +465,7 @@
                         </ul>
                     @endif
 
-                    <div class="d-none d-lg-block d-xl-block padding_25">
+                    <div class="d-none d-lg-block d-xl-block">
                         @auth
                             <span
                                 class="d-flex align-items-center nav-user-info py-20px @if (isAdmin()) ml-xl-5 ml-lg-0 @endif"
@@ -487,9 +487,9 @@
                             </span>
                         @else
                             <!--Login & Registration -->
-                            <span class="d-flex align-items-center nav-user-info ml-3 py-20px">
+                            <span class="d-flex align-items-center nav-user-info py-20px">
                                 <!-- Image -->
-                                <span
+                                <!-- <span
                                     class="size-40px rounded-circle overflow-hidden border d-flex align-items-center justify-content-center nav-user-img">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="19.902" height="20.012"
                                         viewBox="0 0 19.902 20.012">
@@ -497,11 +497,15 @@
                                             d="M15.71,12.71a6,6,0,1,0-7.42,0,10,10,0,0,0-6.22,8.18,1.006,1.006,0,1,0,2,.22,8,8,0,0,1,15.9,0,1,1,0,0,0,1,.89h.11a1,1,0,0,0,.88-1.1,10,10,0,0,0-6.25-8.19ZM12,12a4,4,0,1,1,4-4A4,4,0,0,1,12,12Z"
                                             transform="translate(-2.064 -1.995)" fill="#91919b" />
                                     </svg>
-                                </span>
-                                <a href="{{ route('user.login') }}"
+                                </span> -->
+
+                                 <a href="{{ route('user.login') }}"><i class="las la-user la-2x pt-1 login_icons" style="color: #23780E;"></i></a>
+                                 <a class="b2b_buttons" href="business/registration" >B2B Registration</a>
+
+                                <!-- <a href="{{ route('user.login') }}"
                                     class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block border-right border-soft-light border-width-2 pr-2 ml-3">{{ translate('Login') }}</a>
                                 <a href="{{ route('user.registration') }}"
-                                    class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block py-2 pl-2">{{ translate('Registration') }}</a>
+                                    class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block py-2 pl-2">{{ translate('Registration') }}</a> -->
                             </span>
                         @endauth
                        </div>

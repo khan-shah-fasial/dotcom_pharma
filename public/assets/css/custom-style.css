@@ -907,7 +907,7 @@ body .aiz-count-down-circle #time .circle svg circle {
 
 img.logo_main {
     width: 250px;
-    padding-top: 12px;
+    padding-top: 8px;
 }
 
 .logo_menu li a {
@@ -969,7 +969,7 @@ ul.dropdown-menu {
 
 .logo_menu a {
     height: 100%;
-    padding-top: 30px;
+    padding-top: 23px;
     padding-right: 10px;
 }
 
@@ -1378,4 +1378,23 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     text-align: right;
     right: 20px;
     margin-top: 5px;
+}
+
+.login_icons {
+    font-size: 2.2em !important;
+    position: relative;
+    top: 1px;
+}
+
+.b2b_buttons {
+    border: 1px solid #123498;
+    color: #123498;
+    border-radius: 50px;
+    padding: 5px 11px;
+    margin-left: 15px;
+}
+
+.b2b_buttons:hover {
+    background: #123498;
+    color: #fff;
 }
