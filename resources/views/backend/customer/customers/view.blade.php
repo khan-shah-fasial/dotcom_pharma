@@ -215,7 +215,7 @@
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Primary Mobile (this number is user for your Login details)</label>
+                                <label class="form-label text-capitalize" for="pincode">Primary Mobile (this number is user for your Login details)</label>
                                 <p> {{ $user->prim_mobile_no_business ?? "-" }}</p>
                             </div>
     
@@ -233,7 +233,7 @@
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Alternate Mobile (contact Person)</label>
+                                <label class="form-label" for="pincode">Alternate Mobile (Contact Person)</label>
                                 <p> {{ $user->alt_mobile_no_business ?? "-" }}</p>
                             </div>
     
@@ -251,7 +251,7 @@
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Primary E-mail * (this eamil is user for login details)</label>
+                                <label class="form-label" for="pincode">Primary E-Mail * (this eamil is user for login details)</label>
                                 <p> {{ $user->prim_email_business ?? "-" }}</p>
                             </div>
     
@@ -260,7 +260,7 @@
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Alternate E-mail</label>
+                                <label class="form-label" for="pincode">Alternate E-Mail</label>
                                 <p> {{ $user->alt_email_business ?? "-" }}</p>
                             </div>
     
@@ -607,7 +607,7 @@
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Primary E-mail</label>
+                                <label class="form-label" for="pincode">Primary E-Mail</label>
                                 <p> {{ $user->prim_email_personal ?? "-" }}</p>
                             </div>
     
@@ -616,7 +616,7 @@
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Alternate E-mail</label>
+                                <label class="form-label" for="pincode">Alternate E-Mail</label>
                                 <p> {{ $user->alt_email_personal ?? "-" }}</p>
                             </div>
     

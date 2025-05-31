@@ -36,7 +36,7 @@
         if (form.valid()) {
             var btn = $(form).find('button[type="submit"]');
             var btn_text = $(btn).html();
-            $(btn).html('please wait... <i class="las la-spinner la-spin"></i>');
+            $(btn).html('Please Wait... <i class="las la-spinner la-spin"></i>');
             $(btn).css("opacity", "0.7");
             $(btn).css("pointer-events", "none");
             var action = form.attr("action");

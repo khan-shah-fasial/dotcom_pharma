@@ -451,7 +451,7 @@ body .form-control:focus {
 
 .login_form_popup input {
     border: 1px solid #363636CC;
-    border-radius: 15px !important;
+    border-radius: 5px !important;
     height: 45px !important;
 }
 
@@ -459,7 +459,7 @@ body .form-control:focus {
 .login_form_popup textarea,
 .login_form_popup .dropdown-toggle {
     border: 1px solid #363636CC;
-    border-radius: 15px !important;
+    border-radius: 5px !important;
 }
 
 .login_form_popup .form-control::placeholder {
@@ -1397,4 +1397,37 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .b2b_buttons:hover {
     background: #123498;
     color: #fff;
+}
+
+.delivery_section {
+    background: #3636360D;
+    border: 1px solid #36363680;
+    padding: 25px 30px 19px 30px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    text-align: center;
+    border-radius: 30px;
+    margin-top: 30px;
+}
+
+.delivery_section p {
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 18px;
+    padding-top: 6px;
+}
+
+.delivery_boxex_img {
+    border: 1px solid #23780E4D;
+    background: #3636360D;
+    border-radius: 20px;
+    margin-bottom: 4px;
+    width: 110px;
+    height: 54px;
+    line-height: 52px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
 }

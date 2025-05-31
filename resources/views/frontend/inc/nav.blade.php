@@ -468,7 +468,7 @@
                     <div class="d-none d-lg-block d-xl-block">
                         @auth
                             <span
-                                class="d-flex align-items-center nav-user-info py-20px @if (isAdmin()) ml-xl-5 ml-lg-0 @endif"
+                                class="d-flex align-items-center nav-user-info py-20px @if (isAdmin()) ml-lg-0 @endif"
                                 id="nav-user-info">
                                 <!-- Image -->
                                 <span
@@ -500,7 +500,7 @@
                                 </span> -->
 
                                  <a href="{{ route('user.login') }}"><i class="las la-user la-2x pt-1 login_icons" style="color: #23780E;"></i></a>
-                                 <a class="b2b_buttons" href="business/registration" >B2B Registration</a>
+                                 <a class="b2b_buttons" href="/business/registration" >B2B Registration</a>
 
                                 <!-- <a href="{{ route('user.login') }}"
                                     class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block border-right border-soft-light border-width-2 pr-2 ml-3">{{ translate('Login') }}</a>

@@ -304,7 +304,7 @@
 
                     <div class="row">
 
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <h3 class="fs-20 pt-3">Business Details</h3>
                         </div>
 
@@ -412,10 +412,10 @@
 
                         </div>
 
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <hr>
                         </div>
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <h3 class="fs-20">Address</h3>
                         </div>
 
@@ -558,7 +558,7 @@
                             @endphp
 
                             <div class="form-group phone-form-group">
-                                <label for="phone-code" class="fs-12 fw-700 text-soft-dark">Primary Mobile (this number is user for your Login details) *</label>
+                                <label for="phone-code" class="fs-12 fw-700 text-soft-dark text-capitalize">Primary Mobile (this number is user for your Login details) *</label>
                                 <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Phone No" name="phone" autocomplete="off" 
                                 value="{{ $Phone_parts_number ?? '' }}" required>
                             </div>
@@ -597,7 +597,7 @@
                             @endphp
 
                             <div class="form-group phone-form-group">
-                                <label for="phone" class="fs-12 fw-700 text-soft-dark">Alternate No. (contact Person)</label>
+                                <label for="phone" class="fs-12 fw-700 text-soft-dark">Alternate No. (Contact Person)</label>
                                 <input type="tel" id="alternate_mob_no_business" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Alternate Mobile No" name="alternate_mob_no_business" autocomplete="off" value="{{ $alternate_mob_no_business_number ?? '' }}" >
                             </div>
 
@@ -628,7 +628,7 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="email">Primary E-mail *</label>
+                                <label class="form-label" for="email">Primary E-Mail *</label>
                                 <input type="email" id="prim_email_business" name="prim_email_business"
                                     class="form-control form-control-lg" value="{{ $data['email'] ?? $session_data_user['email'] ?? Session::get('email') ?? '' }}" required placeholder="Enter Primary E-mail"/>
                             </div>
@@ -638,7 +638,7 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="alt_email_business">Alternate E-mail</label>
+                                <label class="form-label" for="alt_email_business">Alternate E-Mail</label>
                                 <input type="email" id="alt_email_business" name="alt_email_business"
                                     class="form-control form-control-lg" value="{{ $data['alt_email_business'] ?? $session_data_user['alt_email_business'] ?? '' }}" placeholder="Enter Alternate E-mail"/>
                             </div>
@@ -656,12 +656,12 @@
                         </div>
 
 
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <hr>
                         </div>
 
 
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <h3 class="fs-20">Bank Details</h3>
                         </div>
 
@@ -804,7 +804,7 @@
                     <div class="row">
                         
 
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <h3 class="fs-20 pt-3">Personal Details</h3>
                         </div>
 
@@ -904,10 +904,10 @@
 
                         </div>
 
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <hr>
                         </div>
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <h3 class="fs-20">Address</h3>
                         </div>
 
@@ -1120,7 +1120,7 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="prim_email_personal">Primary E-mail *</label>
+                                <label class="form-label" for="prim_email_personal">Primary E-Mail *</label>
                                 <input type="email" id="prim_email_personal" name="prim_email_personal"
                                     class="form-control form-control-lg" value="{{ $data['prim_email_personal'] ?? $session_data_user['prim_email_personal'] ?? Session::get('email') ?? '' }}" required placeholder="Enter Primary E-mail"/>
                             </div>
@@ -1130,7 +1130,7 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="alt_email_personal">Alternate E-mail</label>
+                                <label class="form-label" for="alt_email_personal">Alternate E-Mail</label>
                                 <input type="email" id="alt_email_personal" name="alt_email_personal"
                                     class="form-control form-control-lg" value="{{ $data['alt_email_personal'] ?? $session_data_user['alt_email_personal'] ?? '' }}" placeholder="Enter Alternate E-mail"/>
                             </div>
@@ -1138,11 +1138,11 @@
                         </div>
 
 
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <hr>
                         </div>
 
-                        <div class="col-md-12 mb-3 text-center">
+                        <div class="col-md-12 mb-3 text-left">
                             <h3 class="fs-20">Personal Bank Details</h3>
                         </div>
 

@@ -481,7 +481,7 @@
                                                 @if ($key == 0 || get_user_subtype() == strtolower($value)) checked @endif>
                                             <!--added user_subtype role condition for role wise price based on session [by nexgeno]-->
                                             <span
-                                                class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3">
+                                                class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3" style="border-radius:5px !important" >
                                                 {{ $value }}
                                             </span>
                                         </label>
@@ -680,6 +680,36 @@
                 </button>
             @endif
         </div>
+
+
+      <div class="delivery_section">
+          
+           <div class="delivery_boxex">
+                     <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/free_delivery.svg') }}"></div>
+                    <p>Free Delivery</p>
+           </div>
+
+           <div class="delivery_boxex">
+           <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/secure_icons.svg') }}"></div>
+                    <p>Secure Transaction</p>
+           </div>
+
+           <div class="delivery_boxex">
+           <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/top_brands.svg') }}"></div>
+                    <p>Top Brand</p>
+           </div>
+
+           <div class="delivery_boxex">
+           <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/cash_dilevery.svg') }}"></div>
+                    <p>Cash on Delivery</p>
+           </div>
+
+           <div class="delivery_boxex">
+           <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/free_delivery.svg') }}"></div>
+                    <p>Non Return</p>
+           </div>
+
+      </div>
 
         <!-- Promote Link -->
         <div class="d-table width-100 mt-3">
