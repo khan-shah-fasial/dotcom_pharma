@@ -129,7 +129,7 @@ class ProductService
         }
 
         $published = 1;
-        if ($collection['button'] == 'unpublish' || $collection['button'] == 'draft') {
+        if (isset($collection['button']) && ($collection['button'] == 'unpublish' || $collection['button'] == 'draft')) {
             $published = 0;
         }
         unset($collection['button']);

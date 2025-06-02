@@ -116,7 +116,7 @@
                                     <div class="col-xxl-7 col-xl-6">
                                         <!-- Product Name -->
                                         <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Name')}} <span class="text-danger">*</span></label>
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Name')}} <span class="text-danger h5">*</span></label>
                                             <div class="col-xxl-9">
                                                 <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" placeholder="{{ translate('Product Name') }}" onchange="update_sku()" required>
                                             </div>
@@ -130,6 +130,14 @@
                                             </div>
                                         </div>
 
+                                        <!-- Product Pharma Categories -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Pharma Categories')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('pharma_categories') is-invalid @enderror" name="pharma_categories" value="{{ old('pharma_categories') }}" placeholder="{{ translate('Pharma Categories') }}">
+                                            </div>
+                                        </div>
+
                                         <!-- Product Form -->
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Form')}} </label>
@@ -140,7 +148,7 @@
 
                                         <!-- Product short description -->
                                         <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Description')}} <span class="text-danger">*</span></label>
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Description')}} <span class="text-danger h5">*</span></label>
                                             <div class="col-xxl-9">
                                                 <input type="text" class="form-control @error('name') is-invalid @enderror" name="short_description" placeholder="{{translate('Product Description')}}" required>
                                             </div>
@@ -161,7 +169,7 @@
                                         </div>
                                         <!-- Unit -->
                                         <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Unit')}} <span class="text-danger">*</span></label>
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Unit')}} <span class="text-danger h5">*</span></label>
                                             <div class="col-xxl-9">
                                                 <input type="text" class="form-control @error('unit') is-invalid @enderror" name="unit" value="{{ old('unit') }}" placeholder="{{ translate('Unit (e.g. KG, Pc etc)') }}" required>
                                             </div>
@@ -175,7 +183,7 @@
                                         </div>
                                         <!-- Minimum Purchase Qty -->
                                         <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Minimum Purchase Qty')}} <span class="text-danger">*</span></label>
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Minimum Purchase Qty')}} <span class="text-danger h5">*</span></label>
                                             <div class="col-xxl-9">
                                                 <input type="number" lang="en" class="form-control @error('min_qty') is-invalid @enderror" name="min_qty" value="{{ old('min_qty') ?? 1 }}" placeholder="1" min="1" required>
                                                 <small class="text-muted">{{translate("The minimum quantity needs to be purchased by your customer.")}}</small>
@@ -309,7 +317,7 @@
                                     <div class="col-xxl-5 col-xl-6">
                                         <div class="card @if($errors->has('category_ids') || $errors->has('category_id')) border border-danger @endif">
                                             <div class="card-header">
-                                                <h5 class="mb-0 h6">{{ translate('Product Category') }}</h5>
+                                                <h5 class="mb-0 h6">{{ translate('Product Category') }} *</h5>
                                                 <h6 class="float-right fs-13 mb-0">
                                                     {{ translate('Select Main') }}
                                                     <span class="position-relative main-category-info-icon">
@@ -603,7 +611,7 @@
 
                                 <!-- Unit price -->
                                 <div class="form-group row">
-                                    <label class="col-md-3 col-from-label">{{translate('Unit price')}} <span class="text-danger">*</span></label>
+                                    <label class="col-md-3 col-from-label">{{translate('Unit price')}} <span class="text-danger h5">*</span></label>
                                     <div class="col-md-6">
                                         <input type="number" lang="en" min="0" value="0" step="0.01" placeholder="{{ translate('Unit price') }}" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror">
                                     </div>
@@ -617,7 +625,7 @@
                                 </div>
                                 <!-- Discount -->
                                 <div class="form-group row">
-                                    <label class="col-md-3 col-from-label">{{translate('Discount')}} <span class="text-danger">*</span></label>
+                                    <label class="col-md-3 col-from-label">{{translate('Discount')}} <span class="text-danger h5">*</span></label>
                                     <div class="col-md-6">
                                         <input type="number" lang="en" min="0" value="0" step="0.01" placeholder="{{ translate('Discount') }}" name="discount" class="form-control @error('discount') is-invalid @enderror">
                                     </div>
@@ -644,7 +652,7 @@
                                 <div id="show-hide-div">
                                     <!-- Quantity -->
                                     <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Quantity')}} <span class="text-danger">*</span></label>
+                                        <label class="col-md-3 col-from-label">{{translate('Quantity')}} <span class="text-danger h5">*</span></label>
                                         <div class="col-md-6">
                                             <input type="number" lang="en" min="0" value="0" step="1" placeholder="{{ translate('Quantity') }}" name="current_stock" class="form-control">
                                         </div>
@@ -974,7 +982,7 @@
 
                     <!-- Save Button -->
                     <div class="mt-4 text-right">
-                        <button type="submit" name="button" value="unpublish" class="mx-2 btn btn-light w-230px btn-md rounded-2 fs-14 fw-700 shadow-secondary border-soft-secondary action-btn">{{ translate('Save & Unpublish') }}</button>
+                        {{-- <button type="submit" name="button" value="unpublish" class="mx-2 btn btn-light w-230px btn-md rounded-2 fs-14 fw-700 shadow-secondary border-soft-secondary action-btn">{{ translate('Save & Unpublish') }}</button> --}}
                         <button type="submit" name="button" value="publish" class="mx-2 btn btn-success w-230px btn-md rounded-2 fs-14 fw-700 shadow-success action-btn">{{ translate('Save & Publish') }}</button>
                     </div>
 
@@ -1239,6 +1247,7 @@
     $(document).ready(function() {
         warrantySelection();
 
+        {{--
         // const selectElement = document.getElementById('choice_attributes');
 
         // if (selectElement) {
@@ -1301,7 +1310,63 @@
         // } else {
         //     console.dir('Select element with ID choice_attributes not found.');
         // }
+        --}}
 
+
+
+        // Initialize AIZ validation
+        initValidate('#choice_form');
+
+        $('#choice_form').on('submit', function (e) {
+            // If AIZ validation fails, stop
+            if (!$(this).valid()) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please fill all required fields.');
+                return;
+            }
+
+            // Check if category_id is selected
+            const categoryId = $('[name="category_id"]:checked').val();
+            if (!categoryId) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please select a Main category.');
+                return;
+            }
+
+            // ✅ Validate category_ids (checkbox group)
+            const categoryIds = $('[name="category_ids[]"]:checked');
+            if (categoryIds.length === 0) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please select the Same Product Category.');
+                return;
+            }
+
+            // Check unit_price
+            const unitPrice = parseFloat($('[name="unit_price"]').val());
+            if (isNaN(unitPrice) || unitPrice <= 0) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please set the unit price.');
+                return;
+            }
+
+            // Now check the special condition
+            const selectedChoices = $('#choice_attributes').val(); // returns array
+
+            if (!selectedChoices || selectedChoices.length === 0) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please select at least one attribute.');
+                return;
+            }
+
+            if (!selectedChoices.includes('3')) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Attribute Role must be selecte and its all Role (Pts, Ptr, Ptd, Gov, Expo)');
+                return;
+            }
+
+            this.submit();
+
+        });
 
 
     });

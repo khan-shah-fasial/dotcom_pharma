@@ -140,6 +140,14 @@
                                             </div>
                                         </div>
 
+                                        <!-- Product Pharma Categories -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Pharma Categories')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('pharma_categories') is-invalid @enderror" name="pharma_categories" value="{{ old('pharma_categories') }}" placeholder="{{ translate('Pharma Categories') }}" value="{{ $product->pharma_categories }}">
+                                            </div>
+                                        </div>
+
 
                                         <!-- Product short description -->
                                         <div class="form-group row">
@@ -1426,6 +1434,72 @@
         }
         $('#choice_form').submit();
     }
+</script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        warrantySelection();
+
+        // Initialize AIZ validation
+        // Initialize AIZ validation
+        initValidate('#choice_form');
+
+        $('#choice_form').on('submit', function (e) {
+            // If AIZ validation fails, stop
+            if (!$(this).valid()) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please fill all required fields.');
+                return;
+            }
+
+            // Check if category_id is selected
+            const categoryId = $('[name="category_id"]:checked').val();
+            if (!categoryId) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please select a Main category.');
+                return;
+            }
+
+            // ✅ Validate category_ids (checkbox group)
+            const categoryIds = $('[name="category_ids[]"]:checked');
+            if (categoryIds.length === 0) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please select the Same Product Category.');
+                return;
+            }
+
+            // Check unit_price
+            const unitPrice = parseFloat($('[name="unit_price"]').val());
+            if (isNaN(unitPrice) || unitPrice <= 0) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please set the unit price.');
+                return;
+            }
+
+            // Now check the special condition
+            const selectedChoices = $('#choice_attributes').val(); // returns array
+
+            if (!selectedChoices || selectedChoices.length === 0) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Please select at least one attribute.');
+                return;
+            }
+
+            if (!selectedChoices.includes('3')) {
+                e.preventDefault();
+                AIZ.plugins.notify('danger', 'Attribute Role must be selecte and its all Role (Pts, Ptr, Ptd, Gov, Expo)');
+                return;
+            }
+
+            this.submit();
+
+        });
+
+
+
+    });
+
+
 </script>
 
 @endsection
