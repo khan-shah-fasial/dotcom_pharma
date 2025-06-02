@@ -1339,5 +1339,49 @@
 
          /*--------------------- email verify otp ------------------*/ 
 
+         /* ----------------------------- Pincode ----------------------- */
+
+            let debounceTimeout;
+
+            function pincode_info(){
+                console.dir('working');
+                clearTimeout(debounceTimeout);
+
+                debounceTimeout = setTimeout(() => {
+                    var postalCode = $('#pincode').val().trim();
+
+                    if (postalCode.length === 0) {
+                        $('#city').val('');
+                        $('#state').val('');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: 'https://secure.geonames.org/postalCodeSearchJSON',
+                        dataType: 'json',
+                        data: {
+                            postalcode: postalCode,
+                            country: '',
+                            username: 'umair.makent'
+                        },
+                        success: function (data) {
+                            if (data.postalCodes.length > 0) {
+                                $('#country_name').val(data.postalCodes[0].countryCode).focus();
+                                $('#city').val(data.postalCodes[0].adminName2).focus();
+                                $('#state').val(data.postalCodes[0].adminName1).focus();
+                                $('#pincode').focus();
+
+                                $('#response').html('<pre>' + JSON.stringify(data, null, 2) + '</pre>');
+                            }
+                        }
+                    });
+                }, 100); // 500ms delay
+            }
+
+            // $(document).ready(function () {
+                // $('#pincode').on('input', pincode_info); // Use input event for real-time typing
+            // });
+
+
     </script>
 @endsection

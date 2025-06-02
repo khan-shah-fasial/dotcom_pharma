@@ -491,13 +491,23 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
+                                <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
+                                <input type="text" id="pincode" name="pincode_business"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_business'] ?? '' }}" onchange="pincode_info();" placeholder="Enter Pincode Or Postal Code" required />
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <div class="form-group">
                                 <label class="form-label" for="state_business">State/Province/Region *</label>
-                                {{-- <input type="text" id="state" name="state"
-                                    class="form-control form-control-lg" value="{{ $data['state'] ?? '' }}" required /> --}}
+                                <input type="text" id="state" name="state_id"
+                                    class="form-control form-control-lg" value="{{ $data['state_id'] ?? '' }}" required />
 
-                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="state_id" required placeholder="Select State">
+                                    {{-- <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="state_id" required placeholder="Select State">
 
-                                    </select>
+                                    </select> --}}
                             </div>
 
                         </div>
@@ -516,23 +526,12 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="city_id_business">City / Town *</label>
-                                {{-- <input type="text" id="district" name="district"
-                                    class="form-control form-control-lg" value="{{ $data['district'] ?? '' }}" required /> --}}
+                                <input type="text" id="city" name="city_id"
+                                    class="form-control form-control-lg" value="{{ $data['city_id'] ?? '' }}" required />
 
-                                <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City">
+                                {{-- <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City">
 
-                                </select>
-                            </div>
-
-                        </div>
-
-
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
-                                <input type="text" id="pincode_business" name="pincode_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_business'] ?? '' }}" placeholder="Enter Pincode Or Postal Code" required />
+                                </select> --}}
                             </div>
 
                         </div>
@@ -983,13 +982,24 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
+                                <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
+                                <input type="text" id="pincode" name="pincode_personal"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_personal'] ?? '' }}" placeholder="Enter Pincode Or Postal Code"
+                                    onchange="pincode_info();" required />
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3">
+
+                            <div class="form-group">
                                 <label class="form-label" for="state_personal">State/Province/Region *</label>
-                                {{-- <input type="text" id="state" name="state"
-                                    class="form-control form-control-lg" value="{{ $data['state'] ?? '' }}" required /> --}}
+                                    <input type="text" id="state" name="state_id"
+                                    class="form-control form-control-lg" value="{{ $data['state_id'] ?? '' }}" required />
 
-                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="state_id" required placeholder="Select State">
+                                    {{-- <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="state_id" required placeholder="Select State"> 
 
-                                    </select>
+                                    </select> --}}
                             </div>
 
                         </div>
@@ -1008,27 +1018,16 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="city_id_personal">City / Town *</label>
-                                {{-- <input type="text" id="district" name="district"
-                                    class="form-control form-control-lg" value="{{ $data['district'] ?? '' }}" required /> --}}
+                                <input type="text" id="city" name="city_id"
+                                    class="form-control form-control-lg" value="{{ $data['city_id'] ?? '' }}" required />
 
-                                <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City">
+                                {{-- <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City"> --}}
 
                                 </select>
                             </div>
 
                         </div>
 
-                        <div class="col-md-3">
-
-                            <div class="form-group">
-                                <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
-                                <input type="text" id="pincode_personal" name="pincode_personal"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_personal'] ?? '' }}" placeholder="Enter Pincode Or Postal Code" required />
-                            </div>
-
-                        </div>
-
- 
                         <div class="col-md-3">
 
                             <div class="form-group">
