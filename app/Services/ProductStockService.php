@@ -39,7 +39,9 @@ class ProductStockService
             unset($collection['colors_active'], $collection['colors'], $collection['choice_no']);
             $qty = $collection['current_stock'];
             $price = $collection['unit_price'];
+            $per_piece_price = $collection['per_piece_price'] ?? null;
             unset($collection['current_stock']);
+            unset($collection['per_piece_price']);
 
             $data = $collection->merge(compact('variant', 'qty', 'price', 'per_piece_price'))->toArray();
             

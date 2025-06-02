@@ -1349,20 +1349,22 @@
                 return;
             }
 
-            // Now check the special condition
-            const selectedChoices = $('#choice_attributes').val(); // returns array
+            {{--
+            // // Now check the special condition
+            // const selectedChoices = $('#choice_attributes').val(); // returns array
 
-            if (!selectedChoices || selectedChoices.length === 0) {
-                e.preventDefault();
-                AIZ.plugins.notify('danger', 'Please select at least one attribute.');
-                return;
-            }
+            // if (!selectedChoices || selectedChoices.length === 0) {
+            //     e.preventDefault();
+            //     AIZ.plugins.notify('danger', 'Please select at least one attribute.');
+            //     return;
+            // }
 
-            if (!selectedChoices.includes('3')) {
-                e.preventDefault();
-                AIZ.plugins.notify('danger', 'Attribute Role must be selecte and its all Role (Pts, Ptr, Ptd, Gov, Expo)');
-                return;
-            }
+            // if (!selectedChoices.includes('3')) {
+            //     e.preventDefault();
+            //     AIZ.plugins.notify('danger', 'Attribute Role must be selecte and its all Role (Pts, Ptr, Ptd, Gov, Expo)');
+            //     return;
+            // }
+            --}}
 
             this.submit();
 

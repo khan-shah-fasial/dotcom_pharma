@@ -35,7 +35,7 @@
                                         @endforeach
                                     </td>
                                     <td class="text-right w-140px">
-                                        @if(strtolower($attribute->name) != "role")
+                                        {{-- @if(strtolower($attribute->name) != "role") --}}
                                             @can('view_product_attribute_values')
                                                 <a class="btn btn-soft-info btn-icon btn-circle btn-sm"
                                                     href="{{ route('attributes.show', $attribute->id) }}"
@@ -58,7 +58,7 @@
                                                     <i class="las la-trash"></i>
                                                 </a>
                                             @endcan
-                                        @endif
+                                        {{-- @endif --}}
                                     </td>
                                 </tr>
                             @endforeach
