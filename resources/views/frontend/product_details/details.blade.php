@@ -85,138 +85,6 @@
             <span class="fw-500">{{ $detailedProduct->unit_price ?? '-' }}</span>
         </div>
 
-
-
-        @if ($detailedProduct->auction_product != 1 && is_user_loggedin())
-            <!--Display price & vairation to only loggedin user [by nexgeno]-->
-            <form id="option-choice-form">
-                @csrf
-                <input type="hidden" name="id" value="{{ $detailedProduct->id }}">
-
-                @if ($detailedProduct->digital == 0)
-                    <!-- Choice Options -->
-                    @if ($detailedProduct->choice_options != null)
-                        @foreach (json_decode($detailedProduct->choice_options) as $key => $choice)
-                            <!--<div class="row no-gutters mb-3">--> <!--old code-->
-                            <div class="row no-gutters mb-3 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
-                                <!--hiding 1st attribute ROLE [by nexgeno]-->
-                                <div class="col-sm-2">
-                                    <div class="text-secondary fs-14 fw-400 mt-2 ">
-                                        {{ get_single_attribute_name($choice->attribute_id) }}
-                                    </div>
-                                </div>
-                                <div class="col-sm-10">
-                                    <div class="aiz-radio-inline">
-                                        @foreach ($choice->values as $key => $value)
-                                            <label class="aiz-megabox pl-0 mr-2 mb-0">
-                                                <!--<input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
-                                                    value="{{ $value }}"
-                                                    @if ($key == 0) checked @endif>-->
-                                                <!--old code-->
-                                                <input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
-                                                    value="{{ $value }}"
-                                                    @if ($key == 0 || get_user_subtype() == strtolower($value)) checked @endif>
-                                                <!--added user_subtype role condition for role wise price based on session [by nexgeno]-->
-                                                <span
-                                                    class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3"
-                                                    style="border-radius:5px !important">
-                                                    {{ $value }}
-                                                </span>
-                                            </label>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    @endif
-
-                    <!-- Color Options -->
-                    @if ($detailedProduct->colors != null && count(json_decode($detailedProduct->colors)) > 0)
-                        <div class="row no-gutters mb-3">
-                            <div class="col-sm-2">
-                                <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Color') }}</div>
-                            </div>
-                            <div class="col-sm-10">
-                                <div class="aiz-radio-inline">
-                                    @foreach (json_decode($detailedProduct->colors) as $key => $color)
-                                        <label class="aiz-megabox pl-0 mr-2 mb-0" data-toggle="tooltip"
-                                            data-title="{{ get_single_color_name($color) }}">
-                                            <input type="radio" name="color"
-                                                value="{{ get_single_color_name($color) }}"
-                                                @if ($key == 0) checked @endif>
-                                            <span
-                                                class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center p-1">
-                                                <span class="size-25px d-inline-block rounded"
-                                                    style="background: {{ $color }};"></span>
-                                            </span>
-                                        </label>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Quantity + Add to cart -->
-                    <div class="row no-gutters mb-3">
-                        <div class="col-sm-2">
-                            <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Quantity') }}</div>
-                        </div>
-                        <div class="col-sm-10">
-                            <div class="product-quantity d-flex align-items-center">
-                                <div class="row no-gutters align-items-center aiz-plus-minus mr-3"
-                                    style="width: 130px;">
-                                    <button class="btn col-auto btn-icon btn-sm btn-light rounded-0" type="button"
-                                        data-type="minus" data-field="quantity" disabled="">
-                                        <i class="las la-minus"></i>
-                                    </button>
-                                    <input type="number" name="quantity"
-                                        class="col border-0 text-center flex-grow-1 fs-16 input-number" placeholder="1"
-                                        value="{{ $detailedProduct->min_qty }}" min="{{ $detailedProduct->min_qty }}"
-                                        max="10" lang="en">
-                                    <button class="btn col-auto btn-icon btn-sm btn-light rounded-0" type="button"
-                                        data-type="plus" data-field="quantity">
-                                        <i class="las la-plus"></i>
-                                    </button>
-                                </div>
-                                @php
-                                    $qty = 0;
-                                    foreach ($detailedProduct->stocks as $key => $stock) {
-                                        $qty += $stock->qty;
-                                    }
-                                @endphp
-                                <div class="avialable-amount opacity-60">
-                                    @if ($detailedProduct->stock_visibility_state == 'quantity')
-                                        (<span id="available-quantity">{{ $qty }}</span>
-                                        {{ translate('available') }})
-                                    @elseif($detailedProduct->stock_visibility_state == 'text' && $qty >= 1)
-                                        (<span id="available-quantity">{{ translate('In Stock') }}</span>)
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <!-- Quantity -->
-                    <input type="hidden" name="quantity" value="1">
-                @endif
-
-                <!-- Total Price -->
-                <div class="row no-gutters pb-3 d-none" id="chosen_price_div">
-                    <div class="col-sm-2">
-                        <div class="text-secondary fs-14 fw-400 mt-1">{{ translate('Total Price') }}</div>
-                    </div>
-                    <div class="col-sm-10">
-                        <div class="product-price">
-                            <strong id="chosen_price" class="fs-20 fw-700 text-primary">
-
-                            </strong>
-                        </div>
-                    </div>
-                </div>
-
-            </form>
-        @endif
-
         <div class="col-12 fs-14 mt-1">
             <small class="mr-1 opacity-50 fs-14">{{ translate('Type') }}:</small>
             <span class="fw-500">{{ $detailedProduct->product_type ?? '-' }}</span>
@@ -612,7 +480,7 @@
 
 
 
-    {{-- @if ($detailedProduct->auction_product != 1 && is_user_loggedin())
+    @if ($detailedProduct->auction_product != 1 && is_user_loggedin())
         <!--Display price & vairation to only loggedin user [by nexgeno]-->
         <form id="option-choice-form">
             @csrf
@@ -738,7 +606,7 @@
             </div>
 
         </form>
-    @endif --}}
+    @endif
 
     @if ($detailedProduct->auction_product)
         @php
