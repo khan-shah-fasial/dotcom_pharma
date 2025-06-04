@@ -6,6 +6,9 @@
     <div class="modal-dialog" role="document"> --}}
         <div class="modal-content py-3">
             <div class="modal-header">
+                <div class="purple_btn_close">
+                    <button type="button" onclick="close_and_reload_home();" class="close p-1 px-3" data-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="heading">
                     <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
                     <h5 class="modal-title" id="exampleModalLabel_phone">Register As</h5>

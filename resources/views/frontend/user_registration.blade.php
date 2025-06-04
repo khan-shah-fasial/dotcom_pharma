@@ -1013,14 +1013,24 @@
         }
 
         let login_page_reg = "{{ route('user.login') }}";
+        let login_page_home = "{{ route('home') }}";
 
         function close_and_reload_reg (){
-            $('#reg_model_8').modal('hide');
+            $('#reg_model_1').modal('hide');
             setTimeout(function() {
                 // location.reload();
                 window.location.href = login_page_reg;
             }, 100);
         }
+
+        function close_and_reload_home (){
+            $('#reg_model_1').modal('hide');
+            setTimeout(function() {
+                // location.reload();
+                window.location.href = login_page_home;
+            }, 100);
+        }
+
 
 
         $(document).on('change', '[name=country_id]', function() {
