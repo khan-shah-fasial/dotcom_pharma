@@ -1686,7 +1686,129 @@ class RegisterController extends Controller
                     'passport_no' => $data_personal['passport_no'],
                     'step' => '8',
                 ]);
+
+                $userDetails = UserDetails::where('user_id', $user->id)->update([
+                        'user_id' => $user->id,
+                        'type_option' => $data_business['type_option'] ?? Null,
+                        'gst_no' => $data_business['gst_no'] ?? Null,
+
+                        'gst_no_file' => $gst_no_file,
+                        'iec_no_file' => $iec_no_file,
+
+                        'iec_no' => $data_business['iec_no'] ?? Null,
+                        'registration_date' => $data_business['registration_date'] ?? Null,
+                        'const_of_business' => $data_business['const_of_business'] ?? Null,
+                        'gstin_current_status' => $data_business['gstin_current_status'] ?? Null,
+                        'uin_current_status' => $data_business['uin_current_status'] ?? Null,
+                        'con_person_name' => $data_business['con_person_name'] ?? Null,
+                        'company_name' => $data_business['company_name'] ?? Null,
+                        'street_add_first_business' => $data_business['street_add_first_business'] ?? Null,
+                        'street_add_sec_business' => $data_business['street_add_sec_business'] ?? Null,
+                        'locality_land_mark_business' => $data_business['locality_land_mark_business'] ?? Null,
+                        'village_business' => $data_business['village_business'] ?? Null,
+                        'post_business' => $data_business['post_business'] ?? Null,
+                        'city_id_business' => $data_business['city_id_business'] ?? Null,
+                        'district_business' => $data_business['district_business'] ?? Null,
+                        'state_id_business' => $data_business['state_id_business'] ?? Null,
+                        'pincode_business' => $data_business['pincode_business'] ?? Null,
+                        'country_id_business' => $data_business['country_id_business'] ?? Null,
+                        'country_code_business' => $data_business['country_code_business'] ?? Null,
+                    
+                        'prim_mobile_no_business' => $data_business['phone_business'] ?? Null,
+                        'prim_mobile_no_business_meta' => $data_business['phone_business_meta'] ?? Null,
+
+                        'alt_mobile_no_business' => $data_business['alternate_mob_no_business'] ?? Null,
+                        'alt_mobile_no_business_meta' => $data_business['alternate_mob_no_business_meta'] ?? Null,
+
+                        'prim_whats_app_no_business' => $data_business['whats_app_no_business'] ?? Null,
+                        'prim_whats_app_no_business_meta' => $data_business['whats_app_no_business_meta'] ?? Null,
+
+                        'alternate_whats_app_no_business' => $data_business['alternate_whats_app_no_business'] ?? Null,
+                        'alternate_whats_app_no_business_meta' => $data_business['alternate_whats_app_no_business_meta'] ?? Null,
+                    
+                        'prim_email_business' => $data_business['prim_email_business'] ?? Null,
+                        'alt_email_business' => $data_business['alt_email_business'] ?? Null,
+                        'website_business' => $data_business['website_business'] ?? Null,
+
+                        'bank_name_business' => $data_business['bank_name_business'] ?? Null,
+                        'account_no_business' => $data_business['account_no_business'] ?? Null,
+                        'account_name_business' => $data_business['account_name_business'] ?? Null,
+                        'branch_code_business' => $data_business['branch_code_business'] ?? Null,
+                        'branch_name_business' => $data_business['branch_name_business'] ?? Null,
+                        'branch_address_business' => $data_business['branch_address_business'] ?? Null,
+                        'ifsc_code_business' => $data_business['ifsc_code_business'] ?? Null,
+                        'micr_code_business' => $data_business['micr_code_business'] ?? Null,
+                        'ad_code_business' => $data_business['ad_code_business'] ?? Null,
+                    
+                        'aadhaar_no' => $data_personal['aadhaar_no'],
+                        'aadhaar_no_file' => $aadhaar_no_file,
+                        'pan_no' => $data_personal['pan_no'],
+                        'pan_no_file' => $pan_no_file,
+                        'passport_no' => $data_personal['passport_no'],
+                        'passport_no_file' => $passport_no_file,
+                        'photo_file' => $photo_file,
+                        'name' => $data_personal['name'],
+                        'father_name' => $data_personal['father_name'],
+                        'dob' => $data_personal['dob'],
+                        'street_add_first' => $data_personal['street_add_first_personal'],
+                        'street_add_sec' => $data_personal['street_add_sec_personal'],
+                        'locality_land_mark' => $data_personal['locality_land_mark_personal'],
+                        'village' => $data_personal['village_personal'],
+                        'post' => $data_personal['post_personal'],
+                        'city_id' => $data_personal['city_id'],
+                        'district' => $data_personal['district_personal'],
+                        'state_id' => $data_personal['state_id'],
+                        'pincode' => $data_personal['pincode_personal'],
+                        'country_id' => $data_personal['country_id'],
+                        'country_code' => $data_personal['country_code_personal'],
+                    
+                        'prim_mobile_no' => $data_personal['phone'],
+                        'prim_mobile_no_meta' => $data_personal['phone_code_meta'] ?? '',
+
+                        'alt_mobile_no' => $data_personal['alternate_mob_no_personal'],
+                        'alt_mobile_no_meta' => $data_personal['alternate_mob_no_personal_meta'] ?? '',
+
+                        'prim_whats_app_no' => $data_personal['whats_app_no'],
+                        'prim_whats_app_no_meta' => $data_personal['whats_app_no_meta'] ?? '',
+
+                        'alt_whats_app_no' => $data_personal['alternate_whats_app_no_personal'],
+                        'alt_whats_app_no_meta' => $data_personal['alternate_whats_app_no_personal_meta'] ?? '',
+                    
+                        'prim_email_personal' => $data_personal['prim_email_personal'],
+                        'alt_email_personal' => $data_personal['alt_email_personal'],
+                    
+                        'bank_name_personal' => $data_personal['bank_name_personal'],
+                        'account_no_personal' => $data_personal['account_no_personal'],
+                        'account_name_personal' => $data_personal['account_name_personal'],
+                        'branch_code_personal' => $data_personal['branch_code_personal'],
+                        'branch_name_personal' => $data_personal['branch_name_personal'] ?? '',
+                        'branch_address_personal' => $data_personal['branch_address_personal'],
+                        'ifsc_code_personal' => $data_personal['ifsc_code_personal'],
+                        'micr_code_personal' => $data_personal['micr_code_personal'],
+                        'ad_code_personal' => $data_personal['ad_code_personal'],
+                    
+                        'd_l_no_1' => $data_license['d_l_no_1'],
+                        'd_l_no_1_file' => $data_license['d_l_no_1_file'],
+                    
+                        'doctor_hospital_reg_no' => $data_license['doctor_hospital_reg_no'],
+                        'doctor_hospital_reg_no_file' => $data_license['doctor_hospital_reg_no_file'],
+                    
+                        'd_l_no_2' => $data_license['d_l_no_2'],
+                        'd_l_no_2_file' => $data_license['d_l_no_2_file'],
+                    
+                        'dairy_trust_ngo_reg_no' => $data_license['dairy_trust_ngo_reg_no'],
+                        'dairy_trust_ngo_reg_no_file' => $data_license['dairy_trust_ngo_reg_no_file'],
+                    
+                        'd_l_no_3' => $data_license['d_l_no_3'],
+                        'd_l_no_3_file' => $data_license['d_l_no_3_file'],
+                    
+                        'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
+                        'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
+                    ]);
+
+
             }
+
         } else {
 
             $password = Str::random(8);
@@ -1726,141 +1848,142 @@ class RegisterController extends Controller
                 'passport_no' => $data_personal['passport_no'],
                 'step' => '8',
             ]);
+
+            $userDetails = UserDetails::create([
+                'user_id' => $user->id,
+                'type_option' => $data_business['type_option'] ?? Null,
+                'gst_no' => $data_business['gst_no'] ?? Null,
+
+                'gst_no_file' => $gst_no_file,
+                'iec_no_file' => $iec_no_file,
+
+                'iec_no' => $data_business['iec_no'] ?? Null,
+                'registration_date' => $data_business['registration_date'] ?? Null,
+                'const_of_business' => $data_business['const_of_business'] ?? Null,
+                'gstin_current_status' => $data_business['gstin_current_status'] ?? Null,
+                'uin_current_status' => $data_business['uin_current_status'] ?? Null,
+                'con_person_name' => $data_business['con_person_name'] ?? Null,
+                'company_name' => $data_business['company_name'] ?? Null,
+                'street_add_first_business' => $data_business['street_add_first_business'] ?? Null,
+                'street_add_sec_business' => $data_business['street_add_sec_business'] ?? Null,
+                'locality_land_mark_business' => $data_business['locality_land_mark_business'] ?? Null,
+                'village_business' => $data_business['village_business'] ?? Null,
+                'post_business' => $data_business['post_business'] ?? Null,
+                'city_id_business' => $data_business['city_id_business'] ?? Null,
+                'district_business' => $data_business['district_business'] ?? Null,
+                'state_id_business' => $data_business['state_id_business'] ?? Null,
+                'pincode_business' => $data_business['pincode_business'] ?? Null,
+                'country_id_business' => $data_business['country_id_business'] ?? Null,
+                'country_code_business' => $data_business['country_code_business'] ?? Null,
+            
+                'prim_mobile_no_business' => $data_business['phone_business'] ?? Null,
+                'prim_mobile_no_business_meta' => $data_business['phone_business_meta'] ?? Null,
+
+                'alt_mobile_no_business' => $data_business['alternate_mob_no_business'] ?? Null,
+                'alt_mobile_no_business_meta' => $data_business['alternate_mob_no_business_meta'] ?? Null,
+
+                'prim_whats_app_no_business' => $data_business['whats_app_no_business'] ?? Null,
+                'prim_whats_app_no_business_meta' => $data_business['whats_app_no_business_meta'] ?? Null,
+
+                'alternate_whats_app_no_business' => $data_business['alternate_whats_app_no_business'] ?? Null,
+                'alternate_whats_app_no_business_meta' => $data_business['alternate_whats_app_no_business_meta'] ?? Null,
+            
+                'prim_email_business' => $data_business['prim_email_business'] ?? Null,
+                'alt_email_business' => $data_business['alt_email_business'] ?? Null,
+                'website_business' => $data_business['website_business'] ?? Null,
+
+                'bank_name_business' => $data_business['bank_name_business'] ?? Null,
+                'account_no_business' => $data_business['account_no_business'] ?? Null,
+                'account_name_business' => $data_business['account_name_business'] ?? Null,
+                'branch_code_business' => $data_business['branch_code_business'] ?? Null,
+                'branch_name_business' => $data_business['branch_name_business'] ?? Null,
+                'branch_address_business' => $data_business['branch_address_business'] ?? Null,
+                'ifsc_code_business' => $data_business['ifsc_code_business'] ?? Null,
+                'micr_code_business' => $data_business['micr_code_business'] ?? Null,
+                'ad_code_business' => $data_business['ad_code_business'] ?? Null,
+            
+                'aadhaar_no' => $data_personal['aadhaar_no'],
+                'aadhaar_no_file' => $aadhaar_no_file,
+                'pan_no' => $data_personal['pan_no'],
+                'pan_no_file' => $pan_no_file,
+                'passport_no' => $data_personal['passport_no'],
+                'passport_no_file' => $passport_no_file,
+                'photo_file' => $photo_file,
+                'name' => $data_personal['name'],
+                'father_name' => $data_personal['father_name'],
+                'dob' => $data_personal['dob'],
+                'street_add_first' => $data_personal['street_add_first_personal'],
+                'street_add_sec' => $data_personal['street_add_sec_personal'],
+                'locality_land_mark' => $data_personal['locality_land_mark_personal'],
+                'village' => $data_personal['village_personal'],
+                'post' => $data_personal['post_personal'],
+                'city_id' => $data_personal['city_id'],
+                'district' => $data_personal['district_personal'],
+                'state_id' => $data_personal['state_id'],
+                'pincode' => $data_personal['pincode_personal'],
+                'country_id' => $data_personal['country_id'],
+                'country_code' => $data_personal['country_code_personal'],
+            
+                'prim_mobile_no' => $data_personal['phone'],
+                'prim_mobile_no_meta' => $data_personal['phone_code_meta'] ?? '',
+
+                'alt_mobile_no' => $data_personal['alternate_mob_no_personal'],
+                'alt_mobile_no_meta' => $data_personal['alternate_mob_no_personal_meta'] ?? '',
+
+                'prim_whats_app_no' => $data_personal['whats_app_no'],
+                'prim_whats_app_no_meta' => $data_personal['whats_app_no_meta'] ?? '',
+
+                'alt_whats_app_no' => $data_personal['alternate_whats_app_no_personal'],
+                'alt_whats_app_no_meta' => $data_personal['alternate_whats_app_no_personal_meta'] ?? '',
+            
+                'prim_email_personal' => $data_personal['prim_email_personal'],
+                'alt_email_personal' => $data_personal['alt_email_personal'],
+            
+                'bank_name_personal' => $data_personal['bank_name_personal'],
+                'account_no_personal' => $data_personal['account_no_personal'],
+                'account_name_personal' => $data_personal['account_name_personal'],
+                'branch_code_personal' => $data_personal['branch_code_personal'],
+                'branch_name_personal' => $data_personal['branch_name_personal'] ?? '',
+                'branch_address_personal' => $data_personal['branch_address_personal'],
+                'ifsc_code_personal' => $data_personal['ifsc_code_personal'],
+                'micr_code_personal' => $data_personal['micr_code_personal'],
+                'ad_code_personal' => $data_personal['ad_code_personal'],
+            
+                'd_l_no_1' => $data_license['d_l_no_1'],
+                'd_l_no_1_file' => $data_license['d_l_no_1_file'],
+            
+                'doctor_hospital_reg_no' => $data_license['doctor_hospital_reg_no'],
+                'doctor_hospital_reg_no_file' => $data_license['doctor_hospital_reg_no_file'],
+            
+                'd_l_no_2' => $data_license['d_l_no_2'],
+                'd_l_no_2_file' => $data_license['d_l_no_2_file'],
+            
+                'dairy_trust_ngo_reg_no' => $data_license['dairy_trust_ngo_reg_no'],
+                'dairy_trust_ngo_reg_no_file' => $data_license['dairy_trust_ngo_reg_no_file'],
+            
+                'd_l_no_3' => $data_license['d_l_no_3'],
+                'd_l_no_3_file' => $data_license['d_l_no_3_file'],
+            
+                'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
+                'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
+            ]);
         }
 
 
-        $address = DB::table('addresses')->insert([
-            'address' => $data_personal['street_add_first_personal'] . ',' . $data_personal['street_add_sec_personal'] . ',' . $data_personal['locality_land_mark_personal'] . ',' . $data_personal['village_personal'],
+        // $address = DB::table('addresses')->insert([
+        //     'address' => $data_personal['street_add_first_personal'] . ',' . $data_personal['street_add_sec_personal'] . ',' . $data_personal['locality_land_mark_personal'] . ',' . $data_personal['village_personal'],
 
-            'postal_code' => $data_personal['pincode_personal'],
-            'city_id' => $data_personal['city_id'],
-            'state_id' => $data_personal['state_id'],
-            'country_id' => $data_personal['country_id'],
+        //     'postal_code' => $data_personal['pincode_personal'],
+        //     'city_id' => $data_personal['city_id'],
+        //     'state_id' => $data_personal['state_id'],
+        //     'country_id' => $data_personal['country_id'],
 
-            'phone' => '+' . $data_personal['phone'],
-            'user_id' => $user->id,
-            'created_at' => now(), // Add timestamps if your table uses them
-            'updated_at' => now(),
-        ]);
+        //     'phone' => '+' . $data_personal['phone'],
+        //     'user_id' => $user->id,
+        //     'created_at' => now(), // Add timestamps if your table uses them
+        //     'updated_at' => now(),
+        // ]);
 
-        $userDetails = UserDetails::create([
-            'user_id' => $user->id,
-            'type_option' => $data_business['type_option'] ?? Null,
-            'gst_no' => $data_business['gst_no'] ?? Null,
-
-            'gst_no_file' => $gst_no_file,
-            'iec_no_file' => $iec_no_file,
-
-            'iec_no' => $data_business['iec_no'] ?? Null,
-            'registration_date' => $data_business['registration_date'] ?? Null,
-            'const_of_business' => $data_business['const_of_business'] ?? Null,
-            'gstin_current_status' => $data_business['gstin_current_status'] ?? Null,
-            'uin_current_status' => $data_business['uin_current_status'] ?? Null,
-            'con_person_name' => $data_business['con_person_name'] ?? Null,
-            'company_name' => $data_business['company_name'] ?? Null,
-            'street_add_first_business' => $data_business['street_add_first_business'] ?? Null,
-            'street_add_sec_business' => $data_business['street_add_sec_business'] ?? Null,
-            'locality_land_mark_business' => $data_business['locality_land_mark_business'] ?? Null,
-            'village_business' => $data_business['village_business'] ?? Null,
-            'post_business' => $data_business['post_business'] ?? Null,
-            'city_id_business' => $data_business['city_id_business'] ?? Null,
-            'district_business' => $data_business['district_business'] ?? Null,
-            'state_id_business' => $data_business['state_id_business'] ?? Null,
-            'pincode_business' => $data_business['pincode_business'] ?? Null,
-            'country_id_business' => $data_business['country_id_business'] ?? Null,
-            'country_code_business' => $data_business['country_code_business'] ?? Null,
-        
-            'prim_mobile_no_business' => $data_business['phone_business'] ?? Null,
-            'prim_mobile_no_business_meta' => $data_business['phone_business_meta'] ?? Null,
-
-            'alt_mobile_no_business' => $data_business['alternate_mob_no_business'] ?? Null,
-            'alt_mobile_no_business_meta' => $data_business['alternate_mob_no_business_meta'] ?? Null,
-
-            'prim_whats_app_no_business' => $data_business['whats_app_no_business'] ?? Null,
-            'prim_whats_app_no_business_meta' => $data_business['whats_app_no_business_meta'] ?? Null,
-
-            'alternate_whats_app_no_business' => $data_business['alternate_whats_app_no_business'] ?? Null,
-            'alternate_whats_app_no_business_meta' => $data_business['alternate_whats_app_no_business_meta'] ?? Null,
-        
-            'prim_email_business' => $data_business['prim_email_business'] ?? Null,
-            'alt_email_business' => $data_business['alt_email_business'] ?? Null,
-            'website_business' => $data_business['website_business'] ?? Null,
-
-            'bank_name_business' => $data_business['bank_name_business'] ?? Null,
-            'account_no_business' => $data_business['account_no_business'] ?? Null,
-            'account_name_business' => $data_business['account_name_business'] ?? Null,
-            'branch_code_business' => $data_business['branch_code_business'] ?? Null,
-            'branch_name_business' => $data_business['branch_name_business'] ?? Null,
-            'branch_address_business' => $data_business['branch_address_business'] ?? Null,
-            'ifsc_code_business' => $data_business['ifsc_code_business'] ?? Null,
-            'micr_code_business' => $data_business['micr_code_business'] ?? Null,
-            'ad_code_business' => $data_business['ad_code_business'] ?? Null,
-        
-            'aadhaar_no' => $data_personal['aadhaar_no'],
-            'aadhaar_no_file' => $aadhaar_no_file,
-            'pan_no' => $data_personal['pan_no'],
-            'pan_no_file' => $pan_no_file,
-            'passport_no' => $data_personal['passport_no'],
-            'passport_no_file' => $passport_no_file,
-            'photo_file' => $photo_file,
-            'name' => $data_personal['name'],
-            'father_name' => $data_personal['father_name'],
-            'dob' => $data_personal['dob'],
-            'street_add_first' => $data_personal['street_add_first_personal'],
-            'street_add_sec' => $data_personal['street_add_sec_personal'],
-            'locality_land_mark' => $data_personal['locality_land_mark_personal'],
-            'village' => $data_personal['village_personal'],
-            'post' => $data_personal['post_personal'],
-            'city_id' => $data_personal['city_id'],
-            'district' => $data_personal['district_personal'],
-            'state_id' => $data_personal['state_id'],
-            'pincode' => $data_personal['pincode_personal'],
-            'country_id' => $data_personal['country_id'],
-            'country_code' => $data_personal['country_code_personal'],
-        
-            'prim_mobile_no' => $data_personal['phone'],
-            'prim_mobile_no_meta' => $data_personal['phone_code_meta'] ?? '',
-
-            'alt_mobile_no' => $data_personal['alternate_mob_no_personal'],
-            'alt_mobile_no_meta' => $data_personal['alternate_mob_no_personal_meta'] ?? '',
-
-            'prim_whats_app_no' => $data_personal['whats_app_no'],
-            'prim_whats_app_no_meta' => $data_personal['whats_app_no_meta'] ?? '',
-
-            'alt_whats_app_no' => $data_personal['alternate_whats_app_no_personal'],
-            'alt_whats_app_no_meta' => $data_personal['alternate_whats_app_no_personal_meta'] ?? '',
-        
-            'prim_email_personal' => $data_personal['prim_email_personal'],
-            'alt_email_personal' => $data_personal['alt_email_personal'],
-        
-            'bank_name_personal' => $data_personal['bank_name_personal'],
-            'account_no_personal' => $data_personal['account_no_personal'],
-            'account_name_personal' => $data_personal['account_name_personal'],
-            'branch_code_personal' => $data_personal['branch_code_personal'],
-            'branch_name_personal' => $data_personal['branch_name_personal'] ?? '',
-            'branch_address_personal' => $data_personal['branch_address_personal'],
-            'ifsc_code_personal' => $data_personal['ifsc_code_personal'],
-            'micr_code_personal' => $data_personal['micr_code_personal'],
-            'ad_code_personal' => $data_personal['ad_code_personal'],
-        
-            'd_l_no_1' => $data_license['d_l_no_1'],
-            'd_l_no_1_file' => $data_license['d_l_no_1_file'],
-        
-            'doctor_hospital_reg_no' => $data_license['doctor_hospital_reg_no'],
-            'doctor_hospital_reg_no_file' => $data_license['doctor_hospital_reg_no_file'],
-        
-            'd_l_no_2' => $data_license['d_l_no_2'],
-            'd_l_no_2_file' => $data_license['d_l_no_2_file'],
-        
-            'dairy_trust_ngo_reg_no' => $data_license['dairy_trust_ngo_reg_no'],
-            'dairy_trust_ngo_reg_no_file' => $data_license['dairy_trust_ngo_reg_no_file'],
-        
-            'd_l_no_3' => $data_license['d_l_no_3'],
-            'd_l_no_3_file' => $data_license['d_l_no_3_file'],
-        
-            'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
-            'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
-        ]);
 
         $user = User::find($user->id);
 
