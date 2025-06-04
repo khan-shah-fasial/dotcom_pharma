@@ -1288,6 +1288,7 @@
                                 <option value="dairy_trust_ngo_reg_no">Dairy / Trust / NGO / Other Reg. No</option>
                                 <option value="d_l_no_3">Drug / Pharmacy Licence No 3</option>
                                 <option value="cc_mdl_reg_no">CC / MDL Registration No</option>
+                                <option value="other_reg_no">Other Registration No</option>
                             </select>
                         </div>
 
@@ -1344,6 +1345,11 @@
             label: "CC / MDL Registration No",
             name: "cc_mdl_reg_no",
             fileName: "cc_mdl_reg_no_file"
+        },
+        other_reg_no: {
+            label: "Other Registration No",
+            name: "other_reg_no",
+            fileName: "other_reg_no_file"
         }
     };
 

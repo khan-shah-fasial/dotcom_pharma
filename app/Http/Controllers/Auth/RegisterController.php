@@ -1554,6 +1554,10 @@ class RegisterController extends Controller
             'cc_mdl_reg_no.max' => 'CC / MDL Registration No must not exceed 255 characters.',
             'cc_mdl_reg_no_file.mimes' => 'Invalid format for CC / MDL Registration No file. Allowed types: jpg, jpeg, webp, png, pdf.',
             'cc_mdl_reg_no_file.max' => 'CC / MDL Registration No file must not exceed 5 MB.',
+
+            'other_reg_no.max' => 'Other Registration No must not exceed 255 characters.',
+            'other_reg_no_file.mimes' => 'Invalid format for Other Registration No file. Allowed types: jpg, jpeg, webp, png, pdf.',
+            'other_reg_no_file.max' => 'Other Registration No file must not exceed 5 MB.',
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -1566,7 +1570,8 @@ class RegisterController extends Controller
                 ($request->filled('cc_mdl_reg_no') && $request->hasFile('cc_mdl_reg_no_file')) ||
                 ($request->filled('d_l_no_1') && $request->hasFile('d_l_no_1_file')) ||
                 ($request->filled('d_l_no_2') && $request->hasFile('d_l_no_2_file')) ||
-                ($request->filled('d_l_no_3') && $request->hasFile('d_l_no_3_file'));
+                ($request->filled('d_l_no_3') && $request->hasFile('d_l_no_3_file')) ||
+                ($request->filled('other_reg_no') && $request->hasFile('other_reg_no_file'));
 
             if (!$hasAny) {
                 $validator->errors()->add(
@@ -1596,6 +1601,7 @@ class RegisterController extends Controller
             'dairy_trust_ngo_reg_no_file' => null,
             'd_l_no_3_file' => null,
             'cc_mdl_reg_no_file' => null,
+            'other_license_file' => null,
         ];
 
         // Handle uploads
@@ -1626,6 +1632,9 @@ class RegisterController extends Controller
         
             'cc_mdl_reg_no' => $request->cc_mdl_reg_no,
             'cc_mdl_reg_no_file' => $fileFields['cc_mdl_reg_no_file'],
+
+            'other_license' => $request->other_license ?? null,
+            'other_license_file' => $fileFields['other_license_file'],
         ];
 
         // Session::put('user_data_license', $user_data_license);
@@ -1804,6 +1813,9 @@ class RegisterController extends Controller
                     
                         'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
                         'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
+
+                        'other_reg_no' => $data_license['other_reg_no'],
+                        'other_reg_no_file' => $data_license['other_reg_no_file'],
                     ]);
 
 
@@ -1966,6 +1978,9 @@ class RegisterController extends Controller
             
                 'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
                 'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
+
+                'other_reg_no' => $data_license['other_reg_no'],
+                'other_reg_no_file' => $data_license['other_reg_no_file'],
             ]);
         }
 

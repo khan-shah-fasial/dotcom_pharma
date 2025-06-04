@@ -819,6 +819,23 @@
                             </div>
 
                         </div>
+                        <div class="col-md-4 mb-4">
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Other Registration No </label>
+                                <p>{{ $user->other_reg_no ?? "-" }}</p>
+                                <br>
+
+                                @if (!empty($user->other_reg_no_file) && file_exists(public_path(custom_file($user->other_reg_no_file))))
+
+                                    <a href="{{ asset(custom_file($user->other_reg_no_file)) }}" target="_blank">
+                                        view
+                                    </a>
+
+                                @endif
+                            </div>
+
+                        </div>
                     </div>
                 </div>
 
