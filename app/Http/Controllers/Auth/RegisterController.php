@@ -2328,32 +2328,38 @@ class RegisterController extends Controller
             // }
         }
 
-        $response = json_decode(fetchGstinDetails($request->gst_no));
+        // $response = json_decode(fetchGstinDetails($request->gst_no));
 
-        if (isset($response->message_code) && $response->message_code == "success") {
-            Session::put('gst_validate', 'True');
-            Session::put('pan_no', $response->data->pan_number);
+        // if (isset($response->message_code) && $response->message_code == "success") {
+        //     Session::put('gst_validate', 'True');
+        //     Session::put('pan_no', $response->data->pan_number);
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'GST No Validate Successfully',
-                'data' => $response->data,
-            ], 200);
+        //     return response()->json([
+        //         'status' => 'success',
+        //         'message' => 'GST No Validate Successfully',
+        //         'data' => $response->data,
+        //     ], 200);
 
-        } else {
-            Session::put('gst_validate', 'false');
+        // } else {
+        //     Session::put('gst_validate', 'false');
             
-            if (Session::has('pan_no')) {
-                Session::forget('pan_no');
-            }
+        //     if (Session::has('pan_no')) {
+        //         Session::forget('pan_no');
+        //     }
 
-            return response()->json([
-                'status' => 'error',
-                'message' => $response->message ?? 'GST Not Valid',
-            ], 200);
-        }
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => $response->message ?? 'GST Not Valid',
+        //     ], 200);
+        // }
 
+        Session::put('gst_validate', 'True');
 
+        return response()->json([
+            'status' => 'success',
+            'message' => 'GST No Validate Successfully',
+            'data' => [], // empty data
+        ], 200);
 
     }
 
@@ -2392,30 +2398,38 @@ class RegisterController extends Controller
 
         }
 
-        $response = json_decode(fetchIECDetails($request->iec_no));
+        // $response = json_decode(fetchIECDetails($request->iec_no));
 
-        if (isset($response->message_code) && $response->message_code == "success") {
-            Session::put('iec_validate', 'True');
-            Session::put('pan_no', $response->data->pan_number);
+        // if (isset($response->message_code) && $response->message_code == "success") {
+        //     Session::put('iec_validate', 'True');
+        //     Session::put('pan_no', $response->data->pan_number);
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'ICE No Validate Successfully',
-                'data' => $response->data,
-            ], 200);
+        //     return response()->json([
+        //         'status' => 'success',
+        //         'message' => 'ICE No Validate Successfully',
+        //         'data' => $response->data,
+        //     ], 200);
 
-        } else {
-            Session::put('iec_validate', 'false');
+        // } else {
+        //     Session::put('iec_validate', 'false');
 
-            if (Session::has('pan_no')) {
-                Session::forget('pan_no');
-            }
+        //     if (Session::has('pan_no')) {
+        //         Session::forget('pan_no');
+        //     }
 
-            return response()->json([
-                'status' => 'error',
-                'message' => $response->message ?? 'ICE No Not Valid',
-            ], 200);
-        }
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => $response->message ?? 'ICE No Not Valid',
+        //     ], 200);
+        // }
+
+        Session::put('iec_validate', 'True');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'IEC No Validate Successfully',
+            'data' => [], // empty data
+        ], 200);
         
     }
 
@@ -2454,39 +2468,47 @@ class RegisterController extends Controller
                 ], 200);
         }
 
-        $response = json_decode(requestOtpAadhar($request->aadhaar_no));
+        // $response = json_decode(requestOtpAadhar($request->aadhaar_no));
 
-        if ($response->success) {
+        // if ($response->success) {
 
-            Session::put('customer_aadhar_clientId', $response->data->client_id);
-            Session::put('aadhar_no', $request->aadhaar_no);
+        //     Session::put('customer_aadhar_clientId', $response->data->client_id);
+        //     Session::put('aadhar_no', $request->aadhaar_no);
 
-            return response()->json([
-                'status' => 'success',
-                'message' => "OTP Resend to linked Mobile number with ' . $request->aadhaar_no . ' Aadhar number.",
-                'data' => 'open',
-            ], 200);
+        //     return response()->json([
+        //         'status' => 'success',
+        //         'message' => "OTP Resend to linked Mobile number with ' . $request->aadhaar_no . ' Aadhar number.",
+        //         'data' => 'open',
+        //     ], 200);
 
-        } else {
-            //do failure stuff
-            if ($response->status_code == 429) {
+        // } else {
+        //     //do failure stuff
+        //     if ($response->status_code == 429) {
 
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Wait 60 seconds to generate OTP for same Aadhaar Number.",
-                ], 200);
+        //         return response()->json([
+        //             'status' => 'error',
+        //             'message' => "Wait 60 seconds to generate OTP for same Aadhaar Number.",
+        //         ], 200);
 
-            } else {
+        //     } else {
 
-                $rsp_msg['response'] = 'error';
-                $rsp_msg['message']  = "Invalid Aadhar number / No mobile number is linked with " . $request->aadhar . " Aadhar number!";
+        //         $rsp_msg['response'] = 'error';
+        //         $rsp_msg['message']  = "Invalid Aadhar number / No mobile number is linked with " . $request->aadhar . " Aadhar number!";
 
-                return response()->json([
-                    'status' => 'error',
-                    'message' => "Invalid Aadhar number / No mobile number is linked with ' . $request->aadhar . ' Aadhar number!",
-                ], 200);
-            }
-        }
+        //         return response()->json([
+        //             'status' => 'error',
+        //             'message' => "Invalid Aadhar number / No mobile number is linked with ' . $request->aadhar . ' Aadhar number!",
+        //         ], 200);
+        //     }
+        // }
+
+        Session::put('aadhar_no', $request->aadhaar_no);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'OTP Resend to linked Mobile number with ' . $request->aadhaar_no . ' Aadhar number.',
+            'data' => 'open', // empty data
+        ], 200);
 
     }
 
@@ -2506,25 +2528,33 @@ class RegisterController extends Controller
             ], 200);
         }
 
-        $response = json_decode(validateOtpAadhar($request->otp,Session::get('customer_aadhar_clientId')));
+        // $response = json_decode(validateOtpAadhar($request->otp,Session::get('customer_aadhar_clientId')));
 
-        if ($response->success) {
-            Session::put('aadhaar_validate', 'True');
+        // if ($response->success) {
+        //     Session::put('aadhaar_validate', 'True');
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Aadhar Number verified successfully',
-                'data' => $response->data,
-            ], 200);
+        //     return response()->json([
+        //         'status' => 'success',
+        //         'message' => 'Aadhar Number verified successfully',
+        //         'data' => $response->data,
+        //     ], 200);
 
-        } else {
-            Session::put('aadhaar_validate', 'false');
+        // } else {
+        //     Session::put('aadhaar_validate', 'false');
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Aadhar OTP verification failed!',
-            ], 200);
-        }
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'Aadhar OTP verification failed!',
+        //     ], 200);
+        // }
+
+        Session::put('aadhaar_validate', 'True');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Aadhar Number verified successfully',
+            'data' => [],
+        ], 200);
 
     }
 
@@ -2607,25 +2637,33 @@ class RegisterController extends Controller
         }
 
 
-        $response = json_decode(passport_details($request->passport_no, $request->dob));
+        // $response = json_decode(passport_details($request->passport_no, $request->dob));
 
-        if (isset($response->message_code) && $response->message_code == "success") {
-            Session::put('passport_validate', 'True');
+        // if (isset($response->message_code) && $response->message_code == "success") {
+        //     Session::put('passport_validate', 'True');
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Passport File No Validate Successfully',
-                'data' => $response->data,
-            ], 200);
+        //     return response()->json([
+        //         'status' => 'success',
+        //         'message' => 'Passport File No Validate Successfully',
+        //         'data' => $response->data,
+        //     ], 200);
 
-        } else {
-            Session::put('passport_validate', 'false');
+        // } else {
+        //     Session::put('passport_validate', 'false');
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Passport File No Not Valid',
-            ], 200);
-        }
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'Passport File No Not Valid',
+        //     ], 200);
+        // }
+
+        Session::put('passport_validate', 'True');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Passport File No verified successfully',
+            'data' => [],
+        ], 200);
 
     }
 

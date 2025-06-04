@@ -755,7 +755,7 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="name">Drug / Pharmacy Licence No 3 </label>
-                                <p>{{ $user->d_l_no_2 ?? "-" }}</p>
+                                <p>{{ $user->d_l_no_3 ?? "-" }}</p>
                                 <br>
 
                                 @if (!empty($user->d_l_no_3_file) && file_exists(public_path(custom_file($user->d_l_no_3_file))))

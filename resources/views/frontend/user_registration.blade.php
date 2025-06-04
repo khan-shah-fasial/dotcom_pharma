@@ -31,7 +31,6 @@
                     </div>
                     <div class="purple_btn_close">
                         <button type="button" onclick="close_Emai_modal();" class="close p-1 px-3" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true" style="font-size: 24px;">&times;</span>
                         </button>
                     </div>
                 </div>
