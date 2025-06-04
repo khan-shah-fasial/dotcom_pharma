@@ -63,7 +63,7 @@
     {{-- Pricing Row --}}
 
     <div class="col-12 mt-1">
-        <span><span id="per-piece-price-product-details" class="text-secondary  fs-14 "> </span> / Piece</span>   
+        <span><span id="per-piece-price-product-details" class="text-primary fs-18 font-weight-bold"> </span> / Piece</span>   
         <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
         <span class="text-secondary  fs-14 ">Rs {{ $detailedProduct->product_count ?? '-' }} / Count</span>
     </div>
