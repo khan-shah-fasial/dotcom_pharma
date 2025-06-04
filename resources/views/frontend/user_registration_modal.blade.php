@@ -1279,7 +1279,7 @@
                     <div class="">
 
                         <div class="form-group">
-                            <label for="field_selector">Select Field to Add</label>
+                            <label for="field_selector">Are You</label>
                             <select id="field_selector" class="form-control">
                                 <option value="">-- Select Field --</option>
                                 <option value="d_l_no_1">Drug / Pharmacy Licence No 1</option>
