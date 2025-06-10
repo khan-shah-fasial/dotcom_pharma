@@ -1442,6 +1442,25 @@ class RegisterController extends Controller
         }
 
 
+         $temp_phone = $request->country_code_phone_code.'-'.$request->phone;
+
+        if (filter_var($request->prim_email_business, FILTER_VALIDATE_EMAIL)) {
+            if (User::where('email', $request->prim_email_business)->first() != null) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Email already exists.',
+                ], 200);
+            }
+        }
+
+        if (User::where('phone', $temp_phone)->first() != null) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Phone already exists.' 
+            ], 200);
+        }
+
+
         $user_data_personal = [
             'photo_file' => $photo_file,
             'name' => $request->name,
@@ -1814,8 +1833,8 @@ class RegisterController extends Controller
                         'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
                         'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
 
-                        'other_reg_no' => $data_license['other_reg_no'],
-                        'other_reg_no_file' => $data_license['other_reg_no_file'],
+                        'other_reg_no' => $data_license['other_license'],
+                        'other_reg_no_file' => $data_license['other_license_file'],
                     ]);
 
 
