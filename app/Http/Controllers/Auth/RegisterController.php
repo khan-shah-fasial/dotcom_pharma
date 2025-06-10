@@ -1620,7 +1620,7 @@ class RegisterController extends Controller
             'dairy_trust_ngo_reg_no_file' => null,
             'd_l_no_3_file' => null,
             'cc_mdl_reg_no_file' => null,
-            'other_license_file' => null,
+            'other_reg_no_file' => null,
         ];
 
         // Handle uploads
@@ -1652,8 +1652,8 @@ class RegisterController extends Controller
             'cc_mdl_reg_no' => $request->cc_mdl_reg_no,
             'cc_mdl_reg_no_file' => $fileFields['cc_mdl_reg_no_file'],
 
-            'other_license' => $request->other_license ?? null,
-            'other_license_file' => $fileFields['other_license_file'],
+            'other_reg_no' => $request->other_reg_no ?? null,
+            'other_reg_no_file' => $fileFields['other_reg_no_file'],
         ];
 
         // Session::put('user_data_license', $user_data_license);
@@ -1833,8 +1833,8 @@ class RegisterController extends Controller
                         'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
                         'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
 
-                        'other_reg_no' => $data_license['other_license'],
-                        'other_reg_no_file' => $data_license['other_license_file'],
+                        'other_reg_no' => $data_license['other_reg_no'],
+                        'other_reg_no_file' => $data_license['other_reg_no_file'],
                     ]);
 
 
@@ -1998,7 +1998,7 @@ class RegisterController extends Controller
                 'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
                 'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
 
-                'other_reg_no' => $data_license['other_reg_no'],
+                'other_reg_no' => $data_license['other_reg_no_file'],
                 'other_reg_no_file' => $data_license['other_reg_no_file'],
             ]);
         }
