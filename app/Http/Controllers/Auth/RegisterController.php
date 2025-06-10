@@ -1998,7 +1998,7 @@ class RegisterController extends Controller
                 'cc_mdl_reg_no' => $data_license['cc_mdl_reg_no'],
                 'cc_mdl_reg_no_file' => $data_license['cc_mdl_reg_no_file'],
 
-                'other_reg_no' => $data_license['other_reg_no_file'],
+                'other_reg_no' => $data_license['other_reg_no'],
                 'other_reg_no_file' => $data_license['other_reg_no_file'],
             ]);
         }
