@@ -27,6 +27,7 @@ class ProductStockService
                 $product_stock->product_id = $product->id;
                 $product_stock->variant = $str;
                 $product_stock->price = request()['price_' . str_replace('.', '_', $str)];
+                $product_stock->role_price = generateRoleBasedPrices(request()['price_' . str_replace('.', '_', $str)]); //price by role
 
                 $product_stock->per_piece_price = request()->get('per_piece_price_' . str_replace('.', '_', $str), null);
 

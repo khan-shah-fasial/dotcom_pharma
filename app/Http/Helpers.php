@@ -3136,3 +3136,59 @@ if (!function_exists('passport_details')) {
         return $response;
     }
 }
+
+/* Start - Role Based Price Integration */
+if (!function_exists('getRolePricePercentageMap')) {
+    function getRolePricePercentageMap()
+    {
+        return [
+            'pts'  => 5,  // Price for PTS role
+            'ptr'  => 10,  // Price for PTR role
+            'ptd'  => 15,  // Price for PTD role
+            'gov'  => 20,   // Price for Government role
+            'expo' => 25,  // Price for Expo role
+            'customer' => 50, // Default/fallback for general customers
+        ];
+    }
+}
+
+if (!function_exists('generateRoleBasedPrices')) {
+    function generateRoleBasedPrices(float $purchasePrice)
+    {
+        $percentages = getRolePricePercentageMap();
+        $prices = [];
+
+        foreach ($percentages as $role => $percent) {
+            $prices[$role] = round($purchasePrice + ($purchasePrice * $percent / 100), 2);
+        }
+
+        return json_encode($prices);
+    }
+}
+
+if (!function_exists('getCurrentUserRole')) {
+    function getCurrentUserRole(): ?string
+    {
+        $user = Auth::user();
+
+        if (!$user) return null;
+
+        return $user->user_subtype ?: $user->user_type;
+    }
+}
+
+if (!function_exists('getPricesByRole')) {
+    function getPricesByRole(array|string $rolePrices): ?float
+    {
+        $role = getCurrentUserRole();
+
+        if (!$role) return null;
+
+        $prices = is_string($rolePrices) ? json_decode($rolePrices, true) : (array) $rolePrices;
+
+        return $prices[$role] ?? $prices['customer'] ?? 0;
+    }
+}
+// ALTER TABLE `product_stocks` ADD `role_price` VARCHAR(255) NULL DEFAULT NULL AFTER `price`;
+// ALTER TABLE `products` ADD `role_price` VARCHAR(255) NULL DEFAULT NULL AFTER `unit_price`;
+/* End - Role Based Price Integration */

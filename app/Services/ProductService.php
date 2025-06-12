@@ -172,7 +172,9 @@ class ProductService
         unset($collection['tab_title']);
         unset($collection['tab_content']);
         $collection['contents'] = json_encode($tabs);
-        //Tab content        
+        //Tab content       
+        
+        $collection['role_price'] = generateRoleBasedPrices($collection['unit_price']); //price by role
 
         $data = $collection->merge(compact(
             'user_id',
@@ -347,7 +349,9 @@ class ProductService
         unset($collection['tab_title']);
         unset($collection['tab_content']);
         $collection['contents'] = json_encode($tabs);
-        //Tab content        
+        //Tab content    
+        
+        $collection['role_price'] = generateRoleBasedPrices($collection['unit_price']); //price by role
         
         $data = $collection->merge(compact(
             'discount_start_date',
