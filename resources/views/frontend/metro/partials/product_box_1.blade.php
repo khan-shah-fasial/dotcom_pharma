@@ -103,8 +103,8 @@
                 @endif
                 <!-- price -->
                 <div class="">
-                    <!--<span class="fw-700 text-primary">{{ home_discounted_base_price($product) }}</span>--> <!--old code-->
-                    <span class="fw-700 text-primary">{{ home_usertype_base_price($product) }}</span> <!--display lowest price by user type [by nexgeno]-->
+                    <span class="fw-700 text-primary">{{ home_discounted_base_price($product) }}</span> <!--old code-->
+                    <!-- <span class="fw-700 text-primary">{{ home_usertype_base_price($product) }}</span> display lowest price by user type [by nexgeno] -->
                 </div>
             @endif
             @if ($product->auction_product == 1)

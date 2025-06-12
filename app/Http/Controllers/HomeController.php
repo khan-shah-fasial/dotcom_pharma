@@ -854,7 +854,8 @@ class HomeController extends Controller
 
         $product_stock = $product->stocks->where('variant', $str)->first();
 
-        $price = $product_stock->price;
+        //$price = $product_stock->price;
+        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
         $sku = $product_stock->sku;
         $per_piece_price = $product_stock->per_piece_price;
 

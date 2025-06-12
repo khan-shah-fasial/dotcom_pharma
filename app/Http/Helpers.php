@@ -286,7 +286,8 @@ if (!function_exists('cart_product_price')) {
             $price = 0;
             $product_stock = $product->stocks->where('variant', $str)->first();
             if ($product_stock) {
-                $price = $product_stock->price;
+                //$price = $product_stock->price;
+                $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
             }
 
             if ($product->wholesale_product) {
@@ -348,7 +349,8 @@ if (!function_exists('cart_product_tax')) {
             $str = $cart_product['variation'];
         }
         $product_stock = $product->stocks->where('variant', $str)->first();
-        $price = $product_stock->price;
+        //$price = $product_stock->price;
+        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
 
         //discount calculation
         $discount_applicable = false;
@@ -396,7 +398,8 @@ if (!function_exists('cart_product_discount')) {
             $str = $cart_product['variation'];
         }
         $product_stock = $product->stocks->where('variant', $str)->first();
-        $price = $product_stock->price;
+        //$price = $product_stock->price;
+        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
 
         //discount calculation
         $discount_applicable = false;
@@ -439,7 +442,8 @@ if (!function_exists('carts_product_discount')) {
                 $str = $cart_product['variation'];
             }
             $product_stock = $product->stocks->where('variant', $str)->first();
-            $price = $product_stock->price;
+            //$price = $product_stock->price;
+            $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
 
             //discount calculation
             $discount_applicable = false;
@@ -552,16 +556,26 @@ if (!function_exists('carts_coupon_discount')) {
 if (!function_exists('home_price')) {
     function home_price($product, $formatted = true)
     {
-        $lowest_price = $product->unit_price;
-        $highest_price = $product->unit_price;
+        // $lowest_price = $product->unit_price;
+        // $highest_price = $product->unit_price;
+        $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
+        $highest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
 
         if ($product->variant_product) {
             foreach ($product->stocks as $key => $stock) {
-                if ($lowest_price > $stock->price) {
-                    $lowest_price = $stock->price;
+                // if ($lowest_price > $stock->price) {
+                //     $lowest_price = $stock->price;
+                // }
+                // if ($highest_price < $stock->price) {
+                //     $highest_price = $stock->price;
+                // }
+
+                //price by role
+                if ($lowest_price > getPriceByRole($stock->role_price ?? $product->role_price, $stock->price)) {
+                    $lowest_price = getPriceByRole($stock->role_price ?? $product->role_price, $stock->price);
                 }
-                if ($highest_price < $stock->price) {
-                    $highest_price = $stock->price;
+                if ($highest_price < getPriceByRole($stock->role_price ?? $product->role_price, $stock->price)) {
+                    $highest_price = getPriceByRole($stock->role_price ?? $product->role_price, $stock->price);
                 }
             }
         }
@@ -592,17 +606,27 @@ if (!function_exists('home_price')) {
 if (!function_exists('home_discounted_price')) {
     function home_discounted_price($product, $formatted = true)
     {
-        $lowest_price = $product->unit_price;
-        $highest_price = $product->unit_price;
+        // $lowest_price = $product->unit_price;
+        // $highest_price = $product->unit_price;
+        $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
+        $highest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role        
 
         if ($product->variant_product) {
             foreach ($product->stocks as $key => $stock) {
-                if ($lowest_price > $stock->price) {
-                    $lowest_price = $stock->price;
+                // if ($lowest_price > $stock->price) {
+                //     $lowest_price = $stock->price;
+                // }
+                // if ($highest_price < $stock->price) {
+                //     $highest_price = $stock->price;
+                // }
+
+                //price by role
+                if ($lowest_price > getPriceByRole($stock->role_price ?? $product->role_price, $stock->price)) { 
+                    $lowest_price = getPriceByRole($stock->role_price ?? $product->role_price, $stock->price);
                 }
-                if ($highest_price < $stock->price) {
-                    $highest_price = $stock->price;
-                }
+                if ($highest_price < getPriceByRole($stock->role_price ?? $product->role_price, $stock->price)) {
+                    $highest_price = getPriceByRole($stock->role_price ?? $product->role_price, $stock->price);
+                }                
             }
         }
 
@@ -654,7 +678,8 @@ if (!function_exists('home_base_price_by_stock_id')) {
     function home_base_price_by_stock_id($id)
     {
         $product_stock = ProductStock::findOrFail($id);
-        $price = $product_stock->price;
+        //$price = $product_stock->price;
+        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
         $tax = 0;
 
         foreach ($product_stock->product->taxes as $product_tax) {
@@ -673,7 +698,8 @@ if (!function_exists('home_base_price_by_stock_id')) {
 if (!function_exists('home_base_price')) {
     function home_base_price($product, $formatted = true)
     {
-        $price = $product->unit_price;
+        //$price = $product->unit_price;
+        $price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
         $tax = 0;
 
         foreach ($product->taxes as $product_tax) {
@@ -694,7 +720,8 @@ if (!function_exists('home_discounted_base_price_by_stock_id')) {
     {
         $product_stock = ProductStock::findOrFail($id);
         $product = $product_stock->product;
-        $price = $product_stock->price;
+        //$price = $product_stock->price;
+        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
         $tax = 0;
 
         $discount_applicable = false;
@@ -734,7 +761,8 @@ if (!function_exists('home_discounted_base_price_by_stock_id')) {
 if (!function_exists('home_discounted_base_price')) {
     function home_discounted_base_price($product, $formatted = true)
     {
-        $price = $product->unit_price;
+        //$price = $product->unit_price;
+        $price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
         $tax = 0;
 
         $discount_applicable = false;
@@ -2756,7 +2784,8 @@ if (!function_exists('is_user_loggedin')) {
 if (!function_exists('home_usertype_base_price')) {
     function home_usertype_base_price($product)
     {
-        $lowest_price = $product->unit_price;
+        //$lowest_price = $product->unit_price;
+        $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
         if($product->variant_product){
             $userSubtype = get_user_subtype();
             $lowest_price = $product->stocks() // Assuming 'stocks' is a defined relationship in the Product model
@@ -2767,7 +2796,8 @@ if (!function_exists('home_usertype_base_price')) {
             
             
             if(empty($lowest_price)){
-                $lowest_price = $product->unit_price;
+                //$lowest_price = $product->unit_price;
+                $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
             }
 
                 
@@ -3142,12 +3172,12 @@ if (!function_exists('getRolePricePercentageMap')) {
     function getRolePricePercentageMap()
     {
         return [
-            'pts'  => 5,  // Price for PTS role
-            'ptr'  => 10,  // Price for PTR role
-            'ptd'  => 15,  // Price for PTD role
-            'gov'  => 20,   // Price for Government role
-            'expo' => 25,  // Price for Expo role
-            'customer' => 50, // Default/fallback for general customers
+            'pts'      => get_setting('product.price.percentage.pts'),
+            'ptr'      => get_setting('product.price.percentage.ptr'),
+            'ptd'      => get_setting('product.price.percentage.ptd'),
+            'gov'      => get_setting('product.price.percentage.gov'),
+            'expo'     => get_setting('product.price.percentage.expo'),
+            'customer' => get_setting('product.price.percentage.customer'),
         ];
     }
 }
@@ -3177,16 +3207,17 @@ if (!function_exists('getCurrentUserRole')) {
     }
 }
 
-if (!function_exists('getPricesByRole')) {
-    function getPricesByRole(array|string $rolePrices): ?float
+if (!function_exists('getPriceByRole')) {
+    function getPriceByRole(array|string $rolePrices, float $defaultPrice): ?float
     {
+        //return 0;
         $role = getCurrentUserRole();
 
         if (!$role) return null;
 
         $prices = is_string($rolePrices) ? json_decode($rolePrices, true) : (array) $rolePrices;
 
-        return $prices[$role] ?? $prices['customer'] ?? 0;
+        return $prices[$role] ?? $prices['customer'] ?? $defaultPrice;
     }
 }
 // ALTER TABLE `product_stocks` ADD `role_price` VARCHAR(255) NULL DEFAULT NULL AFTER `price`;

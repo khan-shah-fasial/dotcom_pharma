@@ -188,7 +188,8 @@ class CartController extends Controller
             $product = Product::find($cartItem['product_id']);
             $product_stock = $product->stocks->where('variant', $cartItem['variation'])->first();
             $quantity = $product_stock->qty;
-            $price = $product_stock->price;
+            //$price = $product_stock->price;
+            $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
 
             //discount calculation
             $discount_applicable = false;
