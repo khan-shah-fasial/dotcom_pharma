@@ -204,6 +204,11 @@
                                         <span class="aiz-side-nav-text">{{translate('Attribute')}}</span>
                                     </a>
                                 </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{route('products.role_prices')}}" class="aiz-side-nav-link {{ areActiveRoutes(['products.role_prices'])}}">
+                                        <span class="aiz-side-nav-text">{{translate('Price Settings')}}</span>
+                                    </a>
+                                </li>                                
                             @endcan
                             @can('view_colors')
                                 <li class="aiz-side-nav-item">

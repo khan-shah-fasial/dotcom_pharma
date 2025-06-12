@@ -3168,19 +3168,51 @@ if (!function_exists('passport_details')) {
 }
 
 /* Start - Role Based Price Integration */
-if (!function_exists('getRolePricePercentageMap')) {
-    function getRolePricePercentageMap()
+
+if (!function_exists('getAllUserRoles')) {
+    function getAllUserRoles(): array
     {
-        return [
-            'pts'      => get_setting('product.price.percentage.pts'),
-            'ptr'      => get_setting('product.price.percentage.ptr'),
-            'ptd'      => get_setting('product.price.percentage.ptd'),
-            'gov'      => get_setting('product.price.percentage.gov'),
-            'expo'     => get_setting('product.price.percentage.expo'),
-            'customer' => get_setting('product.price.percentage.customer'),
-        ];
+        $roles = \App\Models\User::query()
+            ->selectRaw('COALESCE(user_subtype, user_type) as role')
+            ->distinct()
+            ->pluck('role')
+            ->filter() // Remove nulls
+            ->toArray();
+
+        return array_combine($roles, $roles); // ['ptr' => 'ptr', ...]
     }
 }
+
+// if (!function_exists('getRolePricePercentageMap')) {
+//     function getRolePricePercentageMap()
+//     {
+//         return [
+//             'pts'      => get_setting('product-price-percentage-pts'),
+//             'ptr'      => get_setting('product-price-percentage-ptr'),
+//             'ptd'      => get_setting('product-price-percentage-ptd'),
+//             'gov'      => get_setting('product-price-percentage-gov'),
+//             'expo'     => get_setting('product-price-percentage-expo'),
+//             'customer' => get_setting('product-price-percentage-customer'),
+//         ];
+//     }
+// }
+
+if (!function_exists('getRolePricePercentageMap')) {
+    function getRolePricePercentageMap(): array
+    {
+        $rolesJson = get_setting('get_customer_roles');
+        $roles = json_decode($rolesJson, true) ?? [];
+
+        $map = [];
+
+        foreach ($roles as $role) {
+            $map[$role] = get_setting('product-price-percentage-' . $role);
+        }
+        
+        return $map;
+    }
+}
+
 
 if (!function_exists('generateRoleBasedPrices')) {
     function generateRoleBasedPrices(float $purchasePrice)
@@ -3222,4 +3254,12 @@ if (!function_exists('getPriceByRole')) {
 }
 // ALTER TABLE `product_stocks` ADD `role_price` VARCHAR(255) NULL DEFAULT NULL AFTER `price`;
 // ALTER TABLE `products` ADD `role_price` VARCHAR(255) NULL DEFAULT NULL AFTER `unit_price`;
+// INSERT INTO `business_settings` (`id`, `type`, `value`, `lang`, `created_at`, `updated_at`) VALUES
+// (NULL, 'product-price-percentage-pts', '5', 'en', '2025-03-10 16:21:45', '2025-03-10 16:21:45'),
+// (NULL, 'product-price-percentage-ptr', '10', 'en', '2025-03-10 16:21:45', '2025-03-10 16:21:45'),
+// (NULL, 'product-price-percentage-ptd', '15', 'en', '2025-03-10 16:21:45', '2025-03-10 16:21:45'),
+// (NULL, 'product-price-percentage-gov', '20', 'en', '2025-03-10 16:21:45', '2025-03-10 16:21:45'),
+// (NULL, 'product-price-percentage-expo', '25', 'en', '2025-03-10 16:21:45', '2025-03-10 16:21:45'),
+// (NULL, 'product-price-percentage-customer', '50', 'en', '2025-03-10 16:21:45', '2025-03-10 16:21:45');
+// INSERT INTO `business_settings` (`id`, `type`, `value`, `lang`, `created_at`, `updated_at`) VALUES (NULL, 'get_customer_roles', '[\r\n \"pts\",\r\n \"ptr\",\r\n \"ptd\",\r\n \"gov\",\r\n \"expo\",\r\n \"customer\"\r\n]', NULL, '2025-03-10 16:21:45', '2025-06-12 16:45:18');
 /* End - Role Based Price Integration */

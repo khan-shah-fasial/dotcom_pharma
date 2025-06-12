@@ -705,4 +705,8 @@ class ProductController extends Controller
     {
         return $this->productService->setCategoryWiseDiscount($request->except(['_token']));
     }
+
+    public function role_prices(Request $request){ //price by role
+        return view('backend.product.settings.role_prices');
+    }    
 }
