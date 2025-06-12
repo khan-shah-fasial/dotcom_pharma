@@ -857,7 +857,7 @@ class HomeController extends Controller
         //$price = $product_stock->price;
         $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
         $sku = $product_stock->sku;
-        $per_piece_price = $product_stock->per_piece_price;
+        // $per_piece_price = $product_stock->per_piece_price;
 
 
         if ($product->wholesale_product) {
@@ -924,7 +924,8 @@ class HomeController extends Controller
             'variation' => $str,
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
-            'per_piece_price' => $per_piece_price
+            'per_piece_price' => $price,
+            'original_price' => $product_stock->price
         );
     }
 

@@ -719,6 +719,8 @@
 
                         $('#per-piece-price-product-details').html('Rs. ' + (data?.per_piece_price ?? '-'));
 
+                        $('#mrp-unit').html('Rs. ' + (data?.original_price ?? '-'));
+
                         $('.input-number').prop('max', data.max_limit);
                         if(parseInt(data.in_stock) == 0 && data.digital  == 0){
                            $('.buy-now').addClass('d-none');
