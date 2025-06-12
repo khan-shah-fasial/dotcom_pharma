@@ -92,7 +92,7 @@
                     <i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i>
                 </div>
 
-        @if(is_user_loggedin()) <!--display peice to only logged user [by nexgeno]-->
+        {{--@if(is_user_loggedin())--}} <!--display peice to only logged user [by nexgeno]-->
         <div class="fs-16 mt-1">
             @if ($product->auction_product == 0)
                 <!-- Previous price -->
@@ -114,12 +114,12 @@
                 </div>
             @endif
         </div>
-        @endif
+        {{--@endif--}}
     </div>
 
      <div class="flex_boxex">
          <!-- add to cart -->
-            @if(is_user_loggedin())
+            {{--@if(is_user_loggedin())--}}
             <a class="@if (in_array($product->id, $cart_added)) active @endif"
                 href="javascript:void(0)"
                 onclick="showAddToCartModal({{ $product->id }})">
@@ -128,7 +128,7 @@
                 </span> -->
                 <span><i class="las la-shopping-bag la-2x"></i></span>
             </a>
-            @endif
+            {{--@endif--}}
     </div>
         
     </div>

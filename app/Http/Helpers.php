@@ -3208,7 +3208,7 @@ if (!function_exists('getRolePricePercentageMap')) {
         foreach ($roles as $role) {
             $map[$role] = get_setting('product-price-percentage-' . $role);
         }
-        
+
         return $map;
     }
 }
@@ -3245,9 +3245,9 @@ if (!function_exists('getPriceByRole')) {
         //return 0;
         $role = getCurrentUserRole();
 
-        if (!$role) return null;
-
         $prices = is_string($rolePrices) ? json_decode($rolePrices, true) : (array) $rolePrices;
+
+        if (!$role) return $prices['customer'];
 
         return $prices[$role] ?? $prices['customer'] ?? $defaultPrice;
     }
