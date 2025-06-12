@@ -69,12 +69,12 @@
     </div>
 
     {{-- Unit/MRP --}}
-    @if ($detailedProduct->unit_price)
-        <div class="col-12 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Unit/MRP') }}:</span>
-            <span class="text-secondary  fs-14 ">{{ $detailedProduct->unit_price }}</span>
-        </div>
-    @endif
+
+    <div class="col-12 mt-1">
+        <span class="fw-500 fs-14 text-dark">{{ translate('Unit/MRP') }}:</span>
+        <span id="mrp-unit" class="text-secondary  fs-14 "></span>
+    </div>
+
 
     {{-- Pack Size --}}
      {{--
@@ -499,7 +499,7 @@
 
 
 
-    @if ($detailedProduct->auction_product != 1 && is_user_loggedin())
+    @if ($detailedProduct->auction_product != 1)
         <!--Display price & vairation to only loggedin user [by nexgeno]-->
         <form id="option-choice-form">
             @csrf
@@ -689,7 +689,7 @@
         @endif
 
         <!-- Add to cart & Buy now Buttons -->
-        <div class="mt-3" @if (!is_user_loggedin()) style="pointer-events:none;opacity:0.6" @endif>
+        <div class="mt-3">
             @if (!is_user_loggedin())
                 <p>Please login / register to buy or to get detailed information of the product</p>
             @endif

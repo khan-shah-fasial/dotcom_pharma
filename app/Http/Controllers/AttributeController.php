@@ -10,6 +10,8 @@ use App\Models\AttributeValue;
 use CoreComponentRepository;
 use Str;
 
+use Illuminate\Support\Facades\Validator;
+
 class AttributeController extends Controller
 {
     public function __construct() {
@@ -143,6 +145,20 @@ class AttributeController extends Controller
 
     public function store_attribute_value(Request $request)
     {
+
+        $validator = Validator::make($request->all(), [
+            'value' => [
+                'required',
+                'regex:/^[a-zA-Z0-9.-]+$/', // The regex pattern to match the allowed characters
+            ],
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            flash(translate('Only letters, numbers, hyphen (-), dot (.) and 0 are allowed'))->error();
+            return back();
+        }
+
         $attribute_value = new AttributeValue;
         $attribute_value->attribute_id = $request->attribute_id;
         $attribute_value->value = ucfirst($request->value);
@@ -160,6 +176,20 @@ class AttributeController extends Controller
 
     public function update_attribute_value(Request $request, $id)
     {
+
+        $validator = Validator::make($request->all(), [
+            'value' => [
+                'required',
+                'regex:/^[a-zA-Z0-9.-]+$/', // The regex pattern to match the allowed characters
+            ],
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            flash(translate('Only letters, numbers, hyphen (-), dot (.) and 0 are allowed'))->error();
+            return back();
+        }
+
         $attribute_value = AttributeValue::findOrFail($id);
         
         $attribute_value->attribute_id = $request->attribute_id;
