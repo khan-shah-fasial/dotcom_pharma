@@ -128,7 +128,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Drug Name')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('drug_name') is-invalid @enderror" name="drug_name" value="{{ old('drug_name') }}" placeholder="{{ translate('Drug Name') }}" value="{{ $product->drug_name }}">
+                                                <input type="text" class="form-control @error('drug_name') is-invalid @enderror" name="drug_name" placeholder="{{ translate('Drug Name') }}" value="{{ $product->drug_name }}">
                                             </div>
                                         </div>
 
@@ -136,7 +136,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Form')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_form') is-invalid @enderror" name="product_form" value="{{ old('product_form') }}" placeholder="{{ translate('Product Form') }}" value="{{ $product->product_form }}">
+                                                <input type="text" class="form-control @error('product_form') is-invalid @enderror" name="product_form" placeholder="{{ translate('Product Form') }}" value="{{ $product->product_form }}">
                                             </div>
                                         </div>
 
@@ -144,7 +144,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Pharma Categories')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('pharma_categories') is-invalid @enderror" name="pharma_categories" value="{{ old('pharma_categories') }}" placeholder="{{ translate('Pharma Categories') }}" value="{{ $product->pharma_categories }}">
+                                                <input type="text" class="form-control @error('pharma_categories') is-invalid @enderror" name="pharma_categories" placeholder="{{ translate('Pharma Categories') }}" value="{{ $product->pharma_categories }}">
                                             </div>
                                         </div>
 
@@ -242,7 +242,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Type')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_type') is-invalid @enderror" name="product_type" value="{{ old('product_type') }}" placeholder="{{ translate('Product Type') }}" value="{{ $product->product_type }}">
+                                                <input type="text" class="form-control @error('product_type') is-invalid @enderror" name="product_type" placeholder="{{ translate('Product Type') }}" value="{{ $product->product_type }}">
                                             </div>
                                         </div>
 
@@ -250,7 +250,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Count')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_count') is-invalid @enderror" name="product_count" value="{{ old('product_count') }}" placeholder="{{ translate('Product Count') }}" value="{{ $product->product_count }}">
+                                                <input type="text" class="form-control @error('product_count') is-invalid @enderror" name="product_count" placeholder="{{ translate('Product Count') }}" value="{{ $product->product_count }}">
                                             </div>
                                         </div>
 
@@ -259,7 +259,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Material')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_material') is-invalid @enderror" name="product_material" value="{{ old('product_material') }}" placeholder="{{ translate('Product Material') }}" value="{{ $product->product_material }}">
+                                                <input type="text" class="form-control @error('product_material') is-invalid @enderror" name="product_material" placeholder="{{ translate('Product Material') }}" value="{{ $product->product_material }}">
                                             </div>
                                         </div>
 
@@ -267,7 +267,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Country of Origin')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_origin') is-invalid @enderror" name="product_origin" value="{{ old('product_origin') }}" placeholder="{{ translate('Product Country of Origin') }}" value="{{ $product->product_origin }}">
+                                                <input type="text" class="form-control @error('product_origin') is-invalid @enderror" name="product_origin" placeholder="{{ translate('Product Country of Origin') }}" value="{{ $product->product_origin }}">
                                             </div>
                                         </div>
 
@@ -275,7 +275,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Minimum Pack Size ')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_min_pack_size') is-invalid @enderror" name="product_min_pack_size" value="{{ old('product_min_pack_size') }}" placeholder="{{ translate('Product Minimum Pack Size') }}" value="{{ $product->product_min_pack_size }}">
+                                                <input type="text" class="form-control @error('product_min_pack_size') is-invalid @enderror" name="product_min_pack_size"  placeholder="{{ translate('Product Minimum Pack Size') }}" value="{{ $product->product_min_pack_size }}">
                                             </div>
                                         </div>
 
@@ -283,7 +283,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Expiry Date')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_exp_date') is-invalid @enderror" name="product_exp_date" value="{{ old('product_exp_date') }}" placeholder="{{ translate('Product Expiry Date') }}" value="{{ $product->product_exp_date }}">
+                                                <input type="text" class="form-control @error('product_exp_date') is-invalid @enderror" name="product_exp_date" placeholder="{{ translate('Product Expiry Date') }}" value="{{ $product->product_exp_date }}">
                                             </div>
                                         </div>
 
@@ -291,7 +291,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product HSN / HS Code')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_hsn') is-invalid @enderror" name="product_hsn" value="{{ old('product_hsn') }}" placeholder="{{ translate('Product HSN / HS Code') }}" value="{{ $product->product_hsn }}">
+                                                <input type="text" class="form-control @error('product_hsn') is-invalid @enderror" name="product_hsn" placeholder="{{ translate('Product HSN / HS Code') }}" value="{{ $product->product_hsn }}">
                                             </div>
                                         </div>
 
@@ -299,7 +299,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Dimentions')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_dimentions') is-invalid @enderror" name="product_dimentions" value="{{ old('product_dimentions') }}" placeholder="{{ translate('Product Dimentions') }}" value="{{ $product->product_dimentions }}">
+                                                <input type="text" class="form-control @error('product_dimentions') is-invalid @enderror" name="product_dimentions" placeholder="{{ translate('Product Dimentions') }}" value="{{ $product->product_dimentions }}">
                                             </div>
                                         </div>
 
@@ -307,7 +307,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Weight / Volume')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_weight_vol') is-invalid @enderror" name="product_weight_vol" value="{{ old('product_weight_vol') }}" placeholder="{{ translate('Product Weight / Volume') }}" value="{{ $product->product_weight_vol }}">
+                                                <input type="text" class="form-control @error('product_weight_vol') is-invalid @enderror" name="product_weight_vol" placeholder="{{ translate('Product Weight / Volume') }}" value="{{ $product->product_weight_vol }}">
                                             </div>
                                         </div>
 
