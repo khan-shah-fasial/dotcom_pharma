@@ -19,7 +19,7 @@
 
         <!-- Discount percentage tag -->
         @if (discount_in_percentage($product) > 0)
-            <span class="absolute-top-left bg-primary ml-1 mt-1 fs-11 fw-700 text-white w-35px text-center"
+            <span class="absolute-top-left bg-primary ml-1 mt-1 fs-11 fw-700 text-white w-50px text-center"
                 style="padding-top:2px;padding-bottom:2px;">{{ discount_in_percentage($product) }}% OFF</span>
         @endif
         <!-- Wholesale tag -->
