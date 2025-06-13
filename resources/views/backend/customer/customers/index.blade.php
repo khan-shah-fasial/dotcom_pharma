@@ -310,8 +310,8 @@
 
                     <div class="form-group">
                         <label for="approval-status" class="modal-body col-form-label form-label">User Role:</label>
-                        <select class="form-control" id="user-role" name="user_subtype" required>
-                            <option value="">---Select---</option>
+                        <select class="form-control" id="user-role" name="user_subtype">
+                            <option value="">Customer</option>
                             <option value="pts">pts</option>
                             <option value="ptr">ptr</option>
                             <option value="ptd">ptd</option>
