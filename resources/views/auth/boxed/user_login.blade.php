@@ -136,9 +136,10 @@
                                 <!-- Login form -->
                                 <div class="pt-3">
                                     <div class="">
-                                        <form id="login-form-customer" class="form-default" role="form" action="{{ route('user.login.via.otp') }}" method="POST">
+                                        {{-- <form id="login-form-customer" class="form-default" role="form" action="{{ route('user.login.via.otp') }}" method="POST"> --}}
+                                        <form class="form-default" role="form" action="{{ route('login') }}" method="POST">
                                             @csrf
-                                            
+                                        
                                             <!-- Email or Phone -->
                                             @if (addon_is_activated('otp_system'))
                                                 <div class="form-group phone-form-group mb-1">
@@ -158,9 +159,9 @@
                                                     @endif
                                                 </div>
                                                 
-                                                {{-- <div class="form-group text-right">
+                                                <div class="form-group text-right">
                                                     <button class="btn btn-link p-0 text-primary fs-12 fw-400" type="button" onclick="toggleEmailPhone(this)"><i>*{{ translate('Use Email Instead') }}</i></button>
-                                                </div> --}}
+                                                </div>
                                             @else
                                                 <div class="form-group">
                                                     <label for="email" class="fs-12 fw-700 text-soft-dark">{{  translate('Email') }}</label>
