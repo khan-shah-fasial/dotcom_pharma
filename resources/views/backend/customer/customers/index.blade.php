@@ -20,7 +20,7 @@
             <div class="card-header row gutters-5">
 
 
-                {{-- <div class="dropdown mb-2 mb-md-0">
+                {{-- <div class="dropdown mb-3 mb-md-0">
                     <button class="btn border dropdown-toggle" type="button" data-toggle="dropdown">
                         {{ translate('Bulk Action') }}
                     </button>
@@ -30,58 +30,58 @@
                     </div>
                 </div> --}}
                 <div class="row">
-                    <div class="col-md-12 mb-2">
+                    <div class="col-md-12 mb-3">
                         <h5 class="mb-0 h6">{{ translate('Customers') }}</h5>
                     </div>
-                    <div class="col-md-6 mb-2">
+                    <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="search"
                                 name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset
                                 placeholder="{{ translate('Type email or name & Phone & Telephone No Enter') }}">
                         </div>
                     </div>
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="company_name"
                                 name="company_name"@isset($company_name) value="{{ $company_name }}" @endisset
                                 placeholder="{{ translate('Type Company Name') }}">
                         </div>
                     </div>
-                    <div class="col-md-3 mb-2">
+                    <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="gst_no"
                                 name="gst_no"@isset($gst_no) value="{{ $gst_no }}" @endisset
                                 placeholder="{{ translate('Type GST No') }}">
                         </div>
                     </div>
-                    <div class="col-md-12 mb-2">
+                    <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="bank_details"
                                 name="bank_details"@isset($bank_details) value="{{ $bank_details }}" @endisset
                                 placeholder="{{ translate('Type Bank Name or Account No or Branch No or Branch Code & IFSC Code & MICR Code & Customer Care Executive Enter') }}">
                         </div>
                     </div>
-                    <div class="col-md-6 mb-2">
+                    <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="license_details"
                                 name="license_details"@isset($license_details) value="{{ $license_details }}" @endisset
                                 placeholder="{{ translate('Type CC No or D.L No 1 or D.L No 2 or D.L No 3 Enter') }}">
                         </div>
                     </div>
-                    <div class="col-md-6 mb-2">
+                    <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="date" class="form-control" id="dl_expiry_Data"
                                 name="dl_expiry_Data"@isset($dl_expiry_Data) value="{{ $dl_expiry_Data }}" @endisset>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-2">
+                    <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="type" class="form-control" id="transport_Details"
                                 name="transport_Details"@isset($transport_Details) value="{{ $transport_Details }}" @endisset
                                 placeholder="{{ translate('Type Transport or Cargo & Booked To Enter') }}">
                         </div>
                     </div>
-                    <div class="col-md-3 ml-auto mb-2">
+                    <div class="col-md-3">
                         <select class="form-control aiz-selectpicker" name="verification_status" onchange="sort_customers()"
                             data-selected="{{ $verification_status }}">
                             <option value="">{{ translate('Filter by Approval Status') }}</option>
@@ -89,9 +89,11 @@
                             <option value="un_verified">{{ translate('Unverified') }}</option>
                         </select>
                     </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary" onclick="sort_customers()">Search</button>
+                        <a class="btn btn-danger" href="{{ url(route('customers.index')) }}" class="">Reset</a>                        
+                    </div>
                 </div>
-                <button class="mx-2" onclick="sort_customers()">Search</button>
-                <a href="{{ url(route('customers.index')) }}" class="mx-2">Reset</a>
             </div>
 
             <div class="card-body">
@@ -100,20 +102,21 @@
                         <tr>
                             <!--<th data-breakpoints="lg">#</th>-->
                             <th>
-                                <div class="form-group">
+                                Sr No.
+                                <!-- <div class="form-group">
                                     <div class="aiz-checkbox-inline">
                                         <label class="aiz-checkbox">
                                             <input type="checkbox" class="check-all">
                                             <span class="aiz-square-check"></span>
                                         </label>
                                     </div>
-                                </div>
+                                </div> -->
                             </th>
                             <th>{{ translate('Name') }}</th>
                             <th data-breakpoints="lg">{{ translate('Email Address') }}</th>
                             <th data-breakpoints="lg">{{ translate('Phone') }}</th>
-                            <th data-breakpoints="lg">{{ translate('Package') }}</th>
-                            <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th>
+                            <!-- <th data-breakpoints="lg">{{ translate('Package') }}</th>
+                            <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> -->
                             <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th>
                             <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th>
                             <th data-breakpoints="lg">{{ translate('Approval Status') }}</th>
@@ -124,8 +127,8 @@
                         @foreach ($users as $key => $user)
                             @if ($user != null)
                                 <tr>
-                                    <!--<td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>-->
-                                    <td>
+                                    <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
+                                    <!-- <td>
                                         <div class="form-group">
                                             <div class="aiz-checkbox-inline">
                                                 <label class="aiz-checkbox">
@@ -135,7 +138,7 @@
                                                 </label>
                                             </div>
                                         </div>
-                                    </td>
+                                    </td> -->
                                     <td>
                                         @if ($user->banned == 1)
                                             <i class="fa fa-ban text-danger" aria-hidden="true"></i>
@@ -143,12 +146,12 @@
                                     </td>
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->phone }}</td>
-                                    <td>
+                                    <!-- <td>
                                         @if ($user->customer_package != null)
                                             {{ $user->customer_package->getTranslation('name') }}
                                         @endif
                                     </td>
-                                    <td>{{ single_price($user->balance) }}</td>
+                                    <td>{{ single_price($user->balance) }}</td> -->
                                     <td>
                                         @if ($user->email_verified_at != null)
                                             <span
@@ -180,16 +183,16 @@
                                         </a>
                                         @can('ban_customer')
                                             @if ($user->approval_status != 1)
-                                                <a href="#" class="btn btn-soft-danger btn-icon btn-circle btn-sm"
+                                                <a href="#" class="btn btn-soft-success btn-icon btn-circle btn-sm"
                                                     onclick="show_Approval_model({{ $user->id }}, 'approve', '{{ $user->user_subtype ?? 'null' }}');"
                                                     title="{{ translate('Approval this Customer') }}">
-                                                    <i class="las la-thumbs-up"></i>
+                                                    <i class="las la-edit"></i>
                                                 </a>
                                             @else
                                                 <a href="#" class="btn btn-soft-success btn-icon btn-circle btn-sm"
                                                     onclick="show_Approval_model({{ $user->id }}, 'not_approve', '{{ $user->user_subtype ?? 'null' }}');"
                                                     title="{{ translate('Not Approve this Customer') }}">
-                                                    <i class="las la-thumbs-down"></i>
+                                                    <i class="las la-edit"></i>
                                                 </a>
                                             @endif
                                         @endcan
@@ -197,7 +200,7 @@
                                             <a href="{{ route('customers.login', encrypt($user->id)) }}"
                                                 class="btn btn-soft-primary btn-icon btn-circle btn-sm"
                                                 title="{{ translate('Log in as this Customer') }}">
-                                                <i class="las la-edit"></i>
+                                                <i class="las la-sign-in-alt"></i>
                                             </a>
                                         @endif
                                         @can('ban_customer')
