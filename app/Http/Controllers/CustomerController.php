@@ -280,7 +280,8 @@ class CustomerController extends Controller
     public function view($id)
     {
         $user = UserDetails::where('user_id', decrypt($id))->first();
-        return view('backend.customer.customers.view', compact('user'));
+        $user2 = User::where('id', decrypt($id))->first();
+        return view('backend.customer.customers.view', compact('user', 'user2'));
     }
 
     public function approval(Request $request) {

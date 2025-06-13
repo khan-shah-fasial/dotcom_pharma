@@ -2,6 +2,7 @@
 
 @section('content')
     <div class="container my-3">
+        @if(isset($user->type_option))
         <div class="card">
 
             <div class="container my-3 mx-2">
@@ -857,6 +858,22 @@
 
             </div>
         </div>
+        @else
+            <h3> View  Details of Customer {{ $user2->name ?? "-" }} </h3>
+            <div class="col-md-4 mb-4">
+                <div class="form-group">
+                    <label class="form-label" for="name">Email ID</label>
+                    <p>{{ $user2->email ?? "-" }}</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="form-group">
+                    <label class="form-label" for="name">Phone</label>
+                    <p>{{ $user2->phone ?? "-" }}</p>
+                </div>
+            </div>
+
+        @endif
     </div>
 
 
