@@ -121,11 +121,8 @@
          <!-- add to cart -->
             {{--@if(is_user_loggedin())--}}
             <a class="@if (in_array($product->id, $cart_added)) active @endif"
-                href="javascript:void(0)"
-                onclick="showAddToCartModal({{ $product->id }})">
-                <!-- <span class="cart-btn-text">
-                    {{ translate('Add to Cart') }}
-                </span> -->
+                href="{{ $product_url }}"
+                onclick1="showAddToCartModal({{ $product->id }})">
                 <span><i class="las la-shopping-bag la-2x"></i></span>
             </a>
             {{--@endif--}}
