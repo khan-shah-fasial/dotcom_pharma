@@ -189,12 +189,18 @@ li {
     margin-top: 0px;
 }
 
+.left25 {
+    right: 25px;
+    left: auto;
+    top: 20px;
+}
+
 .product_img_bg img {
-    margin-top: 25px;
-    margin-bottom: 25px;
+    margin-top: 15px;
+    margin-bottom: 15px;
     object-fit: cover;
     height: auto;
-    width: 80%;
+    width: 89%;
     display: block;
 }
 
