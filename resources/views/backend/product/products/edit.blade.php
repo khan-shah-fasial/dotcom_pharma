@@ -115,7 +115,39 @@
                             <h5 class="mb-3 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Product Information')}}</h5>
                             <div class="w-100">
                                 <div class="row">
-                                    <div class="col-xxl-7 col-xl-6">
+
+                                <div class="col-xxl-12 col-xl-12">
+                                        <div class="card @if($errors->has('category_ids') || $errors->has('category_id')) border border-danger @endif">
+                                            <div class="card-header">
+                                                <h5 class="mb-0 h6">{{ translate('Product Category') }}</h5>
+                                                <h6 class="float-right fs-13 mb-0">
+                                                    {{ translate('Select Main') }}
+                                                    <span class="position-relative main-category-info-icon">
+                                                        <i class="las la-question-circle fs-18 text-info"></i>
+                                                        <span class="main-category-info bg-soft-info p-2 position-absolute d-none border">{{ translate('This will be used for commission based calculations and homepage category wise product Show.') }}</span>
+                                                    </span>
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="h-300px overflow-auto c-scrollbar-light">
+                                                    @php
+                                                        $old_categories = $product->categories()->pluck('category_id')->toArray();
+                                                    @endphp
+                                                    <ul class="hummingbird-treeview-converter list-unstyled" data-checkbox-name="category_ids[]" data-radio-name="category_id">
+                                                        @foreach ($categories as $category)
+                                                        <li id="{{ $category->id }}">{{ $category->getTranslation('name') }}</li>
+                                                            @foreach ($category->childrenCategories as $childCategory)
+                                                                @include('backend.product.products.child_category', ['child_category' => $childCategory])
+                                                            @endforeach
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="col-xxl-12 col-xl-12">
                                         <!-- Product Name -->
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Name')}} <span class="text-danger">*</span></label>
@@ -315,35 +347,7 @@
                                     </div>
 
                                     <!-- Product Category -->
-                                    <div class="col-xxl-5 col-xl-6">
-                                        <div class="card @if($errors->has('category_ids') || $errors->has('category_id')) border border-danger @endif">
-                                            <div class="card-header">
-                                                <h5 class="mb-0 h6">{{ translate('Product Category') }}</h5>
-                                                <h6 class="float-right fs-13 mb-0">
-                                                    {{ translate('Select Main') }}
-                                                    <span class="position-relative main-category-info-icon">
-                                                        <i class="las la-question-circle fs-18 text-info"></i>
-                                                        <span class="main-category-info bg-soft-info p-2 position-absolute d-none border">{{ translate('This will be used for commission based calculations and homepage category wise product Show.') }}</span>
-                                                    </span>
-                                                </h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="h-300px overflow-auto c-scrollbar-light">
-                                                    @php
-                                                        $old_categories = $product->categories()->pluck('category_id')->toArray();
-                                                    @endphp
-                                                    <ul class="hummingbird-treeview-converter list-unstyled" data-checkbox-name="category_ids[]" data-radio-name="category_id">
-                                                        @foreach ($categories as $category)
-                                                        <li id="{{ $category->id }}">{{ $category->getTranslation('name') }}</li>
-                                                            @foreach ($category->childrenCategories as $childCategory)
-                                                                @include('backend.product.products.child_category', ['child_category' => $childCategory])
-                                                            @endforeach
-                                                        @endforeach
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    
                                 </div>
 
                                 <!-- Description -->

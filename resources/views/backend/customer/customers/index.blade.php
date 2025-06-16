@@ -283,16 +283,18 @@
     <div class="modal fade" id="approval_model" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel_phone"
         aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <div class="modal-content py-3">
+            <div class="modal-content">
                 <div class="modal-header">
                     <div class="heading">
-                        <h5 class="modal-title" id="exampleModalLabel_phone">Approval Statusr</h5>
+                        <h5 class="modal-title" id="exampleModalLabel_phone">Approval Status User</h5>
                     </div>
                     <div class="purple_btn_close">
                         <button type="button" class="close p-1 px-3" data-dismiss="modal" aria-label="Close">
                         </button>
                     </div>
                 </div>
+
+                <div class="modal-body">
                 <form id="approval-status-model" action="{{ url(route('customers.approval')) }}" method="post">
                     @csrf
 
@@ -300,7 +302,7 @@
 
                     <!-- Approval Status Dropdown -->
                     <div class="form-group">
-                        <label for="approval-status" class="modal-body col-form-label form-label">Approval Status:</label>
+                        <label for="approval-status" class="col-form-label form-label">Approval Status:</label>
                         <select class="form-control" id="approval-status" name="approval_status"
                             onchange="toggleNote()">
                             <option value="approve">Approve</option>
@@ -309,7 +311,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="approval-status" class="modal-body col-form-label form-label">User Role:</label>
+                        <label for="approval-status" class=" col-form-label form-label">User Role:</label>
                         <select class="form-control" id="user-role" name="user_subtype">
                             <option value="">Customer</option>
                             <option value="pts">pts</option>
@@ -328,7 +330,7 @@
                     </div>
 
 
-                    <div class="modal-footer">
+                    <div class="modal-footer" style="padding: 0; border-top: 0;">
                         <div class="blue_btn">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         </div>
@@ -337,6 +339,8 @@
                         </div>
                     </div>
                 </form>
+
+            </div>
             </div>
         </div>
     </div>

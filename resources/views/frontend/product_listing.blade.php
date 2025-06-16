@@ -238,7 +238,7 @@
                                 <a class="text-reset" href="{{ route('home') }}">{{ translate('Home')}}</a>
                             </li>
                             @if(!isset($category_id))
-                                <li class="breadcrumb-item fw-700  text-dark">
+                                <li class="breadcrumb-item fw-700  text-dark text-capitalize">
                                     "{{ translate('All Categories')}}"
                                 </li>
                             @else
@@ -257,7 +257,7 @@
                         <div class="text-left pl-md-2">
                             <div class="row gutters-5 flex-wrap align-items-center">
                                 <div class="col-lg col-10">
-                                    <h1 class="fs-20 fs-md-24 fw-700 text-dark">
+                                    <h1 class="fs-20 fs-md-24 fw-700 text-dark text-capitalize">
                                         @if(isset($category_id))
                                             {{ $category->getTranslation('name') }}
                                         @elseif(isset($query))
