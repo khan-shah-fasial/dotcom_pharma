@@ -244,18 +244,13 @@ class HomeController extends Controller
 
         $user = Auth::user();
         $user->name = $request->name;
-        $user->whats_app_no = '+'.$request->country_code_whats_app_no.'-'.$request->whats_app_no;
-        $user->whats_app_no_meta = $request->whats_app_no_meta;
-        $user->tel_number = $request->tel_number;
-        $user->gst_no = $request->gst_no;
-        $user->post = $request->post;
-        $user->company_name = $request->company_name;
 
-        $user->address = $request->address;
-        $user->country = $request->country;
-        $user->city = $request->city;
-        $user->postal_code = $request->postal_code;
-        // $user->phone = $request->phone;
+        // $user->address = $request->address;
+        // $user->country = $request->country;
+        // $user->city = $request->city;
+        // $user->postal_code = $request->postal_code;
+        
+        $user->phone = '+'.$request->phone_code.'-'.$request->phone;
 
         if ($request->new_password != null && ($request->new_password == $request->confirm_password)) {
             $user->password = Hash::make($request->new_password);

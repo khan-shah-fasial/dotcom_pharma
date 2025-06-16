@@ -565,7 +565,7 @@
                                 value="{{ $Phone_parts_number ?? '' }}" required>
                             </div>
 
-                            <input type="hidden" name="country_code_phone_code" value="">
+                            <input type="hidden" name="country_code_phone_code" value="{{ isset($Phone_parts[0]) ? ltrim($Phone_parts[0], '+') : ''  }}">
                             <input type="hidden" name="phone_code_meta" value="">
 
                         </div>
@@ -584,7 +584,7 @@
                                 <input type="tel" id="whats_app_no" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="whats_app_no" autocomplete="off" value="{{ $whats_app_no_parts_number ?? '' }}" required>
                             </div>
 
-                            <input type="hidden" name="country_code_whats_app_no" value="">
+                            <input type="hidden" name="country_code_whats_app_no" value="{{ isset($whats_app_no_parts[0]) ? ltrim($whats_app_no_parts[0], '+') : ''  }}">
                             <input type="hidden" name="whats_app_no_meta" value="">
 
                         </div>
@@ -603,7 +603,7 @@
                                 <input type="tel" id="alternate_mob_no_business" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Alternate Mobile No" name="alternate_mob_no_business" autocomplete="off" value="{{ $alternate_mob_no_business_number ?? '' }}" >
                             </div>
 
-                            <input type="hidden" name="country_code_alternate_mob_no_business" value="">
+                            <input type="hidden" name="country_code_alternate_mob_no_business" value="{{ isset($alternate_mob_no_business_parts[0]) ? ltrim($alternate_mob_no_business_parts[0], '+') : '' }}">
                             <input type="hidden" name="alternate_mob_no_business_meta" value="">
 
                         </div>
@@ -622,7 +622,7 @@
                                 <input type="tel" id="alternate_whats_app_no_business" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="alternate_whats_app_no_business" autocomplete="off" value="{{ $alternate_whats_app_no_parts_number ?? '' }}" >
                             </div>
 
-                            <input type="hidden" name="country_code_alternate_whats_app_no_business" value="">
+                            <input type="hidden" name="country_code_alternate_whats_app_no_business" value="{{ isset($alternate_whats_app_no_parts[0]) ? ltrim($alternate_whats_app_no_parts[0], '+') : '' }}">
                             <input type="hidden" name="alternate_whats_app_no_business_meta" value="">
 
                         </div>
@@ -1057,7 +1057,7 @@
                                 value="{{ $Phone_parts_number ?? '' }}" required>
                             </div>
 
-                            <input type="hidden" name="country_code_phone_code" value="">
+                            <input type="hidden" name="country_code_phone_code" value="{{ isset($Phone_parts[0]) ? ltrim($Phone_parts[0], '+') : ''  }}">
                             <input type="hidden" name="phone_code_meta" value="">
 
                         </div>
@@ -1076,7 +1076,7 @@
                                 <input type="tel" id="whats_app_no" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="whats_app_no" autocomplete="off" value="{{ $whats_app_no_parts_number ?? '' }}" required>
                             </div>
 
-                            <input type="hidden" name="country_code_whats_app_no" value="">
+                            <input type="hidden" name="country_code_whats_app_no" value="{{ isset($whats_app_no_parts[0]) ? ltrim($whats_app_no_parts[0], '+') : ''  }}">
                             <input type="hidden" name="whats_app_no_meta" value="">
 
                         </div>
@@ -1095,7 +1095,7 @@
                                 <input type="tel" id="alternate_mob_no_personal" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Alternate Mobile No" name="alternate_mob_no_personal" autocomplete="off" value="{{ $alternate_mob_no_personal_number ?? '' }}" >
                             </div>
 
-                            <input type="hidden" name="country_code_alternate_mob_no_personal" value="">
+                            <input type="hidden" name="country_code_alternate_mob_no_personal" value="{{ isset($alternate_mob_no_personal_parts[0]) ? ltrim($alternate_mob_no_personal_parts[0], '+') : ''  }}">
                             <input type="hidden" name="alternate_mob_no_personal_meta" value="">
 
                         </div>
@@ -1114,7 +1114,7 @@
                                 <input type="tel" id="alternate_whats_app_no_personal" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Whatsapp No" name="alternate_whats_app_no_personal" autocomplete="off" value="{{ $alternate_whats_app_no_parts_number ?? '' }}" >
                             </div>
 
-                            <input type="hidden" name="country_code_alternate_whats_app_no_personal" value="">
+                            <input type="hidden" name="country_code_alternate_whats_app_no_personal" value="{{ isset($alternate_whats_app_no_parts[0]) ? ltrim($alternate_whats_app_no_parts[0], '+') : ''  }}">
                             <input type="hidden" name="alternate_whats_app_no_personal_meta" value="">
 
                         </div>

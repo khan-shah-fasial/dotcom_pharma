@@ -93,7 +93,7 @@ class RegisterController extends Controller
             if (addon_is_activated('otp_system')){
                 $user = User::create([
                     'name' => $data['name'],
-                    'phone' => '+'.$data['country_code'].$data['phone'],
+                    'phone' => '+'.$data['country_code'].'-'.$data['phone'],
                     'password' => Hash::make($data['password']),
                     // 'verification_code' => rand(100000, 999999)
                     'verification_code' => '123456'
@@ -140,7 +140,7 @@ class RegisterController extends Controller
                 return back();
             }
         }
-        elseif (User::where('phone', '+'.$request->country_code.$request->phone)->first() != null) {
+        elseif (User::where('phone', '+'.$request->country_code.'-'.$request->phone)->first() != null) {
             flash(translate('Phone already exists.'));
             return back();
         }
@@ -989,8 +989,8 @@ class RegisterController extends Controller
             $rules['iec_no'] = ['required', 'regex:/^[0-9A-Z]{10}$/i'];
             $rules['iec_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
             $rules['uin_current_status'] = 'required';
-            $rules['micr_code_business'] = ['required', 'regex:/^\d{9}$/']; 
-            $rules['ad_code_business'] = ['required', 'string', 'max:255'];
+            $rules['micr_code_business'] = ['nullable', 'regex:/^\d{9}$/']; 
+            $rules['ad_code_business'] = ['nullable', 'string', 'max:255'];
 
         }
 
@@ -1058,9 +1058,9 @@ class RegisterController extends Controller
             'branch_address_business.max' => 'Branch address may not be greater than 255 characters.',
             'ifsc_code_business.required' => 'IFSC code is required.',
             'ifsc_code_business.regex' => 'IFSC code format is invalid.',
-            'micr_code_business.required' => 'MICR code is required.',
+            // 'micr_code_business.required' => 'MICR code is required.',
             'micr_code_business.regex' => 'MICR code must be a 9-digit number.',
-            'ad_code_business.required' => 'AD code is required.',
+            // 'ad_code_business.required' => 'AD code is required.',
             'ad_code_business.max' => 'AD code may not be greater than 255 characters.',
         
             // Conditional fields
@@ -1270,8 +1270,8 @@ class RegisterController extends Controller
 
             $rules['passport_no'] = ['required', 'regex:/^[0-9A-Z]{1,9}$/i'];
             $rules['passport_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
-            $rules['micr_code_personal'] = ['required', 'regex:/^\d{9}$/']; 
-            $rules['ad_code_personal'] = ['required', 'string', 'max:255'];
+            $rules['micr_code_personal'] = ['nullable', 'regex:/^\d{9}$/']; 
+            $rules['ad_code_personal'] = ['nullable', 'string', 'max:255'];
         }
 
         $messages = [
@@ -1326,9 +1326,9 @@ class RegisterController extends Controller
             'branch_address_personal.required' => 'Branch address is required.',
             'ifsc_code_personal.required' => 'IFSC code is required.',
             'ifsc_code_personal.regex' => 'IFSC code format is invalid.',
-            'micr_code_personal.required' => 'MICR code is required.',
+            // 'micr_code_personal.required' => 'MICR code is required.',
             'micr_code_personal.regex' => 'MICR code must be a 9-digit number.',
-            'ad_code_personal.required' => 'AD code is required.',
+            // 'ad_code_personal.required' => 'AD code is required.',
         
             // Domestic specific
             'aadhaar_no.required' => 'Aadhaar number is required.',

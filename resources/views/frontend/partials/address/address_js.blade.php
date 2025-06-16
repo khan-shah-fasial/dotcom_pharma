@@ -33,7 +33,6 @@
     function intil_input_edit(name, phone_meta = null) {
         // Select the input element dynamically based on the name parameter
         var inputElement = document.querySelector(`#${name}`);
-
         // Initialize the intlTelInput plugin
         var iti1 = intlTelInput(inputElement, {
             separateDialCode: true,
@@ -50,9 +49,15 @@
         // // Set default country code to +91 (India)
         // iti1.setCountry('in'); // 'in' is the ISO2 code for India
 
+        var countryData = window.intlTelInputGlobals.getCountryData();
 
         if(phone_meta !== 'null'){
-            iti1.setCountry(phone_meta); // 'in' is the ISO2 code for India
+            // Find the country matching the dial code
+            var matchedCountry = countryData.find(function(country) {
+                return country.dialCode === phone_meta;
+            });
+
+            iti1.setCountry(matchedCountry.iso2); 
         } else {
             // Set default country code to +91 (India)
             iti1.setCountry('in'); // 'in' is the ISO2 code for India
@@ -87,10 +92,11 @@
                 $('#edit_modal_body').html(response.html);
                 $('#edit-address-modal').modal('show');
 
-                const phone_meta = $('#edit-address-modal').find('#phone_meta').val();
+                var phone = response.data.address_data.phone;  // e.g., "91-1234567890"
+                var code = phone.split('-')[0].replace(/^\+/, '');  // get the part before '-'
 
-                if (phone_meta) {
-                    intil_input_edit('phone_code_addr_edit', phone_meta);
+                if (code) {
+                    intil_input_edit('phone_code_addr_edit', code);
                 } else {
                     intil_input_edit('phone_code_addr_edit');
                 }

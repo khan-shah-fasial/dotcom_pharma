@@ -25,12 +25,34 @@
                     </div>
                 </div>
                 <!-- Phone-->
-                <div class="form-group row">
+                {{-- <div class="form-group row">
                     <label class="col-md-2 col-form-label fs-14">{{ translate('Your Phone') }}</label>
                     <div class="col-md-10">
                         <input type="text" class="form-control rounded-0" placeholder="{{ translate('Your Phone')}}" name="phone" value="{{ Auth::user()->phone }}">
                     </div>
+                </div> --}}
+
+                @php
+                    if(!empty(Auth::user()->phone)){
+                        $Phone_parts = explode('-', Auth::user()->phone);
+                        $Phone_parts_number = $Phone_parts[1] ?? ''; 
+                    }
+                @endphp
+
+                <!-- Phone -->
+                <div class="form-group row">
+                    <div class="col-md-2">
+                        <label>{{ translate('Phone')}}</label>
+                    </div>
+                    <div class="col-md-10">
+                        <input type="text" id="phone_code_edit" class="form-control mb-3 rounded-0" placeholder="{{ translate('Enter Phone Number')}}" value="{{ $Phone_parts_number ?? '' }}" name="phone" required>
+
+                        <input type="hidden" name="phone_code" value="{{ isset($Phone_parts[0]) ? ltrim($Phone_parts[0], '+') : '' }}" id="phone_code_meta">
+                    </div>
                 </div>
+
+
+
                 <!-- Photo-->
                 <div class="form-group row">
                     <label class="col-md-2 col-form-label fs-14">{{ translate('Photo') }}</label>
@@ -195,6 +217,53 @@
                     AIZ.plugins.notify('danger', data.message);
             });
         });
+    </script>
+
+    <script>
+        function intil_input(name) {
+            // Select the input element dynamically based on the name parameter
+            var inputElement = document.querySelector(`#${name}`);
+
+            // Initialize the intlTelInput plugin
+            var iti1 = intlTelInput(inputElement, {
+                separateDialCode: true,
+                utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
+                onlyCountries: @php echo json_encode(get_active_countries()->pluck('code')->toArray()) @endphp,
+                customPlaceholder: function (selectedCountryPlaceholder, selectedCountryData) {
+                    if (selectedCountryData.iso2 === 'bd') {
+                        return "01xxxxxxxxx"; // Custom placeholder for Bangladesh
+                    }
+                    return selectedCountryPlaceholder;
+                }
+            });
+
+            var phone_meta = document.querySelector(`#phone_code_meta`).value;
+            var countryData = window.intlTelInputGlobals.getCountryData();
+
+            if(phone_meta !== 'null' && phone_meta !== ''){
+
+                // Find the country matching the dial code
+                var matchedCountry = countryData.find(function(country) {
+                    return country.dialCode === phone_meta;
+                });
+
+                iti1.setCountry(matchedCountry.iso2); 
+            } else {
+                iti1.setCountry('in');
+            }
+
+            // Update the hidden input with the selected country's dial code
+            var countryData = iti1.getSelectedCountryData();
+            document.querySelector(`input[name="phone_code"]`).value = countryData.dialCode;
+
+            // Update the country code when the country changes
+            inputElement.addEventListener("countrychange", function () {
+                var updatedCountryData = iti1.getSelectedCountryData();
+                document.querySelector(`input[name="phone_code"]`).value = updatedCountryData.dialCode;
+            });
+        }
+
+        intil_input('phone_code_edit');
     </script>
 
     @if (get_setting('google_map') == 1)

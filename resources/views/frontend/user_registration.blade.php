@@ -334,91 +334,17 @@
                 // iti1.setCountry('in'); // 'in' is the ISO2 code for India --}}
 
 
-                if(name === 'whats_app_no'){
+                var phone_meta = document.querySelector(`input[name="country_code_${name}"]`).value;
+                var countryData = window.intlTelInputGlobals.getCountryData();
 
-                    var country_selected = "{{ getSelectedCountry('whats_app_no_meta') }}";
+                if(phone_meta !== 'null' && phone_meta !== ''){
 
-                    if(country_selected == 'null' || country_selected == ''){
-                        var country_selected = "{{ getSelectedCountry('whats_app_no_business_meta') }}";
-                    }
+                    // Find the country matching the dial code
+                    var matchedCountry = countryData.find(function(country) {
+                        return country.dialCode === phone_meta;
+                    });
 
-                } else if (name === 'alternate_mob_no_business') { 
-                    var country_selected = "{{ getSelectedCountry('alternate_mob_no_business_meta') }}";
-                } else if (name === 'alternate_whats_app_no_business') { 
-                    var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
-                } else {
-                    var country_selected = "{{ getSelectedCountry('phone_code_meta') }}"; 
-
-                    if(country_selected == 'null' || country_selected == ''){
-                        var country_selected = "{{ getSelectedCountry('phone_business_meta') }}";
-                    }
-
-                }
-
-                if(country_selected !== 'null' && country_selected !== ''){
-                    iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
-                } else {
-                    // Set default country code to +91 (India)
-                    let country = new URLSearchParams(window.location.search).get('type') || 'null';
-
-                    if (country === "domestic") {
-                        iti1.setCountry('in'); // 'in' is the ISO2 code for India
-                    } else if (country === "international") {
-                        iti1.setCountry('us'); // set to 'us' for international
-                    } else {
-                        iti1.setCountry('in'); // default fallback
-                    }
-                }
-
-                // Update the hidden input with the selected country's dial code
-                var countryData = iti1.getSelectedCountryData();
-                document.querySelector(`input[name="country_code_${name}"]`).value = countryData.dialCode;
-                document.querySelector(`input[name="${name}_meta"]`).value = countryData.iso2;
-
-                // Update the country code when the country changes
-                inputElement.addEventListener("countrychange", function () {
-                    var updatedCountryData = iti1.getSelectedCountryData();
-                    document.querySelector(`input[name="country_code_${name}"]`).value = updatedCountryData.dialCode;
-                    document.querySelector(`input[name="${name}_meta"]`).value = updatedCountryData.iso2;
-
-                    metaData[`${name}_meta`] = iti1.getSelectedCountryData().iso2;
-                });
-            }
-
-
-
-            function intil_input_form2(name) {
-                // Select the input element dynamically based on the name parameter
-                var inputElement = document.querySelector(`#${name}`);
-
-                // Initialize the intlTelInput plugin
-                var iti1 = intlTelInput(inputElement, {
-                    separateDialCode: true,
-                    utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
-                    onlyCountries: @php echo json_encode(get_active_countries()->pluck('code')->toArray()) @endphp,
-                    customPlaceholder: function (selectedCountryPlaceholder, selectedCountryData) {
-                        if (selectedCountryData.iso2 === 'bd') {
-                            return "01xxxxxxxxx"; // Custom placeholder for Bangladesh
-                        }
-                        return selectedCountryPlaceholder;
-                    }
-                });
-
-                if(name === 'whats_app_no'){
-
-                    var country_selected = "{{ getSelectedCountry_form2('whats_app_no_meta') }}";
-
-                } else if (name === 'alternate_mob_no_personal') { 
-                    var country_selected = "{{ getSelectedCountry_form2('alternate_mob_no_personal_meta') }}";
-                } else if (name === 'alternate_whats_app_no_personal') { 
-                    var country_selected = "{{ getSelectedCountry_form2('alternate_whats_app_no_personal_meta') }}";
-                } else {
-                    var country_selected = "{{ getSelectedCountry_form2('phone_code_meta') }}"; 
-
-                }
-
-                if(country_selected !== 'null' && country_selected !== ''){
-                    iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
+                    iti1.setCountry(matchedCountry.iso2); // 'in' is the ISO2 code for India
                 } else {
                     // Set default country code to +91 (India)
                     let country = new URLSearchParams(window.location.search).get('type') || 'null';
@@ -511,10 +437,10 @@
                                 --}}
                                 
                             } else if (step == 6) {
-                                intil_input_form2('phone_code');
-                                intil_input_form2('whats_app_no');
-                                intil_input_form2('alternate_mob_no_personal');
-                                intil_input_form2('alternate_whats_app_no_personal');
+                                intil_input('phone_code');
+                                intil_input('whats_app_no');
+                                intil_input('alternate_mob_no_personal');
+                                intil_input('alternate_whats_app_no_personal');
                             }
 
 
@@ -696,89 +622,17 @@
             // iti1.setCountry('in'); // 'in' is the ISO2 code for India --}}
 
 
-            if(name === 'whats_app_no'){
+            var phone_meta = document.querySelector(`input[name="country_code_${name}"]`).value;
+            var countryData = window.intlTelInputGlobals.getCountryData();
 
-                var country_selected = "{{ getSelectedCountry('whats_app_no_meta') }}";
+            if(phone_meta !== 'null' && phone_meta !== ''){
 
-                if(country_selected == 'null' || country_selected == ''){
-                    var country_selected = "{{ getSelectedCountry('whats_app_no_business_meta') }}";
-                }
+                // Find the country matching the dial code
+                var matchedCountry = countryData.find(function(country) {
+                    return country.dialCode === phone_meta;
+                });
 
-            } else if (name === 'alternate_mob_no_business') { 
-                var country_selected = "{{ getSelectedCountry('alternate_mob_no_business_meta') }}";
-            } else if (name === 'alternate_whats_app_no_business') { 
-                var country_selected = "{{ getSelectedCountry('alternate_whats_app_no_business_meta') }}";
-            } else {
-                var country_selected = "{{ getSelectedCountry('phone_code_meta') }}"; 
-
-                if(country_selected == 'null' || country_selected == ''){
-                    var country_selected = "{{ getSelectedCountry('phone_business_meta') }}";
-                }
-
-            }
-
-            if(country_selected !== 'null' && country_selected !== ''){
-                iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
-            } else {
-                // Set default country code to +91 (India)
-                let country = new URLSearchParams(window.location.search).get('type') || 'null';
-
-                if (country === "domestic") {
-                    iti1.setCountry('in'); // 'in' is the ISO2 code for India
-                } else if (country === "international") {
-                    iti1.setCountry('us'); // set to 'us' for international
-                } else {
-                    iti1.setCountry('in'); // default fallback
-                }
-            }
-
-            // Update the hidden input with the selected country's dial code
-            var countryData = iti1.getSelectedCountryData();
-            document.querySelector(`input[name="country_code_${name}"]`).value = countryData.dialCode;
-            document.querySelector(`input[name="${name}_meta"]`).value = countryData.iso2;
-
-            // Update the country code when the country changes
-            inputElement.addEventListener("countrychange", function () {
-                var updatedCountryData = iti1.getSelectedCountryData();
-                document.querySelector(`input[name="country_code_${name}"]`).value = updatedCountryData.dialCode;
-                document.querySelector(`input[name="${name}_meta"]`).value = updatedCountryData.iso2;
-
-                metaData[`${name}_meta`] = iti1.getSelectedCountryData().iso2;
-            });
-        }
-
-        function intil_input_form2(name) {
-            // Select the input element dynamically based on the name parameter
-            var inputElement = document.querySelector(`#${name}`);
-
-            // Initialize the intlTelInput plugin
-            var iti1 = intlTelInput(inputElement, {
-                separateDialCode: true,
-                utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
-                onlyCountries: @php echo json_encode(get_active_countries()->pluck('code')->toArray()) @endphp,
-                customPlaceholder: function (selectedCountryPlaceholder, selectedCountryData) {
-                    if (selectedCountryData.iso2 === 'bd') {
-                        return "01xxxxxxxxx"; // Custom placeholder for Bangladesh
-                    }
-                    return selectedCountryPlaceholder;
-                }
-            });
-
-            if(name === 'whats_app_no'){
-
-                var country_selected = "{{ getSelectedCountry_form2('whats_app_no_meta') }}";
-
-            } else if (name === 'alternate_mob_no_personal') { 
-                var country_selected = "{{ getSelectedCountry_form2('alternate_mob_no_personal_meta') }}";
-            } else if (name === 'alternate_whats_app_no_personal') { 
-                var country_selected = "{{ getSelectedCountry_form2('alternate_whats_app_no_personal_meta') }}";
-            } else {
-                var country_selected = "{{ getSelectedCountry_form2('phone_code_meta') }}"; 
-
-            }
-
-            if(country_selected !== 'null' && country_selected !== ''){
-                iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
+                iti1.setCountry(matchedCountry.iso2);// 'in' is the ISO2 code for India
             } else {
                 // Set default country code to +91 (India)
                 let country = new URLSearchParams(window.location.search).get('type') || 'null';
@@ -869,10 +723,10 @@
                             --}}
                             
                         } else if (step == 6) {
-                            intil_input_form2('phone_code');
-                            intil_input_form2('whats_app_no');
-                            intil_input_form2('alternate_mob_no_personal');
-                            intil_input_form2('alternate_whats_app_no_personal');
+                            intil_input('phone_code');
+                            intil_input('whats_app_no');
+                            intil_input('alternate_mob_no_personal');
+                            intil_input('alternate_whats_app_no_personal');
                         }
 
                     } else {
@@ -973,10 +827,10 @@
                             --}}
                             
                         } else if (step == 6) {
-                            intil_input_form2('phone_code');
-                            intil_input_form2('whats_app_no');
-                            intil_input_form2('alternate_mob_no_personal');
-                            intil_input_form2('alternate_whats_app_no_personal');
+                            intil_input('phone_code');
+                            intil_input('whats_app_no');
+                            intil_input('alternate_mob_no_personal');
+                            intil_input('alternate_whats_app_no_personal');
                         }
 
                     } else {

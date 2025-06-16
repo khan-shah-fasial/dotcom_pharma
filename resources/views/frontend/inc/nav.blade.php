@@ -500,7 +500,7 @@
                                 </span> -->
 
                                  <a href="{{ route('user.login') }}"><i class="las la-user la-2x pt-1 login_icons" style="color: #23780E;"></i></a>
-                                 <a class="b2b_buttons" href="/business/registration" >B2B Registration</a>
+                                 <a class="b2b_buttons" href="{{ route('user.new_registration') }}" >B2B Registration</a>
 
                                 <!-- <a href="{{ route('user.login') }}"
                                     class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block border-right border-soft-light border-width-2 pr-2 ml-3">{{ translate('Login') }}</a>
@@ -591,8 +591,8 @@
                                         </a>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
-                                        <a href="{{ route('create.new.user.registration') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
-                                        <span class="user-top-menu-name has-transition ml-3">{{ translate('Create a free business account') }}</span>
+                                        <a href="{{ route('user.new_registration') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                        <span class="user-top-menu-name has-transition ml-3">{{ translate('B2B Registration') }}</span>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('digital_purchase_history.index') }}"
