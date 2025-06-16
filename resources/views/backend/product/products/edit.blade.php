@@ -342,8 +342,6 @@
                                                 <input type="text" class="form-control @error('product_weight_vol') is-invalid @enderror" name="product_weight_vol" placeholder="{{ translate('Product Weight / Volume') }}" value="{{ $product->product_weight_vol }}">
                                             </div>
                                         </div>
-
-
                                     </div>
 
                                     <!-- Product Category -->
