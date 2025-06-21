@@ -2,7 +2,8 @@
 
 @section('content')
     <div class="container my-3">
-        @if(isset($user->type_option))
+        @php var_dump($user->type_option); @endphp 
+        @if(!empty($user->type_option))
         <div class="card">
 
             <div class="container my-3 mx-2">
@@ -169,6 +170,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="country__code">Country</label>
                                 <p> {{ getParticularData('countries','name',$user->country_id_business ?? 0) ?? "-" }}</p>
+                                
                             </div>
     
                         </div>
@@ -176,7 +178,8 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="country__code">state</label>
-                                <p> {{ getParticularData('states','name',$user->state_id_business ?? 0) ?? "-" }}</p>
+                                {{-- <p> {{ getParticularData('states','name',$user->state_id_business ?? 0) ?? "-" }}</p> --}}
+                                <p> {{ $user->state_id_business ?? "-" }}</p>
                             </div>
     
                         </div>
@@ -184,7 +187,8 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="country__code">City</label>
-                                <p> {{ getParticularData('cities','name',$user->city_id_business ?? 0) ?? "-" }}</p>
+                                {{-- <p> {{ getParticularData('cities','name',$user->city_id_business ?? 0) ?? "-" }}</p> --}}
+                                <p> {{ $user->city_id_business ?? "-" }}</p>
                             </div>
     
                         </div>
@@ -216,7 +220,7 @@
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label text-capitalize" for="pincode">Primary Mobile (this number is user for your Login details)</label>
+                                <label class="form-label text-capitalize" for="pincode">Mobile No</label>
                                 <p> {{ $user->prim_mobile_no_business ?? "-" }}</p>
                             </div>
     
@@ -225,7 +229,7 @@
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Primary Whatapp No</label>
+                                <label class="form-label" for="pincode">Whatapp No</label>
                                 <p> {{ $user->prim_whats_app_no_business ?? "-" }}</p>
                             </div>
     
@@ -252,7 +256,7 @@
                         <div class="col-md-4 mb-4">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Primary E-Mail * (this eamil is user for login details)</label>
+                                <label class="form-label" for="pincode">Primary E-Mail</label>
                                 <p> {{ $user->prim_email_business ?? "-" }}</p>
                             </div>
     
@@ -525,6 +529,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="country__code">Country</label>
                                 <p> {{ getParticularData('countries','name',$user->country_id ?? 0) ?? "-" }}</p>
+                                
                             </div>
     
                         </div>
@@ -532,7 +537,8 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="country__code">state</label>
-                                <p> {{ getParticularData('states','name',$user->state_id ?? 0) ?? "-" }}</p>
+                                {{-- <p> {{ getParticularData('states','name',$user->state_id ?? 0) ?? "-" }}</p> --}}
+                                <p> {{ $user->state_id ?? "-" }}</p>
                             </div>
     
                         </div>
@@ -540,7 +546,8 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="country__code">City</label>
-                                <p> {{ getParticularData('cities','name',$user->city_id ?? 0) ?? "-" }}</p>
+                                {{-- <p> {{ getParticularData('cities','name',$user->city_id ?? 0) ?? "-" }}</p> --}}
+                                <p> {{ $user->city_id ?? "-" }}</p>
                             </div>
     
                         </div>

@@ -308,9 +308,9 @@
         @include('frontend.inc.floating_buttons')
     @endif
 
-    <div class="aiz-refresh">
+    {{-- <div class="aiz-refresh">
         <div class="aiz-refresh-content"><div></div><div></div><div></div></div>
-    </div>
+    </div> --}}
 
 
     @if (env("DEMO_MODE") == "On")
@@ -718,6 +718,7 @@
                         $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
 
                         $('#per-piece-price-product-details').html('Rs. ' + (data?.per_piece_price ?? '-'));
+                        
 
                         $('#mrp-unit').html('Rs. ' + (data?.original_price ?? '-'));
 

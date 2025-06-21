@@ -919,7 +919,7 @@ class HomeController extends Controller
             'variation' => $str,
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
-            'per_piece_price' => $price,
+            'per_piece_price' => (float) number_format($price, 2),
             'original_price' => getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price)
         );
     }

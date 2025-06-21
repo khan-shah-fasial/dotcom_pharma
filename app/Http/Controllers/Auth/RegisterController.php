@@ -1678,14 +1678,14 @@ class RegisterController extends Controller
 
             if ($user) {
 
-                $password = null;
+                $password = null; 
 
                 $user->update([
                     'type_option' => $data_business['type_option'] ?? Session::get('reg_locality'),
                     'name' => $data_personal['name'],
                     'email' => $data_personal['prim_email_personal'],
                     'phone' => '+' . str_replace(' ', '', $data_personal['phone']),
-                    'phone_code_meta' => $data_personal['phone_code_meta'],
+                    // 'phone_code_meta' => $data_personal['phone_code_meta'],
 
                     'email_verified_at' => now(),
                     // password is intentionally NOT updated
@@ -1696,15 +1696,15 @@ class RegisterController extends Controller
                                 $data_personal['village_personal'],
 
                     'postal_code' => $data_business['pincode_business'] ?? $data_personal['pincode_personal'],
-                    'city_id' => $data_business['city_id_business'] ?? $data_personal['city_id'],
-                    'state_id' => $data_business['state_id_business'] ?? $data_personal['state_id'],
-                    'country_id' => $data_business['country_id_business'] ?? $data_personal['country_id'],
+                    'city' => $data_business['city_id_business'] ?? $data_personal['city_id'],
+                    'state' => $data_business['state_id_business'] ?? $data_personal['state_id'],
+                    'country' => $data_business['country_id_business'] ?? $data_personal['country_id'],
 
                     'avatar' => $photo_file,
                     'avatar_original' => $photo_file,
 
-                    'whats_app_no' => $data_business['whats_app_no_business'] ?? $data_personal['whats_app_no'],
-                    'whats_app_no_meta' => $data_business['whats_app_no_business_meta'] ?? $data_personal['whats_app_no_meta'],
+                    // 'whats_app_no' => $data_business['whats_app_no_business'] ?? $data_personal['whats_app_no'],
+                    // 'whats_app_no_meta' => $data_business['whats_app_no_business_meta'] ?? $data_personal['whats_app_no_meta'],
 
                     'gst_no' => $data_business['gst_no'] ?? Null,
                     'iec_no' => $data_business['iec_no'] ?? Null,
@@ -1712,13 +1712,13 @@ class RegisterController extends Controller
                     'aadhaar_no' => $data_personal['aadhaar_no'],
                     'pan_no' => $data_personal['pan_no'],
                     'passport_no' => $data_personal['passport_no'],
-                    'approval_status' => '1',
+                    'approval_status' => '0',
                     'step' => '8',
                 ]);
 
                 $userDetails = UserDetails::where('user_id', $user->id)->update([
                         'user_id' => $user->id,
-                        'type_option' => $data_business['type_option'] ?? Null,
+                        'type_option' => $data_business['type_option'] ?? Session::get('reg_locality'),
                         'gst_no' => $data_business['gst_no'] ?? Null,
 
                         'gst_no_file' => $gst_no_file,
@@ -1850,7 +1850,7 @@ class RegisterController extends Controller
                 'name' => $data_personal['name'],
                 'email' => $data_personal['prim_email_personal'],
                 'phone' => '+' . str_replace(' ', '', $data_personal['phone']),
-                'phone_code_meta' => $data_personal['phone_code_meta'],
+                // 'phone_code_meta' => $data_personal['phone_code_meta'],
 
                 'email_verified_at' => now(),
 
@@ -1862,9 +1862,9 @@ class RegisterController extends Controller
                             $data_personal['village_personal'],
 
                 'postal_code' => $data_business['pincode_business'] ?? $data_personal['pincode_personal'],
-                'city_id' => $data_business['city_id_business'] ?? $data_personal['city_id'],
-                'state_id' => $data_business['state_id_business'] ?? $data_personal['state_id'],
-                'country_id' => $data_business['country_id_business'] ?? $data_personal['country_id'],
+                'city' => $data_business['city_id_business'] ?? $data_personal['city_id'],
+                'state' => $data_business['state_id_business'] ?? $data_personal['state_id'],
+                'country' => $data_business['country_id_business'] ?? $data_personal['country_id'],
 
                 'avatar' => $photo_file,
                 'avatar_original' => $photo_file,

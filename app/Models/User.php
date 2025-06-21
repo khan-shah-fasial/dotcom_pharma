@@ -28,13 +28,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
         'referred_by','provider','provider_id','refresh_token','access_token','user_type','type_option','user_subtype',
-        'name', 'email', 'password', 'address', 'postal_code', 'phone', 'phone_code_meta', 'provider_id', 'email_verified_at',    
+        'name', 'email', 'password', 'address', 'postal_code', 'phone', 'provider_id', 'email_verified_at',    
         'verification_code','new_email_verificiation_code','device_token','avatar','avatar_original','balance','banned','referral_code','customer_package_id','remaining_uploads',
-        'city_id',
-        'state_id',
-        'country_id',
-        'whats_app_no',
-        'whats_app_no_meta',
+        'city',
+        'state',
+        'country',
+
         'gst_no',
         'iec_no',
         'aadhaar_no',
