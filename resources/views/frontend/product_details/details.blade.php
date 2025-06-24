@@ -49,7 +49,10 @@
     @endif
 
     @if (!is_null($detailedProduct->prescription_req))
-        <div class="col-12 mt-1">
+         <!-- Discount percentage -->
+         
+                                
+                                <div class="col-12 mt-1">
             <span class="fw-500 fs-14 text-dark">{{ translate('Prescription Required') }}:</span>
             <span class="text-secondary  fs-14 ">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
         </div>
@@ -63,14 +66,20 @@
     {{-- Pricing Row --}}
 
     <div class="col-12 mt-1">
-        <span><span id="per-piece-price-product-details" class="text-primary fs-18 font-weight-bold"> </span> / Piece</span>   
+        
+    @if (discount_in_percentage($detailedProduct) > 0)
+                                    <span class=" ml-0 fs-14 fw-400 text-white w-35px text-center p-1"
+                                        style="color: #E31E24 !important;">-{{ discount_in_percentage($detailedProduct) }}%off</span>
+                                @endif
+
+        <span class="text-secondary fs-14"><span id="per-piece-price-product-details" class="text-primary fs-24 font-600"> </span> / Piece</span>   
         <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
-        <span class="text-secondary  fs-14 ">Rs {{ $detailedProduct->product_count ?? '-' }} / Count</span>
+        <span class="text-secondary fs-14 ">Rs {{ $detailedProduct->product_count ?? '-' }} / Count</span>
     </div>
 
     {{-- Unit/MRP --}}
 
-    <div class="col-12 mt-1">
+    <div class="col-12 mt-2">
         <span class="fw-500 fs-14 text-dark">{{ translate('Unit/MRP') }}:</span>
         <span id="mrp-unit" class="text-secondary  fs-14 "></span>
     </div>
@@ -150,10 +159,6 @@
 </div>
 
 
-
-
-
-
         <!-- Estimate Shipping Time -->
         @if ($detailedProduct->est_shipping_days)
             <div class="col-auto fs-14 mt-1 d-none">
@@ -169,7 +174,7 @@
         @endif
     </div>
 
-    <p>{{ $detailedProduct->short_description ?? '-' }}</p>
+    <p>{{ $detailedProduct->short_description ?? '' }}</p>
 
     <div class="row align-items-center d-none">
         @if (get_setting('product_query_activation') == 1)
@@ -513,15 +518,15 @@
                         <!--<div class="row no-gutters mb-3">--> <!--old code-->
                         <div class="row no-gutters mb-3 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
                             <!--hiding 1st attribute ROLE [by nexgeno]-->
-                            <div class="col-sm-2">
-                                <div class="text-secondary fs-14 fw-400 mt-2 ">
+                            <div class="col-sm-12">
+                                <div class="text-dark fs-14 fw-500 mt-0 mb-2">
                                     {{ get_single_attribute_name($choice->attribute_id) }}
                                 </div>
                             </div>
-                            <div class="col-sm-10">
+                            <div class="col-sm-12">
                                 <div class="aiz-radio-inline">
                                     @foreach ($choice->values as $key => $value)
-                                        <label class="aiz-megabox pl-0 mr-2 mb-0">
+                                        <label class="aiz-megabox pl-0 mr-1 mb-2">
                                             <!--<input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
                                                 value="{{ $value }}"
                                                 @if ($key == 0) checked @endif>--> <!--old code-->
@@ -530,7 +535,7 @@
                                                 @if ($key == 0 || get_user_subtype() == strtolower($value)) checked @endif>
                                             <!--added user_subtype role condition for role wise price based on session [by nexgeno]-->
                                             <span
-                                                class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3" style="border-radius:5px !important" >
+                                                class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3 fs-12 text-secondary" style="border-radius:5px !important" >
                                                 {{ $value }}
                                             </span>
                                         </label>
@@ -550,7 +555,7 @@
                         <div class="col-sm-10">
                             <div class="aiz-radio-inline">
                                 @foreach (json_decode($detailedProduct->colors) as $key => $color)
-                                    <label class="aiz-megabox pl-0 mr-2 mb-0" data-toggle="tooltip"
+                                    <label class="aiz-megabox pl-0 mr-1 mb-2" data-toggle="tooltip"
                                         data-title="{{ get_single_color_name($color) }}">
                                         <input type="radio" name="color"
                                             value="{{ get_single_color_name($color) }}"
@@ -570,7 +575,7 @@
                 <!-- Quantity + Add to cart -->
                 <div class="row no-gutters mb-3">
                     <div class="col-sm-2">
-                        <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Quantity') }}</div>
+                        <div class="fw-500 fs-16 text-dark mt-2">{{ translate('Quantity') }}</div>
                     </div>
                     <div class="col-sm-10">
                         <div class="product-quantity d-flex align-items-center">
@@ -594,12 +599,12 @@
                                     $qty += $stock->qty;
                                 }
                             @endphp
-                            <div class="avialable-amount opacity-60">
+                            <div class="avialable-amount opacity-60 d-none">
                                 @if ($detailedProduct->stock_visibility_state == 'quantity')
                                     (<span id="available-quantity">{{ $qty }}</span>
                                     {{ translate('available') }})
                                 @elseif($detailedProduct->stock_visibility_state == 'text' && $qty >= 1)
-                                    (<span id="available-quantity">{{ translate('In Stock') }}</span>)
+                                    (<span id="available-quantity" class="">{{ translate('In Stock') }}</span>)
                                 @endif
                             </div>
                         </div>
@@ -611,13 +616,13 @@
             @endif
 
             <!-- Total Price -->
-            <div class="row no-gutters pb-3 d-none" id="chosen_price_div">
-                <div class="col-sm-2">
-                    <div class="text-secondary fs-14 fw-400 mt-1">{{ translate('Total Price') }}</div>
+            <div class="row no-gutters pb-1 d-none" id="chosen_price_div">
+                <div class="col-sm-4">
+                    <div class="fw-500 fs-14 text-dark mt-2">{{ translate('Total Amount Product Wise') }}:</div>
                 </div>
-                <div class="col-sm-10">
+                <div class="col-sm-8">
                     <div class="product-price">
-                        <strong id="chosen_price" class="fs-20 fw-700 text-primary">
+                        <strong id="chosen_price" class="fs-24 fw-500" style="color:#23780E;">
 
                         </strong>
                     </div>
@@ -680,16 +685,20 @@
             </div> --}}
         @endif
 
-        @if (!empty($detailedProduct->tags))
+        <!-- @if (!empty($detailedProduct->tags))
             <div class="d-flex flex-wrap align-items-center mb-0">
                 <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Tags') }}</span><br>
                 <p class="text-secondary fs-14 fw-400 pb-0 mb-0">{{ str_replace(',', ', ', $detailedProduct->tags) }}
                 </p>
             </div>
-        @endif
+        @endif -->
+
+
+        <hr>
+
 
         <!-- Add to cart & Buy now Buttons -->
-        <div class="mt-3">
+        <div class="mt-4">
             @if (!is_user_loggedin())
                 <p>Please login / register to buy or to get detailed information of the product</p>
             @endif
@@ -731,6 +740,7 @@
                 </button>
             @endif
         </div>
+
 
 
         <div class="delivery_section">
