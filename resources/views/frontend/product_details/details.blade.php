@@ -766,7 +766,7 @@
             </div>
 
             <div class="delivery_boxex">
-                <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/free_delivery.svg') }}"></div>
+                <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/non_return_icons.svg') }}"></div>
                 <p>Non Return</p>
             </div>
 
