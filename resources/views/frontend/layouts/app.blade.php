@@ -1161,5 +1161,19 @@ $(window).scroll(function() {
         });
     });
 </script>
+
+<script>
+function scrollTabs(direction) {
+  const wrapper = document.querySelector('.tab-scroll-wrapper-new');
+  const scrollAmount = 150;
+
+  if (direction === 'left') {
+    wrapper.scrollLeft -= scrollAmount;
+  } else {
+    wrapper.scrollLeft += scrollAmount;
+  }
+}
+</script>
+
 </body>
 </html>

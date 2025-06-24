@@ -6,38 +6,52 @@
 
 <div class="pt-4 pb-4">
     <!-- Tabs -->
-    <div class="nav aiz-nav-tabs">
+    <div class="position-relative main_disc_scroll">
+    <button class="scroll-btn left" onclick="scrollTabs('left')">&#10094;</button>
+
+    <div class="tab-scroll-wrapper-new">
+    <ul class="nav nav-tabs flex-nowrap" id="myTab" role="tablist">
 
         @if ($detailedProduct->description != null && !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->description))))) )
 
             @php $active = false; @endphp
+            <li class="nav-item">
             <a href="#tab_default_1" data-toggle="tab"
-                class="mr-5 pb-2 fs-16 fw-700 text-reset active show">{{ translate('Description') }}</a>
-
+                class="text-reset active show">{{ translate('Description') }}</a>
+            </li>
         @endif
         @if ($detailedProduct->video_link != null)
+        <li class="nav-item">
             <a href="#tab_default_2" data-toggle="tab"
-                class="mr-5 pb-2 fs-16 fw-700 text-reset @if($active) active show @endif">{{ translate('Video') }}</a>
-
+                class="text-reset @if($active) active show @endif">{{ translate('Video') }}</a>
+                </li>
             @php $active = false; @endphp
         @endif
         @if ($detailedProduct->pdf != null)
+        <li class="nav-item">
             <a href="#tab_default_3" data-toggle="tab"
-                class="mr-5 pb-2 fs-16 fw-700 text-reset @if($active) active show @endif">{{ translate('Downloads') }}</a>
-
+                class="text-reset @if($active) active show @endif">{{ translate('Downloads') }}</a>
+                </li>
             @php $active = false; @endphp
         @endif
 
         {{-- // Dynamic Tab Headers --}}
         @if (!empty($dynamicTabs) && count($dynamicTabs) > 0)
             @foreach ($dynamicTabs as $index => $tab)
+            <li class="nav-item">
                 <a href="#tab_dynamic_{{ $index }}" data-toggle="tab"
-                class="mr-5 pb-2 fs-16 fw-700 text-reset {{ $index === 0 && $active ? 'active show' : '' }}">
+                class="text-reset {{ $index === 0 && $active ? 'active show' : '' }}">
                     {{ $tab['title'] ?? 'Tab ' . ($index + 1) }}
                 </a>
+            </li>
             @endforeach
         @endif 
+        </ul>
     </div>
+
+    <button class="scroll-btn right" onclick="scrollTabs('right')">&#10095;</button>
+    </div>
+
 
     <!-- Description -->
     <div class="tab-content pt-0">
@@ -50,7 +64,7 @@
 
             <!-- Description -->
             <div class="tab-pane fade active show" id="tab_default_1">
-                <div class="py-5">
+                <div class="py-4">
                     <div class="mw-100 overflow-hidden text-left aiz-editor-data">
                         <?php echo $detailedProduct->getTranslation('description'); ?>
                     </div>
@@ -66,7 +80,7 @@
 
             <!-- Video -->
             <div class="tab-pane fade" id="tab_default_2">
-                <div class="py-5">
+                <div class="py-4">
                     <div class="embed-responsive embed-responsive-16by9">
                         @if ($detailedProduct->video_provider == 'youtube' && isset(explode('=', $detailedProduct->video_link)[1]))
                             <iframe class="embed-responsive-item"
@@ -92,7 +106,7 @@
 
             <!-- Download -->
             <div class="tab-pane fade" id="tab_default_3">
-                <div class="py-5 text-center ">
+                <div class="py-4 text-center ">
                     <a href="{{ uploaded_asset($detailedProduct->pdf) }}"
                         class="btn btn-primary">{{ translate('Download') }}</a>
                 </div>
@@ -103,7 +117,7 @@
         @if (!empty($dynamicTabs) && count($dynamicTabs) > 0)
             @foreach ($dynamicTabs as $index => $tab)
                 <div class="tab-pane fade {{ $index === 0 && $show ? 'active show' : '' }}" id="tab_dynamic_{{ $index }}">
-                    <div class="py-5">
+                    <div class="py-4">
                         <div class="mw-100 overflow-hidden text-left aiz-editor-data">
                             {!! $tab['content'] ?? '' !!}
                         </div>

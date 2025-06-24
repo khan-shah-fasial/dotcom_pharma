@@ -549,7 +549,7 @@
                         <div class="tab-content pt-0">
                             <!-- Description -->
                             <div class="tab-pane fade active show" id="tab_default_1">
-                                <div class="py-5">
+                                <div class="py-4">
                                     <div class="mw-100 overflow-hidden text-left aiz-editor-data">
                                         <?php echo $detailedProduct->getTranslation('description'); ?>
                                     </div>
@@ -558,7 +558,7 @@
 
                             <!-- Video -->
                             <div class="tab-pane fade" id="tab_default_2">
-                                <div class="py-5">
+                                <div class="py-4">
                                     <div class="embed-responsive embed-responsive-16by9">
                                         @if ($detailedProduct->video_provider == 'youtube' && isset(explode('=', $detailedProduct->video_link)[1]))
                                             <iframe class="embed-responsive-item"
@@ -578,7 +578,7 @@
 
                             <!-- Download -->
                             <div class="tab-pane fade" id="tab_default_3">
-                                <div class="py-5 text-center ">
+                                <div class="py-4 text-center ">
                                     <a href="{{ uploaded_asset($detailedProduct->pdf) }}"
                                         class="btn btn-primary">{{ translate('Download') }}</a>
                                 </div>
@@ -586,7 +586,7 @@
 
                             <!-- Review -->
                             <div class="tab-pane fade" id="tab_default_4">
-                                <div class="py-5">
+                                <div class="py-4">
                                     <ul class="list-group list-group-flush">
                                         @foreach ($detailedProduct->reviews->where('status', 1) as $key => $review)
                                             @if ($review->user != null)

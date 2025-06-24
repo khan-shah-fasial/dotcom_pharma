@@ -700,7 +700,7 @@
         <!-- Add to cart & Buy now Buttons -->
         <div class="mt-4">
             @if (!is_user_loggedin())
-                <p>Please login / register to buy or to get detailed information of the product</p>
+                <p class="fs-14">Please login / register to buy or to get detailed information of the product</p>
             @endif
             @if ($detailedProduct->digital == 0)
                 @if (

@@ -1437,3 +1437,52 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     margin-right: auto;
     display: block;
 }
+
+.tab-scroll-wrapper-new {
+    overflow-x: hidden;
+    white-space: nowrap;
+    scroll-behavior: smooth;
+    padding: 0 0px;
+}
+
+.tab-scroll-wrapper-new .nav-tabs {
+    display: inline-flex;
+    min-width: max-content;
+}
+
+.main_disc_scroll .scroll-btn {
+    position: absolute;
+    top: 36%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 24px;
+    opacity: 0.8;
+    color: #000 !important;
+}
+
+.main_disc_scroll .scroll-btn.left {
+    left: -40px;
+}
+
+.main_disc_scroll .scroll-btn.right {
+    right: -40px;
+}
+
+.main_disc_scroll li a.active {
+    color: #609A38 !important;
+    border-bottom: 1px solid #609A38 !important;
+}
+
+.main_disc_scroll .nav-tabs .nav-item {
+    margin-bottom: 10px;
+}
+
+.main_disc_scroll li a {
+    font-weight: 500;
+    margin-right: 35px;
+    padding-bottom: 13px;
+}
