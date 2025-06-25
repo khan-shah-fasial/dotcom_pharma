@@ -29,7 +29,7 @@ class ProductStockService
                 $product_stock->price = request()['price_' . str_replace('.', '_', $str)];
                 $product_stock->role_price = generateRoleBasedPrices(request()['price_' . str_replace('.', '_', $str)]); //price by role
 
-                // $product_stock->per_piece_price = request()->get('per_piece_price_' . str_replace('.', '_', $str), null);
+                $product_stock->dimension = request()->get('dimension_' . str_replace('.', '_', $str), null);
 
                 $product_stock->sku = request()['sku_' . str_replace('.', '_', $str)];
                 $product_stock->qty = request()['qty_' . str_replace('.', '_', $str)];
@@ -40,13 +40,13 @@ class ProductStockService
             unset($collection['colors_active'], $collection['colors'], $collection['choice_no']);
             $qty = $collection['current_stock'];
             $price = $collection['unit_price'];
-            // $per_piece_price = $collection['per_piece_price'] ?? null;
+            $dimension = $collection['dimension'] ?? null;
             unset($collection['current_stock']);
-            unset($collection['per_piece_price']);
+            unset($collection['dimension']);
 
             // $data = $collection->merge(compact('variant', 'qty', 'price', 'per_piece_price'))->toArray();
 
-            $data = $collection->merge(compact('variant', 'qty', 'price'))->toArray();
+            $data = $collection->merge(compact('variant', 'qty', 'price', 'dimension'))->toArray();
             
             ProductStock::create($data);
         }

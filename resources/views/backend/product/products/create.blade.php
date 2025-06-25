@@ -325,20 +325,20 @@
                                         </div>
 
                                         <!-- Product Dimentions  -->
-                                        <div class="form-group row">
+                                        {{-- <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Dimentions')}} </label>
                                             <div class="col-xxl-9">
                                                 <input type="text" class="form-control @error('product_dimentions') is-invalid @enderror" name="product_dimentions" value="{{ old('product_dimentions') }}" placeholder="{{ translate('Product Dimentions') }}">
                                             </div>
-                                        </div>
+                                        </div> --}}
 
                                         <!-- Product weight / volume  -->
-                                        <div class="form-group row">
+                                        {{-- <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Weight / Volume')}} </label>
                                             <div class="col-xxl-9">
                                                 <input type="text" class="form-control @error('product_weight_vol') is-invalid @enderror" name="product_weight_vol" value="{{ old('product_weight_vol') }}" placeholder="{{ translate('Product Weight / Volume') }}">
                                             </div>
-                                        </div>
+                                        </div> --}}
 
 
                                     </div>

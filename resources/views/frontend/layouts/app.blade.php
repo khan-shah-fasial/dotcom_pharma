@@ -722,6 +722,14 @@
 
                         $('#mrp-unit').html('Rs. ' + (data?.original_price ?? '-'));
 
+                        if (data?.dimension) {
+                            $('#product-dimentions-div').removeClass('d-none');
+                            $('#product-dimentions').html(data.dimension);
+                        } else {
+                            $('#product-dimentions-div').addClass('d-none');
+                            $('#product-dimentions').html('-'); // optional fallback if needed
+                        }
+
                         $('.input-number').prop('max', data.max_limit);
                         if(parseInt(data.in_stock) == 0 && data.digital  == 0){
                            $('.buy-now').addClass('d-none');

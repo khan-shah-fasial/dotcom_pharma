@@ -8,9 +8,9 @@
             <td class="text-center">
                 {{translate('Variant Price')}}
             </td>
-            {{-- <td class="text-center">
-				{{translate('Per Piece Price')}}
-			</td> --}}
+            <td class="text-center">
+				{{translate('Dimension')}}
+			</td>
             <td class="text-center" data-breakpoints="lg">
                 {{translate('SKU')}}
             </td>
@@ -78,18 +78,18 @@
                             }
                            @endphp" min="0" step="0.01" class="form-control" required>
                 </td>
-                {{-- <td>
-					<input type="number" lang="en" name="per_piece_price_{{ $str }}" value="@php
+                <td>
+					<input type="text" lang="en" name="dimension_{{ $str }}" value="@php
 
                             if($stock != null){
-                                echo $stock->per_piece_price;
+                                echo $stock->dimension;
                             }
                             else {
-                                echo $unit_price;
+                                echo $str;
                             }
 
-                           @endphp" min="0" step="0.01" class="form-control" required>
-				</td> --}}
+                           @endphp" class="form-control" required>
+				</td>
                 <td>
                     <input type="text" name="sku_{{ $str }}" value="@php
                             if($stock != null) {

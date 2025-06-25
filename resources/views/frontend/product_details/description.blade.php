@@ -20,20 +20,6 @@
                 class="text-reset active show">{{ translate('Description') }}</a>
             </li>
         @endif
-        @if ($detailedProduct->video_link != null)
-        <li class="nav-item">
-            <a href="#tab_default_2" data-toggle="tab"
-                class="text-reset @if($active) active show @endif">{{ translate('Video') }}</a>
-                </li>
-            @php $active = false; @endphp
-        @endif
-        @if ($detailedProduct->pdf != null)
-        <li class="nav-item">
-            <a href="#tab_default_3" data-toggle="tab"
-                class="text-reset @if($active) active show @endif">{{ translate('Downloads') }}</a>
-                </li>
-            @php $active = false; @endphp
-        @endif
 
         {{-- // Dynamic Tab Headers --}}
         @if (!empty($dynamicTabs) && count($dynamicTabs) > 0)
@@ -46,6 +32,22 @@
             </li>
             @endforeach
         @endif 
+
+        @if ($detailedProduct->video_link != null)
+        <li class="nav-item">
+            <a href="#tab_default_2" data-toggle="tab"
+                class="text-reset {{ $index === 0 && $active ? 'active show' : '' }}">{{ translate('Video') }}</a>
+                </li>
+            @php $active = false; @endphp
+        @endif
+        @if ($detailedProduct->pdf != null)
+        <li class="nav-item">
+            <a href="#tab_default_3" data-toggle="tab"
+                class="text-reset {{ $index === 0 && $active ? 'active show' : '' }}">{{ translate('Downloads') }}</a>
+                </li>
+            @php $active = false; @endphp
+        @endif
+
         </ul>
     </div>
 
@@ -73,18 +75,32 @@
 
         @endif
 
+        @if (!empty($dynamicTabs) && count($dynamicTabs) > 0)
+            @foreach ($dynamicTabs as $index => $tab)
+                <div class="tab-pane fade {{ $index === 0 && $show ? 'active show' : '' }}" id="tab_dynamic_{{ $index }}">
+                    <div class="py-4">
+                        <div class="mw-100 overflow-hidden text-left aiz-editor-data">
+                            {!! $tab['content'] ?? '' !!}
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        @endif  
+
 
         @if(!empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->video_link))))))
-
             @php $show = false; @endphp
 
             <!-- Video -->
             <div class="tab-pane fade" id="tab_default_2">
                 <div class="py-4">
                     <div class="embed-responsive embed-responsive-16by9">
-                        @if ($detailedProduct->video_provider == 'youtube' && isset(explode('=', $detailedProduct->video_link)[1]))
+                        {{-- @if ($detailedProduct->video_provider == 'youtube' && isset(explode('=', $detailedProduct->video_link)[1])) --}}
+                        @if ($detailedProduct->video_provider == 'youtube')
+                            {{-- <iframe class="embed-responsive-item"
+                                src="https://www.youtube.com/embed/{{ get_url_params($detailedProduct->video_link, 'v') }}"></iframe> --}}
                             <iframe class="embed-responsive-item"
-                                src="https://www.youtube.com/embed/{{ get_url_params($detailedProduct->video_link, 'v') }}"></iframe>
+                                src="{{ $detailedProduct->video_link }}"></iframe>
                         @elseif ($detailedProduct->video_provider == 'dailymotion' && isset(explode('video/', $detailedProduct->video_link)[1]))
                             <iframe class="embed-responsive-item"
                                 src="https://www.dailymotion.com/embed/video/{{ explode('video/', $detailedProduct->video_link)[1] }}"></iframe>
@@ -113,18 +129,7 @@
             </div>
 
         @endif
-
-        @if (!empty($dynamicTabs) && count($dynamicTabs) > 0)
-            @foreach ($dynamicTabs as $index => $tab)
-                <div class="tab-pane fade {{ $index === 0 && $show ? 'active show' : '' }}" id="tab_dynamic_{{ $index }}">
-                    <div class="py-4">
-                        <div class="mw-100 overflow-hidden text-left aiz-editor-data">
-                            {!! $tab['content'] ?? '' !!}
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        @endif   
+ 
     </div>
 </div>
 

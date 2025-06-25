@@ -10,7 +10,7 @@ class ProductStock extends Model
     use PreventDemoModeChanges;
 
     // protected $fillable = ['product_id', 'variant', 'sku', 'price', 'per_piece_price', 'qty', 'image'];
-    protected $fillable = ['product_id', 'variant', 'sku', 'price', 'qty', 'image'];
+    protected $fillable = ['product_id', 'variant', 'sku', 'price','dimension', 'qty', 'image'];
     //
     public function product(){
     	return $this->belongsTo(Product::class);

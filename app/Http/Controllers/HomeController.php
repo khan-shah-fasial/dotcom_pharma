@@ -853,6 +853,7 @@ class HomeController extends Controller
         $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
         $sku = $product_stock->sku;
         // $per_piece_price = $product_stock->per_piece_price;
+        $dimension = $product_stock->dimension;
 
 
         if ($product->wholesale_product) {
@@ -920,7 +921,8 @@ class HomeController extends Controller
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
             'per_piece_price' => (float) number_format($price, 2),
-            'original_price' => getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price)
+            'original_price' => getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price),
+            'dimension' => $dimension
         );
     }
 
