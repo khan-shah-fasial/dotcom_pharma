@@ -3221,7 +3221,15 @@ if (!function_exists('generateRoleBasedPrices')) {
         $prices = [];
 
         foreach ($percentages as $role => $percent) {
-            $prices[$role] = round($purchasePrice + ($purchasePrice * $percent / 100), 2);
+            // $prices[$role] = round($purchasePrice + ($purchasePrice * $percent / 100), 2);
+            $calculatedPrice = $purchasePrice + ($purchasePrice * $percent / 100);
+            $decimalPart = $calculatedPrice - floor($calculatedPrice);
+
+            if ($decimalPart >= 0.5) {
+                $prices[$role] = ceil($calculatedPrice); // round up to next whole number
+            } else {
+                $prices[$role] = floor($calculatedPrice); // round down
+            }
         }
 
         return json_encode($prices);
