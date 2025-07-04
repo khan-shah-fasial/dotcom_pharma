@@ -3,6 +3,7 @@
     $active = true;
 @endphp
 
+@if($detailedProduct->description != null && !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->description))))) || !empty($dynamicTabs) && count($dynamicTabs) > 0)
 
 <div class="pt-4 pb-4">
     <!-- Tabs -->
@@ -132,4 +133,5 @@
  
     </div>
 </div>
+@endif
 
