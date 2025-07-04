@@ -145,6 +145,13 @@ class AizUploadController extends Controller
 
                 $size = $request->file('aiz_file')->getSize();
 
+                if ($type[$extension] == 'video' && $size > 10 * 1024 * 1024) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Video file size should be less than 10 MB.'
+                    ], 422);
+                }
+
                 if ($type[$extension] == 'image' && $extension != 'svg') {
                     if (get_setting('uploaded_image_format') != "default") {
                         $extension = get_setting('uploaded_image_format');

@@ -557,7 +557,7 @@
                             <h5 class="mb-3 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Product Files & Media')}}</h5>
                             <div class="w-100">
                                 <!-- Gallery Images -->
-                                <div class="form-group row">
+                                {{-- <div class="form-group row">
                                     <label class="col-md-3 col-form-label" for="signinSrEmail">{{translate('Gallery Images')}}</label>
                                     <div class="col-md-9">
                                         <div class="input-group" data-toggle="aizuploader" data-type="image" data-multiple="true">
@@ -570,6 +570,23 @@
                                         <div class="file-preview box sm">
                                         </div>
                                         <small class="text-muted">{{translate('These images are visible in product details page gallery. Minimum dimensions required: 900px width X 900px height.')}}</small>
+                                    </div>
+                                </div> --}}
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-form-label" for="signinSrEmail">{{ translate('Gallery Media') }}</label>
+                                    <div class="col-md-9">
+                                        <div class="input-group" data-toggle="aizuploader" data-type="image,video" data-multiple="true">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
+                                            </div>
+                                            <div class="form-control file-amount">{{ translate('Choose Files') }}</div>
+                                            <input type="hidden" name="photos" value="{{ $product->photos }}" class="selected-files">
+                                        </div>
+                                        <div class="file-preview box sm">
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ translate('These images and videos are visible in the product details page gallery. Minimum image dimensions: 900px × 900px. Accepted video formats: MP4, WEBM.') }}
+                                        </small>
                                     </div>
                                 </div>
                                 <!-- Thumbnail Image -->

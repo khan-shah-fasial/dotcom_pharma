@@ -1232,6 +1232,19 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                         AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files"
                     );
                 });
+
+                uppy.on("upload-error", function (file, error, response) {
+                    if (response && response.status === 422 && response.body && response.body.message) {
+                        // Show the error message (you can replace alert with toast, etc.)
+                        // alert(response.body.message);
+
+                        // Or using AIZ toast if available
+                        AIZ.plugins.notify('danger', response.body.message);
+                    } else {
+                        //console.error("Upload failed:", error);
+                        AIZ.plugins.notify('danger', "Upload failed Server Error");
+                    }
+                });
             }
         },
         tooltip: function () {

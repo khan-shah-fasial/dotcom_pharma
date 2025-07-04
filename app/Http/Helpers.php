@@ -1201,6 +1201,28 @@ if (!function_exists('uploaded_asset')) {
     }
 }
 
+if (!function_exists('check_asset_type')) {
+    function check_asset_type($id)
+    {
+        $asset = Upload::find($id);
+
+        if ($asset) {
+            $file_type = $asset->file_name;
+            $ext = strtolower(pathinfo($file_type, PATHINFO_EXTENSION));
+
+            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'])) {
+                return 'image';
+            } elseif (in_array($ext, ['mp4', 'webm', 'ogg'])) {
+                return 'video';
+            } else {
+                return 'file';
+            }
+        }
+
+        return 'image'; // default fallback
+    }
+}
+
 if (!function_exists('my_asset')) {
     /**
      * Generate an asset path for the application.
