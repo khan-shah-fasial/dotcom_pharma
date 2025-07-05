@@ -233,6 +233,8 @@ class CustomerController extends Controller
     {
         $customer = User::findOrFail($id);
         $customer->customer_products()->delete(); 
+        $customer->user_details()->delete();
+        $customer->addresses()->delete();
 
         User::destroy($id);
         flash(translate('Customer has been deleted successfully'))->success();

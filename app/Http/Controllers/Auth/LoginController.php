@@ -251,7 +251,7 @@ class LoginController extends Controller
     protected function credentials(Request $request)
     {
         if ($request->get('phone') != null) {
-            return ['phone' => "+{$request['country_code']}.'-'.{$request['phone']}", 'password' => $request->get('password')];
+            return ['phone' => "+{$request['country_code']}-{$request['phone']}", 'password' => $request->get('password')];
         } elseif ($request->get('email') != null) {
             return $request->only($this->username(), 'password');
         }

@@ -1712,7 +1712,7 @@ class RegisterController extends Controller
                     'aadhaar_no' => $data_personal['aadhaar_no'],
                     'pan_no' => $data_personal['pan_no'],
                     'passport_no' => $data_personal['passport_no'],
-                    'approval_status' => '0',
+                    'approval_status' => '1',
                     'step' => '8',
                 ]);
 
