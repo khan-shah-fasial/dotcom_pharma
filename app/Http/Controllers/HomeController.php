@@ -851,6 +851,9 @@ class HomeController extends Controller
 
         //$price = $product_stock->price;
         $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+        
+        $base = getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price); //price by role
+
         $sku = $product_stock->sku;
         // $per_piece_price = $product_stock->per_piece_price;
         $dimension = $product_stock->dimension;
@@ -901,6 +904,9 @@ class HomeController extends Controller
             }
         }
 
+        $discount_temp = $base - $price;
+        $dis_percentage = ($discount_temp * 100) / ($base > 0 ? $base : 1);
+
         // taxes
         foreach ($product->taxes as $product_tax) {
             if ($product_tax->tax_type == 'percent') {
@@ -921,8 +927,9 @@ class HomeController extends Controller
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
             'per_piece_price' => (float) number_format($price, 2),
-            'original_price' => getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price),
-            'dimension' => $dimension
+            'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),
+            'dimension' => $dimension,
+            'discount_percentage' => $dis_percentage
         );
     }
 

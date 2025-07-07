@@ -175,6 +175,7 @@ class ProductService
         //Tab content       
         
         $collection['role_price'] = generateRoleBasedPrices($collection['unit_price']); //price by role
+        $collection['mrp_role_price'] = generateRoleBasedPrices($collection['mrp_price']); //mrp_price by role
 
         $data = $collection->merge(compact(
             'user_id',
@@ -352,7 +353,8 @@ class ProductService
         //Tab content    
         
         $collection['role_price'] = generateRoleBasedPrices($collection['unit_price']); //price by role
-        
+        $collection['mrp_role_price'] = generateRoleBasedPrices($collection['mrp_price']); //mrp_price by role
+
         $data = $collection->merge(compact(
             'discount_start_date',
             'discount_end_date',

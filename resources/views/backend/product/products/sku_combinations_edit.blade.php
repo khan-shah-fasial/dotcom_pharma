@@ -9,6 +9,9 @@
                 {{translate('Variant Price')}}
             </td>
             <td class="text-center">
+				{{translate('MRP Variant Price')}}
+			</td>
+            <td class="text-center">
 				{{translate('Dimension')}}
 			</td>
             <td class="text-center" data-breakpoints="lg">
@@ -68,6 +71,21 @@
                             if ($product->unit_price == $unit_price) {
                                 if($stock != null){
                                     echo $stock->price;
+                                }
+                                else {
+                                    echo $unit_price;
+                                }
+                            }
+                            else{
+                                echo $unit_price;
+                            }
+                           @endphp" min="0" step="0.01" class="form-control" required>
+                </td>
+                <td>
+                    <input type="number" lang="en" name="mrp_price_{{ $str }}" value="@php
+                            if ($product->unit_price == $unit_price) {
+                                if($stock != null){
+                                    echo $stock->mrp_price;
                                 }
                                 else {
                                     echo $unit_price;

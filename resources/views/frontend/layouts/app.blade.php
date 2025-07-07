@@ -722,6 +722,16 @@
 
                         $('#mrp-unit').html('Rs. ' + (data?.original_price ?? '-'));
 
+                        if (data?.discount_percentage > 0) {
+                            
+                            $('#dis_per')
+                                .removeClass('d-none')
+                                .html('-' + data.discount_percentage + '% off');
+                        } else {
+                            $('#dis_per')
+                                .addClass('d-none');
+                        }
+
                         if (data?.dimension) {
                             $('#product-dimentions-div').removeClass('d-none');
                             $('#product-dimentions').html(data.dimension);

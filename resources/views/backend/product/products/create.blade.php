@@ -636,15 +636,21 @@
                                         <input type="number" lang="en" min="0" value="0" step="0.01" placeholder="{{ translate('Unit price') }}" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror">
                                     </div>
                                 </div>
-                                <!-- Discount Date Range -->
                                 <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{translate('Unit MRP price')}} <span class="text-danger h5">*</span></label>
+                                    <div class="col-md-6">
+                                        <input type="number" lang="en" min="0" value="0" step="0.01" placeholder="{{ translate('Unit MRP price') }}" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror">
+                                    </div>
+                                </div>
+                                <!-- Discount Date Range -->
+                                <div class="form-group row d-none">
                                     <label class="col-sm-3 control-label" for="start_date">{{translate('Discount Date Range')}}</label>
                                     <div class="col-sm-9">
                                       <input type="text" class="form-control aiz-date-range" name="date_range" placeholder="{{translate('Select Date')}}" data-time-picker="true" data-format="DD-MM-Y HH:mm:ss" data-separator=" to " autocomplete="off">
                                     </div>
                                 </div>
                                 <!-- Discount -->
-                                <div class="form-group row">
+                                <div class="form-group row d-none">
                                     <label class="col-md-3 col-from-label">{{translate('Discount')}} <span class="text-danger h5">*</span></label>
                                     <div class="col-md-6">
                                         <input type="number" lang="en" min="0" value="0" step="0.01" placeholder="{{ translate('Discount') }}" name="discount" class="form-control @error('discount') is-invalid @enderror">
