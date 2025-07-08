@@ -65,7 +65,7 @@
                             </li>
                         <!-- Language switcher -->
                         @if (get_setting('show_language_switcher') == 'on')
-                            <li class="list-inline-item dropdown mr-md-4 mr-2" id="lang-change">
+                            <li class="list-inline-item dropdown mr-md-4 mr-1" id="lang-change">
 
                                 <a href="javascript:void(0)" class="black_light_clr dropdown-toggle fs-12 py-2"
                                     data-toggle="dropdown" data-display="static">

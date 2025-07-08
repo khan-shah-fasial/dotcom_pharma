@@ -11,7 +11,7 @@
     <button class="scroll-btn left" onclick="scrollTabs('left')">&#10094;</button>
 
     <div class="tab-scroll-wrapper-new">
-    <ul class="nav nav-tabs flex-nowrap" id="myTab" role="tablist">
+    <ul class="nav nav-tabs flex-nowrap overflow-auto" id="myTab" role="tablist">
 
         @if ($detailedProduct->description != null && !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->description))))) )
 
@@ -27,7 +27,7 @@
             @foreach ($dynamicTabs as $index => $tab)
             <li class="nav-item">
                 <a href="#tab_dynamic_{{ $index }}" data-toggle="tab"
-                class="text-reset {{ $index === 0 && $active ? 'active show' : '' }}">
+                class="specs-text-rest-class text-reset {{ $index === 0 && $active ? 'active show' : '' }}">
                     {{ $tab['title'] ?? 'Tab ' . ($index + 1) }}
                 </a>
             </li>

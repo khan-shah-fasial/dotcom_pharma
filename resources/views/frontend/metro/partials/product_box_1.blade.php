@@ -88,21 +88,27 @@
         </h3>
 
 
-        <div class="listing_rating rating rating-mr-1">
-                    <i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i><i class="las la-star"></i>
-                </div>
+      @if ($product->auction_product != 1 && $product->rating > 0)
+        <div class="mb-3 d-flex align-items-center gap-2">
+            <span class="rating rating-mr-2">
+                {{ renderStarRating($product->rating) }}
+            </span>
+            <span class="text-muted fs-6">({{ $product->reviews->where('status', 1)->count() }}
+                {{ translate('Customer Reviews') }})</span>
+        </div>
+    @endif
 
         {{--@if(is_user_loggedin())--}} <!--display peice to only logged user [by nexgeno]-->
-        <div class="fs-16 mt-1">
+        <div class="product-lis-box-content">
             @if ($product->auction_product == 0)
                 <!-- Previous price -->
                 @if (home_base_price($product) != home_discounted_base_price($product))
-                    <div class="disc-amount has-transition">
-                        <del class="fw-400 text-secondary mr-1">{{ home_base_price($product) }}</del>
+                    <div class="disc-amount order-2 product-previous-price fs-14 fs-md-14-order-2">
+                        <del class="fw-400 text-secondary mr-1 fs-14">{{ home_base_price($product) }}</del>
                     </div>
                 @endif
                 <!-- price -->
-                <div class="">
+                <div class="fs-16 order-1 fs-md-14-order-1">
                     <span class="fw-700 text-primary">{{ home_discounted_base_price($product) }}</span> <!--old code-->
                     <!-- <span class="fw-700 text-primary">{{ home_usertype_base_price($product) }}</span> display lowest price by user type [by nexgeno] -->
                 </div>
@@ -115,9 +121,9 @@
             @endif
         </div>
         {{--@endif--}}
-    </div>
+        </div>
 
-     <div class="flex_boxex">
+        <div class="flex_boxex cart-btn-gome-page">
          <!-- add to cart -->
             {{--@if(is_user_loggedin())--}}
             <a class="@if (in_array($product->id, $cart_added)) active @endif"
@@ -126,7 +132,7 @@
                 <span><i class="las la-shopping-bag la-2x"></i></span>
             </a>
             {{--@endif--}}
-    </div>
+        </div>
         
     </div>
 </div>

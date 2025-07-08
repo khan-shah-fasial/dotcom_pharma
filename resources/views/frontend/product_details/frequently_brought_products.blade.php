@@ -5,8 +5,8 @@
         </h3>
     </div>
     <div class="px-4">
-        <div class="aiz-carousel gutters-5 half-outside-arrow" data-items="5" data-xl-items="3"
-            data-lg-items="4" data-md-items="3" data-sm-items="2" data-xs-items="2"
+        <div class="aiz-carousel gutters-5 half-outside-arrow" data-items="4" data-xl-items="4"
+            data-lg-items="4" data-md-items="4" data-sm-items="2" data-xs-items="2"
             data-arrows='true' data-infinite='true'>
             @foreach (get_related_products($detailedProduct) as $key => $related_product)
                 <div class="carousel-box">
