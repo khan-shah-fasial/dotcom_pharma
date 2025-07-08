@@ -6,10 +6,10 @@
 				{{translate('Variant')}}
 			</td>
 			<td class="text-center">
-				{{translate('MRP Variant Price')}}
+				{{translate('MRP Price')}}
 			</td>
 			<td class="text-center">
-				{{translate('Variant Price')}}
+				{{translate('Selling Price')}}
 			</td>
 			<td class="text-center">
 				{{translate('Dimension')}}

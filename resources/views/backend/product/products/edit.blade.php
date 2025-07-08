@@ -712,7 +712,7 @@
                                 </div>
 
                                 <div class="form-group row">
-                                    <label class="col-md-3 col-from-label">{{translate('Unit MRP price')}} <span class="text-danger">*</span></label>
+                                    <label class="col-md-3 col-from-label">{{translate('MRP price')}} <span class="text-danger">*</span></label>
                                     <div class="col-md-6">
                                         <input type="text" placeholder="{{translate('Unit MRP price')}}" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" value="{{$product->mrp_price}}" required>
                                     </div>
