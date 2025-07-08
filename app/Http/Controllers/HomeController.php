@@ -929,7 +929,7 @@ class HomeController extends Controller
             'per_piece_price' => round($price, 2),
             'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),
             'dimension' => $dimension,
-            'discount_percentage' => $dis_percentage
+            'discount_percentage' => round($dis_percentage, 2)
         );
     }
 
