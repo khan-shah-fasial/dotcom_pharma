@@ -926,7 +926,7 @@ class HomeController extends Controller
             'variation' => $str,
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
-            'per_piece_price' => (float) number_format($price, 2),
+            'per_piece_price' => round($price, 2),
             'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),
             'dimension' => $dimension,
             'discount_percentage' => $dis_percentage
