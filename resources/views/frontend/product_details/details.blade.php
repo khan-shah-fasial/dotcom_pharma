@@ -20,7 +20,8 @@
     @endif
 
     <!-- Reviews -->
-    @if ($detailedProduct->auction_product != 1)
+
+    @if ($detailedProduct->auction_product != 1 && $detailedProduct->rating > 0)
         <div class="mb-3 d-flex align-items-center gap-2">
             <span class="rating rating-mr-2">
                 {{ renderStarRating($detailedProduct->rating) }}
@@ -138,13 +139,13 @@
         @endif
 
         {{-- Final 6 fields --}}
-        <div class="col-4 mt-1">
+        <div class="col-6 mt-1">
             <span class="fw-500 fs-14 text-dark">{{ translate('Stock Available') }}:</span>
             <span id="qnt-product-details" class="text-secondary  fs-14"></span>
         </div>
 
         @if ($detailedProduct->product_exp_date)
-            <div class="col-8 mt-1">
+            <div class="col-6 mt-1">
                 <span class="fw-500 fs-14 text-dark">{{ translate('Expiry Date') }}:</span>
                 <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_exp_date ?? '-' }}</span>
             </div>
@@ -158,14 +159,14 @@
         @endif
 
         @if ($detailedProduct->product_hsn)
-            <div class="col-8 mt-1">
+            <div class="col-6 mt-1">
                 <span class="fw-500 fs-14 text-dark">{{ translate('HSN / HS Code') }}:</span>
                 <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_hsn ?? '-' }}</span>
             </div>
         @endif
 
-        <div id="product-dimentions-div" class="col-4 mt-1 d-none">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Dimentions') }}:</span>
+        <div id="product-dimentions-div" class="col-6 mt-1 d-none">
+            <span class="fw-500 fs-14 text-dark">{{ translate('Dimensions') }}:</span>
             <span class="text-secondary fs-14" id="product-dimentions"></span>
         </div>
 
@@ -710,9 +711,9 @@
 
 
     <!-- Add to cart & Buy now Buttons -->
-    <div class="mt-4">
+    <div class="mt-3">
         @if (!is_user_loggedin())
-            <p class="fs-14">Please login / register to buy or to get detailed information of the product</p>
+            <p class="fs-14 pb-0">Please login / register to buy or to get detailed information of the product</p>
         @endif
         @if ($detailedProduct->digital == 0)
             @if (
@@ -726,12 +727,12 @@
                 </a>
             @else
                 <button type="button"
-                    class="btn btn-success mr-3 add-to-cart fw-600 min-w-150px rounded-0 text-white border-radius-50"
+                    class="btn btn-success mr-3 add-to-cart fw-600 min-w-150px rounded-0 text-white border-radius-50 mb-1"
                     @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                     <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
                 </button>
                 <button type="button"
-                    class="btn btn-primary buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50"
+                    class="btn btn-primary buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50 mb-1"
                     @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                     <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
                 </button>
