@@ -629,6 +629,13 @@
 
                                 </div>
 
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{translate('Unit MRP price')}} <span class="text-danger h5">*</span></label>
+                                    <div class="col-md-6">
+                                        <input type="number" lang="en" min="0" value="0" step="0.01" placeholder="{{ translate('Unit MRP price') }}" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" required>
+                                    </div>
+                                </div>
+
                                 <!-- Unit price -->
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Unit price')}} <span class="text-danger h5">*</span></label>
@@ -636,12 +643,7 @@
                                         <input type="number" lang="en" min="0" value="0" step="0.01" placeholder="{{ translate('Unit price') }}" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror">
                                     </div>
                                 </div>
-                                <div class="form-group row">
-                                    <label class="col-md-3 col-from-label">{{translate('Unit MRP price')}} <span class="text-danger h5">*</span></label>
-                                    <div class="col-md-6">
-                                        <input type="number" lang="en" min="0" value="0" step="0.01" placeholder="{{ translate('Unit MRP price') }}" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror">
-                                    </div>
-                                </div>
+
                                 <!-- Discount Date Range -->
                                 <div class="form-group row d-none">
                                     <label class="col-sm-3 control-label" for="start_date">{{translate('Discount Date Range')}}</label>

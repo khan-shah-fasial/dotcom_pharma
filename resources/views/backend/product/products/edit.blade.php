@@ -711,18 +711,18 @@
                                     @endforeach
                                 </div>
 
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{translate('Unit MRP price')}} <span class="text-danger">*</span></label>
+                                    <div class="col-md-6">
+                                        <input type="text" placeholder="{{translate('Unit MRP price')}}" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" value="{{$product->mrp_price}}" required>
+                                    </div>
+                                </div>
+
                                 <!-- Unit price -->
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Unit price')}} <span class="text-danger">*</span></label>
                                     <div class="col-md-6">
                                         <input type="text" placeholder="{{translate('Unit price')}}" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror" value="{{$product->unit_price}}">
-                                    </div>
-                                </div>
-
-                                <div class="form-group row">
-                                    <label class="col-md-3 col-from-label">{{translate('Unit MRP price')}} <span class="text-danger">*</span></label>
-                                    <div class="col-md-6">
-                                        <input type="text" placeholder="{{translate('Unit MRP price')}}" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" value="{{$product->mrp_price}}">
                                     </div>
                                 </div>
 
@@ -738,7 +738,7 @@
                                     </div>
                                 </div>
                                 <!-- Discount -->
-                                <div class="form-group row d-none">
+                                <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Discount')}} <span class="text-danger">*</span></label>
                                     <div class="col-md-6">
                                         <input type="number" lang="en" min="0" step="0.01" placeholder="{{translate('Discount')}}" name="discount" class="form-control @error('discount') is-invalid @enderror" value="{{ $product->discount }}">

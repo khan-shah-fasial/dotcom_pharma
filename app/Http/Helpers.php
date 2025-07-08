@@ -699,7 +699,7 @@ if (!function_exists('home_base_price')) {
     function home_base_price($product, $formatted = true)
     {
         //$price = $product->unit_price;
-        $price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
+        $price = getPriceByRole(($product->mrp_role_price ?? $product->role_price) ?? ($product->mrp_role_price ?? $product->role_price), ($product->mrp_price ?? $product->unit_price)); //price by role
         $tax = 0;
 
         foreach ($product->taxes as $product_tax) {

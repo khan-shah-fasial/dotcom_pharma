@@ -6,10 +6,10 @@
 				{{translate('Variant')}}
 			</td>
 			<td class="text-center">
-				{{translate('Variant Price')}}
+				{{translate('MRP Variant Price')}}
 			</td>
 			<td class="text-center">
-				{{translate('MRP Variant Price')}}
+				{{translate('Variant Price')}}
 			</td>
 			<td class="text-center">
 				{{translate('Dimension')}}
@@ -58,10 +58,10 @@
 					<label for="" class="control-label">{{ $str }}</label>
 				</td>
 				<td>
-					<input type="number" lang="en" name="price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required>
+					<input type="number" lang="en" name="mrp_price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required>
 				</td>
 				<td>
-					<input type="number" lang="en" name="mrp_price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required>
+					<input type="number" lang="en" name="price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required>
 				</td>
 				<td>
 					<input type="text" lang="en" name="dimension_{{ $str }}" class="form-control" required>

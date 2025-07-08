@@ -71,13 +71,13 @@
 
         <div class="col-12 mt-1">
 
-            {{-- @if (discount_in_percentage($detailedProduct) > 0)
-                <span class=" ml-0 fs-14 fw-400 text-white w-35px text-center p-1"
+            @if (discount_in_percentage($detailedProduct) > 0)
+                <span id="dis_per" class=" ml-0 fs-14 fw-400 text-white w-35px text-center p-1 d-none"
                     style="color: #E31E24 !important;">-{{ discount_in_percentage($detailedProduct) }}%off</span>
-            @endif --}}
-
-            <span id="dis_per" class=" ml-0 fs-14 fw-400 text-white w-35px text-center p-1 d-none"
-                    style="color: #E31E24 !important;"></span>
+            @endif
+{{-- 
+            <span  class=" ml-0 fs-14 fw-400 text-white w-35px text-center p-1 d-none"
+                    style="color: #E31E24 !important;"></span> --}}
 
             <span class="text-secondary fs-14"><span id="per-piece-price-product-details"
                     class="text-primary fs-24 font-600"> </span> / Piece</span>
