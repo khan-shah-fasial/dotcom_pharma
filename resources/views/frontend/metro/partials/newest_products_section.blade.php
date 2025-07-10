@@ -35,7 +35,7 @@
 
                         <!-- Links -->
                         <div class="d-flex">
-                            <a class="blue_light_clr fs-16 fw-400 hov-text-primary animate-underline-primary"
+                            <a class="blue_light_clr fs-14 fw-400 hov-text-primary animate-underline-primary"
                                 href="{{ route('search', ['sort_by' => 'newest']) }}">{{ translate('View More') }} <i
                                     class="las la-angle-double-right"></i></a>
                         </div>

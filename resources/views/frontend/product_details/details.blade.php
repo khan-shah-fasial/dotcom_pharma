@@ -139,16 +139,17 @@
         @endif
 
         {{-- Final 6 fields --}}
-        <div class="col-6 mt-1">
+        <div class="col-4 mt-1">
             <span class="fw-500 fs-14 text-dark">{{ translate('Stock Available') }}:</span>
             <span id="qnt-product-details" class="text-secondary  fs-14"></span>
         </div>
 
         @if ($detailedProduct->product_exp_date)
-            <div class="col-6 mt-1">
+            <div class="col-4 mt-1">
                 <span class="fw-500 fs-14 text-dark">{{ translate('Expiry Date') }}:</span>
                 <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_exp_date ?? '-' }}</span>
             </div>
+            <div class="col-4"></div>
         @endif
 
         @if ($detailedProduct->category_name)
@@ -159,7 +160,7 @@
         @endif
 
         @if ($detailedProduct->product_hsn)
-            <div class="col-6 mt-1">
+            <div class="col-4 mt-1">
                 <span class="fw-500 fs-14 text-dark">{{ translate('HSN / HS Code') }}:</span>
                 <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_hsn ?? '-' }}</span>
             </div>

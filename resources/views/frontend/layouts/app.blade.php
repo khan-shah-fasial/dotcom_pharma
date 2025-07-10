@@ -1193,5 +1193,35 @@ function scrollTabs(direction) {
 }
 </script>
 
+<script>
+    $(document).ready(function() {
+        $(".human_btn, .veterinary_btn").click(function(e) {
+            e.preventDefault();
+
+            let type = $(this).hasClass("human_btn") ? "Human" : "Veterinary";
+            var home = "{{ route('home') }}"; 
+
+            $.ajax({
+                url: "{{ route('set.web.type') }}", 
+                type: "POST",
+                data: {
+                    type: type,
+                    _token: "{{ csrf_token() }}"
+                },
+                success: function(response) {
+                    if (response.success) {
+                        location.reload(); 
+                    } else {
+                        window.location.href = home;
+                    }
+                },
+                error: function() {
+                    window.location.href = home;
+                }
+            });
+        });
+    });
+</script>
+
 </body>
 </html>

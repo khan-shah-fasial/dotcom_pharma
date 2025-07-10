@@ -22,8 +22,8 @@
                             </a>
                             
                         </div>
-                        <div class="p-0 start">
-                            <h3 class="   fw-500 fs-16 text-truncate-1 lh-1-4 mb-0">
+                        <div class="px-3 pb-2 start">
+                            <h3 class="   fw-500 fs-16 text-truncate-1 lh-1-4 mb-1">
                                 <a href="{{ route('product', $related_product->slug) }}"
                                     class="d-block text-reset hov-text-primary">{{ $related_product->getTranslation('name') }}</a>
                             </h3>

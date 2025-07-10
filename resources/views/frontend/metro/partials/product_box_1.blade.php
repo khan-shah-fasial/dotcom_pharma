@@ -82,7 +82,7 @@
    
     <div class="flex_boxex">
         <!-- Product name -->
-        <h3 class="fw-500 fs-16 text-truncate-1 lh-1-4 mb-0">
+        <h3 class="fw-500 fs-16 text-truncate-1 lh-1-4 mb-1">
             <a href="{{ $product_url }}" class="d-block text-reset hov-text-primary"
                 title="{{ $product->getTranslation('name') }}">{{ $product->getTranslation('name') }}</a>
         </h3>
@@ -103,8 +103,8 @@
             @if ($product->auction_product == 0)
                 <!-- Previous price -->
                 @if (home_base_price($product) != home_discounted_base_price($product))
-                    <div class="disc-amount order-2 product-previous-price fs-14 fs-md-14-order-2">
-                        <del class="fw-400 text-secondary mr-1 fs-14">{{ home_base_price($product) }}</del>
+                    <div class="disc-amount order-2 product-previous-price fs-14 fs-md-14-order-2 d-none d-md-block">
+                        <del class="fw-400 text-secondary mr-1 fs-13">{{ home_base_price($product) }}</del>
                     </div>
                 @endif
                 <!-- price -->

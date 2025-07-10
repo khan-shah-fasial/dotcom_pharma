@@ -218,7 +218,7 @@ li {
     z-index: 0;
 } */
 .sale_box_main .product_img_bg img {
-    height: 80px;
+    height: auto;
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -661,6 +661,11 @@ body .accordion_section .card {
     margin-bottom: 20px;
 }
 
+#pills-tab{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
 
 .tabs_products .nav-link.active {
     background: #123498;
@@ -1089,7 +1094,7 @@ ul.dropdown-menu {
     background: #123498;
     right: -5px !important;
     position: absolute;
-    bottom: -33px !important;
+    bottom: -22px !important;
 }
 
 .sales_box_gren i.las.la-shopping-bag {
@@ -1512,13 +1517,63 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     font-size: 12px !important;
 }
 
-
-
 .cart-btn-gome-page {
     bottom: -3px !important;
 }
 
+.sale_section span.left25 {
+    display: none;
+}
 
+.top-navbar ul.dropdown-menu-right{
+    left: -89px;
+}
+
+.dropdown-menu{
+    min-width: 12rem !important;
+}
+
+.logo_menu .dropdown-menu a:nth-last-child(1){
+    border-bottom: 1px solid #ffffff00;
+}
+
+.human_btn .active_btn{
+    background: #23780E !important;
+    color: white !important;
+    /* filter: brightness(0) invert(1); */
+}
+
+.veterinary_btn .active_btn{
+    background: #123498 !important;
+    color: white !important;
+    /* filter: brightness(0) invert(1); */
+}
+
+.human_btn .active_btn img, 
+.veterinary_btn .active_btn img {
+    filter: brightness(0) invert(1);
+}
+
+@media(min-width:320px) and (max-width:375px){
+    .sale_box_main i.las.la-shopping-bag{
+        bottom: -50% !important;
+
+    }
+}
+
+@media(min-width:375px) and (max-width:425px){
+    .sale_box_main i.las.la-shopping-bag{
+        bottom: -70% !important;
+
+    }
+}
+
+@media(min-width:425px) and (max-width:767px){
+    .sale_box_main i.las.la-shopping-bag{
+        bottom: -70% !important;
+
+    }
+}
 
 @media (max-width: 425px) {
     .main_disc_scroll li a {
@@ -1532,7 +1587,23 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     height: calc(30px * 0.8);
     width: calc(30px * 0.8);
     border: calc(2px * 0.8);
-}
+    }
+
+    .terms_li li {
+    float: left;
+    margin-left: 0px;
+    word-spacing: 3px;
+    line-height: 15px;
+    }
+    .footer-copy-right-sec li a,
+    .footer-copy-right-sec {
+        font-size: 12px !important;
+    }
+    .footer-copy-right-sec {
+        word-spacing: 3px;
+        line-height: 15px;
+    }
+
 }
 
 @media (max-width: 375px) {

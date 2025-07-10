@@ -155,7 +155,7 @@
                                             </div>
                                         </div>
                                         <div class="w-100 d-flex flex-column align-items-center justify-content-end">
-                                            <div class="w-100 text-center pt-3">
+                                            <div class="w-100 text-center pt-1 pt-md-3">
                                                 <p class="pb-0 mb-0 w-100 fs-18 fw-500 black_light_clr animate-underline-white home-category-name d-flex align-items-center justify-content-center hov-column-gap-1">
                                                     {{ $category_name }}
                                                 </p>
@@ -215,7 +215,7 @@
     <!-- Banner Section 2 -->
     @php $homeBanner2Images = get_setting('home_banner2_images', null, $lang);   @endphp
     @if ($homeBanner2Images != null)
-        <div class="pt-md-3 pt-0">
+        <div class="pt-md-4 pt-0">
             <div class="container">
                 @php
                     $banner_2_imags = json_decode($homeBanner2Images);
@@ -251,7 +251,7 @@
 
 
 
-    <section class="pt-2 pb-3">
+    <section class="pt-3 pb-4 mb-1">
        <div class="container">
         <div class="payment_safe_secrtion">
                     <div class="row">
@@ -309,7 +309,7 @@
      <!-- Banner Section 3 -->
     @php $homeBanner3Images = get_setting('home_banner3_images', null, $lang);   @endphp
     @if ($homeBanner3Images != null)
-        <div class="mb-2 mb-md-3 mt-2 mt-md-3 d-md-block d-none">
+        <div class="mb-3 mb-md-4 mt-3 mt-md-4 d-md-block d-none">
             <div class="container">
                 @php
                     $banner_3_imags = json_decode($homeBanner3Images);
@@ -609,7 +609,7 @@
 
 
   <!-- TESTIMONIALS -->
-   <section class="testimonials gray_bg pt-md-5 pb-md-5 pt-4 pb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
+   <section class="testimonials gray_bg pt-md-5 pb-md-4 pt-4 pb-3" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
      <div class="container">
        <div class="text-center">
         <p class="text-white mb-0">TESTIMONIALS</p>

@@ -5,7 +5,7 @@
     p,
     li {
         font-size: 14px;
-        line-height: 26px;
+        line-height: 24px;
     }
 
     html {
@@ -107,7 +107,7 @@
 
     .tabs_products button {
         padding: 0px 10px;
-        margin-right: 9px;
+        margin-right: 0px;
         margin-bottom: 0;
         font-size: 12px;
     }
@@ -121,8 +121,8 @@
     }
 
     .headeing_size {
-        font-size: 24px;
-        line-height: 34px;
+        font-size: 20px;
+        line-height: 30px;
     }
 
     .animate_button {
@@ -264,7 +264,13 @@
     }
 
     .home-category-name {
-        font-size: 16px !important;
+        font-size: 13px !important;
+        padding-left: 1px;
+        padding-right: 1px;
+    }
+
+    .flex_boxex h3 a{
+        font-size: 14px;
     }
 
     .category_borders {
@@ -415,7 +421,7 @@
         padding: 0px 10px;
         margin-right: 9px;
         margin-bottom: 0;
-        font-size: 12px;
+        font-size: 11px;
     }
 
     div#section_newest .product_img_bg {

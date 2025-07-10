@@ -164,7 +164,7 @@
 @php
     $col_values = ((get_setting('vendor_system_activation') == 1) || addon_is_activated('delivery_boy')) ? "col-lg-3 col-md-6 col-sm-6" : "col-md-4 col-sm-6";
 @endphp
-<section class="gray_light text-light footer-widget pt-md-5 pt-4 pb-3">
+<section class="gray_light text-light footer-widget pt-md-5 pt-4 pb-md-5 pb-3">
     <!-- footer widgets ========== [Accordion Fotter widgets are bellow from this]-->
     <div class="container d-lg-block">
         <div class="row">
@@ -596,15 +596,15 @@
     <div class="container">
         <div class="row align-items-center">
             <!-- Copyright -->
-            <div class="col-lg-6">
-                <div class="text-lg-left text-md-center text-left fs-14 text-white" current-verison="{{get_setting("current_version")}}">
+            <div class="col-lg-6 pb-3 pb-md-0">
+                <div class="text-xl-left text-lg-left text-md-center text-center fs-14 text-white footer-copy-right-sec" current-verison="{{get_setting("current_version")}}">
                     {!! get_setting('frontend_copyright_text', null, App::getLocale()) !!}
                 </div>
             </div>
 
             <!-- term condition -->
-            <div class="col-lg-6">
-               <ul class="list-unstyled terms_li">
+            <div class="col-lg-6 pb-md-0">
+               <ul class="list-unstyled terms_li footer-copy-right-sec text-center d-flex justify-content-center flex-wrap">
                        
                             <li class="">
                                 <a href="/privacy-policy" class="fs-14 black_light_clr">
@@ -613,7 +613,7 @@
                             </li>
 
                             <li class="">
-                              |
+                              &nbsp;|&nbsp;
                             </li>
 
                              <li class="">
@@ -623,7 +623,7 @@
                             </li>
 
                              <li class="">
-                              |
+                              &nbsp;|&nbsp;
                             </li>
 
                                <li class="">

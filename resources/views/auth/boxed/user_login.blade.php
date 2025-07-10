@@ -143,7 +143,7 @@
                                             <!-- Email or Phone -->
                                             @if (addon_is_activated('otp_system'))
                                                 <div class="form-group phone-form-group mb-1">
-                                                    <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone') }}</label>
+                                                    <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone') }}1</label>
                                                     <input type="tel" id="phone-code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" value="{{ old('phone') }}" placeholder="" name="phone" autocomplete="off">
                                                 </div>
 
@@ -159,7 +159,7 @@
                                                     @endif
                                                 </div>
                                                 
-                                                <div class="form-group text-right">
+                                                <div class="form-group text-right mb-0">
                                                     <button class="btn btn-link p-0 text-primary fs-12 fw-400" type="button" onclick="toggleEmailPhone(this)"><i>*{{ translate('Use Email Instead') }}</i></button>
                                                 </div>
                                             @else
