@@ -592,19 +592,6 @@
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('user.new_registration') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16.001" height="16" viewBox="0 0 16.001 16">
-                                                <g id="Group_B2B_Registration" data-name="Group B2B Registration" transform="translate(-1400 -570)">
-                                                    <!-- Briefcase -->
-                                                    <path id="Path_briefcase" data-name="Path Briefcase"
-                                                    d="M78,96h-6a1,1,0,0,1-1-1V91a1,1,0,0,1,1-1h1V89a1,1,0,0,1,1-1h2a1,1,0,0,1,1,1v1h1a1,1,0,0,1,1,1v4A1,1,0,0,1,78,96Zm-3-7h-2v1h2Z"
-                                                    transform="translate(1328 484)" fill="#b5b5bf" />
-                                                    
-                                                    <!-- User icon inside the briefcase -->
-                                                    <path id="Path_user" data-name="Path User"
-                                                    d="M72,94a1.5,1.5,0,1,1,1.5-1.5A1.5,1.5,0,0,1,72,94Zm0,1c1.33,0,2.5.67,2.5,1.5V97h-5v-.5C69.5,95.67,70.67,95,72,95Z"
-                                                    transform="translate(1328 484)" fill="#b5b5bf" />
-                                                </g>
-                                            </svg>
                                         <span class="user-top-menu-name has-transition ml-3">{{ translate('B2B Registration') }}</span></a>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
