@@ -40,6 +40,47 @@
                                 placeholder="{{ translate('Type email or name & Phone & Telephone No Enter') }}">
                         </div>
                     </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="company_name"
+                                name="company_name"@isset($company_name) value="{{ $company_name }}" @endisset
+                                placeholder="{{ translate('Type Company Name') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="gst_no"
+                                name="gst_no"@isset($gst_no) value="{{ $gst_no }}" @endisset
+                                placeholder="{{ translate('Type GST No') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="bank_details"
+                                name="bank_details"@isset($bank_details) value="{{ $bank_details }}" @endisset
+                                placeholder="{{ translate('Type Bank Name or Account No or Branch No or Branch Code & IFSC Code & MICR Code & Customer Care Executive Enter') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="license_details"
+                                name="license_details"@isset($license_details) value="{{ $license_details }}" @endisset
+                                placeholder="{{ translate('Type CC No or D.L No 1 or D.L No 2 or D.L No 3 Enter') }}">
+                        </div>
+                    </div>
+                    {{-- <div class="col-md-3 mb-3">
+                        <div class="form-group mb-0">
+                            <input type="date" class="form-control" id="dl_expiry_Data"
+                                name="dl_expiry_Data"@isset($dl_expiry_Data) value="{{ $dl_expiry_Data }}" @endisset>
+                        </div>
+                    </div> --}}
+                    {{-- <div class="col-md-3 mb-3">
+                        <div class="form-group mb-0">
+                            <input type="type" class="form-control" id="transport_Details"
+                                name="transport_Details"@isset($transport_Details) value="{{ $transport_Details }}" @endisset
+                                placeholder="{{ translate('Type Transport or Cargo & Booked To Enter') }}">
+                        </div>
+                    </div> --}}
                     <div class="col-md-3">
                         <select class="form-control aiz-selectpicker" name="verification_status" onchange="sort_customers()"
                             data-selected="{{ $verification_status }}">
@@ -59,25 +100,26 @@
                 <table class="table aiz-table mb-0">
                     <thead>
                         <tr>
-                            {{-- <!--<th data-breakpoints="lg">#</th>--> --}}
+                            <!--<th data-breakpoints="lg">#</th>-->
                             <th>
                                 Sr No.
-                                {{-- <!-- <div class="form-group">
+                                <!-- <div class="form-group">
                                     <div class="aiz-checkbox-inline">
                                         <label class="aiz-checkbox">
                                             <input type="checkbox" class="check-all">
                                             <span class="aiz-square-check"></span>
                                         </label>
                                     </div>
-                                </div> --> --}}
+                                </div> -->
                             </th>
                             <th>{{ translate('Name') }}</th>
                             <th data-breakpoints="lg">{{ translate('Email Address') }}</th>
-                            {{-- <th data-breakpoints="lg">{{ translate('Phone') }}</th> --}}
-                            {{-- <!-- <th data-breakpoints="lg">{{ translate('Package') }}</th> --}}
-                            {{-- <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> --> --}}
+                            <th data-breakpoints="lg">{{ translate('Phone') }}</th>
+                            <!-- <th data-breakpoints="lg">{{ translate('Package') }}</th>
+                            <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> -->
                             <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th>
                             <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th>
+                            <th data-breakpoints="lg">{{ translate('Approval Status') }}</th>
                             <th class="text-right">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
@@ -86,7 +128,7 @@
                             @if ($user != null)
                                 <tr>
                                     <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
-                                    {{-- <!-- <td>
+                                    <!-- <td>
                                         <div class="form-group">
                                             <div class="aiz-checkbox-inline">
                                                 <label class="aiz-checkbox">
@@ -96,7 +138,7 @@
                                                 </label>
                                             </div>
                                         </div>
-                                    </td> --> --}}
+                                    </td> -->
                                     <td>
                                         @if ($user->banned == 1)
                                             <i class="fa fa-ban text-danger" aria-hidden="true"></i>
@@ -104,12 +146,12 @@
                                     </td>
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->phone }}</td>
-                                    {{-- <!-- <td>
+                                    <!-- <td>
                                         @if ($user->customer_package != null)
                                             {{ $user->customer_package->getTranslation('name') }}
                                         @endif
                                     </td>
-                                    <td>{{ single_price($user->balance) }}</td> --> --}}
+                                    <td>{{ single_price($user->balance) }}</td> -->
                                     <td>
                                         @if ($user->email_verified_at != null)
                                             <span
@@ -119,10 +161,10 @@
                                                 class="badge badge-inline badge-warning">{{ translate('Unverified') }}</span>
                                         @endif
                                     </td>
-                                    {{-- <td>
+                                    <td>
                                         <span class="badge badge-inline badge-success">{{ translate('Verified') }}</span>
-                                    </td> --}}
-                                    {{-- <td>
+                                    </td>
+                                    <td>
                                         @if ($user->approval_status == 1)
                                             <span
                                                 class="badge badge-inline badge-success">{{ translate('Verified') }}
@@ -132,14 +174,14 @@
                                                 class="badge badge-inline badge-warning">{{ translate('Unverified') }}
                                             </span>
                                         @endif
-                                    </td> --}}
+                                    </td>
                                     <td class="text-right">
                                         <a href="{{ route('customers.view', encrypt($user->id)) }}"
                                             class="btn btn-soft-success btn-icon btn-circle btn-sm"
                                             title="{{ translate('View Details of this Customer') }}">
                                             <i class="las la-eye"></i>
                                         </a>
-                                        {{-- @can('ban_customer')
+                                        @can('ban_customer')
                                             @if ($user->approval_status != 1)
                                                 <a href="#" class="btn btn-soft-success btn-icon btn-circle btn-sm"
                                                     onclick="show_Approval_model({{ $user->id }}, 'approve', '{{ $user->user_subtype ?? 'null' }}');"
@@ -153,7 +195,7 @@
                                                     <i class="las la-edit"></i>
                                                 </a>
                                             @endif
-                                        @endcan --}}
+                                        @endcan
                                         @if ($user->email_verified_at != null && auth()->user()->can('login_as_customer'))
                                             <a href="{{ route('customers.login', encrypt($user->id)) }}"
                                                 class="btn btn-soft-primary btn-icon btn-circle btn-sm"
