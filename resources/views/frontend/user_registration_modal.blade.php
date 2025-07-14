@@ -869,7 +869,7 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label for="gst_no" class="col-form-label form-label">Photo Upload : *</label>
+                                <label for="gst_no" class="col-form-label form-label pt-0">Photo Upload : *</label>
                                 <input type="file" class="form-control form-control-lg" id="photo_file" name="photo_file"
                                 accept=".jpg, .jpeg, .webp, .png"
                                 >
@@ -1366,7 +1366,7 @@
 
         wrapper.innerHTML = `
             <div class="border p-3 rounded">
-                <button type="button" class="remove_btns btn-sm btn-danger btn-close position-absolute top-0 end-0" aria-label="Remove" title="Remove field"><i class="las la-minus"></i></button>
+                <button type="button" class="remove_btns btn-sm btn-danger btn-close position-absolute top-0 end-0" aria-label="Remove" title="Remove field"><i class="las la-times"></i></button>
 
                 <div class="form-group">
                     <label>${field.label} *</label>
