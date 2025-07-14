@@ -15,7 +15,7 @@ class ProductTaxService
                 $product_tax = new ProductTax();
                 $product_tax->tax_id = $val;
                 $product_tax->product_id = $collection['product_id'];
-                $product_tax->tax = $collection['tax'][$key];
+                $product_tax->tax = $collection['tax'][$key] ?? 0;
                 $product_tax->tax_type = $collection['tax_type'][$key];
                 $product_tax->save();
             }

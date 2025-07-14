@@ -210,45 +210,17 @@ class ProductController extends Controller
     public function store(ProductRequest $request)
     {
 
-        // if ($request->has('choice_no')) {
+        if ($request->has('choice_no')) {
+            foreach ($request->input('choice_no') as $choiceNo) {
+                $choiceOptionsKey = 'choice_options_' . $choiceNo;
 
-        //     // Check if the value '3' is in the array of 'choice_no'
-        //     if (in_array('3', $request->input('choice_no'))) {
-                
-        //         // Check if 'choice_options_3' exists
-        //         if ($request->has('choice_options_3')) {
+                if (!$request->has($choiceOptionsKey)) {
+                    flash(translate("Please select the Attribute"))->error();
+                    return back();
+                }
+            }
+        }
 
-        //             $validChoices = ['Pts', 'Ptr', 'Ptd', 'Gov', 'Expo'];
-        //             $choiceOptions = $request->input('choice_options_3');
-
-        //             $missingChoices = array_diff($validChoices, $choiceOptions);
-
-        //             if (!empty($missingChoices)) {
-
-        //                 flash(translate('Please select all roles'))->error();
-
-
-        //                 return back();
-        //             }
-
-
-        //         } else {
-        //             flash(translate('Please select the role'))->error();
-
-        //             return back();
-        //         }
-        
-        //     } else {
-        //         flash(translate('Please select the role Attribute'))->error();
-
-        //         return back();
-        //     }
-        
-        // } else {
-        //     flash(translate('Please select the product Attribute'))->error();
-
-        //     return back();
-        // }
 
         $product = $this->productService->store($request->except([
             '_token', 'sku', 'choice', 'tax_id', 'tax', 'tax_type', 'flash_deal_id', 'flash_discount', 'flash_discount_type'
@@ -363,45 +335,16 @@ class ProductController extends Controller
     {
 
 
-        // if ($request->has('choice_no')) {
+        if ($request->has('choice_no')) {
+            foreach ($request->input('choice_no') as $choiceNo) {
+                $choiceOptionsKey = 'choice_options_' . $choiceNo;
 
-        //     // Check if the value '3' is in the array of 'choice_no'
-        //     if (in_array('3', $request->input('choice_no'))) {
-                
-        //         // Check if 'choice_options_3' exists
-        //         if ($request->has('choice_options_3')) {
-
-        //             $validChoices = ['Pts', 'Ptr', 'Ptd', 'Gov', 'Expo'];
-        //             $choiceOptions = $request->input('choice_options_3');
-
-        //             $missingChoices = array_diff($validChoices, $choiceOptions);
-
-        //             if (!empty($missingChoices)) {
-
-        //                 flash(translate('Please select all roles'))->error();
-
-
-        //                 return back();
-        //             }
-
-
-        //         } else {
-        //             flash(translate('Please select the role'))->error();
-
-        //             return back();
-        //         }
-        
-        //     } else {
-        //         flash(translate('Please select the role Attribute'))->error();
-
-        //         return back();
-        //     }
-        
-        // } else {
-        //     flash(translate('Please select the product Attribute'))->error();
-
-        //     return back();
-        // }
+                if (!$request->has($choiceOptionsKey)) {
+                    flash(translate("Please select the Attribute"))->error();
+                    return back();
+                }
+            }
+        }
 
         //Product
         $product = $this->productService->update($request->except([
