@@ -495,7 +495,7 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
-                                <input type="text" id="pincode" name="pincode_business"
+                                <input type="number" id="pincode" name="pincode_business"
                                     class="form-control form-control-lg" value="{{ $session_data_user['pincode_business'] ?? '' }}" onchange="pincode_info();" placeholder="Enter Pincode Or Postal Code" required />
                             </div>
 
@@ -739,7 +739,7 @@
 
                                 <div class="form-group">
                                     <label class="form-label" for="micr_code_business">MICR Code </label>
-                                    <input type="text" id="micr_code_business" name="micr_code_business"
+                                    <input type="number" id="micr_code_business" name="micr_code_business"
                                         class="form-control form-control-lg" value="{{ $session_data_user['micr_code_business'] ?? '' }}"  placeholder="Enter MICR Code Ex: 600002025"/>
                                 </div>
 
@@ -986,7 +986,7 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
-                                <input type="text" id="pincode" name="pincode_personal"
+                                <input type="number" id="pincode" name="pincode_personal"
                                     class="form-control form-control-lg" value="{{ $session_data_user['pincode_personal'] ?? '' }}" placeholder="Enter Pincode Or Postal Code"
                                     onchange="pincode_info();" required />
                             </div>
@@ -1171,7 +1171,7 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="account_no_personal">Account No </label>
-                                <input type="text" id="account_no_personal" name="account_no_personal"
+                                <input type="number" id="account_no_personal" name="account_no_personal"
                                     class="form-control form-control-lg" value="{{ $session_data_user['account_no_personal'] ?? '' }}"  placeholder="Enter Account No"/>
                             </div>
 
@@ -1218,7 +1218,7 @@
 
                                 <div class="form-group">
                                     <label class="form-label" for="micr_code_personal">MICR Code </label>
-                                    <input type="text" id="micr_code_personal" name="micr_code_personal"
+                                    <input type="number" id="micr_code_personal" name="micr_code_personal"
                                         class="form-control form-control-lg" value="{{ $session_data_user['micr_code_personal'] ?? '' }}"  placeholder="Enter MICR Code Ex: 123456789"/>
                                 </div>
 
