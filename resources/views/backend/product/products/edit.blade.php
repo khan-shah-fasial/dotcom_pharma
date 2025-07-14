@@ -738,7 +738,7 @@
                                     </div>
                                 </div>
                                 <!-- Discount -->
-                                <div class="form-group row">
+                                <div class="form-group row d-none">
                                     <label class="col-md-3 col-from-label">{{translate('Discount')}} <span class="text-danger">*</span></label>
                                     <div class="col-md-6">
                                         <input type="number" lang="en" min="0" step="0.01" placeholder="{{translate('Discount')}}" name="discount" class="form-control @error('discount') is-invalid @enderror" value="{{ $product->discount }}">

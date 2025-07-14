@@ -213,6 +213,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     // Customer
     Route::resource('customers', CustomerController::class);
     Route::controller(CustomerController::class)->group(function () {
+        Route::get('customers-business', 'business_index')->name('customers.business');
         Route::get('customers_ban/{customer}', 'ban')->name('customers.ban');
         Route::get('/customers/login/{id}', 'login')->name('customers.login');
         Route::get('/customers/destroy/{id}', 'destroy')->name('customers.destroy');

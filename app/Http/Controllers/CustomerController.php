@@ -27,6 +27,29 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         $sort_search = $request->search ?? null;
+        $verification_status =  $request->verification_status ?? null;
+
+        $users = User::where('user_type', 'customer')->whereNull('user_subtype')->orderBy('created_at', 'desc');
+        if($verification_status != null){
+            $users = $verification_status == 'verified' ? $users->where('email_verified_at', '!=', null) : $users->where('email_verified_at', null);
+        }
+        if($verification_status != null){
+            $users = $verification_status == 'verified' ? $users->where('approval_Status', 1) : $users->where('approval_Status', 0);
+        }
+        if ($sort_search != null){
+            $sort_search = $request->search;
+            $users->where(function ($q) use ($sort_search){
+                $q->where('name', 'like', '%'.$sort_search.'%')->orWhere('email', 'like', '%'.$sort_search.'%')->orWhere('phone', 'like', '%'.$sort_search.'%')->orWhere('tel_number', 'like', '%'.$sort_search.'%');
+            });
+        }
+
+        $users = $users->paginate(15);
+        return view('backend.customer.customers.index', compact('users', 'sort_search','verification_status'));
+    }
+
+    public function business_index(Request $request)
+    {
+        $sort_search = $request->search ?? null;
         $company_name = $request->company_name ?? null;
         $verification_status =  $request->verification_status ?? null;
         $bank_details =  $request->bank_details ?? null;
@@ -35,7 +58,7 @@ class CustomerController extends Controller
         $gst_no =  $request->gst_no ?? null;
         $transport_Details =  $request->transport_Details ?? null;
 
-        $users = User::where('user_type', 'customer')->orderBy('created_at', 'desc');
+        $users = User::where('user_type', 'customer')->whereNotNull('step')->orderBy('created_at', 'desc');
         // if($verification_status != null){
         //     $users = $verification_status == 'verified' ? $users->where('email_verified_at', '!=', null) : $users->where('email_verified_at', null);
         // }
@@ -50,10 +73,11 @@ class CustomerController extends Controller
         }
         if ($company_name != null){
             $company_name = $request->company_name;
-            $users->where(function ($q) use ($company_name){
+            $users->whereHas('details',function ($q) use ($company_name){
                 $q->where('company_name', 'like', '%'.$company_name.'%');
             });
         }
+
         if ($gst_no != null){
             $gst_no = $request->gst_no;
             $users->where(function ($q) use ($gst_no){
@@ -62,30 +86,18 @@ class CustomerController extends Controller
         }
         if ($bank_details != null){
             $bank_details = $request->bank_details;
-            $users->where(function ($q) use ($bank_details){
-                $q->where('bank_name', 'like', '%'.$bank_details.'%')->orWhere('account_no', 'like', '%'.$bank_details.'%')->orWhere('branch_no', 'like', '%'.$bank_details.'%')->orWhere('branch_code', 'like', '%'.$bank_details.'%')->orwhere('ifsc_code', 'like', '%'.$bank_details.'%')->orwhere('micr_code', 'like', '%'.$bank_details.'%')->orwhere('customer_care_executive', 'like', '%'.$bank_details.'%');
+            $users->whereHas('details', function ($q) use ($bank_details){
+                $q->where('bank_name_business', 'like', '%'.$bank_details.'%')->orWhere('bank_name_personal', 'like', '%'.$bank_details.'%')->orWhere('account_no_business', 'like', '%'.$bank_details.'%')->orWhere('account_no_personal', 'like', '%'.$bank_details.'%')->orWhere('branch_code_business', 'like', '%'.$bank_details.'%')->orWhere('branch_code_personal', 'like', '%'.$bank_details.'%')->orwhere('ifsc_code_business', 'like', '%'.$bank_details.'%')->orwhere('ifsc_code_personal', 'like', '%'.$bank_details.'%')->orwhere('micr_code_business', 'like', '%'.$bank_details.'%')->orwhere('micr_code_personal', 'like', '%'.$bank_details.'%');
             });
         }
         if ($license_details != null){
             $license_details = $request->license_details;
-            $users->where(function ($q) use ($license_details){
+            $users->whereHas('details', function ($q) use ($license_details){
                 $q->where('cc_no', 'like', '%'.$license_details.'%')->orWhere('d_l_no_1', 'like', '%'.$license_details.'%')->orWhere('d_l_no_2', 'like', '%'.$license_details.'%')->orWhere('d_l_no_3', 'like', '%'.$license_details.'%');
             });
         }
-        if ($dl_expiry_Data != null){
-            $dl_expiry_Data = $request->dl_expiry_Data;
-            $users->where(function ($q) use ($dl_expiry_Data){
-                $q->where('d_l_exp_Date', $dl_expiry_Data);
-            });
-        }
-        if ($transport_Details != null){
-            $transport_Details = $request->transport_Details;
-            $users->where(function ($q) use ($transport_Details){
-                $q->where('transport', 'like', '%'.$transport_Details.'%')->orWhere('cargo', 'like', '%'.$transport_Details.'%')->orWhere('booked_to', 'like', '%'.$transport_Details.'%');
-            });
-        }
         $users = $users->paginate(15);
-        return view('backend.customer.customers.index', compact('users', 'sort_search','company_name','bank_details','license_details','dl_expiry_Data','gst_no','transport_Details','verification_status'));
+        return view('backend.customer.customers.businessindex', compact('users', 'sort_search','company_name','bank_details','license_details','gst_no','verification_status'));
     }
 
     /**

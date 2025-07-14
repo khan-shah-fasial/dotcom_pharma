@@ -613,7 +613,14 @@
                             @can('view_all_customers')
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('customers.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['customers.create'])}}">
-                                        <span class="aiz-side-nav-text">{{ translate('Customer list') }}</span>
+                                        <span class="aiz-side-nav-text">{{ translate('Normal Customer list') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_all_customers')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('customers.business') }}" class="aiz-side-nav-link">
+                                        <span class="aiz-side-nav-text">{{ translate('Business Customer list') }}</span>
                                     </a>
                                 </li>
                             @endcan
