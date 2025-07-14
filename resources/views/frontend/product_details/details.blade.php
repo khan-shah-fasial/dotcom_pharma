@@ -5,7 +5,7 @@
     }
 </style>
 
-<div class="text-left product_disc_text">
+<div class="text-left">
     <!-- Product Name -->
     <h2 class="mb-3 fs-md-34 fs-24 fw-600">
         {{ $detailedProduct->getTranslation('name') }}
@@ -13,8 +13,8 @@
 
     <!-- Drug Name -->
     @if (!empty($detailedProduct->drug_name))
-        <p class="mb-2 fw-500 fs-14 text-dark">
-            <span class="fs-500">{{ translate('Drug Name') }}:</span>
+        <p class="mb-2 fs-6 text-muted">
+            <strong class="text-dark">{{ translate('Drug Name') }}:</strong>
             {{ $detailedProduct->drug_name }}
         </p>
     @endif

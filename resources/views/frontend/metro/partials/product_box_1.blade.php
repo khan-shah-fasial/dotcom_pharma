@@ -13,8 +13,11 @@
         <a href="{{ $product_url }}" class="d-block h-100">
             <img class="lazyload mx-auto img-fit has-transition"
                 src="{{ get_image($product->thumbnail) }}"
-                alt="{{ $product->getTranslation('name') }}" title="{{ $product->getTranslation('name') }}"
+                alt="{{ $product->getTranslation('name') }}"
+                title="{{ $product->getTranslation('name') }}"
+                style="width: 250px; height: 250px; object-fit: cover;"
                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+
         </a>
 
         <!-- Discount percentage tag -->
@@ -78,7 +81,7 @@
         @endif
     </div>
 
-    <div class="product_box_mains">
+    <div class="product_box_mains pt-2 pb-3">
    
     <div class="flex_boxex">
         <!-- Product name -->
@@ -103,7 +106,7 @@
             @if ($product->auction_product == 0)
                 <!-- Previous price -->
                 @if (home_base_price($product) != home_discounted_base_price($product))
-                    <div class="disc-amount order-2 product-previous-price fs-14 fs-md-14-order-2 d-none d-md-block">
+                    <div class="disc-amount order-2 product-previous-price fs-14 fs-md-14-order-2 d-none">
                         <del class="fw-400 text-secondary mr-1 fs-13">{{ home_base_price($product) }}</del>
                     </div>
                 @endif

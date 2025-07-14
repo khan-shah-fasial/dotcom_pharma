@@ -256,6 +256,10 @@
         font-size: 20px !important;
     }
 
+    .fs-md-14-order-1 {
+        font-size: 14px !important;
+    }
+
     .header_menu_links {
         padding: 0 !important;
         padding-bottom: 8px !important;
@@ -264,7 +268,7 @@
     }
 
     .home-category-name {
-        font-size: 13px !important;
+        font-size: 12px !important;
         padding-left: 1px;
         padding-right: 1px;
     }
@@ -294,6 +298,29 @@
 
     .login_form_popup {
         padding-left: 0px !important;
+    }
+
+    .category_images img {
+        width: 80px;
+        padding: 22px;
+    }
+
+    .category_boxex_main {
+        border: 1px solid #123498;
+        margin: 0px 10px;
+        border-radius: 20px;
+        padding-top: 15px;
+    }
+
+    .category_borders {
+        width: 95px !important;
+        height: 95px !important;
+        padding-top: 4px;
+    }
+
+    .category_images {
+        width: 85px;
+        height: 85px;
     }
 
 }

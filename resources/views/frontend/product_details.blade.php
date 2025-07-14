@@ -56,7 +56,72 @@
 @endsection
 
 @section('content')
-    <section class="mb-md-4 pt-3">
+<!--  -->
+<!-- Breadcrumb details page -->
+ <section class=" pt-1 pb-0 breacrums_bg">
+    <div class="container">
+        <div class="row">
+            <!-- <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2">
+    
+                <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100">
+                    <a class="text-reset" href="{{ route('home') }}">{{ translate('Home') }}</a>
+                </li>
+                
+                
+                @if(!isset($category))
+                    <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100">
+                        {{ translate('All Categories') }}
+                    </li>
+                @else
+                    <li class="breadcrumb-item opacity-50 hov-opacity-100">
+                        <a class="text-reset" href="{{ route('search') }}">{{ translate('All Categories') }}</a>
+                    </li>
+                @endif
+                
+                
+                @isset($category)
+                    <li class="breadcrumb-item opacity-50 hov-opacity-100">
+                        <a class="text-reset" href="{{ route('products.category', $category->slug) }}">
+                            {{ $category->getTranslation('name') }}
+                        </a>
+                    </li>
+                @endisset
+                
+                
+                @isset($detailedProduct)
+                    @if($detailedProduct->name && !empty(trim($detailedProduct->name)))
+                        <li class="breadcrumb-item fw-700 text-dark">
+                            {{ $detailedProduct->getTranslation('name') }}
+                        </li>
+                    @endif
+                @endisset
+            </ul> -->
+            <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2">
+            <!-- 1. Home (Always shown) -->
+            <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100 fs-12">
+                <a class="text-reset" href="{{ route('home') }}">{{ translate('Home') }}</a>
+            </li>
+
+            <!-- 3. FORCE Pharma Category (If exists) -->
+            @if(isset($detailedProduct) && $detailedProduct->pharma_categories)
+                <li class="breadcrumb-item opacity-50 hov-opacity-100 fs-12">
+                    {{ $detailedProduct->pharma_categories }}
+                </li>
+            @endif
+
+            <!-- 4. Product Name (Always shown if product exists) -->
+            @if(isset($detailedProduct))
+                <li class="breadcrumb-item text-dark fw-600 fs-12">
+                    {{ $detailedProduct->drug_name ?? $detailedProduct->name }}
+                </li>
+            @endif
+        </ul>
+        </div>
+    </div>
+ </section>
+<!--  -->
+
+    <section class="mb-md-4 pt-0">
         <div class="container">
             <div class="bg-white py-3">
                 <div class="row">

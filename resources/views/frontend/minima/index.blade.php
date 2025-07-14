@@ -146,7 +146,7 @@
                             @endphp
                             <div class="carousel-box position-relative p-0 has-transition border-right border-top border-bottom @if ($key == 0) border-left @endif">
                                 <div class="h-200px h-sm-250px h-md-340px">
-                                    <div class="h-100 w-100 w-xl-auto position-relative hov-scale-img overflow-hidden">
+                                    <div class="h-100 w-100 w-xl-auto position-relative hov-scale-img overflow-hidden p-1">
                                         <div class="position-absolute h-100 w-100 overflow-hidden">
                                             <img src="{{ isset($category->coverImage->file_name) ? my_asset($category->coverImage->file_name) : static_asset('assets/img/placeholder.jpg') }}"
                                                 alt="{{ $category_name }}"

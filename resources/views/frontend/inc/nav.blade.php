@@ -33,8 +33,8 @@
               <div class="col-6 d-md-block d-none">
                       <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                             <li class="list-inline-item">
-                                 <a href="mailto:info@dotcompharmaindia.com" class=" text-secondary fs-12 py-2">
-                                   <img class="w-100" src="{{ static_asset('assets/img/envelope_icons.svg') }}" />info@dotcompharmaindia.com
+                                 <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
+                                   <img class="w-100" src="{{ static_asset('assets/img/envelope_icons.svg') }}" />+91 88281 11034
                                 </a>
                             </li>
 
@@ -592,6 +592,7 @@
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('user.new_registration') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                            <i class="las la-business-time"></i>
                                         <span class="user-top-menu-name has-transition ml-3">{{ translate('B2B Registration') }}</span></a>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">

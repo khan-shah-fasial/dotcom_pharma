@@ -133,8 +133,8 @@
                 </div>
             </div>
             <!-- Categories -->
-            <div class="bg-white px-sm-3">
-                <div class="aiz-carousel sm-gutters-17" data-items="7" data-xxl-items="7" data-xl-items="7"
+            <div class="bg-white px-sm-3 top-category-product-sec">
+                <div class="aiz-carousel sm-gutters-17 top-category-product-carousel" data-items="7" data-xxl-items="7" data-xl-items="7"
                     data-lg-items="5" data-md-items="4" data-sm-items="2" data-xs-items="2" data-arrows="true"
                     data-dots="false" data-autoplay="false" data-infinite="true">
                     @foreach ($featured_categories as $key => $category)
@@ -145,7 +145,7 @@
                         <a href="{{ route('products.category', $category->slug) }}" class="d-block text-decoration-none">
                             <div class="carousel-box position-relative p-0 has-transition">
                                 <div class="category_boxex_main">
-                                    <div class="w-xl-auto position-relative hov-scale-img overflow-hidden">
+                                    <div class="w-xl-auto position-relative hov-scale-img overflow-hidden p-1">
                                         <div class="category_borders">
                                             <div class="category_images">
                                                 <img src="{{ isset($category->coverImage->file_name) ? my_asset($category->coverImage->file_name) : static_asset('assets/img/placeholder.jpg') }}"
@@ -348,8 +348,36 @@
     </div>
 
 
-    <section class="sale_section">
+    <section class="sale_section position-relative">
             <img class="w-100 mb-md-0 mb-4" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
+            <!--  -->
+            <a href="#" class="btn" data-toggle="modal" data-target="#exampleModal">
+                <img src="assets/img/play_button_icon.webp" class="pulse-button space_1" alt="">
+            </a>
+
+            <div class="modal fade bd-example-modal-lg in" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                    <div>
+                        <button type="button" class="close position-absolute right-0 p-1 pluse-button-pop-up d-flex justify-content-center align-items-center" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"><img alt="close" src="assets/img/lightbox-close.png"></span>
+                        </button>
+                    </div>
+                    <div class="modal-body m-0 p-1">
+                        <div class="embed-responsive embed-responsive-16by9">
+                            <iframe 
+                                class="embed-responsive-item" 
+                                src="https://www.youtube.com/embed/0PHBJvkiQOM" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!--  -->
             <div class="container">
                 <div class="row">
                     <div class="col-lg-4 col-md-6">

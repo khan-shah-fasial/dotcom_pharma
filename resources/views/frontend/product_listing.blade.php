@@ -36,6 +36,39 @@
 
 @section('content')
 
+<!-- Breadcrumb Listing Page-->
+<section class="bg_gray pt-4">
+        <div class="container">
+                            <div class="row">
+                                <div class="col-lg-12  text-center">
+                                    <!--  -->
+                                    <h1 class="fw-600 h4">All Categories</h1>
+                                    <ul class="breadcrumb bg-transparent p-0 justify-content-center">
+                                        <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100">
+                                            <a class="text-reset" href="{{ route('home') }}">{{ translate('Home')}}</a>
+                                        </li>
+                                        @if(!isset($category_id))
+                                            <li class="text-dark fw-600 breadcrumb-item">
+                                                {{ translate('All Categories')}}
+                                            </li>
+                                        @else
+                                            <li class="breadcrumb-item opacity-50 hov-opacity-100">
+                                                <a class="text-reset" href="{{ route('search') }}">{{ translate('All Categories')}}</a>
+                                            </li>
+                                        @endif
+                                        @if(isset($category_id))
+                                            <li class="text-dark fw-600 breadcrumb-item">
+                                                "{{ $category->getTranslation('name') }}"
+                                            </li>
+                                        @endif
+                                    </ul>
+                                </div>
+                            
+                            </div>
+                        </div>
+    </section>
+
+
     <section class="mb-4 pt-4">
         <div class="container sm-px-0 pt-2">
             <form class="" id="search-form" action="" method="GET">
@@ -233,7 +266,7 @@
                     <div class="col-xl-9">
                         
                         <!-- Breadcrumb -->
-                        <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2">
+                        <!-- <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2">
                             <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100">
                                 <a class="text-reset" href="{{ route('home') }}">{{ translate('Home')}}</a>
                             </li>
@@ -251,7 +284,7 @@
                                     "{{ $category->getTranslation('name') }}"
                                 </li>
                             @endif
-                        </ul>
+                        </ul> -->
                         
                         <!-- Top Filters -->
                         <div class="text-left pl-md-2">

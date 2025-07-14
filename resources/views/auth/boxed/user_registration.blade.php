@@ -116,7 +116,7 @@
                                             <div class="form-group mb-3">
                                                 <label class="aiz-checkbox">
                                                     <input type="checkbox" name="checkbox_example_1" required>
-                                                    <span class="">{{ translate('By signing up you agree to our ')}} <a href="{{ route('terms') }}" class="fw-500">{{ translate('terms and conditions.') }}</a></span>
+                                                    <span class="">{{ translate('By signing up you agree to our ')}} <a href="{{ route('terms') }}" class="fw-500">{{ translate('T&C.') }}</a></span>
                                                     <span class="aiz-square-check"></span>
                                                 </label>
                                             </div>
@@ -166,20 +166,31 @@
                                     </div>
 
                                     <!-- Log In -->
-                                    <p class="fs-12 text-gray mb-0">
+                                    <p class="fs-12 text-gray mb-2">
                                         {{ translate('Already have an account?')}}
-                                        <a href="{{ route('user.login') }}" class="ml-2 fs-14 fw-700 animate-underline-primary">{{ translate('Log In')}}</a>
+                                        <a href="{{ route('user.login') }}" class="ml-2 fs-12 fw-700 animate-underline-primary">{{ translate('Log In')}}</a>
                                     </p>
 
                                     <p class="fs-12 text-gray mb-0">
                                         {{ translate('Buying for work?')}}
-                                        <a href="{{ route('user.new_registration') }}" class="ml-2 fs-14 fw-700 animate-underline-primary">{{ translate('Create a Business Account')}}</a>
+                                        <a href="{{ route('user.new_registration') }}" class="ml-2 fs-12 fw-700 animate-underline-primary">{{ translate('Create a Business Account')}}</a>
+                                    </p>
+
+                                    <!-- Go to Home Page & Previous Page -->
+                                    <p class="fs-12 text-gray mb-0 mt-4 d-flex align-items-center justify-content-between">
+                                        <a href="/" class="mr-0 fs-12 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
+                                            <i class="las la-home fs-16 mr-1"></i> Go to Home Page
+                                        </a>
+                                        <a href="{{ url()->previous() }}" class="ml-0 fs-12 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
+                                                <i class="las la-arrow-left fs-20 mr-1"></i>
+                                                Back to Previous Page
+                                        </a>
                                     </p>
                                 </div>
                             </div>
                         </div>
                         <!-- Go Back -->
-                        <div class="mt-3 mr-4 mr-md-0">
+                        <div class="mt-3 mr-4 mr-md-0 d-none">
                             <a href="{{ url()->previous() }}" class="ml-auto fs-14 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
                                 <i class="las la-arrow-left fs-20 mr-1"></i>
                                 {{ translate('Back to Previous Page')}}

@@ -39,7 +39,7 @@
                                     <i class="las la-angle-down fs-18"></i>
                                 </div>
                                 <div id="collapseShippingInfo" class="collapse show" aria-labelledby="headingShippingInfo" data-parent="#accordioncCheckoutInfo">
-                                    <div class="card-body" id="shipping_info">
+                                    <div class="card-body pt-0" id="shipping_info">
                                        @include('frontend.partials.cart.shipping_info', ['address_id' => $address_id])
                                     </div>
                                 </div>
@@ -57,7 +57,7 @@
                                     <i class="las la-angle-down fs-18"></i>
                                 </div>
                                 <div id="collapseDeliveryInfo" class="collapse show" aria-labelledby="headingDeliveryInfo" data-parent="#accordioncCheckoutInfo">
-                                    <div class="card-body" id="delivery_info">
+                                    <div class="card-body pt-0" id="delivery_info">
                                         @include('frontend.partials.cart.delivery_info', ['carts' => $carts, 'carrier_list' => $carrier_list, 'shipping_info' => $shipping_info])
                                     </div>
                                 </div>
@@ -76,7 +76,7 @@
                                     <i class="las la-angle-down fs-18"></i>
                                 </div>
                                 <div id="collapsePaymentInfo" class="collapse show" aria-labelledby="headingPaymentInfo" data-parent="#accordioncCheckoutInfo">
-                                    <div class="card-body" id="payment_info">
+                                    <div class="card-body pt-0" id="payment_info">
                                         @include('frontend.partials.cart.payment_info', ['carts' => $carts, 'total' => $total])
 
                                         <!-- Agree Box -->
