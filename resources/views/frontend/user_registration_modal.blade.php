@@ -82,6 +82,7 @@
         <div class="modal-dialog" role="document"> --}}
 
             <div class="modal-content py-3">
+
                 <div class="modal-header">
                     <div class="heading">
                         <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
@@ -137,6 +138,8 @@
         <div class="modal-dialog" role="document"> --}}
 
             <div class="modal-content py-3">
+
+
                 <div class="modal-header">
                     <div class="heading">
                         <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
@@ -185,6 +188,8 @@
     <div class="modal-dialog" role="document"> --}}
 
         <div class="modal-content py-3">
+             
+
             <div class="modal-header">
                 <div class="heading">
                     <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
@@ -271,6 +276,9 @@
     <div class="modal-dialog modal-lg" role="document"> --}}
 
         <div class="modal-content py-3">
+             <div class="blue_btn black_buttons black_buttons_top">
+                                <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
+                    </div>
             <div class="modal-header">
                 <div class="heading">
                     <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
@@ -792,6 +800,11 @@
     <div class="modal-dialog modal-lg" role="document"> --}}
 
         <div class="modal-content py-3">
+
+         <div class="blue_btn black_buttons black_buttons_top">
+                                <button type="button" onclick="back_to_prev_reg();" class=""><img src="{{ static_asset('assets/img/arrow_right.svg') }}" /> Previous</button>
+                    </div>
+
             <div class="modal-header">
                 <div class="heading">
                     <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />

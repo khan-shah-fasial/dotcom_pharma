@@ -510,6 +510,16 @@ body .form-control:focus {
 .blue_btn button {
     border-radius: 50px;
     padding: 7px 25px;
+    padding-left: 0px !important;
+}
+
+.black_buttons_top button {
+    padding-left: 0;
+}
+
+.black_buttons_top {
+    position: absolute;
+    z-index: 99;
 }
 
 .login_form_popup .modal-content {
