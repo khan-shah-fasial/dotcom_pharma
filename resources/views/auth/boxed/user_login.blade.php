@@ -143,7 +143,7 @@
                                             <!-- Email or Phone -->
                                             @if (addon_is_activated('otp_system'))
                                                 <div class="form-group phone-form-group mb-1">
-                                                    <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone') }}1</label>
+                                                    <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone') }}</label>
                                                     <input type="tel" id="phone-code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" value="{{ old('phone') }}" placeholder="" name="phone" autocomplete="off">
                                                 </div>
 
@@ -264,6 +264,17 @@
                                         {{ translate('Dont have an account?')}}
                                         <a href="{{ route('user.registration') }}" class="ml-2 fs-14 fw-700 animate-underline-primary">{{ translate('Register Now')}}</a>
                                     </p>
+
+                                    <!-- Go to Home Page & Previous Page -->
+                                    <p class="fs-12 text-gray mb-0 mt-4 d-flex align-items-center justify-content-between">
+                                        <a href="/" class="mr-0 fs-12 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
+                                            <i class="las la-home fs-16 mr-1"></i> Go to Home Page
+                                        </a>
+                                        <a href="{{ url()->previous() }}" class="ml-0 fs-12 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
+                                                <i class="las la-arrow-left fs-20 mr-1"></i>
+                                                Back to Previous Page
+                                        </a>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -274,6 +285,7 @@
                                 {{ translate('Back to Previous Page')}}
                             </a>
                         </div> --}}
+
                     </div>
                 </div>
             </div>

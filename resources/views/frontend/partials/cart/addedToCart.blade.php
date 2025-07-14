@@ -20,7 +20,7 @@
                 {{  $product->getTranslation('name')  }}
             </h6>
             <div class="row mt-2">
-                <div class="col-sm-3 fs-14 fw-400 text-secondary">
+                <div class="col-sm-3 fs-14 fw-400 text-secondary d-none">
                     <div>{{ translate('Price')}}</div>
                 </div>
                 <div class="col-sm-9">
@@ -48,7 +48,7 @@
                     <div class="aiz-card-box my-2 has-transition">
                         <div class="">
                             <a href="{{ route('product', $related_product->slug) }}" class="d-block">
-                                <img class="img-fit lazyload mx-auto h-140px h-md-200px has-transition"
+                                <img class="img-fit lazyload mx-auto h-auto has-transition"
                                     src="{{ static_asset('assets/img/placeholder.jpg') }}"
                                     data-src="{{ uploaded_asset($related_product->thumbnail_img) }}"
                                     alt="{{ $related_product->getTranslation('name') }}"

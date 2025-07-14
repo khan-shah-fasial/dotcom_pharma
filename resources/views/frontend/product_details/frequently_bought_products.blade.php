@@ -12,17 +12,18 @@
                 <div class="carousel-box product_listing_box product_img_bg">
                     <div class="aiz-card-box hov-shadow-md my-2 has-transition hov-scale-img h-100 product_listing_box product_img_bg">
                         <div class="">
-                            <a href="{{ route('product', $related_product->slug) }}"
-                                class="d-block">
-                                <img class="img-fit lazyload mx-auto h-auto h-md-auto has-transition"
+                            <a href="{{ route('product', $related_product->slug) }}" class="d-block">
+                                <img class="img-fit lazyload mx-auto has-transition"
                                     src="{{ static_asset('assets/img/placeholder.jpg') }}"
                                     data-src="{{ uploaded_asset($related_product->thumbnail_img) }}"
                                     alt="{{ $related_product->getTranslation('name') }}"
+                                    style="width: 250px; height: 250px; object-fit: cover;"
                                     onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                             </a>
+
                             
                         </div>
-                        <div class="px-3 pb-2 start">
+                        <div class="px-3 pt-2 pb-3 start">
                             <h3 class="   fw-500 fs-16 text-truncate-1 lh-1-4 mb-1">
                                 <a href="{{ route('product', $related_product->slug) }}"
                                     class="d-block text-reset hov-text-primary">{{ $related_product->getTranslation('name') }}</a>
@@ -42,7 +43,7 @@
                                 <span class="fw-700 text-primary">{{ home_discounted_base_price($related_product) }}</span>
                                 @if (home_base_price($related_product) != home_discounted_base_price($related_product))
                                     <del
-                                        class="fw-400 text-secondary mr-1 fs-14">{{ home_base_price($related_product) }}</del>
+                                        class="fw-400 text-secondary mr-1 fs-14 d-none">{{ home_base_price($related_product) }}</del>
                                 @endif
                             </div>
 
