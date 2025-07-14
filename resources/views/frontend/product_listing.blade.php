@@ -37,27 +37,27 @@
 @section('content')
 
 <!-- Breadcrumb Listing Page-->
-<section class="bg_gray pt-4">
+<section class="bg_gray pt-3">
         <div class="container">
                             <div class="row">
-                                <div class="col-lg-12  text-center">
+                                <div class="col-lg-12  text-left">
                                     <!--  -->
-                                    <h1 class="fw-600 h4">All Categories</h1>
-                                    <ul class="breadcrumb bg-transparent p-0 justify-content-center">
+                                    
+                                    <ul class="breadcrumb bg-transparent p-0 justify-content-start mb-0 pb-3">
                                         <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100">
-                                            <a class="text-reset" href="{{ route('home') }}">{{ translate('Home')}}</a>
+                                            <a class="text-reset fs-14" href="{{ route('home') }}">{{ translate('Home')}}</a>
                                         </li>
                                         @if(!isset($category_id))
-                                            <li class="text-dark fw-600 breadcrumb-item">
-                                                {{ translate('All Categories')}}
+                                            <li class="text-dark fw-400 breadcrumb-item text-capitalize fs-14">
+                                                {{ translate('All Products')}}
                                             </li>
                                         @else
-                                            <li class="breadcrumb-item opacity-50 hov-opacity-100">
-                                                <a class="text-reset" href="{{ route('search') }}">{{ translate('All Categories')}}</a>
+                                            <li class="breadcrumb-item opacity-50 hov-opacity-100 text-capitalize">
+                                                <a class="text-reset fs-14" href="{{ route('search') }}">{{ translate('All Products')}}</a>
                                             </li>
                                         @endif
                                         @if(isset($category_id))
-                                            <li class="text-dark fw-600 breadcrumb-item">
+                                            <li class="text-dark fw-400 breadcrumb-item fs-14">
                                                 "{{ $category->getTranslation('name') }}"
                                             </li>
                                         @endif

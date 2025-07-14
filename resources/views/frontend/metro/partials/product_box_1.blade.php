@@ -15,7 +15,7 @@
                 src="{{ get_image($product->thumbnail) }}"
                 alt="{{ $product->getTranslation('name') }}"
                 title="{{ $product->getTranslation('name') }}"
-                style="width: 250px; height: 250px; object-fit: cover;"
+                style=""
                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
 
         </a>

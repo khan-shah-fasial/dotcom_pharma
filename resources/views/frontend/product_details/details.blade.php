@@ -5,7 +5,7 @@
     }
 </style>
 
-<div class="text-left">
+<div class="text-left product_disc_text">
     <!-- Product Name -->
     <h2 class="mb-3 fs-md-34 fs-24 fw-600">
         {{ $detailedProduct->getTranslation('name') }}
@@ -13,8 +13,8 @@
 
     <!-- Drug Name -->
     @if (!empty($detailedProduct->drug_name))
-        <p class="mb-2 fs-6 text-muted">
-            <strong class="text-dark">{{ translate('Drug Name') }}:</strong>
+        <p class="mb-2 fs-14 text-dark">
+            <span class="fw-500 text-dark">{{ translate('Drug Name') }}:</span>
             {{ $detailedProduct->drug_name }}
         </p>
     @endif
@@ -67,7 +67,7 @@
 
     {{-- Pricing Row --}}
 
-    <div class="col-12 mt-1">
+    <div class="col-12 mt-3 pb-1">
         
     @if (discount_in_percentage($detailedProduct) > 0)
                                     <span class=" ml-0 fs-14 fw-400 text-white w-35px text-center p-1"

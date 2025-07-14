@@ -34,7 +34,7 @@
                       <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                             <li class="list-inline-item">
                                  <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
-                                   <img class="w-100" src="{{ static_asset('assets/img/envelope_icons.svg') }}" />+91 88281 11034
+                                   <img class="w-100" src="{{ static_asset('assets/img/call1_icons.svg') }}" />+91 88281 11034
                                 </a>
                             </li>
 
@@ -51,7 +51,9 @@
 
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
-
+<li class="list-inline-item">
+                    <a class="b2b_buttons" href="{{ route('user.new_registration') }}" >B2B Registration</a>
+</li>
                      <li class="list-inline-item human_btn">
                                  <a href="javascript:void(0)" class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
                                    <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
@@ -500,8 +502,7 @@
                                 </span> -->
 
                                  <a href="{{ route('user.login') }}"><i class="las la-user la-2x pt-1 login_icons" style="color: #23780E;"></i></a>
-                                 <a class="b2b_buttons" href="{{ route('user.new_registration') }}" >B2B Registration</a>
-
+                                 
                                 <!-- <a href="{{ route('user.login') }}"
                                     class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block border-right border-soft-light border-width-2 pr-2 ml-3">{{ translate('Login') }}</a>
                                 <a href="{{ route('user.registration') }}"

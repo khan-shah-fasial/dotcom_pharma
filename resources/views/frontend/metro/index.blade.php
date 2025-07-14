@@ -675,7 +675,7 @@
                         <p class="mb-0 pb-0 text-white fw-300 fs-14">Livestock Farmer</p>
                      </div>
                   </div>
-                 <p class="pt-4">s a livestock farmer, I need reliable and effective veterinary products. Pharm Vet Easy has consistently provided top-notch solutions that keep my animals healthy. Their customer service is excellent, making them a trusted partner in animal care.</p>
+                 <p class="pt-4">Is a livestock farmer, I need reliable and effective veterinary products. Pharm Vet Easy has consistently provided top-notch solutions that keep my animals healthy. Their customer service is excellent, making them a trusted partner in animal care.</p>
                  <div class="rating1 text-left">
                    <i class="las la-star"></i>
                    <i class="las la-star"></i>
