@@ -46,6 +46,11 @@
 .iti--separate-dial-code .iti__selected-flag, .iti--allow-dropdown .iti__flag-container:hover .iti__selected-flag {
     background: transparent !important;
 }
+
+.login-logo-all{
+    width: 180px !important;
+}
+
 .form-control {
     border: 1px solid #363636CC;
     border-radius: 15px !important;

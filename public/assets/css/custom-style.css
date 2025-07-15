@@ -204,6 +204,10 @@ li {
     display: block;
 }
 
+.login-logo-all{
+    width: 180px !important;
+}
+
 /* .product_img_bg::before {
     content: '';
     position: absolute;
