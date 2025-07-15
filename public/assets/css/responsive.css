@@ -296,6 +296,10 @@
         max-width: 100% !important;
     }
 
+    .product_img_bg img {
+        height: auto !important;
+    }
+
     .login_form_popup {
         padding-left: 0px !important;
     }
@@ -628,6 +632,11 @@
     .top_baar_icons li {
         margin-right: 10px !important;
     }
+
+    .product_img_bg img {
+        height: auto !important;
+    }
+
 
 }
 
