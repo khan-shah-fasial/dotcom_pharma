@@ -149,13 +149,12 @@ class AttributeController extends Controller
         $validator = Validator::make($request->all(), [
             'value' => [
                 'required',
-                'regex:/^[a-zA-Z0-9.-]+$/', // The regex pattern to match the allowed characters
+                'regex:/^[a-zA-Z0-9.–&]+$/u', // Updated regex to allow en dash, dot, ampersand
             ],
         ]);
 
-        // Check if validation fails
         if ($validator->fails()) {
-            flash(translate('Only letters, numbers, hyphen (-), dot (.) and 0 are allowed'))->error();
+            flash(translate('Only letters, numbers, en dash (–), dot (.), and ampersand (&) are allowed. No spaces or hyphens (-).'))->error();
             return back();
         }
 
@@ -180,13 +179,12 @@ class AttributeController extends Controller
         $validator = Validator::make($request->all(), [
             'value' => [
                 'required',
-                'regex:/^[a-zA-Z0-9.-]+$/', // The regex pattern to match the allowed characters
+                'regex:/^[a-zA-Z0-9.–&]+$/u', // Updated regex to allow en dash, dot, ampersand
             ],
         ]);
 
-        // Check if validation fails
         if ($validator->fails()) {
-            flash(translate('Only letters, numbers, hyphen (-), dot (.) and 0 are allowed'))->error();
+            flash(translate('Only letters, numbers, en dash (–), dot (.), and ampersand (&) are allowed. No spaces or hyphens (-).'))->error();
             return back();
         }
 

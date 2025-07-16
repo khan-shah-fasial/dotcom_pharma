@@ -103,9 +103,11 @@
             </li>
 
             <!-- 3. FORCE Pharma Category (If exists) -->
-            @if(isset($detailedProduct) && $detailedProduct->pharma_categories)
-                <li class="breadcrumb-item opacity-50 hov-opacity-100 fs-14">
-                    {{ $detailedProduct->pharma_categories }}
+            @if($detailedProduct->category_id != 'null')
+                <li class="fw-500 breadcrumb-item text-capitalize fs-14">
+                    <a class="text-reset" href="{{ route('products.category', \App\Models\Category::find($detailedProduct->category_id)->slug) }}">
+                        {{ \App\Models\Category::find($detailedProduct->category_id)->getTranslation('name') }}
+                    </a>
                 </li>
             @endif
 

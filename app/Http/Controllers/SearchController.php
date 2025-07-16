@@ -19,13 +19,13 @@ class SearchController extends Controller
     {
         $query = $request->keyword;
 
-        $category_id = ($request->has('category') && $request->category != 'All Category' && !empty($request->category)) 
-        ? $request->category 
-        : null;
+        // $category_id = ($request->has('category') && $request->category != 'All Category' && !empty($request->category)) 
+        // ? $request->category 
+        // : null;
 
-        $brand_id = ($request->has('brand') && $request->brand != 'All Brand' && !empty($request->brand)) 
-        ? $request->brand 
-        : null;
+        // $brand_id = ($request->has('brand') && $request->brand != 'All Brand' && !empty($request->brand)) 
+        // ? $request->brand 
+        // : null;
 
         $product_query = ($request->has('product') && !empty($request->product)) 
         ? $request->product 

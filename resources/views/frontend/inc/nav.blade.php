@@ -262,14 +262,14 @@
                                         $cat_veterinary_id = [85, 86, 87, 88, 89];
 
                                         if (session('web_type_name') == 'human') {
-                                            $category_top_menu = Category::select('id', 'parent_id', 'name')
+                                            $category_top_menu = Category::select('id', 'parent_id', 'name', 'slug')
                                                 ->whereIn('id', $cat_human_id)
                                                 ->where('parent_id', session('web_type'))
                                                 ->with('childrenCategories') 
                                                 ->orderByRaw("FIELD(id, " . implode(',', $cat_human_id) . ")") // Maintain order
                                                 ->get();
                                         } elseif (session('web_type_name') == 'veterinary') {
-                                            $category_top_menu = Category::select('id', 'parent_id', 'name')
+                                            $category_top_menu = Category::select('id', 'parent_id', 'name', 'slug')
                                                 ->whereIn('id', $cat_veterinary_id)
                                                 ->where('parent_id', session('web_type'))
                                                 ->with('childrenCategories') 
@@ -288,7 +288,7 @@
                                                 </a>
                                                 <div class="dropdown-menu" aria-labelledby="injectionsDropdown_{{ $cat->id }}">
                                                     @foreach ($cat->childrenCategories as $childCategory)
-                                                        <a class="dropdown-item" href="/search">{{ $childCategory->name }}</a>
+                                                        <a class="dropdown-item" href="/category/{{ $childCategory->slug }}">{{ $childCategory->name }}</a>
                                                     @endforeach
                                                 </div>
                                             </li>
@@ -747,23 +747,30 @@
                             <ul class="list-inline mb-0 pl-0">
 
                                 @php
- 
-                                    $cat_human_id = [46]; // Ensure IDs are integers
-                                    $cat_veterinary_id = [88];
+                                    $cat_human_id_raw = get_setting('header_nav_menu_human'); // Ensure IDs are integers
+                                    $cat_veterinary_id_raw = get_setting('header_nav_menu_veterinary');
+
+                                    // Decode JSON string into PHP arrays
+                                    $cat_human_id = json_decode($cat_human_id_raw, true);
+                                    $cat_veterinary_id = json_decode($cat_veterinary_id_raw, true);
+
+                                    // Ensure the IDs are integers and non-empty arrays
+                                    $cat_human_id = array_map('intval', $cat_human_id ?: []);
+                                    $cat_veterinary_id = array_map('intval', $cat_veterinary_id ?: []);
 
                                     if (session('web_type_name') == 'human') {
-                                        $category_menu = Category::select('id', 'parent_id', 'name')
+                                        $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
                                             ->whereIn('id', $cat_human_id)
                                             ->where('parent_id', session('web_type'))
-                                            ->with('childrenCategories') 
+                                            // ->with('childrenCategories') 
                                             ->orderByRaw("FIELD(id, " . implode(',', $cat_human_id) . ")") // Maintain order
                                             ->get();
 
                                     } elseif (session('web_type_name') == 'veterinary') {
-                                        $category_menu = Category::select('id', 'parent_id', 'name')
+                                        $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
                                             ->whereIn('id', $cat_veterinary_id)
                                             ->where('parent_id', session('web_type'))
-                                            ->with('childrenCategories') 
+                                            // ->with('childrenCategories') 
                                             ->orderByRaw("FIELD(id, " . implode(',', $cat_veterinary_id) . ")") // Maintain order
                                             ->get();
                                     } else {
@@ -774,16 +781,15 @@
 
                                 @foreach ($category_menu as $cat)
                                     <li class="list-inline-item mr-0 animate-underline-white">
-                                        <a href=""
-                                            class="fs-16 py-3 d-inline-block fw-500 {{ $nav_txt_color }} header_menu_links
-                                        {{--@if (url()->current() == json_decode(get_setting('header_menu_links'), true)[$key]) active @endif--}}">
+                                        <a href="/category/{{ $cat->slug }}"
+                                            class="fs-16 py-3 d-inline-block fw-500 {{ $nav_txt_color }} header_menu_links">
                                             {{ $cat->name }}
                                         </a>
-                                        <div class="dropdown-menu" aria-labelledby="injectionsDropdown_{{ $cat->id }}">
+                                        {{-- <div class="dropdown-menu" aria-labelledby="injectionsDropdown_{{ $cat->id }}">
                                             @foreach ($cat->childrenCategories as $childCategory)
                                                 <a class="dropdown-item" href="/search">{{ $childCategory->name }}</a>
                                             @endforeach
-                                        </div>
+                                        </div> --}}
                                     </li>
                                 @endforeach
                                 
