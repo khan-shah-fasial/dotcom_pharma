@@ -12,7 +12,10 @@
 
                         <div class="col-lg-6 p-4 p-lg-5 d-flex flex-column justify-content-center border right-content" style="height: auto;">
                             <!-- Site Icon -->
-                            <div class="size-48px mb-3 mx-auto mx-lg-0">
+                            <!-- <div class="size-48px mb-3 mx-auto mx-lg-0">
+                                <img src="{{ uploaded_asset(get_setting('site_icon')) }}" alt="{{ translate('Site Icon')}}" class="img-fit h-100">
+                            </div> -->
+                            <div class="mb-3 mx-auto mx-lg-0 login-logo-all">
                                 <img src="{{ uploaded_asset(get_setting('site_icon')) }}" alt="{{ translate('Site Icon')}}" class="img-fit h-100">
                             </div>
 
@@ -68,6 +71,17 @@
                                         <div class="mb-4 mt-4">
                                             <button type="submit" class="btn btn-primary btn-block fw-700 fs-14 rounded-0">{{  translate('Login') }}</button>
                                         </div>
+
+                                        <!-- Go to Home Page & Previous Page -->
+                                        <p class="fs-12 text-gray mb-0 mt-4 d-flex align-items-center justify-content-between">
+                                            <a href="/" class="mr-0 fs-12 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
+                                                <i class="las la-home fs-16 mr-1"></i> Go to Home Page
+                                            </a>
+                                            <a href="{{ url()->previous() }}" class="ml-0 fs-12 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
+                                                    <i class="las la-arrow-left fs-20 mr-1"></i>
+                                                    Back to Previous Page
+                                            </a>
+                                        </p>
                                     </form>
 
                                     <!-- DEMO MODE -->
@@ -91,12 +105,12 @@
                         </div>
                     </div>
                     <!-- Go Back -->
-                    <div class="mt-3 mr-4 mr-md-0">
+                    <!-- <div class="mt-3 mr-4 mr-md-0">
                         <a href="{{ url()->previous() }}" class="ml-auto fs-14 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
                             <i class="las la-arrow-left fs-20 mr-1"></i>
                             {{ translate('Back to Previous Page')}}
                         </a>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>

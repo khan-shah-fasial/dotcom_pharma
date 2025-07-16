@@ -72,7 +72,7 @@
 
     <link rel="stylesheet" href="{{ static_asset('assets/css/intlTelinput.css') }}" />
 
-    <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}?v=1.1.0">
+    <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}?v=1.2.0">
     <link rel="stylesheet" href="{{ static_asset('assets/css/responsive.css') }}">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>

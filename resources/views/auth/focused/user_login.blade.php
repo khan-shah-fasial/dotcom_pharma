@@ -17,7 +17,7 @@
                     <div class="d-flex align-items-center right-content">
                         <div class="py-3 py-lg-4 px-3 px-xl-5 flex-grow-1">
                             <!-- Site Icon -->
-                            <div class="size-48px mb-3 mx-auto mx-lg-0">
+                            <div class="mb-3 mx-auto mx-lg-0 login-logo-all">
                                 <img src="{{ uploaded_asset(get_setting('site_icon')) }}" alt="{{ translate('Site Icon')}}" class="img-fit h-100">
                             </div>
                             <!-- Titles -->
