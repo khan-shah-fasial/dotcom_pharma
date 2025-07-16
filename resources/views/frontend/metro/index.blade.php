@@ -352,7 +352,7 @@
             <img class="w-100 mb-md-0 mb-4" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
             <!--  -->
             <a href="#" class="btn" data-toggle="modal" data-target="#exampleModal">
-                <img src="assets/img/play_button_icon.webp" class="pulse-button space_1" alt="">
+                <img src="{{ static_asset('assets/img/play_button_icon.webp') }}" class="pulse-button space_1" alt="Play button">
             </a>
 
             <div class="modal fade bd-example-modal-lg in" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -360,7 +360,7 @@
                     <div class="modal-content">
                     <div>
                         <button type="button" class="close position-absolute right-0 p-1 pluse-button-pop-up d-flex justify-content-center align-items-center" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true"><img alt="close" src="assets/img/lightbox-close.png"></span>
+                        <span aria-hidden="true"><img alt="close" src="{{ static_asset('assets/img/lightbox-close.png') }}" class="lightbox-close"></span>
                         </button>
                     </div>
                     <div class="modal-body m-0 p-1">
