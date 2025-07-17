@@ -155,10 +155,11 @@
 								</div>
 							</div>
 						</div>
+
 						<!-- Header Nav Menus -->
 						<label class="">{{translate('Header Nav Menu')}}</label>
 						<div class="header-nav-menu">
-							<input type="hidden" name="types[]" value="header_menu_labels">
+							{{-- <input type="hidden" name="types[]" value="header_menu_labels">
 							<input type="hidden" name="types[]" value="header_menu_links">
 							@if (get_setting('header_menu_labels') != null)
 								@foreach (json_decode( get_setting('header_menu_labels'), true) as $key => $value)
@@ -180,9 +181,43 @@
 										</div>
 									</div>
 								@endforeach
-							@endif
+							@endif --}}
+
+							<input type="hidden" name="types[]" value="header_nav_menu_human">
+							<div class="w-100">
+								<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Categories For Human (Max 7)') }}</label>
+								<!-- Brands -->
+								<div class="form-group">
+									<input type="hidden" name="types[]" value="top_categories_human">
+									<select class="form-control aiz-selectpicker" name="header_nav_menu_human[]" multiple data-max-options="7" data-live-search="true" data-selected="{{ get_setting('header_nav_menu_human') }}" required>
+										@foreach (\App\Models\Category::where('parent_id', 0)->with('childrenCategories')->get() as $category)
+											<option value="{{ $category->id }}">{{ $category->getTranslation('name') }}</option>
+											@foreach ($category->childrenCategories as $childCategory)
+												@include('categories.child_category', ['child_category' => $childCategory])
+											@endforeach
+										@endforeach
+									</select>
+								</div>
+							</div>
+							<input type="hidden" name="types[]" value="header_nav_menu_veterinary">
+							<div class="w-100">
+								<label class="col-from-label fs-13 fw-500 mb-3">{{ translate('Top Categories For Veterinary (Max 7)') }}</label>
+								<!-- Brands -->
+								<div class="form-group">
+									<input type="hidden" name="types[]" value="top_categories_veterinary">
+									<select class="form-control aiz-selectpicker" name="header_nav_menu_veterinary[]" multiple data-max-options="7" data-live-search="true" data-selected="{{ get_setting('header_nav_menu_veterinary') }}" required>
+										@foreach (\App\Models\Category::where('parent_id', 0)->with('childrenCategories')->get() as $category)
+											<option value="{{ $category->id }}">{{ $category->getTranslation('name') }}</option>
+											@foreach ($category->childrenCategories as $childCategory)
+												@include('categories.child_category', ['child_category' => $childCategory])
+											@endforeach
+										@endforeach
+									</select>
+								</div>
+							</div>
+
 						</div>
-						<button
+						{{-- <button
 							type="button"
 							class="btn btn-soft-secondary btn-sm"
 							data-toggle="add-more"
@@ -205,7 +240,7 @@
 							</div>'
 							data-target=".header-nav-menu">
 							{{ translate('Add New') }}
-						</button>
+						</button> --}}
 					</div>
 					<!-- Update Button -->
 					<div class="mt-4 text-right">

@@ -105,14 +105,22 @@
    
    if (session('web_type_name') == 'human') {
        $top_cat_human = json_decode(get_setting('top_categories_human'), true); // Convert to array
-       $featured_categories = Category::select('id', 'parent_id', 'name','slug')
-           ->whereIn('id', $top_cat_human)
-           ->get();
+        if (!empty($top_cat_human)) {
+            $featured_categories = Category::select('id', 'parent_id', 'name', 'slug', 'icon')
+                ->whereIn('id', $top_cat_human)
+                ->get();
+        } else {
+            $featured_categories = collect(); // or [] or 0, depending on your logic
+        }
    } elseif (session('web_type_name') == 'veterinary') {
        $top_cat_veterinary = json_decode(get_setting('top_categories_veterinary'), true);
-       $featured_categories = Category::select('id', 'parent_id', 'name','slug')
-           ->whereIn('id', $top_cat_veterinary ?? [])
-           ->get();
+       if (!empty($top_cat_veterinary)) {
+           $featured_categories = Category::select('id', 'parent_id', 'name', 'slug', 'icon')
+               ->whereIn('id', $top_cat_veterinary)
+               ->get();
+       } else {
+           $featured_categories = collect(); // or [] or 0, depending on your logic
+       }
    } else {
        $featured_categories = 0;
    }
@@ -148,7 +156,7 @@
                                     <div class="w-xl-auto position-relative hov-scale-img overflow-hidden p-1">
                                         <div class="category_borders">
                                             <div class="category_images">
-                                                <img src="{{ isset($category->coverImage->file_name) ? my_asset($category->coverImage->file_name) : static_asset('assets/img/placeholder.jpg') }}"
+                                                <img src="{{ isset($category->catIcon->file_name) ? my_asset($category->catIcon->file_name) : static_asset('assets/img/placeholder.jpg') }}"
                                                     alt="{{ $category_name }}"
                                                     class="img-fit has-transition"
                                                     onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
