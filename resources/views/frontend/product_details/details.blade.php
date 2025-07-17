@@ -716,12 +716,12 @@
                     </a>
                 @else
                     <button type="button"
-                        class="btn btn-success mr-3 add-to-cart fw-600 min-w-150px rounded-0 text-white border-radius-50"
+                        class="btn btn-success mr-3 add-to-cart fw-600 min-w-100px rounded-0 text-white border-radius-50"
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
                     </button>
                     <button type="button"
-                        class="btn btn-primary buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50"
+                        class="btn btn-primary buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50"
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
                     </button>

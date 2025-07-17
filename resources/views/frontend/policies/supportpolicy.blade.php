@@ -30,12 +30,12 @@
 @endsection
 
 @section('content')
-<section class="pt-4 bg_gray">
+<section class="pt-md-4 pt-3 bg_gray">
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">
-                <h1 class="fw-600 h4">About Us</h1>
-                 <ul class="breadcrumb bg-transparent p-0 justify-content-center">
+                <h1 class="fw-600 h4 mb-md-1 mb-0">About Us</h1>
+                <ul class="breadcrumb bg-transparent p-0 justify-content-center">
                     <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100">
                         <a class="text-reset" href="{{ route('home') }}">{{ translate('Home')}}</a>
                     </li>
@@ -230,13 +230,13 @@
 
     <section class="sale_section position-relative">
             <div class="image-wrapper">
-                <img class="w-100 mb-md-0 mb-4" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
+                <img class="w-100 mb-0" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
                 <a href="#" class="btn" data-toggle="modal" data-target="#exampleModal">
                     <img src="{{ static_asset('assets/img/play_button_icon.webp') }}" class="pulse-button space_1 overlay-img" alt="Play button">
                 </a>
             </div>
 
-            <div class="modal fade bd-example-modal-lg in mt-2" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal fade bd-example-modal-lg in mt-md-4 mt-5 p-3" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                     <div>
@@ -258,7 +258,7 @@
             </div>
 </section>
 
-   <section class="pt-md-5 pb-md-5 pt-4 pb-4">
+   <section class="pt-md-5 pb-md-5 pt-3 pb-4">
        <div class="container">
         <div class="payment_safe_secrtion">
                     <div class="row">

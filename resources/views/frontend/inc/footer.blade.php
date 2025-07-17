@@ -220,28 +220,28 @@
                    <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-md-3 mb-1">{{ translate('Quick Links') }}</h4>
                     <ul class="list-unstyled">
                        
-                            <li class="mb-md-2 mb-1">
-                                <a href="/" class="fs-md-16 black_light_clr animate-underline-white">
+                            <li class="mb-0">
+                                <a href="/" class="fs-md-14 black_light_clr animate-underline-white">
                                    Home
                                 </a>
                             </li>
 
-                             <li class="mb-md-2 mb-1">
-                                <a href="/about-us" class="fs-md-16 black_light_clr animate-underline-white">
+                             <li class="mb-0">
+                                <a href="/about-us" class="fs-md-14 black_light_clr animate-underline-white">
                                    About Us
                                 </a>
                             </li>
 
-                               <li class="mb-md-2 mb-1">
-                                <a href="/search" class="fs-md-16 black_light_clr animate-underline-white">
+                               <li class="mb-0">
+                                <a href="/search" class="fs-md-14 black_light_clr animate-underline-white">
                                    Product
                                 </a>
                             </li>
 
                            
 
-                             <li class="mb-md-2 mb-1">
-                                <a href="/contact-us" class="fs-md-16 black_light_clr animate-underline-white">
+                             <li class="mb-0">
+                                <a href="/contact-us" class="fs-md-14 black_light_clr animate-underline-white">
                                    Contact Us
                                 </a>
                             </li>
@@ -265,8 +265,8 @@
 									$widget_one_links = json_decode(get_setting('widget_one_links'), true)[$key];
 								}
 							@endphp
-                            <li class="mb-md-2 mb-1">
-                                <a href="{{ $widget_one_links }}" class="fs-md-16 black_light_clr animate-underline-white">
+                            <li class="mb-0">
+                                <a href="{{ $widget_one_links }}" class="fs-md-14 black_light_clr animate-underline-white">
                                     {{ $value }}
                                 </a>
                             </li>
@@ -283,18 +283,18 @@
                 <div class="text-left mt-md-4 mt-1 footer_address_1">
                     <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-md-3 mb-1">{{ translate('Contacts') }}</h4>
                     <ul class="list-unstyled">
-                        <li class="mb-md-2 mb-0">
+                        <li class="mb-0">
                              <img src="{{ static_asset('assets/img/envolope_icons.svg') }} "/>
-                            <p  class="fs-md-16 black_light_clr">{{ get_setting('contact_address',null,App::getLocale()) }}</p>
+                            <p  class="fs-md-14 black_light_clr">{{ get_setting('contact_address',null,App::getLocale()) }}</p>
                         </li>
-                        <li class="mb-md-2 mb-0">
+                        <li class="mb-0">
                              <img src="{{ static_asset('assets/img/call_icons.svg') }} "/>
-                            <p  class="fs-md-16 black_light_clr">{{ get_setting('contact_phone') }}</p>
+                            <p  class="fs-md-14 black_light_clr">{{ get_setting('contact_phone') }}</p>
                         </li>
-                        <li class="mb-md-2 mb-0">
+                        <li class="mb-0">
                             <img src="{{ static_asset('assets/img/location_icons.svg') }} "/>
                             <p  class="mb-0">
-                                <a href="mailto:{{ get_setting('contact_email') }}" class="fs-md-16 black_light_clr hov-text-primary">{{ get_setting('contact_email')  }}</a>
+                                <a href="mailto:{{ get_setting('contact_email') }}" class="fs-md-14 black_light_clr hov-text-primary">{{ get_setting('contact_email')  }}</a>
                             </p>
                         </li>
                     </ul>

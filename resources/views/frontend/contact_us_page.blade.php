@@ -31,11 +31,11 @@
 
 @section('content')
 
-<section class="pt-4 bg_gray">
+<section class="pt-md-4 pt-3 bg_gray">
     <div class="container">
         <div class="row">
             <div class="col-lg-12 text-center">
-                <h1 class="fw-600 h4">Contact Us</h1>
+                <h1 class="fw-600 h4 mb-md-1 mb-0">Contact Us</h1>
                  <ul class="breadcrumb bg-transparent p-0 justify-content-center">
                     <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100">
                         <a class="text-reset" href="{{ route('home') }}">{{ translate('Home')}}</a>
