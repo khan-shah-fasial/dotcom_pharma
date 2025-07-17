@@ -764,7 +764,7 @@
                                             // Fetch categories based on the IDs
                                             $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
                                                 ->whereIn('id', $cat_human_id)
-                                                ->where('parent_id', session('web_type'))
+                                                // ->where('parent_id', session('web_type'))
                                                 // ->with('childrenCategories') 
                                                 ->orderByRaw("FIELD(id, " . implode(',', $cat_human_id) . ")") // Maintain order
                                                 ->get();
@@ -776,7 +776,7 @@
                                         if(count($cat_veterinary_id) > 0) {
                                             $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
                                                 ->whereIn('id', $cat_veterinary_id)
-                                                ->where('parent_id', session('web_type'))
+                                                // ->where('parent_id', session('web_type'))
                                             // ->with('childrenCategories') 
                                             ->orderByRaw("FIELD(id, " . implode(',', $cat_veterinary_id) . ")") // Maintain order
                                             ->get();
