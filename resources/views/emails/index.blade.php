@@ -20,11 +20,12 @@
                                                         <th style="line-height:0pt; padding:0; margin:0; font-weight:normal;">
                                                             <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                                                 <tr>
-                                                                    <td style="line-height:0pt; text-align:left;"><img src="{{ $logo ? uploaded_asset($logo) : uploaded_asset('/img/logo.png') }}" width="" height="26" border="0" alt="" /></td>
+                                                                    <td style="line-height:0pt; text-align:center;"><img src="{{ static_asset('assets/img/video_img_sec.webp') ? static_asset('assets/img/video_img_sec.webp') : static_asset('/img/default-video-img.webp') }}" width="" height="26" border="0" alt="" /></td>
+                                                                    <!-- <td style="line-height:0pt; text-align:left;"><img src="{{ $logo ? uploaded_asset($logo) : uploaded_asset('/img/logo.png') }}" width="" height="26" border="0" alt="" /></td> -->
                                                                 </tr>
                                                             </table>
                                                         </th>
-                                                        <th width="170" style="line-height:0pt; padding:0; margin:0; font-weight:normal;">
+                                                        <!-- <th width="170" style="line-height:0pt; padding:0; margin:0; font-weight:normal;">
                                                             <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                                                 <tr>
                                                                     <td style="color:#000000; font-family:'Public Sans', sans-serif; font-size:14px; line-height:16px; text-align:right;">
@@ -34,7 +35,7 @@
                                                                     </td>
                                                                 </tr>
                                                             </table>
-                                                        </th>
+                                                        </th> -->
                                                     </tr>
                                                 </table>
                                             </td>
