@@ -96,7 +96,7 @@
                     @endif
                 @endisset
             </ul> -->
-            <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2 pt-2 pb-3">
+            <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2 pt-2 pb-md-3 pb-0">
             <!-- 1. Home (Always shown) -->
             <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100 fs-14">
                 <a class="text-reset" href="{{ route('home') }}">{{ translate('Home') }}</a>

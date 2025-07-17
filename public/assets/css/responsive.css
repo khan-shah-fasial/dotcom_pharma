@@ -135,7 +135,7 @@
     }
 
     body .aiz-count-down-circle #time div {
-        font-size: 36px;
+        font-size: 25px;
     }
 
     .whu_choose_box {
@@ -216,7 +216,7 @@
     }
 
     .counter_boxex .counter_img img {
-        width: 80px !important;
+        width: 70px !important;
         margin-bottom: 5px;
     }
 
@@ -225,17 +225,17 @@
     }
 
     .counter_boxex .counter-value {
-        font-size: 28px;
-        line-height: 36px;
+        font-size: 20px;
+        line-height: 20px;
     }
 
     .counter_boxex span {
-        font-size: 28px;
-        line-height: 36px;
+        font-size: 20px;
+        line-height: 20px;
     }
 
     .counter_content p {
-        font-size: 14px;
+        font-size: 12px;
         padding-top: 0px;
     }
 
@@ -325,6 +325,36 @@
     .category_images {
         width: 85px;
         height: 85px;
+    }
+
+    .pulse-button.overlay-img {
+        width: min(var(--overlay-size), 15%) !important;
+        top: 40% !important;
+    }
+
+    .b2b_buttons_menu{
+        margin-left: 0px !important;
+    }
+
+    .aiz-count-down-circle #time{
+        gap: 6px;
+    }
+
+    body .aiz-count-down-circle #time .circle {
+        width: 70px;
+        height: 70px;
+    }
+
+    body .aiz-count-down-circle #time div {
+        font-size: 30px !important;
+        margin-left: 0;
+        border-radius: 15px;
+        margin-top: -19px;
+        line-height: 28px;
+    }
+
+    body .aiz-count-down-circle #time .circle div span {
+        font-size: 12px !important;
     }
 
 }
@@ -630,11 +660,15 @@
     }
 
     .top_baar_icons li {
-        margin-right: 10px !important;
+        margin-right: 5px !important;
     }
 
     .product_img_bg img {
         height: auto !important;
+    }
+
+    .b2b_buttons_menu{
+        margin-left: 0px !important;
     }
 
 

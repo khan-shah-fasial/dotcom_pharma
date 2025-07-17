@@ -87,12 +87,12 @@ li {
 }
 
 .human_btn a {
-    width: 75px;
+    /* width: 75px; */
     text-align: center;
     color: #23780E !important;
     background: #23780E33;
     border-radius: 8px;
-    padding: 0px 0px !important;
+    padding: 0px 4px !important;
     font-weight: 400;
     margin-top: 9px;
     font-size: 11px !important;
@@ -124,12 +124,12 @@ li {
 }
 
 .veterinary_btn a {
-    width: 85px;
+    /* width: 85px; */
     text-align: center;
     color: #123498 !important;
     background: #12349833;
     border-radius: 8px;
-    padding: 0px 1px !important;
+    padding: 0px 4px !important;
     font-weight: 400;
     margin-top: 9px;
     font-size: 11px !important;
@@ -624,7 +624,7 @@ h3.login_heds.thank_head {
 }
 
 .footer_address_1 li img {
-    width: 27px;
+    width: 25px;
     position: relative;
     top: 1px;
 }
@@ -1126,7 +1126,7 @@ ul.dropdown-menu {
     background: #123498;
     right: -5px !important;
     position: absolute;
-    margin-bottom: -22px !important;
+    margin-bottom: -19px !important;
 }
 
 /* .sales_box_gren i.las.la-shopping-bag {
@@ -1436,11 +1436,23 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     text-align: center;
     background: #d0d6ea;
     border-radius: 8px;
-    padding: 4px 8px !important;
+    padding: 3.5px 4px !important;
     font-weight: 400;
     font-size: 11px !important;
     position: relative;
-    top: 7px;
+    top: 8px;
+
+
+
+    /* color: #123498 !important;
+    text-align: center;
+    background: #12349833;
+    border-radius: 8px;
+    padding: 0px 4px !important;
+    font-weight: 400;
+    margin-top: 9px;
+    font-size: 11px !important;
+    line-height: 24px; */
 }
 
 .b2b_buttons:hover {
@@ -1641,14 +1653,13 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     }
 
     .veterinary_btn a {
-        width: calc(85px * 0.8);
+        width: calc(85px * 0.9);
         padding: calc(0px 1px * 0.8) !important;
         font-size: calc(11px * 0.8) !important;
     }
 
     .human_btn a {
-        width: 75px;
-        width: calc(75px * 0.8);
+        width: calc(75px * 0.9);
         padding: 0px 0px !important;
         font-size: calc(11px * 0.8) !important;
     }
