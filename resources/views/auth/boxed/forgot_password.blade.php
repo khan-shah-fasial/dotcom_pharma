@@ -87,12 +87,12 @@
                         </div>
                     </div>
                     <!-- Go Back -->
-                    <div class="mt-3 mr-4 mr-md-0 d-none">
+                    <!-- <div class="mt-3 mr-4 mr-md-0 d-none">
                         <a href="{{ url(route('user.login')) }}" class="ml-auto fs-14 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
                             <i class="las la-arrow-left fs-20 mr-1"></i>
                             {{ translate('Back to Previous Page')}}
                         </a>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>
