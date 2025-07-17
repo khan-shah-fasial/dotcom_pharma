@@ -759,23 +759,31 @@
                                     $cat_veterinary_id = array_map('intval', $cat_veterinary_id ?: []);
 
                                     if (session('web_type_name') == 'human') {
-                                        $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
-                                            ->whereIn('id', $cat_human_id)
-                                            ->where('parent_id', session('web_type'))
-                                            // ->with('childrenCategories') 
-                                            ->orderByRaw("FIELD(id, " . implode(',', $cat_human_id) . ")") // Maintain order
-                                            ->get();
+
+                                        if(count($cat_human_id) > 0) {
+                                            // Fetch categories based on the IDs
+                                            $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
+                                                ->whereIn('id', $cat_human_id)
+                                                ->where('parent_id', session('web_type'))
+                                                // ->with('childrenCategories') 
+                                                ->orderByRaw("FIELD(id, " . implode(',', $cat_human_id) . ")") // Maintain order
+                                                ->get();
+                                        } else {
+                                            $category_menu = collect(); // Empty collection if no IDs
+                                        }
 
                                     } elseif (session('web_type_name') == 'veterinary') {
-                                        $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
-                                            ->whereIn('id', $cat_veterinary_id)
-                                            ->where('parent_id', session('web_type'))
+                                        if(count($cat_veterinary_id) > 0) {
+                                            $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
+                                                ->whereIn('id', $cat_veterinary_id)
+                                                ->where('parent_id', session('web_type'))
                                             // ->with('childrenCategories') 
                                             ->orderByRaw("FIELD(id, " . implode(',', $cat_veterinary_id) . ")") // Maintain order
                                             ->get();
-                                    } else {
-                                        $category_menu = collect();
+                                        } else {
+                                            $category_menu = collect();
 
+                                        }
                                     }
                                 @endphp
 
