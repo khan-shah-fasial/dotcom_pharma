@@ -20,7 +20,7 @@
                                                         <th style="line-height:0pt; padding:0; margin:0; font-weight:normal;">
                                                             <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                                                 <tr> 
-                                                                    <td style="line-height:0pt; text-align:left;"><img src="https://asmotiwala.com/cdn/shop/files/7_350x.png?v=1722677414" width="" height="50" border="0" alt="" /></td>
+                                                                    <td style="line-height:0pt; text-align:center;"><img src="https://i.ibb.co/B5xJ5d2N/Dotcom-Parma-Logo.png" width="180" height="" border="0" alt="" /></td>
                                                                     <!-- <td style="line-height:0pt; text-align:left;"><img src="{{ $logo ? uploaded_asset($logo) : uploaded_asset('/img/logo.png') }}" width="" height="26" border="0" alt="" /></td> -->
                                                                 </tr>
                                                             </table>
