@@ -14,7 +14,7 @@
                                     <!-- Header -->
                                     <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff" style="background-color: #f8fafa" >
                                         <tr>
-                                            <td style="padding: 40px 30px 40px 30px;">
+                                            <td style="padding: 20px 30px 20px 30px;">
                                                 <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                                     <tr>
                                                         <th style="line-height:0pt; padding:0; margin:0; font-weight:normal;">
