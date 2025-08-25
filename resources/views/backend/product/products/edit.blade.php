@@ -1502,6 +1502,33 @@
                 return;
             }
 
+            // Colors: if colors_active is checked then colors[] must have at least one selection
+            const colorsActive = $('[name="colors_active"]').is(':checked');
+            if (colorsActive) {
+                const selectedColors = $('#colors').val() || [];
+                if (selectedColors.length === 0) {
+                    e.preventDefault();
+                    AIZ.plugins.notify('danger', 'Please select at least one color.');
+
+                    // activate Price & Stocks tab and scroll to the colors select (robust attempt)
+                    const $tab = $('a[data-target="#price_and_stocks"], a[href="#price_and_stocks"], button[data-bs-target="#price_and_stocks"]');
+                    if ($tab.length) {
+                        try { $tab.first().tab('show'); } catch(err){ $tab.first().trigger('click'); }
+                    }
+                    setTimeout(function(){
+                        const $colors = $('#colors');
+                        if ($colors.length) {
+                            // scroll to the select; works even if select is hidden by custom picker
+                            $('html,body').animate({scrollTop: $colors.offset().top - 120}, 350);
+                            // focus the underlying select (some pickers may need focusing their button)
+                            try { $colors.focus(); } catch(e){}
+                        }
+                    }, 250);
+
+                    return;
+                }
+            }
+
             {{--
             // // Now check the special condition
             // const selectedChoices = $('#choice_attributes').val(); // returns array

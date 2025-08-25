@@ -1376,6 +1376,33 @@
                 AIZ.plugins.notify('danger', 'Please set the unit price.');
                 return;
             }
+            
+            // Colors: if colors_active is checked then colors[] must have at least one selection
+            const colorsActive = $('[name="colors_active"]').is(':checked');
+            if (colorsActive) {
+                const selectedColors = $('#colors').val() || [];
+                if (selectedColors.length === 0) {
+                    e.preventDefault();
+                    AIZ.plugins.notify('danger', 'Please select at least one color.');
+
+                    // activate Price & Stocks tab and scroll to the colors select (robust attempt)
+                    const $tab = $('a[data-target="#price_and_stocks"], a[href="#price_and_stocks"], button[data-bs-target="#price_and_stocks"]');
+                    if ($tab.length) {
+                        try { $tab.first().tab('show'); } catch(err){ $tab.first().trigger('click'); }
+                    }
+                    setTimeout(function(){
+                        const $colors = $('#colors');
+                        if ($colors.length) {
+                            // scroll to the select; works even if select is hidden by custom picker
+                            $('html,body').animate({scrollTop: $colors.offset().top - 120}, 350);
+                            // focus the underlying select (some pickers may need focusing their button)
+                            try { $colors.focus(); } catch(e){}
+                        }
+                    }, 250);
+
+                    return;
+                }
+            }
 
             {{--
             // // Now check the special condition
@@ -1402,6 +1429,174 @@
     });
 
 
+</script>
+<!-- put this after your form (or in a scripts stack) -->
+<script>
+$(function(){
+
+  const $form = $('#choice_form');
+
+  function clearFrontendErrors(){
+    $form.find('.is-invalid').removeClass('is-invalid');
+    $form.find('.invalid-feedback.frontend').remove();
+    $('#frontendErrors').remove();
+    // remove data-frontend-id markers we added (optional)
+    $form.find('[data-frontend-id]').removeAttr('data-frontend-id');
+  }
+
+  function makeIdFor($el, idx){
+    if ($el.attr('id')) return '#'+$el.attr('id');
+    const key = 'field_frontend_' + idx;
+    $el.attr('data-frontend-id', key);
+    return '[data-frontend-id="' + key + '"]';
+  }
+
+  function showTopSummary(errors){
+    if (!errors.length) return;
+    const $box = $('<div id="frontendErrors" class="alert alert-danger"><strong>Please fix the following:</strong><ul class="mb-0 mt-2"></ul></div>');
+    errors.forEach(err => {
+      $box.find('ul').append(
+        '<li><a href="#" class="error-link" data-target="'+err.selector+'">'+err.label+' — '+err.message+'</a></li>'
+      );
+    });
+    $form.prepend($box);
+
+    // click in summary: open tab, scroll and focus
+    $box.on('click', 'a.error-link', function(e){
+      e.preventDefault();
+      const sel = $(this).data('target');
+      const $target = $form.find(sel).first();
+      if (!$target.length) return;
+      const $pane = $target.closest('.tab-pane');
+      const paneId = $pane.attr('id');
+      if (paneId) {
+        // Try to activate using data-target or href
+        const $tabEl = $('a[data-target="#' + paneId + '"], a[href="#' + paneId + '"]');
+        if ($tabEl.length) { $tabEl.tab('show'); }
+      }
+      $('html,body').animate({scrollTop: $target.offset().top - 100}, 350);
+      $target.focus();
+    });
+  }
+
+  // main submit handler
+  $form.on('submit', function(e){
+    clearFrontendErrors();
+
+    const errors = [];
+    let firstInvalidEl = null;
+    let idx = 0;
+
+    // choose which elements to validate; include inputs, selects, textareas
+    $form.find('input, select, textarea').each(function(){
+      const $el = $(this);
+      // skip elements not in the form or hidden via display:none (but do validate hidden selects if user can change them)
+      // we still want to validate elements inside inactive tab panes, so don't skip by :hidden entirely.
+      // We'll only skip elements that are disabled
+      if ($el.prop('disabled')) return;
+
+      idx++;
+      const name = $el.attr('name') || '[unnamed]';
+      const label = $form.find('label[for="'+$el.attr('id')+'"]').first().text().trim() || name;
+
+      // decide "required" - checks HTML required attribute (you can expand to custom data attributes)
+      const isRequired = typeof $el.prop('required') !== 'undefined' && $el.prop('required');
+
+      // checkbox/radio group handling
+      if (isRequired && ($el.is(':checkbox') || $el.is(':radio'))) {
+        const grpName = $el.attr('name');
+        // if at least one checked in group, ok
+        if ($form.find('[name="'+grpName+'"]:checked').length === 0) {
+          const selector = makeIdFor($el, idx);
+          errors.push({ selector: selector, label: label, message: 'This field is required.' });
+          if (!firstInvalidEl) firstInvalidEl = $el;
+        }
+        return;
+      }
+
+      // normal input/select/textarea
+      if (isRequired) {
+        // get value trimmed (for textareas/inputs)
+        let val = $el.val();
+        if (val === null || (typeof val === 'string' && $.trim(val) === '')) {
+          const selector = makeIdFor($el, idx);
+          errors.push({ selector: selector, label: label, message: 'This field is required.' });
+          if (!firstInvalidEl) firstInvalidEl = $el;
+          return;
+        }
+      }
+
+      // optional: HTML5 validity (pattern, type=email, min, max etc.)
+      if ( $el[0] && typeof $el[0].checkValidity === 'function' ) {
+        try {
+          if (!$el[0].checkValidity()) {
+            const vMsg = $el[0].validationMessage || 'Invalid value';
+            const selector = makeIdFor($el, idx);
+            errors.push({ selector: selector, label: label, message: vMsg });
+            if (!firstInvalidEl) firstInvalidEl = $el;
+            return;
+          }
+        } catch(err){
+          // ignore browsers without checkValidity support
+        }
+      }
+    }); // each field
+
+    if (errors.length) {
+      e.preventDefault();
+
+      // mark fields invalid (and add messages)
+      errors.forEach(function(err){
+        const $el = $form.find(err.selector).first();
+        if (!$el.length) return;
+        // add bootstrap invalid class (works with form-control)
+        $el.addClass('is-invalid');
+        // insert message after element (you can change position)
+        const $msg = $('<div class="invalid-feedback frontend">' + err.message + '</div>');
+        // for select pickers that hide original select, insert after the select itself
+        $el.after($msg);
+      });
+
+      // switch to the tab that contains first invalid control
+      if (firstInvalidEl) {
+        const $pane = $(firstInvalidEl).closest('.tab-pane');
+        const paneId = $pane.attr('id');
+        if (paneId) {
+          const $tabLink = $('a[data-target="#' + paneId + '"], a[href="#' + paneId + '"]');
+          if ($tabLink.length) $tabLink.tab('show');
+        }
+        // scroll into view and focus
+        const $fv = $(firstInvalidEl);
+        $('html,body').animate({scrollTop: $fv.offset().top - 100}, 350);
+        $fv.focus();
+      }
+
+      // show top summary
+      showTopSummary(errors);
+
+      return false;
+    }
+
+    // nothing invalid: let native submit happen
+    return true;
+  });
+
+  // clear error as user interacts
+  $form.on('input change', 'input, select, textarea', function(){
+    const $el = $(this);
+    if ($el.hasClass('is-invalid')) {
+      $el.removeClass('is-invalid');
+      $el.next('.invalid-feedback.frontend').remove();
+    }
+    // remove corresponding item from summary if exists
+    const id = $el.attr('data-frontend-id');
+    if (id) {
+      $('#frontendErrors').find('[data-target="[data-frontend-id=\''+id+'\']"]').closest('li').remove();
+      if ($('#frontendErrors ul li').length === 0) $('#frontendErrors').remove();
+    }
+  });
+
+});
 </script>
 
 @endsection
