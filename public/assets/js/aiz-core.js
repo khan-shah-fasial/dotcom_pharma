@@ -2038,6 +2038,7 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     e.preventDefault();
                     $(target).append(content);
                     AIZ.plugins.bootstrapSelect();
+                    AIZ.plugins.textEditor(); //added by nexgeno
                 });
             });
         },

@@ -152,7 +152,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Name')}} <span class="text-danger">*</span></label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="{{translate('Product Name')}}" value="{{ $product->getTranslation('name', $lang) }}">
+                                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="{{translate('Product Name')}}" value="{{ $product->getTranslation('name', $lang) }}" required>
                                             </div>
                                         </div>
 
@@ -185,7 +185,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Description')}} <span class="text-danger">*</span></label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="short_description" placeholder="{{translate('Product Description')}}" value="{{ $product->short_description }}">
+                                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="short_description" placeholder="{{translate('Product Description')}}" value="{{ $product->short_description }}" required>
                                             </div>
                                         </div>
 
@@ -206,7 +206,7 @@
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Unit')}} <span class="text-danger">*</span></label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('unit') is-invalid @enderror" name="unit" placeholder="{{ translate('Unit (e.g. KG, Pc etc)') }}" value="{{$product->getTranslation('unit', $lang)}}">
+                                                <input type="text" class="form-control @error('unit') is-invalid @enderror" name="unit" placeholder="{{ translate('Unit (e.g. KG, Pc etc)') }}" value="{{$product->getTranslation('unit', $lang)}}" required>
                                             </div>
                                         </div>
                                         <!-- Weight -->
@@ -722,7 +722,7 @@
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Unit price')}} <span class="text-danger">*</span></label>
                                     <div class="col-md-6">
-                                        <input type="text" placeholder="{{translate('Unit price')}}" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror" value="{{$product->unit_price}}">
+                                        <input type="text" placeholder="{{translate('Unit price')}}" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror" value="{{$product->unit_price}}" required>
                                     </div>
                                 </div>
 
@@ -768,7 +768,7 @@
                                     <div class="form-group row" id="quantity">
                                         <label class="col-md-3 col-from-label">{{translate('Quantity')}} <span class="text-danger">*</span></label>
                                         <div class="col-md-6">
-                                            <input type="number" lang="en" value="{{ optional($product->stocks->first())->qty }}" step="1" placeholder="{{translate('Quantity')}}" name="current_stock" class="form-control">
+                                            <input type="number" lang="en" value="{{ optional($product->stocks->first())->qty }}" step="1" placeholder="{{translate('Quantity')}}" name="current_stock" class="form-control" required>
                                         </div>
                                     </div>
                                     <!-- SKU -->
@@ -1461,7 +1461,7 @@
         $('#choice_form').submit();
     }
 </script>
-
+{{-- 
 <script type="text/javascript">
     $(document).ready(function() {
         warrantySelection();
@@ -1529,7 +1529,6 @@
                 }
             }
 
-            {{--
             // // Now check the special condition
             // const selectedChoices = $('#choice_attributes').val(); // returns array
 
@@ -1544,7 +1543,6 @@
             //     AIZ.plugins.notify('danger', 'Attribute Role must be selecte and its all Role (Pts, Ptr, Ptd, Gov, Expo)');
             //     return;
             // }
-            --}}
 
             this.submit();
 
@@ -1555,6 +1553,192 @@
     });
 
 
+</script> 
+--}}
+
+<!-- put this after your form (or in a scripts stack) -->
+<script type="text/javascript">
+$(document).ready(function () {
+    warrantySelection();
+    // Initialize custom field validation
+    function initFieldValidation(selector) {
+        $(selector).validate({
+            errorElement: "div",
+            errorPlacement: function (error, element) {
+                // Remove previous error message for this element
+                element.closest(".form-group").find(".invalid-feedback").remove();
+
+                // Add Bootstrap's invalid-feedback styling
+                error.addClass("invalid-feedback");
+
+                // Insert error message directly after the input field itself
+                if (element.parent('.input-group').length) {
+                    error.insertAfter(element.parent()); // for input groups
+                } else {
+                    error.insertAfter(element); // normal fields
+                }
+            },
+            highlight: function (element) {
+                $(element).addClass("is-invalid");
+                $(element).closest(".form-group").addClass("has-error");
+            },
+            unhighlight: function (element) {
+                $(element).removeClass("is-invalid");
+                $(element).closest(".form-group").removeClass("has-error");
+                $(element).closest(".form-group").find(".invalid-feedback").remove();
+            }
+        });
+    }
+
+    // Usage
+    initFieldValidation("#choice_form");
+
+    // initValidate("#choice_form");
+
+    const $form = $("#choice_form");
+
+    function clearFrontendErrors() {
+        $form.find(".is-invalid").removeClass("is-invalid");
+        $form.find(".invalid-feedback.frontend").remove();
+        $form.find("[data-frontend-id]").removeAttr("data-frontend-id");
+    }
+
+    $form.on("submit", function (e) {
+        clearFrontendErrors();
+
+        // Custom required field validation for all fields
+        const errors = [];
+        let firstInvalidEl = null;
+        let idx = 0;
+
+        $form.find("input, select, textarea").each(function () {
+            const $el = $(this);
+            if ($el.prop("disabled")) return;
+
+            idx++;
+            const isRequired = $el.prop("required");
+
+            // Checkbox / radio required
+            if (isRequired && ($el.is(":checkbox") || $el.is(":radio"))) {
+                const name = $el.attr("name");
+                if ($form.find(`[name="${name}"]:checked`).length === 0) {
+                    errors.push($el);
+                    if (!firstInvalidEl) firstInvalidEl = $el;
+                }
+                return;
+            }
+
+            // Normal required fields
+            if (isRequired) {
+                const val = $el.val();
+                if (val === null || (typeof val === "string" && $.trim(val) === "")) {
+                    errors.push($el);
+                    if (!firstInvalidEl) firstInvalidEl = $el;
+                    return;
+                }
+            }
+
+            // HTML5 checkValidity
+            if ($el[0] && typeof $el[0].checkValidity === "function") {
+                if (!$el[0].checkValidity()) {
+                    errors.push($el);
+                    if (!firstInvalidEl) firstInvalidEl = $el;
+                }
+            }
+        });
+
+        if (errors.length) {
+            e.preventDefault();
+            AIZ.plugins.notify("danger", "Please fix the highlighted fields.");
+
+            // Highlight all invalid fields
+            errors.forEach(function ($el) {
+                $el.addClass("is-invalid");
+
+                // Add invalid-feedback if it doesn't exist
+                if ($el.next(".invalid-feedback").length === 0) {
+                    $el.after('<div class="invalid-feedback frontend">This field is required.</div>');
+                }
+            });
+
+            // Focus the first invalid element and show its tab
+            if (firstInvalidEl) {
+                const $pane = $(firstInvalidEl).closest(".tab-pane");
+                const paneId = $pane.attr("id");
+                if (paneId) {
+                    const $tabLink = $(`a[data-target="#${paneId}"], a[href="#${paneId}"]`);
+                    if ($tabLink.length) $tabLink.tab("show");
+                }
+
+                $("html,body").animate({ scrollTop: $(firstInvalidEl).offset().top - 100 }, 350);
+                $(firstInvalidEl).focus();
+            }
+
+            return false;
+        }
+
+        // 1. Stop if jQuery validation fails
+        // if (!$form.valid()) {
+        //     e.preventDefault();
+        //     AIZ.plugins.notify("danger", "Please fill all required fields.");
+        //     return false;
+        // }
+
+        // 2. Main category validation
+        const categoryId = $('[name="category_id"]:checked').val();
+        if (!categoryId) {
+            e.preventDefault();
+            AIZ.plugins.notify("danger", "Please select a Main category.");
+            return false;
+        }
+
+        // 3. Same Product Category validation
+        const categoryIds = $('[name="category_ids[]"]:checked');
+        if (categoryIds.length === 0) {
+            e.preventDefault();
+            AIZ.plugins.notify("danger", "Please select the Same Product Category.");
+            return false;
+        }
+
+        // 4. Colors validation
+        const colorsActive = $('[name="colors_active"]').is(":checked");
+        if (colorsActive) {
+            const selectedColors = $("#colors").val() || [];
+            if (selectedColors.length === 0) {
+                e.preventDefault();
+                AIZ.plugins.notify("danger", "Please select at least one color.");
+
+                // Open tab and scroll to color select
+                const $tab = $('a[data-target="#price_and_stocks"], a[href="#price_and_stocks"], button[data-bs-target="#price_and_stocks"]');
+                if ($tab.length) {
+                    try { $tab.first().tab("show"); } catch (err) { $tab.first().trigger("click"); }
+                }
+                setTimeout(function () {
+                    const $colors = $("#colors");
+                    if ($colors.length) {
+                        $("html,body").animate({ scrollTop: $colors.offset().top - 120 }, 350);
+                        try { $colors.focus(); } catch (e) {}
+                    }
+                }, 250);
+
+                return false;
+            }
+        }
+        
+        // If no errors, allow submit
+        return true;
+    });
+
+    // Clear error state on user input
+    $form.on("input change", "input, select, textarea", function () {
+        const $el = $(this);
+        if ($el.hasClass("is-invalid")) {
+            $el.removeClass("is-invalid");
+            $el.next(".invalid-feedback.frontend").remove();
+        }
+    });
+
+});
 </script>
 
 @endsection
