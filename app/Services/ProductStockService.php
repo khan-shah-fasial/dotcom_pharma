@@ -34,6 +34,9 @@ class ProductStockService
                 $product_stock->role_price = generateRoleBasedPrices(request()['price_' . str_replace('.', '_', $str)]); //price by role
 
                 $product_stock->dimension = request()->get('dimension_' . str_replace('.', '_', $str), null);
+                $product_stock->length = request()->get('length_' . str_replace('.', '_', $str), null);
+                $product_stock->width = request()->get('width_' . str_replace('.', '_', $str), null);
+                $product_stock->height = request()->get('height_' . str_replace('.', '_', $str), null);
 
                 $product_stock->sku = request()['sku_' . str_replace('.', '_', $str)];
                 $product_stock->qty = request()['qty_' . str_replace('.', '_', $str)];
@@ -47,6 +50,9 @@ class ProductStockService
 
             $mrp_price = $collection['mrp_price'] ?? null;
             $dimension = $collection['dimension'] ?? null;
+            $length = $collection['length'] ?? null;
+            $width = $collection['width'] ?? null;
+            $height = $collection['height'] ?? null;
 
             unset($collection['current_stock']);
             unset($collection['dimension']);

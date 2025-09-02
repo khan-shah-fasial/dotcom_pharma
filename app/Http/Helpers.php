@@ -59,6 +59,7 @@ use App\Models\UserCoupon;
 use App\Models\NotificationType;
 use App\Utility\EmailUtility;
 use App\Models\Address;
+use Illuminate\Support\Facades\DB;
 
 //sensSMS function for OTP
 if (!function_exists('sendSMS')) {
@@ -3280,6 +3281,35 @@ if (!function_exists('getPriceByRole')) {
         if (!$role) return $prices['customer'];
 
         return $prices[$role] ?? $prices['customer'] ?? $defaultPrice;
+    }
+}
+
+
+if (!function_exists('getProductImage')) {
+    function getProductImage($productId)
+    {
+        // Fetch product photos column
+        $photos = DB::table('products')->where('id', $productId)->value('photos');
+
+        if ($photos) {
+            // Split photos into array
+            $photoIds = explode(',', $photos);
+
+            // Take first photo id
+            $firstPhotoId = trim($photoIds[0]);
+
+            if ($firstPhotoId) {
+                // Get filename from uploads table
+                $fileName = DB::table('uploads')->where('id', $firstPhotoId)->value('file_name');
+
+                if ($fileName) {
+                    return uploaded_asset($fileName);
+                }
+            }
+        }
+
+        // Fallback
+        return static_asset('assets/img/placeholder.jpg');
     }
 }
 // ALTER TABLE `product_stocks` ADD `role_price` VARCHAR(255) NULL DEFAULT NULL AFTER `price`;

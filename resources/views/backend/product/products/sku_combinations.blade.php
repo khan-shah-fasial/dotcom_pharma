@@ -14,6 +14,9 @@
 			<td class="text-center">
 				{{translate('Dimension')}}
 			</td>
+			<td class="text-center">
+				{{translate('L x W x H (cm)')}}
+			</td>
 			<td class="text-center" data-breakpoints="lg">
 				{{translate('SKU')}}
 			</td>
@@ -65,6 +68,16 @@
 				</td>
 				<td>
 					<input type="text" lang="en" name="dimension_{{ $str }}" class="form-control" required>
+				</td>
+				<td class="d-flex" style="gap:5px;">
+					<input type="number" lang="en" name="length_{{ $str }}" class="form-control"
+						placeholder="L (cm)" step="0.01" min="0" required>
+
+					<input type="number" lang="en" name="width_{{ $str }}" class="form-control"
+						placeholder="W (cm)" step="0.01" min="0" required>
+
+					<input type="number" lang="en" name="height_{{ $str }}" class="form-control"
+						placeholder="H (cm)" step="0.01" min="0" required>
 				</td>
 				<td>
 					<input type="text" name="sku_{{ $str }}" value="" class="form-control">

@@ -1063,9 +1063,15 @@
                             @endif
                             @can('view_all_contacts')
                                 <li class="aiz-side-nav-item">
-                                    <a href="{{ route('contacts') }}"
+                                    <a href="{{ route('contacts') }}?type=contacts"
                                         class="aiz-side-nav-link {{ areActiveRoutes(['contacts']) }}">
-                                        <span class="aiz-side-nav-text">{{ translate('Contacts') }}</span>
+                                        <span class="aiz-side-nav-text">{{ translate('Contact Enquiries') }}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('product_enquiry') }}?type=product"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['product_enquiry']) }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Product Enquiries') }}</span>
                                     </a>
                                 </li>
                             @endcan
