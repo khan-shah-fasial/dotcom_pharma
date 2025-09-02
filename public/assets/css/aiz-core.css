@@ -12418,7 +12418,7 @@ div.footable-loader>span.fooicon:after {
   object-fit: cover; 
 } */
  .home-banner-area img {
-  max-height: 68vh; 
+  /* max-height: 68vh;  */
   object-fit: cover;
   width: 100%;
 }
