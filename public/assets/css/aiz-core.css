@@ -7182,7 +7182,8 @@ hr {
 
     .container,
     .container-xxl {
-        max-width: 1270px;
+        /* max-width: 1270px; */
+        max-width: 1600px;
     }
 
     .col-xxl {
@@ -12407,6 +12408,22 @@ div.footable-loader>span.fooicon:after {
         padding-right: 0 !important;
     }
 }
+/* .home-banner-area {
+  height: 70vh;
+  overflow: hidden; 
+}
+.home-banner-area img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover; 
+} */
+ .home-banner-area img {
+  /* max-height: 68vh;  */
+  object-fit: cover;
+  width: 100%;
+}
+
+
 
 /*social icon colored*/
 ul.social a {

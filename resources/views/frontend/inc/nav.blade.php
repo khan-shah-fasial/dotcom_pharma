@@ -30,7 +30,7 @@
         <div class="container">
             <div class="row">
 
-              <div class="col-4 d-md-block d-none">
+              <div class="col-xl-3 col-lg-4 d-lg-block d-none">
                       <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                             <li class="list-inline-item">
                                  <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
@@ -47,14 +47,10 @@
               </div>
 
 
-                <div class="col-lg-8 col">
+                <div class="col-xl-9 col-lg-8 col-md-12 col d-flex justify-content-between">
 
-
-                    <ul class="list-inline d-flex justify-content-end mb-0">
-                            <li class="list-inline-item d-none d-md-block">
-                                <a class="b2b_buttons" href="{{ route('user.new_registration') }}" >B2B Registration</a>
-                            </li>
-                            <li class="list-inline-item human_btn">
+                    <ul class="list-inline d-flex justify-content-start mb-0">
+                        <li class="list-inline-item human_btn">
                                  <a href="javascript:void(0)" class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
                                    <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
                                 </a>
@@ -65,6 +61,12 @@
                                    <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
                                 </a>
                             </li>
+                    </ul>
+                    <ul class="list-inline d-flex justify-content-end mb-0">
+                            <li class="list-inline-item d-none d-md-block mr-2">
+                                <a class="b2b_buttons" href="{{ route('user.new_registration') }}" >B2B Registration</a>
+                            </li>
+                            
                         <!-- Language switcher -->
                         @if (get_setting('show_language_switcher') == 'on')
                             <li class="list-inline-item dropdown mr-1" id="lang-change">

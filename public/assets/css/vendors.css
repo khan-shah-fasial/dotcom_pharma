@@ -655,7 +655,8 @@ pre code {
     .container-md,
     .container-sm,
     .container-xl {
-        max-width: 1270px
+        /* max-width: 1270px */
+        max-width: 1600px;
     }
 }
 
@@ -5513,7 +5514,7 @@ input[type=submit].btn-block {
     padding: .75rem 1rem;
     margin-bottom: 1rem;
     list-style: none;
-    background-color: #e9ecef;
+    /* background-color: #e9ecef; */
     border-radius: .25rem
 }
 

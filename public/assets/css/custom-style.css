@@ -76,7 +76,7 @@ li {
 }
 
 .human_btn a {
-    float: left;
+  float: left;
 }
 
 .human_btn img {
@@ -139,18 +139,18 @@ li {
 .veterinary_btn .active {
     background: #123498;
     color: #fff !important;
-}
+} 
 
 .veterinary_btn .active img {
     filter: grayscale(100%) brightness(1000%);
-}
+} 
 
 .top_baar_icons {
     padding-top: 6px;
 }
 
 .top_baar_icons li {
-    margin-right: 30px !important;
+    margin-right: 20px !important;
 }
 
 .top_baar_icons li a {
@@ -221,6 +221,10 @@ li {
     background-repeat: no-repeat;
     z-index: 0;
 } */
+
+.menu-bar-bg-color{
+    background-color:#243b81;
+}
 .sale_box_main .product_img_bg img {
     height: auto;
     margin-top: 0px;
@@ -322,7 +326,8 @@ button.slick-next.slick-arrow {
 }
 
 #customers-testimonials .slick-slide.slick-current.slick-active.slick-center .testimnl_box {
-    background-color: #123498;
+    /* background-color: #123498; */
+    background-color: white;
 }
 
 #customers-testimonials .slick-slide.slick-current.slick-active.slick-center .rating1 i {
@@ -337,9 +342,10 @@ button.slick-next.slick-arrow {
     display: flex;
     align-items: center;
     gap: 15px;
-    background-color: #363636;
+    /* background-color: #363636; */
+    background-color: white;
     border-radius: 50px;
-    padding: 7px 10px;
+    padding: 1px 10px;
 }
 
 .testimonials {
@@ -649,14 +655,15 @@ ul.social a {
     font-size: 16px;
     font-weight: 500;
     margin-bottom: 0;
-    border: 0;
+
 }
 
 .accordion_section .card-header {
     border: 0;
-    padding: 0;
-    border-bottom: 1px solid #36363680;
     cursor: pointer;
+    /* border: 1px solid #36363680; */
+    border-radius: 30px !important;
+   
 }
 
 
@@ -668,12 +675,24 @@ body .accordion_section .card {
 .accordion_section .card-body {
     font-size: 14px;
     line-height: 26px;
-    padding: 0;
-    padding-top: 17px;
-    border-bottom: 1px solid #36363680;
-    border-radius: 0;
-    padding-bottom: 15px;
+    /* padding: 0; */
+    padding-top: 2px;
+     /* border: 1px solid #36363680; */
+    border-radius: 30px !important;
+ 
 }
+.accordion-item {
+  background-color: #fff;
+border: 1px solid #36363680;
+  border-radius: 30px;
+   margin-bottom: 10px !important;
+}
+
+/* .accordion-item:first-of-type {
+   border-top-left-radius: 30px;
+  border-top-right-radius: 30px;
+} */
+
 
 .tabs_products button {
     border: 0;

@@ -566,8 +566,8 @@
    
    <section class="pt-md-5 pt-4 pb-md-5 pb-4">
        <div class="container">
-         <div class="row align-items-center">
-               <div class="col-md-6 mb-md-0 mb-4">
+         <div class="row align-items-start">
+               <div class="col-md-6 mb-md-0 mb-4 sticky-img">
                      <img class="w-100" src="{{ static_asset('assets/img/about_us_images.png') }}" />
                </div> 
                
@@ -646,7 +646,7 @@
 
 
   <!-- TESTIMONIALS -->
-   <section class="testimonials gray_bg pt-md-5 pb-md-4 pt-4 pb-3" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
+   <section class="testimonials gray_bg pt-md-5 pb-md-4 pt-4 pb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
      <div class="container">
        <div class="text-center">
         <p class="text-white mb-0">TESTIMONIALS</p>
@@ -660,8 +660,8 @@
                   <div class="testimnl_box ">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Dr. Ananya Mehta</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Veterinarian</p>
+                        <h6 class="mb-0 text-dark fs-18">Dr. Ananya Mehta</h6>
+                        <p class="mb-0 pb-0 text-dark fw-300 fs-14">Veterinarian</p>
                      </div>
                   </div>
                  <p class="pt-4">Pharm Vet Easy has been our go-to provider for veterinary medicines and supplements. The quality of their products is outstanding, and their prompt delivery ensures our clinic never runs out of essential supplies. Highly recommended!</p>
@@ -680,8 +680,8 @@
                   <div class="testimnl_box">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Ramesh Patil</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Livestock Farmer</p>
+                        <h6 class="mb-0 text-dark fs-18">Ramesh Patil</h6>
+                        <p class="mb-0 pb-0 text-dark fw-300 fs-14">Livestock Farmer</p>
                      </div>
                   </div>
                  <p class="pt-4">Is a livestock farmer, I need reliable and effective veterinary products. Pharm Vet Easy has consistently provided top-notch solutions that keep my animals healthy. Their customer service is excellent, making them a trusted partner in animal care.</p>
@@ -702,8 +702,8 @@
                   <div class="testimnl_box">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Sneha Kapoor</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Pet Owner</p>
+                        <h6 class="mb-0 text-dark fs-18">Sneha Kapoor</h6>
+                        <p class="mb-0 pb-0 text-dark fw-300 fs-14">Pet Owner</p>
                      </div>
                   </div>
                  <p class="pt-4">What sets Pharm Vet Easy apart is their knowledgeable team and dedication to customer satisfaction. They helped me choose the right supplements for my pet, and I’ve seen remarkable improvements in my dog's health. Thank you for the great service!</p>
@@ -724,8 +724,8 @@
                   <div class="testimnl_box ">
                      <img src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
-                        <h6 class="mb-0 text-white fs-18">Dr. Ananya Mehta</h6>
-                        <p class="mb-0 pb-0 text-white fw-300 fs-14">Veterinarian</p>
+                        <h6 class="mb-0 text-dark fs-18">Dr. Ananya Mehta</h6>
+                        <p class="mb-0 pb-0 text-dark fw-300 fs-14">Veterinarian</p>
                      </div>
                   </div>
                  <p class="pt-4">Pharm Vet Easy has been our go-to provider for veterinary medicines and supplements. The quality of their products is outstanding, and their prompt delivery ensures our clinic never runs out of essential supplies. Highly recommended!</p>
@@ -750,10 +750,11 @@
     
 <div class="container">
     <div class="text-center">
-         <h3 class="headeing_size text_clr_green pb-2 fw-600 text-left">Frequently Asked Questions</h3>
+         <h3 class="headeing_size text_clr_green pb-2 fw-600 text-center">Frequently Asked Questions</h3>
        </div>
     <div id="accordion" class="accordion">
         <div class="card mb-0">
+         <div class="accordion-item">
             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_1">
                 <a class="card-title">
                   What is Pharm Vet Easy?
@@ -764,7 +765,8 @@
 
                 </div>
             </div>
-
+          </div>
+        <div class="accordion-item">
             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_2">
                 <a class="card-title">
                  What types of veterinary products do you offer?
@@ -775,7 +777,8 @@
 
                 </div>
             </div>
-
+         </div>
+        <div class="accordion-item">
             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_3">
                 <a class="card-title">
                   Are your products safe and certified?
@@ -786,7 +789,9 @@
 
                 </div>
             </div>
+              </div>
 
+        <div class="accordion-item">
              <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_4">
                 <a class="card-title">
                   Do you provide bulk orders for veterinary clinics and farms?
@@ -797,7 +802,8 @@
 
                 </div>
             </div>
-
+             </div>
+            <div class="accordion-item">
              <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_5">
                 <a class="card-title">
                  How can I place an order?
@@ -808,7 +814,8 @@
 
                 </div>
             </div>
-
+            </div>
+            <div class="accordion-item">
              <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_6">
                 <a class="card-title">
                  Do you offer worldwide shipping?
@@ -818,7 +825,8 @@
                 <div class="card-body fs-14">Yes, we provide global shipping options. Delivery times may vary based on location and regulatory approvals.
                 </div>
             </div>
-
+            </div>
+        <div class="accordion-item">
              <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_7">
                 <a class="card-title">
                   How can I track my order
@@ -829,7 +837,8 @@
 
                 </div>
             </div>
-
+              </div>
+            <div class="accordion-item">
              <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_8">
                 <a class="card-title">
                  What payment methods do you accept?
@@ -840,7 +849,8 @@
 
                 </div>
             </div>
-
+           </div>
+        <div class="accordion-item">
             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_9">
                 <a class="card-title">
                  Can I return or exchange a product?
@@ -851,7 +861,8 @@
 
                 </div>
             </div>
-
+         </div>
+        <div class="accordion-item">
             <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapse_10">
                 <a class="card-title">
                  How can I contact customer support?
@@ -861,6 +872,7 @@
                 <div class="card-body fs-14">You can reach our customer support team via email, phone, or our website’s contact form for any queries or assistance.
                 </div>
             </div>
+          </div>
 
         </div>
     </div>
