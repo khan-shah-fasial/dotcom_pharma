@@ -92,6 +92,51 @@
         $(btn).css("opacity", "1");
         $(btn).css("pointer-events", "inherit");
     }
+// toggle..
+// let pillButtonOnText = $('.pill-button-selection_on'),
+//     pillButtonOffText = $('.pill-button-selection_off'),
+//     pillButtonHighlight = $('.pill-button-highlight'),
+//     pillButtonInput = $('.pill-button-input');
+
+
+// function setHighlight() {
+//   if (pillButtonInput.prop('checked')) {
+//     $('.pill-button-selection').removeClass('pill-button-selection_active');
+//     pillButtonOnText.addClass('pill-button-selection_active');
+
+//     pillButtonHighlight.css({
+//       'width': pillButtonOnText.outerWidth(),
+//       'left': pillButtonOnText.position().left
+//     });
+//   } else {
+//     $('.pill-button-selection').removeClass('pill-button-selection_active');
+//     pillButtonOffText.addClass('pill-button-selection_active');
+
+//     pillButtonHighlight.css({
+//       'width': pillButtonOffText.outerWidth(),
+//       'left': pillButtonOffText.position().left
+//     });
+//   }
+// }
+
+
+// $('.pill-button-selection').on('click', function() {
+//   if (!$(this).hasClass('pill-button-selection_active')) {
+//     $('.pill-button-selection').removeClass('pill-button-selection_active');
+//     $(this).addClass('pill-button-selection_active');
+
+//     if ($(this).hasClass('pill-button-selection_off')) {
+//       pillButtonInput.prop('checked', false);
+//     } else {
+//       pillButtonInput.prop('checked', true);
+//     }
+//     setHighlight(); 
+//   }
+// });
+
+
+// setHighlight();
+
 
     /*------------------- form submit ajax new --------------------*/
 //});
