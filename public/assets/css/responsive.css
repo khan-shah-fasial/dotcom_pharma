@@ -273,7 +273,7 @@
         padding-right: 1px;
     }
 
-    .flex_boxex h3 a{
+    .flex_boxex h3 a {
         font-size: 14px;
     }
 
@@ -296,9 +296,6 @@
         max-width: 100% !important;
     }
 
-    .product_img_bg img {
-        height: auto !important;
-    }
 
     .login_form_popup {
         padding-left: 0px !important;
@@ -332,11 +329,11 @@
         top: 40% !important;
     }
 
-    .b2b_buttons_menu{
+    .b2b_buttons_menu {
         margin-left: 0px !important;
     }
 
-    .aiz-count-down-circle #time{
+    .aiz-count-down-circle #time {
         gap: 6px;
     }
 
@@ -663,11 +660,9 @@
         margin-right: 5px !important;
     }
 
-    .product_img_bg img {
-        height: auto !important;
-    }
 
-    .b2b_buttons_menu{
+
+    .b2b_buttons_menu {
         margin-left: 0px !important;
     }
 

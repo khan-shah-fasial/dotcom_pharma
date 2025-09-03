@@ -76,7 +76,7 @@ li {
 }
 
 .human_btn a {
-  float: left;
+    float: left;
 }
 
 .human_btn img {
@@ -139,11 +139,11 @@ li {
 .veterinary_btn .active {
     background: #123498;
     color: #fff !important;
-} 
+}
 
 .veterinary_btn .active img {
     filter: grayscale(100%) brightness(1000%);
-} 
+}
 
 .top_baar_icons {
     padding-top: 6px;
@@ -199,12 +199,13 @@ li {
     margin-top: 15px;
     margin-bottom: 15px;
     object-fit: cover;
-    height: auto;
+    height: 250px;
+
     width: 89%;
     display: block;
 }
 
-.login-logo-all{
+.login-logo-all {
     width: 180px !important;
 }
 
@@ -222,9 +223,10 @@ li {
     z-index: 0;
 } */
 
-.menu-bar-bg-color{
-    background-color:#243b81;
+.menu-bar-bg-color {
+    background-color: #243b81;
 }
+
 .sale_box_main .product_img_bg img {
     height: auto;
     margin-top: 0px;
@@ -663,7 +665,7 @@ ul.social a {
     cursor: pointer;
     /* border: 1px solid #36363680; */
     border-radius: 30px !important;
-   
+
 }
 
 
@@ -677,15 +679,16 @@ body .accordion_section .card {
     line-height: 26px;
     /* padding: 0; */
     padding-top: 2px;
-     /* border: 1px solid #36363680; */
+    /* border: 1px solid #36363680; */
     border-radius: 30px !important;
- 
+
 }
+
 .accordion-item {
-  background-color: #fff;
-border: 1px solid #36363680;
-  border-radius: 30px;
-   margin-bottom: 10px !important;
+    background-color: #fff;
+    border: 1px solid #36363680;
+    border-radius: 30px;
+    margin-bottom: 10px !important;
 }
 
 /* .accordion-item:first-of-type {
@@ -1718,20 +1721,21 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 
 /*  */
 .image-wrapper {
-  --overlay-size: 100px !important; /* Adjust size as needed */
-  position: relative !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  display: inline-block !important;
+    --overlay-size: 100px !important;
+    /* Adjust size as needed */
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: inline-block !important;
 }
 
 /* Centered overlay button */
 .pulse-button.overlay-img {
-  position: absolute !important;
-  width: min(var(--overlay-size), 15%) !important;
-  height: auto !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  z-index: 10 !important;
+    position: absolute !important;
+    width: min(var(--overlay-size), 15%) !important;
+    height: auto !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 10 !important;
 }
