@@ -154,7 +154,7 @@
 
         <div class="col-4 mt-1">
             <span class="fw-500 fs-14 text-dark">{{ translate('Dimentions') }}:</span>
-            <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_dimentions ?? '-' }}</span>
+            <span id="dimentions-product-details" class="text-secondary  fs-14 "></span>
         </div>
 
         <div class="col-8 mt-1">
