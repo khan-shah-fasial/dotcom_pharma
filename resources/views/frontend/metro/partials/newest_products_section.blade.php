@@ -22,7 +22,7 @@
 @endphp
 
 @if (count($newest_products) > 0 && $newest_products->isNotEmpty())
-    <section class="pt-0 pt-md-3 pb-3 pb-lg-3 pb-md-0">
+    <section class="pt-0 pt-md-0 pb-3 pb-lg-3 pb-md-0">
         <div class="container">
             <div class="row">
                 <div class="col-md-9 col-12 width_80 pt-4 pr-md-4">

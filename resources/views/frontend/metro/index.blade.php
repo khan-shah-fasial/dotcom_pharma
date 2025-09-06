@@ -317,7 +317,7 @@
      <!-- Banner Section 3 -->
     @php $homeBanner3Images = get_setting('home_banner3_images', null, $lang);   @endphp
     @if ($homeBanner3Images != null)
-        <div class="mb-3 mb-md-4 mt-3 mt-md-4 d-md-block d-none">
+        <div class="mb-3 mb-md-b mt-3 mt-md-4 d-md-block d-none">
             <div class="container">
                 @php
                     $banner_3_imags = json_decode($homeBanner3Images);
@@ -566,12 +566,12 @@
    
    <section class="pt-md-5 pt-4 pb-md-5 pb-4">
        <div class="container">
-         <div class="row align-items-start">
+         <div class="row align-items-md-center">
                <div class="col-md-6 mb-md-0 mb-4 sticky-img">
                      <img class="w-100" src="{{ static_asset('assets/img/about_us_images.png') }}" />
                </div> 
                
-               <div class="col-md-6">
+               <div class="col-md-6 pl-md-5">
                      <p class="fw-600 blue_light_clr pb-0 mb-0">About Us</p>
                      <h3 class="fw-600 headeing_size">Welcome to <span class="blue_light_clr">Pharm Vet Easy</span></h3>
                      <p>At <b>Pharm Vet Easy,</b> we have a strong vision for the future of global pharmaceuticals, with a primary focus on high-quality veterinary formulations. Guided by our core values of <b>PEOPLE – TRUST – VALUE & TECHNOLOGY,</b> we are committed to delivering world-class products and services while ensuring cost-effectiveness.
@@ -646,7 +646,7 @@
 
 
   <!-- TESTIMONIALS -->
-   <section class="testimonials gray_bg pt-md-5 pb-md-4 pt-4 pb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
+   <section class="testimonials gray_bg pt-md-5 pb-md-5 pt-4 pb-4" style="background-image: url('{{ static_asset('assets/img/testi_bg.png') }}');">
      <div class="container">
        <div class="text-center">
         <p class="text-white mb-0">TESTIMONIALS</p>
