@@ -718,7 +718,10 @@
                         $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
 
                         $('#per-piece-price-product-details').html('Rs. ' + (data?.per_piece_price ?? '-'));
-                        
+
+                        $('#dimentions-product-details').html(data?.dimension ?? '-');
+
+                        console.dir(data?.dimension ?? '-');
 
                         $('#mrp-unit').html('Rs. ' + (data?.original_price ?? '-'));
 
