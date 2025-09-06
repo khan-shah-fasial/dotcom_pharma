@@ -37,7 +37,7 @@
 @section('content')
 
 <!-- Breadcrumb Listing Page-->
-<section class="bg_gray pt-3">
+<section class=" pt-2">
         <div class="container">
                             <div class="row">
                                 <div class="col-lg-12  text-left">

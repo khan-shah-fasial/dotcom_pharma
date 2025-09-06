@@ -80,7 +80,7 @@ li {
 }
 
 .human_btn img {
-    width: 11px;
+    width: 11px !important;
     margin-right: 2px;
     position: relative;
     top: -1px;
@@ -94,7 +94,7 @@ li {
     border-radius: 8px;
     padding: 0px 4px !important;
     font-weight: 400;
-    margin-top: 9px;
+    margin-top: 3px;
     font-size: 11px !important;
     line-height: 24px;
 }
@@ -117,10 +117,14 @@ li {
 }
 
 .veterinary_btn img {
-    width: 11px;
+    width: 11px !important;
     margin-right: 2px;
     position: relative;
     top: -1px;
+}
+
+li.list-inline-item.human_btn {
+    margin-right: 10px !important;
 }
 
 .veterinary_btn a {
@@ -131,7 +135,7 @@ li {
     border-radius: 8px;
     padding: 0px 4px !important;
     font-weight: 400;
-    margin-top: 9px;
+    margin-top: 3px;
     font-size: 11px !important;
     line-height: 24px;
 }

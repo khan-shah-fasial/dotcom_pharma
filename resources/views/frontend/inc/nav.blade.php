@@ -30,7 +30,7 @@
         <div class="container">
             <div class="row">
 
-              <div class="col-xl-3 col-lg-4 d-lg-block d-none">
+              <div class="col-xl-5 col-lg-5 d-lg-block d-none">
                       <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                             <li class="list-inline-item">
                                  <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
@@ -43,14 +43,8 @@
                                    <img class="w-100" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
                                 </a>
                             </li>
-                    </ul> 
-              </div>
 
-
-                <div class="col-xl-9 col-lg-8 col-md-12 col d-flex justify-content-between">
-
-                    <ul class="list-inline d-flex justify-content-start mb-0">
-                        <li class="list-inline-item human_btn">
+                             <li class="list-inline-item human_btn">
                                  <a href="javascript:void(0)" class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
                                    <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
                                 </a>
@@ -61,7 +55,13 @@
                                    <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
                                 </a>
                             </li>
-                    </ul>
+                    </ul> 
+              </div>
+
+
+                <div class="col-xl-7 col-lg-7 col-md-12 col d-flex justify-content-end">
+
+                  
                     <ul class="list-inline d-flex justify-content-end mb-0">
                             <li class="list-inline-item d-none d-md-block mr-2">
                                 <a class="b2b_buttons" href="{{ route('user.new_registration') }}" >B2B Registration</a>
@@ -720,7 +720,7 @@
         </div>
 
         <!-- Menu Bar -->
-        <div class="d-none d-lg-block position-relative bg-primary h-50px">
+        <div class="d-none d-lg-block position-relative h-50px" style="background-color:#2b56a1 !important;">
             <div class="container h-100">
                 <div class="d-flex h-100">
                     <!-- Categoty Menu Button -->

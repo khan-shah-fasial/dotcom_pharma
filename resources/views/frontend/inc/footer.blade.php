@@ -218,7 +218,7 @@
             <div class="col-lg-2 col-md-3 pl-md-5 col-6">
                 <div class="text-left mt-4">
                    <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-md-3 mb-1">{{ translate('Quick Links') }}</h4>
-                    <ul class="list-unstyled">
+                    <ul class="list-unstyled mb-0">
                        
                             <li class="mb-0">
                                 <a href="/" class="fs-md-14 black_light_clr animate-underline-white">
@@ -282,7 +282,7 @@
             <div class="col-lg-4 col-md-12">
                 <div class="text-left mt-md-4 mt-1 footer_address_1">
                     <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-md-3 mb-1">{{ translate('Contacts') }}</h4>
-                    <ul class="list-unstyled">
+                    <ul class="list-unstyled mb-0">
                         <li class="mb-0">
                              <img src="{{ static_asset('assets/img/envolope_icons.svg') }} "/>
                             <p  class="fs-md-14 black_light_clr">{{ get_setting('contact_address',null,App::getLocale()) }}</p>
