@@ -154,7 +154,7 @@
             <div class="container">
                 <div class="">
                  
-                    <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white mx-xl-5">
+                    <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
                             <form action="{{ route('search') }}" method="GET" class="stop-propagation">
                                 <div class="d-flex position-relative align-items-center">
@@ -242,7 +242,7 @@
 
                         <div class="col-md-6 d-lg-block d-none">
                             <div class="w-100 logo_menu">
-                                <div class="d-flex align-items-center justify-content-center justify-content-xl-start h-100">
+                                <div class="d-flex align-items-center justify-content-center h-100">
                                     <ul class="list-inline mb-0 pl-0">
                                         <!-- Dropdown for Injections -->
 
@@ -745,7 +745,7 @@
                         $nav_txt_color = ((get_setting('header_nav_menu_text') == 'light') ||  (get_setting('header_nav_menu_text') == null)) ? 'text-white' : 'text-dark';
                     @endphp
                     <div class="w-100 full_menu_nav">
-                        <div class="d-flex align-items-center justify-content-center justify-content-xl-start h-100">
+                        <div class="d-flex align-items-center justify-content-center h-100">
                             <ul class="list-inline mb-0 pl-0">
 
                                 @php

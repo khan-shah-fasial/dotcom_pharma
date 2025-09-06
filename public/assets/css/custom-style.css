@@ -198,9 +198,8 @@ li {
 .product_img_bg img {
     margin-top: 15px;
     margin-bottom: 15px;
-    object-fit: cover;
     height: 250px;
-
+    object-fit: scale-down;
     width: 89%;
     display: block;
 }
@@ -946,7 +945,9 @@ body .aiz-count-down-circle #time .circle svg circle {
 .front-header-search {
     position: absolute;
     z-index: 111;
-    width: 94%;
+    width: 100%;
+    padding-left: 20px;
+    padding-right: 30px;
     height: 100%;
     top: -33px;
     right: 0;
@@ -984,7 +985,7 @@ img.logo_main {
 }
 
 .full_menu_nav a.header_menu_links {
-    padding-right: 50px;
+    padding-right: 30px;
 }
 
 .badge_icons {

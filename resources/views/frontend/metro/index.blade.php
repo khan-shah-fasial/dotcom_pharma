@@ -216,7 +216,7 @@
     @endif
 
     <!-- Featured Products -->
-    <div id="section_featured">
+    <div id="section_featured" class="d-none">
 
     </div>
 
@@ -351,7 +351,7 @@
     @php
         $todays_deal_section_bg = get_setting('todays_deal_section_bg_color');
     @endphp
-    <div id="todays_deal" class="mt-md-4" @if(get_setting('todays_deal_section_bg') == 1) style="background: {{ $todays_deal_section_bg }};" @endif>
+    <div id="todays_deal" class="d-none" @if(get_setting('todays_deal_section_bg') == 1) style="background: {{ $todays_deal_section_bg }};" @endif>
 
     </div>
 
