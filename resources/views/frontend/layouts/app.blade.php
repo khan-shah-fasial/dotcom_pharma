@@ -717,13 +717,26 @@
                         let qnt = data?.quantity ?? 0;
                         $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
 
-                        $('#per-piece-price-product-details').html('Rs. ' + (data?.per_piece_price ?? '-'));
+                        // $('#per-piece-price-product-details').html('Rs. ' + (data?.per_piece_price ?? '-'));
+
+                        let package_count = data?.package_count ?? 1;
+                        let temp_per_piece_price = data?.per_piece_price;
+
+                        let per_piece_price = temp_per_piece_price / package_count;
+
+                        $('#per-piece-price-product-details').html(
+                            'Rs. ' + (per_piece_price ? per_piece_price.toFixed(2) : '-')
+                        );
 
                         $('#dimentions-product-details').html(data?.dimension ?? '-');
+                        $('#weight-volume-product-details').html(data?.weight_volume ?? '-');
 
-                        console.dir(data?.dimension ?? '-');
+                        $('#package-count-product-details').html((data?.package_count ?? '-') + ' / Count');
 
                         $('#mrp-unit').html('Rs. ' + (data?.original_price ?? '-'));
+
+                        $('#tax-product-details').html('Rs. ' + (data?.tax ?? '-'));
+                        $('#without-tax-product').html('Rs. ' + (data?.without_tax_price ?? '-'));
 
                         if (data?.discount_percentage > 0) {
                             

@@ -940,23 +940,78 @@ class RegisterController extends Controller
 
     public function registration_bussiness_details($request){
 
-        $rules = [
-            'registration_date' => ['required'],
-            'const_of_business' => ['required'],
+        // $rules = [
+        //     'registration_date' => ['required'],
+        //     'const_of_business' => ['required'],
             
-            'con_person_name' => ['required', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
-            'company_name' => ['required', 'string', 'min:1', 'max:150'],
-            'street_add_first_business' => ['required', 'string', 'min:1', 'max:150'],
+        //     'con_person_name' => ['required', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
+        //     'company_name' => ['required', 'string', 'min:1', 'max:150'],
+        //     'street_add_first_business' => ['required', 'string', 'min:1', 'max:150'],
+        //     'street_add_sec_business' => ['nullable', 'string', 'min:1', 'max:150'],
+        //     'locality_land_mark_business' => ['required', 'string', 'min:1', 'max:150'],
+        //     'village_business' => ['required', 'string', 'min:1', 'max:150'],
+        //     'post_business' => ['required', 'string', 'min:1', 'max:150'],
+        //     'district_business' => ['required', 'string', 'min:1', 'max:150'],
+        //     'country_code_business' => ['required', 'string', 'min:1', 'max:150'],
+        //     'pincode_business' => ['required', 'regex:/^\d{6}$/'], 
+        //     'city_id' => ['required', 'string', 'max:100'],
+        //     'state_id' => ['required', 'string', 'max:100'],
+        //     'country_id' => 'required',
+
+        //     'phone' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+        //     'alternate_mob_no_business' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+        //     'whats_app_no' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+        //     'alternate_whats_app_no_business' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+
+        //     'prim_email_business' => ['required', 'email'],
+        //     'alt_email_business' => ['nullable', 'email'],
+
+        //     'website_business' => ['nullable'],
+
+        //     'bank_name_business' => ['nullable', 'string', 'max:255'],
+        //     'account_no_business' => ['nullable', 'regex:/^\d+$/', 'max:20'],
+        //     'account_name_business' => ['nullable', 'string', 'max:255'],
+        //     'branch_code_business' => ['nullable', 'string', 'max:50'],
+        //     'branch_name_business' => ['nullable', 'string', 'max:255'],
+        //     'branch_address_business' => ['nullable', 'string', 'max:255'],
+        //     'ifsc_code_business' => ['nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+        // ];
+
+        // if (Session::get('reg_locality') === 'domestic') {
+
+        //     $rules['gst_no'] = ['required', 'regex:/^[0-9A-Z]{15}$/i'];
+        //     $rules['gst_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
+        //     $rules['gstin_current_status'] = 'required';
+
+
+        // } elseif (Session::get('reg_locality') === 'international') {
+
+        //     $rules['iec_no'] = ['required', 'regex:/^[0-9A-Z]{10}$/i'];
+        //     $rules['iec_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
+        //     $rules['uin_current_status'] = 'required';
+        //     $rules['micr_code_business'] = ['nullable', 'regex:/^\d{9}$/']; 
+        //     $rules['ad_code_business'] = ['nullable', 'string', 'max:255'];
+
+        // }
+
+
+        $rules = [
+            'registration_date' => ['nullable'],
+            'const_of_business' => ['nullable'],
+            
+            'con_person_name' => ['nullable', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
+            'company_name' => ['nullable', 'string', 'min:1', 'max:150'],
+            'street_add_first_business' => ['nullable', 'string', 'min:1', 'max:150'],
             'street_add_sec_business' => ['nullable', 'string', 'min:1', 'max:150'],
-            'locality_land_mark_business' => ['required', 'string', 'min:1', 'max:150'],
-            'village_business' => ['required', 'string', 'min:1', 'max:150'],
-            'post_business' => ['required', 'string', 'min:1', 'max:150'],
-            'district_business' => ['required', 'string', 'min:1', 'max:150'],
-            'country_code_business' => ['required', 'string', 'min:1', 'max:150'],
-            'pincode_business' => ['required', 'regex:/^\d{6}$/'], 
-            'city_id' => ['required', 'string', 'max:100'],
-            'state_id' => ['required', 'string', 'max:100'],
-            'country_id' => 'required',
+            'locality_land_mark_business' => ['nullable', 'string', 'min:1', 'max:150'],
+            'village_business' => ['nullable', 'string', 'min:1', 'max:150'],
+            'post_business' => ['nullable', 'string', 'min:1', 'max:150'],
+            'district_business' => ['nullable', 'string', 'min:1', 'max:150'],
+            'country_code_business' => ['nullable', 'string', 'min:1', 'max:150'],
+            'pincode_business' => ['nullable', 'regex:/^\d{6}$/'], 
+            'city_id' => ['nullable', 'string', 'max:100'],
+            'state_id' => ['nullable', 'string', 'max:100'],
+            'country_id' => ['nullable'],
 
             'phone' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
             'alternate_mob_no_business' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
@@ -978,20 +1033,15 @@ class RegisterController extends Controller
         ];
 
         if (Session::get('reg_locality') === 'domestic') {
-
-            $rules['gst_no'] = ['required', 'regex:/^[0-9A-Z]{15}$/i'];
-            $rules['gst_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
-            $rules['gstin_current_status'] = 'required';
-
-
+            $rules['gst_no'] = ['nullable', 'regex:/^[0-9A-Z]{15}$/i'];
+            $rules['gst_no_file'] = ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
+            $rules['gstin_current_status'] = 'nullable';
         } elseif (Session::get('reg_locality') === 'international') {
-
-            $rules['iec_no'] = ['required', 'regex:/^[0-9A-Z]{10}$/i'];
-            $rules['iec_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
-            $rules['uin_current_status'] = 'required';
+            $rules['iec_no'] = ['nullable', 'regex:/^[0-9A-Z]{10}$/i'];
+            $rules['iec_no_file'] = ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
+            $rules['uin_current_status'] = 'nullable';
             $rules['micr_code_business'] = ['nullable', 'regex:/^\d{9}$/']; 
             $rules['ad_code_business'] = ['nullable', 'string', 'max:255'];
-
         }
 
         $messages = [
@@ -1089,25 +1139,30 @@ class RegisterController extends Controller
             ], 200);
         }
 
-        if (
-            Session::get('reg_locality') == 'domestic' &&
-            (!Session::has('gst_validate') || Session::get('gst_validate') != "True")
-        ) {
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Please Provide a valid GST Number',
-            ], 200);
 
-        } elseif (
-            Session::get('reg_locality') == 'international' &&
-            (!Session::has('iec_validate') || Session::get('iec_validate') != "True")
-        ) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Please Provide a valid IEC Number',
-            ], 200);
-        }
+        // if (
+        //     Session::get('reg_locality') == 'domestic' &&
+        //     (!Session::has('gst_validate') || Session::get('gst_validate') != "True")
+        // ) {
+
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'Please Provide a valid GST Number',
+        //     ], 200);
+
+        // } elseif (
+        //     Session::get('reg_locality') == 'international' &&
+        //     (!Session::has('iec_validate') || Session::get('iec_validate') != "True")
+        // ) {
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'Please Provide a valid IEC Number',
+        //     ], 200);
+        // }
+
+
+
 
 
         // $temp_phone = $request->country_code_phone_code.'-'.$request->phone;
@@ -1222,25 +1277,77 @@ class RegisterController extends Controller
 
     public function registration_personal_details($request){
 
-        $rules = [
-            'photo_file' => ['required', 'mimes:jpg,jpeg,webp,png', 'max:5120'],
-            'name' => ['required', 'string', 'min:1', 'max:150'],
-            'father_name' => ['required', 'string', 'min:1', 'max:150'],
-            'dob' => ['required'],
+        // $rules = [
+        //     'photo_file' => ['required', 'mimes:jpg,jpeg,webp,png', 'max:5120'],
+        //     'name' => ['required', 'string', 'min:1', 'max:150'],
+        //     'father_name' => ['required', 'string', 'min:1', 'max:150'],
+        //     'dob' => ['required'],
 
-            'street_add_first_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'street_add_sec_personal' => ['nullable', 'string', 'min:1', 'max:150'],
-            'locality_land_mark_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'village_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'post_personal' => ['required', 'string', 'min:1', 'max:150'],
+        //     'street_add_first_personal' => ['required', 'string', 'min:1', 'max:150'],
+        //     'street_add_sec_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+        //     'locality_land_mark_personal' => ['required', 'string', 'min:1', 'max:150'],
+        //     'village_personal' => ['required', 'string', 'min:1', 'max:150'],
+        //     'post_personal' => ['required', 'string', 'min:1', 'max:150'],
             
-            'district_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'country_code_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'pincode_personal' => ['required', 'regex:/^\d{6}$/'], 
+        //     'district_personal' => ['required', 'string', 'min:1', 'max:150'],
+        //     'country_code_personal' => ['required', 'string', 'min:1', 'max:150'],
+        //     'pincode_personal' => ['required', 'regex:/^\d{6}$/'], 
 
-            'city_id' => ['required', 'string', 'max:100'],
-            'state_id' => ['required', 'string', 'max:100'],
-            'country_id' => 'required',
+        //     'city_id' => ['required', 'string', 'max:100'],
+        //     'state_id' => ['required', 'string', 'max:100'],
+        //     'country_id' => 'required',
+
+        //     'phone' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+        //     'alternate_mob_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+        //     'whats_app_no' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+        //     'alternate_whats_app_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+
+        //     'prim_email_personal' => ['required', 'email'],
+        //     'alt_email_personal' => ['nullable', 'email'],
+
+        //     'bank_name_personal' => ['nullable', 'string', 'max:255'],
+        //     'account_no_personal' => ['nullable', 'regex:/^\d+$/', 'max:20'],
+        //     'account_name_personal' => ['nullable', 'string', 'max:255'],
+        //     'branch_code_personal' => ['nullable', 'string', 'max:50'],
+        //     'branch_name_personal' => ['nullable', 'string', 'max:255'],
+        //     'branch_address_personal' => ['nullable', 'string', 'max:255'],
+        //     'ifsc_code_personal' => ['nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+        // ];
+
+        // if (Session::get('reg_locality') === 'domestic') {
+
+        //     $rules['aadhaar_no'] = ['required', 'regex:/^[0-9]{12}$/i'];
+        //     $rules['aadhaar_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
+        //     $rules['pan_no'] = ['required', 'regex:/^[0-9A-Z]{10}$/i'];
+        //     $rules['pan_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
+
+        // } elseif (Session::get('reg_locality') === 'international') {
+
+        //     $rules['passport_no'] = ['required', 'regex:/^[0-9A-Z]{1,9}$/i'];
+        //     $rules['passport_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
+        //     $rules['micr_code_personal'] = ['nullable', 'regex:/^\d{9}$/']; 
+        //     $rules['ad_code_personal'] = ['nullable', 'string', 'max:255'];
+        // }
+
+        $rules = [
+            'photo_file' => ['nullable', 'mimes:jpg,jpeg,webp,png', 'max:5120'],
+            'name' => ['nullable', 'string', 'min:1', 'max:150'],
+            'father_name' => ['nullable', 'string', 'min:1', 'max:150'],
+            'dob' => ['nullable'],
+
+            'street_add_first_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'street_add_sec_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'locality_land_mark_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'village_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'post_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            
+            'district_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'country_code_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'pincode_personal' => ['nullable', 'regex:/^\d{6}$/'], 
+
+            'city_id' => ['nullable', 'string', 'max:100'],
+            'state_id' => ['nullable', 'string', 'max:100'],
+            'country_id' => 'nullable',
 
             'phone' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
             'alternate_mob_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
@@ -1260,16 +1367,13 @@ class RegisterController extends Controller
         ];
 
         if (Session::get('reg_locality') === 'domestic') {
-
-            $rules['aadhaar_no'] = ['required', 'regex:/^[0-9]{12}$/i'];
-            $rules['aadhaar_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
-            $rules['pan_no'] = ['required', 'regex:/^[0-9A-Z]{10}$/i'];
-            $rules['pan_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
-
+            $rules['aadhaar_no'] = ['nullable', 'regex:/^[0-9]{12}$/i'];
+            $rules['aadhaar_no_file'] = ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
+            $rules['pan_no'] = ['nullable', 'regex:/^[0-9A-Z]{10}$/i'];
+            $rules['pan_no_file'] = ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
         } elseif (Session::get('reg_locality') === 'international') {
-
-            $rules['passport_no'] = ['required', 'regex:/^[0-9A-Z]{1,9}$/i'];
-            $rules['passport_no_file'] = ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
+            $rules['passport_no'] = ['nullable', 'regex:/^[0-9A-Z]{1,9}$/i'];
+            $rules['passport_no_file'] = ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'];
             $rules['micr_code_personal'] = ['nullable', 'regex:/^\d{9}$/']; 
             $rules['ad_code_personal'] = ['nullable', 'string', 'max:255'];
         }
@@ -1366,17 +1470,17 @@ class RegisterController extends Controller
 
         $prev_form = Session::get('reg_locality');
 
-        if (
-            $prev_form == 'domestic' &&
-            (!Session::has('aadhaar_validate') || Session::get('aadhaar_validate') != "True")
-        ) {
+        // if (
+        //     $prev_form == 'domestic' &&
+        //     (!Session::has('aadhaar_validate') || Session::get('aadhaar_validate') != "True")
+        // ) {
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Please Provide a valid Aadhaar Number',
-            ], 200);
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'Please Provide a valid Aadhaar Number',
+        //     ], 200);
 
-        } 
+        // } 
         
         // elseif (
         //     $prev_form['type_option'] == 'domestic' &&
@@ -1390,17 +1494,17 @@ class RegisterController extends Controller
 
         // } 
         
-        elseif (
-            $prev_form == 'international' &&
-            (!Session::has('passport_validate') || Session::get('passport_validate') != "True")
-        ) {
+        // elseif (
+        //     $prev_form == 'international' &&
+        //     (!Session::has('passport_validate') || Session::get('passport_validate') != "True")
+        // ) {
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Please Provide a valid Passport Number',
-            ], 200);
+        //     return response()->json([
+        //         'status' => 'error',
+        //         'message' => 'Please Provide a valid Passport Number',
+        //     ], 200);
             
-        }
+        // }
 
 
         $aadhaar_no_file = null;
@@ -1582,23 +1686,23 @@ class RegisterController extends Controller
         $validator = Validator::make($request->all(), $rules, $messages);
 
 
-        $validator->after(function ($validator) use ($request) {
-            $hasAny =
-                ($request->filled('doctor_hospital_reg_no') && $request->hasFile('doctor_hospital_reg_no_file')) ||
-                ($request->filled('dairy_trust_ngo_reg_no') && $request->hasFile('dairy_trust_ngo_reg_no_file')) ||
-                ($request->filled('cc_mdl_reg_no') && $request->hasFile('cc_mdl_reg_no_file')) ||
-                ($request->filled('d_l_no_1') && $request->hasFile('d_l_no_1_file')) ||
-                ($request->filled('d_l_no_2') && $request->hasFile('d_l_no_2_file')) ||
-                ($request->filled('d_l_no_3') && $request->hasFile('d_l_no_3_file')) ||
-                ($request->filled('other_reg_no') && $request->hasFile('other_reg_no_file'));
+        // $validator->after(function ($validator) use ($request) {
+        //     $hasAny =
+        //         ($request->filled('doctor_hospital_reg_no') && $request->hasFile('doctor_hospital_reg_no_file')) ||
+        //         ($request->filled('dairy_trust_ngo_reg_no') && $request->hasFile('dairy_trust_ngo_reg_no_file')) ||
+        //         ($request->filled('cc_mdl_reg_no') && $request->hasFile('cc_mdl_reg_no_file')) ||
+        //         ($request->filled('d_l_no_1') && $request->hasFile('d_l_no_1_file')) ||
+        //         ($request->filled('d_l_no_2') && $request->hasFile('d_l_no_2_file')) ||
+        //         ($request->filled('d_l_no_3') && $request->hasFile('d_l_no_3_file')) ||
+        //         ($request->filled('other_reg_no') && $request->hasFile('other_reg_no_file'));
 
-            if (!$hasAny) {
-                $validator->errors()->add(
-                    'at_least_one_combination',
-                    'At least one valid pair of registration number and file upload is required (e.g., Drug Licence No 1 with file, or Doctor Reg No with file, etc.).'
-                );
-            }
-        });
+        //     if (!$hasAny) {
+        //         $validator->errors()->add(
+        //             'at_least_one_combination',
+        //             'At least one valid pair of registration number and file upload is required (e.g., Drug Licence No 1 with file, or Doctor Reg No with file, etc.).'
+        //         );
+        //     }
+        // });
 
         if ($validator->fails()) {
 
@@ -1687,7 +1791,7 @@ class RegisterController extends Controller
                     'phone' => '+' . str_replace(' ', '', $data_personal['phone']),
                     // 'phone_code_meta' => $data_personal['phone_code_meta'],
 
-                    'email_verified_at' => now(),
+                    // 'email_verified_at' => now(),
                     // password is intentionally NOT updated
 
                     'address' => $data_personal['street_add_first_personal'] . ',' .
@@ -1852,7 +1956,7 @@ class RegisterController extends Controller
                 'phone' => '+' . str_replace(' ', '', $data_personal['phone']),
                 // 'phone_code_meta' => $data_personal['phone_code_meta'],
 
-                'email_verified_at' => now(),
+                // 'email_verified_at' => now(),
 
                 'password' => bcrypt($password), // only on creation
 

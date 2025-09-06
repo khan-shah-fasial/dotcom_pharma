@@ -322,27 +322,43 @@
                         @if(session()->get('reg_locality') == "domestic")
                           
 
-                                    <div class="col-md-3 mb-md-24 mb-2">
+                                    {{-- <div class="col-md-3 mb-md-24 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">GST No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="gst_no" name="gst_no"
                                             minlength="10" maxlength="15" placeholder="Please Enter GST No Ex: 22AAAAA0000A1Z5 " value="{{ $data['gst_no'] ?? $session_data_user['gst_no'] ?? '' }}" required>
                                         </div>
-                                    </div>
+                                    </div> --}}
         
-                                    <div class="col-md-3 mb-md-2 mb-2">
+                                    <div class="col-md-3 mb-md-24 mb-2">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">GST No: </label>
+                                            <input type="text" class="form-control form-control-lg" id="gst_no" name="gst_no"
+                                            minlength="10" maxlength="15" placeholder="Please Enter GST No Ex: 22AAAAA0000A1Z5 " value="{{ $data['gst_no'] ?? $session_data_user['gst_no'] ?? '' }}">
+                                        </div>
+                                    </div>
+
+                                    {{-- <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">GST No Upload : *</label>
                                             <input type="file" class="form-control form-control-lg" id="gst_no_file" name="gst_no_file"
                                             accept=".jpg, .jpeg, .webp, .png, .pdf"
                                             required>
                                         </div>
+                                    </div> --}}
+
+                                    <div class="col-md-3 mb-md-2 mb-2">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">GST No Upload : </label>
+                                            <input type="file" class="form-control form-control-lg" id="gst_no_file" name="gst_no_file"
+                                            accept=".jpg, .jpeg, .webp, .png, .pdf">
+                                        </div>
                                     </div>
 
                                
                         @else
                             
-                                    <div class="col-md-3 mb-md-2 mb-2">
+                                    {{-- <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="iec_no" class="col-form-label form-label">IEC.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="iec_no" name="iec_no"
@@ -357,24 +373,56 @@
                                             accept=".jpg, .jpeg, .webp, .png, .pdf"
                                             required>
                                         </div>
+                                    </div> --}}
+
+                                    <div class="col-md-3 mb-md-2 mb-2">
+                                        <div class="form-group">
+                                            <label for="iec_no" class="col-form-label form-label">IEC.No: </label>
+                                            <input type="text" class="form-control form-control-lg" id="iec_no" name="iec_no"
+                                            minlength="10" maxlength="10" placeholder="Please Enter IEC.No Ex: 1234567890" value="{{ $data['iec_no'] ?? $session_data_user['iec_no'] ?? '' }}" >
+                                        </div>
                                     </div>
+
+                                    <div class="col-md-3 mb-md-2 mb-2">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">IEC.No Upload : </label>
+                                            <input type="file" class="form-control form-control-lg" id="iec_no_file" name="iec_no_file"
+                                            accept=".jpg, .jpeg, .webp, .png, .pdf"
+                                            >
+                                        </div>
+                                    </div>
+
+
                         @endif
 
                         <div class="col-md-3">
 
-                            <div class="form-group">
+                            {{-- <div class="form-group">
                                 <label class="form-label" for="registration_date">Registration Date *</label>
                                 <input type="date" id="registration_date" name="registration_date"
                                     class="form-control form-control-lg" value="{{ old('registration_date', $data['registration_date'] ?? $session_data_user['registration_date'] ?? '') }}" required />
+                            </div> --}}
+
+                            <div class="form-group">
+                                <label class="form-label" for="registration_date">Registration Date </label>
+                                <input type="date" id="registration_date" name="registration_date"
+                                    class="form-control form-control-lg" value="{{ old('registration_date', $data['registration_date'] ?? $session_data_user['registration_date'] ?? '') }}" />
                             </div>
 
                         </div>
                         <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group">
+                            {{-- <div class="form-group">
                                 <label class="form-label" for="const_of_business">Constitution of Business *</label>
                                 <input type="text" id="const_of_business" name="const_of_business"
                                     class="form-control form-control-lg" value="{{ $data['const_of_business'] ?? $session_data_user['const_of_business'] ?? '' }}" required placeholder="Enter Constitution of Business Ex: ABCD"/>
+                            </div> --}}
+
+
+                            <div class="form-group">
+                                <label class="form-label" for="const_of_business">Constitution of Business </label>
+                                <input type="text" id="const_of_business" name="const_of_business"
+                                    class="form-control form-control-lg" value="{{ $data['const_of_business'] ?? $session_data_user['const_of_business'] ?? '' }}" placeholder="Enter Constitution of Business Ex: ABCD"/>
                             </div>
 
                         </div>
@@ -384,21 +432,34 @@
                         @if(session()->get('reg_locality') == "domestic")
                             <div class="col-md-12 mb-md-2 mb-2">
 
-                                    <div class="form-group">
+                                    {{-- <div class="form-group">
                                         <label class="form-label" for="gstin_current_status">GSTIN Status / Current Status *</label>
                                         <input type="text" id="gstin_current_status" name="gstin_current_status"
                                             class="form-control form-control-lg" value="{{ $data['gstin_current_status'] ?? $session_data_user['gstin_current_status'] ?? '' }}" required placeholder="Enter GSTIN Status / Current Status Ex: Active"/>
+                                    </div> --}}
+
+                                    <div class="form-group">
+                                        <label class="form-label" for="gstin_current_status">GSTIN Status / Current Status </label>
+                                        <input type="text" id="gstin_current_status" name="gstin_current_status"
+                                            class="form-control form-control-lg" value="{{ $data['gstin_current_status'] ?? $session_data_user['gstin_current_status'] ?? '' }}" placeholder="Enter GSTIN Status / Current Status Ex: Active"/>
                                     </div>
 
                                 </div>
                         @else
                             
                                 <div class="col-md-3 mb-md-2 mb-2">
-
+{{-- 
                                     <div class="form-group">
                                         <label class="form-label" for="uin_current_status">UIN Status / Current Status *</label>
                                         <input type="text" id="uin_current_status" name="uin_current_status"
                                             class="form-control form-control-lg" value="{{ $data['uin_current_status'] ?? $session_data_user['uin_current_status'] ?? '' }}" required placeholder="Enter UIN Status / Current Status Ex: Active"/>
+                                    </div> --}}
+
+                                    
+                                    <div class="form-group">
+                                        <label class="form-label" for="uin_current_status">UIN Status / Current Status </label>
+                                        <input type="text" id="uin_current_status" name="uin_current_status"
+                                            class="form-control form-control-lg" value="{{ $data['uin_current_status'] ?? $session_data_user['uin_current_status'] ?? '' }}" placeholder="Enter UIN Status / Current Status Ex: Active"/>
                                     </div>
 
                                 </div>
@@ -406,19 +467,32 @@
 
                         <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group">
+                            {{-- <div class="form-group">
                                 <label class="form-label" for="name">Concerned Person Name *</label>
                                 <input type="text" id="con_person_name" name="con_person_name"
                                     class="form-control form-control-lg" value="{{ $data['con_person_name'] ?? $session_data_user['con_person_name'] ?? '' }}" required placeholder="Enter Concerned Person Name Ex: ABCD"/>
+                            </div> --}}
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Concerned Person Name </label>
+                                <input type="text" id="con_person_name" name="con_person_name"
+                                    class="form-control form-control-lg" value="{{ $data['con_person_name'] ?? $session_data_user['con_person_name'] ?? '' }}" placeholder="Enter Concerned Person Name Ex: ABCD"/>
                             </div>
 
                         </div>
                         <div class="col-md-3 mb-md-2 mb-2">
-
+{{-- 
                             <div class="form-group">
                                 <label class="form-label" for="name">Company Name *</label>
                                 <input type="text" id="company_name" name="company_name"
                                     class="form-control form-control-lg" value="{{ $data['company_name'] ?? $session_data_user['company_name'] ?? '' }}" required placeholder="Enter Company Name"/>
+                            </div> --}}
+
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="name">Company Name </label>
+                                <input type="text" id="company_name" name="company_name"
+                                    class="form-control form-control-lg" value="{{ $data['company_name'] ?? $session_data_user['company_name'] ?? '' }}" placeholder="Enter Company Name"/>
                             </div>
 
                         </div>
@@ -432,10 +506,16 @@
 
                         <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group">
+                            {{-- <div class="form-group">
                                 <label class="form-label" for="street_add_first_business">Street Address 1 *</label>
                                 <input type="text" id="street_add_first_business" name="street_add_first_business"
                                     class="form-control form-control-lg" value="{{ $data['street_add_first_business'] ?? $session_data_user['street_add_first_business'] ?? '' }}" required placeholder="Enter Street Address"/>
+                            </div> --}}
+
+                            <div class="form-group">
+                                <label class="form-label" for="street_add_first_business">Street Address 1 </label>
+                                <input type="text" id="street_add_first_business" name="street_add_first_business"
+                                    class="form-control form-control-lg" value="{{ $data['street_add_first_business'] ?? $session_data_user['street_add_first_business'] ?? '' }}" placeholder="Enter Street Address"/>
                             </div>
 
                         </div>
@@ -452,10 +532,16 @@
 
                         <div class="col-md-3 mb-md-2 mb-2">
 
-                            <div class="form-group">
+                            {{-- <div class="form-group">
                                 <label class="form-label" for="locality_land_mark_business">Locality/Suburb/Land Mark *</label>
                                 <input type="text" id="locality_land_mark_business" name="locality_land_mark_business"
                                     class="form-control form-control-lg" value="{{ $data['locality_land_mark_business'] ?? $session_data_user['locality_land_mark_business'] ?? '' }}" required placeholder="Enter Locality/Suburb/Land Mark"/>
+                            </div> --}}
+
+                            <div class="form-group">
+                                <label class="form-label" for="locality_land_mark_business">Locality/Suburb/Land Mark </label>
+                                <input type="text" id="locality_land_mark_business" name="locality_land_mark_business"
+                                    class="form-control form-control-lg" value="{{ $data['locality_land_mark_business'] ?? $session_data_user['locality_land_mark_business'] ?? '' }}" placeholder="Enter Locality/Suburb/Land Mark"/>
                             </div>
 
                         </div>
@@ -463,9 +549,13 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="village_business">Village *</label>
+                                {{-- <label class="form-label" for="village_business">Village *</label>
                                 <input type="text" id="village_business" name="village_business"
-                                    class="form-control form-control-lg" value="{{ $data['village_business'] ?? $session_data_user['village_business'] ?? '' }}" required placeholder="Enter Village"/>
+                                    class="form-control form-control-lg" value="{{ $data['village_business'] ?? $session_data_user['village_business'] ?? '' }}" required placeholder="Enter Village"/> --}}
+
+                                <label class="form-label" for="village_business">Village </label>
+                                <input type="text" id="village_business" name="village_business"
+                                    class="form-control form-control-lg" value="{{ $data['village_business'] ?? $session_data_user['village_business'] ?? '' }}"  placeholder="Enter Village"/>
                             </div>
 
                         </div>
@@ -473,9 +563,12 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="post_business">Post *</label>
+                                {{-- <label class="form-label" for="post_business">Post *</label>
                                 <input type="text" id="post_business" name="post_business" value="{{ $data['post_business'] ?? $session_data_user['post_business'] ?? '' }}"
-                                    class="form-control form-control-lg" placeholder="Enter Post" required/>
+                                    class="form-control form-control-lg" placeholder="Enter Post" required/> --}}
+                                <label class="form-label" for="post_business">Post </label>
+                                <input type="text" id="post_business" name="post_business" value="{{ $data['post_business'] ?? $session_data_user['post_business'] ?? '' }}"
+                                    class="form-control form-control-lg" placeholder="Enter Post" />
                             </div>
 
                         </div>
@@ -483,18 +576,29 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="country_business">Country *</label>
+                                {{-- <label class="form-label" for="country_business">Country *</label>
                                 {{-- <input type="text" id="country_code" name="country_code"
                                     class="form-control form-control-lg" value="{{ $data['country__code'] ?? '' }}" required /> --}}
 
-
+                                    {{--
                                     <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" required>
+                                        <option value="">{{ translate('Select your country') }}</option>
+                                        @foreach (get_active_countries() as $key => $country)
+                                            <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                        @endforeach
+                                    </select> --}}
+
+                                    <label class="form-label" for="country_business">Country </label>
+
+                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country">
                                         <option value="">{{ translate('Select your country') }}</option>
                                         @foreach (get_active_countries() as $key => $country)
                                             <option value="{{ $country->id }}">{{ $country->name }}</option>
                                         @endforeach
                                     </select>
 
+                                    <input type="hidden" name="country__name" id="country__name" value="{{ $session_data_user['country_id_business'] ?? '' }}"/>
+
                             </div>
 
                         </div>
@@ -502,9 +606,13 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
+                                {{-- <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
                                 <input type="number" id="pincode" name="pincode_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_business'] ?? '' }}" onchange="pincode_info();" placeholder="Enter Pincode Or Postal Code" required />
+                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_business'] ?? '' }}" onchange="pincode_info();" placeholder="Enter Pincode Or Postal Code" required /> --}}
+
+                                <label class="form-label" for="pincode">Pincode Or Postal Code </label>
+                                <input type="number" id="pincode" name="pincode_business"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_business'] ?? '' }}" onchange="pincode_info();" placeholder="Enter Pincode Or Postal Code" />
                             </div>
 
                         </div>
@@ -512,9 +620,12 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="state_business">State/Province/Region *</label>
+                                <label class="form-label" for="state_business">State/Province/Region </label>
+                                {{-- <input type="text" id="state" name="state_id"
+                                    class="form-control form-control-lg" value="{{ $data['state_id'] ?? '' }}" required /> --}}
+
                                 <input type="text" id="state" name="state_id"
-                                    class="form-control form-control-lg" value="{{ $data['state_id'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $session_data_user['state_id_business'] ?? '' }}" />
 
                                     {{-- <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="state_id" required placeholder="Select State">
 
@@ -526,9 +637,11 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="district_business">District *</label>
+                                <label class="form-label" for="district_business">District </label>
+                                {{-- <input type="text" id="district_business" name="district_business" value="{{ $data['district_business'] ?? $session_data_user['district_business'] ?? '' }}"
+                                    class="form-control form-control-lg" placeholder="Enter District" required/> --}}
                                 <input type="text" id="district_business" name="district_business" value="{{ $data['district_business'] ?? $session_data_user['district_business'] ?? '' }}"
-                                    class="form-control form-control-lg" placeholder="Enter District" required/>
+                                    class="form-control form-control-lg" placeholder="Enter District"/>
                             </div>
 
                         </div>
@@ -536,9 +649,11 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="city_id_business">City / Town *</label>
-                                <input type="text" id="city" name="city_id"
-                                    class="form-control form-control-lg" value="{{ $data['city_id'] ?? '' }}" required />
+                                <label class="form-label" for="city_id_business">City / Town </label>
+                                {{-- <input type="text" id="city" name="city_id"
+                                    class="form-control form-control-lg" value="{{ $data['city_id'] ?? '' }}" required /> --}}
+                                    <input type="text" id="city" name="city_id"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['city_id_business'] ?? '' }}" />
 
                                 {{-- <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City">
 
@@ -550,9 +665,12 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="country_code_business">Country Code *</label>
+                                <label class="form-label" for="country_code_business">Country Code </label>
+                                {{-- <input type="text" id="country_code_business" name="country_code_business"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['country_code_business'] ?? '' }}" placeholder="Enter Country Code Ex: 91" required /> --}}
+
                                 <input type="text" id="country_code_business" name="country_code_business"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['country_code_business'] ?? '' }}" placeholder="Enter Country Code Ex: 91" required />
+                                    class="form-control form-control-lg" value="{{ $session_data_user['country_code_business'] ?? '' }}" placeholder="Enter Country Code Ex: 91" />
                             </div>
 
                         </div>
@@ -826,7 +944,7 @@
                         @if($reg_locality == "domestic")
 
 
-                                    <div class="col-md-3 mb-md-2 mb-2">
+                                    {{-- <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">Aadhaar.No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="aadhaar_no" name="aadhaar_no"
@@ -858,11 +976,46 @@
                                             accept=".jpg, .jpeg, .webp, .png, .pdf"
                                             required>
                                         </div>
+                                    </div> --}}
+
+
+                                    <div class="col-md-3 mb-md-2 mb-2">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">Aadhaar.No: </label>
+                                            <input type="text" class="form-control form-control-lg" id="aadhaar_no" name="aadhaar_no"
+                                            minlength="12" maxlength="12" placeholder="Please Enter Aadhaar No Ex: 123456789012" value="{{ $data['aadhaar_no'] ?? $session_data_user['aadhaar_no'] ?? '' }}" >
+                                        </div>
+                                    </div>
+        
+                                    <div class="col-md-3 mb-md-2 mb-2">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">Aadhaar Upload : </label>
+                                            <input type="file" class="form-control form-control-lg" id="aadhaar_no_file" name="aadhaar_no_file"
+                                            accept=".jpg, .jpeg, .webp, .png, .pdf"
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3 mb-md-2 mb-2">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">PAN.No: </label>
+                                            <input type="text" class="form-control form-control-lg" id="pan_no" name="pan_no"
+                                            minlength="10" maxlength="10" placeholder="Please Enter PAN No Ex: 3WEKY5JOR4" value="{{ $session_data_user['pan_no'] ?? $pan_no }}" >
+                                        </div>
+                                    </div>
+        
+                                    <div class="col-md-3 mb-md-2 mb-2">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">Pan Upload : </label>
+                                            <input type="file" class="form-control form-control-lg" id="pan_no_file" name="pan_no_file"
+                                            accept=".jpg, .jpeg, .webp, .png, .pdf"
+                                            >
+                                        </div>
                                     </div>
 
                         @else
                               <div class="col-md-3 mb-md-2 mb-2">
-                                        <div class="form-group">
+                                    {{-- <div class="form-group">
                                             <label for="iec_no" class="col-form-label form-label">Passport File No: *</label>
                                             <input type="text" class="form-control form-control-lg" id="passport_no" name="passport_no"
                                             minlength="9" maxlength="15" placeholder="Please Enter Passport No Ex: HYDA089153811" value="{{ $session_data_user['passport_no'] ?? '' }}" 
@@ -876,13 +1029,34 @@
                                             <input type="file" class="form-control form-control-lg" id="passport_no_file" name="passport_no_file"
                                             accept=".jpg, .jpeg, .webp, .png, .pdf" required>
                                         </div>
+                                    </div> --}}
+
+                                    <div class="form-group">
+                                            <label for="iec_no" class="col-form-label form-label">Passport File No: </label>
+                                            <input type="text" class="form-control form-control-lg" id="passport_no" name="passport_no"
+                                            minlength="9" maxlength="15" placeholder="Please Enter Passport No Ex: HYDA089153811" value="{{ $session_data_user['passport_no'] ?? '' }}" 
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3 mb-md-2 mb-2">
+                                        <div class="form-group">
+                                            <label for="gst_no" class="col-form-label form-label">Passport Upload : </label>
+                                            <input type="file" class="form-control form-control-lg" id="passport_no_file" name="passport_no_file"
+                                            accept=".jpg, .jpeg, .webp, .png, .pdf">
+                                        </div>
                                     </div>
                         @endif
 
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label for="gst_no" class="col-form-label form-label pt-0">Photo Upload : *</label>
+                                {{-- <label for="gst_no" class="col-form-label form-label pt-0">Photo Upload : *</label>
+                                <input type="file" class="form-control form-control-lg" id="photo_file" name="photo_file"
+                                accept=".jpg, .jpeg, .webp, .png"
+                                > --}}
+
+                                <label for="gst_no" class="col-form-label form-label pt-0">Photo Upload : </label>
                                 <input type="file" class="form-control form-control-lg" id="photo_file" name="photo_file"
                                 accept=".jpg, .jpeg, .webp, .png"
                                 >
@@ -893,18 +1067,22 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="name">Name *</label>
+                                <label class="form-label" for="name">Name </label>
+                                {{-- <input type="text" id="name" name="name"
+                                    class="form-control form-control-lg" value="{{ $data['name'] ?? $session_data_user['name'] ?? '' }}" required placeholder="Enter Name"/> --}}
                                 <input type="text" id="name" name="name"
-                                    class="form-control form-control-lg" value="{{ $data['name'] ?? $session_data_user['name'] ?? '' }}" required placeholder="Enter Name"/>
+                                    class="form-control form-control-lg" value="{{ $data['name'] ?? $session_data_user['name'] ?? '' }}" placeholder="Enter Name"/>
                             </div>
 
                         </div>
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="name">Father Name *</label>
-                                <input type="text" id="father_name" name="father_name"
-                                    class="form-control form-control-lg" value="{{ $data['father_name'] ?? $session_data_user['father_name'] ?? '' }}" required placeholder="Enter Father Name"/>
+                                <label class="form-label" for="name">Father Name </label>
+                                {{-- <input type="text" id="father_name" name="father_name"
+                                    class="form-control form-control-lg" value="{{ $data['father_name'] ?? $session_data_user['father_name'] ?? '' }}" required placeholder="Enter Father Name"/> --}}
+                                    <input type="text" id="father_name" name="father_name"
+                                    class="form-control form-control-lg" value="{{ $data['father_name'] ?? $session_data_user['father_name'] ?? '' }}" placeholder="Enter Father Name"/>
                             </div>
 
                         </div>
@@ -912,9 +1090,11 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="registration_date">D.O.B *</label>
-                                <input type="date" id="dob" name="dob"
-                                    class="form-control form-control-lg" value="{{ $data['dob'] ?? $session_data_user['dob'] ?? '' }}" required />
+                                <label class="form-label" for="registration_date">D.O.B </label>
+                                {{-- <input type="date" id="dob" name="dob"
+                                    class="form-control form-control-lg" value="{{ $data['dob'] ?? $session_data_user['dob'] ?? '' }}" required /> --}}
+                                    <input type="date" id="dob" name="dob"
+                                    class="form-control form-control-lg" value="{{ $data['dob'] ?? $session_data_user['dob'] ?? '' }}" />
                             </div>
 
                         </div>
@@ -929,9 +1109,11 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="street_add_first_personal">Street Address 1 *</label>
-                                <input type="text" id="street_add_first_personal" name="street_add_first_personal"
-                                    class="form-control form-control-lg" value="{{ $data['street_add_first_personal'] ?? $session_data_user['street_add_first_personal'] ?? '' }}" required placeholder="Enter Street Address"/>
+                                <label class="form-label" for="street_add_first_personal">Street Address 1 </label>
+                                {{-- <input type="text" id="street_add_first_personal" name="street_add_first_personal"
+                                    class="form-control form-control-lg" value="{{ $data['street_add_first_personal'] ?? $session_data_user['street_add_first_personal'] ?? '' }}" required placeholder="Enter Street Address"/> --}}
+                                    <input type="text" id="street_add_first_personal" name="street_add_first_personal"
+                                    class="form-control form-control-lg" value="{{ $data['street_add_first_personal'] ?? $session_data_user['street_add_first_personal'] ?? '' }}" placeholder="Enter Street Address"/>
                             </div>
 
                         </div>
@@ -949,9 +1131,11 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="locality_land_mark_personal">Locality/Suburb/Land Mark *</label>
-                                <input type="text" id="locality_land_mark_personal" name="locality_land_mark_personal"
-                                    class="form-control form-control-lg" value="{{ $data['locality_land_mark_personal'] ?? $session_data_user['locality_land_mark_personal'] ?? '' }}" required placeholder="Enter Locality/Suburb/Land Mark"/>
+                                <label class="form-label" for="locality_land_mark_personal">Locality/Suburb/Land Mark </label>
+                                {{-- <input type="text" id="locality_land_mark_personal" name="locality_land_mark_personal"
+                                    class="form-control form-control-lg" value="{{ $data['locality_land_mark_personal'] ?? $session_data_user['locality_land_mark_personal'] ?? '' }}" required placeholder="Enter Locality/Suburb/Land Mark"/> --}}
+                                    <input type="text" id="locality_land_mark_personal" name="locality_land_mark_personal"
+                                    class="form-control form-control-lg" value="{{ $data['locality_land_mark_personal'] ?? $session_data_user['locality_land_mark_personal'] ?? '' }}" placeholder="Enter Locality/Suburb/Land Mark"/>
                             </div>
 
                         </div>
@@ -959,9 +1143,11 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="village_personal">Village *</label>
-                                <input type="text" id="village_personal" name="village_personal"
-                                    class="form-control form-control-lg" value="{{ $data['village_personal'] ?? $session_data_user['village_personal'] ?? '' }}" required placeholder="Enter Village"/>
+                                <label class="form-label" for="village_personal">Village</label>
+                                {{-- <input type="text" id="village_personal" name="village_personal"
+                                    class="form-control form-control-lg" value="{{ $data['village_personal'] ?? $session_data_user['village_personal'] ?? '' }}" required placeholder="Enter Village"/> --}}
+                                    <input type="text" id="village_personal" name="village_personal"
+                                    class="form-control form-control-lg" value="{{ $data['village_personal'] ?? $session_data_user['village_personal'] ?? '' }}" placeholder="Enter Village"/>
                             </div>
 
                         </div>
@@ -969,9 +1155,11 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="post_personal">Post *</label>
+                                <label class="form-label" for="post_personal">Post </label>
+                                {{-- <input type="text" id="post_personal" name="post_personal" value="{{ $data['post_personal'] ?? $session_data_user['post_personal'] ?? '' }}"
+                                    class="form-control form-control-lg" placeholder="Enter Post" required/> --}}
                                 <input type="text" id="post_personal" name="post_personal" value="{{ $data['post_personal'] ?? $session_data_user['post_personal'] ?? '' }}"
-                                    class="form-control form-control-lg" placeholder="Enter Post" required/>
+                                    class="form-control form-control-lg" placeholder="Enter Post"/>
                             </div>
 
                         </div>
@@ -979,17 +1167,26 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="country_personal">Country *</label>
+                                <label class="form-label" for="country_personal">Country </label>
                                 {{-- <input type="text" id="country_code" name="country_code"
                                     class="form-control form-control-lg" value="{{ $data['country__code'] ?? '' }}" required /> --}}
 
-
+{{-- 
                                     <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" required>
                                         <option value="">{{ translate('Select your country') }}</option>
                                         @foreach (get_active_countries() as $key => $country)
                                             <option value="{{ $country->id }}">{{ $country->name }}</option>
                                         @endforeach
-                                    </select>
+                                    </select> --}}
+
+                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country">
+                                        <option value="">{{ translate('Select your country') }}</option>
+                                        @foreach (get_active_countries() as $key => $country)
+                                            <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                        @endforeach
+                                    </select> 
+
+                                    <input type="hidden" name="country__name" id="country__name" value="{{ $session_data_user['country_id'] ?? '' }}"/>
 
                             </div>
 
@@ -998,10 +1195,13 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="pincode">Pincode Or Postal Code *</label>
-                                <input type="number" id="pincode" name="pincode_personal"
+                                <label class="form-label" for="pincode">Pincode Or Postal Code </label>
+                                {{-- <input type="number" id="pincode" name="pincode_personal"
                                     class="form-control form-control-lg" value="{{ $session_data_user['pincode_personal'] ?? '' }}" placeholder="Enter Pincode Or Postal Code"
-                                    onchange="pincode_info();" required />
+                                    onchange="pincode_info();" required /> --}}
+                                    <input type="number" id="pincode" name="pincode_personal"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['pincode_personal'] ?? '' }}" placeholder="Enter Pincode Or Postal Code"
+                                    onchange="pincode_info();" />
                             </div>
 
                         </div>
@@ -1009,9 +1209,12 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="state_personal">State/Province/Region *</label>
+                                <label class="form-label" for="state_personal">State/Province/Region </label>
+                                    {{-- <input type="text" id="state" name="state_id"
+                                    class="form-control form-control-lg" value="{{ $data['state_id'] ?? '' }}" required /> --}}
+
                                     <input type="text" id="state" name="state_id"
-                                    class="form-control form-control-lg" value="{{ $data['state_id'] ?? '' }}" required />
+                                    class="form-control form-control-lg" value="{{ $data['state_id'] ?? '' }}"  />
 
                                     {{-- <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="state_id" required placeholder="Select State"> 
 
@@ -1023,9 +1226,12 @@
                         <div class="col-md-3 mb-md-2 mb-2">
 
                             <div class="form-group">
-                                <label class="form-label" for="district_personal">District *</label>
+                                <label class="form-label" for="district_personal">District</label>
+                                {{-- <input type="text" id="district_personal" name="district_personal" value="{{ $data['district_personal'] ?? $session_data_user['district_personal'] ?? '' }}"
+                                    class="form-control form-control-lg" placeholder="Enter District" required/> --}}
+
                                 <input type="text" id="district_personal" name="district_personal" value="{{ $data['district_personal'] ?? $session_data_user['district_personal'] ?? '' }}"
-                                    class="form-control form-control-lg" placeholder="Enter District" required/>
+                                    class="form-control form-control-lg" placeholder="Enter District"/>
                             </div>
 
                         </div>
@@ -1033,9 +1239,12 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="city_id_personal">City / Town *</label>
-                                <input type="text" id="city" name="city_id"
-                                    class="form-control form-control-lg" value="{{ $data['city_id'] ?? '' }}" required />
+                                <label class="form-label" for="city_id_personal">City / Town </label>
+                                {{-- <input type="text" id="city" name="city_id"
+                                    class="form-control form-control-lg" value="{{ $data['city_id'] ?? '' }}" required /> --}}
+
+                                    <input type="text" id="city" name="city_id"
+                                    class="form-control form-control-lg" value="{{ $data['city_id'] ?? '' }}" />
 
                                 {{-- <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" name="city_id" required placeholder="Select City"> --}}
 
@@ -1047,9 +1256,13 @@
                         <div class="col-md-3">
 
                             <div class="form-group">
-                                <label class="form-label" for="country_code_personal">Country Code *</label>
-                                <input type="text" id="country_code_personal" name="country_code_personal"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['country_code_personal'] ?? '' }}" required />
+                                <label class="form-label" for="country_code_personal">Country Code </label>
+                                {{-- <input type="text" id="country_code_personal" name="country_code_personal"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['country_code_personal'] ?? '' }}" required /> --}}
+
+                                    <input type="text" id="country_code_personal" name="country_code_personal"
+                                    class="form-control form-control-lg" value="{{ $session_data_user['country_code_personal'] ?? '' }}" />
+                                
                             </div>
 
                         </div>

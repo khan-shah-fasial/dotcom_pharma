@@ -38,6 +38,9 @@ class ProductStockService
                 $product_stock->width = request()->get('width_' . str_replace('.', '_', $str), null);
                 $product_stock->height = request()->get('height_' . str_replace('.', '_', $str), null);
 
+                $product_stock->weight = request()->get('weight_' . str_replace('.', '_', $str), null);
+                $product_stock->count = request()->get('count_' . str_replace('.', '_', $str), null);
+
                 $product_stock->sku = request()['sku_' . str_replace('.', '_', $str)];
                 $product_stock->qty = request()['qty_' . str_replace('.', '_', $str)];
                 $product_stock->image = request()['img_' . str_replace('.', '_', $str)];
@@ -54,14 +57,17 @@ class ProductStockService
             $width = $collection['width'] ?? null;
             $height = $collection['height'] ?? null;
 
+            $weight = $collection['weight'] ?? null;
+            $count = $collection['count'] ?? null;
+
             unset($collection['current_stock']);
             unset($collection['dimension']);
             unset($collection['mrp_price']);
 
             // $data = $collection->merge(compact('variant', 'qty', 'price', 'per_piece_price'))->toArray();
 
-            $data = $collection->merge(compact('variant', 'qty', 'price', 'dimension' ,'mrp_price'))->toArray();
-            
+            $data = $collection->merge(compact('variant', 'qty', 'price', 'dimension' ,'mrp_price', 'length', 'width', 'height', 'weight', 'count'))->toArray();
+
             ProductStock::create($data);
         }
     }

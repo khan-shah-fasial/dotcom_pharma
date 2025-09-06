@@ -857,6 +857,8 @@ class HomeController extends Controller
         $sku = $product_stock->sku;
         // $per_piece_price = $product_stock->per_piece_price;
         $dimension = $product_stock->dimension;
+        $weight = $product_stock->weight;
+        $count = $product_stock->count;
 
 
         if ($product->wholesale_product) {
@@ -927,8 +929,12 @@ class HomeController extends Controller
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
             'per_piece_price' => round($price, 2),
+            'without_tax_price' => single_price(($price - $tax) * $request->quantity),
+            'tax' => single_price($tax * $request->quantity),
             'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),
             'dimension' => $dimension,
+            'weight_volume' => $weight,
+            'package_count' => $count,
             'discount_percentage' => round($dis_percentage, 2)
         );
     }

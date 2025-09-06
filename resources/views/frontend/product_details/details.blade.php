@@ -79,10 +79,17 @@
             <span class="text-secondary fs-14"><span id="per-piece-price-product-details"
                     class="text-primary fs-24 font-600"> </span> / Piece</span>
             <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
-            <span class="text-secondary fs-14 ">Rs {{ $detailedProduct->product_count ?? '-' }} / Count</span>
+            <span id="package-count-product-details" class="text-secondary fs-14 "> {{ $detailedProduct->product_count ?? '-' }} / Count</span>
         </div>
 
         {{-- Unit/MRP --}}
+
+        <div class="col-12 mt-2">
+            <span class="fw-500 fs-14 text-dark">{{ translate('Without Tax') }}:</span>
+            <span id="without-tax-product" class="text-secondary fs-14"></span>
+            <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Tax Amount') }}:</span>
+            <span id="tax-product-details" class="text-secondary fs-14"></span>
+        </div>
 
         <div class="col-12 mt-2">
             <span class="fw-500 fs-14 text-dark">{{ translate('Unit/MRP') }}:</span>
@@ -159,7 +166,7 @@
 
         <div class="col-8 mt-1">
             <span class="fw-500 fs-14 text-dark">{{ translate('Weight / Volume') }}:</span>
-            <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_weight_vol ?? '-' }}</span>
+            <span id="weight-volume-product-details" class="text-secondary  fs-14 "></span>
         </div>
     </div>
 

@@ -66,15 +66,18 @@
 @section('custome-script')
     <script>
 
-        const metaData = {
-            whats_app_no_meta: 'null',
-            phone_business_meta: 'null',
-            phone_code_meta: 'null',
-            alternate_whats_app_no_business_meta: 'null',
-            alternate_mob_no_business_meta: 'null',
-            alternate_whats_app_no_personal_meta: 'null',
-            alternate_mob_no_personal_meta: 'null'
-        };
+        {{--
+        // const metaData = {
+        //     whats_app_no_meta: 'null',
+        //     phone_business_meta: 'null',
+        //     phone_code_meta: 'null',
+        //     alternate_whats_app_no_business_meta: 'null',
+        //     alternate_mob_no_business_meta: 'null',
+        //     alternate_whats_app_no_personal_meta: 'null',
+        //     alternate_mob_no_personal_meta: 'null'
+        // };
+        --}}
+        let country_id = '';
 
         $(document).ready(function() {
 
@@ -363,6 +366,12 @@
                 document.querySelector(`input[name="country_code_${name}"]`).value = countryData.dialCode;
                 document.querySelector(`input[name="${name}_meta"]`).value = countryData.iso2;
 
+                if (document.getElementById("country_code_business")) {
+                    document.getElementById("country_code_business").value = countryData.dialCode;
+                } else if (document.getElementById("country_code_personal")) {
+                    document.getElementById("country_code_personal").value = countryData.dialCode;
+                }
+
                 // Update the country code when the country changes
                 inputElement.addEventListener("countrychange", function () {
                     var updatedCountryData = iti1.getSelectedCountryData();
@@ -372,6 +381,37 @@
                     metaData[`${name}_meta`] = iti1.getSelectedCountryData().iso2;
                 });
             }
+
+            function selectCountry(){
+                const countryHidden = document.getElementById("country__name");
+                const countrySelect = document.querySelector("select[name='country_id']");
+
+                if (countryHidden && countrySelect) {
+                    const countryValue = countryHidden.value.trim();
+
+                    console.dir(`Country hidden: ${countryHidden.value}`);
+                    console.dir(`Country Value: ${countryValue}`);
+
+                    if (countryValue !== "") {
+                        countrySelect.value = countryValue;
+                        
+                        // Refresh aiz-selectpicker
+                        if (typeof $ !== "undefined" && $.fn.selectpicker) {
+                            $(countrySelect).selectpicker("refresh");
+                            console.dir(`Country Value refreshed: ${countryValue}`);
+                        }
+                    } else {
+                        countrySelect.value = country_id;
+                        
+                        // Refresh aiz-selectpicker
+                        if (typeof $ !== "undefined" && $.fn.selectpicker) {
+                            $(countrySelect).selectpicker("refresh");
+                            console.dir(`Country Value else refreshed: ${country_id}`);
+                        }
+                    }
+                }
+            }
+
 
             // Function to render the modal for the current step
             function modelRendStep() {
@@ -421,6 +461,7 @@
                             }
 
                             if(step == 5){
+                                selectCountry();
                                 intil_input('phone_code');
                                 intil_input('whats_app_no');
                                 intil_input('alternate_mob_no_business');
@@ -437,6 +478,7 @@
                                 --}}
                                 
                             } else if (step == 6) {
+                                selectCountry();
                                 intil_input('phone_code');
                                 intil_input('whats_app_no');
                                 intil_input('alternate_mob_no_personal');
@@ -651,6 +693,12 @@
             document.querySelector(`input[name="country_code_${name}"]`).value = countryData.dialCode;
             document.querySelector(`input[name="${name}_meta"]`).value = countryData.iso2;
 
+            if (document.getElementById("country_code_business")) {
+                document.getElementById("country_code_business").value = countryData.dialCode;
+            } else if (document.getElementById("country_code_personal")) {
+                document.getElementById("country_code_personal").value = countryData.dialCode;
+            }
+
             // Update the country code when the country changes
             inputElement.addEventListener("countrychange", function () {
                 var updatedCountryData = iti1.getSelectedCountryData();
@@ -659,6 +707,36 @@
 
                 metaData[`${name}_meta`] = iti1.getSelectedCountryData().iso2;
             });
+        }
+
+        function selectCountry(){
+            const countryHidden = document.getElementById("country__name");
+            const countrySelect = document.querySelector("select[name='country_id']");
+
+            if (countryHidden && countrySelect) {
+                const countryValue = countryHidden.value.trim();
+
+                console.dir(`Country hidden: ${countryHidden.value}`);
+                console.dir(`Country Value: ${countryValue}`);
+
+                if (countryValue !== "") {
+                    countrySelect.value = countryValue;
+                    
+                    // Refresh aiz-selectpicker
+                    if (typeof $ !== "undefined" && $.fn.selectpicker) {
+                        $(countrySelect).selectpicker("refresh");
+                        console.dir(`Country Value refreshed: ${countryValue}`);
+                    }
+                } else {
+                    countrySelect.value = country_id;
+                    
+                    // Refresh aiz-selectpicker
+                    if (typeof $ !== "undefined" && $.fn.selectpicker) {
+                        $(countrySelect).selectpicker("refresh");
+                        console.dir(`Country Value else refreshed: ${country_id}`);
+                    }
+                }
+            }
         }
 
         function modelRendStep() {
@@ -706,6 +784,7 @@
                         }
 
                         if(step == 5){
+                            selectCountry();
                             intil_input('phone_code');
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_business');
@@ -723,6 +802,7 @@
                             --}}
                             
                         } else if (step == 6) {
+                            selectCountry();
                             intil_input('phone_code');
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_personal');
@@ -810,6 +890,7 @@
                         validate_form(step);
 
                         if(step == 5){
+                            selectCountry();
                             intil_input('phone_code');
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_business');
@@ -827,6 +908,7 @@
                             --}}
                             
                         } else if (step == 6) {
+                            selectCountry();
                             intil_input('phone_code');
                             intil_input('whats_app_no');
                             intil_input('alternate_mob_no_personal');
@@ -1245,6 +1327,27 @@
                 // $('#pincode').on('input', pincode_info); // Use input event for real-time typing
             // });
 
+            document.addEventListener("change", function (event) {
+                const targetNames = ["country_id"];
+
+                if (event.target && targetNames.includes(event.target.name)) {
+                    console.dir(`Function hit on: ${event.target.name}, value: ${event.target.value}`);
+                    country_id = event.target.value;
+                    myCustomFunction(event.target.name);
+                }
+            });
+
+
+            function myCustomFunction(fieldName) {
+                console.dir("Custom function executed →", fieldName);
+
+                // Remove error if exists
+                const errorElement = document.getElementById(`${fieldName}-error`);
+                if (errorElement) {
+                    errorElement.remove();
+                    console.dir(`Removed error for: ${fieldName}`);
+                }
+            }
 
     </script>
 @endsection

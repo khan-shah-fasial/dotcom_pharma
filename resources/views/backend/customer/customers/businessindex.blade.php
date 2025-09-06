@@ -162,7 +162,13 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge badge-inline badge-success">{{ translate('Verified') }}</span>
+                                        @if ($user->email_verified_at != null)
+                                            <span
+                                                class="badge badge-inline badge-success">{{ translate('Verified') }}</span>
+                                        @else
+                                            <span
+                                                class="badge badge-inline badge-warning">{{ translate('Unverified') }}</span>
+                                        @endif
                                     </td>
                                     <td>
                                         @if ($user->approval_status == 1)

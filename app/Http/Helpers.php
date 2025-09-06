@@ -823,7 +823,8 @@ function translate($key, $lang = null, $addslashes = false)
     if ($lang == null) {
         $lang = App::getLocale();
     }
-
+    
+    $key = $key ?? '';
     $lang_key = preg_replace('/[^A-Za-z0-9\_]/', '', str_replace(' ', '_', strtolower($key)));
 
     $translations_en = Cache::rememberForever('translations-en', function () {

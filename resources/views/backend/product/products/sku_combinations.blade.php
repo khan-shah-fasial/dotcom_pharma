@@ -17,9 +17,15 @@
 			<td class="text-center">
 				{{translate('L x W x H (cm)')}}
 			</td>
-			<td class="text-center" data-breakpoints="lg">
-				{{translate('SKU')}}
+			<td class="text-center">
+				{{translate('Weight / Volume')}}
 			</td>
+			<td class="text-center">
+				{{translate('Package Count')}}
+			</td>
+			<td class="text-center">
+                {{ translate('SKU') }}
+            </td>
 			<td class="text-center" data-breakpoints="lg">
 				{{translate('Quantity')}}
 			</td>
@@ -78,6 +84,14 @@
 
 					<input type="number" lang="en" name="height_{{ $str }}" class="form-control"
 						placeholder="H (cm)" step="0.01" min="0" required>
+				</td>
+				<td>
+					<input type="number" lang="en" name="weight_{{ $str }}" class="form-control"
+						placeholder="Weight" step="0.01" min="0" required>
+				</td>
+				<td>
+					<input type="number" lang="en" name="count_{{ $str }}" class="form-control"
+						placeholder="Count" step="0.01" min="0" required>
 				</td>
 				<td>
 					<input type="text" name="sku_{{ $str }}" value="" class="form-control">

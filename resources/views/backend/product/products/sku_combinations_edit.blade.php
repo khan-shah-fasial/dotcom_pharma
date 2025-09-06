@@ -17,7 +17,13 @@
                 <td class="text-center">
                     {{ translate('L x W x H (cm)') }}
                 </td>
-                <td class="text-center" data-breakpoints="lg">
+                <td class="text-center">
+                    {{ translate('Weight / Volume') }}
+                </td>
+                <td class="text-center">
+                    {{ translate('Package Count') }}
+                </td>
+                <td class="text-center">
                     {{ translate('SKU') }}
                 </td>
                 <td class="text-center" data-breakpoints="lg">
@@ -140,6 +146,28 @@
                                 class="form-control" placeholder="H (cm)" step="0.01" min="0" required>
                         </td>
                         <td>
+                            <input type="text" name="weight_{{ $str }}"
+                                value="@php
+                            if($stock != null) {
+                                echo $stock->weight;
+                            }
+                            else {
+                                echo $str;
+                            } @endphp"
+                                class="form-control" required>
+                        </td>
+                        <td>
+                            <input type="text" name="count_{{ $str }}"
+                                value="@php
+                            if($stock != null) {
+                                echo $stock->count;
+                            }
+                            else {
+                                echo $str;
+                            } @endphp"
+                                class="form-control" required>
+                        </td>
+                        <td>
                             <input type="text" name="sku_{{ $str }}"
                                 value="@php
                             if($stock != null) {
@@ -148,7 +176,7 @@
                             else {
                                 echo $str;
                             } @endphp"
-                                class="form-control">
+                                class="form-control" required>
                         </td>
                         <td>
                             <input type="number" lang="en" name="qty_{{ $str }}"
