@@ -853,12 +853,13 @@ class HomeController extends Controller
         $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
         
         $base = getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price); //price by role
+        
 
         $sku = $product_stock->sku;
         // $per_piece_price = $product_stock->per_piece_price;
-        $dimension = $product_stock->dimension;
-        $weight = $product_stock->weight;
-        $count = $product_stock->count;
+        $dimension = $product_stock->dimension ?? $product->product_dimentions;
+        $weight = $product_stock->weight ?? $product->product_weight_vol;
+        $count = $product_stock->count ?? $product->product_min_pack_size;
 
 
         if ($product->wholesale_product) {

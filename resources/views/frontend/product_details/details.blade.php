@@ -32,10 +32,12 @@
 
     <div class="row">
 
-        <div class="col-12 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Brand / Mfg') }}:</span>
-            <span class="text-secondary  fs-14 ">{{ $detailedProduct->brand->name ?? '-' }}</span>
-        </div>
+        @if (!empty($detailedProduct->brand->name))
+            <div class="col-12 mt-1">
+                <span class="fw-500 fs-14 text-dark">{{ translate('Brand / Mfg') }}:</span>
+                <span class="text-secondary  fs-14 ">{{ $detailedProduct->brand->name ?? '-' }}</span>
+            </div>
+        @endif
 
         @if ($detailedProduct->pharma_categories)
             <div class="col-12 mt-1">
@@ -131,12 +133,12 @@
         @endif
 
         {{-- Min Pack Size --}}
-        @if ($detailedProduct->product_min_pack_size)
+        {{-- @if ($detailedProduct->product_min_pack_size) --}}
             <div class="col-12 mt-1">
                 <span class="fw-500 fs-14 text-dark">{{ translate('Minimum Pack Size') }}:</span>
-                <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_min_pack_size ?? '-' }}</span>
+                <span id="min-package-count-product-details" class="text-secondary  fs-14 "></span>
             </div>
-        @endif
+        {{-- @endif --}}
 
         {{-- Final 6 fields --}}
         <div class="col-4 mt-1">
@@ -144,20 +146,24 @@
             <span id="qnt-product-details" class="text-secondary  fs-14"></span>
         </div>
 
-        <div class="col-8 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Expiry Date') }}:</span>
-            <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_exp_date ?? '-' }}</span>
-        </div>
+        @if (!empty($detailedProduct->product_exp_date))
+            <div class="col-8 mt-1">
+                <span class="fw-500 fs-14 text-dark">{{ translate('Expiry Date') }}:</span>
+                <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_exp_date ?? '-' }}</span>
+            </div>
+        @endif
 
         <div class="col-4 mt-1">
             <span class="fw-500 fs-14 text-dark">{{ translate('Category') }}:</span>
             <span class="text-secondary  fs-14 ">{{ ucfirst($category_name ?? '-') }}</span>
         </div>
 
-        <div class="col-8 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('HSN / HS Code') }}:</span>
-            <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_hsn ?? '-' }}</span>
-        </div>
+        @if (!empty($detailedProduct->product_hsn))
+            <div class="col-8 mt-1">
+                <span class="fw-500 fs-14 text-dark">{{ translate('HSN / HS Code') }}:</span>
+                <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_hsn ?? '-' }}</span>
+            </div>
+        @endif
 
         <div class="col-4 mt-1">
             <span class="fw-500 fs-14 text-dark">{{ translate('Dimentions') }}:</span>
