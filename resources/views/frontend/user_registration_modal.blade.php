@@ -430,7 +430,7 @@
                        
 
                         @if(session()->get('reg_locality') == "domestic")
-                            <div class="col-md-12 mb-md-2 mb-2">
+                            <div class="col-md-3 mb-md-2 mb-2">
 
                                     {{-- <div class="form-group">
                                         <label class="form-label" for="gstin_current_status">GSTIN Status / Current Status *</label>
@@ -686,9 +686,10 @@
                             @endphp
 
                             <div class="form-group phone-form-group">
-                                <label for="phone-code" class="fs-12 fw-700 text-soft-dark text-capitalize">Primary Mobile (this number is user for your Login details) *</label>
+                                <label for="phone-code" class="fs-12 fw-700 text-soft-dark text-capitalize">Primary Mobile *</label>
                                 <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Phone No" name="phone" autocomplete="off" 
                                 value="{{ $Phone_parts_number ?? '' }}" required>
+                                <label for="phone-code" class="fs-12 fw-700 text-soft-dark text-capitalize primary-number-warning">(this number is user for your Login details)</label>
                             </div>
 
                             <input type="hidden" name="country_code_phone_code" value="{{ isset($Phone_parts[0]) ? ltrim($Phone_parts[0], '+') : ''  }}">

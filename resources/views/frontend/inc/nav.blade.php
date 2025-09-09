@@ -30,7 +30,7 @@
         <div class="container">
             <div class="row">
 
-              <div class="col-xl-5 col-lg-5 d-lg-block d-none">
+              <div class="col-xl-5 col-lg-6 d-lg-block d-none">
                       <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                             <li class="list-inline-item">
                                  <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
@@ -59,7 +59,7 @@
               </div>
 
 
-                <div class="col-xl-7 col-lg-7 col-md-12 col d-flex justify-content-end">
+                <div class="col-xl-7 col-lg-6 col-md-12 col d-flex justify-content-end">
 
                   
                     <ul class="list-inline d-flex justify-content-end mb-0">

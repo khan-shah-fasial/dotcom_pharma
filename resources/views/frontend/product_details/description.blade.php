@@ -125,7 +125,7 @@
             <div class="tab-pane fade" id="tab_default_3">
                 <div class="py-4 text-center ">
                     <a href="{{ uploaded_asset($detailedProduct->pdf) }}"
-                        class="btn btn-primary">{{ translate('Download') }}</a>
+                        class="btn btn-primary" target="_blank">{{ translate('Download') }}</a>
                 </div>
             </div>
 

@@ -71,15 +71,15 @@
 
         {{-- Pricing Row --}}
 
-        <div class="col-12 mt-3 pb-1">
+        <div class="col-12 mt-3 pb-0">
 
             @if (discount_in_percentage($detailedProduct) > 0)
-                <span class=" ml-0 fs-14 fw-400 text-white w-35px text-center p-1"
+                <span class=" ml-0 fs-18 fw-500 text-white w-35px text-center p-1"
                     style="color: #E31E24 !important;">-{{ discount_in_percentage($detailedProduct) }}%off</span>
             @endif
 
             <span class="text-secondary fs-14"><span id="per-piece-price-product-details"
-                    class="text-primary fs-24 font-600"> </span> / Piece</span>
+                    class="text-primary fs-26 font-600 fw-500"> </span> / Piece</span>
             <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
             <span id="package-count-product-details" class="text-secondary fs-14 "> {{ $detailedProduct->product_count ?? '-' }} / Count</span>
         </div>
@@ -97,9 +97,10 @@
             @endif
         @endauth
 
-        <div class="col-12 mt-2">
+        <div class="col-12 mt-1">
             <span class="fw-500 fs-14 text-dark">{{ translate('Unit/MRP') }}:</span>
-            <span id="mrp-unit" class="text-secondary  fs-14 "></span>
+            <span id="mrp-unit" class="text-secondary fs-14"></span><br>
+            <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
         </div>
 
 

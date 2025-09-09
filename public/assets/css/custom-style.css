@@ -1724,6 +1724,11 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     color: #000000b5 !important;
 }
 
+#mrp-unit{
+    text-decoration: line-through !important;
+    color: #000000b5 !important;
+}
+
 /*  */
 .image-wrapper {
     --overlay-size: 100px !important;
@@ -1743,4 +1748,9 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     z-index: 10 !important;
+}
+
+.phone-form-group .primary-number-warning{
+    font-size: 10px !important;
+    font-weight: 500 !important;
 }
