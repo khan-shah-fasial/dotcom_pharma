@@ -86,12 +86,16 @@
 
         {{-- Unit/MRP --}}
 
-        <div class="col-12 mt-2">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Without Tax') }}:</span>
-            <span id="without-tax-product" class="text-secondary fs-14"></span>
-            <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Tax Amount') }}:</span>
-            <span id="tax-product-details" class="text-secondary fs-14"></span>
-        </div>
+        @auth
+            @if(auth()->user()->user_subtype !== null)
+                <div class="col-12 mt-2">
+                    <span class="fw-500 fs-14 text-dark">{{ translate('Without Tax') }}:</span>
+                    <span id="without-tax-product" class="text-secondary fs-14"></span>
+                    <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Tax Amount') }}:</span>
+                    <span id="tax-product-details" class="text-secondary fs-14"></span>
+                </div>
+            @endif
+        @endauth
 
         <div class="col-12 mt-2">
             <span class="fw-500 fs-14 text-dark">{{ translate('Unit/MRP') }}:</span>
