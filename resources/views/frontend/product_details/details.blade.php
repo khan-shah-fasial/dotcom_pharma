@@ -93,12 +93,13 @@
                     <span id="without-tax-product" class="text-secondary fs-14"></span>
                     <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Tax Amount') }}:</span>
                     <span id="tax-product-details" class="text-secondary fs-14"></span>
+                    <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </div>
             @endif
         @else
             <div class="col-12 mt-2">
                 <p class="fw-500 fs-14 text-dark">
-                    <span class="fw-500 fs-14 text-dark">{{ translate('All inclusive of tax.') }}</span>
+                    <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </p>
             </div>
         @endauth
