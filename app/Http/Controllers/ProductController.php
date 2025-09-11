@@ -798,7 +798,7 @@ class ProductController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'Validation failed.',
-                'file' => asset('storage/temp/' . $fileName)
+                'file' => static_asset('storage/temp/' . $fileName)
             ], 422);
         }
 
