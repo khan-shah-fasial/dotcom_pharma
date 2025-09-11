@@ -106,7 +106,7 @@
         <div class="col-12 mt-1">
             <span class="fw-500 fs-14 text-dark">{{ translate('Unit/MRP') }}:</span>
             <span id="mrp-unit" class="text-secondary fs-14"></span><br>
-            <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
+            {{-- <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span> --}}
         </div>
 
 
