@@ -91,12 +91,14 @@ Route::get('/test-otp', function () {
     dd($sessionData);
 });
 
-Route::any('/dummy-test', function () {
-    $step = Session()->get('step');
-
-     $step = $step + 1;
-
-    Session()->put('step', $step);
+Route::get('/create-storage-link', function () {
+    $exitCode = Artisan::call('storage:link');
+    
+    if ($exitCode === 0) {
+        return 'Storage link created successfully.';
+    } else {
+        return 'Error creating storage link.';
+    }
 });
 
 
