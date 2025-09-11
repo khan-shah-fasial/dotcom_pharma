@@ -28,6 +28,12 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\URL;
 
+use App\Exports\ProductStocksExport;
+use Maatwebsite\Excel\Facades\Excel;
+
+use App\Models\ProductStock;
+use Illuminate\Support\Facades\Storage;
+
 class ProductController extends Controller
 {
     protected $productService;
@@ -223,7 +229,15 @@ class ProductController extends Controller
 
 
         $product = $this->productService->store($request->except([
-            '_token', 'sku', 'choice', 'tax_id', 'tax', 'tax_type', 'flash_deal_id', 'flash_discount', 'flash_discount_type'
+            '_token',
+            'sku',
+            'choice',
+            'tax_id',
+            'tax',
+            'tax_type',
+            'flash_deal_id',
+            'flash_discount',
+            'flash_discount_type'
         ]));
         $request->merge(['product_id' => $product->id]);
 
@@ -233,31 +247,50 @@ class ProductController extends Controller
         //VAT & Tax
         if ($request->tax_id) {
             $this->productTaxService->store($request->only([
-                'tax_id', 'tax', 'tax_type', 'product_id'
+                'tax_id',
+                'tax',
+                'tax_type',
+                'product_id'
             ]));
         }
 
         //Flash Deal
         $this->productFlashDealService->store($request->only([
-            'flash_deal_id', 'flash_discount', 'flash_discount_type'
+            'flash_deal_id',
+            'flash_discount',
+            'flash_discount_type'
         ]), $product);
 
         //Product Stock
         $this->productStockService->store($request->only([
-            'colors_active', 'colors', 'choice_no', 'unit_price', 'mrp_price', 'sku', 'current_stock', 'product_id'
+            'colors_active',
+            'colors',
+            'choice_no',
+            'unit_price',
+            'mrp_price',
+            'sku',
+            'current_stock',
+            'product_id'
         ]), $product);
 
         // Frequently Bought Products
         $this->frequentlyBoughtProductService->store($request->only([
-            'product_id', 'frequently_bought_selection_type', 'fq_bought_product_ids', 'fq_bought_product_category_id'
+            'product_id',
+            'frequently_bought_selection_type',
+            'fq_bought_product_ids',
+            'fq_bought_product_category_id'
         ]));
-       
+
         // Product Translations
         $request->merge(['lang' => env('DEFAULT_LANGUAGE')]);
         ProductTranslation::create($request->only([
-            'lang', 'name', 'unit', 'description', 'product_id'
+            'lang',
+            'name',
+            'unit',
+            'description',
+            'product_id'
         ]));
-        
+
         flash(translate('Product has been inserted successfully'))->success();
 
         Artisan::call('view:clear');
@@ -348,7 +381,15 @@ class ProductController extends Controller
 
         //Product
         $product = $this->productService->update($request->except([
-            '_token', 'sku', 'choice', 'tax_id', 'tax', 'tax_type', 'flash_deal_id', 'flash_discount', 'flash_discount_type'
+            '_token',
+            'sku',
+            'choice',
+            'tax_id',
+            'tax',
+            'tax_type',
+            'flash_deal_id',
+            'flash_discount',
+            'flash_discount_type'
         ]), $product);
 
         $request->merge(['product_id' => $product->id]);
@@ -360,35 +401,53 @@ class ProductController extends Controller
         //Product Stock
         $product->stocks()->delete();
         $this->productStockService->store($request->only([
-            'colors_active', 'colors', 'choice_no', 'unit_price','mrp_price','sku', 'current_stock', 'product_id'
+            'colors_active',
+            'colors',
+            'choice_no',
+            'unit_price',
+            'mrp_price',
+            'sku',
+            'current_stock',
+            'product_id'
         ]), $product);
 
         //Flash Deal
         $this->productFlashDealService->store($request->only([
-            'flash_deal_id', 'flash_discount', 'flash_discount_type'
+            'flash_deal_id',
+            'flash_discount',
+            'flash_discount_type'
         ]), $product);
 
         //VAT & Tax
         if ($request->tax_id) {
             $product->taxes()->delete();
             $this->productTaxService->store($request->only([
-                'tax_id', 'tax', 'tax_type', 'product_id'
+                'tax_id',
+                'tax',
+                'tax_type',
+                'product_id'
             ]));
         }
 
         // Frequently Bought Products
         $product->frequently_bought_products()->delete();
         $this->frequentlyBoughtProductService->store($request->only([
-            'product_id', 'frequently_bought_selection_type', 'fq_bought_product_ids', 'fq_bought_product_category_id'
+            'product_id',
+            'frequently_bought_selection_type',
+            'fq_bought_product_ids',
+            'fq_bought_product_category_id'
         ]));
 
         // Product Translations
         ProductTranslation::updateOrCreate(
             $request->only([
-                'lang', 'product_id'
+                'lang',
+                'product_id'
             ]),
             $request->only([
-                'name', 'unit', 'description'
+                'name',
+                'unit',
+                'description'
             ])
         );
 
@@ -396,7 +455,7 @@ class ProductController extends Controller
 
         Artisan::call('view:clear');
         Artisan::call('cache:clear');
-        if($request->has('tab') && $request->tab != null){
+        if ($request->has('tab') && $request->tab != null) {
             return Redirect::to(URL::previous() . "#" . $request->tab);
         }
         return back();
@@ -465,9 +524,9 @@ class ProductController extends Controller
 
         //VAT & Tax
         $this->productTaxService->product_duplicate_store($product->taxes, $product_new);
-        
+
         // Product Categories
-        foreach($product->product_categories as $product_category){
+        foreach ($product->product_categories as $product_category) {
             ProductCategory::insert([
                 'product_id' => $product_new->id,
                 'category_id' => $product_category->category_id,
@@ -639,7 +698,8 @@ class ProductController extends Controller
         return view('partials.product.product_search', compact('products'));
     }
 
-    public function get_selected_products(Request $request){
+    public function get_selected_products(Request $request)
+    {
         $products = product::whereIn('id', $request->product_ids)->get();
         return  view('partials.product.frequently_bought_selected_product', compact('products'));
     }
@@ -649,7 +709,159 @@ class ProductController extends Controller
         return $this->productService->setCategoryWiseDiscount($request->except(['_token']));
     }
 
-    public function role_prices(Request $request){ //price by role
+    public function role_prices(Request $request)
+    { //price by role
         return view('backend.product.settings.role_prices');
-    }    
+    }
+
+    public function download_stock_Excel()
+    {
+        $fileName = 'product-stock-excel-' . now()->format('Y-m-d-H-i-s') . '.xlsx';
+        return Excel::download(new ProductStocksExport, $fileName);
+    }
+
+    public function upload_excel_update_stock(Request $request)
+    {
+        $request->validate([
+            'price_file' => 'required|file|mimes:xlsx,xls,csv,txt'
+        ]);
+
+        $path = $request->file('price_file')->store('temp');
+
+        $rows = Excel::toArray([], $path)[0]; // Get first sheet data
+
+        Storage::delete($path);
+
+        $errors = [];
+        $updates = [];
+
+        foreach ($rows as $index => $row) {
+            // Skip header row
+            if ($index == 0) continue;
+
+            $productId = $row[0] ?? null;
+            $stockId = $row[1] ?? null;
+            $sku = $row[2] ?? null;
+            $productName = $row[3] ?? null;
+            $variantDetails = $row[4] ?? null;
+            $mrpPrice = $row[5] ?? null;
+            $sellingPrice = $row[6] ?? null;
+
+            $rowData = [
+                'product_id' => $productId,
+                'stock_id' => $stockId,
+                'sku' => $sku,
+                'product_name' => $productName,
+                'variant_details' => $variantDetails,
+                'mrp_price' => $mrpPrice,
+                'selling_price' => $sellingPrice
+            ];
+
+            // Validate MRP and Selling Price
+            if ($mrpPrice === null || $sellingPrice === null || $mrpPrice === '' || $sellingPrice === '') {
+                $errors[] = $rowData;
+                continue;
+            }
+
+            if (!is_numeric($mrpPrice) || !is_numeric($sellingPrice)) {
+                $errors[] = $rowData;
+                continue;
+            }
+
+            if (floatval($mrpPrice) <= 0 || floatval($sellingPrice) <= 0) {
+                $errors[] = $rowData;
+                continue;
+            }
+
+            // If all validations pass, add to updates
+            $updates[] = $rowData;
+        }
+
+        if (!empty($errors)) {
+            // Generate error file
+            $errorContent = '';
+
+            foreach ($errors as $error) {
+                $errorContent .= "Product ID : " . ($error['product_id'] ?? '') . "\n";
+                $errorContent .= "Stock ID : " . ($error['stock_id'] ?? '') . "\n";
+                $errorContent .= "SKU : " . ($error['sku'] ?? '') . "\n";
+                $errorContent .= "Product Name : " . ($error['product_name'] ?? '') . "\n";
+                $errorContent .= "Variant Details : " . ($error['variant_details'] ?? '') . "\n";
+                $errorContent .= "MRP Price : " . ($error['mrp_price'] ?? '') . "\n";
+                $errorContent .= "Selling Price : " . ($error['selling_price'] ?? '') . "\n";
+                $errorContent .= str_repeat("-", 40) . "\n";
+            }
+
+            $fileName = 'price_update_errors_' . time() . '.txt';
+            Storage::disk('public')->put('temp/' . $fileName, $errorContent);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed.',
+                'file' => asset('storage/temp/' . $fileName)
+            ], 422);
+        }
+
+        // Process updates in chunks
+        $productMinPrices = [];
+
+        // Step 1: Find lowest selling price per product along with corresponding MRP
+        foreach ($updates as $update) {
+            $productId = $update['product_id'];
+            $sellingPrice = $update['selling_price'];
+            $mrpPrice = $update['mrp_price'];
+
+            if (!isset($productMinPrices[$productId])) {
+                $productMinPrices[$productId] = [
+                    'selling_price' => $sellingPrice,
+                    'mrp_price' => $mrpPrice
+                ];
+            } else {
+                if ($sellingPrice < $productMinPrices[$productId]['selling_price']) {
+                    $productMinPrices[$productId] = [
+                        'selling_price' => $sellingPrice,
+                        'mrp_price' => $mrpPrice
+                    ];
+                }
+            }
+        }
+
+        // Step 2: Update stocks in chunks
+        foreach (array_chunk($updates, 100) as $chunk) {
+            foreach ($chunk as $update) {
+                $stock = ProductStock::find($update['stock_id']);
+                if ($stock) {
+                    $stock->mrp_price = $update['mrp_price'];
+                    $stock->mrp_role_price = generateRoleBasedPrices_excel($update['mrp_price']);
+                    $stock->price = $update['selling_price'];
+                    $stock->role_price = generateRoleBasedPrices_excel($update['selling_price']);
+
+                    $stock->save();
+                }
+            }
+        }
+
+        // Step 3: Update products in chunks only if selling price is lower
+        foreach (array_chunk($productMinPrices, 100, true) as $chunk) {
+            foreach ($chunk as $productId => $prices) {
+                $product = Product::find($productId);
+                if ($product && $prices['selling_price'] < $product->unit_price) {
+                    $product->mrp_price = $prices['mrp_price'];
+                    $product->mrp_role_price = generateRoleBasedPrices_excel($prices['mrp_price']);
+                    $product->unit_price = $prices['selling_price'];
+                    $product->role_price = generateRoleBasedPrices_excel($prices['selling_price']);
+                    $product->published = 1; // Auto-publish if price is updated to lower
+                    $product->save();
+                    // echo "Updated Product ID: {$productId} with MRP: {$prices['mrp_price']} and Selling Price: {$prices['selling_price']}\n";
+                }
+            }
+        }
+
+        Artisan::call('cache:clear');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Prices updated successfully.'
+        ]);
+    }
 }

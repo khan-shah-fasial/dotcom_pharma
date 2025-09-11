@@ -3313,6 +3313,49 @@ if (!function_exists('getProductImage')) {
         return static_asset('assets/img/placeholder.jpg');
     }
 }
+
+if (!function_exists('calculatePrice')) {
+    function calculatePrice($basePrice, $percent) {
+        $calculatedPrice = $basePrice + ($basePrice * $percent / 100);
+        $decimalPart = $calculatedPrice - floor($calculatedPrice);
+
+        if ($decimalPart >= 0.5) {
+            return ceil($calculatedPrice); // round up
+        } else {
+            return floor($calculatedPrice); // round down
+        }
+    }
+}
+
+if (!function_exists('generateRoleBasedPrices_excel')) {
+    function generateRoleBasedPrices_excel(float $purchasePrice)
+    {
+        $percentages = getRolePricePercentageMap();
+        $prices = [];
+
+        // Start with purchase price
+        $prices['pts'] = calculatePrice($purchasePrice, $percentages['pts']);
+
+        // Calculate ptr based on pts
+        $prices['ptr'] = calculatePrice($prices['pts'], $percentages['ptr']);
+
+        // Calculate ptd based on ptr
+        $prices['ptd'] = calculatePrice($prices['ptr'], $percentages['ptd']);
+
+        // Calculate gov based on ptd
+        $prices['gov'] = calculatePrice($prices['ptd'], $percentages['gov']);
+
+        // Calculate expo based on gov
+        $prices['expo'] = calculatePrice($prices['gov'], $percentages['expo']);
+
+        // Calculate customer based on ptd
+        $prices['customer'] = calculatePrice($prices['ptd'], $percentages['customer']);
+
+        return json_encode($prices);
+    }
+}
+
+
 // ALTER TABLE `product_stocks` ADD `role_price` VARCHAR(255) NULL DEFAULT NULL AFTER `price`;
 // ALTER TABLE `products` ADD `role_price` VARCHAR(255) NULL DEFAULT NULL AFTER `unit_price`;
 // INSERT INTO `business_settings` (`id`, `type`, `value`, `lang`, `created_at`, `updated_at`) VALUES

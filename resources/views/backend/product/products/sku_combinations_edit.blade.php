@@ -87,7 +87,7 @@
                             else{
                                 echo $unit_price;
                             } @endphp"
-                                min="0" step="0.01" class="form-control" required>
+                                min="0" step="0.01" class="form-control" required readonly>
                         </td>
                         <td>
                             <input type="number" lang="en" name="price_{{ $str }}"
@@ -103,7 +103,7 @@
                             else{
                                 echo $unit_price;
                             } @endphp"
-                                min="0" step="0.01" class="form-control" required>
+                                min="0" step="0.01" class="form-control" required readonly>
                         </td>
                         <td>
                             <input type="text" lang="en" name="dimension_{{ $str }}"

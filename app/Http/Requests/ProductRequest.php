@@ -34,11 +34,14 @@ class ProductRequest extends FormRequest
         $rules['category_id']   = ['required', Rule::in($this->category_ids)];
         $rules['unit']         = 'sometimes|required';
         $rules['min_qty']      = 'sometimes|required|numeric';
-        $rules['unit_price']    = 'sometimes|required|numeric|gt:0';
+        // $rules['unit_price']    = 'sometimes|required|numeric|gt:0';
+        $rules['unit_price']    = 'sometimes|required|numeric|min:0';
         if ($this->get('discount_type') == 'amount') {
-            $rules['discount'] = 'sometimes|required|numeric|lt:unit_price';
+            // $rules['discount'] = 'sometimes|required|numeric|lt:unit_price';
+            $rules['discount'] = 'sometimes|required|numeric|min:0';
         } else {
-            $rules['discount'] = 'sometimes|required|numeric|lt:100';
+            // $rules['discount'] = 'sometimes|required|numeric|lt:100';
+            $rules['discount'] = 'sometimes|required|numeric|min:0|lt:100';
         }
         $rules['current_stock'] = 'sometimes|required|numeric';
         $rules['starting_bid']  = 'sometimes|required|numeric|min:1';

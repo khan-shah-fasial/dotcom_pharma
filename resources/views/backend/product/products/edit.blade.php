@@ -725,7 +725,7 @@
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('MRP price')}} <span class="text-danger">*</span></label>
                                     <div class="col-md-6">
-                                        <input type="text" placeholder="{{translate('Unit MRP price')}}" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" value="{{$product->mrp_price}}" required>
+                                        <input type="text" placeholder="{{translate('Unit MRP price')}}" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" value="{{$product->mrp_price}}" required readonly>
                                     </div>
                                 </div>
 
@@ -733,7 +733,7 @@
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Unit price')}} <span class="text-danger">*</span></label>
                                     <div class="col-md-6">
-                                        <input type="text" placeholder="{{translate('Unit price')}}" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror" value="{{$product->unit_price}}" required>
+                                        <input type="text" placeholder="{{translate('Unit price')}}" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror" value="{{$product->unit_price}}" required readonly>
                                     </div>
                                 </div>
 
@@ -1617,6 +1617,87 @@ $(document).ready(function () {
     $form.on("submit", function (e) {
         clearFrontendErrors();
 
+        {{--
+        // 1. Stop if jQuery validation fails
+        // if (!$form.valid()) {
+        //     e.preventDefault();
+        //     AIZ.plugins.notify("danger", "Please fill all required fields.");
+        //     return false;
+        // }
+        --}}
+
+        // 2. Main category validation
+        const categoryId = $('[name="category_id"]:checked').val();
+        if (!categoryId) {
+            e.preventDefault();
+            AIZ.plugins.notify("danger", "Please select a Main category.");
+            return false;
+        }
+
+        // 3. Same Product Category validation
+        const categoryIds = $('[name="category_ids[]"]:checked');
+        if (categoryIds.length === 0) {
+            e.preventDefault();
+            AIZ.plugins.notify("danger", "Please select the Same Product Category.");
+            return false;
+        }
+
+        // 4. Colors validation
+        const colorsActive = $('[name="colors_active"]').is(":checked");
+        if (colorsActive) {
+            const selectedColors = $("#colors").val() || [];
+            if (selectedColors.length === 0) {
+                e.preventDefault();
+                AIZ.plugins.notify("danger", "Please select at least one color.");
+
+                // Open tab and scroll to color select
+                const $tab = $('a[data-target="#price_and_stocks"], a[href="#price_and_stocks"], button[data-bs-target="#price_and_stocks"]');
+                if ($tab.length) {
+                    try { $tab.first().tab("show"); } catch (err) { $tab.first().trigger("click"); }
+                }
+                setTimeout(function () {
+                    const $colors = $("#colors");
+                    if ($colors.length) {
+                        $("html,body").animate({ scrollTop: $colors.offset().top - 120 }, 350);
+                        try { $colors.focus(); } catch (e) {}
+                    }
+                }, 250);
+
+                return false;
+            } else {
+                // Remove error state if any
+                $('input[name="product_dimentions"]').removeAttr('required');
+                $('input[name="length"]').removeAttr('required');
+                $('input[name="width"]').removeAttr('required');
+                $('input[name="height"]').removeAttr('required');
+                $('input[name="product_weight_vol"]').removeAttr('required');
+            }
+        } else {
+            // Remove error state if any
+            $('input[name="product_dimentions"]').attr('required', true);
+            $('input[name="length"]').attr('required', true);
+            $('input[name="width"]').attr('required', true);
+            $('input[name="height"]').attr('required', true);
+            $('input[name="product_weight_vol"]').attr('required', true);
+        }
+
+
+        const selectedChoices = $('#choice_attributes').val(); // returns array
+
+        if (!selectedChoices || selectedChoices.length > 0) {
+            $('input[name="product_dimentions"]').removeAttr('required');
+            $('input[name="length"]').removeAttr('required');
+            $('input[name="width"]').removeAttr('required');
+            $('input[name="height"]').removeAttr('required');
+            $('input[name="product_weight_vol"]').removeAttr('required');
+        } else {
+            $('input[name="product_dimentions"]').attr('required', true);
+            $('input[name="length"]').attr('required', true);
+            $('input[name="width"]').attr('required', true);
+            $('input[name="height"]').attr('required', true);
+            $('input[name="product_weight_vol"]').attr('required', true);
+        }
+
         // Custom required field validation for all fields
         const errors = [];
         let firstInvalidEl = null;
@@ -1660,7 +1741,7 @@ $(document).ready(function () {
 
         if (errors.length) {
             e.preventDefault();
-            AIZ.plugins.notify("danger", "Please fix the highlighted fields.");
+            AIZ.plugins.notify("danger", "Please provide the required information in the highlighted fields.");
 
             // Highlight all invalid fields
             errors.forEach(function ($el) {
@@ -1688,54 +1769,6 @@ $(document).ready(function () {
             return false;
         }
 
-        // 1. Stop if jQuery validation fails
-        // if (!$form.valid()) {
-        //     e.preventDefault();
-        //     AIZ.plugins.notify("danger", "Please fill all required fields.");
-        //     return false;
-        // }
-
-        // 2. Main category validation
-        const categoryId = $('[name="category_id"]:checked').val();
-        if (!categoryId) {
-            e.preventDefault();
-            AIZ.plugins.notify("danger", "Please select a Main category.");
-            return false;
-        }
-
-        // 3. Same Product Category validation
-        const categoryIds = $('[name="category_ids[]"]:checked');
-        if (categoryIds.length === 0) {
-            e.preventDefault();
-            AIZ.plugins.notify("danger", "Please select the Same Product Category.");
-            return false;
-        }
-
-        // 4. Colors validation
-        const colorsActive = $('[name="colors_active"]').is(":checked");
-        if (colorsActive) {
-            const selectedColors = $("#colors").val() || [];
-            if (selectedColors.length === 0) {
-                e.preventDefault();
-                AIZ.plugins.notify("danger", "Please select at least one color.");
-
-                // Open tab and scroll to color select
-                const $tab = $('a[data-target="#price_and_stocks"], a[href="#price_and_stocks"], button[data-bs-target="#price_and_stocks"]');
-                if ($tab.length) {
-                    try { $tab.first().tab("show"); } catch (err) { $tab.first().trigger("click"); }
-                }
-                setTimeout(function () {
-                    const $colors = $("#colors");
-                    if ($colors.length) {
-                        $("html,body").animate({ scrollTop: $colors.offset().top - 120 }, 350);
-                        try { $colors.focus(); } catch (e) {}
-                    }
-                }, 250);
-
-                return false;
-            }
-        }
-        
         // If no errors, allow submit
         return true;
     });

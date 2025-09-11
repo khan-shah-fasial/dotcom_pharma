@@ -190,6 +190,11 @@ class ProductService
             'published',
         ))->toArray();
 
+        // If unit_price is 0, set published to 0
+        if ($data['unit_price'] == 0) {
+            $data['published'] = 0;
+        }
+
         return Product::create($data);
     }
 
@@ -354,7 +359,8 @@ class ProductService
         
         $collection['role_price'] = generateRoleBasedPrices($collection['unit_price']); //price by role
         $collection['mrp_role_price'] = generateRoleBasedPrices($collection['mrp_price']); //mrp_price by role
-
+        
+        
         $data = $collection->merge(compact(
             'discount_start_date',
             'discount_end_date',
@@ -364,6 +370,11 @@ class ProductService
             'choice_options',
             'attributes',
         ))->toArray();
+
+        // If unit_price is 0, set published to 0
+        if ($data['unit_price'] == 0) {
+            $data['published'] = 0;
+        }
         
         $product->update($data);
 

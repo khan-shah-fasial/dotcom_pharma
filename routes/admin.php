@@ -144,6 +144,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/get-selected-products', 'get_selected_products')->name('get-selected-products');
         Route::post('/set-product-discount', 'setProductDiscount')->name('set_product_discount');
         Route::get('/products/role-prices', 'role_prices')->name('products.role_prices'); //price by role
+
+        Route::get('/products/download-product-stock-excel', 'download_stock_Excel')->name('download-product-stock-excel');
+
+        Route::post('/products/price-update/upload', 'upload_excel_update_stock')->name('price-update.upload');
     });
 
     // Digital Product
