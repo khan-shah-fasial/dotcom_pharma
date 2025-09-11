@@ -3328,13 +3328,13 @@ if (!function_exists('calculatePrice')) {
 }
 
 if (!function_exists('generateRoleBasedPrices_excel')) {
-    function generateRoleBasedPrices_excel(float $purchasePrice)
+    function generateRoleBasedPrices_excel(float $purchasePrice, $pts_percentage)
     {
         $percentages = getRolePricePercentageMap();
         $prices = [];
 
         // Start with purchase price
-        $prices['pts'] = calculatePrice($purchasePrice, $percentages['pts']);
+        $prices['pts'] = calculatePrice($purchasePrice, $pts_percentage);
 
         // Calculate ptr based on pts
         $prices['ptr'] = calculatePrice($prices['pts'], $percentages['ptr']);

@@ -744,8 +744,8 @@ class ProductController extends Controller
             $sku = $row[2] ?? null;
             $productName = $row[3] ?? null;
             $variantDetails = $row[4] ?? null;
-            $mrpPrice = $row[5] ?? null;
-            $sellingPrice = $row[6] ?? null;
+            $sellingPrice = $row[5] ?? null;
+            $pts_percentage = $row[6] ?? null;
 
             $rowData = [
                 'product_id' => $productId,
@@ -753,22 +753,23 @@ class ProductController extends Controller
                 'sku' => $sku,
                 'product_name' => $productName,
                 'variant_details' => $variantDetails,
-                'mrp_price' => $mrpPrice,
-                'selling_price' => $sellingPrice
+                'selling_price' => $sellingPrice,
+                'pts_percentage' => $pts_percentage
             ];
 
             // Validate MRP and Selling Price
-            if ($mrpPrice === null || $sellingPrice === null || $mrpPrice === '' || $sellingPrice === '') {
+            if ($pts_percentage === null || $sellingPrice === null || $pts_percentage === '' || $sellingPrice === '') {
                 $errors[] = $rowData;
                 continue;
             }
 
-            if (!is_numeric($mrpPrice) || !is_numeric($sellingPrice)) {
+            if (!is_numeric($pts_percentage) || !is_numeric($sellingPrice)) {
                 $errors[] = $rowData;
                 continue;
             }
 
-            if (floatval($mrpPrice) <= 0 || floatval($sellingPrice) <= 0) {
+            // if (floatval($pts_percentage) <= 0 || floatval($sellingPrice) <= 0) {
+            if (floatval($sellingPrice) <= 0) {
                 $errors[] = $rowData;
                 continue;
             }
@@ -787,8 +788,8 @@ class ProductController extends Controller
                 $errorContent .= "SKU : " . ($error['sku'] ?? '') . "\n";
                 $errorContent .= "Product Name : " . ($error['product_name'] ?? '') . "\n";
                 $errorContent .= "Variant Details : " . ($error['variant_details'] ?? '') . "\n";
-                $errorContent .= "MRP Price : " . ($error['mrp_price'] ?? '') . "\n";
-                $errorContent .= "Selling Price : " . ($error['selling_price'] ?? '') . "\n";
+                $errorContent .= "Purchase Price : " . ($error['selling_price'] ?? '') . "\n";
+                $errorContent .= "Pts Percentage : " . ($error['pts_percentage'] ?? '') . "\n";
                 $errorContent .= str_repeat("-", 40) . "\n";
             }
 
@@ -809,18 +810,21 @@ class ProductController extends Controller
         foreach ($updates as $update) {
             $productId = $update['product_id'];
             $sellingPrice = $update['selling_price'];
-            $mrpPrice = $update['mrp_price'];
+            $mrpPrice = $update['selling_price'];
+            $pts_percentage = $update['pts_percentage'];
 
             if (!isset($productMinPrices[$productId])) {
                 $productMinPrices[$productId] = [
                     'selling_price' => $sellingPrice,
-                    'mrp_price' => $mrpPrice
+                    'mrp_price' => $mrpPrice,
+                    'pts_percentage' => $pts_percentage
                 ];
             } else {
                 if ($sellingPrice < $productMinPrices[$productId]['selling_price']) {
                     $productMinPrices[$productId] = [
                         'selling_price' => $sellingPrice,
-                        'mrp_price' => $mrpPrice
+                        'mrp_price' => $mrpPrice,
+                        'pts_percentage' => $pts_percentage
                     ];
                 }
             }
@@ -831,10 +835,10 @@ class ProductController extends Controller
             foreach ($chunk as $update) {
                 $stock = ProductStock::find($update['stock_id']);
                 if ($stock) {
-                    $stock->mrp_price = $update['mrp_price'];
-                    $stock->mrp_role_price = generateRoleBasedPrices_excel($update['mrp_price']);
+                    $stock->mrp_price = $update['selling_price'];
+                    $stock->mrp_role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
                     $stock->price = $update['selling_price'];
-                    $stock->role_price = generateRoleBasedPrices_excel($update['selling_price']);
+                    $stock->role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
 
                     $stock->save();
                 }
@@ -847,9 +851,9 @@ class ProductController extends Controller
                 $product = Product::find($productId);
                 if ($product && $prices['selling_price'] < $product->unit_price) {
                     $product->mrp_price = $prices['mrp_price'];
-                    $product->mrp_role_price = generateRoleBasedPrices_excel($prices['mrp_price']);
+                    $product->mrp_role_price = generateRoleBasedPrices_excel($prices['mrp_price'], $prices['pts_percentage']);
                     $product->unit_price = $prices['selling_price'];
-                    $product->role_price = generateRoleBasedPrices_excel($prices['selling_price']);
+                    $product->role_price = generateRoleBasedPrices_excel($prices['selling_price'], $prices['pts_percentage']);
                     $product->published = 1; // Auto-publish if price is updated to lower
                     $product->save();
                     // echo "Updated Product ID: {$productId} with MRP: {$prices['mrp_price']} and Selling Price: {$prices['selling_price']}\n";

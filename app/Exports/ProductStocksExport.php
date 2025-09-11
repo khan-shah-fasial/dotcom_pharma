@@ -77,8 +77,9 @@ class ProductStocksExport implements FromCollection, WithHeadings
                 'sku' => $stock->sku,
                 'product_name' => $stock->product_name,
                 'variant_details' => $variantDetails,
-                'mrp_price' => '', // empty column
+                // 'mrp_price' => '', // empty column
                 'selling_price' => '', // empty column
+                'pts_percentage' => '', // empty column
             ];
         });
 
@@ -87,6 +88,6 @@ class ProductStocksExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ['Product ID', 'Stock ID', 'SKU', 'Product Name', 'Variant Details', 'MRP Price', 'Selling Price'];
+        return ['Product ID', 'Stock ID', 'SKU', 'Product Name', 'Variant Details', 'Purchase Price', 'PTS Percentage'];
     }
 }
