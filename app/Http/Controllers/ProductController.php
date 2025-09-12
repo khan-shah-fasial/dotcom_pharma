@@ -162,6 +162,7 @@ class ProductController extends Controller
                     $q->where('sku', 'like', '%' . $sort_search . '%');
                 });
         }
+        
         if ($request->type != null) {
             $var = explode(",", $request->type);
             $col_name = $var[0];
@@ -398,18 +399,23 @@ class ProductController extends Controller
         $product->categories()->sync($request->category_ids);
 
 
-        //Product Stock
-        $product->stocks()->delete();
-        $this->productStockService->store($request->only([
-            'colors_active',
-            'colors',
-            'choice_no',
-            'unit_price',
-            'mrp_price',
-            'sku',
-            'current_stock',
-            'product_id'
-        ]), $product);
+
+        if ($request->has('reset_variant_prices')) {
+
+            //Product Stock
+            $product->stocks()->delete();
+            $this->productStockService->store($request->only([
+                'colors_active',
+                'colors',
+                'choice_no',
+                'unit_price',
+                'mrp_price',
+                'sku',
+                'current_stock',
+                'product_id'
+            ]), $product);
+
+        }
 
         //Flash Deal
         $this->productFlashDealService->store($request->only([
@@ -758,19 +764,34 @@ class ProductController extends Controller
             ];
 
             // Validate MRP and Selling Price
-            if ($pts_percentage === null || $sellingPrice === null || $pts_percentage === '' || $sellingPrice === '') {
+            if ($pts_percentage === null || $pts_percentage === '') {
                 $errors[] = $rowData;
+                $rowData['pts_percentage'] = 0; // Temp fix
                 continue;
             }
 
-            if (!is_numeric($pts_percentage) || !is_numeric($sellingPrice)) {
+            if($sellingPrice === null || $sellingPrice === ''){
                 $errors[] = $rowData;
+                $rowData['selling_price'] = 0; // Temp fix
+                continue;
+            }
+
+            if (!is_numeric($pts_percentage)) {
+                $errors[] = $rowData;
+                $rowData['pts_percentage'] = 0; // Temp fix
+                continue;
+            }
+
+             if (!is_numeric($sellingPrice)) {
+                $errors[] = $rowData;
+                $rowData['selling_price'] = 0; // Temp fix
                 continue;
             }
 
             // if (floatval($pts_percentage) <= 0 || floatval($sellingPrice) <= 0) {
             if (floatval($sellingPrice) <= 0) {
                 $errors[] = $rowData;
+                $rowData['selling_price'] = 0; // Temp fix
                 continue;
             }
 
@@ -778,30 +799,6 @@ class ProductController extends Controller
             $updates[] = $rowData;
         }
 
-        if (!empty($errors)) {
-            // Generate error file
-            $errorContent = '';
-
-            foreach ($errors as $error) {
-                $errorContent .= "Product ID : " . ($error['product_id'] ?? '') . "\n";
-                $errorContent .= "Stock ID : " . ($error['stock_id'] ?? '') . "\n";
-                $errorContent .= "SKU : " . ($error['sku'] ?? '') . "\n";
-                $errorContent .= "Product Name : " . ($error['product_name'] ?? '') . "\n";
-                $errorContent .= "Variant Details : " . ($error['variant_details'] ?? '') . "\n";
-                $errorContent .= "Purchase Price : " . ($error['selling_price'] ?? '') . "\n";
-                $errorContent .= "Pts Percentage : " . ($error['pts_percentage'] ?? '') . "\n";
-                $errorContent .= str_repeat("-", 40) . "\n";
-            }
-
-            $fileName = 'price_update_errors_' . time() . '.txt';
-            Storage::disk('public')->put('temp/' . $fileName, $errorContent);
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed.',
-                'file' => static_asset('storage/temp/' . $fileName)
-            ], 422);
-        }
 
         // Process updates in chunks
         $productMinPrices = [];
@@ -854,7 +851,11 @@ class ProductController extends Controller
                     $product->mrp_role_price = generateRoleBasedPrices_excel($prices['mrp_price'], $prices['pts_percentage']);
                     $product->unit_price = $prices['selling_price'];
                     $product->role_price = generateRoleBasedPrices_excel($prices['selling_price'], $prices['pts_percentage']);
-                    $product->published = 1; // Auto-publish if price is updated to lower
+
+                    if ($prices['selling_price'] != 0) {
+                        $product->published = 1;
+                    }  
+
                     $product->save();
                     // echo "Updated Product ID: {$productId} with MRP: {$prices['mrp_price']} and Selling Price: {$prices['selling_price']}\n";
                 }
@@ -862,6 +863,31 @@ class ProductController extends Controller
         }
 
         Artisan::call('cache:clear');
+
+        if (!empty($errors)) {
+            // Generate error file
+            $errorContent = '';
+
+            foreach ($errors as $error) {
+                $errorContent .= "Product ID : " . ($error['product_id'] ?? '') . "\n";
+                $errorContent .= "Stock ID : " . ($error['stock_id'] ?? '') . "\n";
+                $errorContent .= "SKU : " . ($error['sku'] ?? '') . "\n";
+                $errorContent .= "Product Name : " . ($error['product_name'] ?? '') . "\n";
+                $errorContent .= "Variant Details : " . ($error['variant_details'] ?? '') . "\n";
+                $errorContent .= "Purchase Price : " . ($error['selling_price'] ?? '') . "\n";
+                $errorContent .= "Pts Percentage : " . ($error['pts_percentage'] ?? '') . "\n";
+                $errorContent .= str_repeat("-", 40) . "\n";
+            }
+
+            $fileName = 'price_update_errors_' . time() . '.txt';
+            Storage::disk('public')->put('temp/' . $fileName, $errorContent);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed.',
+                'file' => static_asset('storage/temp/' . $fileName)
+            ], 422);
+        }
 
         return response()->json([
             'status' => 'success',

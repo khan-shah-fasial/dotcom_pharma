@@ -11,9 +11,9 @@
                 <td class="text-center">
                     {{ translate('Selling Price') }}
                 </td>
-                <td class="text-center">
+                {{-- <td class="text-center">
                     {{ translate('Dimension') }}
-                </td>
+                </td> --}}
                 <td class="text-center">
                     {{ translate('L x W x H (cm)') }}
                 </td>
@@ -81,11 +81,13 @@
                                     echo $stock->mrp_price;
                                 }
                                 else {
-                                    echo $unit_price;
+                                    // echo $unit_price;
+                                    echo 0;
                                 }
                             }
                             else{
-                                echo $unit_price;
+                                // echo $unit_price;
+                                echo 0;
                             } @endphp"
                                 min="0" step="0.01" class="form-control" required readonly>
                         </td>
@@ -97,15 +99,17 @@
                                     echo $stock->price;
                                 }
                                 else {
-                                    echo $unit_price;
+                                    // echo $unit_price;
+                                    echo 0;
                                 }
                             }
                             else{
-                                echo $unit_price;
+                                // echo $unit_price;
+                                echo 0;
                             } @endphp"
                                 min="0" step="0.01" class="form-control" required readonly>
                         </td>
-                        <td>
+                        {{-- <td>
                             <input type="text" lang="en" name="dimension_{{ $str }}"
                                 value="@php
                             if($stock != null){
@@ -115,7 +119,7 @@
                                 echo $str;
                             } @endphp"
                                 class="form-control" required>
-                        </td>
+                        </td> --}}
                         <td class="d-flex" style="gap:5px;">
                             <input type="number" lang="en" name="length_{{ $str }}"
                                 value="@php

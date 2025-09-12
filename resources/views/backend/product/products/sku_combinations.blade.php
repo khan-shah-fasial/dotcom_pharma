@@ -11,9 +11,9 @@
 			<td class="text-center">
 				{{translate('Selling Price')}}
 			</td>
-			<td class="text-center">
+			{{-- <td class="text-center">
 				{{translate('Dimension')}}
-			</td>
+			</td> --}}
 			<td class="text-center">
 				{{translate('L x W x H (cm)')}}
 			</td>
@@ -72,9 +72,9 @@
 				<td>
 					<input type="number" lang="en" name="price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required readonly>
 				</td>
-				<td>
+				{{-- <td>
 					<input type="text" lang="en" name="dimension_{{ $str }}" class="form-control" required>
-				</td>
+				</td> --}}
 				<td class="d-flex" style="gap:5px;">
 					<input type="number" lang="en" name="length_{{ $str }}" class="form-control"
 						placeholder="L (cm)" step="0.01" min="0" required>

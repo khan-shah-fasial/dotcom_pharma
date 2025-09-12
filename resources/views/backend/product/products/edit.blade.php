@@ -812,6 +812,20 @@
                                         <small class="text-muted">{{translate('Leave it blank if you do not use external site link')}}</small>
                                     </div>
                                 </div>
+
+                                <div class="form-group row">
+                                    <label
+                                        class="col-md-3 col-from-label">{{ translate('Change Product variant') }}</label>
+                                    <div class="col-md-9">
+                                        <label class="aiz-switch aiz-switch-success mb-0 d-block">
+                                            <input type="checkbox" name="reset_variant_prices" value="1">
+                                            <span></span>
+                                        </label>
+                                        <small
+                                            class="text-muted">{{ translate('If you enable this, the prices of all variants of this product will be reset using an Excel or CSV file.') }}</small>
+                                    </div>
+                                </div>
+
                                 <br>
                                 <!-- sku combination -->
                                 <div class="sku_combination" id="sku_combination">
@@ -1783,6 +1797,84 @@ $(document).ready(function () {
     });
 
 });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.querySelector('input[name="reset_variant_prices"]');
+        let originalValues = {};
+
+        function applyChanges() {
+            const skuCombination = document.getElementById('sku_combination');
+            if (!skuCombination) return;
+
+            const priceInputs = skuCombination.querySelectorAll(
+                'input[name^="price_"], input[name^="mrp_price_"]');
+
+            // Store original values only once
+            if (Object.keys(originalValues).length === 0) {
+                priceInputs.forEach(input => {
+                    originalValues[input.name] = input.value;
+                });
+            }
+
+            if (checkbox.checked) {
+                skuCombination.style.opacity = '1';
+                skuCombination.style.pointerEvents = 'auto';
+
+                priceInputs.forEach(input => {
+                    input.value = '0';
+                });
+            } else {
+                skuCombination.style.opacity = '0.5';
+                skuCombination.style.pointerEvents = 'none';
+
+                priceInputs.forEach(input => {
+                    if (originalValues.hasOwnProperty(input.name)) {
+                        input.value = originalValues[input.name];
+                    }
+                });
+            }
+        }
+
+        // Observe for dynamic addition of sku_combination
+        const observer = new MutationObserver(function(mutationsList, observer) {
+            for (let mutation of mutationsList) {
+                if (mutation.type === 'childList') {
+                    const skuCombination = document.getElementById('sku_combination');
+                    if (skuCombination) {
+                        applyChanges();
+                        observer.disconnect();
+                        break;
+                    }
+                }
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Run on page load if already there
+        applyChanges();
+
+        // Apply changes when checkbox is toggled
+        checkbox.addEventListener('change', applyChanges);
+
+        // Watch for any changes inside customer_choice_options
+        const customerChoices = document.getElementById('customer_choice_options');
+        if (customerChoices) {
+            customerChoices.addEventListener('change', function() {
+                setTimeout(function() {
+                    if (!checkbox.checked) {
+                        checkbox.checked = true;
+                        applyChanges();
+                    }
+                }, 3000); // 3000 milliseconds = 3 seconds
+            });
+        }
+    });
 </script>
 
 @endsection
