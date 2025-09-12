@@ -102,6 +102,17 @@
                             placeholder="{{ translate('Type & Enter') }}">
                     </div>
                 </div>
+                <div class="col-md-2 ml-auto">
+                    <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0" name="published_status" id="published_status" onchange="sort_products()">
+                        <option value="">{{ translate('Filter By Status') }}</option>
+                        <option value="1"
+                            @isset($published_status) @if ($published_status == '1') selected @endif @endisset>
+                            {{ translate('Published') }}</option>
+                        <option value="0"
+                            @isset($published_status) @if ($published_status == '0') selected @endif @endisset>
+                            {{ translate('Unpublished') }}</option>
+                    </select>
+                </div>
             </div>
 
             <div class="card-body">
@@ -467,8 +478,18 @@
             var button = $(this);
             button.prop('disabled', true).text('Please wait...');
 
-            // Redirect the browser to the download route
-            window.location.href = '{{ route('download-product-stock-excel') }}';
+            let queryParams = window.location.search; // includes "?" if exists
+
+            // Base download route
+            let downloadUrl = '{{ route('download-product-stock-excel') }}';
+
+            // Append query parameters if they exist
+            if (queryParams) {
+                downloadUrl += queryParams;
+            }
+
+            // Redirect to the final URL
+            window.location.href = downloadUrl;
 
             // Re-enable the button after some delay or if needed
             setTimeout(function() {

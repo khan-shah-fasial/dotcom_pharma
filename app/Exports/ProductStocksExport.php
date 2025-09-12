@@ -13,17 +13,83 @@ use Illuminate\Support\Facades\DB;
 
 class ProductStocksExport implements FromCollection, WithHeadings
 {
+
+    protected $type;
+    protected $search;
+    protected $published_status;
+
+    public function __construct($type = null, $search = null, $published_status = null)
+    {
+        $this->type = $type;
+        $this->search = $search;
+        $this->published_status = $published_status;
+    }
+
     public function collection()
     {
-        $stocks = ProductStock::join('products', 'product_stocks.product_id', '=', 'products.id')
-            ->select(
-                'product_stocks.id as stock_id',
-                'product_stocks.product_id',
-                'products.name as product_name',
-                'product_stocks.sku',
-                'product_stocks.variant'
-            )
-            ->get();
+
+        // If either search or type is provided, reverse the query
+        if ($this->search !== null || $this->type !== null || $this->published_status !== null) {
+
+            // echo "Generating filtered export...\n";
+
+            // Base query on Product joined with product_stocks
+            $stocks = Product::join('product_stocks', 'products.id', '=', 'product_stocks.product_id')
+                ->select(
+                    'product_stocks.id as stock_id',
+                    'product_stocks.product_id',
+                    'products.name as product_name',
+                    'product_stocks.sku',
+                    'product_stocks.variant'
+                );
+
+            // Apply search filter
+            if (!empty($this->search)) {
+                $stocks = $stocks->where('products.name', 'like', '%' . $this->search . '%')
+                    ->orWhere('product_stocks.sku', 'like', '%' . $this->search . '%');
+            }
+
+            // Apply type/order filter
+            if (!empty($this->type)) {
+                $var = explode(",", $this->type);
+                if (count($var) == 2) {
+                    $col_name = $var[0];
+                    $query = $var[1];
+                    $stocks = $stocks->orderBy($col_name, $query);
+                }
+            }
+
+            if ($this->published_status != 'All') {
+                $stocks = $stocks->where('published', $this->published_status);
+            }
+
+            $stocks = $stocks->get();
+
+        } else {
+
+            // echo "default Generating filtered export...\n";
+
+            // Base query on ProductStock
+            $stocks = ProductStock::join('products', 'product_stocks.product_id', '=', 'products.id')
+                ->select(
+                    'product_stocks.id as stock_id',
+                    'product_stocks.product_id',
+                    'products.name as product_name',
+                    'product_stocks.sku',
+                    'product_stocks.variant'
+                )
+                ->get();
+        }
+
+        // $stocks = ProductStock::join('products', 'product_stocks.product_id', '=', 'products.id')
+        //     ->select(
+        //         'product_stocks.id as stock_id',
+        //         'product_stocks.product_id',
+        //         'products.name as product_name',
+        //         'product_stocks.sku',
+        //         'product_stocks.variant'
+        //     )
+        //     ->get();
 
         $data = $stocks->map(function ($stock) {
             $variantDetails = '';

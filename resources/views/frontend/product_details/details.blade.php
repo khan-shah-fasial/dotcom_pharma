@@ -81,13 +81,14 @@
             <span class="text-secondary fs-14"><span id="per-piece-price-product-details"
                     class="text-primary fs-26 font-600 fw-500"> </span> / Piece</span>
             <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
-            <span id="package-count-product-details" class="text-secondary fs-14 "> {{ $detailedProduct->product_count ?? '-' }} / Count</span>
+            <span id="package-count-product-details" class="text-secondary fs-14 ">
+                {{ $detailedProduct->product_count ?? '-' }} / Count</span>
         </div>
 
         {{-- Unit/MRP --}}
 
         @auth
-            @if(auth()->user()->user_subtype !== null)
+            @if (auth()->user()->user_subtype !== null)
                 <div class="col-12 mt-2">
                     <span class="fw-500 fs-14 text-dark">{{ translate('Without Tax') }}:</span>
                     <span id="without-tax-product" class="text-secondary fs-14"></span>
@@ -146,10 +147,10 @@
 
         {{-- Min Pack Size --}}
         {{-- @if ($detailedProduct->product_min_pack_size) --}}
-            <div class="col-12 mt-1">
-                <span class="fw-500 fs-14 text-dark">{{ translate('Minimum Pack Size') }}:</span>
-                <span id="min-package-count-product-details" class="text-secondary  fs-14 "></span>
-            </div>
+        <div class="col-12 mt-1">
+            <span class="fw-500 fs-14 text-dark">{{ translate('Minimum Pack Size') }}:</span>
+            <span id="min-package-count-product-details" class="text-secondary  fs-14 "></span>
+        </div>
         {{-- @endif --}}
 
         {{-- Final 6 fields --}}
@@ -710,13 +711,13 @@
             </div> --}}
     @endif
 
-    <!-- @if (!empty($detailedProduct->tags))
-<div class="d-flex flex-wrap align-items-center mb-0">
-                <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Tags') }}</span><br>
-                <p class="text-secondary fs-14 fw-400 pb-0 mb-0">{{ str_replace(',', ', ', $detailedProduct->tags) }}
-                </p>
-            </div>
-@endif -->
+    @if (!empty($detailedProduct->tags))
+        <div class="d-flex flex-wrap align-items-center mb-0">
+            <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Tags') }}</span><br>
+            <p class="text-secondary fs-14 fw-400 pb-0 mb-0">{{ str_replace(',', ', ', $detailedProduct->tags) }}
+            </p>
+        </div>
+    @endif
 
 
     <hr>

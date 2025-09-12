@@ -146,6 +146,7 @@ class ProductController extends Controller
         $query = null;
         $seller_id = null;
         $sort_search = null;
+        $published_status = null;
         $products = Product::where('auction_product', 0)->where('wholesale_product', 0);
         if (get_setting('vendor_system_activation') != 1) {
             $products = $products->where('added_by', 'admin');
@@ -171,10 +172,17 @@ class ProductController extends Controller
             $sort_type = $request->type;
         }
 
+        if ($request->published_status != null) {
+            $products = $products->where('published', $request->published_status);
+            $published_status = $request->published_status;
+        } else {
+            $published_status = 'All';
+        }
+
         $products = $products->orderBy('created_at', 'desc')->paginate(15);
         $type = 'All';
 
-        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search'));
+        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status'));
     }
 
 
@@ -720,10 +728,21 @@ class ProductController extends Controller
         return view('backend.product.settings.role_prices');
     }
 
-    public function download_stock_Excel()
+    public function download_stock_Excel(Request $request)
     {
         $fileName = 'product-stock-excel-' . now()->format('Y-m-d-H-i-s') . '.xlsx';
-        return Excel::download(new ProductStocksExport, $fileName);
+        // Get query parameters from the request
+        $type = $request->query('type');
+        $search = $request->query('search');
+        $published_status = $request->query('published_status');
+
+        // var_dump($type);
+        // var_dump($search);
+        // var_dump($published_status);
+        // exit;
+
+        // Pass them to the export class
+        return Excel::download(new ProductStocksExport($type, $search, $published_status), $fileName);
     }
 
     public function upload_excel_update_stock(Request $request)
