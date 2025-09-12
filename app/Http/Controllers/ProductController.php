@@ -786,32 +786,32 @@ class ProductController extends Controller
             if ($pts_percentage === null || $pts_percentage === '') {
                 $errors[] = $rowData;
                 $rowData['pts_percentage'] = 0; // Temp fix
-                continue;
+                // continue;
             }
 
             if($sellingPrice === null || $sellingPrice === ''){
                 $errors[] = $rowData;
                 $rowData['selling_price'] = 0; // Temp fix
-                continue;
+                // continue;
             }
 
             if (!is_numeric($pts_percentage)) {
                 $errors[] = $rowData;
                 $rowData['pts_percentage'] = 0; // Temp fix
-                continue;
+                // continue;
             }
 
              if (!is_numeric($sellingPrice)) {
                 $errors[] = $rowData;
                 $rowData['selling_price'] = 0; // Temp fix
-                continue;
+                // continue;
             }
 
             // if (floatval($pts_percentage) <= 0 || floatval($sellingPrice) <= 0) {
             if (floatval($sellingPrice) <= 0) {
                 $errors[] = $rowData;
                 $rowData['selling_price'] = 0; // Temp fix
-                continue;
+                // continue;
             }
 
             // If all validations pass, add to updates
