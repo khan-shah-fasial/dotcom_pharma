@@ -939,7 +939,7 @@ class HomeController extends Controller
             'variation' => $str,
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
-            'per_piece_price' => round($price, 2),
+            'per_piece_price' => single_price(round($price, 2)),
             'without_tax_price' => single_price(($price - $tax) * $request->quantity),
             'tax' => single_price($tax * $request->quantity),
             'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),

@@ -717,15 +717,21 @@
                         let qnt = data?.quantity ?? 0;
                         $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
 
-                        $('#per-piece-price-product-details').html('Rs. ' + (data?.per_piece_price ?? '-'));
+                        // $('#per-piece-price-product-details').html('Rs. ' + (data?.per_piece_price ?? '-'));
+                        $('#per-piece-price-product-details').html(data?.per_piece_price ?? '-');
 
                         let package_count = data?.package_count ?? 1;
-                        let temp_per_piece_price = data?.per_piece_price;
+                        let temp_per_piece_price = data?.per_piece_price?.replace(/[^0-9.]/g, "") || "";
+
+                        let original = data?.per_piece_price || "";
+
+                        // Extract string part (all characters except digits and decimal point)
+                        let stringPart = original.replace(/[0-9.]/g, "");
 
                         let per_piece_price = temp_per_piece_price / package_count;
 
                         $('#package-count-product-details').html(
-                            'Rs. ' + (per_piece_price ? per_piece_price.toFixed(2) + ' / Count' : '-')
+                            stringPart + ' ' + (per_piece_price ? per_piece_price.toFixed(2) + ' / Count' : '-')
                         );
 
                         $('#dimentions-product-details').html(data?.dimension ?? '-');
@@ -733,7 +739,7 @@
 
                         $('#min-package-count-product-details').html((data?.package_count ?? '-') + ' Pcs');
 
-                        $('#mrp-unit').html('Rs. ' + (data?.original_price ?? '-'));
+                        $('#mrp-unit').html(stringPart + ' ' + (data?.original_price ?? '-'));
 
                         $('#tax-product-details').html('Rs. ' + (data?.tax ?? '-'));
                         $('#without-tax-product').html('Rs. ' + (data?.without_tax_price ?? '-'));
