@@ -18,7 +18,7 @@
                         <span>{{ translate('Add New Product') }}</span>
                     </a>
                     <button id="downloadExcelBtn" class="btn btn-circle btn-success mx-1">Download Excel</button>
-                    <button type="button" class="btn btn-primary mx-1" id="openModalBtn">
+                    <button type="button" class="btn btn-primary btn-circle mx-1" id="openModalBtn">
                         Upload Price Update File
                     </button>
                 </div>
@@ -305,14 +305,14 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="uploadModalLabel">Upload Excel or CSV</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" id="closeModalBtn"></button>
+                        <button type="button" class="btn-close upload-close-btn-admin" data-bs-dismiss="modal" id="closeModalBtn"><i class="las fs-18 la-minus"></i></button>
                     </div>
                     <div class="modal-body">
                         <input type="file" name="price_file" accept=".xlsx,.xls,.csv" required>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Upload and Update</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        <button type="submit" class="btn btn-success btn-circle">Upload and Update</button>
+                        <button type="button" class="btn btn-secondary btn-circle" data-bs-dismiss="modal"
                             id="cancelModalBtn">Close</button>
                     </div>
                 </div>
