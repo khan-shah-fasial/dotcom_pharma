@@ -11047,6 +11047,18 @@ input[type="number"] {
     color: var(--primary);
 }
 
+.upload-close-btn-admin{
+    background: grey;
+    border: none;
+    background: wheat;
+    border-radius: 20px;
+    width: 35px;
+    height: 34px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .btn-soft-secondary {
     background-color: var(--soft-secondary);
     color: var(--dark);
