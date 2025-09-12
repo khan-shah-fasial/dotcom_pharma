@@ -857,7 +857,17 @@ class HomeController extends Controller
 
         $sku = $product_stock->sku;
         // $per_piece_price = $product_stock->per_piece_price;
-        $dimension = $product_stock->dimension ?? $product->product_dimentions;
+
+        $length = $product_stock->length ?? $product->length;
+        $breadth = $product_stock->breadth ?? $product->breadth;
+        $height = $product_stock->height ?? $product->height;
+
+
+        $dimension = 
+            ($length ?? '-') . ' x ' . 
+            ($breadth ?? '-') . ' x ' . 
+            ($height ?? '-');
+        
         $weight = $product_stock->weight ?? $product->product_weight_vol;
         $count = $product_stock->count ?? $product->product_min_pack_size;
 
