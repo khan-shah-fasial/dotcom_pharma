@@ -865,7 +865,7 @@ class ProductController extends Controller
         foreach (array_chunk($productMinPrices, 100, true) as $chunk) {
             foreach ($chunk as $productId => $prices) {
                 $product = Product::find($productId);
-                if ($product && $prices['selling_price'] < $product->unit_price) {
+                // if ($product && $prices['selling_price'] < $product->unit_price) {
                     $product->mrp_price = $prices['mrp_price'];
                     $product->mrp_role_price = generateRoleBasedPrices_excel($prices['mrp_price'], $prices['pts_percentage']);
                     $product->unit_price = $prices['selling_price'];
@@ -877,7 +877,7 @@ class ProductController extends Controller
 
                     $product->save();
                     // echo "Updated Product ID: {$productId} with MRP: {$prices['mrp_price']} and Selling Price: {$prices['selling_price']}\n";
-                }
+                // }
             }
         }
 
