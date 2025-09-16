@@ -968,6 +968,12 @@ class HomeController extends Controller
         return view("frontend.policies.supportpolicy", compact('page'));
     }
 
+     public function human()
+    {
+        $page =  Page::where('type', 'human')->first();
+        return view("frontend.policies.human", compact('page'));
+    }
+
     public function terms()
     {
         $page =  Page::where('type', 'terms_conditions_page')->first();

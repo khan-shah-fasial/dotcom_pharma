@@ -52,6 +52,7 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\SizeChartController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\PolicyController;
 /*
   |--------------------------------------------------------------------------
   | Web Routes
@@ -193,6 +194,7 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/seller-policy', 'sellerpolicy')->name('sellerpolicy');
     Route::get('/return-policy', 'returnpolicy')->name('returnpolicy');
     Route::get('/about-us', 'supportpolicy')->name('supportpolicy');
+    Route::get('/human', [PolicyController::class, 'humanPolicy'])->name('human');
     Route::get('/terms', 'terms')->name('terms');
     Route::get('/privacy-policy', 'privacypolicy')->name('privacypolicy');
 

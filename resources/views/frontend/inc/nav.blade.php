@@ -45,7 +45,7 @@
                             </li>
 
                              <li class="list-inline-item human_btn">
-                                 <a href="javascript:void(0)" class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
+                                 <a href="/human" class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
                                    <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
                                 </a>
                             </li>

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Policy;
+use App\Models\Category;
+use App\Models\Brand;
 
 class PolicyController extends Controller
 {
@@ -12,6 +14,14 @@ class PolicyController extends Controller
     {
         $policy = Policy::where('name', $type)->first();
         return view('policies.index', compact('policy'));
+    }
+
+    public function humanPolicy()
+    {
+        $categories = Category::with('childrenCategories')->get();
+        $Brands = Brand::all();
+
+        return view('frontend.policies.human', compact('categories', 'Brands'));
     }
 
     //updates the policy pages

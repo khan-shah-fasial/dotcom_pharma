@@ -1,6 +1,8 @@
 @extends('frontend.layouts.app')
 
 @section('content')
+  
+
     <style>
         #section_featured .slick-slider .slick-list{
             background: #fff;
@@ -22,9 +24,28 @@
         <div class="p-0">
             <!-- Sliders -->
             <div class="home-slider slider-full">
-                <div class="d-block mw-100 img-fit overflow-hidden overflow-hidden">
-                    <img class="img-fit m-auto has-transition ls-is-cached lazyloaded" src="{{ static_asset('assets/img/slider_images.png') }}" />
-                </div>
+                @if (get_setting('home_slider_images', null, $lang) != null)
+                    <div class="aiz-carousel dots-inside-bottom mobile-img-auto-height" data-autoplay="true" data-infinite="true">
+                        @php
+                            $decoded_slider_images = json_decode(get_setting('home_slider_images', null, $lang), true);
+                            $sliders = get_slider_images($decoded_slider_images);
+                            $home_slider_links = get_setting('home_slider_links', null, $lang);
+                        @endphp
+                        @foreach ($sliders as $key => $slider)
+                            <div class="carousel-box">
+                                <a href="{{ isset(json_decode($home_slider_links, true)[$key]) ? json_decode($home_slider_links, true)[$key] : '' }}">
+                                    <!-- Image -->
+                                    <div class="d-block mw-100 img-fit overflow-hidden overflow-hidden">
+                                        <img class="img-fit  m-auto has-transition ls-is-cached lazyloaded"
+                                        src="{{ $slider ? my_asset($slider->file_name) : static_asset('assets/img/placeholder.jpg') }}"
+                                        alt="{{ env('APP_NAME') }} promo"
+                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';">
+                                    </div>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -33,6 +54,7 @@
    <section>
        <div class="container">
         @include('frontend.partials.search_product', ['categories' => $categories, 'Brands' => $Brands])
+
        </div>
    </section>
 
@@ -1160,6 +1182,7 @@
             </div>
         </section>
     @endif
+
 
 @endsection
 
