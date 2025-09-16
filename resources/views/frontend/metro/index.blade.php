@@ -23,7 +23,7 @@
             <!-- Sliders -->
             <div class="home-slider slider-full">
                 <div class="d-block mw-100 img-fit overflow-hidden overflow-hidden">
-                    <img class="img-fit m-auto has-transition ls-is-cached lazyloaded" src="{{ static_asset('assets/img/slider_images.png') }}" />
+                    <img class="img-fit m-auto has-transition ls-is-cached lazyloaded" src="{{ static_asset('assets/img/veterniry-banner-background.webp') }}" />
                 </div>
             </div>
         </div>
