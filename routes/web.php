@@ -157,6 +157,7 @@ Route::controller(HomeController::class)->group(function () {
 
     //Home Page
     Route::get('/', 'index')->name('home');
+    Route::get('/human', 'humanPage')->name('human');
     Route::post('/set-web-type', 'setWebType')->name('set.web.type');
 
     Route::post('/home/section/featured', 'load_featured_section')->name('home.section.featured');
@@ -194,7 +195,7 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/seller-policy', 'sellerpolicy')->name('sellerpolicy');
     Route::get('/return-policy', 'returnpolicy')->name('returnpolicy');
     Route::get('/about-us', 'supportpolicy')->name('supportpolicy');
-    Route::get('/human', [PolicyController::class, 'humanPolicy'])->name('human');
+
     Route::get('/terms', 'terms')->name('terms');
     Route::get('/privacy-policy', 'privacypolicy')->name('privacypolicy');
 

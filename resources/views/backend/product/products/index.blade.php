@@ -270,11 +270,11 @@
                                         @endif
                                     @endcan
                                     @can('product_duplicate')
-                                        <a class="btn btn-soft-warning btn-icon btn-circle btn-sm"
+                                        {{-- <a class="btn btn-soft-warning btn-icon btn-circle btn-sm"
                                             href="{{ route('products.duplicate', ['id' => $product->id, 'type' => $type]) }}"
                                             title="{{ translate('Duplicate') }}">
                                             <i class="las la-copy"></i>
-                                        </a>
+                                        </a> --}}
                                     @endcan
                                     @can('product_delete')
                                         <a href="#"
@@ -549,13 +549,17 @@
 
                         if (xhr.status === 422) {
                             // Validation errors
-                            var errorMsg = 'Validation failed.';
+                            var errorMsg = `${xhr.responseJSON.message}`;
 
                             if (xhr.responseJSON && xhr.responseJSON.file) {
                                 errorMsg += ' <a href="' + xhr.responseJSON.file +
                                     '" target="_blank">Download error file</a>';
                             }
                             AIZ.plugins.notify('danger', errorMsg);
+                            setTimeout(function() {
+                                $('#uploadModal').modal('hide');
+                                location.reload();
+                            }, 7000);
                         } else {
                             // Other errors
                             AIZ.plugins.notify('danger', 'An unexpected error occurred.');

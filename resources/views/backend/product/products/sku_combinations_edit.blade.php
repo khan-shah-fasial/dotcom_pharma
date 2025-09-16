@@ -89,7 +89,7 @@
                                 // echo $unit_price;
                                 echo 0;
                             } @endphp"
-                                min="0" step="0.01" class="form-control" required readonly>
+                                min="0" step="0.01" class="form-control" required>
                         </td>
                         <td>
                             <input type="number" lang="en" name="price_{{ $str }}"
@@ -150,7 +150,7 @@
                                 class="form-control" placeholder="H (cm)" step="0.01" min="0" required>
                         </td>
                         <td>
-                            <input type="text" name="weight_{{ $str }}"
+                            <input type="number" name="weight_{{ $str }}"
                                 value="@php
                             if($stock != null) {
                                 echo $stock->weight;
@@ -158,7 +158,7 @@
                             else {
                                 echo $str;
                             } @endphp"
-                                class="form-control" required>
+                                class="form-control" step="0.01" min="0" required>
                         </td>
                         <td>
                             <input type="text" name="count_{{ $str }}"

@@ -423,6 +423,19 @@ class ProductController extends Controller
                 'product_id'
             ]), $product);
 
+        } else {
+            //Product Stock
+            $this->productStockService->update($request->only([
+                'colors_active',
+                'colors',
+                'choice_no',
+                'unit_price',
+                'mrp_price',
+                'sku',
+                'current_stock',
+                'product_id'
+            ]), $product);
+
         }
 
         //Flash Deal
@@ -852,7 +865,7 @@ class ProductController extends Controller
                 $stock = ProductStock::find($update['stock_id']);
                 if ($stock) {
                     $stock->mrp_price = $update['selling_price'];
-                    $stock->mrp_role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
+                    // $stock->mrp_role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
                     $stock->price = $update['selling_price'];
                     $stock->role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
 
@@ -867,7 +880,7 @@ class ProductController extends Controller
                 $product = Product::find($productId);
                 // if ($product && $prices['selling_price'] < $product->unit_price) {
                     $product->mrp_price = $prices['mrp_price'];
-                    $product->mrp_role_price = generateRoleBasedPrices_excel($prices['mrp_price'], $prices['pts_percentage']);
+                    // $product->mrp_role_price = generateRoleBasedPrices_excel($prices['mrp_price'], $prices['pts_percentage']);
                     $product->unit_price = $prices['selling_price'];
                     $product->role_price = generateRoleBasedPrices_excel($prices['selling_price'], $prices['pts_percentage']);
 
@@ -903,7 +916,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Validation failed.',
+                'message' => 'Other products have been updated, but some rows encountered errors due to validation failures. Please check the error file for details.',
                 'file' => static_asset('storage/temp/' . $fileName)
             ], 422);
         }

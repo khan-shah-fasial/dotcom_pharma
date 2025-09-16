@@ -36,36 +36,7 @@
        </div>
    </section>
 
-
    <!-- Featured Categories -->
-   @php
-   use App\Models\Category;
-   
-   if (session('web_type_name') == 'human') {
-       $top_cat_human = json_decode(get_setting('top_categories_human'), true); // Convert to array
-        if (!empty($top_cat_human)) {
-            $featured_categories = Category::select('id', 'parent_id', 'name', 'slug', 'icon')
-                ->whereIn('id', $top_cat_human)
-                ->get();
-        } else {
-            $featured_categories = collect(); // or [] or 0, depending on your logic
-        }
-   } elseif (session('web_type_name') == 'veterinary') {
-       $top_cat_veterinary = json_decode(get_setting('top_categories_veterinary'), true);
-       if (!empty($top_cat_veterinary)) {
-           $featured_categories = Category::select('id', 'parent_id', 'name', 'slug', 'icon')
-               ->whereIn('id', $top_cat_veterinary)
-               ->get();
-       } else {
-           $featured_categories = collect(); // or [] or 0, depending on your logic
-       }
-   } else {
-       $featured_categories = 0;
-   }
-   @endphp
-
-
-
 @if (count($featured_categories) > 0)
     <section class="mb-4 mb-lg-5 mb-md-4 mt-4 mt-lg-5 mt-md-4">
         <div class="container">

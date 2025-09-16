@@ -487,7 +487,7 @@
     @yield('custom-script-section')
 
     <script>
-        @if (Route::currentRouteName() == 'home' || Route::currentRouteName() == '/')
+        @if (Route::currentRouteName() == 'home' || Route::currentRouteName() == '/' || Route::currentRouteName() == 'human')
 
             $.post('{{ route('home.section.featured') }}', {
                 _token: '{{ csrf_token() }}'
@@ -1217,11 +1217,18 @@ function scrollTabs(direction) {
 
 <script>
     $(document).ready(function() {
-        $(".human_btn, .veterinary_btn").click(function(e) {
+        $(".human_btn, .veterinary_btn, .home_btn").click(function(e) {
             e.preventDefault();
 
-            let type = $(this).hasClass("human_btn") ? "Human" : "Veterinary";
-            var home = "{{ route('home') }}"; 
+            let type; // Declare type here so it has function scope
+
+            if ($(this).hasClass("home_btn")) {
+                type = "Veterinary";
+            } else {
+                type = $(this).hasClass("human_btn") ? "Human" : "Veterinary";
+                var home = "{{ route('home') }}"; 
+            }
+
 
             $.ajax({
                 url: "{{ route('set.web.type') }}", 
@@ -1232,7 +1239,14 @@ function scrollTabs(direction) {
                 },
                 success: function(response) {
                     if (response.success) {
-                        location.reload(); 
+                        if (type === "Human") {
+                            home = "{{ route('human') }}";
+                            window.location.href = home;
+                        } else if (type === "Veterinary") {
+                            home = "{{ route('home') }}";
+                            window.location.href = home;
+                        }
+
                     } else {
                         window.location.href = home;
                     }

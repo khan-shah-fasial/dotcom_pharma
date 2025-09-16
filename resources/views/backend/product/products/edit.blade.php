@@ -813,7 +813,7 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group row">
+                                <div class="form-group row ">
                                     <label
                                         class="col-md-3 col-from-label">{{ translate('Change Product variant') }}</label>
                                     <div class="col-md-9">
@@ -1819,15 +1819,15 @@ $(document).ready(function () {
             }
 
             if (checkbox.checked) {
-                skuCombination.style.opacity = '1';
-                skuCombination.style.pointerEvents = 'auto';
+                // skuCombination.style.opacity = '1';
+                // skuCombination.style.pointerEvents = 'auto';
 
                 priceInputs.forEach(input => {
                     input.value = '0';
                 });
             } else {
-                skuCombination.style.opacity = '0.5';
-                skuCombination.style.pointerEvents = 'none';
+                // skuCombination.style.opacity = '0.5';
+                // skuCombination.style.pointerEvents = 'none';
 
                 priceInputs.forEach(input => {
                     if (originalValues.hasOwnProperty(input.name)) {

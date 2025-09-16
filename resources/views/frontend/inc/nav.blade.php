@@ -10,7 +10,8 @@
             data-value="removed">
             <a href="{{ get_setting('topbar_banner_link') }}" class="d-block text-reset h-40px h-lg-60px">
                 <!-- For Large device -->
-                <img src="{{ $topbar_banner_asset }}" class="d-none d-xl-block img-fit h-100" alt="{{ translate('topbar_banner') }}">
+                <img src="{{ $topbar_banner_asset }}" class="d-none d-xl-block img-fit h-100"
+                    alt="{{ translate('topbar_banner') }}">
                 <!-- For Medium device -->
                 <img src="{{ $topbar_banner_medium != null ? uploaded_asset($topbar_banner_medium) : $topbar_banner_asset }}"
                     class="d-none d-md-block d-xl-none img-fit h-100" alt="{{ translate('topbar_banner') }}">
@@ -30,43 +31,46 @@
         <div class="container">
             <div class="row">
 
-              <div class="col-xl-5 col-lg-6 d-lg-block d-none">
-                      <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
-                            <li class="list-inline-item">
-                                 <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
-                                   <img class="w-100" src="{{ static_asset('assets/img/call1_icons.svg') }}" />+91 88281 11034
-                                </a>
-                            </li>
+                <div class="col-xl-5 col-lg-6 d-lg-block d-none">
+                    <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
+                        <li class="list-inline-item">
+                            <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
+                                <img class="w-100" src="{{ static_asset('assets/img/call1_icons.svg') }}" />+91 88281
+                                11034
+                            </a>
+                        </li>
 
-                            <li class="list-inline-item">
-                                 <a href="mailto:info@dotcompharmaindia.com" class=" text-secondary fs-12 py-2">
-                                   <img class="w-100" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
-                                </a>
-                            </li>
+                        <li class="list-inline-item">
+                            <a href="mailto:info@dotcompharmaindia.com" class=" text-secondary fs-12 py-2">
+                                <img class="w-100" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
+                            </a>
+                        </li>
 
-                             <li class="list-inline-item human_btn">
-                                 <a href="/human" class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
-                                   <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
-                                </a>
-                            </li>
+                        <li class="list-inline-item human_btn">
+                            <a href="javascript:void(0)"
+                                class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
+                                <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
+                            </a>
+                        </li>
 
-                            <li class="list-inline-item veterinary_btn">
-                                 <a href="javascript:void(0)" class=" fs-12 py-2 {{ session('web_type_name') == 'veterinary' ? 'active_btn' : '' }}">
-                                   <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
-                                </a>
-                            </li>
-                    </ul> 
-              </div>
+                        <li class="list-inline-item veterinary_btn">
+                            <a href="javascript:void(0)"
+                                class=" fs-12 py-2 {{ session('web_type_name') == 'veterinary' ? 'active_btn' : '' }}">
+                                <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
 
                 <div class="col-xl-7 col-lg-6 col-md-12 col d-flex justify-content-end">
 
-                  
+
                     <ul class="list-inline d-flex justify-content-end mb-0">
-                            <li class="list-inline-item d-none d-md-block mr-2">
-                                <a class="b2b_buttons" href="{{ route('user.new_registration') }}" >B2B Registration</a>
-                            </li>
-                            
+                        <li class="list-inline-item d-none d-md-block mr-2">
+                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">B2B Registration</a>
+                        </li>
+
                         <!-- Language switcher -->
                         @if (get_setting('show_language_switcher') == 'on')
                             <li class="list-inline-item dropdown mr-1" id="lang-change">
@@ -108,7 +112,8 @@
                                             <a class="dropdown-item @if ($system_currency->code == $currency->code) active @endif"
                                                 href="javascript:void(0)"
                                                 data-currency="{{ $currency->code }}">{{ $currency->name }}
-                                                ({{ $currency->symbol }})</a>
+                                                ({{ $currency->symbol }})
+                                            </a>
                                         </li>
                                     @endforeach
                                 </ul>
@@ -153,13 +158,12 @@
         <div class="position-relative logo-bar-area border-bottom border-md-nonea z-1025">
             <div class="container">
                 <div class="">
-                 
+
                     <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
                             <form action="{{ route('search') }}" method="GET" class="stop-propagation">
                                 <div class="d-flex position-relative align-items-center">
-                                    <div class="" data-toggle="class-toggle"
-                                        data-target=".front-header-search">
+                                    <div class="" data-toggle="class-toggle" data-target=".front-header-search">
                                         <button class="btn px-2" type="button"><i
                                                 class="la la-2x la-long-arrow-left"></i></button>
                                     </div>
@@ -205,38 +209,39 @@
 
                     <div class="row">
 
-                    <div class="col-lg-3 col-md-4 col-2 d-lg-none d-block">
-                         <!-- top menu sidebar button -->
-                    <button type="button" class="btn d-lg-none mr-3 mr-sm-4 p-0 active mobile_icons_menus" data-toggle="class-toggle"
-                        data-target=".aiz-top-menu-sidebar">
-                        <svg id="Component_43_1" data-name="Component 43 – 1" xmlns="http://www.w3.org/2000/svg"
-                            width="20" height="20" viewBox="0 0 20 20">
-                            <rect id="Rectangle_19062" data-name="Rectangle 19062" width="20" height="2"
-                                transform="translate(0 7)" fill="#919199" />
-                            <rect id="Rectangle_19063" data-name="Rectangle 19063" width="20" height="2"
-                                fill="#919199" />
-                            <rect id="Rectangle_19064" data-name="Rectangle 19064" width="20" height="2"
-                                transform="translate(0 14)" fill="#919199" />
-                        </svg>
+                        <div class="col-lg-3 col-md-4 col-2 d-lg-none d-block">
+                            <!-- top menu sidebar button -->
+                            <button type="button" class="btn d-lg-none mr-3 mr-sm-4 p-0 active mobile_icons_menus"
+                                data-toggle="class-toggle" data-target=".aiz-top-menu-sidebar">
+                                <svg id="Component_43_1" data-name="Component 43 – 1"
+                                    xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 20 20">
+                                    <rect id="Rectangle_19062" data-name="Rectangle 19062" width="20"
+                                        height="2" transform="translate(0 7)" fill="#919199" />
+                                    <rect id="Rectangle_19063" data-name="Rectangle 19063" width="20"
+                                        height="2" fill="#919199" />
+                                    <rect id="Rectangle_19064" data-name="Rectangle 19064" width="20"
+                                        height="2" transform="translate(0 14)" fill="#919199" />
+                                </svg>
 
-                    </button>
-                    </div>
+                            </button>
+                        </div>
                         <div class="col-lg-3 col-md-4 col-8">
                             <!-- Header Logo -->
-                                <div class="col-auto pl-0 pr-lg-3 pr-md-0 d-flex align-items-center">
-                                    <a class="d-block" href="{{ route('home') }}">
-                                        @php
-                                            $header_logo = get_setting('header_logo');
-                                        @endphp
-                                        @if ($header_logo != null)
-                                            <img class="logo_main" src="{{ uploaded_asset($header_logo) }}" alt="{{ env('APP_NAME') }}"
-                                               >
-                                        @else
-                                            <img class="logo_main" src="{{ static_asset('assets/img/logo.png') }}" alt="{{ env('APP_NAME') }}"
-                                                >
-                                        @endif
-                                    </a>
-                                </div>
+                            <div class="col-auto pl-0 pr-lg-3 pr-md-0 d-flex align-items-center">
+                                <a class="d-block home_btn" href="javascript:void(0)">
+                                    @php
+                                        $header_logo = get_setting('header_logo');
+                                    @endphp
+                                    @if ($header_logo != null)
+                                        <img class="logo_main" src="{{ uploaded_asset($header_logo) }}"
+                                            alt="{{ env('APP_NAME') }}">
+                                    @else
+                                        <img class="logo_main" src="{{ static_asset('assets/img/logo.png') }}"
+                                            alt="{{ env('APP_NAME') }}">
+                                    @endif
+                                </a>
+                            </div>
                         </div>
 
 
@@ -246,51 +251,65 @@
                                     <ul class="list-inline mb-0 pl-0">
                                         <!-- Dropdown for Injections -->
 
-                                    @php
-                                        use App\Models\Category;
-                                    
-                                        if (session()->has('web_type')) {
-                                            $web_type = session()->get('web_type');
-                                        } else {
-                                            $cat_data = Category::whereRaw('LOWER(name) = ?', [strtolower('Human')])->first(['id', 'name']);
-                                    
-                                            if ($cat_data) {
-                                                session()->put('web_type', $cat_data->id);
-                                                session()->put('web_type_name', strtolower($cat_data->name));
-                                            }
-                                        }
-                                    
-                                        $cat_human_id = [58, 43, 70, 68, 72]; // Ensure IDs are integers
-                                        $cat_veterinary_id = [85, 86, 87, 88, 89];
+                                        @php
+                                            use App\Models\Category;
+                                            use Illuminate\Support\Facades\Cache;
 
-                                        if (session('web_type_name') == 'human') {
-                                            $category_top_menu = Category::select('id', 'parent_id', 'name', 'slug')
-                                                ->whereIn('id', $cat_human_id)
-                                                ->where('parent_id', session('web_type'))
-                                                ->with('childrenCategories') 
-                                                ->orderByRaw("FIELD(id, " . implode(',', $cat_human_id) . ")") // Maintain order
-                                                ->get();
-                                        } elseif (session('web_type_name') == 'veterinary') {
-                                            $category_top_menu = Category::select('id', 'parent_id', 'name', 'slug')
-                                                ->whereIn('id', $cat_veterinary_id)
-                                                ->where('parent_id', session('web_type'))
-                                                ->with('childrenCategories') 
-                                                ->orderByRaw("FIELD(id, " . implode(',', $cat_veterinary_id) . ")") // Maintain order
-                                                ->get();
-                                        } else {
-                                            $category_top_menu = collect();
-                                        }
-                                    @endphp
+                                            if (!session()->has('web_type')) {
+                                                $catData = Category::whereRaw('LOWER(name) = ?', [strtolower('veterinary')])
+                                                    ->first(['id', 'name']);
+
+                                                if ($catData) {
+                                                    session()->put('web_type', $catData->id);
+                                                    session()->put('web_type_name', strtolower($catData->name));
+                                                }
+                                            }
+
+                                            $webTypeId = session('web_type');
+                                            $webTypeName = session('web_type_name');
+
+                                            $catHumanId = [58, 43, 70, 68, 72]; // Ensure IDs are integers
+                                            $catVeterinaryId = [85, 86, 87, 88, 89];
+
+                                            // Create a cache key based on web type
+                                            $cacheKey = 'category_top_menu_' . ($webTypeName ?? 'default');
+
+                                            // Retrieve from cache or generate and cache it
+                                            $category_top_menu = Cache::rememberForever($cacheKey, function () use ($webTypeName, $webTypeId, $catHumanId, $catVeterinaryId) {
+                                                if ($webTypeName == 'human') {
+                                                    return Category::select('id', 'parent_id', 'name', 'slug')
+                                                        ->whereIn('id', $catHumanId)
+                                                        ->where('parent_id', $webTypeId)
+                                                        ->with('childrenCategories')
+                                                        ->orderByRaw('FIELD(id, ' . implode(',', $catHumanId) . ')')
+                                                        ->get();
+                                                } elseif ($webTypeName == 'veterinary') {
+                                                    return Category::select('id', 'parent_id', 'name', 'slug')
+                                                        ->whereIn('id', $catVeterinaryId)
+                                                        ->where('parent_id', $webTypeId)
+                                                        ->with('childrenCategories')
+                                                        ->orderByRaw('FIELD(id, ' . implode(',', $catVeterinaryId) . ')')
+                                                        ->get();
+                                                } else {
+                                                    return collect();
+                                                }
+                                            });
+                                        @endphp
 
                                         @foreach ($category_top_menu as $cat)
                                             <li class="list-inline-item mr-0 animate-underline-white dropdown">
-                                                <a href="#" class="fs-14 d-inline-block fw-500 header_menu_links dropdown-toggle" 
-                                                id="injectionsDropdown_{{ $cat->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <a href="#"
+                                                    class="fs-14 d-inline-block fw-500 header_menu_links dropdown-toggle"
+                                                    id="injectionsDropdown_{{ $cat->id }}"
+                                                    data-toggle="dropdown" aria-haspopup="true"
+                                                    aria-expanded="false">
                                                     {{ $cat->name }}
                                                 </a>
-                                                <div class="dropdown-menu" aria-labelledby="injectionsDropdown_{{ $cat->id }}">
+                                                <div class="dropdown-menu"
+                                                    aria-labelledby="injectionsDropdown_{{ $cat->id }}">
                                                     @foreach ($cat->childrenCategories as $childCategory)
-                                                        <a class="dropdown-item" href="/category/{{ $childCategory->slug }}">{{ $childCategory->name }}</a>
+                                                        <a class="dropdown-item"
+                                                            href="/category/{{ $childCategory->slug }}">{{ $childCategory->name }}</a>
                                                     @endforeach
                                                 </div>
                                             </li>
@@ -341,182 +360,226 @@
                         </div>
 
                         <div class="col-lg-3 col-md-4 col-2">
-                        <div class="display_flex1">
-                              <!-- Search Icon for small device -->
+                            <div class="display_flex1">
+                                <!-- Search Icon for small device -->
                                 <div class="ml-auto mr-0">
                                     <a class="p-0 d-block" href="javascript:void(0);" data-toggle="class-toggle"
                                         data-target=".front-header-search">
-                                        <i class="las la-search la-flip-horizontal la-2x pt-1" style="color:#23780E;"></i>
+                                        <i class="las la-search la-flip-horizontal la-2x pt-1"
+                                            style="color:#23780E;"></i>
                                     </a>
-                                </div> 
+                                </div>
 
-                                
-                   
+
+
                                 <!-- Cart -->
                                 <div class="d-none d-lg-block d-xl-block align-self-stretch has-transition"
                                     data-hover="dropdown">
-                                    <div class="nav-cart-box dropdown h-100" id="cart_items" style="width: max-content;">
+                                    <div class="nav-cart-box dropdown h-100" id="cart_items"
+                                        style="width: max-content;">
                                         @include('frontend.partials.cart.cart')
                                     </div>
-                                </div> 
+                                </div>
 
-                     @if (Auth::check() && auth()->user()->user_type == 'customer')
-                        <!-- Compare -->
-                        <div class="d-none">
-                            <div class="" id="compare">
-                                @include('frontend.partials.compare')
-                            </div>
-                        </div>
-                        <!-- Wishlist -->
-                        <div class="d-none d-lg-block">
-                            <div class="" id="wishlist">
-                                @include('frontend.partials.wishlist')
-                            </div>
-                        </div>
-                        <!-- Notifications -->
-                        <ul class=" list-inline mb-0 h-100 d-none justify-content-end align-items-center ">
-                            <li class="list-inline-item ml-3 mr-3 pr-3 pl-0 dropdown">
-                                <a class="dropdown-toggle no-arrow text-secondary fs-12" data-toggle="dropdown"
-                                    href="javascript:void(0);" role="button" aria-haspopup="false"
-                                    aria-expanded="false"
-                                    onclick="nonLinkableNotificationRead()">
-                                    <span class="position-relative d-inline-block">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14.668" height="16"
-                                            viewBox="0 0 14.668 16">
-                                            <path id="_26._Notification" data-name="26. Notification"
-                                                d="M8.333,16A3.34,3.34,0,0,0,11,14.667H5.666A3.34,3.34,0,0,0,8.333,16ZM15.06,9.78a2.457,2.457,0,0,1-.727-1.747V6a6,6,0,1,0-12,0V8.033A2.457,2.457,0,0,1,1.606,9.78,2.083,2.083,0,0,0,3.08,13.333H13.586A2.083,2.083,0,0,0,15.06,9.78Z"
-                                                transform="translate(-0.999)" fill="#91919b" />
-                                        </svg>
-                                        @if (Auth::check() && count($user->unreadNotifications) > 0)
-                                            <span class="badge badge-secondary  badge-inline badge-pill unread-notification-count">{{ count($user->unreadNotifications) }}</span>
-                                        @endif
-                                    </span>
-                                </a>
-                                @auth
-                                    <div class="dropdown-menu dropdown-menu-right dropdown-menu-lg py-0 rounded-0">
-                                        <div class="p-3 bg-light border-bottom">
-                                            <h6 class="mb-0">{{ translate('Notifications') }}</h6>
-                                        </div>
-                                        <div class="c-scrollbar-light overflow-auto" style="max-height:300px;">
-                                            <ul class="list-group list-group-flush">
-                                                @forelse($user->unreadNotifications as $notification)
-                                                    @php
-                                                        $isLinkable = true;
-                                                        $notificationType = get_notification_type($notification->notification_type_id, 'id');
-                                                        $notifyContent = $notificationType->getTranslation('default_text');
-                                                        $notificationShowDesign = get_setting('notification_show_type');
-                                                        if($notification->type == 'App\Notifications\customNotification' && $notification->data['link'] == null){
-                                                            $isLinkable = false;
-                                                        }
-                                                    @endphp
-                                                    <li class="list-group-item">
-                                                        <div class="d-flex">
-                                                            @if($notificationShowDesign != 'only_text')
-                                                                <div class="size-35px mr-2">
-                                                                    @php
-                                                                        $notifyImageDesign = '';
-                                                                        if($notificationShowDesign == 'design_2'){
-                                                                            $notifyImageDesign = 'rounded-1';
-                                                                        }
-                                                                        elseif($notificationShowDesign == 'design_3'){
-                                                                            $notifyImageDesign = 'rounded-circle';
-                                                                        }
-                                                                    @endphp
-                                                                    <img
-                                                                        src="{{ uploaded_asset($notificationType->image) }}"
-                                                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/notification.png') }}';"
-                                                                        class="img-fit h-100 {{ $notifyImageDesign }}" >
-                                                                </div>
-                                                            @endif
-                                                            <div>
-                                                                @if ($notification->type == 'App\Notifications\OrderNotification')
-                                                                    @php
-                                                                        $orderCode  = $notification->data['order_code'];
-                                                                        $route = route('purchase_history.details', encrypt($notification->data['order_id']));
-                                                                            $orderCode = "<span class='text-blue'>".$orderCode."</span>";
-                                                                        $notifyContent = str_replace('[[order_code]]', $orderCode, $notifyContent);
-                                                                    @endphp
-                                                                @endif
-
-                                                                @if($isLinkable = true)
-                                                                    <a href="{{ route('notification.read-and-redirect', encrypt($notification->id)) }}">
-                                                                @endif
-                                                                    <span class="fs-12 text-dark text-truncate-2">{!! $notifyContent !!}</span>
-                                                                @if($isLinkable = true)
-                                                                    </a>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                @empty
-                                                    <li class="list-group-item">
-                                                        <div class="py-4 text-center fs-16">
-                                                            {{ translate('No notification found') }}
-                                                        </div>
-                                                    </li>
-                                                @endforelse
-                                            </ul>
-                                        </div>
-                                        <div class="text-center border-top">
-                                            <a href="{{ route('customer.all-notifications') }}"
-                                                class="text-secondary fs-12 d-block py-2">
-                                                {{ translate('View All Notifications') }}
-                                            </a>
+                                @if (Auth::check() && auth()->user()->user_type == 'customer')
+                                    <!-- Compare -->
+                                    <div class="d-none">
+                                        <div class="" id="compare">
+                                            @include('frontend.partials.compare')
                                         </div>
                                     </div>
-                                @endauth
-                            </li>
-                        </ul>
-                    @endif
+                                    <!-- Wishlist -->
+                                    <div class="d-none d-lg-block">
+                                        <div class="" id="wishlist">
+                                            @include('frontend.partials.wishlist')
+                                        </div>
+                                    </div>
+                                    <!-- Notifications -->
+                                    <ul class=" list-inline mb-0 h-100 d-none justify-content-end align-items-center ">
+                                        <li class="list-inline-item ml-3 mr-3 pr-3 pl-0 dropdown">
+                                            <a class="dropdown-toggle no-arrow text-secondary fs-12"
+                                                data-toggle="dropdown" href="javascript:void(0);" role="button"
+                                                aria-haspopup="false" aria-expanded="false"
+                                                onclick="nonLinkableNotificationRead()">
+                                                <span class="position-relative d-inline-block">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14.668"
+                                                        height="16" viewBox="0 0 14.668 16">
+                                                        <path id="_26._Notification" data-name="26. Notification"
+                                                            d="M8.333,16A3.34,3.34,0,0,0,11,14.667H5.666A3.34,3.34,0,0,0,8.333,16ZM15.06,9.78a2.457,2.457,0,0,1-.727-1.747V6a6,6,0,1,0-12,0V8.033A2.457,2.457,0,0,1,1.606,9.78,2.083,2.083,0,0,0,3.08,13.333H13.586A2.083,2.083,0,0,0,15.06,9.78Z"
+                                                            transform="translate(-0.999)" fill="#91919b" />
+                                                    </svg>
+                                                    @if (Auth::check() && count($user->unreadNotifications) > 0)
+                                                        <span
+                                                            class="badge badge-secondary  badge-inline badge-pill unread-notification-count">{{ count($user->unreadNotifications) }}</span>
+                                                    @endif
+                                                </span>
+                                            </a>
+                                            @auth
+                                                <div
+                                                    class="dropdown-menu dropdown-menu-right dropdown-menu-lg py-0 rounded-0">
+                                                    <div class="p-3 bg-light border-bottom">
+                                                        <h6 class="mb-0">{{ translate('Notifications') }}</h6>
+                                                    </div>
+                                                    <div class="c-scrollbar-light overflow-auto"
+                                                        style="max-height:300px;">
+                                                        <ul class="list-group list-group-flush">
+                                                            @forelse($user->unreadNotifications as $notification)
+                                                                @php
+                                                                    $isLinkable = true;
+                                                                    $notificationType = get_notification_type(
+                                                                        $notification->notification_type_id,
+                                                                        'id',
+                                                                    );
+                                                                    $notifyContent = $notificationType->getTranslation(
+                                                                        'default_text',
+                                                                    );
+                                                                    $notificationShowDesign = get_setting(
+                                                                        'notification_show_type',
+                                                                    );
+                                                                    if (
+                                                                        $notification->type ==
+                                                                            'App\Notifications\customNotification' &&
+                                                                        $notification->data['link'] == null
+                                                                    ) {
+                                                                        $isLinkable = false;
+                                                                    }
+                                                                @endphp
+                                                                <li class="list-group-item">
+                                                                    <div class="d-flex">
+                                                                        @if ($notificationShowDesign != 'only_text')
+                                                                            <div class="size-35px mr-2">
+                                                                                @php
+                                                                                    $notifyImageDesign = '';
+                                                                                    if (
+                                                                                        $notificationShowDesign ==
+                                                                                        'design_2'
+                                                                                    ) {
+                                                                                        $notifyImageDesign =
+                                                                                            'rounded-1';
+                                                                                    } elseif (
+                                                                                        $notificationShowDesign ==
+                                                                                        'design_3'
+                                                                                    ) {
+                                                                                        $notifyImageDesign =
+                                                                                            'rounded-circle';
+                                                                                    }
+                                                                                @endphp
+                                                                                <img src="{{ uploaded_asset($notificationType->image) }}"
+                                                                                    onerror="this.onerror=null;this.src='{{ static_asset('assets/img/notification.png') }}';"
+                                                                                    class="img-fit h-100 {{ $notifyImageDesign }}">
+                                                                            </div>
+                                                                        @endif
+                                                                        <div>
+                                                                            @if ($notification->type == 'App\Notifications\OrderNotification')
+                                                                                @php
+                                                                                    $orderCode =
+                                                                                        $notification->data[
+                                                                                            'order_code'
+                                                                                        ];
+                                                                                    $route = route(
+                                                                                        'purchase_history.details',
+                                                                                        encrypt(
+                                                                                            $notification->data[
+                                                                                                'order_id'
+                                                                                            ],
+                                                                                        ),
+                                                                                    );
+                                                                                    $orderCode =
+                                                                                        "<span class='text-blue'>" .
+                                                                                        $orderCode .
+                                                                                        '</span>';
+                                                                                    $notifyContent = str_replace(
+                                                                                        '[[order_code]]',
+                                                                                        $orderCode,
+                                                                                        $notifyContent,
+                                                                                    );
+                                                                                @endphp
+                                                                            @endif
 
-                    <div class="d-none d-lg-block d-xl-block">
-                        @auth
-                            <span
-                                class="d-flex align-items-center nav-user-info py-20px @if (isAdmin()) ml-lg-0 @endif"
-                                id="nav-user-info">
-                                <!-- Image -->
-                                <span
-                                    class="size-40px rounded-circle overflow-hidden border border-transparent nav-user-img">
-                                    @if ($user->avatar_original != null)
-                                        <img src="{{ $user_avatar }}"
-                                            class="img-fit h-100" alt="{{ translate('avatar') }}"
-                                            onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
+                                                                            @if ($isLinkable = true)
+                                                                                <a
+                                                                                    href="{{ route('notification.read-and-redirect', encrypt($notification->id)) }}">
+                                                                            @endif
+                                                                            <span
+                                                                                class="fs-12 text-dark text-truncate-2">{!! $notifyContent !!}</span>
+                                                                            @if ($isLinkable = true)
+                                                                                </a>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+                                                                </li>
+                                                            @empty
+                                                                <li class="list-group-item">
+                                                                    <div class="py-4 text-center fs-16">
+                                                                        {{ translate('No notification found') }}
+                                                                    </div>
+                                                                </li>
+                                                            @endforelse
+                                                        </ul>
+                                                    </div>
+                                                    <div class="text-center border-top">
+                                                        <a href="{{ route('customer.all-notifications') }}"
+                                                            class="text-secondary fs-12 d-block py-2">
+                                                            {{ translate('View All Notifications') }}
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            @endauth
+                                        </li>
+                                    </ul>
+                                @endif
+
+                                <div class="d-none d-lg-block d-xl-block">
+                                    @auth
+                                        <span
+                                            class="d-flex align-items-center nav-user-info py-20px @if (isAdmin()) ml-lg-0 @endif"
+                                            id="nav-user-info">
+                                            <!-- Image -->
+                                            <span
+                                                class="size-40px rounded-circle overflow-hidden border border-transparent nav-user-img">
+                                                @if ($user->avatar_original != null)
+                                                    <img src="{{ $user_avatar }}" class="img-fit h-100"
+                                                        alt="{{ translate('avatar') }}"
+                                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
+                                                @else
+                                                    <img src="{{ static_asset('assets/img/avatar-place.png') }}"
+                                                        class="image" alt="{{ translate('avatar') }}"
+                                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
+                                                @endif
+                                            </span>
+                                            <!-- Name -->
+                                            <h4 class="h5 fs-14 fw-700 text-dark ml-2 mb-0">{{ $user->name }}</h4>
+                                        </span>
                                     @else
-                                        <img src="{{ static_asset('assets/img/avatar-place.png') }}" class="image" alt="{{ translate('avatar') }}"
-                                            onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
-                                    @endif
-                                </span>
-                                <!-- Name -->
-                                <h4 class="h5 fs-14 fw-700 text-dark ml-2 mb-0">{{ $user->name }}</h4>
-                            </span>
-                        @else
-                            <!--Login & Registration -->
-                            <span class="d-flex align-items-center nav-user-info py-20px">
-                                <!-- Image -->
-                                <!-- <span
-                                    class="size-40px rounded-circle overflow-hidden border d-flex align-items-center justify-content-center nav-user-img">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="19.902" height="20.012"
-                                        viewBox="0 0 19.902 20.012">
-                                        <path id="fe2df171891038b33e9624c27e96e367"
-                                            d="M15.71,12.71a6,6,0,1,0-7.42,0,10,10,0,0,0-6.22,8.18,1.006,1.006,0,1,0,2,.22,8,8,0,0,1,15.9,0,1,1,0,0,0,1,.89h.11a1,1,0,0,0,.88-1.1,10,10,0,0,0-6.25-8.19ZM12,12a4,4,0,1,1,4-4A4,4,0,0,1,12,12Z"
-                                            transform="translate(-2.064 -1.995)" fill="#91919b" />
-                                    </svg>
-                                </span> -->
+                                        <!--Login & Registration -->
+                                        <span class="d-flex align-items-center nav-user-info py-20px">
+                                            <!-- Image -->
+                                            <!-- <span
+                                        class="size-40px rounded-circle overflow-hidden border d-flex align-items-center justify-content-center nav-user-img">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="19.902" height="20.012"
+                                            viewBox="0 0 19.902 20.012">
+                                            <path id="fe2df171891038b33e9624c27e96e367"
+                                                d="M15.71,12.71a6,6,0,1,0-7.42,0,10,10,0,0,0-6.22,8.18,1.006,1.006,0,1,0,2,.22,8,8,0,0,1,15.9,0,1,1,0,0,0,1,.89h.11a1,1,0,0,0,.88-1.1,10,10,0,0,0-6.25-8.19ZM12,12a4,4,0,1,1,4-4A4,4,0,0,1,12,12Z"
+                                                transform="translate(-2.064 -1.995)" fill="#91919b" />
+                                        </svg>
+                                    </span> -->
 
-                                 <a href="{{ route('user.login') }}"><i class="las la-user la-2x pt-1 login_icons" style="color: #23780E;"></i></a>
-                                 
-                                <!-- <a href="{{ route('user.login') }}"
-                                    class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block border-right border-soft-light border-width-2 pr-2 ml-3">{{ translate('Login') }}</a>
-                                <a href="{{ route('user.registration') }}"
-                                    class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block py-2 pl-2">{{ translate('Registration') }}</a> -->
-                            </span>
-                        @endauth
-                       </div>
-                   </div>
+                                            <a href="{{ route('user.login') }}"><i
+                                                    class="las la-user la-2x pt-1 login_icons"
+                                                    style="color: #23780E;"></i></a>
 
-            </div>
-          </div>
-        </div>
+                                            <!-- <a href="{{ route('user.login') }}"
+                                        class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block border-right border-soft-light border-width-2 pr-2 ml-3">{{ translate('Login') }}</a>
+                                    <a href="{{ route('user.registration') }}"
+                                        class="text-reset opacity-60 hov-opacity-100 hov-text-primary fs-12 d-inline-block py-2 pl-2">{{ translate('Registration') }}</a> -->
+                                        </span>
+                                    @endauth
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Loged in user Menus -->
@@ -594,9 +657,11 @@
                                         </a>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
-                                        <a href="{{ route('user.new_registration') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                        <a href="{{ route('user.new_registration') }}"
+                                            class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <i class="las la-business-time"></i>
-                                        <span class="user-top-menu-name has-transition ml-3">{{ translate('B2B Registration') }}</span></a>
+                                            <span
+                                                class="user-top-menu-name has-transition ml-3">{{ translate('B2B Registration') }}</span></a>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('digital_purchase_history.index') }}"
@@ -742,13 +807,17 @@
                     </div>
                     <!-- Header Menus -->
                     @php
-                        $nav_txt_color = ((get_setting('header_nav_menu_text') == 'light') ||  (get_setting('header_nav_menu_text') == null)) ? 'text-white' : 'text-dark';
+                        $nav_txt_color =
+                            get_setting('header_nav_menu_text') == 'light' ||
+                            get_setting('header_nav_menu_text') == null
+                                ? 'text-white'
+                                : 'text-dark';
                     @endphp
                     <div class="w-100 full_menu_nav">
                         <div class="d-flex align-items-center justify-content-center h-100">
                             <ul class="list-inline mb-0 pl-0">
 
-                                @php
+                                {{-- @php
                                     $cat_human_id_raw = get_setting('header_nav_menu_human'); // Ensure IDs are integers
                                     $cat_veterinary_id_raw = get_setting('header_nav_menu_veterinary');
 
@@ -761,32 +830,59 @@
                                     $cat_veterinary_id = array_map('intval', $cat_veterinary_id ?: []);
 
                                     if (session('web_type_name') == 'human') {
-
-                                        if(count($cat_human_id) > 0) {
+                                        if (count($cat_human_id) > 0) {
                                             // Fetch categories based on the IDs
                                             $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
                                                 ->whereIn('id', $cat_human_id)
                                                 // ->where('parent_id', session('web_type'))
-                                                // ->with('childrenCategories') 
-                                                ->orderByRaw("FIELD(id, " . implode(',', $cat_human_id) . ")") // Maintain order
+                                                // ->with('childrenCategories')
+                                                ->orderByRaw('FIELD(id, ' . implode(',', $cat_human_id) . ')') // Maintain order
                                                 ->get();
                                         } else {
                                             $category_menu = collect(); // Empty collection if no IDs
                                         }
-
                                     } elseif (session('web_type_name') == 'veterinary') {
-                                        if(count($cat_veterinary_id) > 0) {
+                                        if (count($cat_veterinary_id) > 0) {
                                             $category_menu = Category::select('id', 'parent_id', 'name', 'slug')
                                                 ->whereIn('id', $cat_veterinary_id)
                                                 // ->where('parent_id', session('web_type'))
-                                            // ->with('childrenCategories') 
-                                            ->orderByRaw("FIELD(id, " . implode(',', $cat_veterinary_id) . ")") // Maintain order
-                                            ->get();
+                                                // ->with('childrenCategories')
+                                                ->orderByRaw('FIELD(id, ' . implode(',', $cat_veterinary_id) . ')') // Maintain order
+                                                ->get();
                                         } else {
                                             $category_menu = collect();
-
                                         }
                                     }
+                                @endphp --}}
+
+                                @php
+                                    // Get category ID settings from the database
+                                    $catHumanIdRaw = get_setting('header_nav_menu_human');
+                                    $catVeterinaryIdRaw = get_setting('header_nav_menu_veterinary');
+
+                                    // Decode JSON into arrays, fallback to empty arrays if null or invalid
+                                    $catHumanId = array_map('intval', json_decode($catHumanIdRaw, true) ?: []);
+                                    $catVeterinaryId = array_map('intval', json_decode($catVeterinaryIdRaw, true) ?: []);
+
+                                    $webTypeName = session('web_type_name') ?? 'default';
+                                    $cacheKey = 'category_menu_' . $webTypeName;
+
+                                    // Retrieve from cache or generate it if not present
+                                    $category_menu = Cache::rememberForever($cacheKey, function () use ($webTypeName, $catHumanId, $catVeterinaryId) {
+                                        if ($webTypeName == 'human' && count($catHumanId) > 0) {
+                                            return Category::select('id', 'parent_id', 'name', 'slug')
+                                                ->whereIn('id', $catHumanId)
+                                                ->orderByRaw('FIELD(id, ' . implode(',', $catHumanId) . ')')
+                                                ->get();
+                                        } elseif ($webTypeName == 'veterinary' && count($catVeterinaryId) > 0) {
+                                            return Category::select('id', 'parent_id', 'name', 'slug')
+                                                ->whereIn('id', $catVeterinaryId)
+                                                ->orderByRaw('FIELD(id, ' . implode(',', $catVeterinaryId) . ')')
+                                                ->get();
+                                        } else {
+                                            return collect(); // Return empty collection if no IDs match
+                                        }
+                                    });
                                 @endphp
 
                                 @foreach ($category_menu as $cat)
@@ -802,7 +898,7 @@
                                         </div> --}}
                                     </li>
                                 @endforeach
-                                
+
                                 {{-- @if (get_setting('header_menu_labels') != null)
                                     @foreach (json_decode(get_setting('header_menu_labels'), true) as $key => $value)
                                         <li class="list-inline-item mr-0 animate-underline-white">
@@ -817,7 +913,7 @@
                             </ul>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
             <!-- Categoty Menus -->
@@ -826,7 +922,7 @@
                 <div class="container">
                     <div class="d-flex position-relative">
                         <div class="position-static">
-                            @include('frontend.'.get_setting("homepage_select").'.partials.category_menu')
+                            @include('frontend.' . get_setting('homepage_select') . '.partials.category_menu')
                         </div>
                     </div>
                 </div>
@@ -851,7 +947,8 @@
                             <img src="{{ $user_avatar }}" class="img-fit h-100" alt="{{ translate('avatar') }}"
                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
                         @else
-                            <img src="{{ static_asset('assets/img/avatar-place.png') }}" class="image" alt="{{ translate('avatar') }}"
+                            <img src="{{ static_asset('assets/img/avatar-place.png') }}" class="image"
+                                alt="{{ translate('avatar') }}"
                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
                         @endif
                     </span>
@@ -890,7 +987,8 @@
                         </li>
                     @endforeach
                     <li class="list-inline-item">
-                        <a class="b2b_buttons b2b_buttons_menu" href="{{ route('user.new_registration') }}" >B2B Registration</a>
+                        <a class="b2b_buttons b2b_buttons_menu" href="{{ route('user.new_registration') }}">B2B
+                            Registration</a>
                     </li>
                 @endif
                 @auth
@@ -981,5 +1079,4 @@
                 });
             }
         </script>
-
     @endsection

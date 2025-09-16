@@ -3,22 +3,40 @@
 
     use App\Models\Product;
     use App\Models\Category;
-    use Illuminate\Support\Str;
+    use Illuminate\Support\Facades\Cache;
 
-    $webType = session('web_type_name');
-    $popularItems = [];
+    $webType = session('web_type_name') ?? 'default';
+    $categoriesCacheKey = 'popular_categories_' . $webType;
+    $productsCacheKey = 'newest_products_' . $webType;
 
-    if ($webType == 'human') {
-        $popularItems = json_decode(get_setting('popular_items_categories_human'), true);
-    } elseif ($webType == 'veterinary') {
-        $popularItems = json_decode(get_setting('popular_items_categories_veterinary'), true);
-    }
+    // Cache popular categories
+    $pop_categories = Cache::rememberForever($categoriesCacheKey, function () use ($webType) {
+        if ($webType == 'human') {
+            $popularItems = json_decode(get_setting('popular_items_categories_human'), true) ?: [];
+        } elseif ($webType == 'veterinary') {
+            $popularItems = json_decode(get_setting('popular_items_categories_veterinary'), true) ?: [];
+        } else {
+            $popularItems = [];
+        }
 
-    $pop_categories = Category::select('id', 'name')
-        ->whereIn('id', $popularItems ?? [])
-        ->get();
+        return Category::select('id', 'name')
+            ->whereIn('id', $popularItems)
+            ->get();
+    });
 
-    $newest_products = Product::whereIn('category_id', $popularItems ?? [])->get();
+    // Cache newest products
+    $newest_products = Cache::rememberForever($productsCacheKey, function () use ($webType) {
+        if ($webType == 'human') {
+            $popularItems = json_decode(get_setting('popular_items_categories_human'), true) ?: [];
+        } elseif ($webType == 'veterinary') {
+            $popularItems = json_decode(get_setting('popular_items_categories_veterinary'), true) ?: [];
+        } else {
+            $popularItems = [];
+        }
+
+        return Product::whereIn('category_id', $popularItems)
+            ->get();
+    });
 @endphp
 
 @if (count($newest_products) > 0 && $newest_products->isNotEmpty())

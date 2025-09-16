@@ -48,14 +48,23 @@ class HomeController extends Controller
     public function index()
     {
         $lang = get_system_language() ? get_system_language()->code : null;
-        // $featured_categories = Cache::rememberForever('featured_categories', function () {
-        //     return Category::with('bannerImage')->where('featured', 1)->get();
-        // });
+        $topCatVeterinary = json_decode(get_setting('top_categories_veterinary'), true);
 
-        $featured_categories = null;
+        if (!is_array($topCatVeterinary)) {
+            $topCatVeterinary = [];
+        }
+
+        $featured_categories = Cache::rememberForever('featured_categories_veterinary', function () use ($topCatVeterinary) {
+            return Category::select('id', 'parent_id', 'name', 'slug', 'icon')
+                ->whereIn('id', $topCatVeterinary)
+                ->where('featured', 1)
+                ->get();
+        });
+
+        // $featured_categories = null;
 
         if (!Session::has('web_type')) {
-            $category = Category::whereRaw('LOWER(name) = ?', [strtolower('Human')])->first();
+            $category = Category::whereRaw('LOWER(name) = ?', [strtolower('veterinary')])->first();
             if ($category) {
                 Session::put('web_type', $category->id);
                 session()->put('web_type_name', strtolower($category->name));
@@ -71,6 +80,31 @@ class HomeController extends Controller
         $Brands = Brand::select(['id', 'name'])->get();
 
         return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories', 'lang', 'categories','Brands'));
+    }
+
+    public function humanPage()
+    {
+        $topCatHuman = json_decode(get_setting('top_categories_human'), true);
+
+        if (!is_array($topCatHuman)) {
+            $topCatHuman = [];
+        }
+
+        $featured_categories = Cache::rememberForever('featured_categories_human', function () use ($topCatHuman) {
+            return Category::select('id', 'parent_id', 'name', 'slug', 'icon')
+                ->whereIn('id', $topCatHuman)
+                ->where('featured', 1)
+                ->get();
+        });
+
+        $categories = Category::where('parent_id', 0)
+        ->where('digital', 0)
+        ->with('childrenCategories')
+        ->get();
+
+        $Brands = Brand::select(['id', 'name'])->get();
+
+        return view('frontend.metro.human', compact('featured_categories', 'categories', 'Brands'));
     }
 
     public function load_todays_deal_section()
@@ -851,8 +885,7 @@ class HomeController extends Controller
 
         //$price = $product_stock->price;
         $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
-        
-        $base = getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price); //price by role
+        $base = $product_stock->mrp_price ?? $product->mrp_price; //price by role
         
 
         $sku = $product_stock->sku;
@@ -942,7 +975,8 @@ class HomeController extends Controller
             'per_piece_price' => single_price(round($price, 2)),
             'without_tax_price' => single_price(($price - $tax) * $request->quantity),
             'tax' => single_price($tax * $request->quantity),
-            'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),
+            // 'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),
+            'original_price' => single_price($base),
             'dimension' => $dimension,
             'weight_volume' => $weight,
             'package_count' => $count,
@@ -1194,7 +1228,7 @@ class HomeController extends Controller
             session()->put('web_type', $category->id);
             session()->put('web_type_name', strtolower($category->name));
 
-            Cache::flush();
+            // Cache::flush();
 
             return response()->json(['success' => true]);
         }

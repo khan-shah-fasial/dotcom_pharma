@@ -644,7 +644,7 @@
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('MRP price (PTs)')}} <span class="text-danger h5">*</span></label>
                                     <div class="col-md-6">
-                                        <input type="number" lang="en" min="0" step="0.01" placeholder="{{ translate('Unit MRP price') }}" value="0" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" required readonly>
+                                        <input type="number" lang="en" min="0" step="0.01" placeholder="{{ translate('Unit MRP price') }}" value="0" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" required>
                                     </div>
                                 </div>
 
@@ -694,7 +694,7 @@
                                     <div class="form-group row">
                                         <label class="col-md-3 col-from-label">{{translate('Quantity')}} <span class="text-danger h5">*</span></label>
                                         <div class="col-md-6">
-                                            <input type="number" lang="en" min="0" step="1" placeholder="{{ translate('Quantity') }}" name="current_stock" class="form-control" required>
+                                            <input type="number" lang="en" min="0" step="1" placeholder="{{ translate('Quantity') }}" name="current_stock" value="{{ old('current_stock', 0) }}" class="form-control" required>
                                         </div>
                                     </div>
                                     <!-- SKU -->
@@ -1174,9 +1174,13 @@
                 AIZ.plugins.sectionFooTable('#sku_combination');
                 if (data.trim().length > 1) {
                    $('#show-hide-div').hide();
+                    // Remove 'required' from all input fields inside
+                    $('#show-hide-div').find('input').removeAttr('required');
                 }
                 else {
                     $('#show-hide-div').show();
+                    // Add 'required' back to the necessary fields
+                    $('#show-hide-div').find('input[name="current_stock"]').attr('required', 'required');
                 }
            }
        });

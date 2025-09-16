@@ -16,14 +16,6 @@ class PolicyController extends Controller
         return view('policies.index', compact('policy'));
     }
 
-    public function humanPolicy()
-    {
-        $categories = Category::with('childrenCategories')->get();
-        $Brands = Brand::all();
-
-        return view('frontend.policies.human', compact('categories', 'Brands'));
-    }
-
     //updates the policy pages
     public function store(Request $request)
     {
