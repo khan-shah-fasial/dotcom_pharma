@@ -32,19 +32,20 @@
                 </a>
             </li>
             @endforeach
+            @php $active = false; @endphp
         @endif 
 
         @if ($detailedProduct->video_link != null)
         <li class="nav-item">
             <a href="#tab_default_2" data-toggle="tab"
-                class="text-reset {{ $index === 0 && $active ? 'active show' : '' }}">{{ translate('Video') }}</a>
+                class="text-reset {{ $active ? 'active show' : '' }}">{{ translate('Video') }}</a>
                 </li>
             @php $active = false; @endphp
         @endif
         @if ($detailedProduct->pdf != null)
         <li class="nav-item">
             <a href="#tab_default_3" data-toggle="tab"
-                class="text-reset {{ $index === 0 && $active ? 'active show' : '' }}">{{ translate('Downloads') }}</a>
+                class="text-reset {{ $active ? 'active show' : '' }}">{{ translate('Downloads') }}</a>
                 </li>
             @php $active = false; @endphp
         @endif
@@ -86,6 +87,7 @@
                     </div>
                 </div>
             @endforeach
+            @php $show = false; @endphp
         @endif  
 
 
