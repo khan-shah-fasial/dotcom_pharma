@@ -6,6 +6,9 @@
 				{{translate('Variant')}}
 			</td>
 			<td class="text-center">
+                {{ translate('SKU') }}
+            </td>
+			<td class="text-center">
 				{{translate('MRP Price')}}
 			</td>
 			<td class="text-center">
@@ -23,9 +26,6 @@
 			<td class="text-center">
 				{{translate('Package Count')}}
 			</td>
-			<td class="text-center">
-                {{ translate('SKU') }}
-            </td>
 			<td class="text-center" data-breakpoints="lg">
 				{{translate('Quantity')}}
 			</td>
@@ -67,6 +67,9 @@
 					<label for="" class="control-label">{{ $str }}</label>
 				</td>
 				<td>
+					<input type="text" name="sku_{{ $str }}" value="" class="form-control" required>
+				</td>
+				<td>
 					<input type="number" lang="en" name="mrp_price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required>
 				</td>
 				<td>
@@ -92,9 +95,6 @@
 				<td>
 					<input type="number" lang="en" name="count_{{ $str }}" class="form-control"
 						placeholder="Count" step="0.01" min="0" required>
-				</td>
-				<td>
-					<input type="text" name="sku_{{ $str }}" value="" class="form-control" required>
 				</td>
 				<td>
 					<input type="number" lang="en" name="qty_{{ $str }}" value="10" min="0" step="1" class="form-control" required>

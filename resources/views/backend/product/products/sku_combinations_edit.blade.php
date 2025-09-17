@@ -6,6 +6,9 @@
                     {{ translate('Variant') }}
                 </td>
                 <td class="text-center">
+                    {{ translate('SKU') }}
+                </td>
+                <td class="text-center">
                     {{ translate('MRP Price') }}
                 </td>
                 <td class="text-center">
@@ -22,9 +25,6 @@
                 </td>
                 <td class="text-center">
                     {{ translate('Package Count') }}
-                </td>
-                <td class="text-center">
-                    {{ translate('SKU') }}
                 </td>
                 <td class="text-center" data-breakpoints="lg">
                     {{ translate('Quantity') }}
@@ -72,6 +72,17 @@
                     <tr class="variant">
                         <td>
                             <label for="" class="control-label">{{ $str }}</label>
+                        </td>
+                        <td>
+                            <input type="text" name="sku_{{ $str }}"
+                                value="@php
+                            if($stock != null) {
+                                echo $stock->sku;
+                            }
+                            else {
+                                echo $str;
+                            } @endphp"
+                                class="form-control" required>
                         </td>
                         <td>
                             <input type="number" lang="en" name="mrp_price_{{ $str }}"
@@ -165,17 +176,6 @@
                                 value="@php
                             if($stock != null) {
                                 echo $stock->count;
-                            }
-                            else {
-                                echo $str;
-                            } @endphp"
-                                class="form-control" required>
-                        </td>
-                        <td>
-                            <input type="text" name="sku_{{ $str }}"
-                                value="@php
-                            if($stock != null) {
-                                echo $stock->sku;
                             }
                             else {
                                 echo $str;

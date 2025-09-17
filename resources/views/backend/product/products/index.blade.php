@@ -2,6 +2,12 @@
 
 @section('content')
 
+    <style>
+        .stock-item.hidden {
+            display: none;
+        }
+    </style>
+
     @php
         CoreComponentRepository::instantiateShopRepository();
         CoreComponentRepository::initializeCache();
@@ -186,7 +192,7 @@
                                     {{ single_price($product->unit_price) }} </br>
                                     <strong>{{ translate('Rating') }}:</strong> {{ $product->rating }} </br>
                                 </td>
-                                <td>
+                                {{-- <td>
                                     @if ($product->digital == 1)
                                         <span
                                             class="badge badge-inline badge-info">{{ translate('Digital Product') }}</span>
@@ -209,6 +215,52 @@
                                         @endif
                                     @endif
 
+                                </td> --}}
+                                <td>
+                                    @if ($product->digital == 1)
+                                        <span class="badge badge-inline badge-info">{{ translate('Digital Product') }}</span>
+                                    @else
+                                        @php
+                                            $qty = 0;
+                                            $stocks = [];
+                                            if ($product->variant_product) {
+                                                foreach ($product->stocks as $key => $stock) {
+                                                    $stocks[] = ['variant' => $stock->variant, 'qty' => $stock->qty];
+                                                    $qty += $stock->qty;
+                                                }
+                                            } else {
+                                                $qty = optional($product->stocks->first())->qty;
+                                                $stocks[] = ['variant' => $product->stocks->first()->variant, 'qty' => $qty];
+                                            }
+                                        @endphp
+
+                                        @if (count($stocks) > 4)
+                                            <div class="stock-list" id="stock-list-{{ $product->id }}">
+                                                <div class="stock-items">
+                                                    @foreach($stocks as $index => $stock)
+                                                        <div class="stock-item {{ $index >= 4 ? 'hidden' : '' }}" data-index="{{ $index }}">
+                                                            {{ $stock['variant'] }} - {{ $stock['qty'] }}
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+
+                                                <!-- View More / View Less Toggle Button -->
+                                                <button class="btn btn-sm btn-link view-more-toggle" onclick="toggleViewMore('stock-list-{{ $product->id }}')">View More</button>
+                                            </div>
+                                        @else
+                                            <div class="stock-items">
+                                                @foreach($stocks as $stock)
+                                                    <div class="stock-item">
+                                                        {{ $stock['variant'] }} - {{ $stock['qty'] }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+
+                                        @if ($qty <= $product->low_stock_quantity)
+                                            <span class="badge badge-inline badge-danger">{{ translate('Low') }}</span>
+                                        @endif
+                                    @endif
                                 </td>
                                 <td>
                                     <label class="aiz-switch aiz-switch-success mb-0">
@@ -568,5 +620,33 @@
                 });
             });
         });
+    </script>
+
+    <script>
+        let isExpanded = {}; // Track expanded state for each stock list
+
+        // Toggle view for specific stock list
+        function toggleViewMore(stockListId) {
+            const stockList = document.getElementById(stockListId);
+            const items = stockList.querySelectorAll('.stock-item');
+            const button = stockList.querySelector('.view-more-toggle');
+
+            // Toggle visibility of items beyond the first 4
+            items.forEach((item, index) => {
+                if (index >= 4) {
+                    item.classList.toggle('hidden');
+                }
+            });
+
+            // Update the button text based on whether the list is expanded or not
+            if (isExpanded[stockListId]) {
+                button.innerText = 'View More';
+            } else {
+                button.innerText = 'View Less';
+            }
+
+            // Toggle the expanded state for the specific list
+            isExpanded[stockListId] = !isExpanded[stockListId];
+        }
     </script>
 @endsection

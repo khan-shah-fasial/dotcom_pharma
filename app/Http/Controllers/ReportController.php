@@ -28,12 +28,16 @@ class ReportController extends Controller
     public function stock_report(Request $request)
     {
         $sort_by = null;
-        $products = Product::orderBy('created_at', 'desc');
-        if ($request->has('category_id')) {
+        $products = Product::with('stocks')->orderBy('created_at', 'desc');
+        if ($request->has('category_id') && $request->category_id != null && $request->category_id != "") {
             $sort_by = $request->category_id;
             $products = $products->where('category_id', $sort_by);
         }
-        $products = $products->paginate(15);
+        if ($request->has('product_id') && $request->product_id != null && $request->product_id != "") {
+            $sort_by = $request->product_id;
+            $products = $products->where('id', $sort_by);
+        }
+        $products = $products->paginate(5);
         return view('backend.reports.stock_report', compact('products', 'sort_by'));
     }
 

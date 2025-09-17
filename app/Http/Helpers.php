@@ -61,6 +61,8 @@ use App\Utility\EmailUtility;
 use App\Models\Address;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Facades\Cache;
+
 //sensSMS function for OTP
 if (!function_exists('sendSMS')) {
     function sendSMS($to, $from, $text, $template_id)
@@ -3367,3 +3369,142 @@ if (!function_exists('generateRoleBasedPrices_excel')) {
 // (NULL, 'product-price-percentage-customer', '50', 'en', '2025-03-10 16:21:45', '2025-03-10 16:21:45');
 // INSERT INTO `business_settings` (`id`, `type`, `value`, `lang`, `created_at`, `updated_at`) VALUES (NULL, 'get_customer_roles', '[\r\n \"pts\",\r\n \"ptr\",\r\n \"ptd\",\r\n \"gov\",\r\n \"expo\",\r\n \"customer\"\r\n]', NULL, '2025-03-10 16:21:45', '2025-06-12 16:45:18');
 /* End - Role Based Price Integration */
+
+
+if (! function_exists('getCategoryTopMenu')) {
+    function getCategoryTopMenu()
+    {
+        if (!session()->has('web_type')) {
+            $catData = Category::whereRaw('LOWER(name) = ?', [strtolower('veterinary')])
+                ->first(['id', 'name']);
+
+            if ($catData) {
+                session()->put('web_type', $catData->id);
+                session()->put('web_type_name', strtolower($catData->name));
+            }
+        }
+
+        $webTypeId = session('web_type');
+        $webTypeName = session('web_type_name');
+
+        $catHumanId = [58, 43, 70, 68, 72]; // Human category IDs
+        $catVeterinaryId = [85, 86, 87, 88, 89]; // Veterinary category IDs
+
+        $cacheKey = 'category_top_menu_' . ($webTypeName ?? 'default');
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($webTypeName, $webTypeId, $catHumanId, $catVeterinaryId) {
+            if ($webTypeName == 'human') {
+                return Category::select('id', 'parent_id', 'name', 'slug')
+                    ->whereIn('id', $catHumanId)
+                    ->where('parent_id', $webTypeId)
+                    ->with('childrenCategories')
+                    ->orderByRaw('FIELD(id, ' . implode(',', $catHumanId) . ')')
+                    ->get();
+            } elseif ($webTypeName == 'veterinary') {
+                return Category::select('id', 'parent_id', 'name', 'slug')
+                    ->whereIn('id', $catVeterinaryId)
+                    ->where('parent_id', $webTypeId)
+                    ->with('childrenCategories')
+                    ->orderByRaw('FIELD(id, ' . implode(',', $catVeterinaryId) . ')')
+                    ->get();
+            } else {
+                return collect();
+            }
+        });
+    }
+}
+
+if (! function_exists('getCategoryMenu')) {
+    function getCategoryMenu()
+    {
+        $catHumanIdRaw = get_setting('header_nav_menu_human');
+        $catVeterinaryIdRaw = get_setting('header_nav_menu_veterinary');
+
+        // Decode JSON into arrays, fallback to empty arrays if null or invalid
+        $catHumanId = array_map('intval', json_decode($catHumanIdRaw, true) ?: []);
+        $catVeterinaryId = array_map('intval', json_decode($catVeterinaryIdRaw, true) ?: []);
+
+        $webTypeName = session('web_type_name') ?? 'default';
+        $cacheKey = 'category_menu_' . $webTypeName;
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($webTypeName, $catHumanId, $catVeterinaryId) {
+            if ($webTypeName == 'human' && count($catHumanId) > 0) {
+                return Category::select('id', 'parent_id', 'name', 'slug')
+                    ->whereIn('id', $catHumanId)
+                    ->orderByRaw('FIELD(id, ' . implode(',', $catHumanId) . ')')
+                    ->get();
+            } elseif ($webTypeName == 'veterinary' && count($catVeterinaryId) > 0) {
+                return Category::select('id', 'parent_id', 'name', 'slug')
+                    ->whereIn('id', $catVeterinaryId)
+                    ->orderByRaw('FIELD(id, ' . implode(',', $catVeterinaryId) . ')')
+                    ->get();
+            } else {
+                return collect(); // Return empty collection if no IDs match
+            }
+        });
+    }
+}
+
+
+if (! function_exists('getBestSellingProducts')) {
+    function getBestSellingProducts()
+    {
+        $webTypeName = session('web_type_name') ?? 'default';
+        $cacheKey = 'best_selling_products_' . $webTypeName;
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($webTypeName) {
+            if ($webTypeName == 'human') {
+                $trendingItems = json_decode(get_setting('trending_items_human'), true) ?: [];
+                return Product::whereIn('id', $trendingItems)->get();
+            } elseif ($webTypeName == 'veterinary') {
+                $trendingItems = json_decode(get_setting('trending_items_veterinary'), true) ?: [];
+                return Product::whereIn('id', $trendingItems)->get();
+            } else {
+                return collect(); // Return empty collection if no type is matched
+            }
+        });
+    }
+}
+
+if (! function_exists('getPopularCategories')) {
+    function getPopularCategories()
+    {
+        $webType = session('web_type_name') ?? 'default';
+        $categoriesCacheKey = 'popular_categories_' . $webType;
+
+        return Cache::remember($categoriesCacheKey, now()->addHours(6), function () use ($webType) {
+            if ($webType == 'human') {
+                $popularItems = json_decode(get_setting('popular_items_categories_human'), true) ?: [];
+            } elseif ($webType == 'veterinary') {
+                $popularItems = json_decode(get_setting('popular_items_categories_veterinary'), true) ?: [];
+            } else {
+                $popularItems = [];
+            }
+
+            return Category::select('id', 'name')
+                ->whereIn('id', $popularItems)
+                ->get();
+        });
+    }
+}
+
+if (! function_exists('getNewestProducts')) {
+    function getNewestProducts()
+    {
+        $webType = session('web_type_name') ?? 'default';
+        $productsCacheKey = 'newest_products_' . $webType;
+
+        return Cache::remember($productsCacheKey, now()->addHours(6), function () use ($webType) {
+            if ($webType == 'human') {
+                $popularItems = json_decode(get_setting('popular_items_categories_human'), true) ?: [];
+            } elseif ($webType == 'veterinary') {
+                $popularItems = json_decode(get_setting('popular_items_categories_veterinary'), true) ?: [];
+            } else {
+                $popularItems = [];
+            }
+
+            return Product::whereIn('category_id', $popularItems)
+                ->get();
+        });
+    }
+}

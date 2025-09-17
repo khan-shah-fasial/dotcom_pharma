@@ -2,6 +2,77 @@
 
 @section('content')
 
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Full-screen overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3); /* Light semi-transparent background */
+            backdrop-filter: blur(20px); /* This is where the glass blur effect is applied */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* Ensure it's on top */
+        }
+
+        /* Loading text styling */
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #070321;
+            animation: fadeIn 1s infinite; /* Add a fade animation for fun */
+            font-family: 'Courier New', Courier, monospace; /* A curvy or more "stylish" built-in font */
+            text-transform: uppercase; /* Optional, if you want uppercase text */
+            letter-spacing: 2px; /* Adds spacing between letters */
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3), -2px -2px 5px rgba(0, 0, 0, 0.3); /* Stylish shadow effect */
+        }
+
+        /* Optional: Add a simple fadeIn effect */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+
+    <!-- Full screen loading overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-text">Loading... Please Wait</div>
+        </div>
+    </div>
+
+    <!-- Sliders -->
+    <div class="home-banner-area mb-3">
+        <div class="p-0">
+            <!-- Sliders -->
+            <div class="home-slider slider-full">
+                <div class="d-block mw-100 img-fit overflow-hidden overflow-hidden">
+                    <img class="img-fit m-auto has-transition ls-is-cached lazyloaded" src="{{ static_asset('assets/img/veterniry-banner-background.webp') }}" />
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if (!Session::has('step') || Session::get('step') == 1)
 
         @php
@@ -433,6 +504,8 @@
                             // }
                             --}}
 
+                            document.getElementById('loading-overlay').style.display = 'none';
+
                             // $(`#reg_model_${step}`).modal('show');
                             if (!$('#reg_model_1').hasClass('show')) {
                                 $('#reg_model_1').modal('show');
@@ -758,6 +831,8 @@
                         // }
                         --}}
 
+                        document.getElementById('loading-overlay').style.display = 'none';
+
                         // $(`#reg_model_${step}`).modal('show');
                         if (!$('#reg_model_1').hasClass('show')) {
                             $('#reg_model_1').modal('show');
@@ -959,11 +1034,13 @@
         }
 
         function close_and_reload_home (){
+            document.getElementById('loading-overlay').style.display = 'block';
             $('#reg_model_1').modal('hide');
-            setTimeout(function() {
-                // location.reload();
-                window.location.href = login_page_home;
-            }, 100);
+            window.location.href = login_page_home;
+            // setTimeout(function() {
+            //     // location.reload();
+            //     window.location.href = login_page_home;
+            // }, 100);
         }
 
 

@@ -14,9 +14,17 @@
             <div class="card-body">
                 <form action="{{ route('stock_report.index') }}" method="GET">
                     <div class="form-group row offset-lg-2">
-                        <label class="col-md-3 col-form-label">{{translate('Sort by Category')}} :</label>
+                        <label class="col-md-3 col-form-label">{{translate('Sort by Product')}} :</label>
                         <div class="col-md-5">
-                            <select id="demo-ease" class="from-control aiz-selectpicker" name="category_id" required>
+                            <select id="demo-ease" class="from-control aiz-selectpicker" name="product_id">
+                                <option value="">{{ translate('Choose Product') }}</option>
+                                @foreach (App\Models\Product::orderBy('created_at', 'desc')->get() as $key => $product)
+                                    <option value="{{ $product->id }}" @if($sort_by == $product->id) selected @endif>{{ $product->getTranslation('name') }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <select id="demo-ease" class="from-control aiz-selectpicker" name="category_id">
                                 <option value="">{{ translate('Choose Category') }}</option>
                                 @foreach (\App\Models\Category::all() as $key => $category)
                                     <option value="{{ $category->id }}" @if($sort_by == $category->id) selected @endif>{{ $category->getTranslation('name') }}</option>
@@ -32,21 +40,25 @@
                     <thead>
                         <tr>
                             <th>{{ translate('Product Name') }}</th>
+                            <th>{{ translate('Variant') }}</th>
                             <th>{{ translate('Stock') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($products as $key => $product)
-                            @php
+                            {{-- @php
                                 $qty = 0;
                                 foreach ($product->stocks as $key => $stock) {
                                     $qty += $stock->qty;
                                 }
-                            @endphp
-                            <tr>
-                                <td>{{ $product->getTranslation('name') }}</td>
-                                <td>{{ $qty }}</td>
-                            </tr>
+                            @endphp --}}
+                            @foreach ($product->stocks as $key => $stock)
+                                <tr>
+                                    <td>{{ $product->getTranslation('name') }}</td>
+                                    <td>{{ $stock->variant }}</td>
+                                    <td>{{ $stock->qty }}</td>
+                                </tr>
+                            @endforeach
                         @endforeach
                     </tbody>
                 </table>

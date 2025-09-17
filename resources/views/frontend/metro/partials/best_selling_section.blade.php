@@ -1,23 +1,24 @@
 @php
     // $best_selling_products = get_best_selling_products(20);
 
-    use App\Models\Product;
-    use Illuminate\Support\Facades\Cache;
+    // use App\Models\Product;
+    // use Illuminate\Support\Facades\Cache;
 
-    $webTypeName = session('web_type_name') ?? 'default';
-    $cacheKey = 'best_selling_products_' . $webTypeName;
+    // $webTypeName = session('web_type_name') ?? 'default';
+    // $cacheKey = 'best_selling_products_' . $webTypeName;
 
-    $best_selling_products = Cache::rememberForever($cacheKey, function () use ($webTypeName) {
-        if ($webTypeName == 'human') {
-            $trendingItems = json_decode(get_setting('trending_items_human'), true) ?: [];
-            return Product::whereIn('id', $trendingItems)->get();
-        } elseif ($webTypeName == 'veterinary') {
-            $trendingItems = json_decode(get_setting('trending_items_veterinary'), true) ?: [];
-            return Product::whereIn('id', $trendingItems)->get();
-        } else {
-            return collect(); // Return an empty collection if no type is matched
-        }
-    });
+    // $best_selling_products = Cache::rememberForever($cacheKey, function () use ($webTypeName) {
+    //     if ($webTypeName == 'human') {
+    //         $trendingItems = json_decode(get_setting('trending_items_human'), true) ?: [];
+    //         return Product::whereIn('id', $trendingItems)->get();
+    //     } elseif ($webTypeName == 'veterinary') {
+    //         $trendingItems = json_decode(get_setting('trending_items_veterinary'), true) ?: [];
+    //         return Product::whereIn('id', $trendingItems)->get();
+    //     } else {
+    //         return collect(); // Return an empty collection if no type is matched
+    //     }
+    // });
+    $best_selling_products = getBestSellingProducts();
 @endphp
 
 

@@ -203,10 +203,27 @@
                                             </div>
                                         </div>
                                         <!-- Unit -->
-                                        <div class="form-group row">
+                                        {{-- <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Unit')}} <span class="text-danger">*</span></label>
                                             <div class="col-xxl-9">
                                                 <input type="text" class="form-control @error('unit') is-invalid @enderror" name="unit" placeholder="{{ translate('Unit (e.g. KG, Pc etc)') }}" value="{{$product->getTranslation('unit', $lang)}}" required>
+                                            </div>
+                                        </div> --}}
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-form-label fs-13">{{ translate('Unit') }} <span class="text-danger">*</span></label>
+                                            <div class="col-xxl-9">
+                                                <select class="form-control @error('unit') is-invalid @enderror" name="unit" required>
+                                                    <option value="" disabled selected>{{ translate('Select a unit') }}</option>
+                                                    <!-- Example unit options -->
+                                                    <option value="kg" {{ old('unit', $product->getTranslation('unit', $lang)) == 'kg' ? 'selected' : '' }}>KG</option>
+                                                    <option value="pc" {{ old('unit', $product->getTranslation('unit', $lang)) == 'pc' ? 'selected' : '' }}>Pc</option>
+                                                    <option value="ltr" {{ old('unit', $product->getTranslation('unit', $lang)) == 'ltr' ? 'selected' : '' }}>Ltr</option>
+                                                    <option value="ml" {{ old('unit', $product->getTranslation('unit', $lang)) == 'ml' ? 'selected' : '' }}>Ml</option>
+                                                    <!-- Add more unit options as needed -->
+                                                </select>
+                                                @error('unit')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
                                             </div>
                                         </div>
                                         <!-- Weight -->
@@ -328,12 +345,12 @@
                                         </div>
 
                                         <!-- Product Dimentions  -->
-                                        <div class="form-group row">
+                                        {{-- <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Dimentions')}} <span class="text-danger">*</span></label>
                                             <div class="col-xxl-9">
                                                 <input type="text" class="form-control @error('product_dimentions') is-invalid @enderror" name="product_dimentions" placeholder="{{ translate('Product Dimentions') }}" value="{{ $product->product_dimentions }}" required>
                                             </div>
-                                        </div>
+                                        </div> --}}
 
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-form-label fs-13">{{ translate('Product Dimensions L x W x H (cm)') }} <span class="text-danger">*</span></label>
@@ -813,7 +830,7 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group row ">
+                                <div class="form-group row d-none">
                                     <label
                                         class="col-md-3 col-from-label">{{ translate('Change Product variant') }}</label>
                                     <div class="col-md-9">

@@ -1,42 +1,44 @@
 @php
     // $best_selling_products = get_best_selling_products(20);
 
-    use App\Models\Product;
-    use App\Models\Category;
-    use Illuminate\Support\Facades\Cache;
+    // use App\Models\Product;
+    // use App\Models\Category;
+    // use Illuminate\Support\Facades\Cache;
 
-    $webType = session('web_type_name') ?? 'default';
-    $categoriesCacheKey = 'popular_categories_' . $webType;
-    $productsCacheKey = 'newest_products_' . $webType;
+    // $webType = session('web_type_name') ?? 'default';
+    // $categoriesCacheKey = 'popular_categories_' . $webType;
+    // $productsCacheKey = 'newest_products_' . $webType;
 
-    // Cache popular categories
-    $pop_categories = Cache::rememberForever($categoriesCacheKey, function () use ($webType) {
-        if ($webType == 'human') {
-            $popularItems = json_decode(get_setting('popular_items_categories_human'), true) ?: [];
-        } elseif ($webType == 'veterinary') {
-            $popularItems = json_decode(get_setting('popular_items_categories_veterinary'), true) ?: [];
-        } else {
-            $popularItems = [];
-        }
+    // // Cache popular categories
+    // $pop_categories = Cache::rememberForever($categoriesCacheKey, function () use ($webType) {
+    //     if ($webType == 'human') {
+    //         $popularItems = json_decode(get_setting('popular_items_categories_human'), true) ?: [];
+    //     } elseif ($webType == 'veterinary') {
+    //         $popularItems = json_decode(get_setting('popular_items_categories_veterinary'), true) ?: [];
+    //     } else {
+    //         $popularItems = [];
+    //     }
 
-        return Category::select('id', 'name')
-            ->whereIn('id', $popularItems)
-            ->get();
-    });
+    //     return Category::select('id', 'name')
+    //         ->whereIn('id', $popularItems)
+    //         ->get();
+    // });
 
-    // Cache newest products
-    $newest_products = Cache::rememberForever($productsCacheKey, function () use ($webType) {
-        if ($webType == 'human') {
-            $popularItems = json_decode(get_setting('popular_items_categories_human'), true) ?: [];
-        } elseif ($webType == 'veterinary') {
-            $popularItems = json_decode(get_setting('popular_items_categories_veterinary'), true) ?: [];
-        } else {
-            $popularItems = [];
-        }
+    // // Cache newest products
+    // $newest_products = Cache::rememberForever($productsCacheKey, function () use ($webType) {
+    //     if ($webType == 'human') {
+    //         $popularItems = json_decode(get_setting('popular_items_categories_human'), true) ?: [];
+    //     } elseif ($webType == 'veterinary') {
+    //         $popularItems = json_decode(get_setting('popular_items_categories_veterinary'), true) ?: [];
+    //     } else {
+    //         $popularItems = [];
+    //     }
 
-        return Product::whereIn('category_id', $popularItems)
-            ->get();
-    });
+    //     return Product::whereIn('category_id', $popularItems)
+    //         ->get();
+    // });
+    $pop_categories = getPopularCategories();
+    $newest_products = getNewestProducts();
 @endphp
 
 @if (count($newest_products) > 0 && $newest_products->isNotEmpty())

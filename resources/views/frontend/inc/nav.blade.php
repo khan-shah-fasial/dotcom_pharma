@@ -251,7 +251,7 @@
                                     <ul class="list-inline mb-0 pl-0">
                                         <!-- Dropdown for Injections -->
 
-                                        @php
+                                        {{-- @php
                                             use App\Models\Category;
                                             use Illuminate\Support\Facades\Cache;
 
@@ -294,7 +294,8 @@
                                                     return collect();
                                                 }
                                             });
-                                        @endphp
+                                        @endphp --}}
+                                        @php $category_top_menu = getCategoryTopMenu(); @endphp
 
                                         @foreach ($category_top_menu as $cat)
                                             <li class="list-inline-item mr-0 animate-underline-white dropdown">
@@ -855,7 +856,7 @@
                                     }
                                 @endphp --}}
 
-                                @php
+                                {{-- @php
                                     // Get category ID settings from the database
                                     $catHumanIdRaw = get_setting('header_nav_menu_human');
                                     $catVeterinaryIdRaw = get_setting('header_nav_menu_veterinary');
@@ -883,7 +884,9 @@
                                             return collect(); // Return empty collection if no IDs match
                                         }
                                     });
-                                @endphp
+                                @endphp --}}
+                                @php $category_menu = getCategoryMenu(); @endphp
+                                {{-- Render the category menu items --}}
 
                                 @foreach ($category_menu as $cat)
                                     <li class="list-inline-item mr-0 animate-underline-white">
