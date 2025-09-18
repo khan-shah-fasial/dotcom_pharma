@@ -245,7 +245,7 @@
                                                 </div>
 
                                                 <!-- View More / View Less Toggle Button -->
-                                                <button class="btn btn-sm btn-link view-more-toggle" onclick="toggleViewMore('stock-list-{{ $product->id }}')">View More</button>
+                                                <a class="badge badge-inline badge-primary text-light view-more-all-product btn-sm btn-link view-more-toggle" onclick="toggleViewMore('stock-list-{{ $product->id }}')">View More</a>
                                             </div>
                                         @else
                                             <div class="stock-items">

@@ -11099,6 +11099,11 @@ input[type="number"] {
     color: var(--blue);
 }
 
+.view-more-all-product{
+    cursor: pointer;
+    padding: 5px;
+}
+
 .btn-soft-white {
     background-color: var(--soft-white);
     color: var(--white);

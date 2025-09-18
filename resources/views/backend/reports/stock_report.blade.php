@@ -13,26 +13,31 @@
             <!--card body-->
             <div class="card-body">
                 <form action="{{ route('stock_report.index') }}" method="GET">
-                    <div class="form-group row offset-lg-2">
-                        <label class="col-md-3 col-form-label">{{translate('Sort by Product')}} :</label>
-                        <div class="col-md-5">
-                            <select id="demo-ease" class="from-control aiz-selectpicker" name="product_id">
-                                <option value="">{{ translate('Choose Product') }}</option>
-                                @foreach (App\Models\Product::orderBy('created_at', 'desc')->get() as $key => $product)
-                                    <option value="{{ $product->id }}" @if($sort_by == $product->id) selected @endif>{{ $product->getTranslation('name') }}</option>
-                                @endforeach
-                            </select>
+                    <div class="form-group row d-flex justify-content-center align-items-center">
+                        <div class="col-lg-6 mt-1 d-flex justify-content-center align-items-center">
+                            <label class="col-form-label mr-1">{{translate('Sort by Product')}} :</label>
+                            <div class="">
+                                <select id="demo-ease" class="from-control aiz-selectpicker" name="product_id">
+                                    <option value="">{{ translate('Choose Product') }}</option>
+                                    @foreach (App\Models\Product::orderBy('created_at', 'desc')->get() as $key => $product)
+                                        <option value="{{ $product->id }}" @if($sort_by == $product->id) selected @endif>{{ $product->getTranslation('name') }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-5">
-                            <select id="demo-ease" class="from-control aiz-selectpicker" name="category_id">
-                                <option value="">{{ translate('Choose Category') }}</option>
-                                @foreach (\App\Models\Category::all() as $key => $category)
-                                    <option value="{{ $category->id }}" @if($sort_by == $category->id) selected @endif>{{ $category->getTranslation('name') }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-primary" type="submit">{{ translate('Filter') }}</button>
+
+                        <div class="col-lg-6 mt-1 d-flex justify-content-center align-items-center">
+                            <div class="">
+                                <select id="demo-ease" class="from-control aiz-selectpicker" name="category_id">
+                                    <option value="">{{ translate('Choose Category') }}</option>
+                                    @foreach (\App\Models\Category::all() as $key => $category)
+                                        <option value="{{ $category->id }}" @if($sort_by == $category->id) selected @endif>{{ $category->getTranslation('name') }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="">
+                                <button class="btn btn-primary ml-1" type="submit">{{ translate('Filter') }}</button>
+                            </div>
                         </div>
                     </div>
                 </form>
