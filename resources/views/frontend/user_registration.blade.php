@@ -27,17 +27,20 @@
         /* Loading text styling */
         .loading-content {
             text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
 
         .loading-text {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
             color: #070321;
             animation: fadeIn 1s infinite; /* Add a fade animation for fun */
-            font-family: 'Courier New', Courier, monospace; /* A curvy or more "stylish" built-in font */
-            text-transform: uppercase; /* Optional, if you want uppercase text */
-            letter-spacing: 2px; /* Adds spacing between letters */
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3), -2px -2px 5px rgba(0, 0, 0, 0.3); /* Stylish shadow effect */
+            text-transform: capitalize; /* Optional, if you want uppercase text */
+            letter-spacing: 1px; /* Adds spacing between letters */
+            /* text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3), -2px -2px 5px rgba(0, 0, 0, 0.3); */
         }
 
         /* Optional: Add a simple fadeIn effect */
