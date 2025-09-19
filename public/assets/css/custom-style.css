@@ -76,7 +76,7 @@ li {
 }
 
 .human_btn a {
-    border: 1px solid #123498;
+    border: 1px solid #2b56a1;
 }
 
 .human_btn a {
@@ -104,7 +104,7 @@ li {
 }
 
 .human_btn .active {
-    background: #123498 !important;
+    background: #2b56a1 !important;
     color: #fff !important;
 }
 
@@ -113,7 +113,7 @@ li {
 }
 
 .veterinary_btn a {
-    border: 1px solid #123498;
+    border: 1px solid #2b56a1;
 }
 
 .veterinary_btn a {
@@ -145,7 +145,7 @@ li.list-inline-item.human_btn {
 }
 
 .veterinary_btn .active {
-    background: #123498;
+    background: #2b56a1;
     color: #fff !important;
 }
 
@@ -1620,13 +1620,13 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 }
 
 .human_btn .active_btn {
-    background: #123498 !important;
+    background: #2b56a1 !important;
     color: white !important;
     /* filter: brightness(0) invert(1); */
 }
 
 .veterinary_btn .active_btn {
-    background: #123498 !important;
+    background: #2b56a1 !important;
     color: white !important;
     /* filter: brightness(0) invert(1); */
 }
