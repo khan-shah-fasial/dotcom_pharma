@@ -46,17 +46,17 @@
                             </a>
                         </li>
 
-                        <li class="list-inline-item human_btn">
-                            <a href="javascript:void(0)"
-                                class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
-                                <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
-                            </a>
-                        </li>
-
                         <li class="list-inline-item veterinary_btn">
                             <a href="javascript:void(0)"
                                 class=" fs-12 py-2 {{ session('web_type_name') == 'veterinary' ? 'active_btn' : '' }}">
                                 <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
+                            </a>
+                        </li>
+
+                        <li class="list-inline-item human_btn">
+                            <a href="javascript:void(0)"
+                                class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
+                                <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
                             </a>
                         </li>
                     </ul>

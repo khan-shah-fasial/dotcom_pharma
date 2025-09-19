@@ -72,7 +72,7 @@ li {
 }
 
 .human_btn a {
-    border: 1px solid #23780E;
+    border: 1px solid #123498;
 }
 
 .human_btn a {
@@ -89,8 +89,8 @@ li {
 .human_btn a {
     /* width: 75px; */
     text-align: center;
-    color: #23780E !important;
-    background: #23780E33;
+    color: #123498 !important;
+    background: #fff;
     border-radius: 8px;
     padding: 0px 4px !important;
     font-weight: 400;
@@ -100,7 +100,7 @@ li {
 }
 
 .human_btn .active {
-    background: #23780E;
+    background: #123498;
     color: #fff !important;
 }
 
