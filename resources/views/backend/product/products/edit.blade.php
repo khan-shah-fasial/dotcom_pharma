@@ -210,17 +210,55 @@
                                             </div>
                                         </div> --}}
                                         <div class="form-group row">
-                                            <label class="col-xxl-3 col-form-label fs-13">{{ translate('Unit') }} <span class="text-danger">*</span></label>
+                                            <label class="col-xxl-3 col-form-label fs-13">{{ translate('Unit') }}
+                                                <span class="text-danger">*</span>
+                                            </label>
                                             <div class="col-xxl-9">
-                                                <select class="form-control @error('unit') is-invalid @enderror" name="unit" required>
-                                                    <option value="" disabled selected>{{ translate('Select a unit') }}</option>
-                                                    <!-- Example unit options -->
-                                                    <option value="kg" {{ old('unit', $product->getTranslation('unit', $lang)) == 'kg' ? 'selected' : '' }}>KG</option>
-                                                    <option value="pc" {{ old('unit', $product->getTranslation('unit', $lang)) == 'pc' ? 'selected' : '' }}>Pc</option>
-                                                    <option value="ltr" {{ old('unit', $product->getTranslation('unit', $lang)) == 'ltr' ? 'selected' : '' }}>Ltr</option>
-                                                    <option value="ml" {{ old('unit', $product->getTranslation('unit', $lang)) == 'ml' ? 'selected' : '' }}>Ml</option>
-                                                    <!-- Add more unit options as needed -->
+                                                <select class="form-control aiz-selectpicker @error('unit') is-invalid @enderror"
+                                                        name="unit"
+                                                        data-live-search="true"
+                                                        title="{{ translate('Select a unit') }}"
+                                                        required>
+
+                                                    <!-- Weight Units -->
+                                                    <optgroup label="Weight Units">
+                                                        <option value="mcg" {{ old('unit', $product->getTranslation('unit', $lang)) == 'mcg' ? 'selected' : '' }}>Microgram (mcg)</option>
+                                                        <option value="mg" {{ old('unit', $product->getTranslation('unit', $lang)) == 'mg' ? 'selected' : '' }}>Milligram (mg)</option>
+                                                        <option value="g" {{ old('unit', $product->getTranslation('unit', $lang)) == 'g' ? 'selected' : '' }}>Gram (g)</option>
+                                                        <option value="kg" {{ old('unit', $product->getTranslation('unit', $lang)) == 'kg' ? 'selected' : '' }}>Kilogram (kg)</option>
+                                                        <option value="ng" {{ old('unit', $product->getTranslation('unit', $lang)) == 'ng' ? 'selected' : '' }}>Nanogram (ng)</option>
+                                                    </optgroup>
+
+                                                    <!-- Volume Units -->
+                                                    <optgroup label="Volume Units">
+                                                        <option value="ml" {{ old('unit', $product->getTranslation('unit', $lang)) == 'ml' ? 'selected' : '' }}>Milliliter (mL)</option>
+                                                        <option value="ltr" {{ old('unit', $product->getTranslation('unit', $lang)) == 'ltr' ? 'selected' : '' }}>Liter (L)</option>
+                                                        <option value="cc" {{ old('unit', $product->getTranslation('unit', $lang)) == 'cc' ? 'selected' : '' }}>Cubic Centimeter (cc)</option>
+                                                        <option value="tsp" {{ old('unit', $product->getTranslation('unit', $lang)) == 'tsp' ? 'selected' : '' }}>Teaspoon (tsp ≈ 5 mL)</option>
+                                                        <option value="tbsp" {{ old('unit', $product->getTranslation('unit', $lang)) == 'tbsp' ? 'selected' : '' }}>Tablespoon (tbsp ≈ 15 mL)</option>
+                                                        <option value="fl_oz" {{ old('unit', $product->getTranslation('unit', $lang)) == 'fl_oz' ? 'selected' : '' }}>Fluid Ounce (fl oz ≈ 30 mL)</option>
+                                                    </optgroup>
+
+                                                    <!-- Count Units -->
+                                                    <optgroup label="Count Units">
+                                                        <option value="pc" {{ old('unit', $product->getTranslation('unit', $lang)) == 'pc' ? 'selected' : '' }}>Piece (Pc)</option>
+                                                        <option value="tab" {{ old('unit', $product->getTranslation('unit', $lang)) == 'tab' ? 'selected' : '' }}>Tablet (Tab)</option>
+                                                        <option value="cap" {{ old('unit', $product->getTranslation('unit', $lang)) == 'cap' ? 'selected' : '' }}>Capsule (Cap)</option>
+                                                        <option value="amp" {{ old('unit', $product->getTranslation('unit', $lang)) == 'amp' ? 'selected' : '' }}>Ampoule (Amp)</option>
+                                                        <option value="vial" {{ old('unit', $product->getTranslation('unit', $lang)) == 'vial' ? 'selected' : '' }}>Vial</option>
+                                                        <option value="syringe" {{ old('unit', $product->getTranslation('unit', $lang)) == 'syringe' ? 'selected' : '' }}>Syringe</option>
+                                                        <option value="bottle" {{ old('unit', $product->getTranslation('unit', $lang)) == 'bottle' ? 'selected' : '' }}>Bottle</option>
+                                                        <option value="pack" {{ old('unit', $product->getTranslation('unit', $lang)) == 'pack' ? 'selected' : '' }}>Pack</option>
+                                                    </optgroup>
+
+                                                    <!-- Special Units -->
+                                                    <optgroup label="Special Units">
+                                                        <option value="iu" {{ old('unit', $product->getTranslation('unit', $lang)) == 'iu' ? 'selected' : '' }}>International Unit (IU)</option>
+                                                        <option value="meq" {{ old('unit', $product->getTranslation('unit', $lang)) == 'meq' ? 'selected' : '' }}>Milliequivalent (mEq)</option>
+                                                        <option value="units" {{ old('unit', $product->getTranslation('unit', $lang)) == 'units' ? 'selected' : '' }}>Units</option>
+                                                    </optgroup>
                                                 </select>
+
                                                 @error('unit')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
