@@ -71,6 +71,10 @@ li {
     margin-right: 8px;
 }
 
+.top-navbar .top_baar_icons .veterinary_btn {
+    margin-right: 10px !important;
+}
+
 .human_btn a {
     border: 1px solid #123498;
 }
@@ -100,7 +104,7 @@ li {
 }
 
 .human_btn .active {
-    background: #123498;
+    background: #123498 !important;
     color: #fff !important;
 }
 
@@ -131,7 +135,7 @@ li.list-inline-item.human_btn {
     /* width: 85px; */
     text-align: center;
     color: #123498 !important;
-    background: #12349833;
+    background: #fff;
     border-radius: 8px;
     padding: 0px 4px !important;
     font-weight: 400;
@@ -1616,7 +1620,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 }
 
 .human_btn .active_btn {
-    background: #23780E !important;
+    background: #123498 !important;
     color: white !important;
     /* filter: brightness(0) invert(1); */
 }
