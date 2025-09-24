@@ -158,55 +158,6 @@
         <div class="position-relative logo-bar-area border-bottom border-md-nonea z-1025">
             <div class="container">
                 <div class="">
-
-                    <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white">
-                        <div class="position-relative flex-grow-1 px-3 px-lg-0">
-                            <form action="{{ route('search') }}" method="GET" class="stop-propagation">
-                                <div class="d-flex position-relative align-items-center">
-                                    <div class="" data-toggle="class-toggle" data-target=".front-header-search">
-                                        <button class="btn px-2" type="button"><i
-                                                class="la la-2x la-long-arrow-left"></i></button>
-                                    </div>
-                                    <div class="search-input-box">
-                                        <input type="text"
-                                            class="border border-soft-light form-control fs-14 hov-animate-outline"
-                                            id="search" name="keyword"
-                                            @isset($query)
-                                            value="{{ $query }}"
-                                        @endisset
-                                            placeholder="{{ translate('I am shopping for...') }}" autocomplete="off">
-
-                                        <svg id="Group_723" data-name="Group 723" xmlns="http://www.w3.org/2000/svg"
-                                            width="20.001" height="20" viewBox="0 0 20.001 20">
-                                            <path id="Path_3090" data-name="Path 3090"
-                                                d="M9.847,17.839a7.993,7.993,0,1,1,7.993-7.993A8,8,0,0,1,9.847,17.839Zm0-14.387a6.394,6.394,0,1,0,6.394,6.394A6.4,6.4,0,0,0,9.847,3.453Z"
-                                                transform="translate(-1.854 -1.854)" fill="#b5b5bf" />
-                                            <path id="Path_3091" data-name="Path 3091"
-                                                d="M24.4,25.2a.8.8,0,0,1-.565-.234l-6.15-6.15a.8.8,0,0,1,1.13-1.13l6.15,6.15A.8.8,0,0,1,24.4,25.2Z"
-                                                transform="translate(-5.2 -5.2)" fill="#b5b5bf" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </form>
-                            <div class="typed-search-box stop-propagation document-click-d-none d-none bg-white rounded shadow-lg position-absolute left-0 top-100 w-100"
-                                style="min-height: 200px">
-                                <div class="search-preloader absolute-top-center">
-                                    <div class="dot-loader">
-                                        <div></div>
-                                        <div></div>
-                                        <div></div>
-                                    </div>
-                                </div>
-                                <div class="search-nothing d-none p-3 text-center fs-16">
-
-                                </div>
-                                <div id="search-content" class="text-left">
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="row">
 
                         <div class="col-lg-3 col-md-4 col-2 d-lg-none d-block">
@@ -246,6 +197,54 @@
 
 
                         <div class="col-md-6 d-lg-block d-none">
+
+                            <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
+                        <div class="position-relative flex-grow-1 px-3 px-lg-0">
+                            <form action="{{ route('search') }}" method="GET" class="stop-propagation">
+                                <div class="d-flex position-relative align-items-center">
+                                    {{-- <div class="" data-toggle="class-toggle" data-target=".front-header-search">
+                                        <button class="btn px-2" type="button"><i
+                                                class="la la-2x la-long-arrow-left"></i></button>
+                                    </div> --}}
+                                    <div class="search-input-box">
+                                        <input type="text"
+                                            class="border border-soft-light form-control fs-14 hov-animate-outline"
+                                            id="search" name="keyword"
+                                            @isset($query)
+                                            value="{{ $query }}"
+                                        @endisset
+                                            placeholder="{{ translate('I am shopping for...') }}" autocomplete="off">
+
+                                        <svg id="Group_723" data-name="Group 723" xmlns="http://www.w3.org/2000/svg"
+                                            width="20.001" height="20" viewBox="0 0 20.001 20">
+                                            <path id="Path_3090" data-name="Path 3090"
+                                                d="M9.847,17.839a7.993,7.993,0,1,1,7.993-7.993A8,8,0,0,1,9.847,17.839Zm0-14.387a6.394,6.394,0,1,0,6.394,6.394A6.4,6.4,0,0,0,9.847,3.453Z"
+                                                transform="translate(-1.854 -1.854)" fill="#b5b5bf" />
+                                            <path id="Path_3091" data-name="Path 3091"
+                                                d="M24.4,25.2a.8.8,0,0,1-.565-.234l-6.15-6.15a.8.8,0,0,1,1.13-1.13l6.15,6.15A.8.8,0,0,1,24.4,25.2Z"
+                                                transform="translate(-5.2 -5.2)" fill="#b5b5bf" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="typed-search-box stop-propagation document-click-d-none d-none bg-white rounded shadow-lg position-absolute left-0 top-100 w-100"
+                                style="min-height: 200px">
+                                <div class="search-preloader absolute-top-center">
+                                    <div class="dot-loader">
+                                        <div></div>
+                                        <div></div>
+                                        <div></div>
+                                    </div>
+                                </div>
+                                <div class="search-nothing d-none p-3 text-center fs-16">
+
+                                </div>
+                                <div id="search-content" class="text-left">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                             {{-- <div class="w-100 logo_menu">
                                 <div class="d-flex align-items-center justify-content-center h-100">
                                     <ul class="list-inline mb-0 pl-0"> --}}
@@ -363,7 +362,7 @@
                         <div class="col-lg-3 col-md-4 col-2">
                             <div class="display_flex1">
                                 <!-- Search Icon for small device -->
-                                <div class="ml-auto mr-0">
+                                <div class="ml-auto mr-0 search-toggle-side-nav-bar">
                                     <a class="p-0 d-block" href="javascript:void(0);" data-toggle="class-toggle"
                                         data-target=".front-header-search">
                                         <i class="las la-search la-flip-horizontal la-2x pt-1"

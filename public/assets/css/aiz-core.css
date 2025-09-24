@@ -12981,17 +12981,10 @@ ul.apps a:hover i {
 
 @media (max-width: 991px) {
     .front-header-search {
-        position: absolute;
-        z-index: 1;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        right: 0;
-        left: 0;
-        opacity: 0;
-        transform: translateY(-100%);
-        -webkit-transform: translateY(-100%);
-        transition: all 0.3s;
+        /* position: absolute; */
+        transform: translateY(0%);
+        -webkit-transform: translateY(0%);
+        opacity: 1;
         -webkit-transition: all 0.3s;
     }
 

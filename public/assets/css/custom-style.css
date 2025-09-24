@@ -971,6 +971,7 @@ body .aiz-count-down-circle #time .circle svg circle {
     display: flex;
     align-items: center;
     gap: 18px;
+    justify-content: end;
 }
 
 img.logo_main {

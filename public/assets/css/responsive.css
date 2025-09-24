@@ -705,4 +705,12 @@
         width: 100% !important;
         margin-left: 70px;
     }
+
+    
+}
+
+@media (min-width: 992px) {
+    .search-toggle-side-nav-bar{
+        display: none !important;
+    }
 }
