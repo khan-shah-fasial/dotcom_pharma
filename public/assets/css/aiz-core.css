@@ -12981,7 +12981,7 @@ ul.apps a:hover i {
 
 @media (max-width: 991px) {
     .front-header-search {
-        /* position: absolute; */
+        position: absolute;
         transform: translateY(0%);
         -webkit-transform: translateY(0%);
         opacity: 1;
@@ -13695,8 +13695,9 @@ ul.apps a:hover i {
 }
 
 .search-input-box .form-control:focus {
-    border-width: 2px !important;
-    border-color: var(--primary) !important;
+    /* border-width: 2px !important; */
+    /* border-color: var(--primary) !important; */
+    /* border: none !important; */
 }
 
 /* animate underline */

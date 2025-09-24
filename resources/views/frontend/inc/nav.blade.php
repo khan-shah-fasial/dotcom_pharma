@@ -198,14 +198,14 @@
 
                         <div class="col-md-6 d-lg-block d-none">
 
-                            <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
+                            <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
                             <form action="{{ route('search') }}" method="GET" class="stop-propagation">
                                 <div class="d-flex position-relative align-items-center">
-                                    {{-- <div class="" data-toggle="class-toggle" data-target=".front-header-search">
+                                    <div class="search-toggle-side-nav-bar" data-toggle="class-toggle" data-target=".front-header-search">
                                         <button class="btn px-2" type="button"><i
                                                 class="la la-2x la-long-arrow-left"></i></button>
-                                    </div> --}}
+                                    </div>
                                     <div class="search-input-box">
                                         <input type="text"
                                             class="border border-soft-light form-control fs-14 hov-animate-outline"
