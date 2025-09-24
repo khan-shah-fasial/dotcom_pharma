@@ -67,13 +67,13 @@
 
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
-                        <li class="list-inline-item d-none d-md-block mr-2">
+                        <li class="list-inline-item d-none d-md-block mr-3">
                             <a class="b2b_buttons" href="{{ route('user.new_registration') }}">B2B Registration</a>
                         </li>
 
                         <!-- Language switcher -->
                         @if (get_setting('show_language_switcher') == 'on')
-                            <li class="list-inline-item dropdown mr-1" id="lang-change">
+                            <li class="list-inline-item dropdown mr-3" id="lang-change">
 
                                 <a href="javascript:void(0)" class="black_light_clr dropdown-toggle fs-12 py-2"
                                     data-toggle="dropdown" data-display="static">
@@ -246,9 +246,9 @@
 
 
                         <div class="col-md-6 d-lg-block d-none">
-                            <div class="w-100 logo_menu">
+                            {{-- <div class="w-100 logo_menu">
                                 <div class="d-flex align-items-center justify-content-center h-100">
-                                    <ul class="list-inline mb-0 pl-0">
+                                    <ul class="list-inline mb-0 pl-0"> --}}
                                         <!-- Dropdown for Injections -->
 
                                         {{-- @php
@@ -295,7 +295,7 @@
                                                 }
                                             });
                                         @endphp --}}
-                                        @php $category_top_menu = getCategoryTopMenu(); @endphp
+                                        {{-- @php $category_top_menu = getCategoryTopMenu(); @endphp
 
                                         @foreach ($category_top_menu as $cat)
                                             <li class="list-inline-item mr-0 animate-underline-white dropdown">
@@ -314,7 +314,7 @@
                                                     @endforeach
                                                 </div>
                                             </li>
-                                        @endforeach
+                                        @endforeach --}}
 
                                         {{-- <li class="list-inline-item mr-0 animate-underline-white dropdown">
                                             <a href="#" class="fs-14 d-inline-block fw-500 header_menu_links dropdown-toggle" id="injectionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -355,9 +355,9 @@
                                                 <a class="dropdown-item" href="/search">Suspensions</a>
                                             </div>
                                         </li> --}}
-                                    </ul>
+                                    {{-- </ul>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
 
                         <div class="col-lg-3 col-md-4 col-2">
@@ -788,9 +788,33 @@
         <!-- Menu Bar -->
         <div class="d-none d-lg-block position-relative h-50px" style="background-color:#2b56a1 !important;">
             <div class="container h-100">
-                <div class="d-flex h-100">
+                <div class="row pt-2">
+                    <div class="col-12 d-none d-lg-block ">
+                        <div class="text-center">
+                            @php $category_top_menu = getCategoryTopMenu(); @endphp
+
+                            @foreach ($category_top_menu as $cat)
+                                <li class="list-inline-item mr-3 animate-underline-white dropdown">
+                                    <a href="#"
+                                        class="fs-14 text-white d-inline-block fw-500 header_menu_links dropdown-toggle"
+                                        id="injectionsDropdown_{{ $cat->id }}"
+                                        data-toggle="dropdown" aria-haspopup="true"
+                                        aria-expanded="false">
+                                        {{ $cat->name }}
+                                    </a>
+                                    <div class="dropdown-menu"
+                                        aria-labelledby="injectionsDropdown_{{ $cat->id }}">
+                                        @foreach ($cat->childrenCategories as $childCategory)
+                                            <a class="dropdown-item"
+                                                href="/category/{{ $childCategory->slug }}">{{ $childCategory->name }}</a>
+                                        @endforeach
+                                    </div>
+                                </li>
+                            @endforeach
+                        </div>
+                    </div>
                     <!-- Categoty Menu Button -->
-                    <div class="d-none all-category has-transition bg-black-10" id="category-menu-bar">
+                    {{-- <div class="d-none all-category has-transition bg-black-10" id="category-menu-bar">
                         <div class="px-3 h-100"
                             style="padding-top: 12px;padding-bottom: 12px; width:270px; cursor: pointer;">
                             <div class="d-flex align-items-center justify-content-between">
@@ -805,9 +829,11 @@
                                     style="font-size: 1.2rem !important"></i>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
+
+                    
                     <!-- Header Menus -->
-                    @php
+                    {{-- @php
                         $nav_txt_color =
                             get_setting('header_nav_menu_text') == 'light' ||
                             get_setting('header_nav_menu_text') == null
@@ -816,7 +842,7 @@
                     @endphp
                     <div class="w-100 full_menu_nav">
                         <div class="d-flex align-items-center justify-content-center h-100">
-                            <ul class="list-inline mb-0 pl-0">
+                            <ul class="list-inline mb-0 pl-0"> --}}
 
                                 {{-- @php
                                     $cat_human_id_raw = get_setting('header_nav_menu_human'); // Ensure IDs are integers
@@ -885,22 +911,22 @@
                                         }
                                     });
                                 @endphp --}}
-                                @php $category_menu = getCategoryMenu(); @endphp
+                                {{-- @php $category_menu = getCategoryMenu(); @endphp --}}
                                 {{-- Render the category menu items --}}
 
-                                @foreach ($category_menu as $cat)
+                                {{-- @foreach ($category_menu as $cat)
                                     <li class="list-inline-item mr-0 animate-underline-white">
                                         <a href="/category/{{ $cat->slug }}"
                                             class="fs-16 py-3 d-inline-block fw-500 {{ $nav_txt_color }} header_menu_links">
                                             {{ $cat->name }}
-                                        </a>
+                                        </a> --}}
                                         {{-- <div class="dropdown-menu" aria-labelledby="injectionsDropdown_{{ $cat->id }}">
                                             @foreach ($cat->childrenCategories as $childCategory)
                                                 <a class="dropdown-item" href="/search">{{ $childCategory->name }}</a>
                                             @endforeach
                                         </div> --}}
-                                    </li>
-                                @endforeach
+                                    {{-- </li>
+                                @endforeach --}}
 
                                 {{-- @if (get_setting('header_menu_labels') != null)
                                     @foreach (json_decode(get_setting('header_menu_labels'), true) as $key => $value)
@@ -913,9 +939,9 @@
                                         </li>
                                     @endforeach
                                 @endif --}}
-                            </ul>
+                            {{-- </ul>
                         </div>
-                    </div>
+                    </div> --}}
 
                 </div>
             </div>
