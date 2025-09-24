@@ -198,7 +198,7 @@
 
                         <div class="col-md-6 d-lg-block d-none">
 
-                            <div class="flex-grow-1 front-header-search d-flex align-items-center bg-white">
+                            <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
                             <form action="{{ route('search') }}" method="GET" class="stop-propagation">
                                 <div class="d-flex position-relative align-items-center">
