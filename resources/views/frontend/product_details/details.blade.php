@@ -73,8 +73,7 @@
 
         <div class="col-12 pl-0 d-flex mt-md-3">
             <span class="detail-font-14px detail-gray-color">{{ translate('MRP') }}:</span>
-            <span id="mrp-unit" class="detail-font-14px detail-gray-color"></span><br>
-            {{-- <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span> --}}
+            <span id="mrp-unit" class="detail-font-14px detail-gray-color"></span>
         </div>
 
                 
@@ -86,38 +85,41 @@
         {{-- Pricing Row --}}
 
         <div class="col-12 pl-0 mt-3 pb-0">
-
-            @if (discount_in_percentage($detailedProduct) > 0)
-                <span class=" ml-0 fs-18 fw-500 text-white w-35px text-center p-1"
-                    style="color: #E31E24 !important;">-{{ discount_in_percentage($detailedProduct) }}%off</span>
-            @endif
-
             <span class="text-secondary fs-14"><span id="per-piece-price-product-details"
-                    class="text-primary fs-26 font-600 fw-500"> </span> / Piece</span>
-            <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
+                    class=""> </span> <span class="per-piece-price-product-details-gst">incl. GST</span>  / Piece</span>
+            {{-- <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
             <span id="package-count-product-details" class="text-secondary fs-14 ">
-                {{ $detailedProduct->product_count ?? '-' }} / Count</span>
+                {{ $detailedProduct->product_count ?? '-' }} / Count</span> --}}
+        </div>
+
+        <div class="col-12 pl-0 mt-3 pb-0">
+            @if (discount_in_percentage($detailedProduct) > 0)
+                <span class=" fs-18 text-center"
+                    style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="tax-product-details" class="fs-18 text-center" style="color: #E31E24 !important;"></span> ({{ discount_in_percentage($detailedProduct) }}%)</span>
+            @endif
         </div>
 
         {{-- Unit/MRP --}}
 
-        {{-- @auth
-            @if (auth()->user()->user_subtype !== null) --}}
-                <div class="col-12 pl-0 mt-2">
-                    <span class="fw-500 fs-14 text-dark">{{ translate('Without Tax') }}:</span>
-                    <span id="without-tax-product" class="text-secondary fs-14"></span>
-                    <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Tax Amount') }}:</span>
+        @auth
+            @if (auth()->user()->user_subtype !== null)
+                <div class="col-12 pl-0 mt-3 pb-0">
+                    <span class="detail-font-14px detail-gray-color">{{ translate('Without Tax') }}:</span>
+                    <span id="without-tax-product" class=""></span> <span class="without-tax-product-gst">excl. GST</span>
+                </div>
+                <div class="col-12 pl-0 mt-3 pb-0">
+                    {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
                     <span id="tax-product-details" class="text-secondary fs-14"></span>
                     <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </div>
-            {{-- @endif --}}
-        {{-- @else
-            <div class="col-12 mt-2">
+            @endif
+        @else
+            <div class="col-12 pl-0 mt-3 pb-0">
                 <p class="fw-500 fs-14 text-dark">
                     <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </p>
             </div>
-        @endauth --}}
+        @endauth
 
         
 
@@ -135,7 +137,7 @@
 
 
     @if ($detailedProduct->auction_product != 1)
-        <div class="col-12 pl-0 mt-3 pb-0">
+        <div class="col-12 pl-0 pb-0">
             <!--Display price & vairation to only loggedin user [by nexgeno]-->
             <form id="option-choice-form">
                 @csrf
@@ -146,7 +148,7 @@
                     @if ($detailedProduct->choice_options != null)
                         @foreach (json_decode($detailedProduct->choice_options) as $key => $choice)
                             <!--<div class="row no-gutters mb-3">--> <!--old code-->
-                            <div class="row no-gutters mb-3 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
+                            <div class="row no-gutters mt-3 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
                                 <!--hiding 1st attribute ROLE [by nexgeno]-->
                                 <div class="col-sm-12">
                                     <div class="text-dark fs-14 fw-500 mt-0 mb-2">
@@ -204,39 +206,58 @@
 
                     
                     <!-- Quantity + Add to cart -->
-                    <div class="row no-gutters mb-3">
-                        <div class="col-12">
-                            <div class="fw-500 fs-16 text-dark mt-2 mb-2">{{ translate('Quantity') }}</div>
-                        </div>
-                        <div class="col-12">
-                            <div class="product-quantity d-flex align-items-center">
-                                <div class="row no-gutters align-items-center aiz-plus-minus mr-3" style="width: 130px; border: 1px solid #dfdfdf">
-                                    <button class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color" type="button"
-                                        data-type="minus" data-field="quantity" disabled="">
-                                        <i class="las la-minus"></i>
-                                    </button>
-                                    <input type="number" name="quantity"
-                                        class="col border-0 text-center flex-grow-1 fs-16 input-number new-bg-color" placeholder="1"
-                                        value="{{ $detailedProduct->min_qty }}" min="{{ $detailedProduct->min_qty }}"
-                                        max="10" lang="en">
-                                    <button class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color" type="button"
-                                        data-type="plus" data-field="quantity">
-                                        <i class="las la-plus"></i>
-                                    </button>
+                    <div class="row no-gutters">
+                        <div class="col-md-3 col-12 pl-0 mt-3 pb-0">
+                            {{--  --}}
+                            <div class="">
+                                <div class="fw-500 fs-16 text-dark mt-2 mb-2">{{ translate('Quantity') }}</div>
+                            </div>
+                            <div class="">
+                                <div class="product-quantity d-flex align-items-center">
+                                    <div class="row no-gutters align-items-center aiz-plus-minus mr-3" style="width: 130px; border: 1px solid #dfdfdf">
+                                        <button class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color" type="button"
+                                            data-type="minus" data-field="quantity" disabled="">
+                                            <i class="las la-minus"></i>
+                                        </button>
+                                        <input type="number" name="quantity"
+                                            class="col border-0 text-center flex-grow-1 fs-16 input-number new-bg-color" placeholder="1"
+                                            value="{{ $detailedProduct->min_qty }}" min="{{ $detailedProduct->min_qty }}"
+                                            max="10" lang="en">
+                                        <button class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color" type="button"
+                                            data-type="plus" data-field="quantity">
+                                            <i class="las la-plus"></i>
+                                        </button>
+                                    </div>
+                                    @php
+                                        $qty = 0;
+                                        foreach ($detailedProduct->stocks as $key => $stock) {
+                                            $qty += $stock->qty;
+                                        }
+                                    @endphp
+                                    <div class="avialable-amount opacity-60 d-none">
+                                        @if ($detailedProduct->stock_visibility_state == 'quantity')
+                                            (<span id="available-quantity">{{ $qty }}</span>
+                                            {{ translate('available') }})
+                                        @elseif($detailedProduct->stock_visibility_state == 'text' && $qty >= 1)
+                                            (<span id="available-quantity" class="">{{ translate('In Stock') }}</span>)
+                                        @endif
+                                    </div>
                                 </div>
-                                @php
-                                    $qty = 0;
-                                    foreach ($detailedProduct->stocks as $key => $stock) {
-                                        $qty += $stock->qty;
-                                    }
-                                @endphp
-                                <div class="avialable-amount opacity-60 d-none">
-                                    @if ($detailedProduct->stock_visibility_state == 'quantity')
-                                        (<span id="available-quantity">{{ $qty }}</span>
-                                        {{ translate('available') }})
-                                    @elseif($detailedProduct->stock_visibility_state == 'text' && $qty >= 1)
-                                        (<span id="available-quantity" class="">{{ translate('In Stock') }}</span>)
-                                    @endif
+                            </div>
+                            {{--  --}}
+                        </div>
+                        <div class="col-md-9 col-12 pl-0 mt-3 pb-0">
+                            <!-- Total Price -->
+                            <div class="" id="chosen_price_div">
+                                <div class="">
+                                    <div class="fw-500 fs-16 text-dark mt-2 mb-2">{{ translate('Total Amount Product Wise') }}:</div>
+                                </div>
+                                <div class="">
+                                    <div class="product-price">
+                                        <strong id="chosen_price" class="fs-24 fw-500" style="color:#123498;">
+
+                                        </strong>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -246,19 +267,7 @@
                     <input type="hidden" name="quantity" value="1">
                 @endif
 
-                <!-- Total Price -->
-                <div class="row no-gutters pb-1 d-none" id="chosen_price_div">
-                    <div class="col-sm-4">
-                        <div class="fw-500 fs-14 text-dark mt-2">{{ translate('Total Amount Product Wise') }}:</div>
-                    </div>
-                    <div class="col-sm-8">
-                        <div class="product-price">
-                            <strong id="chosen_price" class="fs-24 fw-500" style="color:#23780E;">
-
-                            </strong>
-                        </div>
-                    </div>
-                </div>
+                
 
             </form>
         </div>
@@ -283,17 +292,17 @@
                     </a>
                 @else
                     <button type="button"
-                        class="btn btn-success mr-3 add-to-cart fw-600 min-w-100px rounded-0 text-white border-radius-50 mb-md-0 mb-2"
+                        class="btn btn-success mr-3 add-to-cart fw-600 min-w-100px rounded-0 text-white border-radius-50 mb-md-0 mb-2 mt-2"
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
                     </button>
                     <button type="button"
-                        class="btn detail-buy-now-btn btn-primary buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50 mb-md-0 mb-2"
+                        class="btn detail-buy-now-btn btn-primary mr-3 buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50 mb-md-0 mb-2 mt-2"
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
                     </button>
                 @endif
-                <button type="button" class="btn btn-secondary out-of-stock fw-600 d-none border-radius-50 mb-md-0 mb-2" disabled>
+                <button type="button" class="btn btn-secondary out-of-stock fw-600 d-none border-radius-50 mb-md-0 mb-2 mt-2" disabled>
                     <i class="la la-cart-arrow-down"></i> {{ translate('Out of Stock') }}
                 </button>
             @elseif ($detailedProduct->digital == 1)
@@ -309,7 +318,7 @@
                 </button>
             @endif
             <button type="button"
-                class="btn detail-product-enquiry-btn btn-info buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50 product-enquiry-btn ml-md-3 mb-md-0 mb-2"
+                class="btn detail-product-enquiry-btn btn-info buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50 product-enquiry-btn mb-md-0 mb-2 mt-2 mr-3"
                 data-product-id="{{ $detailedProduct->id }}">
                 <i class="las la-question-circle fs-20 position_btn"></i> {{ translate('Product Enquiry') }}
             </button>

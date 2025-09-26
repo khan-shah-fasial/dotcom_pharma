@@ -1809,6 +1809,26 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     width: 120px;
 } */
 
+#without-tax-product,
+.without-tax-product-gst{
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 18px;
+}
+
+#per-piece-price-product-details,
+.per-piece-price-product-details-gst{
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 30px;
+}
+
+.percentage-offf{
+    font-size: 18px;
+    font-weight: 700;
+    color: #E31E24;
+}
+
 .delivery_boxex_img svg {
     color: #135d9a;
 }
