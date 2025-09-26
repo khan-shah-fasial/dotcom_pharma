@@ -984,7 +984,7 @@ img.logo_main {
 }
 
 .logo_menu li a:hover {
-    color: #23780E;
+    color: #2b56a1;
 }
 
 .logo_menu .dropdown-menu {
@@ -1032,13 +1032,13 @@ ul.dropdown-menu {
 .logo_menu .dropdown-menu a {
     padding-top: 11px;
     padding-bottom: 10px;
-    border-bottom: 1px solid #123498;
+    border-bottom: 1px solid #2b56a1;
     font-size: 14px;
 }
 
 .logo_menu a {
     height: 100%;
-    padding-top: 23px;
+    /* padding-top: 23px; */
     padding-right: 10px;
 }
 

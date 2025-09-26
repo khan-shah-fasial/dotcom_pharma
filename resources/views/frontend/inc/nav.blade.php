@@ -788,7 +788,7 @@
         <div class="d-none d-lg-block position-relative h-50px" style="background-color: white !important;">
             <div class="container h-100">
                 <div class="row pt-2">
-                    <div class="col-12 d-none d-lg-block ">
+                    <div class="col-12 d-none d-lg-block logo_menu">
                         <div class="text-center">
                             @php $category_top_menu = getCategoryTopMenu(); @endphp
 
