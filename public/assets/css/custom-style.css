@@ -1462,8 +1462,8 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 }
 
 .b2b_buttons {
-    border: 1px solid #123498;
-    color: #123498;
+    border: 1px solid #2b56a1;
+    color: #2b56a1;
     margin-left: 15px;
     text-align: center;
     background: #d0d6ea;
@@ -1488,7 +1488,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 }
 
 .b2b_buttons:hover {
-    background: #123498;
+    background: #2b56a1;
     color: #fff;
 }
 
@@ -1814,6 +1814,10 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     color: var(--primary);
     font-weight: 700;
     font-size: 18px;
+}
+
+.text-black{
+    color: black !important;
 }
 
 #per-piece-price-product-details,

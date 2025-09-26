@@ -785,7 +785,7 @@
         </div>
 
         <!-- Menu Bar -->
-        <div class="d-none d-lg-block position-relative h-50px" style="background-color:#2b56a1 !important;">
+        <div class="d-none d-lg-block position-relative h-50px" style="background-color: white !important;">
             <div class="container h-100">
                 <div class="row pt-2">
                     <div class="col-12 d-none d-lg-block ">
@@ -795,7 +795,7 @@
                             @foreach ($category_top_menu as $cat)
                                 <li class="list-inline-item mr-3 animate-underline-white dropdown">
                                     <a href="#"
-                                        class="fs-14 text-white d-inline-block fw-500 header_menu_links dropdown-toggle"
+                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links dropdown-toggle"
                                         id="injectionsDropdown_{{ $cat->id }}"
                                         data-toggle="dropdown" aria-haspopup="true"
                                         aria-expanded="false">

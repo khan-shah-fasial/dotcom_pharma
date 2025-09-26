@@ -9134,7 +9134,7 @@ input[type="number"] {
 .dropdown-item:hover,
 .dropdown-item:active {
     color: #fff !important;
-    background-color: var(--primary);
+    background-color: #2b56a1;
 }
 
 .notifications .nav-link {
