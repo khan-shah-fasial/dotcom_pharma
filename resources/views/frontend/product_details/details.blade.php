@@ -7,71 +7,85 @@
 
 <div class="text-left product_disc_text">
     <!-- Product Name -->
-    <h2 class="mb-3 fs-md-34 fs-24 fw-600">
+    <h2 class="mb-1">
         {{ $detailedProduct->getTranslation('name') }}
     </h2>
 
     <!-- Drug Name -->
     @if (!empty($detailedProduct->drug_name))
-        <p class="mb-2 fs-14 text-dark">
-            <span class="fw-500 text-dark">{{ translate('Drug Name') }}:</span>
+        <p class="mb-2 detail-gray-color">
+            <span class="">{{ translate('Drug Name') }}:</span>
             {{ $detailedProduct->drug_name }}
         </p>
     @endif
 
     <!-- Reviews -->
     @if ($detailedProduct->auction_product != 1)
-        <div class="mb-3 d-flex align-items-center gap-2">
-            <span class="rating rating-mr-2">
+        <div class="mb-2 d-flex align-items-center gap-2">
+            <span class="rating rating-mr-1 detail-gray-color">
                 {{ renderStarRating($detailedProduct->rating) }}
             </span>
-            <span class="text-muted fs-6">({{ $detailedProduct->reviews->where('status', 1)->count() }}
+            <span class="detail-gray-color detail-font-14px fs-6">({{ $detailedProduct->reviews->where('status', 1)->count() }}
                 {{ translate('Customer Reviews') }})</span>
         </div>
     @endif
 
-    <div class="row">
+    <div class="row ml-0 mr-0">
 
-        @if (!empty($detailedProduct->brand->name))
-            <div class="col-12 mt-1">
-                <span class="fw-500 fs-14 text-dark">{{ translate('Brand / Mfg') }}:</span>
-                <span class="text-secondary  fs-14 ">{{ $detailedProduct->brand->name ?? '-' }}</span>
+        <div class="col-12 d-flex pl-0 mt-md-3">
+            @if (!empty($detailedProduct->brand->name))
+                <div class="col-6 pl-0 mb-md-0 mb-2">
+                    <span class="detail-font-14px detail-gray-color">{{ translate('Brand / Mfg') }}:</span><br>
+                    <span class="fw-500 fs-16">{{ $detailedProduct->brand->name ?? '-' }}</span>
+                </div>
+            @endif
+            <div class="col-6 pl-0 mb-md-0 mb-2">
+                <span class="detail-font-14px detail-gray-color">{{ translate('SKU') }}:</span><br>
+                <span id="sku-product-details" class="fw-500 fs-16"></span>
             </div>
-        @endif
-
-        @if ($detailedProduct->pharma_categories)
-            <div class="col-12 mt-1">
-                <span class="fw-500 fs-14 text-dark">{{ translate('Pharma Categories') }}:</span>
-                <span class="text-secondary  fs-14 ">{{ $detailedProduct->pharma_categories ?? '-' }}</span>
-            </div>
-        @endif
-
-        @if ($detailedProduct->product_form)
-            <div class="col-12 mt-1">
-                <span class="fw-500 fs-14 text-dark">{{ translate('Product Form') }}:</span>
-                <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_form ?? '-' }}</span>
-            </div>
-        @endif
-
-        @if (!is_null($detailedProduct->prescription_req))
-            <!-- Discount percentage -->
-
-
-            <div class="col-12 mt-1">
-                <span class="fw-500 fs-14 text-dark">{{ translate('Prescription Required') }}:</span>
-                <span
-                    class="text-secondary  fs-14 ">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
-            </div>
-        @endif
-
-        <div class="col-12 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('SKU') }}:</span>
-            <span id="sku-product-details" class="text-secondary  fs-14 "></span>
         </div>
+
+        <div class="row pl-0 d-flex mt-md-3">
+            @if ($detailedProduct->pharma_categories)
+                <div class="col-md-4  mb-md-0 mb-2">
+                    <span class="detail-font-14px detail-gray-color">{{ translate('Pharma Categories') }}:</span><br>
+                    <span class="fw-500 fs-16">{{ $detailedProduct->pharma_categories ?? '-' }}</span>
+                </div>
+            @endif
+
+            @if ($detailedProduct->product_form)
+                <div class="col-md-4 pl-md-0 mb-md-0 mb-2">
+                    <span class="detail-font-14px detail-gray-color">{{ translate('Product Form') }}:</span><br>
+                    <span class="fw-500 fs-16">{{ $detailedProduct->product_form ?? '-' }}</span>
+                </div>
+            @endif
+
+            @if (!is_null($detailedProduct->prescription_req))
+                <!-- Discount percentage -->
+                <div class="col-md-4 pl-md-0 mb-md-0 mb-2">
+                    <span class="detail-font-14px detail-gray-color">{{ translate('Prescription Required') }}:</span><br>
+                    <span
+                        class="fw-500 fs-16 detail-red-color">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
+                </div>
+            @endif
+
+        </div>
+
+        <div class="col-12 pl-0 d-flex mt-md-3">
+            <span class="detail-font-14px detail-gray-color">{{ translate('MRP') }}:</span>
+            <span id="mrp-unit" class="detail-font-14px detail-gray-color"></span><br>
+            {{-- <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span> --}}
+        </div>
+
+                
+
+        
+
+        
 
         {{-- Pricing Row --}}
 
-        <div class="col-12 mt-3 pb-0">
+        <div class="col-12 pl-0 mt-3 pb-0">
 
             @if (discount_in_percentage($detailedProduct) > 0)
                 <span class=" ml-0 fs-18 fw-500 text-white w-35px text-center p-1"
@@ -87,29 +101,25 @@
 
         {{-- Unit/MRP --}}
 
-        @auth
-            @if (auth()->user()->user_subtype !== null)
-                <div class="col-12 mt-2">
+        {{-- @auth
+            @if (auth()->user()->user_subtype !== null) --}}
+                <div class="col-12 pl-0 mt-2">
                     <span class="fw-500 fs-14 text-dark">{{ translate('Without Tax') }}:</span>
                     <span id="without-tax-product" class="text-secondary fs-14"></span>
                     <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Tax Amount') }}:</span>
                     <span id="tax-product-details" class="text-secondary fs-14"></span>
                     <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </div>
-            @endif
-        @else
+            {{-- @endif --}}
+        {{-- @else
             <div class="col-12 mt-2">
                 <p class="fw-500 fs-14 text-dark">
                     <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </p>
             </div>
-        @endauth
+        @endauth --}}
 
-        <div class="col-12 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Unit/MRP') }}:</span>
-            <span id="mrp-unit" class="text-secondary fs-14"></span><br>
-            {{-- <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span> --}}
-        </div>
+        
 
 
         {{-- Pack Size --}}
@@ -121,72 +131,303 @@
         <button class="btn btn-outline-secondary btn-sm">40ml</button>
     </div> --}}
 
-        {{-- Type --}}
-        @if ($detailedProduct->product_type)
-            <div class="col-12 mt-2">
-                <span class="fw-500 fs-14 text-dark">{{ translate('Type') }}:</span>
-                <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_type ?? '-' }}</span>
-            </div>
-        @endif
+        
 
-        {{-- Material --}}
-        @if ($detailedProduct->product_material)
-            <div class="col-12 mt-1">
-                <span class="fw-500 fs-14 text-dark">{{ translate('Material') }}:</span>
-                <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_material ?? '-' }}</span>
-            </div>
-        @endif
 
-        {{-- Origin --}}
-        @if ($detailedProduct->product_origin)
-            <div class="col-12 mt-1">
-                <span class="fw-500 fs-14 text-dark">{{ translate('Country of Origin') }}:</span>
-                <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_origin ?? '-' }}</span>
-            </div>
-        @endif
+    @if ($detailedProduct->auction_product != 1)
+        <div class="col-12 pl-0 mt-3 pb-0">
+            <!--Display price & vairation to only loggedin user [by nexgeno]-->
+            <form id="option-choice-form">
+                @csrf
+                <input type="hidden" name="id" value="{{ $detailedProduct->id }}">
 
-        {{-- Min Pack Size --}}
-        {{-- @if ($detailedProduct->product_min_pack_size) --}}
-        <div class="col-12 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Minimum Pack Size') }}:</span>
-            <span id="min-package-count-product-details" class="text-secondary  fs-14 "></span>
+                @if ($detailedProduct->digital == 0)
+                    <!-- Choice Options -->
+                    @if ($detailedProduct->choice_options != null)
+                        @foreach (json_decode($detailedProduct->choice_options) as $key => $choice)
+                            <!--<div class="row no-gutters mb-3">--> <!--old code-->
+                            <div class="row no-gutters mb-3 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
+                                <!--hiding 1st attribute ROLE [by nexgeno]-->
+                                <div class="col-sm-12">
+                                    <div class="text-dark fs-14 fw-500 mt-0 mb-2">
+                                        {{ get_single_attribute_name($choice->attribute_id) }}
+                                    </div>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="aiz-radio-inline">
+                                        @foreach ($choice->values as $key => $value)
+                                            <label class="aiz-megabox pl-0 mr-1 mb-2">
+                                                <!--<input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
+                                                        value="{{ $value }}"
+                                                        @if ($key == 0) checked @endif>--> <!--old code-->
+                                                <input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
+                                                    value="{{ $value }}"
+                                                    @if ($key == 0 || get_user_subtype() == strtolower($value)) checked @endif>
+                                                <!--added user_subtype role condition for role wise price based on session [by nexgeno]-->
+                                                <span
+                                                    class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3 fs-12 text-secondary"
+                                                    style="border-radius:5px !important">
+                                                    {{ $value }}
+                                                </span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
+
+                    <!-- Color Options -->
+                    @if ($detailedProduct->colors != null && count(json_decode($detailedProduct->colors)) > 0)
+                        <div class="row no-gutters mb-3">
+                            <div class="col-sm-2">
+                                <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Color') }}</div>
+                            </div>
+                            <div class="col-sm-10">
+                                <div class="aiz-radio-inline">
+                                    @foreach (json_decode($detailedProduct->colors) as $key => $color)
+                                        <label class="aiz-megabox pl-0 mr-1 mb-2" data-toggle="tooltip"
+                                            data-title="{{ get_single_color_name($color) }}">
+                                            <input type="radio" name="color" value="{{ get_single_color_name($color) }}"
+                                                @if ($key == 0) checked @endif>
+                                            <span
+                                                class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center p-1">
+                                                <span class="size-25px d-inline-block rounded"
+                                                    style="background: {{ $color }};"></span>
+                                            </span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    
+                    <!-- Quantity + Add to cart -->
+                    <div class="row no-gutters mb-3">
+                        <div class="col-12">
+                            <div class="fw-500 fs-16 text-dark mt-2 mb-2">{{ translate('Quantity') }}</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="product-quantity d-flex align-items-center">
+                                <div class="row no-gutters align-items-center aiz-plus-minus mr-3" style="width: 130px; border: 1px solid #dfdfdf">
+                                    <button class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color" type="button"
+                                        data-type="minus" data-field="quantity" disabled="">
+                                        <i class="las la-minus"></i>
+                                    </button>
+                                    <input type="number" name="quantity"
+                                        class="col border-0 text-center flex-grow-1 fs-16 input-number new-bg-color" placeholder="1"
+                                        value="{{ $detailedProduct->min_qty }}" min="{{ $detailedProduct->min_qty }}"
+                                        max="10" lang="en">
+                                    <button class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color" type="button"
+                                        data-type="plus" data-field="quantity">
+                                        <i class="las la-plus"></i>
+                                    </button>
+                                </div>
+                                @php
+                                    $qty = 0;
+                                    foreach ($detailedProduct->stocks as $key => $stock) {
+                                        $qty += $stock->qty;
+                                    }
+                                @endphp
+                                <div class="avialable-amount opacity-60 d-none">
+                                    @if ($detailedProduct->stock_visibility_state == 'quantity')
+                                        (<span id="available-quantity">{{ $qty }}</span>
+                                        {{ translate('available') }})
+                                    @elseif($detailedProduct->stock_visibility_state == 'text' && $qty >= 1)
+                                        (<span id="available-quantity" class="">{{ translate('In Stock') }}</span>)
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <!-- Quantity -->
+                    <input type="hidden" name="quantity" value="1">
+                @endif
+
+                <!-- Total Price -->
+                <div class="row no-gutters pb-1 d-none" id="chosen_price_div">
+                    <div class="col-sm-4">
+                        <div class="fw-500 fs-14 text-dark mt-2">{{ translate('Total Amount Product Wise') }}:</div>
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="product-price">
+                            <strong id="chosen_price" class="fs-24 fw-500" style="color:#23780E;">
+
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
         </div>
-        {{-- @endif --}}
+    @endif
 
-        {{-- Final 6 fields --}}
-        <div class="col-4 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Stock Available') }}:</span>
-            <span id="qnt-product-details" class="text-secondary  fs-14"></span>
+
+
+        <!-- Add to cart & Buy now Buttons -->
+        <div class="mt-4">
+            @if (!is_user_loggedin())
+                <p class="fs-14">Please login / register to buy or to get detailed information of the product</p>
+            @endif
+            @if ($detailedProduct->digital == 0)
+                @if (
+                    (get_setting('product_external_link_for_seller') == 1 &&
+                        $detailedProduct->added_by == 'seller' &&
+                        $detailedProduct->external_link != null) ||
+                        ($detailedProduct->added_by != 'seller' && $detailedProduct->external_link != null))
+                    <a type="button" class="btn btn-primary buy-now fw-600 add-to-cart px-4 rounded-0"
+                        href="{{ $detailedProduct->external_link }}">
+                        <i class="la la-share"></i> {{ translate($detailedProduct->external_link_btn) }}
+                    </a>
+                @else
+                    <button type="button"
+                        class="btn btn-success mr-3 add-to-cart fw-600 min-w-100px rounded-0 text-white border-radius-50 mb-md-0 mb-2"
+                        @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
+                        <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
+                    </button>
+                    <button type="button"
+                        class="btn detail-buy-now-btn btn-primary buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50 mb-md-0 mb-2"
+                        @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
+                        <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
+                    </button>
+                @endif
+                <button type="button" class="btn btn-secondary out-of-stock fw-600 d-none border-radius-50 mb-md-0 mb-2" disabled>
+                    <i class="la la-cart-arrow-down"></i> {{ translate('Out of Stock') }}
+                </button>
+            @elseif ($detailedProduct->digital == 1)
+                <button type="button"
+                    class="btn btn-success mr-3 add-to-cart fw-600 min-w-150px rounded-0 text-white border-radius-50 mb-md-0 mb-2"
+                    @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
+                    <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
+                </button>
+                <button type="button"
+                    class="btn btn-primary buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50 mb-md-0 md-2"
+                    @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
+                    <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
+                </button>
+            @endif
+            <button type="button"
+                class="btn detail-product-enquiry-btn btn-info buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50 product-enquiry-btn ml-md-3 mb-md-0 mb-2"
+                data-product-id="{{ $detailedProduct->id }}">
+                <i class="las la-question-circle fs-20 position_btn"></i> {{ translate('Product Enquiry') }}
+            </button>
         </div>
+        
 
-        @if (!empty($detailedProduct->product_exp_date))
-            <div class="col-8 mt-1">
-                <span class="fw-500 fs-14 text-dark">{{ translate('Expiry Date') }}:</span>
-                <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_exp_date ?? '-' }}</span>
+        
+
+        
+
+        <div class="col-12 d-flex flex-wrap mt-4 pt-4 pb-2 pl-4 pr-2 detail-border-1px bg-white">
+            <div class="col-12 col-md-12 text-left pl-0 pr-0">
+                <h5 class="fe-semibold mb-4">Product Specifications</h5>
             </div>
-        @endif
+            {{-- Type --}}
+            @if ($detailedProduct->product_type)
+                <div class="col-12 col-md-12 pl-0 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg> &nbsp; {{ translate('Type') }}:</p>
+                        <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_type ?? '-' }}</p>
+                    </div>
+                </div>
+            @endif
 
-        <div class="col-4 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Category') }}:</span>
-            <span class="text-secondary  fs-14 ">{{ ucfirst($category_name ?? '-') }}</span>
-        </div>
+            {{-- Material --}}
+            @if ($detailedProduct->product_material)
+                <div class="col-12 col-md-6 pl-0 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg> &nbsp; {{ translate('Material') }}:</p>
+                    <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_material ?? '-' }}</p>
+                    </div>
+                </div>
+            @endif
 
-        @if (!empty($detailedProduct->product_hsn))
-            <div class="col-8 mt-1">
-                <span class="fw-500 fs-14 text-dark">{{ translate('HSN / HS Code') }}:</span>
-                <span class="text-secondary  fs-14 ">{{ $detailedProduct->product_hsn ?? '-' }}</span>
+            {{-- Origin --}}
+            @if ($detailedProduct->product_origin)
+                <div class="col-12 col-md-6 pl-0 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> &nbsp; {{ translate('Country of Origin') }}:</p>
+                        <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_origin ?? '-' }}</p>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Min Pack Size --}}
+            {{-- @if ($detailedProduct->product_min_pack_size) --}}
+                <div class="col-12 col-md-6 pl-0 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg> &nbsp;{{ translate('Minimum Pack Size') }}:</p>
+                        <p id="min-package-count-product-details" class="fw-500 fs-16 mb-0"></p>
+                    </div>
+                </div>
+            {{-- @endif --}}
+
+
+            {{-- Final 6 fields --}}
+            <div class="col-12 col-md-6 pl-0 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg> &nbsp;{{ translate('Stock Available') }}:</p>
+                    <p id="qnt-product-details" class="fw-500 fs-16 mb-0"></p>
+                </div>
             </div>
-        @endif
 
-        <div class="col-4 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Dimentions') }}:</span>
-            <span id="dimentions-product-details" class="text-secondary  fs-14 "></span>
-        </div>
+            @if (!empty($detailedProduct->product_exp_date))
+                <div class="col-12 col-md-6 pl-0 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg> &nbsp;{{ translate('Expiry Date') }}:</p>
+                        <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_exp_date ?? '-' }}</p>
+                    </div>
+                </div>
+            @endif
 
-        <div class="col-8 mt-1">
-            <span class="fw-500 fs-14 text-dark">{{ translate('Weight / Volume') }}:</span>
-            <span id="weight-volume-product-details" class="text-secondary  fs-14 "></span>
+            <div class="col-12 col-md-6 pl-0 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg> &nbsp;{{ translate('Category') }}:</p>
+                    <p class="fw-500 fs-16 mb-0">{{ ucfirst($category_name ?? '-') }}</p>
+                </div>
+            </div>
+
+            @if (!empty($detailedProduct->product_hsn))
+                <div class="col-12 col-md-6 pl-0 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg> &nbsp;{{ translate('HSN / HS Code') }}:</p>
+                        <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_hsn ?? '-' }}</p>
+                    </div>
+                </div>
+            @endif
+
+            <div class="col-12 col-md-6 pl-0 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg> &nbsp;{{ translate('Dimentions') }}:</p>
+                    <p id="dimentions-product-details" class="fw-500 fs-16 mb-0"></p>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 pl-0 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg> &nbsp;{{ translate('Weight / Volume') }}:</p>
+                    <p id="weight-volume-product-details" class="fw-500 fs-16 mb-0"></p>
+                </div>
+            </div>
+
+            @if (!empty($detailedProduct->tags))
+                <div class="col-12 col-md-12 pl-0 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+                        <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Tags') }}</p>
+                        <p class="fw-500 fs-16 mb-0">{{ str_replace(',', ', ', $detailedProduct->tags) }}</p>
+                    </div>
+                </div>
+            @endif
+            
         </div>
+        
+
+        
+
+    
+
     </div>
 
 
@@ -333,7 +574,7 @@
     @endif
 </div>
 
-<hr>
+{{-- <hr> --}}
 @if (is_user_loggedin())
     <!--Display price to only loggedin user [by nexgeno]-->
     <!-- For auction product -->
@@ -531,132 +772,7 @@
 
 
 
-@if ($detailedProduct->auction_product != 1)
-    <!--Display price & vairation to only loggedin user [by nexgeno]-->
-    <form id="option-choice-form">
-        @csrf
-        <input type="hidden" name="id" value="{{ $detailedProduct->id }}">
 
-        @if ($detailedProduct->digital == 0)
-            <!-- Choice Options -->
-            @if ($detailedProduct->choice_options != null)
-                @foreach (json_decode($detailedProduct->choice_options) as $key => $choice)
-                    <!--<div class="row no-gutters mb-3">--> <!--old code-->
-                    <div class="row no-gutters mb-3 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
-                        <!--hiding 1st attribute ROLE [by nexgeno]-->
-                        <div class="col-sm-12">
-                            <div class="text-dark fs-14 fw-500 mt-0 mb-2">
-                                {{ get_single_attribute_name($choice->attribute_id) }}
-                            </div>
-                        </div>
-                        <div class="col-sm-12">
-                            <div class="aiz-radio-inline">
-                                @foreach ($choice->values as $key => $value)
-                                    <label class="aiz-megabox pl-0 mr-1 mb-2">
-                                        <!--<input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
-                                                value="{{ $value }}"
-                                                @if ($key == 0) checked @endif>--> <!--old code-->
-                                        <input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
-                                            value="{{ $value }}"
-                                            @if ($key == 0 || get_user_subtype() == strtolower($value)) checked @endif>
-                                        <!--added user_subtype role condition for role wise price based on session [by nexgeno]-->
-                                        <span
-                                            class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3 fs-12 text-secondary"
-                                            style="border-radius:5px !important">
-                                            {{ $value }}
-                                        </span>
-                                    </label>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            @endif
-
-            <!-- Color Options -->
-            @if ($detailedProduct->colors != null && count(json_decode($detailedProduct->colors)) > 0)
-                <div class="row no-gutters mb-3">
-                    <div class="col-sm-2">
-                        <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Color') }}</div>
-                    </div>
-                    <div class="col-sm-10">
-                        <div class="aiz-radio-inline">
-                            @foreach (json_decode($detailedProduct->colors) as $key => $color)
-                                <label class="aiz-megabox pl-0 mr-1 mb-2" data-toggle="tooltip"
-                                    data-title="{{ get_single_color_name($color) }}">
-                                    <input type="radio" name="color" value="{{ get_single_color_name($color) }}"
-                                        @if ($key == 0) checked @endif>
-                                    <span
-                                        class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center p-1">
-                                        <span class="size-25px d-inline-block rounded"
-                                            style="background: {{ $color }};"></span>
-                                    </span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            <!-- Quantity + Add to cart -->
-            <div class="row no-gutters mb-3">
-                <div class="col-sm-2">
-                    <div class="fw-500 fs-16 text-dark mt-2">{{ translate('Quantity') }}</div>
-                </div>
-                <div class="col-sm-10">
-                    <div class="product-quantity d-flex align-items-center">
-                        <div class="row no-gutters align-items-center aiz-plus-minus mr-3" style="width: 130px;">
-                            <button class="btn col-auto btn-icon btn-sm btn-light rounded-0" type="button"
-                                data-type="minus" data-field="quantity" disabled="">
-                                <i class="las la-minus"></i>
-                            </button>
-                            <input type="number" name="quantity"
-                                class="col border-0 text-center flex-grow-1 fs-16 input-number" placeholder="1"
-                                value="{{ $detailedProduct->min_qty }}" min="{{ $detailedProduct->min_qty }}"
-                                max="10" lang="en">
-                            <button class="btn col-auto btn-icon btn-sm btn-light rounded-0" type="button"
-                                data-type="plus" data-field="quantity">
-                                <i class="las la-plus"></i>
-                            </button>
-                        </div>
-                        @php
-                            $qty = 0;
-                            foreach ($detailedProduct->stocks as $key => $stock) {
-                                $qty += $stock->qty;
-                            }
-                        @endphp
-                        <div class="avialable-amount opacity-60 d-none">
-                            @if ($detailedProduct->stock_visibility_state == 'quantity')
-                                (<span id="available-quantity">{{ $qty }}</span>
-                                {{ translate('available') }})
-                            @elseif($detailedProduct->stock_visibility_state == 'text' && $qty >= 1)
-                                (<span id="available-quantity" class="">{{ translate('In Stock') }}</span>)
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @else
-            <!-- Quantity -->
-            <input type="hidden" name="quantity" value="1">
-        @endif
-
-        <!-- Total Price -->
-        <div class="row no-gutters pb-1 d-none" id="chosen_price_div">
-            <div class="col-sm-4">
-                <div class="fw-500 fs-14 text-dark mt-2">{{ translate('Total Amount Product Wise') }}:</div>
-            </div>
-            <div class="col-sm-8">
-                <div class="product-price">
-                    <strong id="chosen_price" class="fs-24 fw-500" style="color:#23780E;">
-
-                    </strong>
-                </div>
-            </div>
-        </div>
-
-    </form>
-@endif
 
 @if ($detailedProduct->auction_product)
     @php
@@ -711,94 +827,41 @@
             </div> --}}
     @endif
 
-    @if (!empty($detailedProduct->tags))
-        <div class="d-flex flex-wrap align-items-center mb-0">
-            <span class="fs-14 fw-500 mr-4 w-80px">{{ translate('Tags') }}</span><br>
-            <p class="text-secondary fs-14 fw-400 pb-0 mb-0">{{ str_replace(',', ', ', $detailedProduct->tags) }}
-            </p>
-        </div>
-    @endif
+    
 
 
-    <hr>
-
-
-    <!-- Add to cart & Buy now Buttons -->
-    <div class="mt-4">
-        @if (!is_user_loggedin())
-            <p class="fs-14">Please login / register to buy or to get detailed information of the product</p>
-        @endif
-        @if ($detailedProduct->digital == 0)
-            @if (
-                (get_setting('product_external_link_for_seller') == 1 &&
-                    $detailedProduct->added_by == 'seller' &&
-                    $detailedProduct->external_link != null) ||
-                    ($detailedProduct->added_by != 'seller' && $detailedProduct->external_link != null))
-                <a type="button" class="btn btn-primary buy-now fw-600 add-to-cart px-4 rounded-0"
-                    href="{{ $detailedProduct->external_link }}">
-                    <i class="la la-share"></i> {{ translate($detailedProduct->external_link_btn) }}
-                </a>
-            @else
-                <button type="button"
-                    class="btn btn-success mr-3 add-to-cart fw-600 min-w-100px rounded-0 text-white border-radius-50"
-                    @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
-                    <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
-                </button>
-                <button type="button"
-                    class="btn btn-primary buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50"
-                    @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
-                    <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
-                </button>
-            @endif
-            <button type="button" class="btn btn-secondary out-of-stock fw-600 d-none border-radius-50" disabled>
-                <i class="la la-cart-arrow-down"></i> {{ translate('Out of Stock') }}
-            </button>
-        @elseif ($detailedProduct->digital == 1)
-            <button type="button"
-                class="btn btn-success mr-3 add-to-cart fw-600 min-w-150px rounded-0 text-white border-radius-50"
-                @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
-                <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
-            </button>
-            <button type="button"
-                class="btn btn-primary buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50"
-                @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
-                <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
-            </button>
-        @endif
-        <button type="button"
-            class="btn btn-info buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50 product-enquiry-btn ml-3"
-            data-product-id="{{ $detailedProduct->id }}">
-            <i class="las la-question-circle fs-20 position_btn"></i> {{ translate('Product Enquiry') }}
-        </button>
-    </div>
+    {{-- <hr> --}}
 
 
 
     <div class="delivery_section">
 
-        <div class="delivery_boxex">
+        {{-- <div class="delivery_boxex">
             <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/free_delivery.svg') }}"></div>
             <p>Free Delivery</p>
-        </div>
+        </div> --}}
 
         <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/secure_icons.svg') }}"></div>
+            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield w-6 h-6 text-medical-info"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg></div>
             <p>Secure Transaction</p>
+            <p>100% secure payment</p>
         </div>
 
         <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/top_brands.svg') }}"></div>
+            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-award w-6 h-6 text-medical-info"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path><circle cx="12" cy="8" r="6"></circle></svg></div>
             <p>Top Brand</p>
+            <p>Trusted quality</p>
         </div>
 
-        <div class="delivery_boxex">
+        {{-- <div class="delivery_boxex">
             <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/cash_dilevery.svg') }}"></div>
             <p>Cash on Delivery</p>
-        </div>
+        </div> --}}
 
         <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/non_return_icons.svg') }}"></div>
+            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw w-6 h-6 text-medical-info"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg></div>
             <p>Non Return</p>
+            <p>Due to hygiene</p>
         </div>
 
     </div>

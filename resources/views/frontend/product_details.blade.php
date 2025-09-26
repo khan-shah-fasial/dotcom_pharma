@@ -58,7 +58,7 @@
 @section('content')
 <!--  -->
 <!-- Breadcrumb details page -->
- <section class=" pt-1 pb-0 breacrums_bg">
+ <section class=" pt-1 pb-0 breacrums_bg new-bg-color">
     <div class="container">
         <div class="row">
             <!-- <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2">
@@ -123,17 +123,17 @@
  </section>
 <!--  -->
 
-    <section class="mb-md-4 pt-0">
-        <div class="container">
-            <div class="bg-white py-3">
-                <div class="row">
+    <section class="new-bg-color mb-md-4 pt-0">
+        <div class="container new-bg-color">
+            <div class="new-bg-color py-3">
+                <div class="row ml-0 mr-0">
                     <!-- Product Image Gallery -->
-                    <div class="col-xl-5 col-lg-6 mb-4">
+                    <div class="col-xl-6 col-lg-6 mb-4">
                         @include('frontend.product_details.image_gallery')
                     </div>
 
                     <!-- Product Details -->
-                    <div class="col-xl-7 col-lg-6">
+                    <div class="col-xl-6 col-lg-6">
                         @include('frontend.product_details.details')
                     </div>
                 </div>

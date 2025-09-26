@@ -9758,6 +9758,13 @@ input[type="number"] {
     -webkit-transition: all 0.3s ease;
     transition: all 0.3s ease;
     border-radius: 0.25rem;
+    font-weight:500;
+}
+
+.aiz-megabox .aiz-megabox-elem:hover {
+    border-color: var(--primary);
+    background-color: var(--primary);
+    color: white !important;
 }
 
 .aiz-megabox>input:checked~span .aiz-rounded-check:after,
@@ -9769,6 +9776,8 @@ input[type="number"] {
 .aiz-megabox>input:checked~.aiz-megabox-elem,
 .aiz-megabox>input:checked~.aiz-megabox-elem {
     border-color: var(--primary);
+    background-color: var(--primary);
+    color: White !important;
 }
 
 .aiz-megabox>input:checked~.aiz-megabox-elem.border-transparent {

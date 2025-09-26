@@ -1493,16 +1493,18 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 }
 
 .delivery_section {
-    background: #3636360D;
-    border: 1px solid #36363680;
-    padding: 25px 15px 19px 10px;
+    background: white;
+    border-width: 1px;
+    padding: 26px 15px 22px 10px;
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
     gap: 16px;
     text-align: center;
-    border-radius: 30px;
+    border-style: solid;
     margin-top: 30px;
     flex-wrap: wrap;
+    border-radius: 8px;
+    border-color: #e5e7eb;
 }
 
 
@@ -1515,11 +1517,10 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 }
 
 .delivery_boxex_img {
-    border: 1px solid #23780E4D;
-    background: #3636360D;
-    border-radius: 20px;
+    background: #135d9a1a;
+    border-radius: 30px;
     margin-bottom: 4px;
-    width: 110px;
+    width: 54px;
     height: 54px;
     line-height: 52px;
     margin-left: auto;
@@ -1758,4 +1759,90 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .phone-form-group .primary-number-warning{
     font-size: 10px !important;
     font-weight: 500 !important;
+}
+
+
+
+
+
+
+
+
+/* =================================24 09 2025========================== */
+
+.product_disc_text h2{
+    font-weight: 700;
+    font-size: 30px;
+}
+
+.detail-gray-color{
+    color: 	#5d7189;
+}
+
+.detail-font-14px{
+    font-size: 14px;
+}
+
+.detail-red-color{
+    color: #E31E24;
+    
+}
+
+.detail-product-specs {
+  background-color: rgba(241, 245, 249, 0.3) !important;
+  padding: 12px !important;
+}
+
+.detail-product-specs p svg {
+    color: 	#135d9a !important;
+}
+
+.detail-border-1px{
+    box-sizing: border-box;
+    border-width: 1px !important;
+    border-style: solid;
+    border-radius: 8px !important;
+    border-color: #e5e7eb !important;
+}
+
+/* .delivery_boxex{
+    width: 120px;
+} */
+
+.delivery_boxex_img svg {
+    color: #135d9a;
+}
+
+.detail-product-specs p:nth-child(2) {
+    padding-left: 32px;
+    position: relative;
+    margin-top: -5px;
+}
+
+.new-bg-color{
+    background-color: #f6f5ff !important;
+}
+
+.detail-product-enquiry-btn{
+    background-color: #ffffff !important;
+    border-color: #076fed !important;
+    color: #076fed !important;
+}
+
+.delivery_boxex p:nth-child(3) {
+    font-size: 12px;
+    color: #5f738c;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    padding-top: 0px !important;
+}
+
+.delivery_boxex p:nth-child(2) {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.product_disc_text .detail-buy-now-btn{
+    background-color: #2b56a1 !important;
+    border-color: #2b56a1 !important;
 }
