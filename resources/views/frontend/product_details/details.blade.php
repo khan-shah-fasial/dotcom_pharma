@@ -13,7 +13,7 @@
 
     <!-- Drug Name -->
     @if (!empty($detailedProduct->drug_name))
-        <p class="mb-2 detail-gray-color">
+        <p class="mb-2 detail-gray-color fs-14">
             <span class="">{{ translate('Drug Name') }}:</span>
             {{ $detailedProduct->drug_name }}
         </p>
@@ -30,46 +30,31 @@
         </div>
     @endif
 
-    <div class="row ml-0 mr-0">
+    <div class="row ml-0 mr-0 pt-4">
 
-        <div class="col-12 d-flex pl-0 mt-md-3">
+       
             @if (!empty($detailedProduct->brand->name))
-                <div class="col-6 pl-0 mb-md-0 mb-2">
+                <div class="col-md-5 col-6 pl-0 mb-md-0 mb-2">
                     <span class="detail-font-14px detail-gray-color">{{ translate('Brand / Mfg') }}:</span><br>
-                    <span class="fw-500 fs-16">{{ $detailedProduct->brand->name ?? '-' }}</span>
+                    <span class="fw-500 fs-14">{{ $detailedProduct->brand->name ?? '-' }}</span>
                 </div>
             @endif
-            <div class="col-6 pl-0 mb-md-0 mb-2">
+            <div class="col-md-3 pl-0 mb-md-0 mb-2">
                 <span class="detail-font-14px detail-gray-color">{{ translate('SKU') }}:</span><br>
-                <span id="sku-product-details" class="fw-500 fs-16"></span>
+                <span id="sku-product-details" class="fw-500 fs-14"></span>
             </div>
-        </div>
+       
 
-        <div class="row pl-0 d-flex mt-md-3">
-            @if ($detailedProduct->pharma_categories)
-                <div class="col-md-4  mb-md-0 mb-2">
-                    <span class="detail-font-14px detail-gray-color">{{ translate('Pharma Categories') }}:</span><br>
-                    <span class="fw-500 fs-16">{{ $detailedProduct->pharma_categories ?? '-' }}</span>
-                </div>
-            @endif
-
-            @if ($detailedProduct->product_form)
-                <div class="col-md-4 pl-md-0 mb-md-0 mb-2">
-                    <span class="detail-font-14px detail-gray-color">{{ translate('Product Form') }}:</span><br>
-                    <span class="fw-500 fs-16">{{ $detailedProduct->product_form ?? '-' }}</span>
-                </div>
-            @endif
-
-            @if (!is_null($detailedProduct->prescription_req))
+         @if (!is_null($detailedProduct->prescription_req))
                 <!-- Discount percentage -->
                 <div class="col-md-4 pl-md-0 mb-md-0 mb-2">
                     <span class="detail-font-14px detail-gray-color">{{ translate('Prescription Required') }}:</span><br>
                     <span
-                        class="fw-500 fs-16 detail-red-color">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
+                        class="fw-500 fs-14 detail-red-color">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
                 </div>
             @endif
 
-        </div>
+       
 
         <div class="col-12 pl-0 d-flex mt-md-3">
             <span class="detail-font-14px detail-gray-color">{{ translate('MRP') }}:</span>
@@ -210,7 +195,7 @@
                         <div class="col-md-3 col-12 pl-0 mt-3 pb-0">
                             {{--  --}}
                             <div class="">
-                                <div class="fw-500 fs-16 text-dark mt-2 mb-2">{{ translate('Quantity') }}</div>
+                                <div class="fw-500 fs-14 text-dark mt-2 mb-2">{{ translate('Quantity') }}</div>
                             </div>
                             <div class="">
                                 <div class="product-quantity d-flex align-items-center">
@@ -250,7 +235,7 @@
                             <!-- Total Price -->
                             <div class="" id="chosen_price_div">
                                 <div class="">
-                                    <div class="fw-500 fs-16 text-dark mt-2 mb-2">{{ translate('Total Amount Product Wise') }}:</div>
+                                    <div class="fw-500 fs-14 text-dark mt-2 mb-2">{{ translate('Total Amount Product Wise') }}:</div>
                                 </div>
                                 <div class="">
                                     <div class="product-price">
@@ -277,9 +262,7 @@
 
         <!-- Add to cart & Buy now Buttons -->
         <div class="mt-4">
-            @if (!is_user_loggedin())
-                <p class="fs-14">Please login / register to buy or to get detailed information of the product</p>
-            @endif
+          
             @if ($detailedProduct->digital == 0)
                 @if (
                     (get_setting('product_external_link_for_seller') == 1 &&
@@ -292,12 +275,12 @@
                     </a>
                 @else
                     <button type="button"
-                        class="btn btn-success mr-3 add-to-cart fw-600 min-w-100px rounded-0 text-white border-radius-50 mb-md-0 mb-2 mt-2"
+                        class="btn btn-success mr-2 add-to-cart fw-600 min-w-100px rounded-0 text-white border-radius-50 mb-md-0 mb-2 mt-2"
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
                     </button>
                     <button type="button"
-                        class="btn detail-buy-now-btn btn-primary mr-3 buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50 mb-md-0 mb-2 mt-2"
+                        class="btn detail-buy-now-btn btn-primary mr-2 buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50 mb-md-0 mb-2 mt-2"
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
                     </button>
@@ -324,7 +307,9 @@
             </button>
         </div>
         
-
+  @if (!is_user_loggedin())
+                <p class="fs-14 pt-3">Please login / register to buy or to get detailed information of the product</p>
+            @endif
         
 
         
@@ -333,12 +318,51 @@
             <div class="col-12 col-md-12 text-left pl-0 pr-0">
                 <h5 class="fe-semibold mb-4">Product Specifications</h5>
             </div>
+
+             @if ($detailedProduct->pharma_categories)
+                <div class="col-md-12 pl-0  mb-md-3 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+
+
+                     <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-check-icon lucide-copy-check"><path d="m12 15 2 2 4-4"/><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></div>
+                            <div class=""><span class="detail-font-14px detail-gray-color">{{ translate('Pharma Categories') }}:</span><br>
+                    <span class="fw-500 fs-14">{{ $detailedProduct->pharma_categories ?? '-' }}</span></div>
+                        </div>
+                    
+                </div>
+                </div>
+            @endif
+
+            @if ($detailedProduct->product_form)
+                <div class="col-md-12 pl-0  mb-md-3 mb-3">
+                     <div class="detail-product-specs rounded h-100">
+
+                     <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-copy-icon lucide-book-copy"><path d="M5 7a2 2 0 0 0-2 2v11"/><path d="M5.803 18H5a2 2 0 0 0 0 4h9.5a.5.5 0 0 0 .5-.5V21"/><path d="M9 15V4a2 2 0 0 1 2-2h9.5a.5.5 0 0 1 .5.5v14a.5.5 0 0 1-.5.5H11a2 2 0 0 1 0-4h10"/></svg></div>
+                            <div class=""> <span class="detail-font-14px detail-gray-color">{{ translate('Product Form') }}:</span><br>
+                    <span class="fw-500 fs-14">{{ $detailedProduct->product_form ?? '-' }}</span></div>
+                        </div>
+                     
+                       
+                </div>
+                </div>
+            @endif
+
+
             {{-- Type --}}
             @if ($detailedProduct->product_type)
                 <div class="col-12 col-md-12 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg> &nbsp; {{ translate('Type') }}:</p>
-                        <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_type ?? '-' }}</p>
+                        <div class="display_flex1">
+                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
+                             <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">  &nbsp; {{ translate('Type') }}:</p>
+                               <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_type ?? '-' }}</p>
+                            </div>
+                        </div>
+                        
+                        
                     </div>
                 </div>
             @endif
@@ -347,8 +371,14 @@
             @if ($detailedProduct->product_material)
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg> &nbsp; {{ translate('Material') }}:</p>
-                    <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_material ?? '-' }}</p>
+                         <div class="display_flex3">
+                               <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg></div>
+                               <div class="">
+                                   <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Material') }}:</p>
+                    <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_material ?? '-' }}</p>
+                               </div>
+                         </div>
+                    
                     </div>
                 </div>
             @endif
@@ -357,8 +387,14 @@
             @if ($detailedProduct->product_origin)
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg> &nbsp; {{ translate('Country of Origin') }}:</p>
-                        <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_origin ?? '-' }}</p>
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
+                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Country of Origin') }}:</p>
+                            <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_origin ?? '-' }}</p>
+                        </div>
+                        </div>
+                        
+                        
                     </div>
                 </div>
             @endif
@@ -367,8 +403,14 @@
             {{-- @if ($detailedProduct->product_min_pack_size) --}}
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg> &nbsp;{{ translate('Minimum Pack Size') }}:</p>
-                        <p id="min-package-count-product-details" class="fw-500 fs-16 mb-0"></p>
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Minimum Pack Size') }}:</p>
+                        <p id="min-package-count-product-details" class="fw-500 fs-14 mb-0"></p>
+                            </div>
+                        </div>
+                        
                     </div>
                 </div>
             {{-- @endif --}}
@@ -377,55 +419,83 @@
             {{-- Final 6 fields --}}
             <div class="col-12 col-md-6 pl-0 mb-3">
                 <div class="detail-product-specs rounded h-100">
-                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg> &nbsp;{{ translate('Stock Available') }}:</p>
-                    <p id="qnt-product-details" class="fw-500 fs-16 mb-0"></p>
+                    <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg></div>
+                            <div class=""> <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Stock Available') }}:</p>
+                    <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p></div>
+                        </div>
+                   
                 </div>
             </div>
 
             @if (!empty($detailedProduct->product_exp_date))
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg> &nbsp;{{ translate('Expiry Date') }}:</p>
-                        <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_exp_date ?? '-' }}</p>
+                         <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg></div>
+                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Expiry Date') }}:</p>
+                        <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_exp_date ?? '-' }}</p></div>
+                        </div>
+                        
                     </div>
                 </div>
             @endif
 
             <div class="col-12 col-md-6 pl-0 mb-3">
                 <div class="detail-product-specs rounded h-100">
-                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg> &nbsp;{{ translate('Category') }}:</p>
-                    <p class="fw-500 fs-16 mb-0">{{ ucfirst($category_name ?? '-') }}</p>
+                     <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></div>
+                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Category') }}:</p>
+                    <p class="fw-500 fs-14 mb-0 pl21">{{ ucfirst($category_name ?? '-') }}</p></div>
+                        </div>
+                    
                 </div>
             </div>
 
             @if (!empty($detailedProduct->product_hsn))
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                        <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg> &nbsp;{{ translate('HSN / HS Code') }}:</p>
-                        <p class="fw-500 fs-16 mb-0">{{ $detailedProduct->product_hsn ?? '-' }}</p>
+                         <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></div>
+                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('HSN / HS Code') }}:</p>
+                        <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_hsn ?? '-' }}</p></div>
+                        </div>
+                        
                     </div>
                 </div>
             @endif
 
             <div class="col-12 col-md-6 pl-0 mb-3">
                 <div class="detail-product-specs rounded h-100">
-                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg> &nbsp;{{ translate('Dimentions') }}:</p>
-                    <p id="dimentions-product-details" class="fw-500 fs-16 mb-0"></p>
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
+                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Dimentions') }}:</p>
+                    <p id="dimentions-product-details pl21" class="fw-500 fs-14 mb-0"></p></div>
+                        </div>
+                    
                 </div>
             </div>
 
             <div class="col-12 col-md-6 pl-0 mb-3">
                 <div class="detail-product-specs rounded h-100">
-                    <p class="detail-font-14px detail-gray-color mb-0"> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg> &nbsp;{{ translate('Weight / Volume') }}:</p>
-                    <p id="weight-volume-product-details" class="fw-500 fs-16 mb-0"></p>
+                    <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg></div>
+                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Weight / Volume') }}:</p>
+                    <p id="weight-volume-product-details pl21" class="fw-500 fs-14 mb-0"></p></div>
+                        </div>
+                    
                 </div>
             </div>
 
             @if (!empty($detailedProduct->tags))
                 <div class="col-12 col-md-12 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                        <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Tags') }}</p>
-                        <p class="fw-500 fs-16 mb-0">{{ str_replace(',', ', ', $detailedProduct->tags) }}</p>
+                         <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tags-icon lucide-tags"><path d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z"/><path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193"/><circle cx="10.5" cy="6.5" r=".5" fill="currentColor"/></svg></div>
+                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Tags') }}</p>
+                        <p class="fw-500 fs-14 mb-0 pl21">{{ str_replace(',', ', ', $detailedProduct->tags) }}</p></div>
+                        </div>
+                        
                     </div>
                 </div>
             @endif
