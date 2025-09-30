@@ -90,7 +90,7 @@
             @else --}}
                     <span id="discount-show" class=" fs-18 text-center d-none"
                     style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span>
-                     <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>    
+                    <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>    
                     </span>
             {{-- @endif --}}
         </div>
@@ -369,7 +369,7 @@
 
             {{-- Type --}}
             @if ($detailedProduct->product_type)
-                <div class="col-12 col-md-6 pl-0 mb-3">
+                <div class="col-12 col-md-12 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
                         <div class="display_flex3">
                              <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
@@ -384,7 +384,7 @@
 
             {{-- Material --}}
             @if ($detailedProduct->product_material)
-                <div class="col-12 col-md-6 pl-0 mb-3">
+                <div class="col-12 col-md-12 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
                          <div class="display_flex3">
                                <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg></div>
