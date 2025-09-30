@@ -83,15 +83,16 @@
         </div>
 
         <div class="col-12 pl-0 mt-3 pb-0">
-            @if (discount_in_percentage($detailedProduct) > 0)
+            {{-- @if (discount_in_percentage($detailedProduct) > 0)
+                @php echo "here"; @endphp
                 <span class=" fs-18 text-center"
                     style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span> ({{ discount_in_percentage($detailedProduct) }}%)</span>
-            @else
-                    <span id="discount-show" class=" fs-18 text-center"
+            @else --}}
+                    <span id="discount-show" class=" fs-18 text-center d-none"
                     style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span>
                      <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>    
                     </span>
-            @endif
+            {{-- @endif --}}
         </div>
 
         {{-- Unit/MRP --}}
@@ -118,7 +119,7 @@
 
         <div class="col-12 pl-0 mt-3 pb-0">
             {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
-            <span id="tax-product-details" class="text-secondary fs-14"></span>
+            {{-- <span id="tax-product-details" class="text-secondary fs-14"></span> --}}
             <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
         </div>
 
