@@ -981,7 +981,7 @@ class HomeController extends Controller
             'weight_volume' => $weight,
             'package_count' => $count,
             'discount_percentage' => round($dis_percentage, 2),
-            'discount_price' => $discount_temp
+            'discount_price' => number_format($discount_temp, 2)
         );
     }
 

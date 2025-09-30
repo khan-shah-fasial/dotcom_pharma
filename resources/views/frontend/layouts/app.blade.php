@@ -746,7 +746,8 @@
 
                         $('#min-package-count-product-details').html((data?.package_count ?? '-') + ' Pcs');
 
-                        $('#mrp-unit').html(stringPart + ' ' + (data?.original_price ?? '-'));
+                        // $('#mrp-unit').html(stringPart + ' ' + (data?.original_price ?? '-'));
+                        $('#mrp-unit').html(data?.original_price ?? '-');
 
                         $('#tax-product-details').html('Rs. ' + (data?.tax ?? '-'));
 
