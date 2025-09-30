@@ -198,6 +198,7 @@ class ProductController extends Controller
         $categories = Category::where('parent_id', 0)
             ->where('digital', 0)
             ->with('childrenCategories')
+            ->orderByRaw("FIELD(id, 83, 84) DESC")
             ->get();
 
         return view('backend.product.products.create', compact('categories'));
@@ -339,6 +340,7 @@ class ProductController extends Controller
         $categories = Category::where('parent_id', 0)
             ->where('digital', 0)
             ->with('childrenCategories')
+            ->orderByRaw("FIELD(id, 83, 84) DESC")
             ->get();
         return view('backend.product.products.edit', compact('product', 'categories', 'tags', 'lang'));
     }
