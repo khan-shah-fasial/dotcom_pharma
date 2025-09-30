@@ -546,4 +546,5 @@ Route::controller(PageController::class)->group(function () {
 Route::controller(ContactController::class)->group(function () {
     Route::post('/contact', 'contact')->name('contact');
     Route::post('/product-enquiry-store', 'product_enquiry_store')->name('product_enquiry_store');
+    Route::post('/prescription-upload', 'prescription_store')->name('prescription.store')->middleware('auth');
 });

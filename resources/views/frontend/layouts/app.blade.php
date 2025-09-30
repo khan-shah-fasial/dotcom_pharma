@@ -442,6 +442,58 @@
 
     @yield('modal')
 
+
+
+    @auth
+        <div class="modal fade" id="prescriptionModal" tabindex="-1" role="dialog" aria-labelledby="prescriptionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <form action="{{ route('prescription.store') }}" method="POST" enctype="multipart/form-data" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title" id="prescriptionModalLabel">Upload Prescription</h5>
+                <button type="button" class="btn-close" onclick="closePrescriptionModal()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {{-- Name --}}
+                <div class="mb-3">
+                <label for="presc_name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="presc_name" name="name" value="{{ old('name', auth()->user()->name ?? '') }}" required>
+                </div>
+
+                {{-- Email --}}
+                <div class="mb-3">
+                    <label for="presc_email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="presc_email" name="email" 
+                        value="{{ old('email', auth()->user()->email ?? '') }}">
+                    <div class="form-text">Either email or phone is required.</div>
+                </div>
+
+                {{-- Phone --}}
+                <div class="mb-3">
+                    <label for="presc_phone" class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="presc_phone" name="phone" 
+                        value="{{ old('phone', auth()->user()->phone ?? '') }}">
+                    <div class="form-text">Either phone or email is required.</div>
+                </div>
+
+                {{-- File --}}
+                <div class="mb-3">
+                <label for="presc_file" class="form-label">Prescription (image or PDF)</label>
+                <input class="form-control" type="file" id="presc_file" name="prescription_file" accept="image/*,application/pdf" required>
+                <small class="form-text text-muted">Accepted: jpg, jpeg, png, gif, pdf. Max 5MB.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePrescriptionModal()">Close</button>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+            </form>
+        </div>
+        </div>
+    @endauth
+
+
+
     <!-- SCRIPTS -->
     <script src="{{ static_asset('assets/js/vendors.js') }}"></script>
     <script src="{{ static_asset('assets/js/aiz-core.js?v=') }}{{ rand(1000, 9999) }}"></script>
@@ -1132,6 +1184,10 @@
     @endif
 
 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+
 
     @yield('script')
 
@@ -1274,5 +1330,41 @@ function scrollTabs(direction) {
     });
 </script>
 @yield('custom_script')
+
+@auth
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var prescBtn = document.getElementById('prescription-btn');
+        if (prescBtn) {
+            prescBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var prescModal = new bootstrap.Modal(document.getElementById('prescriptionModal'));
+                prescModal.show();
+            });
+        }
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('#prescriptionModal form');
+        const emailInput = document.getElementById('presc_email');
+        const phoneInput = document.getElementById('presc_phone');
+
+        form.addEventListener('submit', function (e) {
+            if (!emailInput.value.trim() && !phoneInput.value.trim()) {
+                e.preventDefault();
+                toastr.error("Please enter either Email or Phone.");
+            }
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        window.closePrescriptionModal = function() {
+            $('#prescriptionModal').modal('hide');
+        };
+    });
+</script>
+@endauth
+
 </body>
 </html>

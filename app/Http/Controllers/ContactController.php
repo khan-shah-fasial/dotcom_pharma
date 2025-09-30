@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Mail;
 
 class ContactController extends Controller
@@ -63,6 +64,51 @@ class ContactController extends Controller
         $contacts = $contacts->orderBy('created_at', 'desc')->paginate(20);
 
         return view('backend.support.contact.product_enquiry', compact('contacts'));
+    }
+
+    public function prescription_enquiry_index(Request $request)
+    {
+        $contacts = Contact::query();
+
+        // Filter by contact type if provided
+        if ($request->type != null) {
+            $contacts->where('type', $request->type);
+        }
+        
+        // Search by contact name, product name, or pincode
+        if ($request->search != null) {
+            $sort_search = $request->search;
+            $contacts->where(function ($query) use ($sort_search) {
+                $query->where('name', 'like', '%' . $sort_search . '%')
+                      ->orWhere('email', 'like', '%' . $sort_search . '%')
+                      ->orWhere('phone', 'like', '%' . $sort_search . '%')
+                      ->orWhereHas('product', function ($q) use ($sort_search) {
+                          $q->where('name', 'like', '%' . $sort_search . '%'); 
+                      });
+            });
+        }
+        
+        // Improved Date Range Filter (Handles same date correctly)
+        if ($request->date_from && $request->date_to) {
+            // Check if both dates are the same
+            if ($request->date_from == $request->date_to) {
+                $contacts->whereDate('created_at', $request->date_from);
+            } else {
+                $contacts->whereBetween('created_at', [
+                    $request->date_from . ' 00:00:00',
+                    $request->date_to . ' 23:59:59'
+                ]);
+            }
+        } elseif ($request->date_from) {
+            $contacts->whereDate('created_at', '>=', $request->date_from);
+        } elseif ($request->date_to) {
+            $contacts->whereDate('created_at', '<=', $request->date_to);
+        }
+        
+        // Default sorting by newest first
+        $contacts = $contacts->orderBy('created_at', 'desc')->paginate(20);
+
+        return view('backend.support.contact.prescription_enquiry', compact('contacts'));
     }
 
     public function index(Request $request)
@@ -231,4 +277,72 @@ class ContactController extends Controller
         flash(translate('Product Enquiry has been sent successfully'))->success();
         return back();
     }
+
+
+    public function prescription_store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255|required_without:phone',
+            'phone' => 'nullable|regex:/^[0-9\-\+\s\(\)]*$/|required_without:email',
+            'prescription_file' => 'required|file|mimes:jpg,jpeg,png,gif,pdf|max:5120' // max 5MB
+        ]);
+
+        if ($validator->fails()) {
+            foreach ($validator->errors()->all() as $error) {
+                flash($error)->error(); // if you use laracasts/flash or your flash helper
+            }
+            return back();
+        }
+
+        try {
+            // store file in storage/app/public/prescriptions
+            $file = $request->file('prescription_file');
+            $storedPath = $file->store('prescriptions', 'public'); // returns e.g. prescriptions/abc.jpg
+
+            // optional: get public url using Storage::url($storedPath)
+            $publicUrl = Storage::url($storedPath);
+
+            $admin = get_admin(); // your helper function — optional if you want to email admin
+
+            // prepare array for mail if needed
+            $array = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'attachment_url' => $publicUrl,
+                'subject' => 'Prescription Upload - ' . env('APP_NAME'),
+                'from' => $request->email,
+            ];
+
+            // Optional: send mail to admin (similar style to your product enquiry)
+            // Mail::to($admin->email)->queue(new PrescriptionReceivedMail($array));
+
+            // Insert into contacts table (reuse existing Contact model/table)
+            Contact::insert([
+                'type' => 'prescription',
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                // store raw path so you can serve via Storage::url later
+                'attachment' => $storedPath,
+                
+                'content' => null,
+                'url' => $request->fullUrl(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            // useful for debugging in dev only
+            \Log::error('Prescription upload error: ' . $e->getMessage());
+            flash('Something went wrong while uploading prescription.')->error();
+            return back();
+        }
+
+        flash('Prescription uploaded successfully.')->success();
+        return back();
+    }
+
+
+
 }

@@ -371,6 +371,8 @@
                                 </div>
 
 
+                                
+
 
                                 <!-- Cart -->
                                 <div class="d-none d-lg-block d-xl-block align-self-stretch has-transition"
@@ -380,6 +382,16 @@
                                         @include('frontend.partials.cart.cart')
                                     </div>
                                 </div>
+
+                                <!-- prescription -->
+                                @auth
+                                    <div class="">
+                                        <a href="javascript:void(0)" id="prescription-btn" class="nav-link" title="Upload Prescription">
+                                            <i class="fa fa-file-prescription"></i> <!-- or fa-file-medical -->
+                                            <span class="d-none d-md-inline">Prescription</span>
+                                        </a>
+                                    </div>
+                                @endauth
 
                                 @if (Auth::check() && auth()->user()->user_type == 'customer')
                                     <!-- Compare -->
