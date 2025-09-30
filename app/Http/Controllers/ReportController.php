@@ -146,4 +146,26 @@ class ReportController extends Controller
         return view('backend.reports.wallet_history_report', compact('wallets', 'users_with_wallet', 'user_id', 'date_range'));
     }
 
+
+    public function getProductsByCategory(Request $request)
+    {
+        $categoryId = $request->input('category_id');
+
+        // Optional: eager load relationships if needed
+        $products = \App\Models\Product::where('category_id', $categoryId)
+                        ->orderBy('created_at', 'desc')
+                        ->get(['id', 'name']); // Only send needed fields
+
+        $productsFormatted = $products->map(function($product) {
+            return [
+                'id' => $product->id,
+                'name' => $product->getTranslation('name'),
+            ];
+        });
+
+        return response()->json([
+            'products' => $productsFormatted
+        ]);
+    }
+
 }

@@ -1,13 +1,12 @@
 @extends('backend.layouts.app')
 
 @section('content')
-    <div class="container my-3">
-        @php var_dump($user->type_option); @endphp 
+    <div class="container my-4">
         @if(!empty($user->type_option))
         <div class="card">
 
             <div class="container my-3 mx-2">
-                <h3> View  Details of Customer {{ $user->name ?? "-" }} </h3>
+                <h3> View  Details of Customer - {{ $user->name ?? "-" }} </h3>
                 <hr>
                 <br>
 
@@ -27,7 +26,7 @@
 
                                     @if (!empty($user->gst_no_file) && file_exists(public_path(custom_file($user->gst_no_file))))
 
-                                        <a href="{{ asset(custom_file($user->gst_no_file)) }}" target="_blank">
+                                        <a href="{{ asset(custom_file($user->gst_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
                                         </a>
 
@@ -45,7 +44,7 @@
 
                                     @if (!empty($user->iec_no_file) && file_exists(public_path(custom_file($user->iec_no_file))))
 
-                                        <a href="{{ asset(custom_file($user->iec_no_file)) }}" target="_blank">
+                                        <a href="{{ asset(custom_file($user->iec_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
                                         </a>
                                     
@@ -386,7 +385,7 @@
 
                                     @if (!empty($user->aadhaar_no_file) && file_exists(public_path(custom_file($user->aadhaar_no_file))))
 
-                                        <a href="{{ asset(custom_file($user->aadhaar_no_file)) }}" target="_blank">
+                                        <a href="{{ asset(custom_file($user->aadhaar_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
                                         </a>
                                     
@@ -403,7 +402,7 @@
 
                                     @if (!empty($user->pan_no_file) && file_exists(public_path(custom_file($user->pan_no_file))))
 
-                                        <a href="{{ asset(custom_file($user->pan_no_file)) }}" target="_blank">
+                                        <a href="{{ asset(custom_file($user->pan_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
                                         </a>
 
@@ -421,7 +420,7 @@
 
                                     @if (!empty($user->passport_no_file) && file_exists(public_path(custom_file($user->passport_no_file))))
 
-                                        <a href="{{ asset(custom_file($user->passport_no_file)) }}" target="_blank">
+                                        <a href="{{ asset(custom_file($user->passport_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
                                         </a>
 
@@ -439,7 +438,7 @@
 
                                 @if (!empty($user->photo_file) && file_exists(public_path(custom_file($user->photo_file))))
 
-                                    <a href="{{ asset(custom_file($user->photo_file)) }}" target="_blank">
+                                    <a href="{{ asset(custom_file($user->photo_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
                                     </a>
 
@@ -734,7 +733,7 @@
 
                                 @if (!empty($user->d_l_no_1_file) && file_exists(public_path(custom_file($user->d_l_no_1_file))))
 
-                                    <a href="{{ asset(custom_file($user->d_l_no_1_file)) }}" target="_blank">
+                                    <a href="{{ asset(custom_file($user->d_l_no_1_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
                                     </a>
 
@@ -751,7 +750,7 @@
 
                                 @if (!empty($user->d_l_no_2_file) && file_exists(public_path(custom_file($user->d_l_no_2_file))))
 
-                                    <a href="{{ asset(custom_file($user->d_l_no_2_file)) }}" target="_blank">
+                                    <a href="{{ asset(custom_file($user->d_l_no_2_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
                                     </a>
 
@@ -768,7 +767,7 @@
 
                                 @if (!empty($user->d_l_no_3_file) && file_exists(public_path(custom_file($user->d_l_no_3_file))))
 
-                                    <a href="{{ asset(custom_file($user->d_l_no_3_file)) }}" target="_blank">
+                                    <a href="{{ asset(custom_file($user->d_l_no_3_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
                                     </a>
 
@@ -785,7 +784,7 @@
 
                                 @if (!empty($user->doctor_hospital_reg_no_file) && file_exists(public_path(custom_file($user->doctor_hospital_reg_no_file))))
 
-                                    <a href="{{ asset(custom_file($user->doctor_hospital_reg_no_file)) }}" target="_blank">
+                                    <a href="{{ asset(custom_file($user->doctor_hospital_reg_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
                                     </a>
 
@@ -802,7 +801,7 @@
 
                                 @if (!empty($user->dairy_trust_ngo_reg_no_file) && file_exists(public_path(custom_file($user->dairy_trust_ngo_reg_no_file))))
 
-                                    <a href="{{ asset(custom_file($user->dairy_trust_ngo_reg_no_file)) }}" target="_blank">
+                                    <a href="{{ asset(custom_file($user->dairy_trust_ngo_reg_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
                                     </a>
                                 
@@ -819,7 +818,7 @@
 
                                 @if (!empty($user->cc_mdl_reg_no_file) && file_exists(public_path(custom_file($user->cc_mdl_reg_no_file))))
 
-                                    <a href="{{ asset(custom_file($user->cc_mdl_reg_no_file)) }}" target="_blank">
+                                    <a href="{{ asset(custom_file($user->cc_mdl_reg_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
                                     </a>
 
@@ -836,7 +835,7 @@
 
                                 @if (!empty($user->other_reg_no_file) && file_exists(public_path(custom_file($user->other_reg_no_file))))
 
-                                    <a href="{{ asset(custom_file($user->other_reg_no_file)) }}" target="_blank">
+                                    <a href="{{ asset(custom_file($user->other_reg_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
                                     </a>
 

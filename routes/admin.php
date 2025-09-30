@@ -437,6 +437,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/user_search_report', 'user_search_report')->name('user_search_report.index');
         Route::get('/commission-log', 'commission_history')->name('commission-log.index');
         Route::get('/wallet-history', 'wallet_transaction_history')->name('wallet-history.index');
+
+        Route::get('/get-products-by-category', 'getProductsByCategory')->name('get.products.by.category');
     });
 
     // Earning Report

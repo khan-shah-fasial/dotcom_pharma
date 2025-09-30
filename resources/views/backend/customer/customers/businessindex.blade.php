@@ -51,23 +51,23 @@
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="gst_no"
                                 name="gst_no"@isset($gst_no) value="{{ $gst_no }}" @endisset
-                                placeholder="{{ translate('Type GST No') }}">
+                                placeholder="{{ translate(' GST  / IEC / Aadhar / Passport / PAN ') }}">
                         </div>
                     </div>
-                    <div class="col-md-3 mb-3">
+                    {{-- <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="bank_details"
                                 name="bank_details"@isset($bank_details) value="{{ $bank_details }}" @endisset
                                 placeholder="{{ translate('Type Bank Name or Account No or Branch No or Branch Code & IFSC Code & MICR Code & Customer Care Executive Enter') }}">
                         </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
+                    </div> --}}
+                    {{-- <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="license_details"
                                 name="license_details"@isset($license_details) value="{{ $license_details }}" @endisset
                                 placeholder="{{ translate('Type CC No or D.L No 1 or D.L No 2 or D.L No 3 Enter') }}">
                         </div>
-                    </div>
+                    </div> --}}
                     {{-- <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="date" class="form-control" id="dl_expiry_Data"
@@ -91,7 +91,7 @@
                     </div>
                     <div class="col-md-3">
                         <button class="btn btn-primary" onclick="sort_customers()">Search</button>
-                        <a class="btn btn-danger" href="{{ url(route('customers.index')) }}" class="">Reset</a>                        
+                        <a class="btn btn-danger" href="{{ url(route('customers.business')) }}" class="">Reset</a>                        
                     </div>
                 </div>
             </div>
@@ -147,9 +147,9 @@
                                             <i class="fa fa-ban text-danger" aria-hidden="true"></i>
                                         @endif {{ $user->details->company_name ?? '-' }}
                                     </td>
-                                    <td>{{ $user->details->post_business ?? '-' }}</td>
-                                    <td>{{ $user->details->district ?? '-' }}</td>
-                                    <td>{{ $user->details->country_code ?? '-' }}</td>
+                                    <td>{{ $user->details->post_business ?? $user->details->post ?? '-' }}</td>
+                                    <td>{{ $user->details->district_business ?? $user->details->district ?? '-' }}</td>
+                                    <td>{{ $user->details->country_code_business ?? $user->details->country_code ?? '-' }}</td>
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->phone }}</td>
                                     <!-- <td>

@@ -95,46 +95,32 @@ class ProductStocksExport implements FromCollection, WithHeadings
             $variantDetails = '';
 
             if ($stock->variant) {
-                if (strpos($stock->variant, '-') !== false) {
-                    $parts = explode('-', $stock->variant);
-                    if (count($parts) == 2) {
-                        $first_value_code = trim($parts[0]);
-                        $second_value_code = trim($parts[1]);
+                // Split variant by '-'
+                $parts = explode('-', $stock->variant);
+                $details = [];
 
-                        // Find attribute for first part
-                        $attrValue1 = AttributeValue::where('value', $first_value_code)->first();
-                        $attrValue2 = AttributeValue::where('value', $second_value_code)->first();
+                foreach ($parts as $part) {
+                    $part = trim($part);
 
-                        $details = [];
-
-                        if ($attrValue1) {
-                            $attribute1 = Attribute::find($attrValue1->attribute_id);
-                            if ($attribute1) {
-                                $details[] = '('.$attribute1->name.') - ' . $attrValue1->value;
-                            }
-                        }
-
-                        if ($attrValue2) {
-                            $attribute2 = Attribute::find($attrValue2->attribute_id);
-                            if ($attribute2) {
-                                $details[] = '('.$attribute2->name.') - ' . $attrValue2->value;
-                            }
-                        }
-
-                        // Join with ' / ' separator
-                        $variantDetails = implode(' / ', $details);
-                    }
-                } else {
-                    $attribute_value_code = trim($stock->variant);
-                    $attrValue = AttributeValue::where('value', $attribute_value_code)->first();
+                    // Try to find attribute value
+                    $attrValue = AttributeValue::where('value', $part)->first();
 
                     if ($attrValue) {
                         $attribute = Attribute::find($attrValue->attribute_id);
                         if ($attribute) {
-                            $variantDetails = '('.$attribute->name . ') - ' . $attrValue->value;
+                            $details[] = '('.$attribute->name.') - ' . $attrValue->value;
+                        } else {
+                            // If attribute missing, just keep value
+                            $details[] = $attrValue->value;
                         }
+                    } else {
+                        // If no attribute found, keep raw value (like date)
+                        $details[] = $part;
                     }
                 }
+
+                // Join all parts with ' / ' separator
+                $variantDetails = implode(' / ', $details);
             }
 
             return [

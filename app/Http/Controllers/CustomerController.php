@@ -81,7 +81,11 @@ class CustomerController extends Controller
         if ($gst_no != null){
             $gst_no = $request->gst_no;
             $users->where(function ($q) use ($gst_no){
-                $q->where('gst_no', 'like', '%'.$gst_no.'%');
+                $q->where('gst_no', 'like', '%'.$gst_no.'%')
+                ->orWhere('iec_no','like', '%'.$gst_no.'%')
+                ->orWhere('aadhaar_no','like', '%'.$gst_no.'%')
+                ->orWhere('pan_no','like', '%'.$gst_no.'%')
+                ->orWhere('passport_no','like', '%'.$gst_no.'%');
             });
         }
         if ($bank_details != null){
