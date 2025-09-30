@@ -89,7 +89,7 @@
             @else
                     <span id="discount-show" class=" fs-18 text-center"
                     style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span>
-                     <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>    
+                    <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>    
                     </span>
             @endif
         </div>
