@@ -357,8 +357,8 @@
                         <div class="display_flex3">
                                 <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
                                 <div class="">
-                                    <p class="detail-font-14px detail-gray-color mb-0">  &nbsp; {{ translate('Type') }}:</p>
-                                    <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_type ?? '-' }}</p>
+                                    <div class="detail-font-14px detail-gray-color mb-0">  &nbsp; {{ translate('Type') }}:</div>
+                                    <div class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_type ?? '-' }}</div>
                                 </div>
                             </div>
                         
@@ -375,7 +375,7 @@
                                <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg></div>
                                <div class="">
                                    <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Material') }}:</p>
-                                    <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_material ?? '-' }}</p>
+                                    <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_material ?? '-' }}</p>
                                </div>
                          </div>
                     
