@@ -718,7 +718,14 @@
                         $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
 
                         // $('#per-piece-price-product-details').html('Rs. ' + (data?.per_piece_price ?? '-'));
-                        $('#per-piece-price-product-details').html(data?.per_piece_price ?? '-');
+                        let price = data?.per_piece_price ?? '-';
+
+                        // remove decimal part if it exists
+                        if (typeof price === "string") {
+                            price = price.split('.')[0];
+                        }
+
+                        $('#per-piece-price-product-details').html(price);
 
                         let package_count = data?.package_count ?? 1;
                         let temp_per_piece_price = data?.per_piece_price?.replace(/[^0-9.]/g, "") || "";
@@ -742,16 +749,23 @@
                         $('#mrp-unit').html(stringPart + ' ' + (data?.original_price ?? '-'));
 
                         $('#tax-product-details').html('Rs. ' + (data?.tax ?? '-'));
-                        $('#without-tax-product').html('Rs. ' + (data?.without_tax_price ?? '-'));
+
+                        let withoutTaxPrice = data?.without_tax_price ?? '-';
+                        // remove decimal part if it's a number/string with decimals
+                        if (typeof withoutTaxPrice === "string") {
+                            withoutTaxPrice = withoutTaxPrice.split('.')[0];
+                        } else if (typeof withoutTaxPrice === "number") {
+                            withoutTaxPrice = Math.floor(withoutTaxPrice); // removes decimals
+                        }
+
+                        $('#without-tax-product').html(withoutTaxPrice);
 
                         if (data?.discount_percentage > 0) {
-                            
-                            $('#dis_per')
-                                .removeClass('d-none')
-                                .html('-' + data.discount_percentage + '% off');
+                            $('#discount-show').removeClass('d-none');
+                            $('#discount-product-price').html('Rs. ' + data.discount_price);
+                            $('#dis_per').html('( ' + data.discount_percentage + '% )');
                         } else {
-                            $('#dis_per')
-                                .addClass('d-none');
+                            $('#discount-show').addClass('d-none');
                         }
 
                         if (data?.dimension) {

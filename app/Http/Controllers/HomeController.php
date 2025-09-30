@@ -892,7 +892,7 @@ class HomeController extends Controller
         // $per_piece_price = $product_stock->per_piece_price;
 
         $length = $product_stock->length ?? $product->length;
-        $breadth = $product_stock->breadth ?? $product->breadth;
+        $breadth = $product_stock->weight ?? $product->weight;
         $height = $product_stock->height ?? $product->height;
 
 
@@ -980,7 +980,8 @@ class HomeController extends Controller
             'dimension' => $dimension,
             'weight_volume' => $weight,
             'package_count' => $count,
-            'discount_percentage' => round($dis_percentage, 2)
+            'discount_percentage' => round($dis_percentage, 2),
+            'discount_price' => $discount_temp
         );
     }
 

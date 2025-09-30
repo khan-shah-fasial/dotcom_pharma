@@ -21,13 +21,15 @@
 
     <!-- Reviews -->
     @if ($detailedProduct->auction_product != 1)
-        <div class="mb-2 d-flex align-items-center gap-2">
-            <span class="rating rating-mr-1 detail-gray-color">
-                {{ renderStarRating($detailedProduct->rating) }}
-            </span>
-            <span class="detail-gray-color detail-font-14px fs-6">({{ $detailedProduct->reviews->where('status', 1)->count() }}
-                {{ translate('Customer Reviews') }})</span>
-        </div>
+        @if($detailedProduct->reviews->where('status', 1)->count() != 0)
+            <div class="mb-2 d-flex align-items-center gap-2">
+                <span class="rating rating-mr-1 detail-gray-color">
+                    {{ renderStarRating($detailedProduct->rating) }}
+                </span>
+                <span class="detail-gray-color detail-font-14px fs-6">({{ $detailedProduct->reviews->where('status', 1)->count() }}
+                    {{ translate('Customer Reviews') }})</span>
+            </div>
+        @endif
     @endif
 
     <div class="row ml-0 mr-0 pt-4">
@@ -61,17 +63,20 @@
             <span id="mrp-unit" class="detail-font-14px detail-gray-color"></span>
         </div>
 
-                
-
-        
-
-        
-
+        {{-- @auth
+            @if (auth()->user()->user_subtype !== null) --}}
+                <div class="col-12 pl-0 mt-3 pb-0">
+                    <span class="detail-font-14px detail-gray-color">{{ translate('Price') }}:</span>
+                    <span id="without-tax-product" class=""></span> <span class="without-tax-product-gst"> excl. GST</span>
+                </div>
+            {{-- @endif
+        @endauth --}}
+            
         {{-- Pricing Row --}}
 
         <div class="col-12 pl-0 mt-3 pb-0">
             <span class="text-secondary fs-14"><span id="per-piece-price-product-details"
-                    class=""> </span> <span class="per-piece-price-product-details-gst">incl. GST</span>  / Piece</span>
+                    class=""> </span> <span class="per-piece-price-product-details-gst"> incl. GST</span>  / Piece</span>
             {{-- <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
             <span id="package-count-product-details" class="text-secondary fs-14 ">
                 {{ $detailedProduct->product_count ?? '-' }} / Count</span> --}}
@@ -80,13 +85,18 @@
         <div class="col-12 pl-0 mt-3 pb-0">
             @if (discount_in_percentage($detailedProduct) > 0)
                 <span class=" fs-18 text-center"
-                    style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="tax-product-details" class="fs-18 text-center" style="color: #E31E24 !important;"></span> ({{ discount_in_percentage($detailedProduct) }}%)</span>
+                    style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span> ({{ discount_in_percentage($detailedProduct) }}%)</span>
+            @else
+                    <span id="discount-show" class=" fs-18 text-center"
+                    style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span>
+                     <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>    
+                    </span>
             @endif
         </div>
 
         {{-- Unit/MRP --}}
 
-        @auth
+        {{-- @auth
             @if (auth()->user()->user_subtype !== null)
                 <div class="col-12 pl-0 mt-3 pb-0">
                     <span class="detail-font-14px detail-gray-color">{{ translate('Without Tax') }}:</span>
@@ -94,17 +104,23 @@
                 </div>
                 <div class="col-12 pl-0 mt-3 pb-0">
                     {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
-                    <span id="tax-product-details" class="text-secondary fs-14"></span>
+                    {{-- <span id="tax-product-details" class="text-secondary fs-14"></span>
                     <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </div>
-            @endif
-        @else
-            <div class="col-12 pl-0 mt-3 pb-0">
+            @endif --}}
+        {{-- @else --}}
+            {{-- <div class="col-12 pl-0 mt-3 pb-0">
                 <p class="fw-500 fs-14 text-dark">
                     <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </p>
-            </div>
-        @endauth
+            </div> --}}
+        {{-- @endauth --}}
+
+        <div class="col-12 pl-0 mt-3 pb-0">
+            {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
+            <span id="tax-product-details" class="text-secondary fs-14"></span>
+            <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
+        </div>
 
         
 
@@ -354,7 +370,7 @@
             @if ($detailedProduct->product_type)
                 <div class="col-12 col-md-12 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex1">
+                        <div class="display_flex3">
                              <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
                              <div class="">
                                 <p class="detail-font-14px detail-gray-color mb-0">  &nbsp; {{ translate('Type') }}:</p>
@@ -413,6 +429,21 @@
                         
                     </div>
                 </div>
+
+
+                <div class="col-12 col-md-6 pl-0 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Per Count') }}:</p>
+                        <p id="package-count-product-details" class="fw-500 fs-14 mb-0"></p>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+
             {{-- @endif --}}
 
 
@@ -457,8 +488,21 @@
                     <div class="detail-product-specs rounded h-100">
                          <div class="display_flex3">
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('HSN / HS Code') }}:</p>
+                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('HSN Code') }}:</p>
                         <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_hsn ?? '-' }}</p></div>
+                        </div>
+                        
+                    </div>
+                </div>
+            @endif
+
+            @if (!empty($detailedProduct->product_hs))
+                <div class="col-12 col-md-6 pl-0 mb-3">
+                    <div class="detail-product-specs rounded h-100">
+                         <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></div>
+                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('HS Code') }}:</p>
+                        <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_hs ?? '-' }}</p></div>
                         </div>
                         
                     </div>
@@ -470,8 +514,8 @@
                         <div class="display_flex3">
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
                             <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Dimentions') }}:</p>
-                    <p id="dimentions-product-details pl21" class="fw-500 fs-14 mb-0"></p></div>
-                        </div>
+                    <p id="dimentions-product-details" class="fw-500 fs-14 mb-0"></p></div>
+                    </div>
                     
                 </div>
             </div>
@@ -481,7 +525,7 @@
                     <div class="display_flex3">
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg></div>
                             <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Weight / Volume') }}:</p>
-                    <p id="weight-volume-product-details pl21" class="fw-500 fs-14 mb-0"></p></div>
+                    <p id="weight-volume-product-details" class="fw-500 fs-14 mb-0"></p></div>
                         </div>
                     
                 </div>

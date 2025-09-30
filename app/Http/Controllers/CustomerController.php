@@ -58,7 +58,7 @@ class CustomerController extends Controller
         $gst_no =  $request->gst_no ?? null;
         $transport_Details =  $request->transport_Details ?? null;
 
-        $users = User::where('user_type', 'customer')->whereNotNull('step')->orderBy('created_at', 'desc');
+        $users = User::with('details')->where('user_type', 'customer')->whereNotNull('step')->orderBy('created_at', 'desc');
         // if($verification_status != null){
         //     $users = $verification_status == 'verified' ? $users->where('email_verified_at', '!=', null) : $users->where('email_verified_at', null);
         // }

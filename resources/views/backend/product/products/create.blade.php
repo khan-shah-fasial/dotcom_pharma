@@ -373,9 +373,17 @@
 
                                         <!-- Product HSN / HS Code  -->
                                         <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product HSN / HS Code')}} </label>
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product HSN')}} </label>
                                             <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_hsn') is-invalid @enderror" name="product_hsn" value="{{ old('product_hsn') }}" placeholder="{{ translate('Product HSN / HS Code') }}">
+                                                <input type="text" class="form-control @error('product_hsn') is-invalid @enderror" name="product_hsn" value="{{ old('product_hsn') }}" placeholder="{{ translate('Product HSN Code') }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Product HSN / HS Code  -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product HS Code')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('product_hs') is-invalid @enderror" name="product_hs" value="{{ old('product_hs') }}" placeholder="{{ translate('Product HS Code') }}">
                                             </div>
                                         </div>
 

@@ -112,13 +112,16 @@
                                     </div>
                                 </div> -->
                             </th>
-                            <th>{{ translate('Name') }}</th>
+                            <th>{{ translate('Company Name') }}</th>
+                            <th>{{ translate('Post') }}</th>
+                            <th>{{ translate('Destrict') }}</th>
+                            <th>{{ translate('Country Code') }}</th>
                             <th data-breakpoints="lg">{{ translate('Email Address') }}</th>
                             <th data-breakpoints="lg">{{ translate('Phone') }}</th>
                             <!-- <th data-breakpoints="lg">{{ translate('Package') }}</th>
                             <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> -->
-                            <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th>
-                            <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th>
+                            {{-- <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th> --}}
+                            {{-- <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th> --}}
                             <th data-breakpoints="lg">{{ translate('Approval Status') }}</th>
                             <th class="text-right">{{ translate('Options') }}</th>
                         </tr>
@@ -142,8 +145,11 @@
                                     <td>
                                         @if ($user->banned == 1)
                                             <i class="fa fa-ban text-danger" aria-hidden="true"></i>
-                                        @endif {{ $user->name }}
+                                        @endif {{ $user->details->company_name ?? '-' }}
                                     </td>
+                                    <td>{{ $user->details->post_business ?? '-' }}</td>
+                                    <td>{{ $user->details->district ?? '-' }}</td>
+                                    <td>{{ $user->details->country_code ?? '-' }}</td>
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->phone }}</td>
                                     <!-- <td>
@@ -152,7 +158,7 @@
                                         @endif
                                     </td>
                                     <td>{{ single_price($user->balance) }}</td> -->
-                                    <td>
+                                    {{-- <td>
                                         @if ($user->email_verified_at != null)
                                             <span
                                                 class="badge badge-inline badge-success">{{ translate('Verified') }}</span>
@@ -169,7 +175,7 @@
                                             <span
                                                 class="badge badge-inline badge-warning">{{ translate('Unverified') }}</span>
                                         @endif
-                                    </td>
+                                    </td> --}}
                                     <td>
                                         @if ($user->approval_status == 1)
                                             <span
