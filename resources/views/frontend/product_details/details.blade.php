@@ -357,8 +357,8 @@
                         <div class="display_flex3">
                                 <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
                                 <div class="">
-                                    <div class="detail-font-14px detail-gray-color mb-0">  &nbsp; {{ translate('Type') }}:</div>
-                                    <div class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_type ?? '-' }}</div>
+                                    <p class="detail-font-14px detail-gray-color mb-0">  &nbsp; {{ translate('Type') }}:</p>
+                                    <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_type ?? '-' }}</p>
                                 </div>
                             </div>
                         
@@ -389,8 +389,9 @@
                     <div class="detail-product-specs rounded h-100">
                         <div class="display_flex3">
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Country of Origin') }}:</p>
-                            <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_origin ?? '-' }}</p>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Country of Origin') }}:</p>
+                                <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_origin ?? '-' }}</p>
                         </div>
                         </div>
                         
@@ -407,7 +408,7 @@
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
                             <div class="">
                                 <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Minimum Pack Size') }}:</p>
-                        <p id="min-package-count-product-details" class="fw-500 fs-14 mb-0"></p>
+                                <p id="min-package-count-product-details" class="fw-500 fs-14 mb-0"></p>
                             </div>
                         </div>
                         
@@ -421,8 +422,9 @@
                 <div class="detail-product-specs rounded h-100">
                     <div class="display_flex3">
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg></div>
-                            <div class=""> <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Stock Available') }}:</p>
-                    <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Stock Available') }}:</p>
+                                <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p></div>
                         </div>
                    
                 </div>
