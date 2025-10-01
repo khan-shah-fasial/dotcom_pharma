@@ -1886,3 +1886,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .dropdown-menu-bottom-top{
     top: 50px !important;
 }
+
+.product-enquiry-form-name-email .form-group{
+    width: 48.3%;
+}

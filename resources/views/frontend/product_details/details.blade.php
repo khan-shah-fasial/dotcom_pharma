@@ -319,7 +319,7 @@
             @endif
             <button type="button"
                 class="btn detail-product-enquiry-btn btn-info buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50 product-enquiry-btn mb-md-0 mb-2 mt-2 mr-3"
-                data-product-id="{{ $detailedProduct->id }}">
+                data-product-id="{{ $detailedProduct->id }}" data-product-name="{{ $detailedProduct->name }}">
                 <i class="las la-question-circle fs-20 position_btn"></i> {{ translate('Product Enquiry') }}
             </button>
         </div>
@@ -1101,28 +1101,36 @@
                     <input type="hidden" name="product_id" id="enquiry_product_id" value="">
                     <input type="hidden" name="current_url" id="current_url" value="">
 
-                    <!-- Name -->
+                    <!-- Product Name (Optional Display) -->
                     <div class="form-group">
-                        <label for="name" class="fs-16 fw-700 text-soft-dark">{{ translate('Name') }} <span
-                                class="text-danger">*</span></label>
-                        <input type="text" class="form-control rounded-0"
-                            placeholder="{{ translate('Enter Name') }}" name="name" required>
+                        <label for="enquiry_product_name" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Product') }}</label>
+                        <input type="text" id="enquiry_product_name" class="form-control rounded-0" readonly>
                     </div>
 
-                    <!-- Email -->
-                    <div class="form-group">
-                        <label for="email" class="fs-16 fw-700 text-soft-dark">{{ translate('Email') }} <span
-                                class="text-danger">*</span></label>
-                        <input type="email" class="form-control rounded-0"
-                            placeholder="{{ translate('Enter Email') }}" name="email" required>
+                    <div class="d-flex justify-content-between product-enquiry-form-name-email">
+                        <!-- Name -->
+                        <div class="form-group">
+                            <label for="name" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Name') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-0"
+                                placeholder="{{ translate('Enter Your Name') }}" name="name" required>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label for="email" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Email') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="email" class="form-control rounded-0"
+                                placeholder="{{ translate('Enter Your Email') }}" name="email" required>
+                        </div>
                     </div>
 
                     <!-- Phone -->
                     <div class="form-group">
-                        <label for="phone" class="fs-16 fw-700 text-soft-dark">{{ translate('Phone no.') }} <span
+                        <label for="phone" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Phone no.') }} <span
                                 class="text-danger">*</span></label>
                         <input type="tel" class="form-control rounded-0"
-                            placeholder="{{ translate('Enter Phone') }}" name="phone" required>
+                            placeholder="{{ translate('Enter Your Phone') }}" name="phone" required>
                     </div>
 
                     <!-- Pincode -->
@@ -1136,9 +1144,9 @@
                     <!-- Query -->
                     <div class="form-group">
                         <label for="query"
-                            class="fs-16 fw-700 text-soft-dark">{{ translate('Tell us about your query') }}<span
+                            class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Tell us about your query') }}<span
                                 class="text-danger">*</span></label>
-                        <textarea class="form-control rounded-0" placeholder="{{ translate('Type here...') }}" name="content"
+                        <textarea class="form-control rounded-0" placeholder="{{ translate('Tell us about your query') }}" name="content"
                             rows="3" required></textarea>
                     </div>
 
@@ -1196,3 +1204,41 @@
         });
     </script>
 @endsection
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const enquiryButtons = document.querySelectorAll('.detail-product-enquiry-btn');
+
+    enquiryButtons.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const productId = this.getAttribute('data-product-id');
+            const productName = this.getAttribute('data-product-name');
+
+            document.getElementById('enquiry_product_id').value = productId;
+            document.getElementById('current_url').value = window.location.href;
+            document.getElementById('enquiry_product_name').value = productName;
+
+            $('#productEnquiryModal').modal('show'); // Bootstrap 4 modal open
+        });
+    });
+});
+</script>
+
+
+<style>
+    @media (min-width: 768px) { /* md and up */
+        #productEnquiryModal .modal-dialog {
+            max-width: 440px; /* width adjust kar sakte ho */
+            display: flex;
+            align-items: center; /* vertically center */
+            justify-content: center; /* horizontally center */
+        }
+
+        #productEnquiryModal .modal-content {
+            height: 100%; /* modal-content modal-dialog ka height fill kare */
+            overflow-y: auto; /* agar content zyada ho toh scroll */
+        }
+    }
+</style>

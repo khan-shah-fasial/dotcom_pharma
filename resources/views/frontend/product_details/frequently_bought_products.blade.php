@@ -1,6 +1,6 @@
 <div class="">
     <div class="">
-        <h3 class="fs-20 fs-md-24 fw-700 text-dark text-capitalize">
+        <h3 class="fs-20 fs-md-24 fw-500 text-dark text-capitalize">
             <span class="mr-4">{{ translate('Related Products') }}</span>
         </h3>
     </div>
