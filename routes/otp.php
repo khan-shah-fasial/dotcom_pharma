@@ -25,6 +25,13 @@ Route::controller(OTPVerificationController::class)->group(function () {
     //Forgot password phone
     Route::get('/password/phone/reset', 'show_reset_password_form')->name('password.phone.form');
     Route::post('/password/reset/submit', 'reset_password_with_code')->name('password.update.phone');
+
+
+    // Send OTP
+    Route::post('/send-otp', 'sendOtp')->name('send-otp');
+    Route::get('/otp-verification', 'otpVerificationPage')->name('otp-verification-page');
+    Route::get('/resend-otp/{phone}', 'resendOtp')->name('resend-otp');
+    Route::post('/validate-otp-code', 'validateOtpCode')->name('validate-otp-code');
 });
 
 //Admin

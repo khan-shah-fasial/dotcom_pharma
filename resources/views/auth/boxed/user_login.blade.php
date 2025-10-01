@@ -137,7 +137,7 @@
                                 <div class="pt-3">
                                     <div class="">
                                         {{-- <form id="login-form-customer" class="form-default" role="form" action="{{ route('user.login.via.otp') }}" method="POST"> --}}
-                                        <form class="form-default" role="form" action="{{ route('login') }}" method="POST">
+                                        {{-- <form class="form-default" role="form" action="{{ route('login') }}" method="POST">
                                             @csrf
                                         
                                             <!-- Email or Phone -->
@@ -202,7 +202,90 @@
                                             <div class="mb-4 mt-4">
                                                 <button type="submit" class="btn btn-primary btn-block fw-700 fs-14 rounded-0">{{  translate('Login') }}</button>
                                             </div>
+                                        </form> --}}
+
+
+
+                                        <form class="form-default loginForm" role="form" action="{{ route('login') }}" method="POST">
+                                            @csrf
+                                            
+                                            <!-- Email or Phone -->
+                                            @if (addon_is_activated('otp_system'))
+                                                <div class="form-group phone-form-group mb-1">
+                                                    <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone') }}</label>
+                                                    <input type="tel" id="phone-code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" value="{{ old('phone') }}" placeholder="" name="phone" minlength="10" maxlength="10" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')"  autocomplete="off">
+                                                </div>
+
+                                                <input type="hidden" name="country_code" value="">
+                                                
+                                                <div class="form-group email-form-group mb-1 d-none">
+                                                    <label for="email" class="fs-12 fw-700 text-soft-dark">{{  translate('Email') }}</label>
+                                                    <input type="email" class="form-control rounded-0 {{ $errors->has('email') ? ' is-invalid' : '' }}" value="{{ old('email') }}" placeholder="{{  translate('johndoe@example.com') }}" name="email" id="email" autocomplete="off">
+                                                    @if ($errors->has('email'))
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $errors->first('email') }}</strong>
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                
+                                                <div class="form-group text-right">
+                                                    <button class="btn btn-link p-0 text-primary fs-12 fw-400" type="button" onclick="toggleEmailPhone(this)"><i>*{{ translate('Use Email Instead') }}</i></button>
+                                                </div>
+                                            @else
+                                                <div class="form-group">
+                                                    <label for="email" class="fs-12 fw-700 text-soft-dark">{{  translate('Email') }}</label>
+                                                    <input type="email" class="form-control{{ $errors->has('email') ? ' is-invalid' : '' }} rounded-0" value="{{ old('email') }}" placeholder="{{  translate('johndoe@example.com') }}" name="email" id="email" autocomplete="off">
+                                                    @if ($errors->has('email'))
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $errors->first('email') }}</strong>
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                            
+                                            <div class="password-login-block">
+                                                <!-- password -->
+                                                <div class="form-group">
+                                                    <label for="password" class="fs-12 fw-700 text-soft-dark">{{  translate('Password') }}</label>
+                                                    <div class="position-relative">
+                                                        <input type="password" class="form-control rounded-0 {{ $errors->has('password') ? ' is-invalid' : '' }}" placeholder="{{ translate('Password')}}" name="password" id="password">
+                                                        <i class="password-toggle las la-2x la-eye"></i>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row mb-2">
+                                                    <!-- Remember Me -->
+                                                    <div class="col-5">
+                                                    {{-- @if(get_setting('login_with_otp')) --}}
+                                                            <a style="text-decoration: underline;" href="javascript:void(0);" class="text-reset fs-14 fw-500 text-black hov-text-primary toggle-login-with-otp" onclick="toggleLoginPassOTP(this)">{{ translate('Login With OTP') }} </a>
+                                                    {{-- @endif --}}
+                                                        
+                                                    </div>
+                                                    <!-- Forgot password -->
+                                                    <div class="col-7 text-right">
+                                                        
+                                                        <a href="{{ route('password.request') }}" class="text-reset fs-12 fw-400 text-gray-dark hov-text-primary"><u>{{ translate('Forgot password?')}}</u></a>
+                                                    </div>
+
+                                                    <div class="col-12 pt-3">
+                                                    
+                                                        <label class="aiz-checkbox">
+                                                            <input type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
+                                                            <span class="has-transition fs-12 fw-400 text-gray-dark hov-text-primary">{{  translate('Remember Me') }}</span>
+                                                            <span class="aiz-square-check"></span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Submit Button -->
+                                            <div class="mb-4 mt-4">
+                                                <button type="submit" class="btn btn-primary btn-block fw-400 fs-14 rounded-0">{{  translate('Login') }}</button>
+                                            </div>
                                         </form>
+
+
+
 
                                         <!-- DEMO MODE -->
                                         @if (env("DEMO_MODE") == "On")
@@ -292,47 +375,6 @@
         </section>
     </div>
 
-
-    {{--/* otp popup  */ --}}
-
-    <div class="modal login_form_popup" id="otp-modal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-            <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-                </button>
-                 <div class="heading">
-                    <img src="{{ static_asset('assets/img/pharm_favicon.svg') }}" />
-                    <h5 class="modal-title" id="exampleModalLabel_phone">Mobile OTP Verify</h5>
-                </div>
-              
-            </div>
-                <form class="form-default" id="otp-login-customer" role="form" action="{{ route('user.login.via.otp.verify') }}" method="POST">
-                @csrf
-                    <div class="modal-body">
-                        <div class="form-group mt-md-4 mt-2 adhar_field">
-                            <label class="pb-2">Verify OTP *</label>
-                            <input type="text" class="form-control" name="otp" pattern="[0-9]+" minlength="6"
-                                maxlength="6" placeholder="Please Enter OTP" required />
-                        </div>
-                    </div>
-                    <div class="modal-footer " style="justify-content: end; !important">
-                        <div class="purple_btn">
-                            <button type="submit" class="btn btn-primary proceed_btn">Proceed</button>
-                        </div>
-                        
-                        <!-- <button type="button" class="btn btn-secondary" onclick="closeOtpModal()">Close</button> -->
-                    </div>
-                </form>
-            
-            </div>
-        </div>
-        </div>
-    
-    {{--/* otp popup  */ --}}
-
-
 @endsection
 
 @section('script')
@@ -343,7 +385,7 @@
             $('#password').val('123456');
         }
 
-
+        {{--
         /*-----------------New CODE-------------------------------------- */   
         function closeOtpModal() {
             $('#otp-modal').modal('hide');
@@ -397,7 +439,7 @@
                 }
             });
         });
-
+        --}}
 
     </script>
 @endsection

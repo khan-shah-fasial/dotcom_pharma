@@ -446,49 +446,55 @@
 
     @auth
         <div class="modal fade" id="prescriptionModal" tabindex="-1" role="dialog" aria-labelledby="prescriptionModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <form action="{{ route('prescription.store') }}" method="POST" enctype="multipart/form-data" class="modal-content">
-            @csrf
-            <div class="modal-header">
-                <h5 class="modal-title" id="prescriptionModalLabel">Upload Prescription</h5>
-                <button type="button" class="btn-close" onclick="closePrescriptionModal()" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {{-- Name --}}
-                <div class="mb-3">
-                <label for="presc_name" class="form-label">Name</label>
-                <input type="text" class="form-control" id="presc_name" name="name" value="{{ old('name', auth()->user()->name ?? '') }}" required>
-                </div>
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <form action="{{ route('prescription.store') }}" method="POST" enctype="multipart/form-data" class="modal-content">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="prescriptionModalLabel">Upload Prescription</h5>
+                        <!-- Bootstrap 4 uses "close" not "btn-close" -->
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        {{-- Name --}}
+                        <div class="mb-3">
+                            <label for="presc_name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="presc_name" name="name"
+                                value="{{ old('name', auth()->user()->name ?? '') }}" required>
+                        </div>
 
-                {{-- Email --}}
-                <div class="mb-3">
-                    <label for="presc_email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="presc_email" name="email" 
-                        value="{{ old('email', auth()->user()->email ?? '') }}">
-                    <div class="form-text">Either email or phone is required.</div>
-                </div>
+                        {{-- Email --}}
+                        <div class="mb-3">
+                            <label for="presc_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="presc_email" name="email"
+                                value="{{ old('email', auth()->user()->email ?? '') }}">
+                            <div class="form-text">Either email or phone is required.</div>
+                        </div>
 
-                {{-- Phone --}}
-                <div class="mb-3">
-                    <label for="presc_phone" class="form-label">Phone</label>
-                    <input type="text" class="form-control" id="presc_phone" name="phone" 
-                        value="{{ old('phone', auth()->user()->phone ?? '') }}">
-                    <div class="form-text">Either phone or email is required.</div>
-                </div>
+                        {{-- Phone --}}
+                        <div class="mb-3">
+                            <label for="presc_phone" class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="presc_phone" name="phone"
+                                value="{{ old('phone', auth()->user()->phone ?? '') }}">
+                            <div class="form-text">Either phone or email is required.</div>
+                        </div>
 
-                {{-- File --}}
-                <div class="mb-3">
-                <label for="presc_file" class="form-label">Prescription (image or PDF)</label>
-                <input class="form-control" type="file" id="presc_file" name="prescription_file" accept="image/*,application/pdf" required>
-                <small class="form-text text-muted">Accepted: jpg, jpeg, png, gif, pdf. Max 5MB.</small>
-                </div>
+                        {{-- File --}}
+                        <div class="mb-3">
+                            <label for="presc_file" class="form-label">Prescription (image or PDF)</label>
+                            <input class="form-control" type="file" id="presc_file" name="prescription_file"
+                                accept="image/*,application/pdf" required>
+                            <small class="form-text text-muted">Accepted: jpg, jpeg, png, gif, pdf. Max 5MB.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <!-- Bootstrap 4 close button -->
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closePrescriptionModal()">Close</button>
-                <button type="submit" class="btn btn-primary">Upload</button>
-            </div>
-            </form>
-        </div>
         </div>
     @endauth
 
@@ -1031,6 +1037,7 @@
 
             });
 
+            {{--
             function toggleEmailPhone(el) {
                 if (isPhoneShown) {
                     $('.phone-form-group').addClass('d-none');
@@ -1046,6 +1053,45 @@
                     $(el).html('<i>*{{ translate('Use Email Instead') }}</i>');
                 }
             }
+            --}}
+
+
+            function toggleEmailPhone(el) {
+                if (isPhoneShown) {
+                    $('.phone-form-group').addClass('d-none');
+                    $('.email-form-group').removeClass('d-none');
+                    $('input[name=phone]').val(null);
+                    isPhoneShown = false;
+                    $(el).html('*{{ translate('Use Phone Number Instead') }}');
+
+                    $('.toggle-login-with-otp').addClass('d-none');
+
+                } else {
+                    $('.phone-form-group').removeClass('d-none');
+                    $('.email-form-group').addClass('d-none');
+                    $('input[name=email]').val(null);
+                    isPhoneShown = true;
+                    $(el).html('<i>*{{ translate('Use Email Instead') }}</i>');
+
+                    $('.toggle-login-with-otp').removeClass('d-none');
+                }
+                
+                $('.submit-button').html('{{ translate('Login') }}');
+                $('.password-login-block').removeClass('d-none');
+                
+                var url = '{{ route('login') }}';
+                $('.loginForm').attr('action', url);
+            }
+
+            function toggleLoginPassOTP() {
+                $('.password-login-block').addClass('d-none');
+                $('.submit-button').html('{{ translate('Login With OTP') }}');
+
+                var url = '{{ route('send-otp') }}';
+                $('.loginForm').attr('action', url);
+            }
+
+
         }
     </script>
 
@@ -1360,9 +1406,11 @@ function scrollTabs(direction) {
 
     document.addEventListener("DOMContentLoaded", function () {
         window.closePrescriptionModal = function() {
-            $('#prescriptionModal').modal('hide');
+            $('#prescriptionModal').modal('hide'); // requires jQuery + bootstrap.js
+            console.dir("Modal closed (Bootstrap 4)");
         };
     });
+
 </script>
 @endauth
 
