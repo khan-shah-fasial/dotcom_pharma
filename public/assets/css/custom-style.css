@@ -105,9 +105,8 @@ li {
     color: #fff !important;
 }
 
-.human_btn a .active,
-.human_btn i .active {
-    color: #fff !important;
+.human_btn .active_btn>.la-user-alt {
+    color: white;
 }
 
 
@@ -145,11 +144,9 @@ li.list-inline-item.human_btn {
     color: #fff !important;
 }
 
-.veterinary_btn a .active,
-.veterinary_btn i .active {
-    color: #fff !important;
+.veterinary_btn .active_btn>.la-dog {
+    color: white;
 }
-
 
 .top_baar_icons {
     padding-top: 6px;
