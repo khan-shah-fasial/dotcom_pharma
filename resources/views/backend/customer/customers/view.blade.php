@@ -24,7 +24,7 @@
                                     <p>{{ $user->gst_no ?? "-" }}</p>
                                     <br>
 
-                                    @if (!empty($user->gst_no_file) && file_exists(public_path(custom_file($user->gst_no_file))))
+                                    @if (!empty($user->gst_no_file))
 
                                         <a href="{{ asset(custom_file($user->gst_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
@@ -42,7 +42,7 @@
                                     <p>{{ $user->iec_no ?? "-" }}</p>
                                     <br>
 
-                                    @if (!empty($user->iec_no_file) && file_exists(public_path(custom_file($user->iec_no_file))))
+                                    @if (!empty($user->iec_no_file))
 
                                         <a href="{{ asset(custom_file($user->iec_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
@@ -383,7 +383,7 @@
                                     <p>{{ $user->aadhaar_no ?? "-" }}</p>
                                     <br>
 
-                                    @if (!empty($user->aadhaar_no_file) && file_exists(public_path(custom_file($user->aadhaar_no_file))))
+                                    @if (!empty($user->aadhaar_no_file))
 
                                         <a href="{{ asset(custom_file($user->aadhaar_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
@@ -400,7 +400,7 @@
                                     <p>{{ $user->pan_no ?? "-" }}</p>
                                     <br>
 
-                                    @if (!empty($user->pan_no_file) && file_exists(public_path(custom_file($user->pan_no_file))))
+                                    @if (!empty($user->pan_no_file))
 
                                         <a href="{{ asset(custom_file($user->pan_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
@@ -418,7 +418,7 @@
                                     <p>{{ $user->passport_no ?? "-" }}</p>
                                     <br>
 
-                                    @if (!empty($user->passport_no_file) && file_exists(public_path(custom_file($user->passport_no_file))))
+                                    @if (!empty($user->passport_no_file))
 
                                         <a href="{{ asset(custom_file($user->passport_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                             view
@@ -436,7 +436,7 @@
                                 <label class="form-label" for="name">Photo Upload</label>
                                 <br>
 
-                                @if (!empty($user->photo_file) && file_exists(public_path(custom_file($user->photo_file))))
+                                @if (!empty($user->photo_file))
 
                                     <a href="{{ asset(custom_file($user->photo_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
