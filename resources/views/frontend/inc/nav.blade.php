@@ -870,7 +870,7 @@ body .translater_menu .select2-container {
         </div>
 
         <!-- Menu Bar -->
-        <div class="d-none d-lg-block position-relative h-50px" style="background-color: white !important;">
+        <div class="d-none d-lg-block position-relative h-50px border-bottom" style="background-color: white !important;">
             <div class="container h-100">
                 <div class="row pt-0">
                     <div class="col-12 d-none d-lg-block logo_menu">

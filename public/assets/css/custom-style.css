@@ -1839,7 +1839,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .without-tax-product-gst {
     color: var(--primary);
     font-weight: 700;
-    font-size: 18px;
+    font-size: 30px;
 }
 
 .text-black {
@@ -1850,7 +1850,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .per-piece-price-product-details-gst {
     color: var(--primary);
     font-weight: 700;
-    font-size: 30px;
+    font-size: 18px;
 }
 
 .percentage-offf {
