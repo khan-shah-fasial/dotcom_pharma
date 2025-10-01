@@ -49,14 +49,14 @@
                         <li class="list-inline-item veterinary_btn">
                             <a href="javascript:void(0)"
                                 class=" fs-12 py-2 {{ session('web_type_name') == 'veterinary' ? 'active_btn' : '' }}">
-                                <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
+                                <i class="las la-dog"></i> Veterinary
                             </a>
                         </li>
 
                         <li class="list-inline-item human_btn">
                             <a href="javascript:void(0)"
                                 class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
-                                <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
+                                <i class="las la-user-alt"></i> Human
                             </a>
                         </li>
                     </ul>
@@ -799,7 +799,7 @@
         <!-- Menu Bar -->
         <div class="d-none d-lg-block position-relative h-50px" style="background-color: white !important;">
             <div class="container h-100">
-                <div class="row pt-2">
+                <div class="row pt-0">
                     <div class="col-12 d-none d-lg-block logo_menu">
                         <div class="text-center">
                             @php $category_top_menu = getCategoryTopMenu(); @endphp
@@ -807,13 +807,13 @@
                             @foreach ($category_top_menu as $cat)
                                 <li class="list-inline-item mr-3 animate-underline-white dropdown">
                                     <a href="#"
-                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links dropdown-toggle"
+                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links dropdown-toggle pt-2 pb-2"
                                         id="injectionsDropdown_{{ $cat->id }}"
                                         data-toggle="dropdown" aria-haspopup="true"
                                         aria-expanded="false">
                                         {{ $cat->name }}
                                     </a>
-                                    <div class="dropdown-menu"
+                                    <div class="dropdown-menu dropdown-menu-bottom-top"
                                         aria-labelledby="injectionsDropdown_{{ $cat->id }}">
                                         @foreach ($cat->childrenCategories as $childCategory)
                                             <a class="dropdown-item"
