@@ -456,33 +456,33 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body modal-body-prescription">
                         {{-- Name --}}
                         <div class="mb-3">
-                            <label for="presc_name" class="form-label">Name</label>
+                            <label for="presc_name" class="form-label mb-0 pl-1">Name</label>
                             <input type="text" class="form-control" id="presc_name" name="name"
                                 value="{{ old('name', auth()->user()->name ?? '') }}" required>
                         </div>
 
                         {{-- Email --}}
                         <div class="mb-3">
-                            <label for="presc_email" class="form-label">Email</label>
+                            <label for="presc_email" class="form-label mb-0 pl-1">Email</label>
                             <input type="email" class="form-control" id="presc_email" name="email"
                                 value="{{ old('email', auth()->user()->email ?? '') }}">
-                            <div class="form-text">Either email or phone is required.</div>
+                            <div class="form-text form-text-disc">Either email or phone is required.</div>
                         </div>
 
                         {{-- Phone --}}
                         <div class="mb-3">
-                            <label for="presc_phone" class="form-label">Phone</label>
+                            <label for="presc_phone" class="form-label mb-0 pl-1">Phone</label>
                             <input type="text" class="form-control" id="presc_phone" name="phone"
                                 value="{{ old('phone', auth()->user()->phone ?? '') }}">
-                            <div class="form-text">Either phone or email is required.</div>
+                            <div class="form-text form-text-disc">Either phone or email is required.</div>
                         </div>
 
                         {{-- File --}}
                         <div class="mb-3">
-                            <label for="presc_file" class="form-label">Prescription (image or PDF)</label>
+                            <label for="presc_file" class="form-label mb-0 pl-1">Prescription (image or PDF)*</label>
                             <input class="form-control" type="file" id="presc_file" name="prescription_file"
                                 accept="image/*,application/pdf" required>
                             <small class="form-text text-muted">Accepted: jpg, jpeg, png, gif, pdf. Max 5MB.</small>

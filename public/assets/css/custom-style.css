@@ -22,7 +22,7 @@ li {
 }
 
 .blue_bg_light_clr {
-    background-color: #123498;
+    background-color: #2b56a1;
 }
 
 .light_bg_gray {
@@ -341,7 +341,7 @@ button.slick-next.slick-arrow {
 }
 
 #customers-testimonials .slick-slide.slick-current.slick-active.slick-center .rating1 i {
-    color: #123498;
+    color: #2b56a1;
 }
 
 .rating1 i {
@@ -401,7 +401,7 @@ section.why_choose_us {
 
 /*-- category section css open --*/
 .category_images {
-    background: #123498;
+    background: #2b56a1;
     border-radius: 100%;
     text-align: center;
     width: 100px;
@@ -428,11 +428,11 @@ section.why_choose_us {
     margin-left: auto;
     margin-right: auto;
     padding-top: 8px;
-    border: 1px dashed #123498 !important;
+    border: 1px dashed #2b56a1 !important;
 }
 
 .category_boxex_main {
-    border: 1px solid #123498;
+    border: 1px solid #2b56a1;
     margin: 0px 10px;
     border-radius: 20px;
     padding-top: 15px;
@@ -711,7 +711,7 @@ body .accordion_section .card {
     border-radius: 50px !important;
     margin-right: 15px;
     background: #1234981A;
-    color: #123498;
+    color: #2b56a1;
     font-weight: 500;
     margin-bottom: 20px;
 }
@@ -723,7 +723,7 @@ body .accordion_section .card {
 }
 
 .tabs_products .nav-link.active {
-    background: #123498;
+    background: #2b56a1;
 }
 
 body .aiz-count-down-circle {
@@ -1160,7 +1160,7 @@ ul.dropdown-menu {
     text-align: center;
     line-height: 24px;
     border: 2px solid;
-    background: #123498;
+    background: #2b56a1;
     right: -5px !important;
     position: absolute;
     margin-bottom: -19px !important;
@@ -1208,7 +1208,7 @@ body .product_listing_box .product_img_bg i.las.la-shopping-bag.la-2x {
     text-align: center;
     line-height: 24px;
     border: 2px solid;
-    background: #123498;
+    background: #2b56a1;
     right: 12px;
     position: absolute;
     bottom: 11px;
@@ -1226,7 +1226,7 @@ body .product_listing_box .product_img_bg i.las.la-shopping-bag.la-2x {
 }
 
 .blue_bg1 {
-    background: #123498;
+    background: #2b56a1;
 }
 
 div#section_best_selling .product_img_bg {
@@ -1278,10 +1278,10 @@ body .green_lg_btn a {
 body .blue_lg_btn a {
     border-radius: 50px;
     padding: 10px 35px;
-    background: #123498;
+    background: #2b56a1;
     opacity: 1 !important;
     color: #fff !important;
-    border-color: #123498 !important;
+    border-color: #2b56a1 !important;
     font-size: 16px !important;
 }
 
@@ -1363,7 +1363,7 @@ body .form-control:focus {
 
 .white_buttons::before,
 .white_buttons::after {
-    background: #123498;
+    background: #2b56a1;
 }
 
 .white_buttons:hover {
@@ -1375,7 +1375,7 @@ body .form-control:focus {
 .black1_buttons {
     z-index: 1;
     color: #fff;
-    background-color: #123498;
+    background-color: #2b56a1;
     border-radius: 50px;
 }
 
@@ -1411,20 +1411,20 @@ body .form-control:focus {
 
 body div#section_newest .product_listing_box .product_img_bg i.las.la-shopping-bag.la-2x {
 
-    background-color: #123498 !important;
+    background-color: #2b56a1 !important;
 }
 
 body div#section_newest .product_listing_box .product_img_bg span.fw-700.text-primary {
-    color: #123498 !important;
+    color: #2b56a1 !important;
 }
 
 body #section_best_selling .product_listing_box .product_img_bg i.las.la-shopping-bag.la-2x {
 
-    background-color: #123498 !important;
+    background-color: #2b56a1 !important;
 }
 
 body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text-primary {
-    color: #123498 !important;
+    color: #2b56a1 !important;
 }
 
 .fs-md-34 {
@@ -1842,6 +1842,12 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     font-size: 30px;
 }
 
+.without-tax-product-1 {
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+    font-size: 30px !important;
+}
+
 .text-black {
     color: black !important;
 }
@@ -1909,4 +1915,15 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 
 .product-enquiry-form-name-email .form-group{
     width: 48.3%;
+}
+
+.form-text-disc{
+    color: red !important;
+    font-size: 11px !important;
+    padding-left: 10px;
+    margin-top: 0px;
+}
+
+.modal-body-prescription .form-control{
+    border-radius: 0px !important;
 }
