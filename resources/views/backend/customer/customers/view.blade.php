@@ -731,7 +731,7 @@
                                 <p>{{ $user->d_l_no_1 ?? "-" }}</p>
                                 <br>
 
-                                @if (!empty($user->d_l_no_1_file) && file_exists(public_path(custom_file($user->d_l_no_1_file))))
+                                @if (!empty($user->d_l_no_1_file))
 
                                     <a href="{{ asset(custom_file($user->d_l_no_1_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
@@ -748,7 +748,7 @@
                                 <p>{{ $user->d_l_no_2 ?? "-" }}</p>
                                 <br>
 
-                                @if (!empty($user->d_l_no_2_file) && file_exists(public_path(custom_file($user->d_l_no_2_file))))
+                                @if (!empty($user->d_l_no_2_file))
 
                                     <a href="{{ asset(custom_file($user->d_l_no_2_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
@@ -765,7 +765,7 @@
                                 <p>{{ $user->d_l_no_3 ?? "-" }}</p>
                                 <br>
 
-                                @if (!empty($user->d_l_no_3_file) && file_exists(public_path(custom_file($user->d_l_no_3_file))))
+                                @if (!empty($user->d_l_no_3_file))
 
                                     <a href="{{ asset(custom_file($user->d_l_no_3_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
@@ -782,7 +782,7 @@
                                 <p>{{ $user->doctor_hospital_reg_no ?? "-" }}</p>
                                 <br>
 
-                                @if (!empty($user->doctor_hospital_reg_no_file) && file_exists(public_path(custom_file($user->doctor_hospital_reg_no_file))))
+                                @if (!empty($user->doctor_hospital_reg_no_file))
 
                                     <a href="{{ asset(custom_file($user->doctor_hospital_reg_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
@@ -799,7 +799,7 @@
                                 <p>{{ $user->dairy_trust_ngo_reg_no ?? "-" }}</p>
                                 <br>
 
-                                @if (!empty($user->dairy_trust_ngo_reg_no_file) && file_exists(public_path(custom_file($user->dairy_trust_ngo_reg_no_file))))
+                                @if (!empty($user->dairy_trust_ngo_reg_no_file))
 
                                     <a href="{{ asset(custom_file($user->dairy_trust_ngo_reg_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
@@ -816,7 +816,7 @@
                                 <p>{{ $user->cc_mdl_reg_no ?? "-" }}</p>
                                 <br>
 
-                                @if (!empty($user->cc_mdl_reg_no_file) && file_exists(public_path(custom_file($user->cc_mdl_reg_no_file))))
+                                @if (!empty($user->cc_mdl_reg_no_file))
 
                                     <a href="{{ asset(custom_file($user->cc_mdl_reg_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
@@ -833,7 +833,7 @@
                                 <p>{{ $user->other_reg_no ?? "-" }}</p>
                                 <br>
 
-                                @if (!empty($user->other_reg_no_file) && file_exists(public_path(custom_file($user->other_reg_no_file))))
+                                @if (!empty($user->other_reg_no_file))
 
                                     <a href="{{ asset(custom_file($user->other_reg_no_file)) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         view
