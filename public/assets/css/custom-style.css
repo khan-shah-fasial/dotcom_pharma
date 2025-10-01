@@ -148,6 +148,12 @@ li.list-inline-item.human_btn {
     color: white;
 }
 
+.b2b_buttons .la-sign-in-alt{
+    font-size:13px;
+    top: 2px;
+    position: relative;
+}
+
 .top_baar_icons {
     padding-top: 6px;
 }

@@ -68,7 +68,8 @@
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
                         <li class="list-inline-item d-none d-md-block mr-3">
-                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">B2B Registration</a>
+                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
+                                <i class="las la-sign-in-alt"></i> B2B Registration</a>
                         </li>
 
                         <!-- Language switcher -->
