@@ -1,4 +1,63 @@
-    <!-- Top Bar Banner -->
+
+
+<style>
+    .flag-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+          font-size: 12px;
+    }
+    .flag-option img {
+      width: 20px;
+      height: 14px;
+    }
+    .translater_menu span.select2-selection.select2-selection--single {
+    background-color: #fff;
+    border: 1px solid #2b56a1;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-top: 10px;
+    border-radius: 8px;
+    height: 25px;
+}
+.translater_menu .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: #2b56a1 !important;
+    color: white;
+}
+    .translater_menu .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #444;
+    line-height: 23px;
+    color: #2b56a1;
+    font-size: 11px;
+}
+.translater_menu select#languageDropdown {
+    width: 140px;
+    border-radius: 8px;
+    border: 1px solid #2b56a1;
+    margin-top: 9px;
+}
+body .translater_menu .select2-container {
+    width: 140px !important;
+}
+
+.translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 41px;
+}
+.select2-results__option {
+    padding: 1px 6px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #2b56a1 transparent transparent transparent;
+}
+
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: #2b56a1 !important;
+    color: white;
+}
+</style>
+<!-- Top Bar Banner -->
     @php
         $topbar_banner = get_setting('topbar_banner');
         $topbar_banner_medium = get_setting('topbar_banner_medium');
@@ -72,8 +131,18 @@
                                 <i class="las la-sign-in-alt"></i> B2B Registration</a>
                         </li>
 
+                        <li class="list-inline-item d-none d-md-block mr-3 translater_menu">
+                           <!-- Hidden Google Translate -->
+  <div id="google-translate-dropdown" style="display:none;"></div>
+
+  <!-- Custom Dropdown -->
+  <select id="languageDropdown" style="display:none;"></select>
+                        </li>
+
+                        
+
                         <!-- Language switcher -->
-                        @if (get_setting('show_language_switcher') == 'on')
+                        <!-- @if (get_setting('show_language_switcher') == 'on')
                             <li class="list-inline-item dropdown mr-3" id="lang-change">
 
                                 <a href="javascript:void(0)" class="black_light_clr dropdown-toggle fs-12 py-2"
@@ -94,7 +163,7 @@
                                     @endforeach
                                 </ul>
                             </li>
-                        @endif
+                        @endif -->
 
                         <!-- Currency Switcher -->
                         @if (get_setting('show_currency_switcher') == 'on')
