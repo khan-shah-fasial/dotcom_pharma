@@ -64,7 +64,7 @@
         </div>
 
         @auth
-            @if (auth()->user()->user_subtype !== null) --}}
+            @if (auth()->user()->user_subtype !== null)
                 <div class="col-12 pl-0 mt-3 pb-0">
                     <span class="detail-font-14px detail-gray-color">{{ translate('Price') }}:</span>
                     <span id="without-tax-product" class=""></span> <span class="without-tax-product-gst"> excl. GST</span>
