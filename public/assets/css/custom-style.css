@@ -83,17 +83,14 @@ li {
     float: left;
 }
 
-.human_btn img {
-    width: 11px !important;
-    margin-right: 2px;
-    position: relative;
-    top: -1px;
+.human_btn i {
+    font-size: 13px !important;
+    color: #2b56a1;
 }
 
 .human_btn a {
     /* width: 75px; */
     text-align: center;
-    color: #123498 !important;
     background: #fff;
     border-radius: 8px;
     padding: 0px 4px !important;
@@ -108,9 +105,10 @@ li {
     color: #fff !important;
 }
 
-.human_btn .active img {
-    filter: grayscale(100%) brightness(1000%);
+.human_btn .active_btn>.la-user-alt {
+    color: white;
 }
+
 
 .veterinary_btn a {
     border: 1px solid #2b56a1;
@@ -120,11 +118,9 @@ li {
     float: left;
 }
 
-.veterinary_btn img {
-    width: 11px !important;
-    margin-right: 2px;
-    position: relative;
-    top: -1px;
+.veterinary_btn i {
+    font-size: 13px !important;
+    color: #2b56a1;
 }
 
 li.list-inline-item.human_btn {
@@ -134,7 +130,6 @@ li.list-inline-item.human_btn {
 .veterinary_btn a {
     /* width: 85px; */
     text-align: center;
-    color: #123498 !important;
     background: #fff;
     border-radius: 8px;
     padding: 0px 4px !important;
@@ -149,8 +144,14 @@ li.list-inline-item.human_btn {
     color: #fff !important;
 }
 
-.veterinary_btn .active img {
-    filter: grayscale(100%) brightness(1000%);
+.veterinary_btn .active_btn>.la-dog {
+    color: white;
+}
+
+.b2b_buttons .la-sign-in-alt{
+    font-size:13px;
+    top: 2px;
+    position: relative;
 }
 
 .top_baar_icons {
@@ -1477,6 +1478,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     font-size: 11px !important;
     position: relative;
     top: 7px;
+    background-color: white;
 
 
 
@@ -1879,4 +1881,8 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .product_disc_text .detail-buy-now-btn {
     background-color: #2b56a1 !important;
     border-color: #2b56a1 !important;
+}
+
+.dropdown-menu-bottom-top{
+    top: 50px !important;
 }
