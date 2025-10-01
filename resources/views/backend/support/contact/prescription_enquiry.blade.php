@@ -11,11 +11,11 @@
                     <h5 class="mb-md-0 h6">{{ translate('All prescription Enquiries') }}</h5>
                 </div>
     
-                <input type="hidden" name="type" value="product">
+                <input type="hidden" name="type" value="prescription">
                 <div class="col-md-2">
                     <div class="form-group mb-0">
                         <label for="date_from" class="form-label">{{ translate('Search') }}</label>
-                        <input type="text" class="form-control form-control-sm" id="search" name="search" value="{{ request('search') }}" placeholder="{{ translate('Type & Enter') }}">
+                        <input type="text" class="form-control form-control-sm" id="search" name="search" value="{{ request('search') }}" placeholder="{{ translate('Name / Email / Phone') }}">
                     </div>
                 </div>
                 <!-- From Date -->
@@ -58,7 +58,7 @@
                         <th data-breakpoints="lg">{{ translate('Date') }}</th>
                         {{-- <th data-breakpoints="lg">{{ translate('Reply') }}</th> --}}
                         {{-- <th>{{ translate('status') }}</th> --}}
-                        <th class="text-right">{{ translate('Options') }}</th>
+                        {{-- <th class="text-right">{{ translate('Options') }}</th> --}}
                     </tr>
                 </thead>
                 <tbody>
@@ -70,8 +70,8 @@
                             <td>{{ $contact->phone }}</td>
                             {{-- <td>{{ $contact->pincode }}</td> --}}
                             <td>
-                                <a href="{{ $contact->url }}" target="_blank">
-                                    Page Visit
+                                <a href="{{ static_asset('storage/'.$contact->attachment) }}" target="_blank">
+                                    View Prescription
                                 </a>
                             </td>
                             <td>{{ date('d-m-Y', strtotime($contact->created_at)) }}</td>
@@ -82,13 +82,13 @@
                                     {{ $contact->reply == null ? translate('Not Replied') : translate('Replied')}}
                                 </span>
                             </td> --}}
-                            <td class="text-right">
+                            {{-- <td class="text-right">
                                 <a class="btn btn-soft-primary btn-icon btn-circle btn-sm"
                                     href="javascript:void(1)" onclick="showQuery({{ $contact->id }})"
                                     title="{{ translate('View') }}">
                                     <i class="las la-eye"></i>
                                 </a>
-                            </td>
+                            </td> --}}
                         </tr>
                     @endforeach
                 </tbody>

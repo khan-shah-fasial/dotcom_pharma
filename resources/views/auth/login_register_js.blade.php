@@ -101,24 +101,62 @@
 
         });
 
+        // function toggleEmailPhone(el) {
+        //     if (isPhoneShown) {
+        //         $('.phone-form-group').addClass('d-none');
+        //         $('.email-form-group').removeClass('d-none');
+        //         $('input[name=phone]').val(null);
+        //         $('input[name=phone]').removeAttr('required');
+        //         $('input[name=email]').attr('required', true);
+        //         isPhoneShown = false;
+        //         $(el).html('*{{ translate('Use Phone Number Instead') }}');
+        //     } else {
+        //         $('.phone-form-group').removeClass('d-none');
+        //         $('.email-form-group').addClass('d-none');
+        //         $('input[name=email]').val(null);
+        //         $('input[name=email]').removeAttr('required');
+        //         $('input[name=phone]').attr('required', true);
+        //         isPhoneShown = true;
+        //         $(el).html('<i>*{{ translate('Use Email Instead') }}</i>');
+        //     }
+        // }
+
+
         function toggleEmailPhone(el) {
             if (isPhoneShown) {
                 $('.phone-form-group').addClass('d-none');
                 $('.email-form-group').removeClass('d-none');
                 $('input[name=phone]').val(null);
-                $('input[name=phone]').removeAttr('required');
-                $('input[name=email]').attr('required', true);
                 isPhoneShown = false;
                 $(el).html('*{{ translate('Use Phone Number Instead') }}');
+
+                $('.toggle-login-with-otp').addClass('d-none');
+
             } else {
                 $('.phone-form-group').removeClass('d-none');
                 $('.email-form-group').addClass('d-none');
                 $('input[name=email]').val(null);
-                $('input[name=email]').removeAttr('required');
-                $('input[name=phone]').attr('required', true);
                 isPhoneShown = true;
                 $(el).html('<i>*{{ translate('Use Email Instead') }}</i>');
+
+                $('.toggle-login-with-otp').removeClass('d-none');
             }
+            
+            $('.submit-button').html('{{ translate('Login') }}');
+            $('.password-login-block').removeClass('d-none');
+            
+            var url = '{{ route('login') }}';
+            $('.loginForm').attr('action', url);
         }
+
+        function toggleLoginPassOTP() {
+            $('.password-login-block').addClass('d-none');
+            $('.submit-button').html('{{ translate('Login With OTP') }}');
+
+            var url = '{{ route('send-otp') }}';
+            $('.loginForm').attr('action', url);
+        }
+
+
     </script> 
 @endif
