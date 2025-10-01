@@ -1498,6 +1498,26 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     color: #fff;
 }
 
+#prescription-btn{
+    border: 1px solid #2b56a1;
+    color: #2b56a1;
+    margin-left: 15px;
+    text-align: center;
+    background: #d0d6ea;
+    border-radius: 8px;
+    padding: 3.5px 4px !important;
+    font-weight: 400;
+    font-size: 11px !important;
+    position: relative;
+    top: 7px;
+    background-color: white;
+}
+
+#prescription-btn:hover {
+    background: #2b56a1;
+    color: #fff;
+}
+
 .delivery_section {
     background: white;
     border-width: 1px;

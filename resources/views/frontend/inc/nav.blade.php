@@ -131,12 +131,23 @@ body .translater_menu .select2-container {
                                 <i class="las la-sign-in-alt"></i> B2B Registration</a>
                         </li>
 
-                        <li class="list-inline-item d-none d-md-block mr-3 translater_menu">
-                           <!-- Hidden Google Translate -->
-  <div id="google-translate-dropdown" style="display:none;"></div>
 
-  <!-- Custom Dropdown -->
-  <select id="languageDropdown" style="display:none;"></select>
+                        {{--  --}}
+                        <!-- prescription -->
+                        @auth
+                            <li class="list-inline-item d-none d-md-block mr-3">
+                                <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
+                                    <i class="fa fa-file-prescription"></i> Prescription</a>
+                            </li>
+                        @endauth
+                        {{--  --}}
+
+
+                        <li class="list-inline-item d-none d-md-block mr-3 translater_menu">
+                            <!-- Hidden Google Translate -->
+                            <div id="google-translate-dropdown" style="display:none;"></div>
+                            <!-- Custom Dropdown -->
+                            <select id="languageDropdown" style="display:none;"></select>
                         </li>
 
                         
@@ -453,15 +464,7 @@ body .translater_menu .select2-container {
                                     </div>
                                 </div>
 
-                                <!-- prescription -->
-                                @auth
-                                    <div class="">
-                                        <a href="javascript:void(0)" id="prescription-btn" class="nav-link" title="Upload Prescription">
-                                            <i class="fa fa-file-prescription"></i> <!-- or fa-file-medical -->
-                                            <span class="d-none d-md-inline">Prescription</span>
-                                        </a>
-                                    </div>
-                                @endauth
+                                
 
                                 @if (Auth::check() && auth()->user()->user_type == 'customer')
                                     <!-- Compare -->
