@@ -32516,3 +32516,34 @@ img.jssocials-share-logo {
 .hide-scrollbars {
     overflow: hidden !important
 }
+
+
+
+.drop-down-text-icon .dropdown-toggle::after {
+    font-weight: 900;
+    font-size: 12px !important;
+    margin-left: 0rem !important;
+}
+
+.drop-down-text-icon .show.dropdown-menu{
+    left: 0px !important;
+    display: flex;
+    flex-direction: column;
+    max-width: 250px;
+    min-width: 50px;
+}
+
+.drop-down-text-icon-business .show.dropdown-menu{
+    min-width: 153px !important;
+}
+
+.drop-down-text-icon .show.dropdown-menu a{
+    display: flex;
+    align-items: center;
+    padding: 5px 5px 5px 5px;
+}
+
+.drop-down-text-icon .dropdown-toggle::after {
+    display: none !important;
+}
+

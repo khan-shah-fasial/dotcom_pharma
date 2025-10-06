@@ -133,57 +133,82 @@
                                             </span>
                                         @endif
                                     </td> --}}
-                                    <td class="text-right">
-                                        <a href="{{ route('customers.view', encrypt($user->id)) }}"
-                                            class="btn btn-soft-success btn-icon btn-circle btn-sm"
-                                            title="{{ translate('View Details of this Customer') }}">
-                                            <i class="las la-eye"></i>
-                                        </a>
-                                        {{-- @can('ban_customer')
-                                            @if ($user->approval_status != 1)
-                                                <a href="#" class="btn btn-soft-success btn-icon btn-circle btn-sm"
-                                                    onclick="show_Approval_model({{ $user->id }}, 'approve', '{{ $user->user_subtype ?? 'null' }}');"
-                                                    title="{{ translate('Approval this Customer') }}">
-                                                    <i class="las la-edit"></i>
-                                                </a>
-                                            @else
-                                                <a href="#" class="btn btn-soft-success btn-icon btn-circle btn-sm"
-                                                    onclick="show_Approval_model({{ $user->id }}, 'not_approve', '{{ $user->user_subtype ?? 'null' }}');"
-                                                    title="{{ translate('Not Approve this Customer') }}">
-                                                    <i class="las la-edit"></i>
-                                                </a>
-                                            @endif
-                                        @endcan --}}
-                                        @if ($user->email_verified_at != null && auth()->user()->can('login_as_customer'))
-                                            <a href="{{ route('customers.login', encrypt($user->id)) }}"
-                                                class="btn btn-soft-primary btn-icon btn-circle btn-sm"
-                                                title="{{ translate('Log in as this Customer') }}">
-                                                <i class="las la-sign-in-alt"></i>
-                                            </a>
-                                        @endif
-                                        @can('ban_customer')
-                                            @if ($user->banned != 1)
-                                                <a href="#" class="btn btn-soft-danger btn-icon btn-circle btn-sm"
-                                                    onclick="confirm_ban('{{ route('customers.ban', encrypt($user->id)) }}');"
-                                                    title="{{ translate('Ban this Customer') }}">
-                                                    <i class="las la-user-slash"></i>
-                                                </a>
-                                            @else
-                                                <a href="#" class="btn btn-soft-success btn-icon btn-circle btn-sm"
-                                                    onclick="confirm_unban('{{ route('customers.ban', encrypt($user->id)) }}');"
-                                                    title="{{ translate('Unban this Customer') }}">
-                                                    <i class="las la-user-check"></i>
-                                                </a>
-                                            @endif
-                                        @endcan
-                                        @can('delete_customer')
-                                            <a href="#"
-                                                class="btn btn-soft-danger btn-icon btn-circle btn-sm confirm-delete"
-                                                data-href="{{ route('customers.destroy', $user->id) }}"
-                                                title="{{ translate('Delete') }}">
-                                                <i class="las la-trash"></i>
-                                            </a>
-                                        @endcan
+                                    <td class="text-right drop-down-text-icon">
+                                       
+                                <div class="dropdown">
+    <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button" id="customerActionDropdown{{ $user->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="las la-ellipsis-h"></i>
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="customerActionDropdown{{ $user->id }}">
+
+        <!-- View -->
+        <a href="{{ route('customers.view', encrypt($user->id)) }}"
+            class="btn"
+            title="{{ translate('View Details of this Customer') }}">
+            <i class="las la-eye btn-soft-success btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('View') }}</span>
+        </a>
+
+        {{-- Approval buttons (kept commented exactly as your code) --}}
+        {{-- 
+        @can('ban_customer')
+            @if ($user->approval_status != 1)
+                <a href="#" class="btn btn-soft-success btn-icon btn-circle btn-sm"
+                    onclick="show_Approval_model({{ $user->id }}, 'approve', '{{ $user->user_subtype ?? 'null' }}');"
+                    title="{{ translate('Approval this Customer') }}">
+                    <i class="las la-edit"></i> <span class="ms-1">{{ translate('Approve') }}</span>
+                </a>
+            @else
+                <a href="#" class="btn btn-soft-success btn-icon btn-circle btn-sm"
+                    onclick="show_Approval_model({{ $user->id }}, 'not_approve', '{{ $user->user_subtype ?? 'null' }}');"
+                    title="{{ translate('Not Approve this Customer') }}">
+                    <i class="las la-edit"></i> <span class="ms-1">{{ translate('Not Approve') }}</span>
+                </a>
+            @endif
+        @endcan 
+        --}}
+
+        <!-- Login as Customer -->
+        @if ($user->email_verified_at != null && auth()->user()->can('login_as_customer'))
+            <a href="{{ route('customers.login', encrypt($user->id)) }}"
+                class="btn "
+                title="{{ translate('Log in as this Customer') }}">
+                <i class="las la-sign-in-alt btn-soft-primary btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Login') }}</span>
+            </a>
+        @endif
+
+        <!-- Ban / Unban -->
+        @can('ban_customer')
+            @if ($user->banned != 1)
+                <a href="#" class="btn"
+                    onclick="confirm_ban('{{ route('customers.ban', encrypt($user->id)) }}');"
+                    title="{{ translate('Ban this Customer') }}">
+                    <i class="las la-user-slash btn-soft-danger btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Ban') }}</span>
+                </a>
+            @else
+                <a href="#" class="btn"
+                    onclick="confirm_unban('{{ route('customers.ban', encrypt($user->id)) }}');"
+                    title="{{ translate('Unban this Customer') }}">
+                    <i class="las la-user-check  btn-soft-success btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Unban') }}</span>
+                </a>
+            @endif
+        @endcan
+
+        <!-- Delete -->
+        @can('delete_customer')
+            <a href="#"
+                class="btn"
+                data-href="{{ route('customers.destroy', $user->id) }}"
+                title="{{ translate('Delete') }}">
+                <i class="las la-trash btn-soft-danger btn-icon btn-circle btn-sm confirm-delete mr-2"></i> <span class="ms-1">{{ translate('Delete') }}</span>
+            </a>
+        @endcan
+
+    </div>
+</div>
+
+
+
                                     </td>
                                 </tr>
                             @endif

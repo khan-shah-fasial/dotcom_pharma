@@ -300,42 +300,58 @@
                                         <span class="slider round"></span>
                                     </label>
                                 </td>
-                                <td class="text-right">
-                                    <a class="btn btn-soft-success btn-icon btn-circle btn-sm"
-                                        href="{{ route('product', $product->slug) }}" target="_blank"
-                                        title="{{ translate('View') }}">
-                                        <i class="las la-eye"></i>
-                                    </a>
-                                    @can('product_edit')
-                                        @if ($type == 'Seller')
-                                            <a class="btn btn-soft-primary btn-icon btn-circle btn-sm"
-                                                href="{{ route('products.seller.edit', ['id' => $product->id, 'lang' => env('DEFAULT_LANGUAGE')]) }}"
-                                                title="{{ translate('Edit') }}">
-                                                <i class="las la-edit"></i>
-                                            </a>
-                                        @else
-                                            <a class="btn btn-soft-primary btn-icon btn-circle btn-sm"
-                                                href="{{ route('products.admin.edit', ['id' => $product->id, 'lang' => env('DEFAULT_LANGUAGE')]) }}"
-                                                title="{{ translate('Edit') }}">
-                                                <i class="las la-edit"></i>
-                                            </a>
-                                        @endif
-                                    @endcan
-                                    @can('product_duplicate')
-                                        {{-- <a class="btn btn-soft-warning btn-icon btn-circle btn-sm"
-                                            href="{{ route('products.duplicate', ['id' => $product->id, 'type' => $type]) }}"
-                                            title="{{ translate('Duplicate') }}">
-                                            <i class="las la-copy"></i>
-                                        </a> --}}
-                                    @endcan
-                                    @can('product_delete')
-                                        <a href="#"
-                                            class="btn btn-soft-danger btn-icon btn-circle btn-sm confirm-delete"
-                                            data-href="{{ route('products.destroy', $product->id) }}"
-                                            title="{{ translate('Delete') }}">
-                                            <i class="las la-trash"></i>
-                                        </a>
-                                    @endcan
+                                <td class="text-right drop-down-text-icon">
+                                   <div class="dropdown">
+    <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button" id="productActionDropdown{{ $product->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="las la-ellipsis-h"></i>
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="productActionDropdown{{ $product->id }}">
+        <!-- View -->
+        <a class="btn"
+           href="{{ route('product', $product->slug) }}" target="_blank"
+           title="{{ translate('View') }}">
+            <i class="las la-eye btn-soft-success btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('View') }}</span>
+        </a>
+
+        @can('product_edit')
+            @if ($type == 'Seller')
+                <a class="btn"
+                   href="{{ route('products.seller.edit', ['id' => $product->id, 'lang' => env('DEFAULT_LANGUAGE')]) }}"
+                   title="{{ translate('Edit') }}">
+                    <i class="las la-edit btn-soft-primary btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Edit') }}</span>
+                </a>
+            @else
+                <a class="btn"
+                   href="{{ route('products.admin.edit', ['id' => $product->id, 'lang' => env('DEFAULT_LANGUAGE')]) }}"
+                   title="{{ translate('Edit') }}">
+                    <i class="las la-edit btn-soft-primary btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Edit') }}</span>
+                </a>
+            @endif
+        @endcan
+
+        @can('product_duplicate')
+            {{-- 
+            <a class="btn"
+               href="{{ route('products.duplicate', ['id' => $product->id, 'type' => $type]) }}"
+               title="{{ translate('Duplicate') }}">
+                <i class="las la-copy btn-soft-warning btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Duplicate') }}</span>
+            </a>
+            --}}
+        @endcan
+
+        @can('product_delete')
+            <a href="#"
+               class="btn"
+               data-href="{{ route('products.destroy', $product->id) }}"
+               title="{{ translate('Delete') }}">
+                <i class="las la-trash btn-soft-danger btn-icon btn-circle btn-sm confirm-delete mr-2"></i> <span class="ms-1">{{ translate('Delete') }}</span>
+            </a>
+        @endcan
+    </div>
+</div>
+
+
                                 </td>
                             </tr>
                         @endforeach
