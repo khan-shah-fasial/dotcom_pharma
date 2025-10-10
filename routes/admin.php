@@ -56,6 +56,7 @@ use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\WarrantyController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\ZoneController;
+use App\Http\Controllers\RequestDocController;
 
 /*
   |--------------------------------------------------------------------------
@@ -225,6 +226,16 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
         Route::get('/customers_view/{id}', 'view')->name('customers.view');
         Route::any('/customers_approval', 'approval')->name('customers.approval');
+    });
+
+    Route::middleware(['auth','can:admin'])->group(function () {
+        Route::get('/request-docs', [RequestDocController::class, 'adminIndex'])->name('customers.request-doc.index');
+        Route::post('/request-docs/{doc}/approve', [RequestDocController::class, 'approve'])->name('admin.request-doc.approve');
+        Route::post('/request-docs/{doc}/disapprove', [RequestDocController::class, 'disapprove'])->name('admin.request-doc.disapprove');
+
+        Route::post('/admin/request-docs/pdf-store', [RequestDocController::class, 'storeBusinessRequestPdfs'])
+        ->name('admin.request-doc.pdf.store');
+
     });
 
     // Newsletter

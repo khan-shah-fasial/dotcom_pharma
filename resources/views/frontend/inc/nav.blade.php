@@ -741,6 +741,18 @@ body .translater_menu .select2-container {
                                                 class="user-top-menu-name has-transition ml-3">{{ translate('Purchase History') }}</span>
                                         </a>
                                     </li>
+
+                                    @if(!empty($user->user_subtype) && $user->user_subtype != '')
+                                        <li class="user-top-nav-element border border-top-0" data-id="1">
+                                            <a class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1" href="{{ route('request-doc.form') }}">
+                                                <i class="las la-business-time"></i>
+                                                <span
+                                                    class="user-top-menu-name has-transition ml-3">{{ translate('Request Document') }}</span>
+                                            </a>
+                                        </li>
+                                    @endif
+
+
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('user.new_registration') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">

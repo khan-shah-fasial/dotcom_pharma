@@ -3508,3 +3508,34 @@ if (! function_exists('getNewestProducts')) {
         });
     }
 }
+
+
+if (! function_exists('resolve_pdf_paths_from_ids')) {
+    /**
+     * @param  string $idsCsv  like "1531,1522"
+     * @return array           absolute file paths on disk
+     */
+    function resolve_pdf_paths_from_ids(string $idsCsv): array
+    {
+        $ids = array_filter(array_map('trim', explode(',', $idsCsv)));
+        if (empty($ids)) return [];
+
+        $uploads = Upload::whereIn('id', $ids)->get(['id','file_name','extension']);
+
+        $paths = [];
+        foreach ($uploads as $u) {
+            // Adjust if your column name differs. Many AIZ setups store under storage/app/public/<file_name>
+            $relative = $u->file_name; 
+            // Ensure it's a PDF (guard)
+            if (strtolower($u->extension) !== 'pdf') {
+                continue;
+            }
+
+            if (is_file($relative)) {
+                $paths[] = $relative;
+            }
+        }
+
+        return $paths;
+    }
+}

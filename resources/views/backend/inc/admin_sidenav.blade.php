@@ -273,7 +273,7 @@
                                 </svg>
                             </div>
                             <span class="aiz-side-nav-text">{{translate('Notes')}}</span>
-                            @if (env("DEMO_MODE") == "On")
+                            @if (env('DEMO_MODE') == "On")
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="14.001" viewBox="0 0 16 14.001"
                                 class="mx-2">
                                 <path id="Union_49" data-name="Union 49"
@@ -621,6 +621,13 @@
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('customers.business') }}" class="aiz-side-nav-link">
                                         <span class="aiz-side-nav-text">{{ translate('Business Customer list') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_all_customers')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('customers.request-doc.index') }}" class="aiz-side-nav-link">
+                                        <span class="aiz-side-nav-text">{{ translate('Business Customer Document Requests') }}</span>
                                     </a>
                                 </li>
                             @endcan
