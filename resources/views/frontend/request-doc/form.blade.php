@@ -75,7 +75,7 @@
 
                                     @if ($stampedUrls && count($stampedUrls) > 1)
                                         @foreach ($stampedUrls as $i => $url)
-                                            <a href="{{ $url }}" download='{{ 'document-' . ($i + 1) . '.pdf' }}'
+                                            <a href="{{ static_asset($url) }}" download='{{ 'document-' . ($i + 1) . '.pdf' }}'
                                                 class="btn btn-outline-primary btn-lg shadow-sm rounded-pill"
                                                 target="_blank">
                                                 <i class="bi bi-file-earmark-pdf me-2"></i>
@@ -83,7 +83,7 @@
                                             </a>
                                         @endforeach
                                     @else
-                                        <a href="{{ $downloadUrl }}"
+                                        <a href="{{ static_asset($downloadUrl) }}" download='document.pdf'
                                             class="btn btn-outline-primary btn-lg shadow-sm rounded-pill" target="_blank">
                                             <i class="bi bi-file-earmark-pdf me-2"></i>
                                             Download Document
@@ -95,7 +95,7 @@
                                         <i class="bi bi-clock-history me-2"></i>
                                         Document not available yet
                                     </button>
-                                    
+
                                 @endif
                             </div>
 

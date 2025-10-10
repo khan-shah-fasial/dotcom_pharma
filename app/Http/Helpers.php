@@ -3510,6 +3510,26 @@ if (! function_exists('getNewestProducts')) {
 }
 
 
+if (!function_exists('custom_file')) {
+    /**
+     * Generate an asset path for the application.
+     *
+     * @param string $path
+     * @param bool|null $secure
+     * @return string
+     */
+    function custom_file($path, $secure = null)
+    {
+        if(app()->environment('production')){
+            return asset('public/' . $path, $secure); //for production environment
+        }else{
+            return asset('/' . $path, $secure); //for production environment
+        }
+        //return app('url')->asset('public/' . $path, $secure);
+    }
+}
+
+
 if (! function_exists('resolve_pdf_paths_from_ids')) {
     /**
      * @param  string $idsCsv  like "1531,1522"
@@ -3530,7 +3550,7 @@ if (! function_exists('resolve_pdf_paths_from_ids')) {
             if (strtolower($u->extension) !== 'pdf') {
                 continue;
             }
-            $relative = static_asset($relative);
+            $relative = custom_file($relative);
             if (is_file($relative)) {
                 $paths[] = $relative;
             }
