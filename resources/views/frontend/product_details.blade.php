@@ -130,12 +130,12 @@
             <div class="new-bg-color py-3">
                 <div class="row ml-0 mr-0">
                     <!-- Product Image Gallery -->
-                    <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="col-xl-6 col-lg-6 p-md-4 p-0 mb-4">
                         @include('frontend.product_details.image_gallery')
                     </div>
 
                     <!-- Product Details -->
-                    <div class="col-xl-6 col-lg-6">
+                    <div class="col-xl-6 col-lg-6 p-md-4 p-0">
                         @include('frontend.product_details.details')
                     </div>
                 </div>
@@ -171,7 +171,7 @@
                     <div class="col-lg-12">
                         
                        
-                    <div class="discription_boxex">
+                    <div class="discription_boxex d-none">
                        <ul class="nav nav-tabs d-none" id="myTab" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">description</button>
