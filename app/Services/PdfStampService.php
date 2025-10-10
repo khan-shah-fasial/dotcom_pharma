@@ -79,7 +79,7 @@ class PdfStampService
         $outputAbsolutePath = Storage::disk('public')->path($outputRelativePath);
         $pdf->Output($outputAbsolutePath, 'F');
 
-        return static_asset($outputRelativePath);
+        return static_asset('storage/'.$outputRelativePath);
     }
 
     /**
