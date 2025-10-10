@@ -148,8 +148,8 @@ li.list-inline-item.human_btn {
     color: white;
 }
 
-.b2b_buttons .la-sign-in-alt{
-    font-size:13px;
+.b2b_buttons .la-sign-in-alt {
+    font-size: 13px;
     top: 2px;
     position: relative;
 }
@@ -1498,7 +1498,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     color: #fff;
 }
 
-#prescription-btn{
+#prescription-btn {
     border: 1px solid #2b56a1;
     color: #2b56a1;
     margin-left: 15px;
@@ -1914,26 +1914,26 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     border-color: #2b56a1 !important;
 }
 
-.dropdown-menu-bottom-top{
+.dropdown-menu-bottom-top {
     top: 50px !important;
 }
 
-.product-enquiry-form-name-email .form-group{
+.product-enquiry-form-name-email .form-group {
     width: 48.3%;
 }
 
-.form-text-disc{
+.form-text-disc {
     color: red !important;
     font-size: 11px !important;
     padding-left: 10px;
     margin-top: 0px;
 }
 
-.modal-body-prescription .form-control{
+.modal-body-prescription .form-control {
     border-radius: 0px !important;
 }
 
-.tags-span-main span{
+.tags-span-main span {
     background: #e1e1e1;
     padding: 5px 10px;
     border-radius: 5px;
@@ -1942,6 +1942,100 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     font-size: 12px !important;
     margin-right: 10px;
 }
-.tags-span-main span a{
-    color:#1b1b28;
+
+.tags-span-main span a {
+    color: #1b1b28;
+}
+
+
+/*--- accordion css---*/
+
+.productAccordion_box {
+    background: white;
+    border-width: 1px;
+    padding: 20px 20px 5px 20px;
+    gap: 16px;
+    text-align: center;
+    border-style: solid;
+    margin-top: 30px;
+    border-radius: 8px;
+    border-color: #e5e7eb;
+}
+
+.accordion-custom {
+    border-radius: 10px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.accordion-custom .card {
+    border: none;
+    border-bottom: 1px solid #eee;
+    border-radius: 0;
+    text-align: left;
+    box-shadow: none;
+    margin-bottom: 10px;
+}
+
+.accordion-custom .card:last-child .card-header {
+    border-bottom: 0px solid #ebedf2;
+}
+
+.accordion-custom .card:last-child {
+    border-bottom: none;
+}
+
+.accordion-custom .card-header {
+    background: #fff;
+    padding: 0;
+    cursor: pointer;
+    margin-bottom: 0px !important;
+    display: block;
+}
+
+.accordion-custom .btn-link {
+    width: 100%;
+    text-align: left;
+    color: #222;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.accordion-custom .btn-link:focus {
+    box-shadow: none;
+    text-decoration: none;
+}
+
+.accordion-custom .btn-link i {
+    transition: transform 0.3s ease;
+    font-size: 14px;
+}
+
+.accordion-custom .btn-link.collapsed i {
+    transform: rotate(0deg);
+}
+
+.accordion-custom .btn-link i {
+    transform: rotate(180deg);
+}
+
+.accordion-custom .card-body p,
+.accordion-custom .card-body span,
+.accordion-custom .card-body li {
+    font-size: 14px;
+    line-height: 1.6rem;
+    margin-bottom: 5px;
+}
+
+.accordion-custom .card-body {
+    padding: 15px 0px;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.6;
 }

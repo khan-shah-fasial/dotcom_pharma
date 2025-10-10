@@ -1014,6 +1014,163 @@
 
     </div>
 
+@php
+    $dynamicTabs = json_decode($detailedProduct->contents, true) ?? [];
+    $hasDescription = !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->description)))));
+    $hasVideo = !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->video_link)))));
+    $hasPdf = !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->pdf)))));
+@endphp
+
+@if($hasDescription || (!empty($dynamicTabs) && count($dynamicTabs) > 0) || $hasVideo || $hasPdf)
+<div class="productAccordion_box">
+  <div class="accordion accordion-custom" id="productAccordion">
+
+    {{-- Description --}}
+    @if($hasDescription)
+      <div class="card">
+        <div class="card-header" id="headingDescription">
+          <h2 class="mb-0">
+            <button
+              class="btn btn-link"
+              type="button"
+              data-toggle="collapse"
+              data-target="#collapseDescription"
+              aria-expanded="true"
+              aria-controls="collapseDescription"
+            >
+              {{ translate('Description') }}
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h2>
+        </div>
+        <div
+          id="collapseDescription"
+          class="collapse show"
+          aria-labelledby="headingDescription"
+          data-parent="#productAccordion"
+        >
+          <div class="card-body aiz-editor-data">
+            {!! $detailedProduct->getTranslation('description') !!}
+          </div>
+        </div>
+      </div>
+    @endif
+
+    {{-- Dynamic Tabs --}}
+    @if (!empty($dynamicTabs) && count($dynamicTabs) > 0)
+      @foreach ($dynamicTabs as $index => $tab)
+        <div class="card">
+          <div class="card-header" id="headingDynamic{{ $index }}">
+            <h2 class="mb-0">
+              <button
+                class="btn btn-link collapsed"
+                type="button"
+                data-toggle="collapse"
+                data-target="#collapseDynamic{{ $index }}"
+                aria-expanded="false"
+                aria-controls="collapseDynamic{{ $index }}"
+              >
+                {{ $tab['title'] ?? 'Tab ' . ($index + 1) }}
+                <i class="fas fa-chevron-down"></i>
+              </button>
+            </h2>
+          </div>
+          <div
+            id="collapseDynamic{{ $index }}"
+            class="collapse"
+            aria-labelledby="headingDynamic{{ $index }}"
+            data-parent="#productAccordion"
+          >
+            <div class="card-body aiz-editor-data">
+              {!! $tab['content'] ?? '' !!}
+            </div>
+          </div>
+        </div>
+      @endforeach
+    @endif
+
+    {{-- Video --}}
+    @if($hasVideo)
+      <div class="card">
+        <div class="card-header" id="headingVideo">
+          <h2 class="mb-0">
+            <button
+              class="btn btn-link collapsed"
+              type="button"
+              data-toggle="collapse"
+              data-target="#collapseVideo"
+              aria-expanded="false"
+              aria-controls="collapseVideo"
+            >
+              {{ translate('Video') }}
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h2>
+        </div>
+        <div
+          id="collapseVideo"
+          class="collapse"
+          aria-labelledby="headingVideo"
+          data-parent="#productAccordion"
+        >
+          <div class="card-body">
+            <div class="embed-responsive embed-responsive-16by9">
+              @if ($detailedProduct->video_provider == 'youtube')
+                <iframe class="embed-responsive-item"
+                        src="{{ $detailedProduct->video_link }}"></iframe>
+              @elseif ($detailedProduct->video_provider == 'dailymotion' && isset(explode('video/', $detailedProduct->video_link)[1]))
+                <iframe class="embed-responsive-item"
+                        src="https://www.dailymotion.com/embed/video/{{ explode('video/', $detailedProduct->video_link)[1] }}"></iframe>
+              @elseif ($detailedProduct->video_provider == 'vimeo' && isset(explode('vimeo.com/', $detailedProduct->video_link)[1]))
+                <iframe class="embed-responsive-item"
+                        src="https://player.vimeo.com/video/{{ explode('vimeo.com/', $detailedProduct->video_link)[1] }}"
+                        width="500" height="281" frameborder="0"
+                        webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+              @endif
+            </div>
+          </div>
+        </div>
+      </div>
+    @endif
+
+    {{-- PDF Download --}}
+    @if($hasPdf)
+      <div class="card">
+        <div class="card-header" id="headingPdf">
+          <h2 class="mb-0">
+            <button
+              class="btn btn-link collapsed"
+              type="button"
+              data-toggle="collapse"
+              data-target="#collapsePdf"
+              aria-expanded="false"
+              aria-controls="collapsePdf"
+            >
+              {{ translate('Downloads') }}
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h2>
+        </div>
+        <div
+          id="collapsePdf"
+          class="collapse"
+          aria-labelledby="headingPdf"
+          data-parent="#productAccordion"
+        >
+          <div class="card-body text-center">
+            <a href="{{ uploaded_asset($detailedProduct->pdf) }}"
+              class="btn btn-primary" target="_blank">
+              {{ translate('Download') }}
+            </a>
+          </div>
+        </div>
+      </div>
+    @endif
+
+  </div>
+</div>
+@endif
+
     <!-- Promote Link -->
     <div class="d-table width-100 mt-3">
         <div class="d-table-cell">
