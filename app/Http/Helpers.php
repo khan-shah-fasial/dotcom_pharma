@@ -3530,7 +3530,7 @@ if (! function_exists('resolve_pdf_paths_from_ids')) {
             if (strtolower($u->extension) !== 'pdf') {
                 continue;
             }
-
+            $relative = static_asset($relative);
             if (is_file($relative)) {
                 $paths[] = $relative;
             }
