@@ -147,7 +147,7 @@
             color: var(--dark);
         }
         .pagination .page-item {
-            margin: 0 5px;
+            margin: 2px 5px;
         }
 
         .form-control:focus {

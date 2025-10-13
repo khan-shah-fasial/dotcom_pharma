@@ -75,7 +75,7 @@
                         >
                         <span class="d-flex aiz-megabox-elem rounded-0" style="padding: 0.75rem 1.2rem;">
                             <span class="aiz-rounded-check flex-shrink-0 mt-1"></span>
-                            <span class="flex-grow-1 pl-3 fw-600">{{  translate('Carrier') }}</span>
+                            <span class="flex-grow-1 pl-3 fw-600 text-dark">{{  translate('Carrier') }}</span>
                         </span>
                     </label>
                 </div>

@@ -707,7 +707,7 @@
                 $count = count(get_user_cart());
             @endphp
             <div class="col-auto">
-                <a href="{{ route('cart') }}" class="text-secondary d-block text-center pb-2 pt-3 px-3 {{ areActiveRoutes(['cart'],'svg-active')}}">
+                <a href="{{ route('cart') }}" class="text-secondary d-block text-center pb-2 pt-3 px-1 {{ areActiveRoutes(['cart'],'svg-active')}}">
                     <span class="d-inline-block position-relative px-2">
                         <svg id="Group_25499" data-name="Group 25499" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16.001" height="16" viewBox="0 0 16.001 16">
                             <defs>
@@ -733,7 +733,7 @@
             </div>
 
             <!-- Notifications -->
-            <div class="col">
+            <!-- <div class="col">
                 <a href="{{ route('customer.all-notifications') }}" class="text-secondary d-block text-center pb-2 pt-3 {{ areActiveRoutes(['customer.all-notifications'],'svg-active')}}">
                     <span class="d-inline-block position-relative px-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13.6" height="16" viewBox="0 0 13.6 16">
@@ -745,7 +745,7 @@
                     </span>
                     <span class="d-block mt-1 fs-10 fw-600 text-reset {{ areActiveRoutes(['customer.all-notifications'],'text-primary')}}">{{ translate('Notifications') }}</span>
                 </a>
-            </div>
+            </div> -->
         @endif
 
         
@@ -762,7 +762,7 @@
                                 <img src="{{ static_asset('assets/img/avatar-place.png') }}" alt="{{ translate('avatar') }}" class="rounded-circle size-20px">
                             @endif
                         </span>
-                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('My Account') }}</span>
+                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('Account') }}</span>
                     </a>
                 @elseif(isSeller())
                     <a href="{{ route('dashboard') }}" class="text-secondary d-block text-center pb-2 pt-3">
@@ -773,7 +773,7 @@
                                 <img src="{{ static_asset('assets/img/avatar-place.png') }}" alt="{{ translate('avatar') }}" class="rounded-circle size-20px">
                             @endif
                         </span>
-                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('My Account') }}</span>
+                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('Account') }}</span>
                     </a>
                 @else
                     <a href="javascript:void(0)" class="text-secondary d-block text-center pb-2 pt-3 mobile-side-nav-thumb" data-toggle="class-toggle" data-backdrop="static" data-target=".aiz-mobile-side-nav">
@@ -784,7 +784,7 @@
                                 <img src="{{ static_asset('assets/img/avatar-place.png') }}" alt="{{ translate('avatar') }}" class="rounded-circle size-20px">
                             @endif
                         </span>
-                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('My Account') }}</span>
+                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('Account') }}</span>
                     </a>
                 @endif
             @else
@@ -795,7 +795,7 @@
                           <path id="Path_2925" data-name="Path 2925" d="M332.144,20h-10a3,3,0,0,0,0,6h10a3,3,0,0,0,0-6m0,5h-10a2,2,0,0,1,0-4h10a2,2,0,0,1,0,4" transform="translate(-3495.144 592)" fill="#b5b5bf"/>
                         </g>
                     </svg>
-                    <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('My Account') }}</span>
+                    <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('Account') }}</span>
                 </a>
             @endif
         </div>

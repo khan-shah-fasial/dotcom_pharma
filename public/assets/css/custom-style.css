@@ -1703,6 +1703,10 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
         line-height: 15px;
     }
 
+    .product_img_bg img {
+        height: auto;
+    }
+
 }
 
 

@@ -37,7 +37,7 @@
     margin-top: 9px;
 }
 body .translater_menu .select2-container {
-    width: 110px !important;
+    width: 100px !important;
 }
 
 .translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow {
@@ -124,7 +124,7 @@ body .translater_menu .select2-container {
         <div class="container">
             <div class="row d-flex">
 
-                <div class="col-xl-5 col-lg-6 col-md-4 col-6">
+                <div class="col-xl-5 col-lg-6 col-md-4 col-7">
                     <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                         <li class="list-inline-item d-lg-block d-none">
                             <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
@@ -156,7 +156,7 @@ body .translater_menu .select2-container {
                 </div>
 
 
-                <div class="col-xl-7 col-lg-6 col-md-8 col-6 d-flex justify-content-end">
+                <div class="col-xl-7 col-lg-6 col-md-8 col-5 d-flex justify-content-end">
 
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
@@ -183,12 +183,12 @@ body .translater_menu .select2-container {
 
                         {{--  --}}
                         <!-- prescription -->
-                        @auth
+                        <!-- @auth
                             <li class="list-inline-item mr-md-3 mr-2">
                                 <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
                                     <i class="fa fa-file-prescription"></i> Prescription</a>
                             </li>
-                        @endauth
+                        @endauth -->
                         {{--  --}}
 
 
@@ -233,7 +233,7 @@ body .translater_menu .select2-container {
                                 @endphp
 
                                 <a href="javascript:void(0)" 
-                                    class="dropdown-toggle black_light_clr fs-12 pl-md-2 pr-md-2"
+                                    class="dropdown-toggle black_light_clr fs-12 pl-md-1 pr-md-1"
                                     data-toggle="dropdown" data-display="static">
 
                                         <span class="d-none d-md-inline">
@@ -1117,7 +1117,7 @@ body .translater_menu .select2-container {
         <div class="overlay overlay-fixed dark c-pointer" data-toggle="class-toggle"
             data-target=".aiz-top-menu-sidebar" data-same=".hide-top-menu-bar"></div>
         <div class="collapse-sidebar c-scrollbar-light text-left">
-            <button type="button" class="btn btn-sm p-4 hide-top-menu-bar" data-toggle="class-toggle"
+            <button type="button" class="btn btn-sm pl-4 pt-4 pb-2 hide-top-menu-bar" data-toggle="class-toggle"
                 data-target=".aiz-top-menu-sidebar">
                 <i class="las la-times la-2x text-primary"></i>
             </button>
@@ -1172,6 +1172,14 @@ body .translater_menu .select2-container {
                         <a class="b2b_buttons b2b_buttons_menu" href="{{ route('user.new_registration') }}">B2B
                             Registration</a>
                     </li>
+
+                    @auth
+                        <li class="list-inline-item">
+                            <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
+                                <i class="fa fa-file-prescription"></i> Prescription</a>
+                        </li>
+                    @endauth
+
                 @endif
                 @auth
                     @if (isAdmin())
