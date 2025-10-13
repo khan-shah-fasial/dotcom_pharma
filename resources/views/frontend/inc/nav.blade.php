@@ -37,7 +37,7 @@
     margin-top: 9px;
 }
 body .translater_menu .select2-container {
-    width: 140px !important;
+    width: 110px !important;
 }
 
 .translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow {
@@ -55,6 +55,40 @@ body .translater_menu .select2-container {
 .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
     background-color: #2b56a1 !important;
     color: white;
+}
+
+@media (max-width: 767px) {
+    .translater_menu span.select2-selection.select2-selection--single {
+        margin-top: 10px;
+    }
+    body .translater_menu .select2-container {
+        width: 75px !important;
+    }
+
+    .flag-option img{
+        width: 16px;
+        height: 10px;
+    }
+
+    .flag-option{
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 375px) {
+    .translater_menu .select2-container--default .select2-selection--single .select2-selection__rendered{
+        line-height: 20px;
+    }
+
+    .translater_menu span.select2-selection.select2-selection--single{
+        height: 22px;
+        margin-top: 1px;
+    }
+
+    .translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow{
+        height: 20.5px;
+    }
+
 }
 </style>
 <!-- Top Bar Banner -->
@@ -88,18 +122,18 @@ body .translater_menu .select2-container {
     <!-- Top Bar -->
     <div class="top-navbar bg-white z-1035 h-35px h-sm-auto">
         <div class="container">
-            <div class="row">
+            <div class="row d-flex">
 
-                <div class="col-xl-5 col-lg-6 d-lg-block d-none">
+                <div class="col-xl-5 col-lg-6 col-md-4 col-6">
                     <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
-                        <li class="list-inline-item">
+                        <li class="list-inline-item d-lg-block d-none">
                             <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
                                 <img class="w-100" src="{{ static_asset('assets/img/call1_icons.svg') }}" />+91 88281
                                 11034
                             </a>
                         </li>
 
-                        <li class="list-inline-item">
+                        <li class="list-inline-item d-lg-block d-none">
                             <a href="mailto:info@dotcompharmaindia.com" class=" text-secondary fs-12 py-2">
                                 <img class="w-100" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
                             </a>
@@ -122,20 +156,35 @@ body .translater_menu .select2-container {
                 </div>
 
 
-                <div class="col-xl-7 col-lg-6 col-md-12 col d-flex justify-content-end">
+                <div class="col-xl-7 col-lg-6 col-md-8 col-6 d-flex justify-content-end">
 
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
-                        <li class="list-inline-item d-none d-md-block mr-3">
+                        <!-- <li class="list-inline-item mr-md-3 mr-2">
                             <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
-                                <i class="las la-sign-in-alt"></i> B2B Registration</a>
+                                <i class="las la-sign-in-alt"></i>
+                                <span class="d-none d-md-inline">B2B Registration</span>
+                                <span class="d-inline d-md-none">B2B</span>
+                            </a>
+                        </li> -->
+
+                        <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
+                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
+                                <i class="las la-sign-in-alt"></i>B2B Registration
+                            </a>
                         </li>
+                        <!-- <li class="list-inline-item mr-3">
+                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
+                                <i class="las la-sign-in-alt"></i>B2B Registration
+                            </a>
+                        </li> -->
+
 
 
                         {{--  --}}
                         <!-- prescription -->
                         @auth
-                            <li class="list-inline-item d-none d-md-block mr-3">
+                            <li class="list-inline-item mr-md-3 mr-2">
                                 <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
                                     <i class="fa fa-file-prescription"></i> Prescription</a>
                             </li>
@@ -143,7 +192,7 @@ body .translater_menu .select2-container {
                         {{--  --}}
 
 
-                        <li class="list-inline-item d-none d-md-block mr-3 translater_menu">
+                        <li class="list-inline-item mr-md-3 mr-3 translater_menu">
                             <!-- Hidden Google Translate -->
                             <div id="google-translate-dropdown" style="display:none;"></div>
                             <!-- Custom Dropdown -->
@@ -183,10 +232,18 @@ body .translater_menu .select2-container {
                                     $system_currency = get_system_currency();
                                 @endphp
 
-                                <a href="javascript:void(0)" class="dropdown-toggle black_light_clr fs-12 py-2"
+                                <a href="javascript:void(0)" 
+                                    class="dropdown-toggle black_light_clr fs-12 pl-md-2 pr-md-2"
                                     data-toggle="dropdown" data-display="static">
-                                    {{ $system_currency->name }}
+
+                                        <span class="d-none d-md-inline">
+                                            {{ $system_currency->name }} ({{ $system_currency->symbol }})
+                                        </span>
+                                        <span class="d-inline d-md-none">
+                                            {{ $system_currency->symbol }}
+                                        </span>
                                 </a>
+
                                 <ul class="dropdown-menu dropdown-menu-right dropdown-menu-lg-left">
                                     @foreach (get_all_active_currency() as $key => $currency)
                                         <li>

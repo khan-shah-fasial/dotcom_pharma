@@ -682,6 +682,25 @@
             </a>
         </div>
 
+        <div class="col">
+            <a class="text-secondary d-block text-center pb-2 pt-3" href="{{ route('user.new_registration') }}">
+                <!-- paste this into your HTML where you want the icon -->
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"
+                    width="16" height="16">
+
+                    <!-- Door / vertical bar -->
+                    <path d="M160 96H96c-35.35 0-64 28.65-64 64v192c0 35.35 28.65 64 64 64h64 c17.67 0 32-14.33 32-32s-14.33-32-32-32H96c-17.67 0-32-14.33-32-32V160 c0-17.67 14.33-32 32-32h64c17.67 0 32-14.33 32-32s-14.33-32-32-32z" fill="currentColor"/>
+
+                    <!-- Arrow entering the door -->
+                    <path d="M497.94 273.94L385.94 385.94c-12.5 12.5-32.76 12.5-45.26 0 -12.5-12.5-12.5-32.76 0-45.26L381.49 336H192c-17.67 0-32-14.33-32-32 s14.33-32 32-32h189.49l-41.81-41.68c-12.5-12.5-12.5-32.76 0-45.26 12.5-12.5 32.76-12.5 45.26 0l112 112c12.51 12.5 12.51 32.76 0 45.26z" fill="currentColor"/>
+                </svg>
+
+                <!-- <i class="las la-sign-in-alt"></i> -->
+                <span class="d-block mt-1 fs-10 fw-600 text-reset">B2B</span>
+            </a>
+        </div>
+
         @if (Auth::check() && auth()->user()->user_type == 'customer')
             <!-- Cart -->
             @php
@@ -728,6 +747,8 @@
                 </a>
             </div>
         @endif
+
+        
 
         <!-- Account -->
         <div class="col">
