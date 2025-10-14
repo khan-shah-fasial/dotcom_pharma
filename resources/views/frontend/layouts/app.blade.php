@@ -552,6 +552,7 @@
                 _token: '{{ csrf_token() }}'
             }, function(data) {
                 $('#section_featured').html(data);
+                console.dir('featured loaded');
                 AIZ.plugins.slickCarousel();
             });
 

@@ -62,6 +62,7 @@ use App\Models\Address;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 //sensSMS function for OTP
 if (!function_exists('sendSMS')) {
@@ -3509,8 +3510,22 @@ if (! function_exists('getNewestProducts')) {
                 $popularItems = [];
             }
 
-            return Product::whereIn('category_id', $popularItems)
-                ->get();
+            $products = Product::query()
+                ->join('product_categories', 'product_categories.product_id', '=', 'products.id')
+                ->whereIn('products.category_id', $popularItems)
+                ->orWhereIn('product_categories.category_id', $popularItems)
+                ->select('products.*', 'product_categories.category_id as pc_category_id')
+                ->distinct();
+
+            // Log::info('SQL: ' . $products->toSql());
+            // Log::info('Bindings: ', $products->getBindings());
+            // \Log::info('Bindings: ', $products->getBindings());
+                
+            
+            return $products->get();
+
+            // return Product::whereIn('category_id', $popularItems)
+            //     ->get();
         });
     }
 }
