@@ -3387,8 +3387,14 @@ if (! function_exists('getCategoryTopMenu')) {
         $webTypeId = session('web_type');
         $webTypeName = session('web_type_name');
 
-        $catHumanId = [58, 43, 70, 68, 72]; // Human category IDs
-        $catVeterinaryId = [85, 86, 87, 88, 89]; // Veterinary category IDs
+        // $catVeterinaryId = [91, 96, 99, 100, 101]; // Human category IDs
+        // $catHumanId = [119, 120]; // Veterinary category IDs
+
+        $catVeterinaryId = get_setting('header_nav_menu_veterinary');
+        $catHumanId = get_setting('header_nav_menu_human');
+
+        $catHumanId = array_map('intval', json_decode($catHumanId, true) ?: []);
+        $catVeterinaryId = array_map('intval', json_decode($catVeterinaryId, true) ?: []);
 
         $cacheKey = 'category_top_menu_' . ($webTypeName ?? 'default');
 
