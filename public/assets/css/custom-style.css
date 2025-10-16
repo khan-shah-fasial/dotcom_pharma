@@ -349,6 +349,13 @@ button.slick-next.slick-arrow {
     color: #363636;
 }
 
+.aiz-megabox>input:checked~.aiz-megabox-elem,
+.aiz-megabox>input:checked~.aiz-megabox-elem {
+    border-color: #ededf2 !important;
+    background-color: #123498;
+    color: #fff !important;
+}
+
 .testimnl_box {
     display: flex;
     align-items: center;
@@ -2064,7 +2071,8 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
         font-size: calc(11px * 0.8) !important;
         line-height: 20px;
     }
-    #currency-change .dropdown-toggle{
+
+    #currency-change .dropdown-toggle {
         line-height: 20px;
         margin-top: 3px;
     }
@@ -2072,7 +2080,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     .top_baar_icons {
         padding-top: 0px;
     }
-    
+
     .human_btn i {
         position: relative;
         top: 1.3px;
