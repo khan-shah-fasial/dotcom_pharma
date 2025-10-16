@@ -9775,9 +9775,9 @@ input[type="number"] {
 
 .aiz-megabox>input:checked~.aiz-megabox-elem,
 .aiz-megabox>input:checked~.aiz-megabox-elem {
-    border-color: var(--primary);
-    background-color: var(--primary);
-    color: White !important;
+    border-color: #ededf2 !important;;
+    background-color: white;
+    
 }
 
 .aiz-megabox>input:checked~.aiz-megabox-elem.border-transparent {

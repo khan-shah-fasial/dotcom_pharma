@@ -52,6 +52,7 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\SizeChartController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\RequestDocController;
 use App\Http\Controllers\PolicyController;
 /*
   |--------------------------------------------------------------------------
@@ -547,4 +548,10 @@ Route::controller(ContactController::class)->group(function () {
     Route::post('/contact', 'contact')->name('contact');
     Route::post('/product-enquiry-store', 'product_enquiry_store')->name('product_enquiry_store');
     Route::post('/prescription-upload', 'prescription_store')->name('prescription.store')->middleware('auth');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Public link to open page
+    Route::get('/document/request-document', [RequestDocController::class, 'form'])->name('request-doc.form');
+    Route::post('/document/request-document', [RequestDocController::class, 'store'])->name('request-doc.store');
 });

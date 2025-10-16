@@ -16,8 +16,8 @@
                             <!-- Right Side -->
                             <div class="col-lg-6 p-3 p-lg-4 d-flex flex-column justify-content-center border right-content" style="height: auto;">
                                 <!-- Site Icon -->
-                                <div class="login_logo_wdth">
-                                         <a href="/"> <img src="{{ static_asset('assets/img/logo.png') }}" alt="{{ env('APP_NAME') }}" class="width-120"></a>
+                                <div class="login-logo-all">
+                                         <a href="/"> <img src="{{ uploaded_asset(get_setting('site_icon')) }}" alt="{{ translate('Site Icon')}}" class="img-fit h-100"></a>
                                     </div>
 
                                 <!-- Titles -->
@@ -54,7 +54,18 @@
                                         </form>
                                     </div>
 
-                                      <div class="backyohome_class">
+                                    <!-- Go to Home Page & Previous Page -->
+                                    <p class="fs-12 text-gray mb-0 mt-4 d-flex align-items-center justify-content-between">
+                                        <a href="/" class="mr-0 fs-12 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
+                                            <i class="las la-home fs-16 mr-1"></i> Go to Home Page
+                                        </a>
+                                        <a href="{{ url()->previous() }}" class="ml-0 fs-12 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
+                                                <i class="las la-arrow-left fs-20 mr-1"></i>
+                                                Back to Previous Page
+                                        </a>
+                                    </p>
+
+                                    <!-- <div class="backyohome_class">
                                         <div class="mt-3 mr-2 mr-md-0">
                                             <a href="/" class="ml-auto fs-14 fw-700 d-flex align-items-center text-primary" style="max-width: fit-content;">
                                                 <i class="las la-home fs-16 mr-1"></i>
@@ -68,7 +79,7 @@
                                                 {{ translate('Back to Previous Page')}}
                                             </a>
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                         </div>

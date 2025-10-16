@@ -627,6 +627,13 @@
                                     </a>
                                 </li>
                             @endcan
+                            @can('view_all_customers')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('customers.request-doc.index') }}" class="aiz-side-nav-link">
+                                        <span class="aiz-side-nav-text">{{ translate('Business Customer Document Requests') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
                             @if(get_setting('classified_product') == 1)
                                 @can('view_classified_products')
                                     <li class="aiz-side-nav-item">

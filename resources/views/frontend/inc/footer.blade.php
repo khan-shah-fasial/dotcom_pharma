@@ -682,13 +682,32 @@
             </a>
         </div>
 
+        <div class="col">
+            <a class="text-secondary d-block text-center pb-2 pt-3" href="{{ route('user.new_registration') }}">
+                <!-- paste this into your HTML where you want the icon -->
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"
+                    width="16" height="16">
+
+                    <!-- Door / vertical bar -->
+                    <path d="M160 96H96c-35.35 0-64 28.65-64 64v192c0 35.35 28.65 64 64 64h64 c17.67 0 32-14.33 32-32s-14.33-32-32-32H96c-17.67 0-32-14.33-32-32V160 c0-17.67 14.33-32 32-32h64c17.67 0 32-14.33 32-32s-14.33-32-32-32z" fill="currentColor"/>
+
+                    <!-- Arrow entering the door -->
+                    <path d="M497.94 273.94L385.94 385.94c-12.5 12.5-32.76 12.5-45.26 0 -12.5-12.5-12.5-32.76 0-45.26L381.49 336H192c-17.67 0-32-14.33-32-32 s14.33-32 32-32h189.49l-41.81-41.68c-12.5-12.5-12.5-32.76 0-45.26 12.5-12.5 32.76-12.5 45.26 0l112 112c12.51 12.5 12.51 32.76 0 45.26z" fill="currentColor"/>
+                </svg>
+
+                <!-- <i class="las la-sign-in-alt"></i> -->
+                <span class="d-block mt-1 fs-10 fw-600 text-reset">B2B</span>
+            </a>
+        </div>
+
         @if (Auth::check() && auth()->user()->user_type == 'customer')
             <!-- Cart -->
             @php
                 $count = count(get_user_cart());
             @endphp
             <div class="col-auto">
-                <a href="{{ route('cart') }}" class="text-secondary d-block text-center pb-2 pt-3 px-3 {{ areActiveRoutes(['cart'],'svg-active')}}">
+                <a href="{{ route('cart') }}" class="text-secondary d-block text-center pb-2 pt-3 px-1 {{ areActiveRoutes(['cart'],'svg-active')}}">
                     <span class="d-inline-block position-relative px-2">
                         <svg id="Group_25499" data-name="Group 25499" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16.001" height="16" viewBox="0 0 16.001 16">
                             <defs>
@@ -714,7 +733,7 @@
             </div>
 
             <!-- Notifications -->
-            <div class="col">
+            <!-- <div class="col">
                 <a href="{{ route('customer.all-notifications') }}" class="text-secondary d-block text-center pb-2 pt-3 {{ areActiveRoutes(['customer.all-notifications'],'svg-active')}}">
                     <span class="d-inline-block position-relative px-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13.6" height="16" viewBox="0 0 13.6 16">
@@ -726,8 +745,10 @@
                     </span>
                     <span class="d-block mt-1 fs-10 fw-600 text-reset {{ areActiveRoutes(['customer.all-notifications'],'text-primary')}}">{{ translate('Notifications') }}</span>
                 </a>
-            </div>
+            </div> -->
         @endif
+
+        
 
         <!-- Account -->
         <div class="col">
@@ -741,7 +762,7 @@
                                 <img src="{{ static_asset('assets/img/avatar-place.png') }}" alt="{{ translate('avatar') }}" class="rounded-circle size-20px">
                             @endif
                         </span>
-                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('My Account') }}</span>
+                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('Account') }}</span>
                     </a>
                 @elseif(isSeller())
                     <a href="{{ route('dashboard') }}" class="text-secondary d-block text-center pb-2 pt-3">
@@ -752,7 +773,7 @@
                                 <img src="{{ static_asset('assets/img/avatar-place.png') }}" alt="{{ translate('avatar') }}" class="rounded-circle size-20px">
                             @endif
                         </span>
-                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('My Account') }}</span>
+                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('Account') }}</span>
                     </a>
                 @else
                     <a href="javascript:void(0)" class="text-secondary d-block text-center pb-2 pt-3 mobile-side-nav-thumb" data-toggle="class-toggle" data-backdrop="static" data-target=".aiz-mobile-side-nav">
@@ -763,7 +784,7 @@
                                 <img src="{{ static_asset('assets/img/avatar-place.png') }}" alt="{{ translate('avatar') }}" class="rounded-circle size-20px">
                             @endif
                         </span>
-                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('My Account') }}</span>
+                        <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('Account') }}</span>
                     </a>
                 @endif
             @else
@@ -774,7 +795,7 @@
                           <path id="Path_2925" data-name="Path 2925" d="M332.144,20h-10a3,3,0,0,0,0,6h10a3,3,0,0,0,0-6m0,5h-10a2,2,0,0,1,0-4h10a2,2,0,0,1,0,4" transform="translate(-3495.144 592)" fill="#b5b5bf"/>
                         </g>
                     </svg>
-                    <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('My Account') }}</span>
+                    <span class="d-block mt-1 fs-10 fw-600 text-reset">{{ translate('Account') }}</span>
                 </a>
             @endif
         </div>

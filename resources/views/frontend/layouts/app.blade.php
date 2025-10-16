@@ -147,7 +147,7 @@
             color: var(--dark);
         }
         .pagination .page-item {
-            margin: 0 5px;
+            margin: 2px 5px;
         }
 
         .form-control:focus {
@@ -552,6 +552,7 @@
                 _token: '{{ csrf_token() }}'
             }, function(data) {
                 $('#section_featured').html(data);
+                console.dir('featured loaded');
                 AIZ.plugins.slickCarousel();
             });
 
@@ -1419,56 +1420,62 @@ function scrollTabs(direction) {
 
 
 <script>
-    // Language list (shortened example, you can paste full list with flags)
-    const languages = [
-      { code: "en", name: "English", flag: "https://flagcdn.com/w20/us.png" },
-      { code: "fr", name: "French", flag: "https://flagcdn.com/w20/fr.png" },
-      { code: "de", name: "German", flag: "https://flagcdn.com/w20/de.png" },
-      { code: "es", name: "Spanish", flag: "https://flagcdn.com/w20/es.png" },
-      { code: "hi", name: "Hindi", flag: "https://flagcdn.com/w20/in.png" },
-      { code: "zh-CN", name: "Chinese", flag: "https://flagcdn.com/w20/cn.png" },
-      { code: "ar", name: "Arabic", flag: "https://flagcdn.com/w20/sa.png" },
-      { code: "ru", name: "Russian", flag: "https://flagcdn.com/w20/ru.png" },
-      { code: "ja", name: "Japanese", flag: "https://flagcdn.com/w20/jp.png" }
-      // 👉 You can extend this with the full list of 100+ languages
-    ];
+  // Language list (shortened example, you can paste full list with flags)
+  const languages = [
+    { code: "en", name: "English", flag: "https://flagcdn.com/w20/us.png" },
+    { code: "fr", name: "French", flag: "https://flagcdn.com/w20/fr.png" },
+    { code: "de", name: "German", flag: "https://flagcdn.com/w20/de.png" },
+    { code: "es", name: "Spanish", flag: "https://flagcdn.com/w20/es.png" },
+    { code: "hi", name: "Hindi", flag: "https://flagcdn.com/w20/in.png" },
+    { code: "zh-CN", name: "Chinese", flag: "https://flagcdn.com/w20/cn.png" },
+    { code: "ar", name: "Arabic", flag: "https://flagcdn.com/w20/sa.png" },
+    { code: "ru", name: "Russian", flag: "https://flagcdn.com/w20/ru.png" },
+    { code: "ja", name: "Japanese", flag: "https://flagcdn.com/w20/jp.png" }
+    // 👉 You can extend this with the full list of 100+ languages
+  ];
 
-    // Populate dropdown
-    languages.forEach(lang => {
-      $("#languageDropdown").append(
-        new Option(lang.name, lang.code, false, false)
-      );
-    });
+  // Populate dropdown
+  languages.forEach(lang => {
+    $("#languageDropdown").append(
+      new Option(lang.name, lang.code, false, false)
+    );
+  });
 
-    // Apply Select2 with flags
-    $("#languageDropdown").select2({
-      templateResult: formatState,
-      templateSelection: formatState
-    });
+  // Apply Select2 with flags
+  $("#languageDropdown").select2({
+    templateResult: formatState,
+    templateSelection: formatState
+  });
 
-    function formatState(state) {
-      if (!state.id) return state.text;
-      const lang = languages.find(l => l.code === state.id);
-      if (!lang) return state.text;
-      return $(
-        `<span class="flag-option"><img src="${lang.flag}"/> ${lang.name}</span>`
-      );
+  // ✅ Modified part (only what you asked)
+  function formatState(state) {
+    if (!state.id) return state.text;
+    const lang = languages.find(l => l.code === state.id);
+    if (!lang) return state.text;
+
+    // Detect mobile view
+    const isMobile = window.innerWidth < 576;
+    const label = isMobile ? state.id.toUpperCase() : lang.name;
+
+    return $(
+      `<span class="flag-option"><img src="${lang.flag}"/> ${label}</span>`
+    );
+  }
+
+  // Trigger Google Translate
+  $("#languageDropdown").on("change", function () {
+    var lang = $(this).val();
+    var select = document.querySelector(".goog-te-combo");
+    if (select) {
+      select.value = lang;
+      select.dispatchEvent(new Event("change"));
     }
+  });
 
-    // Trigger Google Translate
-    $("#languageDropdown").on("change", function () {
-      var lang = $(this).val();
-      var select = document.querySelector(".goog-te-combo");
-      if (select) {
-        select.value = lang;
-        select.dispatchEvent(new Event("change"));
-      }
-    });
-
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({ pageLanguage: 'en' }, 'google-translate-dropdown');
-    }
-  </script>
+  function googleTranslateElementInit() {
+    new google.translate.TranslateElement({ pageLanguage: 'en' }, 'google-translate-dropdown');
+  }
+</script>
 
   <!-- Google Translate script -->
   <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>

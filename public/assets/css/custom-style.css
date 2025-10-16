@@ -64,6 +64,7 @@ li {
 .top-navbar {
     border-bottom: 1px solid #3636361A;
     border-top: 4px solid #23780E;
+    padding-bottom: 8px;
 }
 
 .top_baar_icons img {
@@ -1702,27 +1703,13 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
         line-height: 15px;
     }
 
+    .product_img_bg img {
+        height: auto;
+    }
+
 }
 
-@media (max-width: 375px) {
 
-    #lang-change a,
-    #currency-change a {
-        font-size: calc(0.75rem * 0.8) !important;
-    }
-
-    .veterinary_btn a {
-        width: calc(85px * 0.9);
-        padding: calc(0px 1px * 0.8) !important;
-        font-size: calc(11px * 0.8) !important;
-    }
-
-    .human_btn a {
-        width: calc(75px * 0.9);
-        padding: 0px 0px !important;
-        font-size: calc(11px * 0.8) !important;
-    }
-}
 
 /* .pulse-button {
     position: absolute;
@@ -2038,4 +2025,66 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     color: #555;
     font-size: 14px;
     line-height: 1.6;
+}
+
+#currency-change .dropdown-toggle {
+    text-align: center;
+    background: #fff;
+    border-radius: 8px;
+    font-size: 11px !important;
+    line-height: 24px;
+    margin-top: 10px;
+    border: 1px solid #2b56a1;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+/* #currency-change{
+    padding-top: 6px;
+} */
+
+
+@media (max-width: 375px) {
+
+    #lang-change a,
+    #currency-change a {
+        font-size: calc(0.75rem * 0.8) !important;
+    }
+
+    .veterinary_btn a {
+        width: calc(85px * 0.9);
+        padding: calc(0px 1px * 0.8) !important;
+        font-size: calc(11px * 0.8) !important;
+        line-height: 20px;
+    }
+
+    .human_btn a {
+        width: calc(75px * 0.9);
+        padding: 0px 0px !important;
+        font-size: calc(11px * 0.8) !important;
+        line-height: 20px;
+    }
+    #currency-change .dropdown-toggle{
+        line-height: 20px;
+        margin-top: 3px;
+    }
+
+    .top_baar_icons {
+        padding-top: 0px;
+    }
+    
+    .human_btn i {
+        position: relative;
+        top: 1.3px;
+    }
+
+    .veterinary_btn i {
+        position: relative;
+        top: 1.5px;
+    }
+
+    .top-navbar {
+        padding-bottom: 6px;
+        padding-top: 3px;
+    }
 }

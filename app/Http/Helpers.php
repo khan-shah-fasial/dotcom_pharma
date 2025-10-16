@@ -62,6 +62,7 @@ use App\Models\Address;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 //sensSMS function for OTP
 if (!function_exists('sendSMS')) {
@@ -3387,8 +3388,14 @@ if (! function_exists('getCategoryTopMenu')) {
         $webTypeId = session('web_type');
         $webTypeName = session('web_type_name');
 
-        $catHumanId = [58, 43, 70, 68, 72]; // Human category IDs
-        $catVeterinaryId = [85, 86, 87, 88, 89]; // Veterinary category IDs
+        // $catVeterinaryId = [91, 96, 99, 100, 101]; // Human category IDs
+        // $catHumanId = [119, 120]; // Veterinary category IDs
+
+        $catVeterinaryId = get_setting('header_nav_menu_veterinary');
+        $catHumanId = get_setting('header_nav_menu_human');
+
+        $catHumanId = array_map('intval', json_decode($catHumanId, true) ?: []);
+        $catVeterinaryId = array_map('intval', json_decode($catVeterinaryId, true) ?: []);
 
         $cacheKey = 'category_top_menu_' . ($webTypeName ?? 'default');
 
@@ -3503,8 +3510,73 @@ if (! function_exists('getNewestProducts')) {
                 $popularItems = [];
             }
 
-            return Product::whereIn('category_id', $popularItems)
-                ->get();
+            $products = Product::query()
+                ->join('product_categories', 'product_categories.product_id', '=', 'products.id')
+                ->whereIn('products.category_id', $popularItems)
+                ->orWhereIn('product_categories.category_id', $popularItems)
+                ->select('products.*', 'product_categories.category_id as pc_category_id')
+                ->distinct();
+
+            // Log::info('SQL: ' . $products->toSql());
+            // Log::info('Bindings: ', $products->getBindings());
+            // \Log::info('Bindings: ', $products->getBindings());
+                
+            
+            return $products->get();
+
+            // return Product::whereIn('category_id', $popularItems)
+            //     ->get();
         });
+    }
+}
+
+
+if (!function_exists('custom_file')) {
+    /**
+     * Generate an asset path for the application.
+     *
+     * @param string $path
+     * @param bool|null $secure
+     * @return string
+     */
+    function custom_file($path, $secure = null)
+    {
+        if(app()->environment('production')){
+            return asset('public/' . $path, $secure); //for production environment
+        }else{
+            return asset('/' . $path, $secure); //for production environment
+        }
+        //return app('url')->asset('public/' . $path, $secure);
+    }
+}
+
+
+if (! function_exists('resolve_pdf_paths_from_ids')) {
+    /**
+     * @param  string $idsCsv  like "1531,1522"
+     * @return array           absolute file paths on disk
+     */
+    function resolve_pdf_paths_from_ids(string $idsCsv): array
+    {
+        $ids = array_filter(array_map('trim', explode(',', $idsCsv)));
+        if (empty($ids)) return [];
+
+        $uploads = Upload::whereIn('id', $ids)->get(['id','file_name','extension']);
+
+        $paths = [];
+        foreach ($uploads as $u) {
+            // Adjust if your column name differs. Many AIZ setups store under storage/app/public/<file_name>
+            $relative = $u->file_name; 
+            // Ensure it's a PDF (guard)
+            if (strtolower($u->extension) !== 'pdf') {
+                continue;
+            }
+            $relative = custom_file($relative);
+            if (is_file($relative)) {
+                $paths[] = $relative;
+            }
+        }
+
+        return $paths;
     }
 }
