@@ -115,7 +115,7 @@
                     <!-- 4. Product Name (Always shown if product exists) -->
                     @if(isset($detailedProduct))
                         <li class="breadcrumb-item text-dark fw-400 fs-12">
-                            {{ $detailedProduct->drug_name ?? $detailedProduct->name }}
+                            {{ $detailedProduct->getTranslation('name') }}
                         </li>
                     @endif
                 </ul>
