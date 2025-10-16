@@ -349,8 +349,8 @@ button.slick-next.slick-arrow {
     color: #363636;
 }
 
-.aiz-megabox>input:checked~.aiz-megabox-elem,
-.aiz-megabox>input:checked~.aiz-megabox-elem {
+form#option-choice-form .aiz-megabox>input:checked~.aiz-megabox-elem,
+form#option-choice-form .aiz-megabox>input:checked~.aiz-megabox-elem {
     border-color: #ededf2 !important;
     background-color: #123498;
     color: #fff !important;
