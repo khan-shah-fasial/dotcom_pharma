@@ -532,7 +532,7 @@
                                     <div class="col-xxl-9">
                                         <select class="form-control aiz-selectpicker" name="flash_discount_type" id="flash_discount_type">
                                             <option value="">{{ translate('Choose Discount Type') }}</option>
-                                            <option value="amount">{{translate('Flat')}}</option>
+                                            <!-- <option value="amount">{{translate('Flat')}}</option> -->
                                             <option value="percent">{{translate('Percent')}}</option>
                                         </select>
                                     </div>

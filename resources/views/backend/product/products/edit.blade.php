@@ -573,9 +573,9 @@
                                     <div class="col-xxl-9">
                                         <select class="form-control aiz-selectpicker" name="flash_discount_type" id="">
                                             <option value="">{{ translate('Choose Discount Type') }}</option>
-                                            <option value="amount" @if($product->discount_type == 'amount') selected @endif>
+                                            <!-- <option value="amount" @if($product->discount_type == 'amount') selected @endif>
                                                 {{translate('Flat')}}
-                                            </option>
+                                            </option> -->
                                             <option value="percent" @if($product->discount_type == 'percent') selected @endif>
                                                 {{translate('Percent')}}
                                             </option>

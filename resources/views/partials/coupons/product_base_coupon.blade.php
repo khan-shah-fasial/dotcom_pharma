@@ -35,7 +35,7 @@
    </div>
    <div class="col-lg-2">
        <select class="form-control aiz-selectpicker" name="discount_type">
-           <option value="amount">{{translate('Amount')}}</option>
+           <!-- <option value="amount">{{translate('Amount')}}</option> -->
            <option value="percent">{{translate('Percent')}}</option>
        </select>
    </div>
