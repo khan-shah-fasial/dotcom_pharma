@@ -1480,7 +1480,7 @@ function scrollTabs(direction) {
     new google.translate.TranslateElement({ pageLanguage: 'en' }, 'google_translate_element');
   }
 </script>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit?{{ rand(1000, 9999) }}"></script>
 
 <!-- ===================== APP LOGIC ===================== -->
 <script>
