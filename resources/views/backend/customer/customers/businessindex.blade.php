@@ -117,7 +117,7 @@
                             <th>{{ translate('Company Name') }}</th>
                             <th>{{ translate('Post') }}</th>
                             <th>{{ translate('Destrict') }}</th>
-                            <th>{{ translate('Country Code') }}</th>
+                            <!-- <th>{{ translate('Country Code') }}</th> -->
                             <th data-breakpoints="lg">{{ translate('Email Address') }}</th>
                             <th data-breakpoints="lg">{{ translate('Phone') }}</th>
                             <!-- <th data-breakpoints="lg">{{ translate('Package') }}</th>
@@ -125,7 +125,7 @@
                             {{-- <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th> --}}
                             {{-- <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th> --}}
                             <th data-breakpoints="lg">{{ translate('Approval Status') }}</th>
-                            <th class="text-right">{{ translate('Options') }}</th>
+                            <th class="">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -151,7 +151,7 @@
                                     </td>
                                     <td>{{ $user->details->post_business ?? $user->details->post ?? '-' }}</td>
                                     <td>{{ $user->details->district_business ?? $user->details->district ?? '-' }}</td>
-                                    <td>{{ $user->details->country_code_business ?? $user->details->country_code ?? '-' }}</td>
+                                    <!-- <td>{{ $user->details->country_code_business ?? $user->details->country_code ?? '-' }}</td> -->
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->phone }}</td>
                                     <!-- <td>
@@ -194,7 +194,7 @@
     <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button"
         id="customerActionDropdown{{ $user->id }}" data-toggle="dropdown"
         aria-haspopup="true" aria-expanded="false">
-        <i class="las la-ellipsis-h"></i>
+        <i class="las la-ellipsis-v"></i>
     </button>
     <div class="dropdown-menu dropdown-menu-right p-2"
         aria-labelledby="customerActionDropdown{{ $user->id }}">

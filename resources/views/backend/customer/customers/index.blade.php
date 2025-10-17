@@ -78,7 +78,7 @@
                             {{-- <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> --> --}}
                             <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th>
                             <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th>
-                            <th class="text-right">{{ translate('Options') }}</th>
+                            <th class="">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -137,7 +137,7 @@
                                        
                                 <div class="dropdown">
     <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button" id="customerActionDropdown{{ $user->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <i class="las la-ellipsis-h"></i>
+        <i class="las la-ellipsis-v"></i>
     </button>
 
     <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="customerActionDropdown{{ $user->id }}">

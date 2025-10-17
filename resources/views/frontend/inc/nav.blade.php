@@ -169,8 +169,8 @@ body .translater_menu .select2-container {
                         </li> -->
 
                         <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
-                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
-                                <i class="las la-sign-in-alt"></i>B2B Registration
+                            <a class="b2b_buttons fs-12 py-2" href="{{ route('user.new_registration') }}">
+                                <i class="las la-sign-in-alt"></i> B02B Registration
                             </a>
                         </li>
                         <!-- <li class="list-inline-item mr-3">

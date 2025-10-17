@@ -86,7 +86,6 @@ li {
 
 .human_btn i {
     font-size: 13px !important;
-    color: #2b56a1;
 }
 
 .human_btn a {
@@ -121,7 +120,6 @@ li {
 
 .veterinary_btn i {
     font-size: 13px !important;
-    color: #2b56a1;
 }
 
 li.list-inline-item.human_btn {
@@ -151,8 +149,8 @@ li.list-inline-item.human_btn {
 
 .b2b_buttons .la-sign-in-alt {
     font-size: 13px;
-    top: 2px;
     position: relative;
+    bottom: -0.5px;
 }
 
 .top_baar_icons {
@@ -1831,13 +1829,13 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .without-tax-product-gst {
     color: var(--primary);
     font-weight: 700;
-    font-size: 30px;
+    font-size: 18px;
 }
 
 .without-tax-product-1 {
     color: var(--primary) !important;
     font-weight: 700 !important;
-    font-size: 30px !important;
+    font-size: 18px !important;
 }
 
 .text-black {
@@ -1848,7 +1846,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .per-piece-price-product-details-gst {
     color: var(--primary);
     font-weight: 700;
-    font-size: 18px;
+    font-size: 30px;
 }
 
 .percentage-offf {
@@ -2041,6 +2039,11 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 
 /* #currency-change{
     padding-top: 6px;
+} */
+
+/* .human_btn a:hover{
+    background: var(--primary);
+    color: var(--white) !important;
 } */
 
 

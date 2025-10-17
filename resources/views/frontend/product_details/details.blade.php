@@ -67,13 +67,22 @@
             
         {{-- Pricing Row --}}
 
+        @auth
+            @if (auth()->user()->user_subtype !== null)
+                <div class="col-12 pl-0 mt-3 pb-0">
+                    <span class="detail-font-14px detail-gray-color">{{ translate('Price') }}:</span>
+                    <span id="without-tax-product" class="without-tax-product-1"></span> <!-- <span class="without-tax-product-gst without-tax-product-1"> excl. GST</span> -->
+                </div>
+             @endif
+        @endauth
+
         <div class="col-12 pl-0 mt-3 pb-0">
             <span class="text-secondary fs-14">
                 <span id="per-piece-price-product-details" class="                    
                     @if(auth()->check() && auth()->user()->user_subtype !== null) 
                         per-piece-price-product-details-gst 
                     @else 
-                        without-tax-product-1 
+                        per-piece-price-product-details-gst
                     @endif"></span>
                 <span class="">
                     @if(auth()->check() && auth()->user()->user_subtype !== null)
@@ -87,14 +96,7 @@
                 {{ $detailedProduct->product_count ?? '-' }} / Count</span> --}}
         </div>
 
-        @auth
-            @if (auth()->user()->user_subtype !== null)
-                <div class="col-12 pl-0 mt-3 pb-0">
-                    <span class="detail-font-14px detail-gray-color">{{ translate('Price') }}:</span>
-                    <span id="without-tax-product" class="without-tax-product-1"></span> <span class="without-tax-product-gst without-tax-product-1"> excl. GST</span>
-                </div>
-             @endif
-        @endauth
+        
 
         <div id="discount-show" class="col-12 pl-0 mt-3 pb-0 d-none">
             {{-- @if (discount_in_percentage($detailedProduct) > 0)
