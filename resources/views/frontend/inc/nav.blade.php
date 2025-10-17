@@ -160,49 +160,45 @@ body .translater_menu .select2-container {
 
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
-                        <!-- <li class="list-inline-item mr-md-3 mr-2">
-                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
-                                <i class="las la-sign-in-alt"></i>
-                                <span class="d-none d-md-inline">B2B Registration</span>
-                                <span class="d-inline d-md-none">B2B</span>
-                            </a>
-                        </li> -->
+
 
                         <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
                             <a class="b2b_buttons fs-12 py-2" href="{{ route('user.new_registration') }}">
                                 <i class="las la-sign-in-alt"></i> B02B Registration
                             </a>
                         </li>
-                        <!-- <li class="list-inline-item mr-3">
-                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
-                                <i class="las la-sign-in-alt"></i>B2B Registration
-                            </a>
-                        </li> -->
-
-
 
                         {{--  --}}
                         <!-- prescription -->
-                        <!-- @auth
+                         @auth
                             <li class="list-inline-item mr-md-3 mr-2">
                                 <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
                                     <i class="fa fa-file-prescription"></i> Prescription</a>
                             </li>
-                        @endauth -->
+                        @endauth 
                         {{--  --}}
 
 
-                        <li class="list-inline-item mr-md-3 mr-3 translater_menu">
-                            <!-- Hidden Google Translate -->
+                        <li class="list-inline-item mr-md-3 mr-3">
+                            {{-- <!-- Hidden Google Translate -->
                             <div id="google-translate-dropdown" style="display:none;"></div>
                             <!-- Custom Dropdown -->
-                            <select id="languageDropdown" style="display:none;"></select>
+                            <select id="languageDropdown" style="display:none;"></select> --}}
+                            <button type="button" class="btn btn-outline-dark btn-sm d-flex align-items-center"
+                                        data-toggle="modal" data-target="#languageCurrencyModal">
+                                <i class="fa fa-globe mr-2"></i>
+                                <span id="selectedLang">English</span>
+                                <span class="mx-1">|</span>
+                                <span id="selectedCurrency">
+                                    {{ get_system_currency()->symbol . ' ' . (get_system_currency()->name ?? '-') }}
+                                </span>
+                            </button>
                         </li>
 
                         
 
                         <!-- Language switcher -->
-                        <!-- @if (get_setting('show_language_switcher') == 'on')
+                        {{-- <!-- @if (get_setting('show_language_switcher') == 'on')
                             <li class="list-inline-item dropdown mr-3" id="lang-change">
 
                                 <a href="javascript:void(0)" class="black_light_clr dropdown-toggle fs-12 py-2"
@@ -223,10 +219,10 @@ body .translater_menu .select2-container {
                                     @endforeach
                                 </ul>
                             </li>
-                        @endif -->
+                        @endif --> --}}
 
                         <!-- Currency Switcher -->
-                        @if (get_setting('show_currency_switcher') == 'on')
+                        {{-- @if (get_setting('show_currency_switcher') == 'on')
                             <li class="list-inline-item dropdown ml-auto ml-lg-0 mr-0" id="currency-change">
                                 @php
                                     $system_currency = get_system_currency();
@@ -256,7 +252,7 @@ body .translater_menu .select2-container {
                                     @endforeach
                                 </ul>
                             </li>
-                        @endif
+                        @endif --}}
 
                     </ul>
                 </div>
@@ -1174,6 +1170,7 @@ body .translater_menu .select2-container {
                             </a>
                         </li>
                     @endforeach
+
                     <li class="list-inline-item">
                         <a class="b2b_buttons b2b_buttons_menu" href="{{ route('user.new_registration') }}">B2B
                             Registration</a>

@@ -498,6 +498,61 @@
         </div>
     @endauth
 
+    <!-- Hidden Google widget (kept in DOM but hidden) -->
+    <div id="google_translate_element" style="display: none;"></div>
+
+    <!-- ======= Language + Currency Modal ======= -->
+    <div class="modal fade" id="languageCurrencyModal" tabindex="-1" role="dialog"
+        aria-labelledby="languageCurrencyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg rounded-3">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="languageCurrencyModalLabel">🌐 Choose Language & Currency</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body p-4">
+                <!-- Language -->
+                <div class="mb-4">
+                <h6 class="font-weight-bold mb-2">Select Language</h6>
+                <select id="languageDropdown" class="form-control" style="width:100%;">
+                    <!-- options injected by JS (with flags) -->
+                </select>
+                </div>
+
+                <!-- Currency -->
+                @if (get_setting('show_currency_switcher') == 'on')
+                @php $system_currency = get_system_currency(); @endphp
+                <div class="mb-3">
+                    <h6 class="font-weight-bold mb-2">Select Currency</h6>
+                    <select id="currencyDropdown"
+                            class="form-control"
+                            data-initial="{{ optional($system_currency)->code }}">
+                    @foreach (get_all_active_currency() as $currency)
+                        <option
+                        value="{{ $currency->code }}"
+                        data-name="{{ $currency->name }}"
+                        data-symbol="{{ $currency->symbol }}"
+                        @selected(optional($system_currency)->code === $currency->code)
+                        >
+                        {{ $currency->name }} ({{ $currency->symbol }})
+                        </option>
+                    @endforeach
+                    </select>
+                </div>
+                @endif
+            </div>
+
+            <div class="modal-footer border-0 justify-content-between">
+                <button type="button" class="btn btn-light rounded-pill" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill" id="saveLangCurrency">Save Changes</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
 
 
     <!-- SCRIPTS -->
@@ -622,19 +677,19 @@
                 });
             }
 
-            if ($('#currency-change').length > 0) {
-                $('#currency-change .dropdown-menu a').each(function() {
-                    $(this).on('click', function(e){
-                        e.preventDefault();
-                        var $this = $(this);
-                        var currency_code = $this.data('currency');
-                        $.post('{{ route('currency.change') }}',{_token: AIZ.data.csrf, currency_code:currency_code}, function(data){
-                            location.reload();
-                        });
+            // if ($('#currency-change').length > 0) {
+            //     $('#currency-change .dropdown-menu a').each(function() {
+            //         $(this).on('click', function(e){
+            //             e.preventDefault();
+            //             var $this = $(this);
+            //             var currency_code = $this.data('currency');
+            //             $.post('{{ route('currency.change') }}',{_token: AIZ.data.csrf, currency_code:currency_code}, function(data){
+            //                 location.reload();
+            //             });
 
-                    });
-                });
-            }
+            //         });
+            //     });
+            // }
         });
 
         $('#search').on('keyup', function(){
@@ -1419,66 +1474,153 @@ function scrollTabs(direction) {
 @endauth
 
 
+<!-- ===================== GOOGLE TRANSLATE INIT (keep only this one) ===================== -->
 <script>
-  // Language list (shortened example, you can paste full list with flags)
-  const languages = [
-    { code: "en", name: "English", flag: "https://flagcdn.com/w20/us.png" },
-    { code: "fr", name: "French", flag: "https://flagcdn.com/w20/fr.png" },
-    { code: "de", name: "German", flag: "https://flagcdn.com/w20/de.png" },
-    { code: "es", name: "Spanish", flag: "https://flagcdn.com/w20/es.png" },
-    { code: "hi", name: "Hindi", flag: "https://flagcdn.com/w20/in.png" },
-    { code: "zh-CN", name: "Chinese", flag: "https://flagcdn.com/w20/cn.png" },
-    { code: "ar", name: "Arabic", flag: "https://flagcdn.com/w20/sa.png" },
-    { code: "ru", name: "Russian", flag: "https://flagcdn.com/w20/ru.png" },
-    { code: "ja", name: "Japanese", flag: "https://flagcdn.com/w20/jp.png" }
-    // 👉 You can extend this with the full list of 100+ languages
-  ];
-
-  // Populate dropdown
-  languages.forEach(lang => {
-    $("#languageDropdown").append(
-      new Option(lang.name, lang.code, false, false)
-    );
-  });
-
-  // Apply Select2 with flags
-  $("#languageDropdown").select2({
-    templateResult: formatState,
-    templateSelection: formatState
-  });
-
-  // ✅ Modified part (only what you asked)
-  function formatState(state) {
-    if (!state.id) return state.text;
-    const lang = languages.find(l => l.code === state.id);
-    if (!lang) return state.text;
-
-    // Detect mobile view
-    const isMobile = window.innerWidth < 576;
-    const label = isMobile ? state.id.toUpperCase() : lang.name;
-
-    return $(
-      `<span class="flag-option"><img src="${lang.flag}"/> ${label}</span>`
-    );
-  }
-
-  // Trigger Google Translate
-  $("#languageDropdown").on("change", function () {
-    var lang = $(this).val();
-    var select = document.querySelector(".goog-te-combo");
-    if (select) {
-      select.value = lang;
-      select.dispatchEvent(new Event("change"));
-    }
-  });
-
   function googleTranslateElementInit() {
-    new google.translate.TranslateElement({ pageLanguage: 'en' }, 'google-translate-dropdown');
+    new google.translate.TranslateElement({ pageLanguage: 'en' }, 'google_translate_element');
   }
 </script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-  <!-- Google Translate script -->
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<!-- ===================== APP LOGIC ===================== -->
+<script>
+(function($){
+  // ---- CONFIG ----
+  var currencyChangeUrl = '{{ route('currency.change') }}';
+  var csrfToken = (window.AIZ && AIZ.data && AIZ.data.csrf) ? AIZ.data.csrf : '{{ csrf_token() }}';
+
+  // ---- Language list with flags (extend as you like) ----
+  var languages = [
+    { code: "en",    name: "English",                 flag: "https://flagcdn.com/w20/us.png" },
+    { code: "fr",    name: "French",                  flag: "https://flagcdn.com/w20/fr.png" },
+    { code: "de",    name: "German",                  flag: "https://flagcdn.com/w20/de.png" },
+    { code: "es",    name: "Spanish",                 flag: "https://flagcdn.com/w20/es.png" },
+    { code: "hi",    name: "Hindi",                   flag: "https://flagcdn.com/w20/in.png" },
+    { code: "mr",    name: "Marathi",                 flag: "https://flagcdn.com/w20/in.png" },
+    { code: "gu",    name: "Gujarati",                flag: "https://flagcdn.com/w20/in.png" },
+    { code: "ta",    name: "Tamil",                   flag: "https://flagcdn.com/w20/in.png" },
+    { code: "te",    name: "Telugu",                  flag: "https://flagcdn.com/w20/in.png" },
+    { code: "bn",    name: "Bengali",                 flag: "https://flagcdn.com/w20/bd.png" },
+    { code: "pa",    name: "Punjabi",                 flag: "https://flagcdn.com/w20/in.png" },
+    { code: "ur",    name: "Urdu",                    flag: "https://flagcdn.com/w20/pk.png" },
+    { code: "ar",    name: "Arabic",                  flag: "https://flagcdn.com/w20/sa.png" },
+    { code: "it",    name: "Italian",                 flag: "https://flagcdn.com/w20/it.png" },
+    { code: "ja",    name: "Japanese",                flag: "https://flagcdn.com/w20/jp.png" },
+    { code: "ru",    name: "Russian",                 flag: "https://flagcdn.com/w20/ru.png" },
+    { code: "zh-CN", name: "Chinese (Simplified)",    flag: "https://flagcdn.com/w20/cn.png" },
+    { code: "zh-TW", name: "Chinese (Traditional)",   flag: "https://flagcdn.com/w20/tw.png" }
+  ];
+
+  // ---- Cookie helpers ----
+  function getCookie(name) {
+    var match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+  function setCookie(name, value, days, domain) {
+    var d = new Date();
+    d.setTime(d.getTime() + (days*24*60*60*1000));
+    var cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/";
+    if (domain) cookie += ";domain=" + domain;
+    document.cookie = cookie;
+  }
+  function setGoogleTranslateLang(langCode) {
+    var host = location.hostname, apex = host.replace(/^www\./,'');
+    var val = "/auto/" + langCode;
+    setCookie('googtrans', val, 365);
+    if (apex && apex !== host) setCookie('googtrans', val, 365, "." + apex);
+  }
+  function getGoogleTranslateLangFromCookie() {
+    var v = getCookie('googtrans'); // e.g. "/auto/hi"
+    if (!v) return null;
+    var parts = v.split('/');
+    return parts.length >= 3 ? parts[2] : null;
+  }
+
+  // ---- Build language dropdown with flags + Select2 ----
+  function buildLanguageDropdown() {
+    var $dd = $('#languageDropdown');
+    $dd.empty();
+    languages.forEach(function(l){
+      var $opt = $('<option/>', { value: l.code, text: l.name });
+      $opt.attr('data-flag', l.flag);
+      $dd.append($opt);
+    });
+
+    function tpl(opt) {
+      if (!opt.id) return opt.text;
+      var flag = $(opt.element).data('flag');
+      var text = opt.text || '';
+      return $(
+        '<span style="display:flex;align-items:center;gap:8px;">' +
+          (flag ? '<img src="'+flag+'" style="width:20px;height:14px;object-fit:cover;border-radius:2px;" alt="">' : '') +
+          '<span>'+ text +'</span>' +
+        '</span>'
+      );
+    }
+
+    $dd.select2({
+      width: '100%',
+      templateResult: tpl,
+      templateSelection: tpl,
+      minimumResultsForSearch: 5
+    });
+
+    // Preselect from cookie if any
+    var currentLang = getGoogleTranslateLangFromCookie();
+    if (currentLang && $dd.find('option[value="'+currentLang+'"]').length) {
+      $dd.val(currentLang).trigger('change.select2');
+    }
+  }
+
+  // ---- Update nav labels from current state (on load) ----
+  function updateNavLabelsFromState() {
+    var langCode = getGoogleTranslateLangFromCookie() || 'en';
+    var match = languages.find(function(l){ return l.code.toLowerCase() === langCode.toLowerCase(); });
+    $('#selectedLang').text(match ? match.name : 'English');
+    // Currency label is server-rendered; nothing else needed here.
+  }
+
+  // ---- Save handler ----
+  function wireSave() {
+    $('#saveLangCurrency').on('click', function() {
+      var $btn = $(this).prop('disabled', true).text('Applying...');
+      var selectedLang = $('#languageDropdown').val();
+      var selectedCurrency = $('#currencyDropdown').val();
+      var initialCurrency  = $('#currencyDropdown').data('initial');
+
+      if (selectedLang) setGoogleTranslateLang(selectedLang);
+
+      var needsCurrencyPost = selectedCurrency && (selectedCurrency !== initialCurrency);
+
+      function reload() { window.location.reload(); }
+
+      if (needsCurrencyPost) {
+        $.post(currencyChangeUrl, { _token: csrfToken, currency_code: selectedCurrency })
+          .always(reload);
+      } else {
+        reload();
+      }
+    });
+
+    // Optional live preview in nav (no persistence until Save)
+    $('#languageDropdown').on('change', function() {
+      $('#selectedLang').text($('#languageDropdown option:selected').text().trim());
+    });
+    $('#currencyDropdown').on('change', function() {
+      var $opt = $('#currencyDropdown option:selected');
+      $('#selectedCurrency').text($opt.data('symbol') + ' ' + $opt.data('name'));
+    });
+  }
+
+  // ---- Init ----
+  $(function(){
+    buildLanguageDropdown();
+    updateNavLabelsFromState();
+    wireSave();
+  });
+
+})(jQuery);
+</script>
 
 </body>
 </html>

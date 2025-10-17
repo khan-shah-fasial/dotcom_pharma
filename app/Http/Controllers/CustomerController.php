@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Country;
 use App\Models\UserDetails;
 use App\Utility\EmailUtility;
 use Hash;
@@ -47,61 +48,229 @@ class CustomerController extends Controller
         return view('backend.customer.customers.index', compact('users', 'sort_search','verification_status'));
     }
 
+    // public function business_index(Request $request)
+    // {
+    //     $sort_search = $request->search ?? null;
+    //     $company_name = $request->company_name ?? null;
+    //     $verification_status =  $request->verification_status ?? null;
+    //     $bank_details =  $request->bank_details ?? null;
+    //     $license_details =  $request->license_details ?? null;
+    //     $dl_expiry_Data =  $request->dl_expiry_Data ?? null;
+    //     $gst_no =  $request->gst_no ?? null;
+    //     $transport_Details =  $request->transport_Details ?? null;
+
+    //     $users = User::with('details')->where('user_type', 'customer')->whereNotNull('step')->orderBy('created_at', 'desc');
+    //     // if($verification_status != null){
+    //     //     $users = $verification_status == 'verified' ? $users->where('email_verified_at', '!=', null) : $users->where('email_verified_at', null);
+    //     // }
+    //     if($verification_status != null){
+    //         $users = $verification_status == 'verified' ? $users->where('approval_Status', 1) : $users->where('approval_Status', 0);
+    //     }
+    //     if ($sort_search != null){
+    //         $sort_search = $request->search;
+    //         $users->where(function ($q) use ($sort_search){
+    //             $q->where('name', 'like', '%'.$sort_search.'%')->orWhere('email', 'like', '%'.$sort_search.'%')->orWhere('phone', 'like', '%'.$sort_search.'%')->orWhere('tel_number', 'like', '%'.$sort_search.'%');
+    //         });
+    //     }
+    //     if ($company_name != null){
+    //         $company_name = $request->company_name;
+    //         $users->whereHas('details',function ($q) use ($company_name){
+    //             $q->where('company_name', 'like', '%'.$company_name.'%');
+    //         });
+    //     }
+
+    //     if ($gst_no != null){
+    //         $gst_no = $request->gst_no;
+    //         $users->where(function ($q) use ($gst_no){
+    //             $q->where('gst_no', 'like', '%'.$gst_no.'%')
+    //             ->orWhere('iec_no','like', '%'.$gst_no.'%')
+    //             ->orWhere('aadhaar_no','like', '%'.$gst_no.'%')
+    //             ->orWhere('pan_no','like', '%'.$gst_no.'%')
+    //             ->orWhere('passport_no','like', '%'.$gst_no.'%');
+    //         });
+    //     }
+    //     // if ($bank_details != null){
+    //     //     $bank_details = $request->bank_details;
+    //     //     $users->whereHas('details', function ($q) use ($bank_details){
+    //     //         $q->where('bank_name_business', 'like', '%'.$bank_details.'%')->orWhere('bank_name_personal', 'like', '%'.$bank_details.'%')->orWhere('account_no_business', 'like', '%'.$bank_details.'%')->orWhere('account_no_personal', 'like', '%'.$bank_details.'%')->orWhere('branch_code_business', 'like', '%'.$bank_details.'%')->orWhere('branch_code_personal', 'like', '%'.$bank_details.'%')->orwhere('ifsc_code_business', 'like', '%'.$bank_details.'%')->orwhere('ifsc_code_personal', 'like', '%'.$bank_details.'%')->orwhere('micr_code_business', 'like', '%'.$bank_details.'%')->orwhere('micr_code_personal', 'like', '%'.$bank_details.'%');
+    //     //     });
+    //     // }
+    //     // if ($license_details != null){
+    //     //     $license_details = $request->license_details;
+    //     //     $users->whereHas('details', function ($q) use ($license_details){
+    //     //         $q->where('cc_no', 'like', '%'.$license_details.'%')->orWhere('d_l_no_1', 'like', '%'.$license_details.'%')->orWhere('d_l_no_2', 'like', '%'.$license_details.'%')->orWhere('d_l_no_3', 'like', '%'.$license_details.'%');
+    //     //     });
+    //     // }
+    //     $users = $users->paginate(15);
+    //     return view('backend.customer.customers.businessindex', compact('users', 'sort_search','company_name','bank_details','license_details','gst_no','verification_status'));
+    // }
+
     public function business_index(Request $request)
     {
-        $sort_search = $request->search ?? null;
-        $company_name = $request->company_name ?? null;
-        $verification_status =  $request->verification_status ?? null;
-        $bank_details =  $request->bank_details ?? null;
-        $license_details =  $request->license_details ?? null;
-        $dl_expiry_Data =  $request->dl_expiry_Data ?? null;
-        $gst_no =  $request->gst_no ?? null;
-        $transport_Details =  $request->transport_Details ?? null;
+        $sort_search         = $request->search ?? null;
+        $company_name        = $request->company_name ?? null;
+        $verification_status = $request->verification_status ?? null;
+        $bank_details        = $request->bank_details ?? null;
+        $license_details     = $request->license_details ?? null;
+        $dl_expiry_Data      = $request->dl_expiry_Data ?? null;
+        $gst_no              = $request->gst_no ?? null;
 
-        $users = User::with('details')->where('user_type', 'customer')->whereNotNull('step')->orderBy('created_at', 'desc');
-        // if($verification_status != null){
-        //     $users = $verification_status == 'verified' ? $users->where('email_verified_at', '!=', null) : $users->where('email_verified_at', null);
-        // }
-        if($verification_status != null){
-            $users = $verification_status == 'verified' ? $users->where('approval_Status', 1) : $users->where('approval_Status', 0);
+        // NEW: location filters (request)
+        $filter_city_id     = $request->city_id ?? null;
+        $filter_district_id = $request->district_id ?? null;
+        $filter_state_id    = $request->state_id ?? null;
+        $filter_country_id  = $request->country_id ?? null;
+
+        // Base query
+        $users = User::with('details')
+            ->where('user_type', 'customer')
+            ->whereNotNull('step')
+            ->orderBy('created_at', 'desc');
+
+        // Approval filter
+        if ($verification_status !== null) {
+            $users = $verification_status === 'verified'
+                ? $users->where('approval_Status', 1)
+                : $users->where('approval_Status', 0);
         }
-        if ($sort_search != null){
-            $sort_search = $request->search;
-            $users->where(function ($q) use ($sort_search){
-                $q->where('name', 'like', '%'.$sort_search.'%')->orWhere('email', 'like', '%'.$sort_search.'%')->orWhere('phone', 'like', '%'.$sort_search.'%')->orWhere('tel_number', 'like', '%'.$sort_search.'%');
+
+        // Text search
+        if ($sort_search !== null) {
+            $users->where(function ($q) use ($sort_search) {
+                $q->where('name', 'like', '%'.$sort_search.'%')
+                ->orWhere('email', 'like', '%'.$sort_search.'%')
+                ->orWhere('phone', 'like', '%'.$sort_search.'%')
+                ->orWhere('tel_number', 'like', '%'.$sort_search.'%');
             });
         }
-        if ($company_name != null){
-            $company_name = $request->company_name;
-            $users->whereHas('details',function ($q) use ($company_name){
+
+        // Company filter
+        if ($company_name !== null) {
+            $users->whereHas('details', function ($q) use ($company_name) {
                 $q->where('company_name', 'like', '%'.$company_name.'%');
             });
         }
 
-        if ($gst_no != null){
-            $gst_no = $request->gst_no;
-            $users->where(function ($q) use ($gst_no){
+        // IDs (GST/Aadhaar/PAN/Passport/IEC) filter
+        if ($gst_no !== null) {
+            $users->where(function ($q) use ($gst_no) {
                 $q->where('gst_no', 'like', '%'.$gst_no.'%')
-                ->orWhere('iec_no','like', '%'.$gst_no.'%')
-                ->orWhere('aadhaar_no','like', '%'.$gst_no.'%')
-                ->orWhere('pan_no','like', '%'.$gst_no.'%')
-                ->orWhere('passport_no','like', '%'.$gst_no.'%');
+                ->orWhere('iec_no', 'like', '%'.$gst_no.'%')
+                ->orWhere('aadhaar_no', 'like', '%'.$gst_no.'%')
+                ->orWhere('pan_no', 'like', '%'.$gst_no.'%')
+                ->orWhere('passport_no', 'like', '%'.$gst_no.'%');
             });
         }
-        if ($bank_details != null){
-            $bank_details = $request->bank_details;
-            $users->whereHas('details', function ($q) use ($bank_details){
-                $q->where('bank_name_business', 'like', '%'.$bank_details.'%')->orWhere('bank_name_personal', 'like', '%'.$bank_details.'%')->orWhere('account_no_business', 'like', '%'.$bank_details.'%')->orWhere('account_no_personal', 'like', '%'.$bank_details.'%')->orWhere('branch_code_business', 'like', '%'.$bank_details.'%')->orWhere('branch_code_personal', 'like', '%'.$bank_details.'%')->orwhere('ifsc_code_business', 'like', '%'.$bank_details.'%')->orwhere('ifsc_code_personal', 'like', '%'.$bank_details.'%')->orwhere('micr_code_business', 'like', '%'.$bank_details.'%')->orwhere('micr_code_personal', 'like', '%'.$bank_details.'%');
+
+        // NEW: Location filters (match against business + personal)
+        if ($filter_city_id !== null && $filter_city_id !== '') {
+            $users->whereHas('details', function ($q) use ($filter_city_id) {
+                $q->where(function ($qq) use ($filter_city_id) {
+                    $qq->where('city_id_business', $filter_city_id)
+                    ->orWhere('city_id', $filter_city_id);
+                });
             });
         }
-        if ($license_details != null){
-            $license_details = $request->license_details;
-            $users->whereHas('details', function ($q) use ($license_details){
-                $q->where('cc_no', 'like', '%'.$license_details.'%')->orWhere('d_l_no_1', 'like', '%'.$license_details.'%')->orWhere('d_l_no_2', 'like', '%'.$license_details.'%')->orWhere('d_l_no_3', 'like', '%'.$license_details.'%');
+
+        if ($filter_district_id !== null && $filter_district_id !== '') {
+            $users->whereHas('details', function ($q) use ($filter_district_id) {
+                $q->where(function ($qq) use ($filter_district_id) {
+                    $qq->where('district_business', $filter_district_id)
+                    ->orWhere('district', $filter_district_id);
+                });
             });
         }
-        $users = $users->paginate(15);
-        return view('backend.customer.customers.businessindex', compact('users', 'sort_search','company_name','bank_details','license_details','gst_no','verification_status'));
+
+        if ($filter_state_id !== null && $filter_state_id !== '') {
+            $users->whereHas('details', function ($q) use ($filter_state_id) {
+                $q->where(function ($qq) use ($filter_state_id) {
+                    $qq->where('state_id_business', $filter_state_id)
+                    ->orWhere('state_id', $filter_state_id);
+                });
+            });
+        }
+
+        // Country: try both business & personal if you have both columns.
+        // If you only have one (e.g., `country_id`), keep just that condition.
+        if ($filter_country_id !== null && $filter_country_id !== '') {
+            $users->whereHas('details', function ($q) use ($filter_country_id) {
+                $q->where(function ($qq) use ($filter_country_id) {
+                    $qq->where('country_id_business', $filter_country_id)
+                    ->orWhere('country_id', $filter_country_id);
+                });
+            });
+        }
+
+        // Build dropdown options (unique & cleaned)
+        // CITY
+        $cityIds = collect()
+            ->merge(
+                UserDetails::whereNotNull('city_id_business')
+                    ->where('city_id_business', '!=', '')
+                    ->where('city_id_business', '!=', '0')
+                    ->pluck('city_id_business')
+            )
+            ->merge(
+                UserDetails::whereNotNull('city_id')
+                    ->where('city_id', '!=', '')
+                    ->where('city_id', '!=', '0')
+                    ->pluck('city_id')
+            )
+            ->unique()
+            ->sort()
+            ->values();
+
+
+        // ✅ DISTRICT
+        $districtIds = collect()
+            ->merge(
+                UserDetails::whereNotNull('district_business')
+                    ->where('district_business', '!=', '')
+                    ->where('district_business', '!=', '0')
+                    ->pluck('district_business')
+            )
+            ->merge(
+                UserDetails::whereNotNull('district')
+                    ->where('district', '!=', '')
+                    ->where('district', '!=', '0')
+                    ->pluck('district')
+            )
+            ->unique()
+            ->sort()
+            ->values();
+
+
+        // ✅ STATE
+        $stateIds = collect()
+            ->merge(
+                UserDetails::whereNotNull('state_id_business')
+                    ->where('state_id_business', '!=', '')
+                    ->where('state_id_business', '!=', '0')
+                    ->pluck('state_id_business')
+            )
+            ->merge(
+                UserDetails::whereNotNull('state_id')
+                    ->where('state_id', '!=', '')
+                    ->where('state_id', '!=', '0')
+                    ->pluck('state_id')
+            )
+            ->unique()
+            ->sort()
+            ->values();
+
+        // COUNTRIES from table
+        $countries = Country::select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        $users = $users->paginate(15)->appends($request->query());
+
+        return view('backend.customer.customers.businessindex', compact(
+            'users', 'sort_search', 'company_name', 'bank_details', 'license_details', 'gst_no', 'verification_status',
+            // new
+            'cityIds', 'districtIds', 'stateIds', 'countries',
+            'filter_city_id', 'filter_district_id', 'filter_state_id', 'filter_country_id'
+        ));
     }
 
     /**
