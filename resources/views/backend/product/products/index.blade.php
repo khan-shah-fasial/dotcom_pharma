@@ -303,7 +303,7 @@
                                 <td class="text-right drop-down-text-icon">
                                    <div class="dropdown">
     <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button" id="productActionDropdown{{ $product->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <i class="las la-ellipsis-h"></i>
+        <i class="las la-ellipsis-v"></i>
     </button>
 
                                         <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="productActionDropdown{{ $product->id }}">
