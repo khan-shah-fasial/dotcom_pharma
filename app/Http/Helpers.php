@@ -62,6 +62,7 @@ use App\Models\Address;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 //sensSMS function for OTP
 if (!function_exists('sendSMS')) {
@@ -248,7 +249,7 @@ if (!function_exists('format_price')) {
         }
 
         if (get_setting('symbol_format') == 1) {
-            return currency_symbol() . $fomated_price;
+            return currency_symbol() . ' ' . $fomated_price;
         } else if (get_setting('symbol_format') == 3) {
             return currency_symbol() . ' ' . $fomated_price;
         } else if (get_setting('symbol_format') == 4) {
@@ -1963,7 +1964,9 @@ if (!function_exists('get_frequently_bought_products')) {
         $fqbProducts = [];
         if($productSelectionType == 'product'){
             $fqbProductIds = $product->frequently_bought_products()->where('category_id', null)->pluck('frequently_bought_product_id')->toArray();
+
             $fqbProducts = filter_products(Product::whereIn('id', $fqbProductIds))->get();
+
         }
         elseif($productSelectionType == 'category'){
             $fqb_product_category = $product->frequently_bought_products()->where('category_id','!=', null)->first();
@@ -1971,10 +1974,13 @@ if (!function_exists('get_frequently_bought_products')) {
             if($fqbCategoryID != null){
                 $category = Category::with('childrenCategories')->find($fqbCategoryID);
 
-                $fqbProducts = $category->products()->where('id','!=',$product->id);
-                $fqbProducts = $product->added_by == 'admin' ? $fqbProducts->where('added_by', 'admin') : $fqbProducts->where('user_id', $product->user_id);
+                if($category) {
+                    $fqbProducts = $category->products()->where('id','!=',$product->id);
+                    $fqbProducts = $product->added_by == 'admin' ? $fqbProducts->where('added_by', 'admin') : $fqbProducts->where('user_id', $product->user_id);
 
-                $fqbProducts = filter_products($fqbProducts)->orderByRaw('RAND()')->take(10)->get();
+                    $fqbProducts = filter_products($fqbProducts)->orderByRaw('RAND()')->take(10)->get();
+                }
+
             }
         }
         return $fqbProducts;
@@ -3387,8 +3393,14 @@ if (! function_exists('getCategoryTopMenu')) {
         $webTypeId = session('web_type');
         $webTypeName = session('web_type_name');
 
-        $catHumanId = [58, 43, 70, 68, 72]; // Human category IDs
-        $catVeterinaryId = [85, 86, 87, 88, 89]; // Veterinary category IDs
+        // $catVeterinaryId = [91, 96, 99, 100, 101]; // Human category IDs
+        // $catHumanId = [119, 120]; // Veterinary category IDs
+
+        $catVeterinaryId = get_setting('header_nav_menu_veterinary');
+        $catHumanId = get_setting('header_nav_menu_human');
+
+        $catHumanId = array_map('intval', json_decode($catHumanId, true) ?: []);
+        $catVeterinaryId = array_map('intval', json_decode($catVeterinaryId, true) ?: []);
 
         $cacheKey = 'category_top_menu_' . ($webTypeName ?? 'default');
 
@@ -3503,8 +3515,22 @@ if (! function_exists('getNewestProducts')) {
                 $popularItems = [];
             }
 
-            return Product::whereIn('category_id', $popularItems)
-                ->get();
+            $products = Product::query()
+                ->join('product_categories', 'product_categories.product_id', '=', 'products.id')
+                ->whereIn('products.category_id', $popularItems)
+                ->orWhereIn('product_categories.category_id', $popularItems)
+                ->select('products.*', 'product_categories.category_id as pc_category_id')
+                ->distinct();
+
+            // Log::info('SQL: ' . $products->toSql());
+            // Log::info('Bindings: ', $products->getBindings());
+            // \Log::info('Bindings: ', $products->getBindings());
+                
+            
+            return $products->get();
+
+            // return Product::whereIn('category_id', $popularItems)
+            //     ->get();
         });
     }
 }

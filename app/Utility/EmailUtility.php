@@ -135,7 +135,8 @@ class EmailUtility
                 $emailBody = str_replace('[[order_code]]', $order->code, $emailBody);
                 $emailBody = str_replace('[[order_date]]', date('d-m-Y', strtotime($order->created_at)), $emailBody);
                 $emailBody = str_replace('[[delivery_date]]', date('d-m-Y'), $emailBody);
-                $emailBody = str_replace('[[order_amount]]', single_price($order->grand_total), $emailBody);
+                // $emailBody = str_replace('[[order_amount]]', single_price($order->grand_total), $emailBody);
+                $emailBody = str_replace('[[order_amount]]', $order->quote_grand_total, $emailBody);
                 $emailBody = str_replace('[[admin_email]]', $admin->email, $emailBody);
                 
                 $array['subject'] = $emailSubject;

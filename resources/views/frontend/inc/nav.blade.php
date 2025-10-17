@@ -949,23 +949,29 @@ body .translater_menu .select2-container {
                             @foreach ($category_top_menu as $cat)
                                 <li class="list-inline-item mr-3 animate-underline-white dropdown">
                                     <a href="#"
-                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links dropdown-toggle pt-2 pb-2"
+                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links @if($cat->childrenCategories->isNotEmpty()) dropdown-toggle @endif  pt-2 pb-2"
                                         id="injectionsDropdown_{{ $cat->id }}"
                                         data-toggle="dropdown" aria-haspopup="true"
                                         aria-expanded="false">
                                         {{ $cat->name }}
                                     </a>
-                                    <div class="dropdown-menu dropdown-menu-bottom-top"
-                                        aria-labelledby="injectionsDropdown_{{ $cat->id }}">
-                                        @foreach ($cat->childrenCategories as $childCategory)
-                                            <a class="dropdown-item"
-                                                href="/category/{{ $childCategory->slug }}">{{ $childCategory->name }}</a>
-                                        @endforeach
-                                    </div>
+
+                                    @if($cat->childrenCategories->isNotEmpty())
+                                        <div class="dropdown-menu dropdown-menu-bottom-top"
+                                            aria-labelledby="injectionsDropdown_{{ $cat->id }}">
+                                            @foreach ($cat->childrenCategories as $childCategory)
+                                                <a class="dropdown-item"
+                                                    href="/category/{{ $childCategory->slug }}">{{ $childCategory->name }}</a>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                    
                                 </li>
                             @endforeach
                         </div>
                     </div>
+
+
                     <!-- Categoty Menu Button -->
                     {{-- <div class="d-none all-category has-transition bg-black-10" id="category-menu-bar">
                         <div class="px-3 h-100"

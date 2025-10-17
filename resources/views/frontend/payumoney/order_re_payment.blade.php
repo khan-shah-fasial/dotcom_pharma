@@ -25,7 +25,9 @@
         'furl' => route('payumoney.failure'),      
         'udf1' => auth()->user()->id,
         'udf2' => 'order_re_payment',
-        'udf3' => 'none',
+
+        'udf3' => Session::get('currency_code') ?? 'none',
+
         'udf4' => Session::get('payment_data')['order_id'], 
         'udf5' => Session::get('payment_data')['payment_method'], 
     ];
