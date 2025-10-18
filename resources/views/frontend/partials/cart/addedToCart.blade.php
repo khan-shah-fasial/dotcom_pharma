@@ -79,7 +79,7 @@
             <button class="btn btn-secondary-base mb-3 mb-sm-0 btn-block rounded-0 text-white" data-dismiss="modal">{{ translate('Back to shopping')}}</button>
         </div>
         <div class="col-sm-6">
-            <a href="{{ route('cart') }}" class="btn btn-primary mb-3 mb-sm-0 btn-block rounded-0">{{ translate('Proceed to Checkout')}}</a>
+            <a href="{{ route('cart') }}" class="btn btn-primary mb-3 mb-sm-0 btn-block rounded-0" style="background: #2b56a1 !important;">{{ translate('Proceed to Checkout')}}</a>
         </div>
 
     </div>

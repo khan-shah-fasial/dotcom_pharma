@@ -504,7 +504,7 @@
     <!-- ======= Language + Currency Modal ======= -->
     <div class="modal fade" id="languageCurrencyModal" tabindex="-1" role="dialog"
         aria-labelledby="languageCurrencyModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-dialog-centered language-change-main-div" role="document">
             <div class="modal-content border-0 shadow-lg rounded-3">
             <div class="modal-header bg-dark text-white" style="background: #2b56a1 !important;">
                 <h5 class="modal-title" id="languageCurrencyModalLabel"><i class="fa fa-globe mr-1"></i> Choose Language & Currency</h5>
@@ -515,7 +515,7 @@
 
             <div class="modal-body pl-4 pr-4 pt-4 pb-0">
                 <!-- Language -->
-                <div class="mb-4">
+                <div class="mb-md-4 mb-3">
                 <h6 class="font-weight-bold mb-2">Select Language</h6>
                 <select id="languageDropdown" class="form-control" style="width:100%;">
                     <!-- options injected by JS (with flags) -->

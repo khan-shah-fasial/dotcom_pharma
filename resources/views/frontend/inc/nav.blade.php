@@ -81,7 +81,7 @@ body .translater_menu .select2-container {
 }
 
 .select2-container--default .select2-results>.select2-results__options {
-    max-height: 140px;
+    max-height: 110px;
     overflow-y: auto
 }
 
@@ -152,7 +152,7 @@ body .translater_menu .select2-container {
         <div class="container">
             <div class="row d-flex">
 
-                <div class="col-xl-5 col-lg-6 col-md-4 col-7">
+                <div class="col-xl-5 col-lg-6 col-md-4 col-8">
                     <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                         <li class="list-inline-item d-lg-block d-none">
                             <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
@@ -184,7 +184,7 @@ body .translater_menu .select2-container {
                 </div>
 
 
-                <div class="col-xl-7 col-lg-6 col-md-8 col-5 d-flex justify-content-end">
+                <div class="col-xl-7 col-lg-6 col-md-8 col-4 d-flex justify-content-end">
 
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
@@ -207,7 +207,7 @@ body .translater_menu .select2-container {
                         {{--  --}}
 
 
-                        <li class="list-inline-item mr-md-3 mr-3">
+                        <li class="list-inline-item mr-md-3 mr-0">
                             {{-- <!-- Hidden Google Translate -->
                             <div id="google-translate-dropdown" style="display:none;"></div>
                             <!-- Custom Dropdown -->
@@ -217,8 +217,11 @@ body .translater_menu .select2-container {
                                 <i class="fa fa-globe mr-1"></i>
                                 <span id="selectedLang">English</span>
                                 <span class="mx-1">|</span>
-                                <span id="selectedCurrency">
+                                <span class="d-none d-md-inline" id="selectedCurrency">
                                     {{ get_system_currency()->symbol . ' ' . (get_system_currency()->name ?? '-') }}
+                                </span>
+                                <span class="d-inline d-md-none" id="selectedCurrency">
+                                    {{ get_system_currency()->symbol }}
                                 </span>
                             </button>
                         </li>
@@ -1206,7 +1209,7 @@ body .translater_menu .select2-container {
 
                     @auth
                         <li class="list-inline-item">
-                            <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
+                            <a href="javascript:void(0)" id="prescription-btn" class="ml-0 prescription-btn_menu" title="Upload Prescription">
                                 <i class="fa fa-file-prescription"></i> Prescription</a>
                         </li>
                     @endauth

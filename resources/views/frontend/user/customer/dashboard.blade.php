@@ -45,7 +45,7 @@
                 <div class="row h-100 @if(get_setting('wallet_system') != 1 && addon_is_activated('club_point')) row-cols-md-2 @endif row-cols-1">
                     <!-- Expenditure summary -->
                     <div class="col">
-                        <div class="p-4 bg-primary @if(!addon_is_activated('club_point')) h-100 @endif" style="margin-bottom: 2rem;">
+                        <div class="p-4 bg-primary @if(!addon_is_activated('club_point')) h-100 @endif" style="margin-bottom: 2rem; background: #2b56a1 !important;">
                             <div class="d-flex align-items-center pb-4 ">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
                                     <g id="Group_25000" data-name="Group 25000" transform="translate(-926 -614)">

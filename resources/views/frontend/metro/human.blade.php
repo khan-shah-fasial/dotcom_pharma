@@ -702,7 +702,7 @@
                 <h3 class="headeing_size text_clr_green pb-2 fw-600 text-center">Frequently Asked Questions</h3>
             </div>
             <div class="row d-flex justify-content-center">
-                <div class="col-md-7 col-12">
+                <div class="col-lg-7 col-12">
                     <div id="accordion" class="accordion">
                         <div class="card mb-0">
                             <div class="accordion-item">
