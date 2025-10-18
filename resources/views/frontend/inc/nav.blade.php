@@ -207,7 +207,7 @@ body .translater_menu .select2-container {
                         {{--  --}}
 
 
-                        <li class="list-inline-item mr-md-3 mr-0">
+                        <li class="list-inline-item mr-md-3 mr-3">
                             {{-- <!-- Hidden Google Translate -->
                             <div id="google-translate-dropdown" style="display:none;"></div>
                             <!-- Custom Dropdown -->
