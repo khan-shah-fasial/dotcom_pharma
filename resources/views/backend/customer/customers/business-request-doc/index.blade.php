@@ -69,7 +69,7 @@
                     </div>
 
                     {{-- Search (name/email/typed number) --}}
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-4 mb-3">
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="q" name="q"
                                 value="{{ request('q') }}"
@@ -114,11 +114,11 @@
                         </div>
                     </div>
 
-                    <div class="col-md-1 mb-3 d-flex">
+                    <div class="col-md-2">
                         <button type="submit" class="btn btn-primary btn-block">{{ translate('Search') }}</button>
                     </div>
 
-                    <div class="col-md-12">
+                    <div class="col-md-2">
                         <a class="btn btn-soft-danger" href="{{ url()->current() }}">{{ translate('Reset') }}</a>
                     </div>
                 </div>
@@ -156,7 +156,7 @@
                                     <td>{{ $doc->email }}</td>
 
                                     <td>
-                                        <span class="badge badge-pill badge-info">
+                                        <span class="badge badge-pill badge-info badge-inline">
                                             {{ strtoupper($doc->type) }}
                                         </span>
                                     </td>
@@ -171,11 +171,11 @@
 
                                     <td id="doc-status-{{ $doc->id }}">
                                         @if ($doc->status === 0)
-                                            <span class="badge badge-warning">{{ translate('New Inquiry') }}</span>
+                                            <span class="badge badge-warning badge-inline">{{ translate('New Inquiry') }}</span>
                                         @elseif($doc->status === 1)
-                                            <span class="badge badge-success">{{ translate('Approved') }}</span>
+                                            <span class="badge badge-success badge-inline">{{ translate('Approved') }}</span>
                                         @else
-                                            <span class="badge badge-danger">{{ translate('Disapproved') }}</span>
+                                            <span class="badge badge-danger badge-inline">{{ translate('Disapproved') }}</span>
                                         @endif
                                     </td>
 
