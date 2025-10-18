@@ -45,7 +45,7 @@
     <section class="pt-0 pt-md-0 pb-3 pb-lg-3 pb-md-0">
         <div class="container">
             <div class="row">
-                <div class="col-md-9 col-12 width_80 pt-4 pr-md-4">
+                <div class="col-lg-9 col-12 width_80 pt-4 pr-md-4">
                     <div class="d-flex mb-2 mb-md-3 align-items-baseline justify-content-between">
                         <!-- Title -->
                         <h3 class="fs-16 fs-md-24 fw-600 mb-2 mb-md-2">
@@ -115,7 +115,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-3 d-lg-block d-md-none d-none width_20 mt-4">
+                <div class="col-md-3 col-12 d-lg-block d-md-none d-none width_20 mt-4">
                     <img class="w-100" src="{{ static_asset('assets/img/product_items_photo.png') }}"
                         alt="Popular items">
                 </div>

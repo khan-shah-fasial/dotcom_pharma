@@ -80,6 +80,11 @@ body .translater_menu .select2-container {
     color: white;
 }
 
+.select2-container--default .select2-results>.select2-results__options {
+    max-height: 140px;
+    overflow-y: auto
+}
+
 @media (max-width: 767px) {
     .translater_menu span.select2-selection.select2-selection--single {
         margin-top: 10px;
@@ -194,7 +199,7 @@ body .translater_menu .select2-container {
                         {{--  --}}
                         <!-- prescription -->
                          @auth
-                            <li class="list-inline-item mr-md-3 mr-2">
+                            <li class="list-inline-item d-none d-md-inline mr-md-3 mr-2">
                                 <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
                                     <i class="fa fa-file-prescription"></i> Prescription</a>
                             </li>

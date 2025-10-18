@@ -28,13 +28,13 @@
                 </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
                     <input type="text" name="product" class="form-control" placeholder="Enter Product..." />
                 </div>
             </div>
 
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <div class="form-group">
                     <button type="submit" class="animate_button black1_buttons">
                         <i class="las la-search la-flip-horizontal la-1x" style="color:#fff;"></i> Search

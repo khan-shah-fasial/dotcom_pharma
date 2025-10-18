@@ -1475,7 +1475,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .language-currency{
         border: 1px solid #2b56a1;
     color: #2b56a1;
-    margin-left: 15px;
+    /* margin-left: 15px; */
     text-align: center;
     background: #d0d6ea;
     border-radius: 8px;
@@ -1741,6 +1741,11 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 
 }
 
+/* @media (max-width: 768px) {
+    .product_img_bg img {
+        height: auto;
+    }
+} */
 
 
 /* .pulse-button {
