@@ -78,12 +78,13 @@
 
         <div class="col-12 pl-0 mt-3 pb-0">
             <span class="text-secondary fs-14">
-                <span id="per-piece-price-product-details" class="                    
+                <span id="per-piece-price-product-details" class="per-piece-price-product-details-gst"></span>
+                <!-- <span id="per-piece-price-product-details" class="                    
                     @if(auth()->check() && auth()->user()->user_subtype !== null) 
                         per-piece-price-product-details-gst 
                     @else 
                         per-piece-price-product-details-gst
-                    @endif"></span>
+                    @endif"></span> -->
                 <span class="">
                     @if(auth()->check() && auth()->user()->user_subtype !== null)
                         incl. GST

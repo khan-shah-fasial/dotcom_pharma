@@ -506,14 +506,14 @@
         aria-labelledby="languageCurrencyModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow-lg rounded-3">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title" id="languageCurrencyModalLabel">🌐 Choose Language & Currency</h5>
+            <div class="modal-header bg-dark text-white" style="background: #2b56a1 !important;">
+                <h5 class="modal-title" id="languageCurrencyModalLabel"><i class="fa fa-globe mr-1"></i> Choose Language & Currency</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
                 </button>
             </div>
 
-            <div class="modal-body p-4">
+            <div class="modal-body pl-4 pr-4 pt-4 pb-0">
                 <!-- Language -->
                 <div class="mb-4">
                 <h6 class="font-weight-bold mb-2">Select Language</h6>
@@ -547,7 +547,7 @@
 
             <div class="modal-footer border-0 justify-content-between">
                 <button type="button" class="btn btn-light rounded-pill" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary rounded-pill" id="saveLangCurrency">Save Changes</button>
+                <button type="button" class="btn btn-primary rounded-pill" id="saveLangCurrency" style="background: #2b56a1;">Save Changes</button>
             </div>
             </div>
         </div>

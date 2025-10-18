@@ -30,6 +30,11 @@
     color: #2b56a1;
     font-size: 11px;
 }
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #444;
+    line-height: 35px;
+}
 .translater_menu select#languageDropdown {
     width: 140px;
     border-radius: 8px;
@@ -38,6 +43,24 @@
 }
 body .translater_menu .select2-container {
     width: 100px !important;
+}
+
+
+.select2-container--default .select2-selection--single {
+    background-color: #fff;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid #dfdfe6;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 33px;
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 20px
 }
 
 .translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow {
@@ -163,8 +186,8 @@ body .translater_menu .select2-container {
 
 
                         <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
-                            <a class="b2b_buttons fs-12 py-2" href="{{ route('user.new_registration') }}">
-                                <i class="las la-sign-in-alt"></i> B02B Registration
+                            <a class="b2b_buttons d-grid align-items-center" href="{{ route('user.new_registration') }}">
+                                <span><i class="las la-sign-in-alt"></i></span> <span>B2B Registration</span> 
                             </a>
                         </li>
 
@@ -184,9 +207,9 @@ body .translater_menu .select2-container {
                             <div id="google-translate-dropdown" style="display:none;"></div>
                             <!-- Custom Dropdown -->
                             <select id="languageDropdown" style="display:none;"></select> --}}
-                            <button type="button" class="btn btn-outline-dark btn-sm d-flex align-items-center"
+                            <button type="button" class="btn language-currency btn-outline-dark btn-sm d-flex align-items-center"
                                         data-toggle="modal" data-target="#languageCurrencyModal">
-                                <i class="fa fa-globe mr-2"></i>
+                                <i class="fa fa-globe mr-1"></i>
                                 <span id="selectedLang">English</span>
                                 <span class="mx-1">|</span>
                                 <span id="selectedCurrency">

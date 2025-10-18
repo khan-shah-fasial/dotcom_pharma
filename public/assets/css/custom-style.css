@@ -150,7 +150,7 @@ li.list-inline-item.human_btn {
 .b2b_buttons .la-sign-in-alt {
     font-size: 13px;
     position: relative;
-    bottom: -0.5px;
+    top: 1px;
 }
 
 .top_baar_icons {
@@ -1472,6 +1472,30 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     top: 1px;
 }
 
+.language-currency{
+        border: 1px solid #2b56a1;
+    color: #2b56a1;
+    margin-left: 15px;
+    text-align: center;
+    background: #d0d6ea;
+    border-radius: 8px;
+    padding: 3.5px 4px !important;
+    font-weight: 400;
+    font-size: 11px !important;
+    position: relative;
+    top: 9px;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    height: 26px;
+}
+
+.language-currency:hover {
+    background: #2b56a1;
+    color: #fff;
+    border: 1px solid #2b56a1;
+}
+
 .b2b_buttons {
     border: 1px solid #2b56a1;
     color: #2b56a1;
@@ -1483,8 +1507,11 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     font-weight: 400;
     font-size: 11px !important;
     position: relative;
-    top: 7px;
+    top: 9px;
     background-color: white;
+    display: flex;
+    align-items: center;
+    height: 26px;
 
 
 
