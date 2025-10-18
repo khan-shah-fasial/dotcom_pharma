@@ -506,7 +506,7 @@
         aria-labelledby="languageCurrencyModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content border-0 shadow-lg rounded-3">
-            <div class="modal-header bg-dark text-white" style="background: #2b56a1;">
+            <div class="modal-header bg-dark text-white" style="background: #2b56a1 !important;">
                 <h5 class="modal-title" id="languageCurrencyModalLabel"><i class="fa fa-globe mr-1"></i> Choose Language & Currency</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
