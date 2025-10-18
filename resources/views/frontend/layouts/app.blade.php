@@ -1482,59 +1482,104 @@ function scrollTabs(direction) {
 </script>
 <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-<!-- ===================== APP LOGIC ===================== -->
+<!-- ===================== APP LOGIC (full, with cookie-domain fix) ===================== -->
 <script>
 (function($){
   // ---- CONFIG ----
   var currencyChangeUrl = '{{ route('currency.change') }}';
   var csrfToken = (window.AIZ && AIZ.data && AIZ.data.csrf) ? AIZ.data.csrf : '{{ csrf_token() }}';
 
-  // ---- Language list with flags (extend as you like) ----
+  // ---- Language list with flags ----
   var languages = [
-    { code: "en",    name: "English",                 flag: "https://flagcdn.com/w20/us.png" },
-    { code: "fr",    name: "French",                  flag: "https://flagcdn.com/w20/fr.png" },
-    { code: "de",    name: "German",                  flag: "https://flagcdn.com/w20/de.png" },
-    { code: "es",    name: "Spanish",                 flag: "https://flagcdn.com/w20/es.png" },
-    { code: "hi",    name: "Hindi",                   flag: "https://flagcdn.com/w20/in.png" },
-    { code: "mr",    name: "Marathi",                 flag: "https://flagcdn.com/w20/in.png" },
-    { code: "gu",    name: "Gujarati",                flag: "https://flagcdn.com/w20/in.png" },
-    { code: "ta",    name: "Tamil",                   flag: "https://flagcdn.com/w20/in.png" },
-    { code: "te",    name: "Telugu",                  flag: "https://flagcdn.com/w20/in.png" },
-    { code: "bn",    name: "Bengali",                 flag: "https://flagcdn.com/w20/bd.png" },
-    { code: "pa",    name: "Punjabi",                 flag: "https://flagcdn.com/w20/in.png" },
-    { code: "ur",    name: "Urdu",                    flag: "https://flagcdn.com/w20/pk.png" },
-    { code: "ar",    name: "Arabic",                  flag: "https://flagcdn.com/w20/sa.png" },
-    { code: "it",    name: "Italian",                 flag: "https://flagcdn.com/w20/it.png" },
-    { code: "ja",    name: "Japanese",                flag: "https://flagcdn.com/w20/jp.png" },
-    { code: "ru",    name: "Russian",                 flag: "https://flagcdn.com/w20/ru.png" },
-    { code: "zh-CN", name: "Chinese (Simplified)",    flag: "https://flagcdn.com/w20/cn.png" },
-    { code: "zh-TW", name: "Chinese (Traditional)",   flag: "https://flagcdn.com/w20/tw.png" }
+    { code: "en",    name: "English",               flag: "https://flagcdn.com/w20/us.png" },
+    { code: "fr",    name: "French",                flag: "https://flagcdn.com/w20/fr.png" },
+    { code: "de",    name: "German",                flag: "https://flagcdn.com/w20/de.png" },
+    { code: "es",    name: "Spanish",               flag: "https://flagcdn.com/w20/es.png" },
+    { code: "hi",    name: "Hindi",                 flag: "https://flagcdn.com/w20/in.png" },
+    { code: "mr",    name: "Marathi",               flag: "https://flagcdn.com/w20/in.png" },
+    { code: "gu",    name: "Gujarati",              flag: "https://flagcdn.com/w20/in.png" },
+    { code: "ta",    name: "Tamil",                 flag: "https://flagcdn.com/w20/in.png" },
+    { code: "te",    name: "Telugu",                flag: "https://flagcdn.com/w20/in.png" },
+    { code: "bn",    name: "Bengali",               flag: "https://flagcdn.com/w20/bd.png" },
+    { code: "pa",    name: "Punjabi",               flag: "https://flagcdn.com/w20/in.png" },
+    { code: "ur",    name: "Urdu",                  flag: "https://flagcdn.com/w20/pk.png" },
+    { code: "ar",    name: "Arabic",                flag: "https://flagcdn.com/w20/sa.png" },
+    { code: "it",    name: "Italian",               flag: "https://flagcdn.com/w20/it.png" },
+    { code: "ja",    name: "Japanese",              flag: "https://flagcdn.com/w20/jp.png" },
+    { code: "ru",    name: "Russian",               flag: "https://flagcdn.com/w20/ru.png" },
+    { code: "zh-CN", name: "Chinese (Simplified)",  flag: "https://flagcdn.com/w20/cn.png" },
+    { code: "zh-TW", name: "Chinese (Traditional)", flag: "https://flagcdn.com/w20/tw.png" }
   ];
 
-  // ---- Cookie helpers ----
+  // ==================== COOKIE HELPERS (robust, base-domain only) ====================
+  // Get base domain (eTLD+1) for cookies: works for most TLDs; extend two-part list if needed.
+  function getBaseDomain() {
+    var h = location.hostname; // e.g., "dotcompharma.webtesting.pw"
+    if (h === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(h)) return h; // localhost or IP
+
+    var parts = h.split('.');
+    if (parts.length <= 2) return h; // already base (e.g., webtesting.pw)
+
+    var twoPartTLDs = [
+      'co.in','com.au','co.uk','org.uk','gov.uk','com.br','com.mx','com.tr','co.nz','com.sg'
+    ];
+    var last2 = parts.slice(-2).join('.');
+    var last3 = parts.slice(-3).join('.');
+
+    if (twoPartTLDs.indexOf(last2) !== -1 && parts.length >= 3) {
+      return last3; // e.g., example.co.in
+    }
+    return last2; // e.g., webtesting.pw
+  }
+
+  function deleteCookieEverywhere(name) {
+    var base = getBaseDomain();
+    var past = 'Thu, 01 Jan 1970 00:00:01 GMT';
+    var paths = ['/']; // could add more paths if you set different ones
+
+    // Try multiple domains to ensure removal of duplicates
+    var domains = [
+      undefined,                             // host-only
+      '.' + location.hostname,               // dot-current-host
+      '.' + base,                            // dot-base
+      base                                   // bare base
+    ];
+
+    domains.forEach(function(dom){
+      paths.forEach(function(p){
+        var c = name + '=;expires=' + past + ';path=' + p;
+        if (dom) c += ';domain=' + dom;
+        document.cookie = c;
+      });
+    });
+  }
+
+  function setCookieBaseDomain(name, value, days) {
+    var base = getBaseDomain();
+    var exp = new Date(Date.now() + days*24*60*60*1000).toUTCString();
+    var attrs = ';path=/;SameSite=Lax' + (location.protocol === 'https:' ? ';Secure' : '');
+    document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + exp + ';domain=.' + base + attrs;
+  }
+
   function getCookie(name) {
     var match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'));
     return match ? decodeURIComponent(match[1]) : null;
   }
-  function setCookie(name, value, days, domain) {
-    var d = new Date();
-    d.setTime(d.getTime() + (days*24*60*60*1000));
-    var cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/";
-    if (domain) cookie += ";domain=" + domain;
-    document.cookie = cookie;
-  }
+
+  // Write ONE shared googtrans cookie at base domain and remove duplicates.
   function setGoogleTranslateLang(langCode) {
-    var host = location.hostname, apex = host.replace(/^www\./,'');
-    var val = "/auto/" + langCode;
-    setCookie('googtrans', val, 365);
-    if (apex && apex !== host) setCookie('googtrans', val, 365, "." + apex);
+    var val = '/auto/' + langCode;
+    deleteCookieEverywhere('googtrans');
+    setCookieBaseDomain('googtrans', val, 365);
   }
+
   function getGoogleTranslateLangFromCookie() {
     var v = getCookie('googtrans'); // e.g. "/auto/hi"
     if (!v) return null;
     var parts = v.split('/');
     return parts.length >= 3 ? parts[2] : null;
   }
+  // ==================== END COOKIE HELPERS ====================
 
   // ---- Build language dropdown with flags + Select2 ----
   function buildLanguageDropdown() {
@@ -1558,12 +1603,14 @@ function scrollTabs(direction) {
       );
     }
 
-    $dd.select2({
-      width: '100%',
-      templateResult: tpl,
-      templateSelection: tpl,
-      minimumResultsForSearch: 5
-    });
+    if ($dd.select2) {
+      $dd.select2({
+        width: '100%',
+        templateResult: tpl,
+        templateSelection: tpl,
+        minimumResultsForSearch: 5
+      });
+    }
 
     // Preselect from cookie if any
     var currentLang = getGoogleTranslateLangFromCookie();
@@ -1591,7 +1638,6 @@ function scrollTabs(direction) {
       if (selectedLang) setGoogleTranslateLang(selectedLang);
 
       var needsCurrencyPost = selectedCurrency && (selectedCurrency !== initialCurrency);
-
       function reload() { window.location.reload(); }
 
       if (needsCurrencyPost) {
@@ -1608,7 +1654,7 @@ function scrollTabs(direction) {
     });
     $('#currencyDropdown').on('change', function() {
       var $opt = $('#currencyDropdown option:selected');
-      $('#selectedCurrency').text($opt.data('symbol') + ' ' + $opt.data('name'));
+      $('#selectedCurrency').text(($opt.data('symbol') || '') + ' ' + ($opt.data('name') || ''));
     });
   }
 
@@ -1621,6 +1667,7 @@ function scrollTabs(direction) {
 
 })(jQuery);
 </script>
+
 
 </body>
 </html>
