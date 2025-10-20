@@ -30,6 +30,11 @@
     color: #2b56a1;
     font-size: 11px;
 }
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #444;
+    line-height: 35px;
+}
 .translater_menu select#languageDropdown {
     width: 140px;
     border-radius: 8px;
@@ -38,6 +43,24 @@
 }
 body .translater_menu .select2-container {
     width: 100px !important;
+}
+
+
+.select2-container--default .select2-selection--single {
+    background-color: #fff;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid #dfdfe6;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 33px;
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 20px
 }
 
 .translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow {
@@ -55,6 +78,11 @@ body .translater_menu .select2-container {
 .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
     background-color: #2b56a1 !important;
     color: white;
+}
+
+.select2-container--default .select2-results>.select2-results__options {
+    max-height: 110px;
+    overflow-y: auto
 }
 
 @media (max-width: 767px) {
@@ -124,7 +152,7 @@ body .translater_menu .select2-container {
         <div class="container">
             <div class="row d-flex">
 
-                <div class="col-xl-5 col-lg-6 col-md-4 col-7">
+                <div class="col-xl-5 col-lg-6 col-md-4 col-8">
                     <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                         <li class="list-inline-item d-lg-block d-none">
                             <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
@@ -156,53 +184,52 @@ body .translater_menu .select2-container {
                 </div>
 
 
-                <div class="col-xl-7 col-lg-6 col-md-8 col-5 d-flex justify-content-end">
+                <div class="col-xl-7 col-lg-6 col-md-8 col-4 d-flex justify-content-end">
 
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
-                        <!-- <li class="list-inline-item mr-md-3 mr-2">
-                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
-                                <i class="las la-sign-in-alt"></i>
-                                <span class="d-none d-md-inline">B2B Registration</span>
-                                <span class="d-inline d-md-none">B2B</span>
-                            </a>
-                        </li> -->
+
 
                         <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
-                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
-                                <i class="las la-sign-in-alt"></i>B2B Registration
+                            <a class="b2b_buttons d-grid align-items-center" href="{{ route('user.new_registration') }}">
+                                <span><i class="las la-sign-in-alt"></i></span> <span>B2B Registration</span> 
                             </a>
                         </li>
-                        <!-- <li class="list-inline-item mr-3">
-                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">
-                                <i class="las la-sign-in-alt"></i>B2B Registration
-                            </a>
-                        </li> -->
-
-
 
                         {{--  --}}
                         <!-- prescription -->
-                        <!-- @auth
-                            <li class="list-inline-item mr-md-3 mr-2">
+                         @auth
+                            <li class="list-inline-item d-none d-md-inline mr-md-3 mr-2">
                                 <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
                                     <i class="fa fa-file-prescription"></i> Prescription</a>
                             </li>
-                        @endauth -->
+                        @endauth 
                         {{--  --}}
 
 
-                        <li class="list-inline-item mr-md-3 mr-3 translater_menu">
-                            <!-- Hidden Google Translate -->
+                        <li class="list-inline-item mr-md-3 mr-3">
+                            {{-- <!-- Hidden Google Translate -->
                             <div id="google-translate-dropdown" style="display:none;"></div>
                             <!-- Custom Dropdown -->
-                            <select id="languageDropdown" style="display:none;"></select>
+                            <select id="languageDropdown" style="display:none;"></select> --}}
+                            <button type="button" class="btn language-currency btn-outline-dark btn-sm d-flex align-items-center"
+                                        data-toggle="modal" data-target="#languageCurrencyModal">
+                                <i class="fa fa-globe mr-1"></i>
+                                <span id="selectedLang">English</span>
+                                <span class="mx-1">|</span>
+                                <span class="d-none d-md-inline" id="selectedCurrency">
+                                    {{ get_system_currency()->symbol . ' ' . (get_system_currency()->name ?? '-') }}
+                                </span>
+                                <span class="d-inline d-md-none" id="selectedCurrency">
+                                    {{ get_system_currency()->symbol }}
+                                </span>
+                            </button>
                         </li>
 
                         
 
                         <!-- Language switcher -->
-                        <!-- @if (get_setting('show_language_switcher') == 'on')
+                        {{-- <!-- @if (get_setting('show_language_switcher') == 'on')
                             <li class="list-inline-item dropdown mr-3" id="lang-change">
 
                                 <a href="javascript:void(0)" class="black_light_clr dropdown-toggle fs-12 py-2"
@@ -223,10 +250,10 @@ body .translater_menu .select2-container {
                                     @endforeach
                                 </ul>
                             </li>
-                        @endif -->
+                        @endif --> --}}
 
                         <!-- Currency Switcher -->
-                        @if (get_setting('show_currency_switcher') == 'on')
+                        {{-- @if (get_setting('show_currency_switcher') == 'on')
                             <li class="list-inline-item dropdown ml-auto ml-lg-0 mr-0" id="currency-change">
                                 @php
                                     $system_currency = get_system_currency();
@@ -256,7 +283,7 @@ body .translater_menu .select2-container {
                                     @endforeach
                                 </ul>
                             </li>
-                        @endif
+                        @endif --}}
 
                     </ul>
                 </div>
@@ -1174,6 +1201,7 @@ body .translater_menu .select2-container {
                             </a>
                         </li>
                     @endforeach
+
                     <li class="list-inline-item">
                         <a class="b2b_buttons b2b_buttons_menu" href="{{ route('user.new_registration') }}">B2B
                             Registration</a>
@@ -1181,7 +1209,7 @@ body .translater_menu .select2-container {
 
                     @auth
                         <li class="list-inline-item">
-                            <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
+                            <a href="javascript:void(0)" id="prescription-btn" class="ml-0 prescription-btn_menu" title="Upload Prescription">
                                 <i class="fa fa-file-prescription"></i> Prescription</a>
                         </li>
                     @endauth

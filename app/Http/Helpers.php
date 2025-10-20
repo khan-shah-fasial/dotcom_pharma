@@ -249,7 +249,7 @@ if (!function_exists('format_price')) {
         }
 
         if (get_setting('symbol_format') == 1) {
-            return currency_symbol() . $fomated_price;
+            return currency_symbol() . ' ' . $fomated_price;
         } else if (get_setting('symbol_format') == 3) {
             return currency_symbol() . ' ' . $fomated_price;
         } else if (get_setting('symbol_format') == 4) {
@@ -1964,7 +1964,9 @@ if (!function_exists('get_frequently_bought_products')) {
         $fqbProducts = [];
         if($productSelectionType == 'product'){
             $fqbProductIds = $product->frequently_bought_products()->where('category_id', null)->pluck('frequently_bought_product_id')->toArray();
+
             $fqbProducts = filter_products(Product::whereIn('id', $fqbProductIds))->get();
+
         }
         elseif($productSelectionType == 'category'){
             $fqb_product_category = $product->frequently_bought_products()->where('category_id','!=', null)->first();
@@ -1972,10 +1974,13 @@ if (!function_exists('get_frequently_bought_products')) {
             if($fqbCategoryID != null){
                 $category = Category::with('childrenCategories')->find($fqbCategoryID);
 
-                $fqbProducts = $category->products()->where('id','!=',$product->id);
-                $fqbProducts = $product->added_by == 'admin' ? $fqbProducts->where('added_by', 'admin') : $fqbProducts->where('user_id', $product->user_id);
+                if($category) {
+                    $fqbProducts = $category->products()->where('id','!=',$product->id);
+                    $fqbProducts = $product->added_by == 'admin' ? $fqbProducts->where('added_by', 'admin') : $fqbProducts->where('user_id', $product->user_id);
 
-                $fqbProducts = filter_products($fqbProducts)->orderByRaw('RAND()')->take(10)->get();
+                    $fqbProducts = filter_products($fqbProducts)->orderByRaw('RAND()')->take(10)->get();
+                }
+
             }
         }
         return $fqbProducts;

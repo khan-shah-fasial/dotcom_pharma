@@ -86,7 +86,6 @@ li {
 
 .human_btn i {
     font-size: 13px !important;
-    color: #2b56a1;
 }
 
 .human_btn a {
@@ -121,7 +120,6 @@ li {
 
 .veterinary_btn i {
     font-size: 13px !important;
-    color: #2b56a1;
 }
 
 li.list-inline-item.human_btn {
@@ -151,8 +149,8 @@ li.list-inline-item.human_btn {
 
 .b2b_buttons .la-sign-in-alt {
     font-size: 13px;
-    top: 2px;
     position: relative;
+    top: 1px;
 }
 
 .top_baar_icons {
@@ -352,7 +350,7 @@ button.slick-next.slick-arrow {
 form#option-choice-form .aiz-megabox>input:checked~.aiz-megabox-elem,
 form#option-choice-form .aiz-megabox>input:checked~.aiz-megabox-elem {
     border-color: #ededf2 !important;
-    background-color: #123498;
+    background-color: #2b56a1;
     color: #fff !important;
 }
 
@@ -1474,6 +1472,30 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     top: 1px;
 }
 
+.language-currency{
+        border: 1px solid #2b56a1;
+    color: #2b56a1;
+    /* margin-left: 15px; */
+    text-align: center;
+    background: #d0d6ea;
+    border-radius: 8px;
+    padding: 3.5px 4px !important;
+    font-weight: 400;
+    font-size: 11px !important;
+    position: relative;
+    top: 9px;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    height: 26px;
+}
+
+.language-currency:hover {
+    background: #2b56a1;
+    color: #fff;
+    border: 1px solid #2b56a1;
+}
+
 .b2b_buttons {
     border: 1px solid #2b56a1;
     color: #2b56a1;
@@ -1485,8 +1507,11 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     font-weight: 400;
     font-size: 11px !important;
     position: relative;
-    top: 7px;
+    top: 9px;
     background-color: white;
+    display: flex;
+    align-items: center;
+    height: 26px;
 
 
 
@@ -1679,6 +1704,10 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     font-size: 18px;
 }
 
+.prescription-btn_menu{
+    top: 10px !important;
+}
+
 @media (max-width: 425px) {
     .main_disc_scroll li a {
         margin-right: 10px !important;
@@ -1716,6 +1745,33 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 
 }
 
+@media (max-width: 768px) {
+    .language-change-main-div .modal-header,
+    .language-change-main-div .modal-body,
+    .language-change-main-div .modal-footer{
+        padding: 10px 15px !important;
+    }
+
+    .language-change-main-div .modal-body h6{
+        font-size: 12px;
+    }
+
+    .language-change-main-div .modal-body{
+        padding-bottom: 0px !important;
+    }
+
+    .language-change-main-div .modal-footer{
+        padding-top: 0px !important;
+    }
+
+    .language-change-main-div .modal-header h5 {
+        font-size: 14px;
+    }
+
+    .language-change-main-div .modal-footer button{
+        padding: 5px 10px;
+    }
+}
 
 
 /* .pulse-button {
@@ -1838,13 +1894,13 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .without-tax-product-gst {
     color: var(--primary);
     font-weight: 700;
-    font-size: 30px;
+    font-size: 18px;
 }
 
 .without-tax-product-1 {
     color: var(--primary) !important;
     font-weight: 700 !important;
-    font-size: 30px !important;
+    font-size: 18px !important;
 }
 
 .text-black {
@@ -1855,7 +1911,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .per-piece-price-product-details-gst {
     color: var(--primary);
     font-weight: 700;
-    font-size: 18px;
+    font-size: 30px;
 }
 
 .percentage-offf {
@@ -2050,6 +2106,11 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     padding-top: 6px;
 } */
 
+/* .human_btn a:hover{
+    background: var(--primary);
+    color: var(--white) !important;
+} */
+
 
 @media (max-width: 375px) {
 
@@ -2095,4 +2156,19 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
         padding-bottom: 6px;
         padding-top: 3px;
     }
+
+    .language-currency {
+        height: 22px;
+        padding: 0px 5px !important;
+        top: 2.5px
+    }
+
+    .top_baar_icons {
+        justify-content: end;
+    }
+
+    li.list-inline-item.human_btn {
+        margin-right: 3px !important;
+    }
+
 }

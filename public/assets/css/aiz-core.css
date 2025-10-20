@@ -15320,3 +15320,29 @@ input[type="color"]::-webkit-color-swatch {
         height: 32px;
     }
 }
+
+.drop-down-text-icon button{
+    padding: 2px 5px 2px 5px;
+    background: none !important;
+    border: none !important;
+}
+
+.drop-down-text-icon button:hover{
+    color: black !important;
+    background: none !important;
+    border: none !important;
+}
+
+.drop-down-text-icon button .la-ellipsis-v{
+    font-size: 20px;
+}
+
+.human_btn a:hover {
+    background-color: #2b56a1 !important;
+    color: var(--white) !important;
+}
+
+.veterinary_btn a:hover {
+    background-color: #2b56a1 !important;
+    color: var(--white) !important;
+}

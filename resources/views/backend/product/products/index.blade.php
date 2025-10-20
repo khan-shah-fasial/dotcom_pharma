@@ -151,7 +151,7 @@
                                 <th data-breakpoints="lg">{{ translate('Approved') }}</th>
                             @endif
                             <th data-breakpoints="lg">{{ translate('Featured') }}</th>
-                            <th data-breakpoints="sm" class="text-right">{{ translate('Options') }}</th>
+                            <th data-breakpoints="sm" class="">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -302,9 +302,9 @@
                                 </td>
                                 <td class="text-right drop-down-text-icon">
                                    <div class="dropdown">
-                                        <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button" id="productActionDropdown{{ $product->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="las la-ellipsis-h"></i>
-                                        </button>
+    <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button" id="productActionDropdown{{ $product->id }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="las la-ellipsis-v"></i>
+    </button>
 
                                         <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="productActionDropdown{{ $product->id }}">
                                             <!-- View -->

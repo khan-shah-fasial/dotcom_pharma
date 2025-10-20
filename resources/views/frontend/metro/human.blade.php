@@ -300,13 +300,14 @@
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div>
-                        <button type="button" class="close position-absolute right-0 p-1 pluse-button-pop-up d-flex justify-content-center align-items-center" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true"><img alt="close" src="{{ static_asset('assets/img/lightbox-close.png') }}" class="lightbox-close"></span>
+                            <button type="button" class="close position-absolute right-0 p-1 pluse-button-pop-up d-flex justify-content-center align-items-center" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true"><img alt="close" src="{{ static_asset('assets/img/lightbox-close.png') }}" class="lightbox-close"></span>
                             </button>
                         </div>
                         <div class="modal-body m-0 p-0">
                             <div class="embed-responsive embed-responsive-16by9">
                                 <iframe 
+                                    id="video-iframe"
                                     class="embed-responsive-item" 
                                     src="https://www.youtube.com/embed/0PHBJvkiQOM" 
                                     allowfullscreen>
@@ -316,6 +317,22 @@
                     </div>
                 </div>
             </div>
+
+            <!-- JS to force stop video -->
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var modal = document.getElementById('exampleModal');
+                var iframe = document.getElementById('video-iframe');
+                var iframeSrc = iframe.src; // save original src
+
+                // For Bootstrap 4
+                $(modal).on('hidden.bs.modal', function () {
+                    iframe.src = '';       // stop video
+                    iframe.src = iframeSrc; // restore src
+                });
+            });
+            </script>
+
 
 
             <!--  -->
@@ -685,7 +702,7 @@
                 <h3 class="headeing_size text_clr_green pb-2 fw-600 text-center">Frequently Asked Questions</h3>
             </div>
             <div class="row d-flex justify-content-center">
-                <div class="col-md-7 col-12">
+                <div class="col-lg-7 col-12">
                     <div id="accordion" class="accordion">
                         <div class="card mb-0">
                             <div class="accordion-item">

@@ -14,6 +14,7 @@ use DB;
 use Illuminate\Http\Request;
 use Schema;
 use App\Models\User;
+use App\Models\Currency;
 use App\Models\Order;
 use Illuminate\Support\Facades\Storage;
 
@@ -46,15 +47,26 @@ class PayumoneyController extends Controller
             $payment_detalis = json_encode($request->all());
             $user_id = $request->udf1;
             $paymentType = $request->udf2;
-            $combined_order_id = $request->udf3;
+            $combined_order_id = $request->udf4;
             $paymentData = ['order_id' => $request->udf4, 'payment_method' => $request->udf5, 'amount' => $request->amount];
-            
+
+            // currency data
+            if(isset($request->udf3) && !empty($request->udf3)){
+                $currency_data = Currency::where('code', $request->udf3)->first();
+            }
+
             //Login user if session loosed
             $user = auth()->user();
             if (!$user) {
                 $user = User::find($user_id);
                 auth()->login($user);
             }         
+
+            if ($currency_data) {
+                $request->session()->put('currency_code', $currency_data->code);
+                $request->session()->put('currency_symbol', $currency_data->symbol);
+                $request->session()->put('currency_exchange_rate', $currency_data->exchange_rate);
+            }
             
             if ($paymentType == 'cart_payment') {
                 return (new CheckoutController)->checkout_done($combined_order_id, $payment_detalis);
@@ -96,7 +108,7 @@ class PayumoneyController extends Controller
             $payment_detalis = json_encode($request->all());
             $user_id = $request->udf1;
             $paymentType = $request->udf2;
-            $combined_order_id = $request->udf3;
+            $combined_order_id = $request->udf4;
             $paymentData = ['order_id' => $request->udf4, 'payment_method' => $request->udf5, 'amount' => $request->amount];
             
             if ($paymentType == 'cart_payment') {

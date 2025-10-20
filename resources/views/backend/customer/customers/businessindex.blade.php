@@ -1,5 +1,3 @@
-
-
 @extends('backend.layouts.app')
 
 @section('content')
@@ -56,6 +54,49 @@
                                 placeholder="{{ translate(' GST  / IEC / Aadhar / Passport / PAN ') }}">
                         </div>
                     </div>
+
+
+                    <div class="col-md-3">
+                        <select class="form-control aiz-selectpicker" name="city_id" onchange="sort_customers()"
+                            data-selected="{{ $filter_city_id }}">
+                            <option value="">{{ translate('Filter by City') }}</option>
+                            @foreach ($cityIds as $cid)
+                                <option value="{{ $cid }}">{{ $cid }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <select class="form-control aiz-selectpicker" name="district_id" onchange="sort_customers()"
+                            data-selected="{{ $filter_district_id }}">
+                            <option value="">{{ translate('Filter by District') }}</option>
+                            @foreach ($districtIds as $did)
+                                <option value="{{ $did }}">{{ $did }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <select class="form-control aiz-selectpicker" name="state_id" onchange="sort_customers()"
+                            data-selected="{{ $filter_state_id }}">
+                            <option value="">{{ translate('Filter by State') }}</option>
+                            @foreach ($stateIds as $sid)
+                                <option value="{{ $sid }}">{{ $sid }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <select class="form-control aiz-selectpicker" name="country_id" onchange="sort_customers()"
+                            data-selected="{{ $filter_country_id }}">
+                            <option value="">{{ translate('Filter by Country') }}</option>
+                            @foreach ($countries as $c)
+                                <option value="{{ $c->id }}">{{ $c->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+
                     {{-- <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
                             <input type="text" class="form-control" id="bank_details"
@@ -91,9 +132,9 @@
                             <option value="un_verified">{{ translate('Unverified') }}</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 my-2">
                         <button class="btn btn-primary" onclick="sort_customers()">Search</button>
-                        <a class="btn btn-danger" href="{{ url(route('customers.business')) }}" class="">Reset</a>                        
+                        <a class="btn btn-danger" href="{{ url(route('customers.business')) }}" class="">Reset</a>
                     </div>
                 </div>
             </div>
@@ -106,26 +147,26 @@
                             <th>
                                 Sr No.
                                 <!-- <div class="form-group">
-                                    <div class="aiz-checkbox-inline">
-                                        <label class="aiz-checkbox">
-                                            <input type="checkbox" class="check-all">
-                                            <span class="aiz-square-check"></span>
-                                        </label>
-                                    </div>
-                                </div> -->
+                                        <div class="aiz-checkbox-inline">
+                                            <label class="aiz-checkbox">
+                                                <input type="checkbox" class="check-all">
+                                                <span class="aiz-square-check"></span>
+                                            </label>
+                                        </div>
+                                    </div> -->
                             </th>
                             <th>{{ translate('Company Name') }}</th>
                             <th>{{ translate('Post') }}</th>
                             <th>{{ translate('Destrict') }}</th>
-                            <th>{{ translate('Country Code') }}</th>
+                            <!-- <th>{{ translate('Country Code') }}</th> -->
                             <th data-breakpoints="lg">{{ translate('Email Address') }}</th>
                             <th data-breakpoints="lg">{{ translate('Phone') }}</th>
                             <!-- <th data-breakpoints="lg">{{ translate('Package') }}</th>
-                            <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> -->
+                                <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> -->
                             {{-- <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th> --}}
                             {{-- <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th> --}}
                             <th data-breakpoints="lg">{{ translate('Approval Status') }}</th>
-                            <th class="text-right">{{ translate('Options') }}</th>
+                            <th class="">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -134,32 +175,32 @@
                                 <tr>
                                     <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
                                     <!-- <td>
-                                        <div class="form-group">
-                                            <div class="aiz-checkbox-inline">
-                                                <label class="aiz-checkbox">
-                                                    <input type="checkbox" class="check-one" name="id[]"
-                                                        value="{{ $user->id }}">
-                                                    <span class="aiz-square-check"></span>
-                                                </label>
+                                            <div class="form-group">
+                                                <div class="aiz-checkbox-inline">
+                                                    <label class="aiz-checkbox">
+                                                        <input type="checkbox" class="check-one" name="id[]"
+                                                            value="{{ $user->id }}">
+                                                        <span class="aiz-square-check"></span>
+                                                    </label>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td> -->
+                                        </td> -->
                                     <td>
                                         @if ($user->banned == 1)
                                             <i class="fa fa-ban text-danger" aria-hidden="true"></i>
                                         @endif {{ $user->details->company_name ?? '-' }}
                                     </td>
-                                    <td>{{ $user->details->post_business ?? $user->details->post ?? '-' }}</td>
-                                    <td>{{ $user->details->district_business ?? $user->details->district ?? '-' }}</td>
-                                    <td>{{ $user->details->country_code_business ?? $user->details->country_code ?? '-' }}</td>
+                                    <td>{{ $user->details->post_business ?? ($user->details->post ?? '-') }}</td>
+                                    <td>{{ $user->details->district_business ?? ($user->details->district ?? '-') }}</td>
+                                    <!-- <td>{{ $user->details->country_code_business ?? ($user->details->country_code ?? '-') }}</td> -->
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->phone }}</td>
                                     <!-- <td>
-                                        @if ($user->customer_package != null)
-                                            {{ $user->customer_package->getTranslation('name') }}
-                                        @endif
-                                    </td>
-                                    <td>{{ single_price($user->balance) }}</td> -->
+                                            @if ($user->customer_package != null)
+    {{ $user->customer_package->getTranslation('name') }}
+    @endif
+                                        </td>
+                                        <td>{{ single_price($user->balance) }}</td> -->
                                     {{-- <td>
                                         @if ($user->email_verified_at != null)
                                             <span
@@ -180,87 +221,98 @@
                                     </td> --}}
                                     <td>
                                         @if ($user->approval_status == 1)
-                                            <span
-                                                class="badge badge-inline badge-success">{{ translate('Verified') }}
+                                            <span class="badge badge-inline badge-success">{{ translate('Verified') }}
                                             </span>
                                         @else
-                                            <span
-                                                class="badge badge-inline badge-warning">{{ translate('Unverified') }}
+                                            <span class="badge badge-inline badge-warning">{{ translate('Unverified') }}
                                             </span>
                                         @endif
                                     </td>
                                     <td class="text-right drop-down-text-icon drop-down-text-icon-business">
                                         <div class="dropdown">
-    <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button"
-        id="customerActionDropdown{{ $user->id }}" data-toggle="dropdown"
-        aria-haspopup="true" aria-expanded="false">
-        <i class="las la-ellipsis-h"></i>
-    </button>
-    <div class="dropdown-menu dropdown-menu-right p-2"
-        aria-labelledby="customerActionDropdown{{ $user->id }}">
+                                            <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button"
+                                                id="customerActionDropdown{{ $user->id }}" data-toggle="dropdown"
+                                                aria-haspopup="true" aria-expanded="false">
+                                                <i class="las la-ellipsis-v"></i>
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-right p-2"
+                                                aria-labelledby="customerActionDropdown{{ $user->id }}">
 
-        <!-- View -->
-        <a href="{{ route('customers.view', encrypt($user->id)) }}"
-            class="btn"
-            title="{{ translate('View Details of this Customer') }}">
-            <i class="las la-eye btn-soft-success btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('View') }}</span>
-        </a>
+                                                <!-- View -->
+                                                <a href="{{ route('customers.view', encrypt($user->id)) }}"
+                                                    class="btn"
+                                                    title="{{ translate('View Details of this Customer') }}">
+                                                    <i
+                                                        class="las la-eye btn-soft-success btn-icon btn-circle btn-sm mr-2"></i>
+                                                    <span class="ms-1">{{ translate('View') }}</span>
+                                                </a>
 
-        <!-- Approval -->
-        @can('ban_customer')
-            @if ($user->approval_status != 1)
-                <a href="#" class="btn"
-                    onclick="show_Approval_model({{ $user->id }}, 'approve', '{{ $user->user_subtype ?? 'null' }}');"
-                    title="{{ translate('Approval this Customer') }}">
-                    <i class="las la-edit btn-soft-success btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Approve') }}</span>
-                </a>
-            @else
-                <a href="#" class="btn"
-                    onclick="show_Approval_model({{ $user->id }}, 'not_approve', '{{ $user->user_subtype ?? 'null' }}');"
-                    title="{{ translate('Not Approve this Customer') }}">
-                    <i class="las la-edit btn-soft-success btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Not Approve') }}</span>
-                </a>
-            @endif
-        @endcan
+                                                <!-- Approval -->
+                                                @can('ban_customer')
+                                                    @if ($user->approval_status != 1)
+                                                        <a href="#" class="btn"
+                                                            onclick="show_Approval_model({{ $user->id }}, 'approve', '{{ $user->user_subtype ?? 'null' }}');"
+                                                            title="{{ translate('Approval this Customer') }}">
+                                                            <i
+                                                                class="las la-edit btn-soft-success btn-icon btn-circle btn-sm mr-2"></i>
+                                                            <span class="ms-1">{{ translate('Approve') }}</span>
+                                                        </a>
+                                                    @else
+                                                        <a href="#" class="btn"
+                                                            onclick="show_Approval_model({{ $user->id }}, 'not_approve', '{{ $user->user_subtype ?? 'null' }}');"
+                                                            title="{{ translate('Not Approve this Customer') }}">
+                                                            <i
+                                                                class="las la-edit btn-soft-success btn-icon btn-circle btn-sm mr-2"></i>
+                                                            <span class="ms-1">{{ translate('Not Approve') }}</span>
+                                                        </a>
+                                                    @endif
+                                                @endcan
 
-        <!-- Login as Customer -->
-        @if ($user->email_verified_at != null && auth()->user()->can('login_as_customer'))
-            <a href="{{ route('customers.login', encrypt($user->id)) }}"
-                class="btn"
-                title="{{ translate('Log in as this Customer') }}">
-                <i class="las la-sign-in-alt btn-soft-primary btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Login') }}</span>
-            </a>
-        @endif
+                                                <!-- Login as Customer -->
+                                                @if ($user->email_verified_at != null && auth()->user()->can('login_as_customer'))
+                                                    <a href="{{ route('customers.login', encrypt($user->id)) }}"
+                                                        class="btn"
+                                                        title="{{ translate('Log in as this Customer') }}">
+                                                        <i
+                                                            class="las la-sign-in-alt btn-soft-primary btn-icon btn-circle btn-sm mr-2"></i>
+                                                        <span class="ms-1">{{ translate('Login') }}</span>
+                                                    </a>
+                                                @endif
 
-        <!-- Ban / Unban -->
-        @can('ban_customer')
-            @if ($user->banned != 1)
-                <a href="#" class="btn"
-                    onclick="confirm_ban('{{ route('customers.ban', encrypt($user->id)) }}');"
-                    title="{{ translate('Ban this Customer') }}">
-                    <i class="las la-user-slash btn-soft-danger btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Ban') }}</span>
-                </a>
-            @else
-                <a href="#" class="btn"
-                    onclick="confirm_unban('{{ route('customers.ban', encrypt($user->id)) }}');"
-                    title="{{ translate('Unban this Customer') }}">
-                    <i class="las la-user-check btn-soft-success btn-icon btn-circle btn-sm mr-2"></i> <span class="ms-1">{{ translate('Unban') }}</span>
-                </a>
-            @endif
-        @endcan
+                                                <!-- Ban / Unban -->
+                                                @can('ban_customer')
+                                                    @if ($user->banned != 1)
+                                                        <a href="#" class="btn"
+                                                            onclick="confirm_ban('{{ route('customers.ban', encrypt($user->id)) }}');"
+                                                            title="{{ translate('Ban this Customer') }}">
+                                                            <i
+                                                                class="las la-user-slash btn-soft-danger btn-icon btn-circle btn-sm mr-2"></i>
+                                                            <span class="ms-1">{{ translate('Ban') }}</span>
+                                                        </a>
+                                                    @else
+                                                        <a href="#" class="btn"
+                                                            onclick="confirm_unban('{{ route('customers.ban', encrypt($user->id)) }}');"
+                                                            title="{{ translate('Unban this Customer') }}">
+                                                            <i
+                                                                class="las la-user-check btn-soft-success btn-icon btn-circle btn-sm mr-2"></i>
+                                                            <span class="ms-1">{{ translate('Unban') }}</span>
+                                                        </a>
+                                                    @endif
+                                                @endcan
 
-        <!-- Delete -->
-        @can('delete_customer')
-            <a href="#"
-                class="btn"
-                data-href="{{ route('customers.destroy', $user->id) }}"
-                title="{{ translate('Delete') }}">
-                <i class="las la-trash btn-soft-danger btn-icon btn-circle btn-sm confirm-delete mr-2"></i> <span class="ms-1">{{ translate('Delete') }}</span>
-            </a>
-        @endcan
+                                                <!-- Delete -->
+                                                @can('delete_customer')
+                                                    <a href="#" class="btn"
+                                                        data-href="{{ route('customers.destroy', $user->id) }}"
+                                                        title="{{ translate('Delete') }}">
+                                                        <i
+                                                            class="las la-trash btn-soft-danger btn-icon btn-circle btn-sm confirm-delete mr-2"></i>
+                                                        <span class="ms-1">{{ translate('Delete') }}</span>
+                                                    </a>
+                                                @endcan
 
-    </div>
-</div>
+                                            </div>
+                                        </div>
 
 
                                     </td>
@@ -332,52 +384,52 @@
                 </div>
 
                 <div class="modal-body">
-                <form id="approval-status-model" action="{{ url(route('customers.approval')) }}" method="post">
-                    @csrf
+                    <form id="approval-status-model" action="{{ url(route('customers.approval')) }}" method="post">
+                        @csrf
 
-                    <input type="hidden" name="id">
+                        <input type="hidden" name="id">
 
-                    <!-- Approval Status Dropdown -->
-                    <div class="form-group">
-                        <label for="approval-status" class="col-form-label form-label">Approval Status:</label>
-                        <select class="form-control" id="approval-status" name="approval_status"
-                            onchange="toggleNote()">
-                            <option value="approve">Approve</option>
-                            <option value="not_approve">Not Approve</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="approval-status" class=" col-form-label form-label">User Role:</label>
-                        <select class="form-control" id="user-role" name="user_subtype">
-                            <option value="">Customer</option>
-                            <option value="pts">pts</option>
-                            <option value="ptr">ptr</option>
-                            <option value="ptd">ptd</option>
-                            <option value="gov">gov</option>
-                            <option value="expo">expo</option>
-                        </select>
-                    </div>
-
-                    <div id="note-section" style="display: none;" class="modal-body">
+                        <!-- Approval Status Dropdown -->
                         <div class="form-group">
-                            <label for="recipient-name" class="col-form-label form-label">Note :</label>
-                            <textarea type="text" class="form-control" id="note" name="note"></textarea>
+                            <label for="approval-status" class="col-form-label form-label">Approval Status:</label>
+                            <select class="form-control" id="approval-status" name="approval_status"
+                                onchange="toggleNote()">
+                                <option value="approve">Approve</option>
+                                <option value="not_approve">Not Approve</option>
+                            </select>
                         </div>
-                    </div>
+
+                        <div class="form-group">
+                            <label for="approval-status" class=" col-form-label form-label">User Role:</label>
+                            <select class="form-control" id="user-role" name="user_subtype">
+                                <option value="">Customer</option>
+                                <option value="pts">pts</option>
+                                <option value="ptr">ptr</option>
+                                <option value="ptd">ptd</option>
+                                <option value="gov">gov</option>
+                                <option value="expo">expo</option>
+                            </select>
+                        </div>
+
+                        <div id="note-section" style="display: none;" class="modal-body">
+                            <div class="form-group">
+                                <label for="recipient-name" class="col-form-label form-label">Note :</label>
+                                <textarea type="text" class="form-control" id="note" name="note"></textarea>
+                            </div>
+                        </div>
 
 
-                    <div class="modal-footer" style="padding: 0; border-top: 0;">
-                        <div class="blue_btn">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <div class="modal-footer" style="padding: 0; border-top: 0;">
+                            <div class="blue_btn">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            </div>
+                            <div class="purple_btn">
+                                <button type="submit" class="btn btn-primary">Proceed</button>
+                            </div>
                         </div>
-                        <div class="purple_btn">
-                            <button type="submit" class="btn btn-primary">Proceed</button>
-                        </div>
-                    </div>
-                </form>
+                    </form>
 
-            </div>
+                </div>
             </div>
         </div>
     </div>
@@ -476,7 +528,7 @@
             // Set the selected option in the dropdown
             $('#approval-status').val(status);
 
-            if(role !== 'null'){
+            if (role !== 'null') {
                 // Set the selected option in the dropdown
                 $('#user-role').val(role);
             }

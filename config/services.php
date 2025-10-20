@@ -63,4 +63,13 @@ return [
         'industry_type' => env('PAYTM_INDUSTRY_TYPE'),
     ],
 
+    'exchangerate' => [
+        'key' => env('EXCHANGERATE_API_KEY'),
+        'base' => 'https://v6.exchangerate-api.com/v6',
+    ],
+
+    'cron' => [
+        'secret' => env('CRON_TOKEN'),
+    ],
+
 ];

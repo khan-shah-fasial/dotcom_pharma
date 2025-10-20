@@ -278,37 +278,49 @@
 
 
     <section class="sale_section position-relative">
-        <div class="image-wrapper">
-            <img class="w-100 mb mb-0" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
-            <a href="#" class="btn" data-toggle="modal" data-target="#exampleModal">
-                <img src="{{ static_asset('assets/img/play_button_icon.webp') }}"
-                    class="pulse-button space_1 overlay-img" alt="Play button">
-            </a>
-        </div>
+<div class="image-wrapper">
+                <img class="w-100 mb mb-0" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
+                <a href="#" class="btn" data-toggle="modal" data-target="#exampleModal">
+                    <img src="{{ static_asset('assets/img/play_button_icon.webp') }}" class="pulse-button space_1 overlay-img" alt="Play button">
+                </a>
+            </div>
 
-        <div class="modal fade bd-example-modal-lg in mt-md-4 mt-5 p-3" id="exampleModal" tabindex="-1" role="dialog"
-            aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div>
-                        <button type="button"
-                            class="close position-absolute right-0 p-1 pluse-button-pop-up d-flex justify-content-center align-items-center"
-                            data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true"><img alt="close"
-                                    src="{{ static_asset('assets/img/lightbox-close.png') }}"
-                                    class="lightbox-close"></span>
-                        </button>
-                    </div>
-                    <div class="modal-body m-0 p-0">
-                        <div class="embed-responsive embed-responsive-16by9">
-                            <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/0PHBJvkiQOM"
-                                allowfullscreen>
-                            </iframe>
+            <div class="modal fade bd-example-modal-lg in mt-md-4 mt-5 p-3" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div>
+                            <button type="button" class="close position-absolute right-0 p-1 pluse-button-pop-up d-flex justify-content-center align-items-center" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true"><img alt="close" src="{{ static_asset('assets/img/lightbox-close.png') }}" class="lightbox-close"></span>
+                            </button>
+                        </div>
+                        <div class="modal-body m-0 p-0">
+                            <div class="embed-responsive embed-responsive-16by9">
+                                <iframe 
+                                    id="video-iframe"
+                                    class="embed-responsive-item" 
+                                    src="https://www.youtube.com/embed/0PHBJvkiQOM" 
+                                    allowfullscreen>
+                                </iframe>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- JS to force stop video -->
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var modal = document.getElementById('exampleModal');
+                var iframe = document.getElementById('video-iframe');
+                var iframeSrc = iframe.src; // save original src
+
+                // For Bootstrap 4
+                $(modal).on('hidden.bs.modal', function () {
+                    iframe.src = '';       // stop video
+                    iframe.src = iframeSrc; // restore src
+                });
+            });
+            </script>
 
 
         <!--  -->
@@ -735,7 +747,7 @@
                 <h3 class="headeing_size text_clr_green pb-2 fw-600 text-center">Frequently Asked Questions</h3>
             </div>
             <div class="row d-flex justify-content-center">
-                <div class="col-md-7 col-12">
+                <div class="col-lg-7 col-12">
                     <div id="accordion" class="accordion">
                         <div class="card mb-0">
                             <div class="accordion-item">
