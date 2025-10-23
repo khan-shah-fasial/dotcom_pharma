@@ -144,6 +144,8 @@ class CartController extends Controller
 
         CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity);
         $cart->notify_date = Carbon::now()->addHour(); // First reminder in 1 hours
+        $cart->save();
+
         if($authUser != null) {
             $user_id = $authUser->id;
             $carts = Cart::where('user_id', $user_id)->get();
