@@ -96,28 +96,30 @@
                     @endif
                 @endisset
             </ul> -->
-            <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2 pt-2 pb-md-3 pb-0">
-            <!-- 1. Home (Always shown) -->
-            <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100 fs-12">
-                <a class="text-reset" href="{{ route('home') }}">{{ translate('Home') }}</a>
-            </li>
+           <div class="col-md-12">
+                <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2 pt-2 pb-md-3 pb-0">
+                    <!-- 1. Home (Always shown) -->
+                    <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100 fs-12">
+                        <a class="text-reset" href="{{ route('home') }}">{{ translate('Home') }}</a>
+                    </li>
 
-            <!-- 3. FORCE Pharma Category (If exists) -->
-            @if($detailedProduct->category_id != 'null')
-                <li class="fw-500 breadcrumb-item text-capitalize fs-12">
-                    <a class="text-reset" href="{{ route('products.category', \App\Models\Category::find($detailedProduct->category_id)->slug) }}">
-                        {{ \App\Models\Category::find($detailedProduct->category_id)->getTranslation('name') }}
-                    </a>
-                </li>
-            @endif
+                    <!-- 3. FORCE Pharma Category (If exists) -->
+                    @if($detailedProduct->category_id != 'null')
+                        <li class="fw-500 breadcrumb-item text-capitalize fs-12">
+                            <a class="text-reset" href="{{ route('products.category', \App\Models\Category::find($detailedProduct->category_id)->slug) }}">
+                                {{ \App\Models\Category::find($detailedProduct->category_id)->getTranslation('name') }}
+                            </a>
+                        </li>
+                    @endif
 
-            <!-- 4. Product Name (Always shown if product exists) -->
-            @if(isset($detailedProduct))
-                <li class="breadcrumb-item text-dark fw-400 fs-12">
-                    {{ $detailedProduct->drug_name ?? $detailedProduct->name }}
-                </li>
-            @endif
-        </ul>
+                    <!-- 4. Product Name (Always shown if product exists) -->
+                    @if(isset($detailedProduct))
+                        <li class="breadcrumb-item text-dark fw-400 fs-12">
+                            {{ $detailedProduct->getTranslation('name') }}
+                        </li>
+                    @endif
+                </ul>
+           </div>
         </div>
     </div>
  </section>
@@ -128,12 +130,12 @@
             <div class="new-bg-color py-3">
                 <div class="row ml-0 mr-0">
                     <!-- Product Image Gallery -->
-                    <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="col-xl-6 col-lg-6 p-md-4 p-0 mb-4">
                         @include('frontend.product_details.image_gallery')
                     </div>
 
                     <!-- Product Details -->
-                    <div class="col-xl-6 col-lg-6">
+                    <div class="col-xl-6 col-lg-6 p-md-4 p-0">
                         @include('frontend.product_details.details')
                     </div>
                 </div>
@@ -169,7 +171,7 @@
                     <div class="col-lg-12">
                         
                        
-                    <div class="discription_boxex">
+                    <div class="discription_boxex d-none">
                        <ul class="nav nav-tabs d-none" id="myTab" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">description</button>

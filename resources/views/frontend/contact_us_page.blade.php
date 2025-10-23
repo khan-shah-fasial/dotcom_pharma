@@ -153,6 +153,9 @@
                                     ></textarea>
                                 </div>
                                 </div>
+<div class="col-md-12">
+                                <div class="h-captcha text-left" data-sitekey="6d4e0748-99d2-47b0-b136-82d8de38fd3e"></div>
+                               </div>
                                </div>
                                
                                 <!-- Recaptcha -->

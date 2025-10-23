@@ -112,6 +112,8 @@
                             <th data-breakpoints="md">{{ translate('Customer') }}</th>
                             <th data-breakpoints="md">{{ translate('Seller') }}</th>
                             <th data-breakpoints="md">{{ translate('Amount') }}</th>
+                            <th data-breakpoints="md">{{ translate('Currency') }}</th>
+                            <th data-breakpoints="md">{{ translate('Exchange Rate') }}</th>
                             <th data-breakpoints="md">{{ translate('Delivery Status') }}</th>
                             <th data-breakpoints="md">{{ translate('Payment method') }}</th>
                             <th data-breakpoints="md">{{ translate('Payment Status') }}</th>
@@ -167,6 +169,12 @@
                                 </td>
                                 <td>
                                     {{ single_price($order->grand_total) }}
+                                </td>
+                                <td>
+                                    {{ $order->quote_currency_code }}
+                                </td>
+                                <td>
+                                    {{ $order->quote_grand_total }}
                                 </td>
                                 <td>
                                     {{ translate(ucfirst(str_replace('_', ' ', $order->delivery_status))) }}

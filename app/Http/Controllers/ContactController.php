@@ -81,10 +81,7 @@ class ContactController extends Controller
             $contacts->where(function ($query) use ($sort_search) {
                 $query->where('name', 'like', '%' . $sort_search . '%')
                       ->orWhere('email', 'like', '%' . $sort_search . '%')
-                      ->orWhere('phone', 'like', '%' . $sort_search . '%')
-                      ->orWhereHas('product', function ($q) use ($sort_search) {
-                          $q->where('name', 'like', '%' . $sort_search . '%'); 
-                      });
+                      ->orWhere('phone', 'like', '%' . $sort_search . '%');
             });
         }
         
@@ -328,7 +325,7 @@ class ContactController extends Controller
                 'attachment' => $storedPath,
                 
                 'content' => null,
-                'url' => $request->fullUrl(),
+                //'url' => $request->fullUrl(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

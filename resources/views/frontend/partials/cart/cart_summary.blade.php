@@ -46,7 +46,7 @@
             <div class="row gutters-5">
                 <!-- Total Products -->
                 <div class="@if (addon_is_activated('club_point')) col-6 @else col-12 @endif">
-                    <div class="d-flex align-items-center justify-content-between bg-primary p-2">
+                    <div class="d-flex align-items-center justify-content-between bg-primary p-2" style="background: #2b56a1 !important;">
                         <span class="fs-13 text-white">{{ translate('Total Products') }}</span>
                         <span class="fs-13 fw-700 text-white">{{ sprintf("%02d", count($carts)) }}</span>
                     </div>
@@ -142,7 +142,7 @@
                                     placeholder="{{ translate('Have coupon code? Apply here') }}" required>
                                 <div class="input-group-append">
                                     <button type="button" id="coupon-apply"
-                                        class="btn btn-primary rounded-0">{{ translate('Apply') }}</button>
+                                        class="btn btn-primary rounded-0" style="background: #2b56a1 !important;">{{ translate('Apply') }}</button>
                                 </div>
                             </div>
                             @if (!auth()->check())
@@ -157,7 +157,7 @@
             @if ($proceed == 1)
             <!-- Continue to Shipping -->
             <div class="mt-4">
-                <a href="{{ route('checkout') }}" class="btn btn-primary btn-block fs-14 fw-700 rounded-0 px-4">
+                <a href="{{ route('checkout') }}" class="btn btn-primary btn-block fs-14 fw-700 rounded-0 px-4" style="background: #2b56a1 !important;">
                     {{ translate('Proceed to Checkout')}} ({{ sprintf("%02d", count($carts)) }})
                 </a>
             </div>

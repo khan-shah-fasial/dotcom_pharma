@@ -257,9 +257,9 @@
                                 </li>
                             @endcan
                         </ul>
-                    </li>
+                    </li>   
                 @endcanany
-
+   
                 <!-- Note  -->
                 @canany(['view_notes', 'add_note'])
                     <li class="aiz-side-nav-item">
@@ -267,41 +267,44 @@
                             <div class="aiz-side-nav-icon">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="15.964" height="16" viewBox="0 0 15.964 16">
                                     <path id="_608087065a4e8d47000761280c315020"
-                                        data-name="608087065a4e8d47000761280c315020"
                                         d="M4.993,20.456a.456.456,0,0,0,.456.456h8.389a.456.456,0,0,0,.456-.456V19.009a1.256,1.256,0,0,0-1.254-1.254h-.2V16.32a.456.456,0,0,0-.456-.456H6.9a.456.456,0,0,0-.456.456v1.435h-.2a1.255,1.255,0,0,0-1.254,1.254Zm2.363-3.68H11.93v.979H7.356ZM5.905,19.009a.342.342,0,0,1,.342-.342H13.04a.342.342,0,0,1,.342.342V20H5.905Zm13.717-1.79a1.405,1.405,0,0,0,1.334-1.4,1.411,1.411,0,0,0-.461-1.042l-4.466-4.009L17.6,9.031a.831.831,0,0,0-.06-1.172L14.513,5.127a.816.816,0,0,0-.6-.213.824.824,0,0,0-.574.272L8.27,10.8a.83.83,0,0,0,.059,1.173L11.354,14.7a.83.83,0,0,0,1.172-.06l1.622-1.795,4.464,4.008a1.392,1.392,0,0,0,1.011.361ZM13.779,11.9l0,0,0,0L11.9,13.972,9,11.35l4.961-5.492,2.9,2.622L13.779,11.9Zm.981.275.658-.728,4.466,4.008a.492.492,0,1,1-.661.728Z"
                                         transform="translate(-4.993 -4.912)" fill="#575b6a" />
                                 </svg>
                             </div>
-                            <span class="aiz-side-nav-text">{{translate('Notes')}}</span>
-                            @if (env("DEMO_MODE") == "On")
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="14.001" viewBox="0 0 16 14.001"
-                                class="mx-2">
-                                <path id="Union_49" data-name="Union 49"
-                                    d="M-19322,3342.5v-5a2.007,2.007,0,0,0-2-2v1.5a3,3,0,0,1-3,3h-4v-10h4a3,3,0,0,1,3,3v1.5a3,3,0,0,1,3,3v5a.506.506,0,0,1-.5.5A.5.5,0,0,1-19322,3342.5Zm-11-2V3339h-3a1,1,0,0,1-1-1,1,1,0,0,1,1-1h3v-7.5a.5.5,0,0,1,.5-.5.5.5,0,0,1,.5.5v11a.5.5,0,0,1-.5.5A.506.506,0,0,1-19333,3340.5Zm-3-7.5a1,1,0,0,1-1-1,1,1,0,0,1,1-1h3v2Z"
-                                    transform="translate(19337 -3329)" fill="#f51350" />
-                            </svg>
+                            <span class="aiz-side-nav-text">{{ translate('Notes') }}</span>
+
+                            @if (env('DEMO_MODE') == 'On')
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="14.001" viewBox="0 0 16 14.001" class="mx-2">
+                                    <path id="Union_49" data-name="Union 49"
+                                        d="M-19322,3342.5v-5a2.007,2.007,0,0,0-2-2v1.5a3,3,0,0,1-3,3h-4v-10h4a3,3,0,0,1,3,3v1.5a3,3,0,0,1,3,3v5a.506.506,0,0,1-.5.5A.5.5,0,0,1-19322,3342.5Zm-11-2V3339h-3a1,1,0,0,1-1-1,1,1,0,0,1,1-1h3v-7.5a.5.5,0,0,1,.5-.5.5.5,0,0,1,.5.5v11a.5.5,0,0,1-.5.5A.506.506,0,0,1-19333,3340.5Zm-3-7.5a1,1,0,0,1-1-1,1,1,0,0,1,1-1h3v2Z"
+                                        transform="translate(19337 -3329)" fill="#f51350" />
+                                </svg>
                             @endif
+
                             <span class="aiz-side-nav-arrow"></span>
                         </a>
-                        <!--Submenu-->
+
+                        <!-- Submenu -->
                         <ul class="aiz-side-nav-list level-2">
                             @can('add_note')
                                 <li class="aiz-side-nav-item">
-                                    <a class="aiz-side-nav-link" href="{{route('note.create')}}">
-                                        <span class="aiz-side-nav-text">{{translate('Add New Note')}}</span>
+                                    <a class="aiz-side-nav-link" href="{{ route('note.create') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Add New Note') }}</span>
                                     </a>
                                 </li>
                             @endcan
+
                             @can('view_notes')
                                 <li class="aiz-side-nav-item">
-                                    <a class="aiz-side-nav-link" href="{{route('note.index')}}">
-                                        <span class="aiz-side-nav-text">{{translate('Note List')}}</span>
+                                    <a class="aiz-side-nav-link" href="{{ route('note.index') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Note List') }}</span>
                                     </a>
                                 </li>
                             @endcan
                         </ul>
                     </li>
                 @endcanany
+
 
                 <!-- Auction Product -->
                 @if(addon_is_activated('auction'))
@@ -621,6 +624,13 @@
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('customers.business') }}" class="aiz-side-nav-link">
                                         <span class="aiz-side-nav-text">{{ translate('Business Customer list') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_all_customers')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('customers.request-doc.index') }}" class="aiz-side-nav-link">
+                                        <span class="aiz-side-nav-text">{{ translate('Business Customer Document Requests') }}</span>
                                     </a>
                                 </li>
                             @endcan

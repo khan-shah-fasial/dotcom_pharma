@@ -8,7 +8,7 @@
         @endphp
     @endif
     <!-- Gallery Images -->
-    <div class="col-12">
+    <div class="col-12 pl-md-0">
         <div class="aiz-carousel product-gallery arrow-inactive-transparent arrow-lg-none product_dt_img"
             data-nav-for='.product-gallery-thumb' data-fade='true' data-auto-height='true' data-arrows='true'>
             @if ($detailedProduct->digital == 0)

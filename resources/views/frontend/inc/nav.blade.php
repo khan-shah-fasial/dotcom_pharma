@@ -1,4 +1,125 @@
-    <!-- Top Bar Banner -->
+
+
+<style>
+    .flag-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+          font-size: 12px;
+    }
+    .flag-option img {
+      width: 20px;
+      height: 14px;
+    }
+    .translater_menu span.select2-selection.select2-selection--single {
+    background-color: #fff;
+    border: 1px solid #2b56a1;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-top: 10px;
+    border-radius: 8px;
+    height: 25px;
+}
+.translater_menu .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: #2b56a1 !important;
+    color: white;
+}
+    .translater_menu .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #444;
+    line-height: 23px;
+    color: #2b56a1;
+    font-size: 11px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #444;
+    line-height: 35px;
+}
+.translater_menu select#languageDropdown {
+    width: 140px;
+    border-radius: 8px;
+    border: 1px solid #2b56a1;
+    margin-top: 9px;
+}
+body .translater_menu .select2-container {
+    width: 100px !important;
+}
+
+
+.select2-container--default .select2-selection--single {
+    background-color: #fff;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid #dfdfe6;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 33px;
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 20px
+}
+
+.translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 41px;
+}
+.select2-results__option {
+    padding: 1px 6px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #2b56a1 transparent transparent transparent;
+}
+
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: #2b56a1 !important;
+    color: white;
+}
+
+.select2-container--default .select2-results>.select2-results__options {
+    max-height: 110px;
+    overflow-y: auto
+}
+
+@media (max-width: 767px) {
+    .translater_menu span.select2-selection.select2-selection--single {
+        margin-top: 10px;
+    }
+    body .translater_menu .select2-container {
+        width: 75px !important;
+    }
+
+    .flag-option img{
+        width: 16px;
+        height: 10px;
+    }
+
+    .flag-option{
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 375px) {
+    .translater_menu .select2-container--default .select2-selection--single .select2-selection__rendered{
+        line-height: 20px;
+    }
+
+    .translater_menu span.select2-selection.select2-selection--single{
+        height: 22px;
+        margin-top: 1px;
+    }
+
+    .translater_menu .select2-container--default .select2-selection--single .select2-selection__arrow{
+        height: 20.5px;
+    }
+
+}
+</style>
+<!-- Top Bar Banner -->
     @php
         $topbar_banner = get_setting('topbar_banner');
         $topbar_banner_medium = get_setting('topbar_banner_medium');
@@ -29,18 +150,18 @@
     <!-- Top Bar -->
     <div class="top-navbar bg-white z-1035 h-35px h-sm-auto">
         <div class="container">
-            <div class="row">
+            <div class="row d-flex">
 
-                <div class="col-xl-5 col-lg-6 d-lg-block d-none">
+                <div class="col-xl-5 col-lg-6 col-md-4 col-8">
                     <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
-                        <li class="list-inline-item">
+                        <li class="list-inline-item d-lg-block d-none">
                             <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
                                 <img class="w-100" src="{{ static_asset('assets/img/call1_icons.svg') }}" />+91 88281
                                 11034
                             </a>
                         </li>
 
-                        <li class="list-inline-item">
+                        <li class="list-inline-item d-lg-block d-none">
                             <a href="mailto:info@dotcompharmaindia.com" class=" text-secondary fs-12 py-2">
                                 <img class="w-100" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
                             </a>
@@ -49,30 +170,66 @@
                         <li class="list-inline-item veterinary_btn">
                             <a href="javascript:void(0)"
                                 class=" fs-12 py-2 {{ session('web_type_name') == 'veterinary' ? 'active_btn' : '' }}">
-                                <img src="{{ static_asset('assets/img/veterinary_icons.svg') }}" /> Veterinary
+                                <i class="las la-dog"></i> Veterinary
                             </a>
                         </li>
 
                         <li class="list-inline-item human_btn">
                             <a href="javascript:void(0)"
                                 class=" fs-12 py-2 {{ session('web_type_name') == 'human' ? 'active_btn' : '' }}">
-                                <img src="{{ static_asset('assets/img/human_icons.svg') }}" /> Human
+                                <i class="las la-user-alt"></i> Human
                             </a>
                         </li>
                     </ul>
                 </div>
 
 
-                <div class="col-xl-7 col-lg-6 col-md-12 col d-flex justify-content-end">
+                <div class="col-xl-7 col-lg-6 col-md-8 col-4 d-flex justify-content-end">
 
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
-                        <li class="list-inline-item d-none d-md-block mr-3">
-                            <a class="b2b_buttons" href="{{ route('user.new_registration') }}">B2B Registration</a>
+
+
+                        <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
+                            <a class="b2b_buttons d-grid align-items-center" href="{{ route('user.new_registration') }}">
+                                <span><i class="las la-sign-in-alt"></i></span> <span>B2B Registration</span> 
+                            </a>
                         </li>
 
+                        {{--  --}}
+                        <!-- prescription -->
+                         @auth
+                            <li class="list-inline-item d-none d-md-inline mr-md-3 mr-2">
+                                <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
+                                    <i class="fa fa-file-prescription"></i> Prescription</a>
+                            </li>
+                        @endauth 
+                        {{--  --}}
+
+
+                        <li class="list-inline-item mr-md-3 mr-3">
+                            {{-- <!-- Hidden Google Translate -->
+                            <div id="google-translate-dropdown" style="display:none;"></div>
+                            <!-- Custom Dropdown -->
+                            <select id="languageDropdown" style="display:none;"></select> --}}
+                            <button type="button" class="btn language-currency btn-outline-dark btn-sm d-flex align-items-center"
+                                        data-toggle="modal" data-target="#languageCurrencyModal">
+                                <i class="fa fa-globe mr-1"></i>
+                                <span id="selectedLang">English</span>
+                                <span class="mx-1">|</span>
+                                <span class="d-none d-md-inline" id="selectedCurrency">
+                                    {{ get_system_currency()->symbol . ' ' . (get_system_currency()->name ?? '-') }}
+                                </span>
+                                <span class="d-inline d-md-none" id="selectedCurrency">
+                                    {{ get_system_currency()->symbol }}
+                                </span>
+                            </button>
+                        </li>
+
+                        
+
                         <!-- Language switcher -->
-                        @if (get_setting('show_language_switcher') == 'on')
+                        {{-- <!-- @if (get_setting('show_language_switcher') == 'on')
                             <li class="list-inline-item dropdown mr-3" id="lang-change">
 
                                 <a href="javascript:void(0)" class="black_light_clr dropdown-toggle fs-12 py-2"
@@ -93,19 +250,27 @@
                                     @endforeach
                                 </ul>
                             </li>
-                        @endif
+                        @endif --> --}}
 
                         <!-- Currency Switcher -->
-                        @if (get_setting('show_currency_switcher') == 'on')
+                        {{-- @if (get_setting('show_currency_switcher') == 'on')
                             <li class="list-inline-item dropdown ml-auto ml-lg-0 mr-0" id="currency-change">
                                 @php
                                     $system_currency = get_system_currency();
                                 @endphp
 
-                                <a href="javascript:void(0)" class="dropdown-toggle black_light_clr fs-12 py-2"
+                                <a href="javascript:void(0)" 
+                                    class="dropdown-toggle black_light_clr fs-12 pl-md-1 pr-md-1"
                                     data-toggle="dropdown" data-display="static">
-                                    {{ $system_currency->name }}
+
+                                        <span class="d-none d-md-inline">
+                                            {{ $system_currency->name }} ({{ $system_currency->symbol }})
+                                        </span>
+                                        <span class="d-inline d-md-none">
+                                            {{ $system_currency->symbol }}
+                                        </span>
                                 </a>
+
                                 <ul class="dropdown-menu dropdown-menu-right dropdown-menu-lg-left">
                                     @foreach (get_all_active_currency() as $key => $currency)
                                         <li>
@@ -118,7 +283,7 @@
                                     @endforeach
                                 </ul>
                             </li>
-                        @endif
+                        @endif --}}
 
                     </ul>
                 </div>
@@ -383,15 +548,7 @@
                                     </div>
                                 </div>
 
-                                <!-- prescription -->
-                                @auth
-                                    <div class="">
-                                        <a href="javascript:void(0)" id="prescription-btn" class="nav-link" title="Upload Prescription">
-                                            <i class="fa fa-file-prescription"></i> <!-- or fa-file-medical -->
-                                            <span class="d-none d-md-inline">Prescription</span>
-                                        </a>
-                                    </div>
-                                @endauth
+                                
 
                                 @if (Auth::check() && auth()->user()->user_type == 'customer')
                                     <!-- Compare -->
@@ -668,6 +825,18 @@
                                                 class="user-top-menu-name has-transition ml-3">{{ translate('Purchase History') }}</span>
                                         </a>
                                     </li>
+
+                                    @if(!empty($user->user_subtype) && $user->user_subtype != '')
+                                        <li class="user-top-nav-element border border-top-0" data-id="1">
+                                            <a class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1" href="{{ route('request-doc.form') }}">
+                                                <i class="las la-business-time"></i>
+                                                <span
+                                                    class="user-top-menu-name has-transition ml-3">{{ translate('Request Document') }}</span>
+                                            </a>
+                                        </li>
+                                    @endif
+
+
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('user.new_registration') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
@@ -797,9 +966,9 @@
         </div>
 
         <!-- Menu Bar -->
-        <div class="d-none d-lg-block position-relative h-50px" style="background-color: white !important;">
+        <div class="d-none d-lg-block position-relative h-50px border-bottom" style="background-color: white !important;">
             <div class="container h-100">
-                <div class="row pt-2">
+                <div class="row pt-0">
                     <div class="col-12 d-none d-lg-block logo_menu">
                         <div class="text-center">
                             @php $category_top_menu = getCategoryTopMenu(); @endphp
@@ -807,23 +976,29 @@
                             @foreach ($category_top_menu as $cat)
                                 <li class="list-inline-item mr-3 animate-underline-white dropdown">
                                     <a href="#"
-                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links dropdown-toggle"
+                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links @if($cat->childrenCategories->isNotEmpty()) dropdown-toggle @endif  pt-2 pb-2"
                                         id="injectionsDropdown_{{ $cat->id }}"
                                         data-toggle="dropdown" aria-haspopup="true"
                                         aria-expanded="false">
                                         {{ $cat->name }}
                                     </a>
-                                    <div class="dropdown-menu"
-                                        aria-labelledby="injectionsDropdown_{{ $cat->id }}">
-                                        @foreach ($cat->childrenCategories as $childCategory)
-                                            <a class="dropdown-item"
-                                                href="/category/{{ $childCategory->slug }}">{{ $childCategory->name }}</a>
-                                        @endforeach
-                                    </div>
+
+                                    @if($cat->childrenCategories->isNotEmpty())
+                                        <div class="dropdown-menu dropdown-menu-bottom-top"
+                                            aria-labelledby="injectionsDropdown_{{ $cat->id }}">
+                                            @foreach ($cat->childrenCategories as $childCategory)
+                                                <a class="dropdown-item"
+                                                    href="/category/{{ $childCategory->slug }}">{{ $childCategory->name }}</a>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                    
                                 </li>
                             @endforeach
                         </div>
                     </div>
+
+
                     <!-- Categoty Menu Button -->
                     {{-- <div class="d-none all-category has-transition bg-black-10" id="category-menu-bar">
                         <div class="px-3 h-100"
@@ -975,7 +1150,7 @@
         <div class="overlay overlay-fixed dark c-pointer" data-toggle="class-toggle"
             data-target=".aiz-top-menu-sidebar" data-same=".hide-top-menu-bar"></div>
         <div class="collapse-sidebar c-scrollbar-light text-left">
-            <button type="button" class="btn btn-sm p-4 hide-top-menu-bar" data-toggle="class-toggle"
+            <button type="button" class="btn btn-sm pl-4 pt-4 pb-2 hide-top-menu-bar" data-toggle="class-toggle"
                 data-target=".aiz-top-menu-sidebar">
                 <i class="las la-times la-2x text-primary"></i>
             </button>
@@ -1026,10 +1201,19 @@
                             </a>
                         </li>
                     @endforeach
+
                     <li class="list-inline-item">
                         <a class="b2b_buttons b2b_buttons_menu" href="{{ route('user.new_registration') }}">B2B
                             Registration</a>
                     </li>
+
+                    @auth
+                        <li class="list-inline-item">
+                            <a href="javascript:void(0)" id="prescription-btn" class="ml-0 prescription-btn_menu" title="Upload Prescription">
+                                <i class="fa fa-file-prescription"></i> Prescription</a>
+                        </li>
+                    @endauth
+
                 @endif
                 @auth
                     @if (isAdmin())

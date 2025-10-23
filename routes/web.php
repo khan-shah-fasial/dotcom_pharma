@@ -52,7 +52,9 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\SizeChartController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\RequestDocController;
 use App\Http\Controllers\PolicyController;
+use App\Http\Controllers\CronjobController;
 /*
   |--------------------------------------------------------------------------
   | Web Routes
@@ -108,6 +110,14 @@ Route::get('/clear-session', function () {
 
     echo"clear";
 });
+
+Route::get('/cron/update-currencies', [CronjobController::class, 'updateCurrencyRates'])
+    ->name('cron.update-currencies');
+
+    //http://127.0.0.1:8000/cron/clear-carts?token=KSFxNexGeno1v2z
+
+Route::get('/cron/clear-carts', [CronjobController::class, 'clearCarts'])
+    ->name('cron.clear-carts');
 
 // AIZ Uploader
 Route::controller(AizUploadController::class)->group(function () {
@@ -454,7 +464,7 @@ Route::controller(VoguepayController::class)->group(function () {
 //Payumoney
 Route::controller(PayumoneyController::class)->group(function () {
     Route::post('/payumoney/success', 'paymentSuccess')->name('payumoney.success');
-    Route::post('/payumoney/failure', 'paymentFailure')->name('payumoney.failure');
+    Route::any('/payumoney/failure', 'paymentFailure')->name('payumoney.failure');
     Route::any('/payumoney/webhook', 'paymentWebhook')->name('payumoney.webhook');
 });
 
@@ -547,4 +557,10 @@ Route::controller(ContactController::class)->group(function () {
     Route::post('/contact', 'contact')->name('contact');
     Route::post('/product-enquiry-store', 'product_enquiry_store')->name('product_enquiry_store');
     Route::post('/prescription-upload', 'prescription_store')->name('prescription.store')->middleware('auth');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Public link to open page
+    Route::get('/document/request-document', [RequestDocController::class, 'form'])->name('request-doc.form');
+    Route::post('/document/request-document', [RequestDocController::class, 'store'])->name('request-doc.store');
 });

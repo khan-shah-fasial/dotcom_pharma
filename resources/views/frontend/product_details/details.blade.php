@@ -63,32 +63,49 @@
             <span id="mrp-unit" class="detail-font-14px detail-gray-color"></span>
         </div>
 
-        {{-- @auth
-            @if (auth()->user()->user_subtype !== null) --}}
-                <div class="col-12 pl-0 mt-3 pb-0">
-                    <span class="detail-font-14px detail-gray-color">{{ translate('Price') }}:</span>
-                    <span id="without-tax-product" class=""></span> <span class="without-tax-product-gst"> excl. GST</span>
-                </div>
-            {{-- @endif
-        @endauth --}}
+        
             
         {{-- Pricing Row --}}
 
+        @auth
+            @if (auth()->user()->user_subtype !== null)
+                <div class="col-12 pl-0 mt-3 pb-0">
+                    <span class="detail-font-14px detail-gray-color">{{ translate('Price') }}:</span>
+                    <span id="without-tax-product" class="without-tax-product-1"></span> <!-- <span class="without-tax-product-gst without-tax-product-1"> excl. GST</span> -->
+                </div>
+             @endif
+        @endauth
+
         <div class="col-12 pl-0 mt-3 pb-0">
-            <span class="text-secondary fs-14"><span id="per-piece-price-product-details"
-                    class=""> </span> <span class="per-piece-price-product-details-gst"> incl. GST</span>  / Piece</span>
+            <span class="text-secondary fs-14">
+                <span id="per-piece-price-product-details" class="per-piece-price-product-details-gst"></span>
+                <!-- <span id="per-piece-price-product-details" class="                    
+                    @if(auth()->check() && auth()->user()->user_subtype !== null) 
+                        per-piece-price-product-details-gst 
+                    @else 
+                        per-piece-price-product-details-gst
+                    @endif"></span> -->
+                <span class="">
+                    @if(auth()->check() && auth()->user()->user_subtype !== null)
+                        incl. GST
+                    @endif
+                </span> 
+                / Piece
+            </span>
             {{-- <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
             <span id="package-count-product-details" class="text-secondary fs-14 ">
                 {{ $detailedProduct->product_count ?? '-' }} / Count</span> --}}
         </div>
 
-        <div class="col-12 pl-0 mt-3 pb-0">
+        
+
+        <div id="discount-show" class="col-12 pl-0 mt-3 pb-0 d-none">
             {{-- @if (discount_in_percentage($detailedProduct) > 0)
                 @php echo "here"; @endphp
                 <span class=" fs-18 text-center"
                     style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span> ({{ discount_in_percentage($detailedProduct) }}%)</span>
             @else --}}
-                    <span id="discount-show" class=" fs-18 text-center d-none"
+                    <span class=" fs-18 text-center"
                     style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span>
                     <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>    
                     </span>
@@ -319,7 +336,7 @@
             @endif
             <button type="button"
                 class="btn detail-product-enquiry-btn btn-info buy-now fw-600 add-to-cart min-w-150px rounded-0 border-radius-50 product-enquiry-btn mb-md-0 mb-2 mt-2 mr-3"
-                data-product-id="{{ $detailedProduct->id }}">
+                data-product-id="{{ $detailedProduct->id }}" data-product-name="{{ $detailedProduct->name }}">
                 <i class="las la-question-circle fs-20 position_btn"></i> {{ translate('Product Enquiry') }}
             </button>
         </div>
@@ -337,32 +354,33 @@
             </div>
 
              @if ($detailedProduct->pharma_categories)
-                <div class="col-md-12 pl-0  mb-md-3 mb-3">
+                <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
                     <div class="detail-product-specs rounded h-100">
 
 
                      <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-check-icon lucide-copy-check"><path d="m12 15 2 2 4-4"/><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></div>
-                            <div class=""><span class="detail-font-14px detail-gray-color">{{ translate('Pharma Categories') }}:</span><br>
-                    <span class="fw-500 fs-14">{{ $detailedProduct->pharma_categories ?? '-' }}</span></div>
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-check-icon lucide-copy-check"><path d="m12 15 2 2 4-4"/><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Pharma Categories') }}:</p>
+                                <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->pharma_categories ?? '-' }}</p>
+                            </div>
                         </div>
                     
-                </div>
+                    </div>
                 </div>
             @endif
 
             @if ($detailedProduct->product_form)
-                <div class="col-md-12 pl-0  mb-md-3 mb-3">
+                <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
                      <div class="detail-product-specs rounded h-100">
-
-                     <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-copy-icon lucide-book-copy"><path d="M5 7a2 2 0 0 0-2 2v11"/><path d="M5.803 18H5a2 2 0 0 0 0 4h9.5a.5.5 0 0 0 .5-.5V21"/><path d="M9 15V4a2 2 0 0 1 2-2h9.5a.5.5 0 0 1 .5.5v14a.5.5 0 0 1-.5.5H11a2 2 0 0 1 0-4h10"/></svg></div>
-                            <div class=""> <span class="detail-font-14px detail-gray-color">{{ translate('Product Form') }}:</span><br>
-                    <span class="fw-500 fs-14">{{ $detailedProduct->product_form ?? '-' }}</span></div>
-                        </div>
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-copy-icon lucide-book-copy"><path d="M5 7a2 2 0 0 0-2 2v11"/><path d="M5.803 18H5a2 2 0 0 0 0 4h9.5a.5.5 0 0 0 .5-.5V21"/><path d="M9 15V4a2 2 0 0 1 2-2h9.5a.5.5 0 0 1 .5.5v14a.5.5 0 0 1-.5.5H11a2 2 0 0 1 0-4h10"/></svg></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Product Form') }}:</p>
+                                <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_form ?? '-' }}</p></div>
+                            </div>
                      
-                       
-                </div>
+                    </div>
                 </div>
             @endif
 
@@ -422,7 +440,7 @@
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
                             <div class="">
                                 <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Minimum Pack Size') }}:</p>
-                        <p id="min-package-count-product-details" class="fw-500 fs-14 mb-0"></p>
+                                <p id="min-package-count-product-details" class="fw-500 fs-14 mb-0"></p>
                             </div>
                         </div>
                         
@@ -451,8 +469,9 @@
                 <div class="detail-product-specs rounded h-100">
                     <div class="display_flex3">
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg></div>
-                            <div class=""> <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Stock Available') }}:</p>
-                    <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Stock Available') }}:</p>
+                                <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p></div>
                         </div>
                    
                 </div>
@@ -463,8 +482,9 @@
                     <div class="detail-product-specs rounded h-100">
                          <div class="display_flex3">
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Expiry Date') }}:</p>
-                        <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_exp_date ?? '-' }}</p></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Expiry Date') }}:</p>
+                                <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_exp_date ?? '-' }}</p></div>
                         </div>
                         
                     </div>
@@ -534,9 +554,18 @@
                 <div class="col-12 col-md-12 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
                          <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tags-icon lucide-tags"><path d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z"/><path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193"/><circle cx="10.5" cy="6.5" r=".5" fill="currentColor"/></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Tags') }}</p>
-                        <p class="fw-500 fs-14 mb-0 pl21">{{ str_replace(',', ', ', $detailedProduct->tags) }}</p></div>
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tags-icon lucide-tags"><path d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z"/><path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193"/><circle cx="10.5" cy="6.5" r=".5" fill="currentColor"/></svg></div>
+                            <div class=""><p class="detail-font-14pxx detail-gray-color mb-1">{{ translate('Tags') }}</p>
+                                <p class="fw-400 fs-12 mb-0 pl21 tags-span-main">
+    @foreach(explode(',', $detailedProduct->tags) as $tag)
+        <span> <a href="/search" target="_blank">{{ trim($tag) }}</a> </span>
+
+    @endforeach
+</p>
+
+
+                    
+                        </div>
                         </div>
                         
                     </div>
@@ -988,6 +1017,163 @@
 
     </div>
 
+@php
+    $dynamicTabs = json_decode($detailedProduct->contents, true) ?? [];
+    $hasDescription = !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->description)))));
+    $hasVideo = !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->video_link)))));
+    $hasPdf = !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->pdf)))));
+@endphp
+
+@if($hasDescription || (!empty($dynamicTabs) && count($dynamicTabs) > 0) || $hasVideo || $hasPdf)
+<div class="productAccordion_box">
+  <div class="accordion accordion-custom" id="productAccordion">
+
+    {{-- Description --}}
+    @if($hasDescription)
+      <div class="card">
+        <div class="card-header" id="headingDescription">
+          <h2 class="mb-0">
+            <button
+              class="btn btn-link"
+              type="button"
+              data-toggle="collapse"
+              data-target="#collapseDescription"
+              aria-expanded="true"
+              aria-controls="collapseDescription"
+            >
+              {{ translate('Description') }}
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h2>
+        </div>
+        <div
+          id="collapseDescription"
+          class="collapse show"
+          aria-labelledby="headingDescription"
+          data-parent="#productAccordion"
+        >
+          <div class="card-body aiz-editor-data">
+            {!! $detailedProduct->getTranslation('description') !!}
+          </div>
+        </div>
+      </div>
+    @endif
+
+    {{-- Dynamic Tabs --}}
+    @if (!empty($dynamicTabs) && count($dynamicTabs) > 0)
+      @foreach ($dynamicTabs as $index => $tab)
+        <div class="card">
+          <div class="card-header" id="headingDynamic{{ $index }}">
+            <h2 class="mb-0">
+              <button
+                class="btn btn-link collapsed"
+                type="button"
+                data-toggle="collapse"
+                data-target="#collapseDynamic{{ $index }}"
+                aria-expanded="false"
+                aria-controls="collapseDynamic{{ $index }}"
+              >
+                {{ $tab['title'] ?? 'Tab ' . ($index + 1) }}
+                <i class="fas fa-chevron-down"></i>
+              </button>
+            </h2>
+          </div>
+          <div
+            id="collapseDynamic{{ $index }}"
+            class="collapse"
+            aria-labelledby="headingDynamic{{ $index }}"
+            data-parent="#productAccordion"
+          >
+            <div class="card-body aiz-editor-data">
+              {!! $tab['content'] ?? '' !!}
+            </div>
+          </div>
+        </div>
+      @endforeach
+    @endif
+
+    {{-- Video --}}
+    @if($hasVideo)
+      <div class="card">
+        <div class="card-header" id="headingVideo">
+          <h2 class="mb-0">
+            <button
+              class="btn btn-link collapsed"
+              type="button"
+              data-toggle="collapse"
+              data-target="#collapseVideo"
+              aria-expanded="false"
+              aria-controls="collapseVideo"
+            >
+              {{ translate('Video') }}
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h2>
+        </div>
+        <div
+          id="collapseVideo"
+          class="collapse"
+          aria-labelledby="headingVideo"
+          data-parent="#productAccordion"
+        >
+          <div class="card-body">
+            <div class="embed-responsive embed-responsive-16by9">
+              @if ($detailedProduct->video_provider == 'youtube')
+                <iframe class="embed-responsive-item"
+                        src="{{ $detailedProduct->video_link }}"></iframe>
+              @elseif ($detailedProduct->video_provider == 'dailymotion' && isset(explode('video/', $detailedProduct->video_link)[1]))
+                <iframe class="embed-responsive-item"
+                        src="https://www.dailymotion.com/embed/video/{{ explode('video/', $detailedProduct->video_link)[1] }}"></iframe>
+              @elseif ($detailedProduct->video_provider == 'vimeo' && isset(explode('vimeo.com/', $detailedProduct->video_link)[1]))
+                <iframe class="embed-responsive-item"
+                        src="https://player.vimeo.com/video/{{ explode('vimeo.com/', $detailedProduct->video_link)[1] }}"
+                        width="500" height="281" frameborder="0"
+                        webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+              @endif
+            </div>
+          </div>
+        </div>
+      </div>
+    @endif
+
+    {{-- PDF Download --}}
+    @if($hasPdf)
+      <div class="card">
+        <div class="card-header" id="headingPdf">
+          <h2 class="mb-0">
+            <button
+              class="btn btn-link collapsed"
+              type="button"
+              data-toggle="collapse"
+              data-target="#collapsePdf"
+              aria-expanded="false"
+              aria-controls="collapsePdf"
+            >
+              {{ translate('Downloads') }}
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </h2>
+        </div>
+        <div
+          id="collapsePdf"
+          class="collapse"
+          aria-labelledby="headingPdf"
+          data-parent="#productAccordion"
+        >
+          <div class="card-body text-center">
+            <a href="{{ uploaded_asset($detailedProduct->pdf) }}"
+              class="btn btn-primary" target="_blank">
+              {{ translate('Download') }}
+            </a>
+          </div>
+        </div>
+      </div>
+    @endif
+
+  </div>
+</div>
+@endif
+
     <!-- Promote Link -->
     <div class="d-table width-100 mt-3">
         <div class="d-table-cell">
@@ -1096,28 +1282,36 @@
                     <input type="hidden" name="product_id" id="enquiry_product_id" value="">
                     <input type="hidden" name="current_url" id="current_url" value="">
 
-                    <!-- Name -->
+                    <!-- Product Name (Optional Display) -->
                     <div class="form-group">
-                        <label for="name" class="fs-16 fw-700 text-soft-dark">{{ translate('Name') }} <span
-                                class="text-danger">*</span></label>
-                        <input type="text" class="form-control rounded-0"
-                            placeholder="{{ translate('Enter Name') }}" name="name" required>
+                        <label for="enquiry_product_name" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Product') }}</label>
+                        <input type="text" id="enquiry_product_name" class="form-control rounded-0" readonly>
                     </div>
 
-                    <!-- Email -->
-                    <div class="form-group">
-                        <label for="email" class="fs-16 fw-700 text-soft-dark">{{ translate('Email') }} <span
-                                class="text-danger">*</span></label>
-                        <input type="email" class="form-control rounded-0"
-                            placeholder="{{ translate('Enter Email') }}" name="email" required>
+                    <div class="d-flex justify-content-between product-enquiry-form-name-email">
+                        <!-- Name -->
+                        <div class="form-group">
+                            <label for="name" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Name') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control rounded-0"
+                                placeholder="{{ translate('Enter Your Name') }}" name="name" required>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label for="email" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Email') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="email" class="form-control rounded-0"
+                                placeholder="{{ translate('Enter Your Email') }}" name="email" required>
+                        </div>
                     </div>
 
                     <!-- Phone -->
                     <div class="form-group">
-                        <label for="phone" class="fs-16 fw-700 text-soft-dark">{{ translate('Phone no.') }} <span
+                        <label for="phone" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Phone no.') }} <span
                                 class="text-danger">*</span></label>
                         <input type="tel" class="form-control rounded-0"
-                            placeholder="{{ translate('Enter Phone') }}" name="phone" required>
+                            placeholder="{{ translate('Enter Your Phone') }}" name="phone" required>
                     </div>
 
                     <!-- Pincode -->
@@ -1131,9 +1325,9 @@
                     <!-- Query -->
                     <div class="form-group">
                         <label for="query"
-                            class="fs-16 fw-700 text-soft-dark">{{ translate('Tell us about your query') }}<span
+                            class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Tell us about your query') }}<span
                                 class="text-danger">*</span></label>
-                        <textarea class="form-control rounded-0" placeholder="{{ translate('Type here...') }}" name="content"
+                        <textarea class="form-control rounded-0" placeholder="{{ translate('Tell us about your query') }}" name="content"
                             rows="3" required></textarea>
                     </div>
 
@@ -1191,3 +1385,107 @@
         });
     </script>
 @endsection
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const enquiryButtons = document.querySelectorAll('.detail-product-enquiry-btn');
+
+    enquiryButtons.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const productId = this.getAttribute('data-product-id');
+            const productName = this.getAttribute('data-product-name');
+
+            document.getElementById('enquiry_product_id').value = productId;
+            document.getElementById('current_url').value = window.location.href;
+            document.getElementById('enquiry_product_name').value = productName;
+
+            $('#productEnquiryModal').modal('show'); // Bootstrap 4 modal open
+        });
+    });
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Select the <p> that comes right after your label
+  const targets = document.querySelectorAll('.detail-font-14px + p');
+
+  targets.forEach(function(p) {
+    // add clamp class
+    p.classList.add('clamped-text');
+
+    // create toggle button
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'view-toggle';
+    toggle.textContent = 'View More';
+
+    // insert toggle after the paragraph
+    p.insertAdjacentElement('afterend', toggle);
+
+    // check if text overflows
+    requestAnimationFrame(() => {
+      if (p.scrollHeight <= p.clientHeight + 1) {
+        toggle.style.display = 'none'; // hide toggle if short text
+      }
+    });
+
+    // toggle expand/collapse
+    toggle.addEventListener('click', function () {
+      const expanded = p.classList.toggle('expanded');
+      toggle.textContent = expanded ? 'View Less' : 'View More';
+    });
+  });
+});
+</script>
+
+
+<style>
+
+/* clamp styles */
+.clamped-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;        /* show only 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  transition: max-height .2s ease;
+  line-height: 1.6;
+}
+
+/* expanded state */
+.clamped-text.expanded {
+  -webkit-line-clamp: initial;
+  max-height: none;
+}
+
+/* toggle button (looks like a link) */
+.view-toggle {
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 0px !important;
+  font-size: 13px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2b56a1; /* bootstrap primary */
+}
+
+    @media (min-width: 768px) { /* md and up */
+        #productEnquiryModal .modal-dialog {
+            max-width: 440px; /* width adjust kar sakte ho */
+            display: flex;
+            align-items: center; /* vertically center */
+            justify-content: center; /* horizontally center */
+        }
+
+        #productEnquiryModal .modal-content {
+            height: 100%; /* modal-content modal-dialog ka height fill kare */
+            overflow-y: auto; /* agar content zyada ho toh scroll */
+        }
+    }
+</style>
