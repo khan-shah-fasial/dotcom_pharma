@@ -28,6 +28,7 @@ use App\Http\Controllers\DynamicPopupController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\FlashDealController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\MeasurementPointsController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\NoteController;
@@ -649,4 +650,6 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     Route::get('/clear-cache', [AdminController::class, 'clearCache'])->name('cache.clear');
 
     Route::get('/admin-permissions', [RoleController::class, 'create_admin_permissions']);
+
+    Route::get('/pending-in-carts', [MarketingController::class, 'list_user_and_cart_details'])->name('list_user_and_cart');
 });
