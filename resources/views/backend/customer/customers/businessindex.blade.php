@@ -55,46 +55,55 @@
                         </div>
                     </div>
 
-
                     <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="city_id" onchange="sort_customers()"
-                            data-selected="{{ $filter_city_id }}">
-                            <option value="">{{ translate('Filter by City') }}</option>
-                            @foreach ($cityIds as $cid)
-                                <option value="{{ $cid }}">{{ $cid }}</option>
-                            @endforeach
+                        <select class="form-control aiz-selectpicker" name="verification_status" onchange1="sort_customers()"
+                            data-selected="{{ $verification_status }}">
+                            <option value="">{{ translate('Filter by Approval Status') }}</option>
+                            <option value="verified">{{ translate('Verified') }}</option>
+                            <option value="un_verified">{{ translate('Unverified') }}</option>
                         </select>
-                    </div>
+                    </div>                    
 
                     <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="district_id" onchange="sort_customers()"
-                            data-selected="{{ $filter_district_id }}">
-                            <option value="">{{ translate('Filter by District') }}</option>
-                            @foreach ($districtIds as $did)
-                                <option value="{{ $did }}">{{ $did }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="state_id" onchange="sort_customers()"
-                            data-selected="{{ $filter_state_id }}">
-                            <option value="">{{ translate('Filter by State') }}</option>
-                            @foreach ($stateIds as $sid)
-                                <option value="{{ $sid }}">{{ $sid }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="country_id" onchange="sort_customers()"
-                            data-selected="{{ $filter_country_id }}">
+                        <select class="form-control aiz-selectpicker" name="country_id" onchange1="sort_customers()"
+                            data-selected="{{ $filter_country_id }}" data-live-search="true">
                             <option value="">{{ translate('Filter by Country') }}</option>
                             @foreach ($countries as $c)
-                                <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                <option value="{{ $c->id }}">{{ ucwords($c->name) }}</option>
+                            @endforeach
+                        </select>
+                    </div>                    
+
+                    <div class="col-md-3">
+                        <select class="form-control aiz-selectpicker" name="state_id" onchange1="sort_customers()"
+                            data-selected="{{ $filter_state_id }}" data-live-search="true">
+                            <option value="">{{ translate('Filter by State') }}</option>
+                            @foreach ($stateIds as $sid)
+                                <option value="{{ $sid }}">{{ ucwords($sid) }}</option>
                             @endforeach
                         </select>
                     </div>
+
+                    <div class="col-md-3">
+                        <select class="form-control aiz-selectpicker" name="city_id" onchange1="sort_customers()"
+                            data-selected="{{ $filter_city_id }}" data-live-search="true">
+                            <option value="">{{ translate('Filter by City') }}</option>
+                            @foreach ($cityIds as $cid)
+                                <option value="{{ $cid }}">{{ ucwords($cid) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <select class="form-control aiz-selectpicker" name="district_id" onchange1="sort_customers()"
+                            data-selected="{{ $filter_district_id }}" data-live-search="true"s>
+                            <option value="">{{ translate('Filter by District') }}</option>
+                            @foreach ($districtIds as $did)
+                                <option value="{{ $did }}">{{ ucwords($did) }}</option>
+                            @endforeach
+                        </select>
+                    </div>                    
+
 
 
                     {{-- <div class="col-md-3 mb-3">
@@ -124,14 +133,7 @@
                                 placeholder="{{ translate('Type Transport or Cargo & Booked To Enter') }}">
                         </div>
                     </div> --}}
-                    <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="verification_status" onchange="sort_customers()"
-                            data-selected="{{ $verification_status }}">
-                            <option value="">{{ translate('Filter by Approval Status') }}</option>
-                            <option value="verified">{{ translate('Verified') }}</option>
-                            <option value="un_verified">{{ translate('Unverified') }}</option>
-                        </select>
-                    </div>
+
                     <div class="col-md-3 my-2">
                         <button class="btn btn-primary" onclick="sort_customers()">Search</button>
                         <a class="btn btn-danger" href="{{ url(route('customers.business')) }}" class="">Reset</a>
