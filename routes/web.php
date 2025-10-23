@@ -28,7 +28,7 @@ use App\Http\Controllers\Payment\BkashController;
 use App\Http\Controllers\Payment\InstamojoController;
 use App\Http\Controllers\Payment\IyzicoController;
 use App\Http\Controllers\Payment\MercadopagoController;
-use App\Http\Controllers\Payment\MarketingController;
+use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\Payment\NagadController;
 use App\Http\Controllers\Payment\NgeniusController;
 use App\Http\Controllers\Payment\PayhereController;
