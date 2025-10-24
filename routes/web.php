@@ -46,6 +46,7 @@ use App\Http\Controllers\ProductQueryController;
 use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\Search2Controller;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SupportTicketController;
@@ -248,13 +249,27 @@ Route::controller(CustomerProductController::class)->group(function () {
 });
 
 // Search
-Route::controller(SearchController::class)->group(function () {
+// Route::controller(SearchController::class)->group(function () {
+//     Route::get('/search', 'index')->name('search');
+//     Route::get('/search?keyword={search}', 'index')->name('suggestion.search');
+//     Route::post('/ajax-search', 'ajax_search')->name('search.ajax');
+//     Route::get('/category/{category_slug}', 'listingByCategory')->name('products.category');
+//     Route::get('/brand/{brand_slug}', 'listingByBrand')->name('products.brand');
+// });
+
+// Search2
+Route::controller(Search2Controller::class)->group(function () {
     Route::get('/search', 'index')->name('search');
-    Route::get('/search?keyword={search}', 'index')->name('suggestion.search');
-    Route::post('/ajax-search', 'ajax_search')->name('search.ajax');
+
+    // AJAX endpoints
+    Route::get('/search/ajax/products', 'ajaxProducts')->name('search.ajax.products');
+    Route::get('/search/ajax/categories/{id}/children', 'ajaxCategoryChildren')->name('search.ajax.category.children');
+
+    Route::post('/ajax-search', 'ajax_search')->name('search.ajax') ;
     Route::get('/category/{category_slug}', 'listingByCategory')->name('products.category');
     Route::get('/brand/{brand_slug}', 'listingByBrand')->name('products.brand');
 });
+
 
 // Cart
 Route::controller(CartController::class)->group(function () {
