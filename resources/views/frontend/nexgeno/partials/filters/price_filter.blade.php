@@ -1,28 +1,48 @@
-<div class="light_bg_gray mb-3 p-3">
-  <div class="fs-16 fw-700 mb-2">{{ translate('Price Range') }}</div>
-
-  <div class="d-flex align-items-center gap-2">
-    <input id="min_price" type="number"
-           class="form-control form-control-sm"
-           value="{{ $min_price ?? ($scopedMin ?? $globalMin) }}"
-           min="{{ $scopedMin ?? $globalMin }}"
-           max="{{ $scopedMax ?? $globalMax }}"
-           step="1">
-    <span class="px-2">—</span>
-    <input id="max_price" type="number"
-           class="form-control form-control-sm"
-           value="{{ $max_price ?? ($scopedMax ?? $globalMax) }}"
-           min="{{ $scopedMin ?? $globalMin }}"
-           max="{{ $scopedMax ?? $globalMax }}"
-           step="1">
+<!-- Price range (OLD SLIDER: UNCHANGED) -->
+<div class="light_bg_gray mb-3">
+  <div class="fs-16 fw-700 p-3">
+      {{ translate('Price Range')}}
   </div>
+  <div class="p-3 mr-3">
+      @php
+          $product_count = get_products_count()
+      @endphp
+      <div class="aiz-range-slider">
+          <div
+              id="input-slider-range"
+              data-range-value-min="@if($product_count < 1) 0 @else {{ get_product_min_unit_price() }} @endif"
+              data-range-value-max="@if($product_count < 1) 0 @else {{ get_product_max_unit_price() }} @endif"
+          ></div>
 
-  <button id="price-apply" type="button" class="btn btn-sm btn-primary mt-2">
-    {{ translate('Apply') }}
-  </button>
-
-  {{-- This hint shows the *scoped* bounds and will be updated by AJAX --}}
-  <div id="price-range-hint" class="mt-1 text-muted fs-12">
-    {{ translate('Min') }}: {{ $scopedMin ?? $globalMin }} | {{ translate('Max') }}: {{ $scopedMax ?? $globalMax }}
+          <div class="row mt-2">
+              <div class="col-6">
+                  <span class="range-slider-value value-low fs-14 fw-600 opacity-70"
+                      @if (isset($min_price))
+                          data-range-value-low="{{ $min_price }}"
+                      @elseif($products->min('unit_price') > 0)
+                          data-range-value-low="{{ $products->min('unit_price') }}"
+                      @else
+                          data-range-value-low="0"
+                      @endif
+                      id="input-slider-range-value-low"
+                  ></span>
+              </div>
+              <div class="col-6 text-right">
+                  <span class="range-slider-value value-high fs-14 fw-600 opacity-70"
+                      @if (isset($max_price))
+                          data-range-value-high="{{ $max_price }}"
+                      @elseif($products->max('unit_price') > 0)
+                          data-range-value-high="{{ $products->max('unit_price') }}"
+                      @else
+                          data-range-value-high="0"
+                      @endif
+                      id="input-slider-range-value-high"
+                  ></span>
+              </div>
+          </div>
+      </div>
   </div>
+  <!-- Hidden Items (unchanged) -->
+  <input type="hidden" name="min_price" value="">
+  <input type="hidden" name="max_price" value="">
 </div>

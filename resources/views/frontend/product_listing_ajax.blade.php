@@ -29,10 +29,14 @@
       <div class="col-xl-3">
 
         {{-- CATEGORY FILTER COMPONENT --}}
+        {{-- CATEGORY FILTER (server-rendered tree with preloaded branches) --}}
         @include('frontend.'.get_setting('homepage_select').'.partials.filters.category_filter', [
-          'categories'  => $categories,
-          'category'    => $category,
-          'category_id' => $category_id,
+          'categories'            => $categories,
+          'category'              => $category,
+          'category_id'           => $category_id,
+          'selected_category_ids' => $selected_category_ids ?? [],
+          'preloadedChildren'     => $preloadedChildren ?? [],
+          'expandedIds'           => $expandedIds ?? [],
         ])
 
         {{-- PRICE FILTER COMPONENT --}}
@@ -112,12 +116,16 @@
         min_price: @json($min_price ?? null),
         max_price: @json($max_price ?? null),
         selected_attribute_values: @json($selected_attribute_values ?? []),
-        category_ids: [], // populated by checked boxes
-        selected_category_name: @json($category_id ? ($category?->getTranslation('name')) : null),
+        category_ids: @json($selected_category_ids ?? []),
+        selected_category_name: @json($selected_category_name ?? ($category_id ? ($category?->getTranslation('name')) : null)),
         page_size: 24,
         next_page_url: @json($ajaxNextPageUrl),
         loading: false,
         append: false,
+            
+        // For first-paint slider align
+        scoped_min: @json($scopedMin ?? null),
+        scoped_max: @json($scopedMax ?? null),
       };
       
       // ========== Helpers ==========
@@ -163,6 +171,76 @@
         return a.toString();
       }
       
+        // -------------- AIZ noUiSlider auto-init (safe-call) --------------
+        // Init the old slider only if it isn't already initialized
+        const sliderEl = document.getElementById('input-slider-range');
+        if (window.AIZ?.plugins?.noUiSlider && sliderEl && !sliderEl.noUiSlider) {
+        AIZ.plugins.noUiSlider();
+        }
+
+
+        // -------------- Expose current scoped bounds (from server) --------------
+        state.scoped_min = @json($scopedMin ?? null);
+        state.scoped_max = @json($scopedMax ?? null);
+
+        // -------------- Shim: old global functions --------------
+        window.filter = function () {
+            state.append = false;
+            fetchProducts(ajaxUrl, false);
+        };
+
+        window.rangefilter = function (arg) {
+            const low  = Number(arg?.[0] ?? 0);
+            const high = Number(arg?.[1] ?? 0);
+
+            // Keep hidden inputs in sync (old template expects them)
+            const hidLow  = document.querySelector('input[name="min_price"]');
+            const hidHigh = document.querySelector('input[name="max_price"]');
+            if (hidLow)  hidLow.value  = low;
+            if (hidHigh) hidHigh.value = high;
+
+            state.min_price = low;
+            state.max_price = high;
+
+            state.append = false;
+            fetchProducts(ajaxUrl, false);
+        };
+
+
+        // -------------- Helper: sync slider range & handles --------------
+        function syncSliderBounds(sMin, sMax) {
+            const el = document.getElementById('input-slider-range');
+            if (!el || !el.noUiSlider) return;
+
+            // Update min/max range
+            try {
+                el.noUiSlider.updateOptions({
+                range: { min: Number(sMin), max: Number(sMax) }
+                }, false); // don't trigger extra events
+            } catch (_) {}
+
+            // Respect current state if set; otherwise snap to scoped bounds
+            let low  = (state.min_price != null) ? Number(state.min_price) : Number(sMin);
+            let high = (state.max_price != null) ? Number(state.max_price) : Number(sMax);
+
+            // Clamp & fix ordering
+            low  = Math.max(Number(sMin), Math.min(low,  Number(sMax)));
+            high = Math.max(Number(sMin), Math.min(high, Number(sMax)));
+            if (low > high) [low, high] = [high, low];
+
+            try { el.noUiSlider.set([low, high]); } catch (_) {}
+        }
+
+
+        // -------------- First paint: align slider to current scoped bounds --------------
+        if (state.scoped_min != null && state.scoped_max != null) {
+            // Defer a tick so AIZ's auto-init has time to create the slider
+            setTimeout(function(){
+            syncSliderBounds(Number(state.scoped_min), Number(state.scoped_max));
+            }, 0);
+        }
+
+  
       async function fetchProducts(url, append=false) {
         if (state.loading) return;
         state.loading = true;
@@ -189,35 +267,12 @@
         state.loading = false;
         sentinel.style.opacity = state.next_page_url ? '1' : '0.3';
         
-        // ====== NEW: update price bounds to SCOPED values from server
-        const minInput = document.querySelector('#min_price');
-        const maxInput = document.querySelector('#max_price');
-        const hint     = document.querySelector('#price-range-hint');
-        
+        // ====== NEW: update price bounds to SCOPED values from server        
+        // Keep the slider in sync with server-scoped bounds on every AJAX response
         if (typeof json.scoped_min !== 'undefined' && typeof json.scoped_max !== 'undefined') {
-          // Update min/max bounds of inputs
-          if (minInput && maxInput) {
-            const sMin = Number(json.scoped_min);
-            const sMax = Number(json.scoped_max);
-            
-            minInput.min = sMin;
-            minInput.max = sMax;
-            maxInput.min = sMin;
-            maxInput.max = sMax;
-
-            // Clamp current values into new bounds
-            if (Number(minInput.value) < sMin)  minInput.value = sMin;
-            if (Number(maxInput.value) > sMax)  maxInput.value = sMax;
-            if (Number(minInput.value) > Number(maxInput.value)) {
-              // swap if needed
-              const t = minInput.value;
-              minInput.value = maxInput.value;
-              maxInput.value = t;
-            }
-          }
-          // Update hint text
-          if (hint) hint.textContent = `Min: ${json.scoped_min} | Max: ${json.scoped_max}`;
+        syncSliderBounds(Number(json.scoped_min), Number(json.scoped_max));
         }
+
         
         // Update address bar (shallow) for shareable filters
         const share = new URL(window.location.href);
@@ -313,9 +368,9 @@
       gatherAttributeSelections();
       
       // Drilldown: if the clicked item has children, fetch and render them below
-      if (e.target.dataset.hasChildren === '1' && e.target.checked) {
+      if (e.target.dataset.hasChildren === '1') {
         const holder = document.getElementById('children-of-' + e.target.value);
-        if (holder && holder.dataset.loaded !== '1') {
+        if (holder && holder.dataset.loaded !== '1' && e.target.checked) {
           const r = await fetch(childUrl(e.target.value), { headers: {'X-Requested-With':'XMLHttpRequest'} });
           const j = await r.json();
           holder.innerHTML = j.children.map(c => `
@@ -340,24 +395,7 @@
         state.append = false;
         fetchProducts(ajaxUrl, false);
       });
-      
-      // Price filter (apply button & input)
-      const priceApplyBtn = qs('#price-apply');
-      const minInput = qs('#min_price');
-      const maxInput = qs('#max_price');
-      
-      function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
-      
-      priceApplyBtn?.addEventListener('click', () => {
-        const gMin = Number(minInput.min), gMax = Number(maxInput.max);
-        const min = clamp(Number(minInput.value || gMin), gMin, gMax);
-        const max = clamp(Number(maxInput.value || gMax), gMin, gMax);
-        if (min > max) { [state.min_price, state.max_price] = [max, min]; }
-        else { state.min_price = min; state.max_price = max; }
-        state.append = false;
-        fetchProducts(ajaxUrl, false);
-      });
-      
+
       // ADDED: Clear all button
       clearBtn.addEventListener('click', () => {
         // uncheck all categories & attributes
@@ -387,10 +425,16 @@
       }, { rootMargin: '200px' });
       io.observe(sentinel);
 
-      // Initial gather (if some are pre-checked server-side)
-      gatherCategorySelections();
-      gatherAttributeSelections();
-      renderPills();
+    // ===== First paint: pre-check DOM from server & sync UI =====
+    qsa('.js-cat-checkbox').forEach(inp => {
+        const id = isNaN(+inp.value) ? inp.value : +inp.value;
+        if (state.category_ids.includes(id)) inp.checked = true;
+    });
+
+    // Initial gather (if some are pre-checked server-side)
+    gatherCategorySelections();
+    gatherAttributeSelections();
+    renderPills();
   })();
   </script>
   @endsection
