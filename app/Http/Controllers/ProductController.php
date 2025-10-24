@@ -787,6 +787,8 @@ class ProductController extends Controller
             $sellingPrice = $row[5] ?? null;
             $pts_percentage = $row[6] ?? null;
 
+            if (empty($sellingPrice) || empty($pts_percentage)) continue; //commented by rashid
+
             $rowData = [
                 'product_id' => $productId,
                 'stock_id' => $stockId,
@@ -866,7 +868,7 @@ class ProductController extends Controller
             foreach ($chunk as $update) {
                 $stock = ProductStock::find($update['stock_id']);
                 if ($stock) {
-                    $stock->mrp_price = $update['selling_price'];
+                    //$stock->mrp_price = $update['selling_price']; // commented by rashid
                     // $stock->mrp_role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
                     $stock->price = $update['selling_price'];
                     $stock->role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
@@ -881,7 +883,7 @@ class ProductController extends Controller
             foreach ($chunk as $productId => $prices) {
                 $product = Product::find($productId);
                 // if ($product && $prices['selling_price'] < $product->unit_price) {
-                    $product->mrp_price = $prices['mrp_price'];
+                    //$product->mrp_price = $prices['mrp_price']; // commented by rashid
                     // $product->mrp_role_price = generateRoleBasedPrices_excel($prices['mrp_price'], $prices['pts_percentage']);
                     $product->unit_price = $prices['selling_price'];
                     $product->role_price = generateRoleBasedPrices_excel($prices['selling_price'], $prices['pts_percentage']);

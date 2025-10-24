@@ -837,7 +837,7 @@
 
                         // remove decimal part if it exists
                         if (typeof price === "string") {
-                            price = price.split('.')[0];
+                            //price = price.split('.')[0];
                         }
 
                         $('#per-piece-price-product-details').html(price);
