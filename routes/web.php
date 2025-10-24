@@ -28,6 +28,7 @@ use App\Http\Controllers\Payment\BkashController;
 use App\Http\Controllers\Payment\InstamojoController;
 use App\Http\Controllers\Payment\IyzicoController;
 use App\Http\Controllers\Payment\MercadopagoController;
+use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\Payment\NagadController;
 use App\Http\Controllers\Payment\NgeniusController;
 use App\Http\Controllers\Payment\PayhereController;
@@ -104,6 +105,7 @@ Route::get('/create-storage-link', function () {
     }
 });
 
+Route::get('/send-cart-reminder-emails', [MarketingController::class, 'sendCartReminderEmails'])->name('send.cart.reminder.emails');
 
 Route::get('/clear-session', function () {
     Session()->flush();

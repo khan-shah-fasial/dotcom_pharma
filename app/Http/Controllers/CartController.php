@@ -7,6 +7,7 @@ use App\Models\Carrier;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
+use Carbon\Carbon;
 use App\Models\Cart;
 use App\Models\Country;
 use Auth;
@@ -142,6 +143,8 @@ class CartController extends Controller
         $tax = CartUtility::tax_calculation($product, $price);
 
         CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity);
+        $cart->notify_date = Carbon::now()->addHour(); // First reminder in 1 hours
+        $cart->save();
 
         if($authUser != null) {
             $user_id = $authUser->id;

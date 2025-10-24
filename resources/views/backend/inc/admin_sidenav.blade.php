@@ -423,7 +423,7 @@
                 @endif
 
                 <!-- Sale -->
-                @canany(['view_all_orders', 'view_inhouse_orders','view_seller_orders','view_pickup_point_orders'])
+                @canany(['view_all_orders', 'view_inhouse_orders','view_seller_orders','view_pickup_point_orders', 'view_pending_in_carts'])
                     <li class="aiz-side-nav-item">
                         <a href="#" class="aiz-side-nav-link">
                             <div class="aiz-side-nav-icon">
@@ -443,6 +443,15 @@
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('all_orders.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['all_orders.index', 'all_orders.show'])}}">
                                         <span class="aiz-side-nav-text">{{translate('All Orders')}}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_pending_in_carts')
+                                {{-- list_user_and_cart --}}
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('list_user_and_cart') }}" class="aiz-side-nav-link">
+                                        <i class="las la-cart-arrow-down aiz-side-nav-icon"></i>
+                                        <span class="aiz-side-nav-text">{{ translate('Pending In Carts') }}</span>
                                     </a>
                                 </li>
                             @endcan
