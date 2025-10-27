@@ -42,68 +42,69 @@ class Search2Controller extends Controller
         $sort_by     = $request->sort_by;
         $min_price   = $request->min_price;
         $max_price   = $request->max_price;
-        $color       = $request->color;
 
         $selected_attribute_values = (array)$request->input('selected_attribute_values', []);
-        $selected_color            = (array)$request->input('selected_color', []);
+        $selected_color            = null;
 
-        // Selected categories coming from query string (multi-select)
-        $catIdsRaw = (array)$request->input('category_ids', []);
-        $selected_category_ids = array_values(array_unique(array_map('intval', $catIdsRaw)));
+        // Single selected category id (from radio OR from array OR from route)
+        $selected_category_id = null;
+
+        // Query string can send category_id (radio)
+        if ($request->filled('category_id')) {
+            $selected_category_id = (int)$request->input('category_id');
+        }
+
+        // Backward compat: if someone still hits with category_ids[]=.. take the first
+        if ($selected_category_id === null) {
+            $catIdsRaw = (array)$request->input('category_ids', []);
+            if (!empty($catIdsRaw)) {
+                $selected_category_id = (int)array_values($catIdsRaw)[0];
+            }
+        }
+
+        // If on /category/{slug} route and still nothing selected, default to route category
+        if ($selected_category_id === null && $category_id) {
+            $selected_category_id = (int)$category_id;
+        }
+
 
         $pageSize    = (int)($request->input('page_size', 24) ?: 24);
 
-        // Base collections for filters
-        $categories = collect();       // top-level + (optionally) more for the sidebar
+        // Base filter datasets
         $attributes = Attribute::all();
-        $colors     = Color::all();
+        // $colors     = Color::all();
         $category   = null;
 
         $products = Product::query();
 
-        // ---------------- BRAND ----------------
+        // -------- BRAND --------
         if ($brand_id) {
             $products->where('brand_id', $brand_id);
         } elseif ($request->filled('brand')) {
             $brand = Brand::where('slug', $request->brand)->first();
-            if ($brand) {
-                $products->where('brand_id', $brand->id);
-            }
+            if ($brand) $products->where('brand_id', $brand->id);
         }
 
-        // Always load top-level categories when not inside a route category
-        if (!$category_id) {
-            $categories = Category::with('childrenCategories', 'coverImage')
-                ->where('level', 0)
-                ->orderBy('order_level', 'desc')
-                ->get();
-        }
-
-        // ---------------- CATEGORY SCOPE ----------------
+        // -------- CATEGORY SCOPE (affects products) --------
         if ($category_id) {
-            // Route category: include its subtree
+            // Route page still scopes by route subtree
             $catTree   = CategoryUtility::children_ids($category_id);
             $catTree[] = $category_id;
-
             $category  = Category::with('childrenCategories')->findOrFail($category_id);
             $products->whereIn('category_id', $catTree);
 
-            $attribute_ids = AttributeCategory::whereIn('category_id', $catTree)->pluck('attribute_id');
-            if ($attribute_ids->count() > 0) {
-                $attributes = Attribute::whereIn('id', $attribute_ids)->get();
-            }
-        } elseif (!empty($selected_category_ids)) {
-            // Multi-select from query string
-            $products->whereIn('category_id', $selected_category_ids);
+            // $attribute_ids = AttributeCategory::whereIn('category_id', $catTree)->pluck('attribute_id');
+            // if ($attribute_ids->count() > 0) $attributes = Attribute::whereIn('id', $attribute_ids)->get();
 
-            // Optional: scope attributes to selected categories
-            $attribute_ids = AttributeCategory::whereIn('category_id', $selected_category_ids)->pluck('attribute_id');
-            if ($attribute_ids->count() > 0) {
-                $attributes = Attribute::whereIn('id', $attribute_ids)->get();
-            }
+        } elseif ($selected_category_id) {
+            // Search page + radio selected: filter by the single id (or its subtree if you prefer)
+            $products->where('category_id', $selected_category_id);
+
+            // $attribute_ids = AttributeCategory::where('category_id', $selected_category_id)->pluck('attribute_id');
+            // if ($attribute_ids->count() > 0) $attributes = Attribute::whereIn('id', $attribute_ids)->get();
         }
 
-        // ---------------- KEYWORD SEARCH ----------------
+        // -------- KEYWORD --------
         if ($query !== '') {
             $products->where(function ($q) use ($query) {
                 foreach (explode(' ', $query) as $word) {
@@ -122,12 +123,20 @@ class Search2Controller extends Controller
             );
         }
 
-        // ---------------- COLOR ----------------
-        if ($color) {
-            $products->where('colors', 'like', '%"'.$color.'"%');
-        }
+        // Did we scope by category (route or radio)?
+        $hasCategoryScope = !is_null($category_id) || !is_null($selected_category_id);
 
-        // ---------------- ATTRIBUTES (OR) ----------------
+        /**
+         * ======= Build ATTRIBUTES for the panel from choice_options =======
+         * Use the product scope BEFORE applying attribute/price filters,
+         * so the panel reflects what exists in the current pool.
+         */
+        $attributes = $this->buildAttributesFromChoiceOptions(clone $products);
+        $colors     = $hasCategoryScope
+            ? $this->buildColorsFromProducts(clone $products) // only colors present in this pool
+            : Color::orderBy('name')->get();
+          
+        // -------- ATTRIBUTES (OR across selected) --------
         if (!empty($selected_attribute_values)) {
             $products->where(function ($q) use ($selected_attribute_values) {
                 foreach ($selected_attribute_values as $value) {
@@ -135,22 +144,31 @@ class Search2Controller extends Controller
                 }
             });
         }
+        // -------- COLOR --------
+        // -------- COLOR (robust & case-insensitive) --------
+        $color = $request->filled('color') ? urldecode((string) $request->color) : null;
 
-        // ---------- SCOPED MIN/MAX (after all filters EXCEPT price) ----------
+        if ($request->has('color')) {
+            $str = '"' . $request->color . '"';
+            $products->where('colors', 'like', '%' . $str . '%');
+            $selected_color = $request->color;
+        }
+
+
+        // ----- SCOPED BOUNDS (pre-price) -----
         $scopedForBounds = filter_products(clone $products);
         $bounds = (clone $scopedForBounds)
             ->selectRaw('MIN(unit_price) AS min_price, MAX(unit_price) AS max_price')
             ->first();
         $scopedMin = (int)($bounds->min_price ?? 0);
         $scopedMax = (int)($bounds->max_price ?? 0);
-        // ---------------------------------------------------------------------
 
-        // ---------------- PRICE ----------------
+        // -------- PRICE --------
         if ($min_price !== null && $max_price !== null && $min_price !== '' && $max_price !== '') {
             $products->whereBetween('unit_price', [(float)$min_price, (float)$max_price]);
         }
 
-        // ---------------- SORT ----------------
+        // -------- SORT --------
         match ($sort_by) {
             'newest'     => $products->orderBy('created_at', 'desc'),
             'oldest'     => $products->orderBy('created_at', 'asc'),
@@ -159,33 +177,37 @@ class Search2Controller extends Controller
             default      => $products->orderBy('id', 'desc'),
         };
 
-        // Eager + counts
+        // Eager + counts + paginate
         $products = filter_products($products)
             ->with(['taxes'])
             ->withCount(['reviews as approved_reviews_count' => fn($q) => $q->where('status', 1)])
             ->paginate($pageSize);
 
-        // Global bounds for slider
+        // -------- Build FULL category tree (for sidebar) --------
+        $allCats = Category::select('id','parent_id','name','level','order_level')
+            ->orderBy('order_level','desc')->get();
+        $preloadedChildren = $allCats->groupBy('parent_id');
+        $roots = $preloadedChildren->get(0, collect())->merge($preloadedChildren->get(null, collect()));
+        $categories = $roots;
+
+        // For breadcrumbs/title
+        $selected_category_name = null;
+        if ($selected_category_id) {
+            $selected_category_name = optional(Category::find($selected_category_id))->getTranslation('name');
+        } elseif ($category_id) {
+            $selected_category_name = optional(Category::find($category_id))->getTranslation('name');
+        }
+
+        // Bounds for slider
         $globalMin = (int) get_product_min_unit_price();
         $globalMax = (int) get_product_max_unit_price();
-
-        // ----- Preload ancestor chains & children so sub-categories from query are visible -----
-        [$preloadedChildren, $expandedIds] = $this->preloadCategoryBranches($selected_category_ids);
-
-        // Selected label (for breadcrumb/list-title fallback)
-        $selected_category_name = null;
-        if (!empty($selected_category_ids)) {
-            $firstCat = Category::find($selected_category_ids[0]);
-            $selected_category_name = $firstCat?->getTranslation('name');
-        }
 
         $viewData = compact(
             'query','sort_by','min_price','max_price',
             'attributes','selected_attribute_values','colors','selected_color',
             'categories','category','category_id','brand_id',
-            'globalMin','globalMax','scopedMin','scopedMax',
-            'selected_category_ids','selected_category_name',
-            'preloadedChildren','expandedIds'
+            'globalMin','globalMax','scopedMin','scopedMax', 'selected_category_id','selected_category_name',
+            'preloadedChildren', 'color'
         );
 
         $perPage     = $products->perPage();
@@ -193,7 +215,6 @@ class Search2Controller extends Controller
         $currentPage = $products->currentPage();
         $total       = $products->total();
 
-        // compute ajax next page url for first render
         $ajaxNextPageUrl = (clone $products)->withPath(route('search.ajax.products'))->nextPageUrl();
 
         $viewData = array_merge($viewData, compact('perPage','totalPages','currentPage','total','ajaxNextPageUrl'));
@@ -206,32 +227,57 @@ class Search2Controller extends Controller
      */
     public function ajaxProducts(Request $request)
     {
-        $category_id = $request->input('route_category_id'); // allows reuse on /category/{slug}
+        $category_id = $request->input('route_category_id');
         $brand_id    = $request->input('route_brand_id');
 
         [$products, $viewData] = $this->buildListing($request, $category_id, $brand_id);
 
-        $html = View::make('frontend.'.get_setting('homepage_select').'.partials.product_grid', array_merge($viewData, compact('products')))->render();
+        // Product grid
+        $gridHtml = View::make(
+            'frontend.'.get_setting('homepage_select').'.partials.product_grid',
+            array_merge($viewData, compact('products'))
+        )->render();
+
+        // Attributes panel (derived from choice_options)
+        $attributesHtml = View::make(
+            'frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter',
+            [
+                'attributes'                => $viewData['attributes'],
+                'selected_attribute_values' => $viewData['selected_attribute_values'] ?? [],
+            ]
+        )->render();
+
+        $colorsHtml = '';
+        if (($viewData['colors'] ?? collect())->count() > 0) {
+            $colorsHtml = View::make(
+                'frontend.'.get_setting('homepage_select').'.partials.filters.color_filter',
+                [
+                    'colors'         => $viewData['colors'],
+                    'selected_color' => $viewData['color'] ?? null,
+                ]
+            )->render();
+        }
+
 
         $products->withPath(route('search.ajax.products'));
 
         return response()->json([
-            'html'          => $html,
-            'next_page_url' => $products->nextPageUrl(),
-            'total'         => $products->total(),
-            'per_page'      => $products->perPage(),
-            'total_pages'   => $products->lastPage(),
-            'current_page'  => $products->currentPage(),
-            'scoped_min'    => $viewData['scopedMin'],
-            'scoped_max'    => $viewData['scopedMax'],
+            'attributes_html'   => $attributesHtml,
+            'colors_html'       => $colorsHtml,
+            'html'              => $gridHtml,
+            'next_page_url'     => $products->nextPageUrl(),
+            'total'             => $products->total(),
+            'per_page'          => $products->perPage(),
+            'total_pages'       => $products->lastPage(),
+            'current_page'      => $products->currentPage(),
+            'scoped_min'        => $viewData['scopedMin'],
+            'scoped_max'        => $viewData['scopedMax'],
         ]);
     }
 
-    /**
-     * AJAX: fetch children categories for drilldown
-     */
     public function ajaxCategoryChildren($id)
     {
+        // Kept for compatibility; not used when rendering full tree.
         $category = Category::with('childrenCategories')->findOrFail($id);
         return response()->json([
             'id'        => $category->id,
@@ -295,59 +341,95 @@ class Search2Controller extends Controller
         return '0';
     }
 
-    // ---------------------- Helpers ----------------------
+        // -------------------- Helper --------------------
 
     /**
-     * Build ancestor chain (root -> ... -> parent) for a given category id.
+     * Build attributes collection from products' choice_options JSON.
+     * - Reads current scope (brand/category/keyword) BEFORE attribute/price filters
+     * - Returns Attribute models with attribute_values filtered to only values present
      */
-    private function ancestorIds(int $id): array
+    private function buildAttributesFromChoiceOptions($baseProducts)
     {
-        $ids = [];
-        $node = Category::select(['id','parent_id'])->find($id);
-        // Walk up until root (parent_id == 0 or null)
-        while ($node && $node->parent_id && (int)$node->parent_id !== 0) {
-            $ids[] = (int)$node->parent_id;
-            $node = Category::select(['id','parent_id'])->find($node->parent_id);
-        }
-        return array_reverse($ids);
-    }
+        // pluck only the JSON column to keep it light
+        $rows = (clone $baseProducts)->select('choice_options')->get()->pluck('choice_options')->filter();
 
-    /**
-     * For a set of selected category IDs, preload ancestors & their children,
-     * and also children of the selected nodes. Returns [preloadedChildren, expandedIds]
-     */
-    private function preloadCategoryBranches(array $selectedIds): array
-    {
-        $preloadedChildren = []; // parent_id => Collection<Category>
-        $expandedIds       = []; // id => true (nodes to consider expanded/visible)
+        $valueMap = []; // [attribute_id => ['val1'=>true, 'val2'=>true, ...]]
+        foreach ($rows as $json) {
+            $arr = json_decode($json, true);
+            if (!is_array($arr)) continue;
 
-        if (empty($selectedIds)) {
-            return [$preloadedChildren, $expandedIds];
-        }
+            foreach ($arr as $item) {
+                // Some dbs may have 'attribute_at' by mistake; support both
+                $aid = (int)($item['attribute_id'] ?? ($item['attribute_at'] ?? 0));
+                if (!$aid) continue;
 
-        foreach ($selectedIds as $sid) {
-            if (!$sid) continue;
-
-            // Expand ancestors
-            $chain = $this->ancestorIds((int)$sid);
-            foreach ($chain as $pid) {
-                $expandedIds[$pid] = true;
-                if (!isset($preloadedChildren[$pid])) {
-                    $preloadedChildren[$pid] = Category::where('parent_id', $pid)
-                        ->orderBy('order_level', 'desc')
-                        ->get();
+                $vals = (array)($item['values'] ?? []);
+                foreach ($vals as $v) {
+                    if ($v === null || $v === '') continue;
+                    $valueMap[$aid][$v] = true;
                 }
             }
-
-            // Expand the selected node itself
-            $expandedIds[$sid] = true;
-            if (!isset($preloadedChildren[$sid])) {
-                $preloadedChildren[$sid] = Category::where('parent_id', $sid)
-                    ->orderBy('order_level', 'desc')
-                    ->get();
-            }
         }
 
-        return [$preloadedChildren, $expandedIds];
+        if (empty($valueMap)) {
+            return collect(); // nothing to show
+        }
+
+        $attrIds = array_keys($valueMap);
+
+        // Load attributes with all their values, then shrink in-memory to only the present ones
+        $attributes = Attribute::with('attribute_values')->whereIn('id', $attrIds)->get();
+
+        foreach ($attributes as $attr) {
+            $allowed = array_keys($valueMap[$attr->id] ?? []);
+            $attr->setRelation(
+                'attribute_values',
+                $attr->attribute_values
+                     ->filter(fn($v) => in_array($v->value, $allowed, true))
+                     ->values()
+            );
+        }
+
+        // Optional: sort attributes by name if you prefer
+        // return $attributes->sortBy('name')->values();
+
+        return $attributes;
     }
+
+    private function buildColorsFromProducts($baseProducts)
+    {
+        $rows  = (clone $baseProducts)->select('colors')->get()->pluck('colors')->filter();
+        $codes = [];
+        foreach ($rows as $json) {
+            $arr = json_decode($json, true);
+            if (!is_array($arr)) continue;
+            foreach ($arr as $code) {
+                if (!is_string($code) || $code === '') continue;
+                $codes[strtoupper(trim($code))] = true;   // normalize to uppercase
+            }
+        }
+        $codes = array_keys($codes);
+        if (empty($codes)) return collect();
+
+        $tableColors = \App\Models\Color::whereIn('code', $codes)->get()->keyBy(function($c){
+            return strtoupper($c->code);
+        });
+
+        $out = collect();
+        foreach ($codes as $code) {
+            $key = strtoupper($code);
+            if (isset($tableColors[$key])) {
+                $out->push($tableColors[$key]);
+            } else {
+                $o = new \stdClass();
+                $o->id   = null;
+                $o->name = $code;
+                $o->code = $code;
+                $out->push($o);
+            }
+        }
+        return $out;
+    }
+
+
 }

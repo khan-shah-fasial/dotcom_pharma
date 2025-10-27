@@ -34,7 +34,7 @@
           'categories'            => $categories,
           'category'              => $category,
           'category_id'           => $category_id,
-          'selected_category_ids' => $selected_category_ids ?? [],
+          'selected_category_ids' => $selected_category_id ?? null,
           'preloadedChildren'     => $preloadedChildren ?? [],
           'expandedIds'           => $expandedIds ?? [],
         ])
@@ -48,8 +48,17 @@
         ])
 
         {{-- ATTRIBUTES FILTER COMPONENT --}}
-        @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
-        'attributes' => $attributes
+        <div id="attributes-filter">
+          @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
+            'attributes' => $attributes,
+            'selected_attribute_values' => $selected_attribute_values ?? [],
+          ])
+        </div>
+
+        {{-- COLOR FILTER (AJAX-replaceable) --}}
+        @include('frontend.'.get_setting('homepage_select').'.partials.filters.color_filter', [
+          'colors'         => $colors,
+          'selected_color' => $color ?? null,
         ])
 
       </div>
@@ -104,209 +113,216 @@
 
 @section('script')
 <script>
-  (function() {
-    const ajaxUrl   = "{{ route('search.ajax.products') }}";
-    const childUrl = (id) => "{{ route('search.ajax.category.children', ['id' => '___ID___']) }}".replace('___ID___', encodeURIComponent(id));
+(function() {
+  const ajaxUrl        = "{{ route('search.ajax.products') }}";
+  const baseBrowseUrl  = "{{ route('search') }}"; // used when clearing to drop /category/{slug}
 
-    const state = {
-        route_category_id: @json($category_id),
-        route_brand_id: @json($brand_id ?? null),
-        keyword: @json($query ?? ''),
-        sort_by: @json($sort_by ?? ''),
-        min_price: @json($min_price ?? null),
-        max_price: @json($max_price ?? null),
-        selected_attribute_values: @json($selected_attribute_values ?? []),
-        category_ids: @json($selected_category_ids ?? []),
-        selected_category_name: @json($selected_category_name ?? ($category_id ? ($category?->getTranslation('name')) : null)),
-        page_size: 24,
-        next_page_url: @json($ajaxNextPageUrl),
-        loading: false,
-        append: false,
-            
-        // For first-paint slider align
-        scoped_min: @json($scopedMin ?? null),
-        scoped_max: @json($scopedMax ?? null),
-      };
-      
-      // ========== Helpers ==========
-      const qs = (sel,ctx=document)=>ctx.querySelector(sel);
-      const qsa= (sel,ctx=document)=>Array.from(ctx.querySelectorAll(sel));
-      const productGrid   = qs('#product-grid');
-      const sentinel      = qs('#infinite-sentinel');
-      const sortSelect    = qs('#sort_by');
-      const crumbSelected = qs('#crumb-selected');
-      const pillsBar      = qs('#active-filters');
-      const clearBtn      = qs('#clear-filters');
+  const state = {
+    route_category_id: @json($category_id),                 // page arrived via /category/{slug}?
+    route_brand_id:    @json($brand_id ?? null),
+    keyword:           @json($query ?? ''),
+    sort_by:           @json($sort_by ?? ''),
+    min_price:         @json($min_price ?? null),
+    max_price:         @json($max_price ?? null),
+    selected_attribute_values: @json($selected_attribute_values ?? []),
+    color: @json($color ?? null),
+    // SINGLE category id
+    category_id:            @json($selected_category_id ?? ($category_id ?: null)),
+    selected_category_name: @json($selected_category_name ?? null),
 
-      function gatherCategorySelections() {
-        state.category_ids = qsa('.js-cat-checkbox:checked').map(i => i.value);
-        const label = qsa('.js-cat-checkbox:checked')[0]?.dataset?.label || state.selected_category_name || null;
-        if (crumbSelected && label) crumbSelected.textContent = `"${label}"`;
-        qs('#list-title').textContent = label || "{{ translate('All Products') }}";
-      }
-      
-      function gatherAttributeSelections() {
-        state.selected_attribute_values = qsa('.js-attr-checkbox:checked').map(i => i.value);
-      }
-      
-      function buildParams(url) {
-        const u = new URL(url, window.location.origin);
-        const p = u.searchParams;
-        // p.set('page_size', state.page_size);
-        if (state.keyword) p.set('keyword', state.keyword);
-        if (state.sort_by) p.set('sort_by', state.sort_by);
-        if (state.min_price != null) p.set('min_price', state.min_price);
-        if (state.max_price != null) p.set('max_price', state.max_price);
-        if (state.route_category_id) p.set('route_category_id', state.route_category_id);
-        if (state.route_brand_id)    p.set('route_brand_id', state.route_brand_id);
-        state.category_ids.forEach(id => p.append('category_ids[]', id));
-        state.selected_attribute_values.forEach(v => p.append('selected_attribute_values[]', v));
-        return u.toString();
-      }
+    page_size: 24,
+    next_page_url: @json($ajaxNextPageUrl),
+    loading: false,
+    append: false,
 
-      function normalizeToAjax(url) {
-        const a = new URL(url, window.location.origin);
-        const ajax = new URL(ajaxUrl, window.location.origin);
-        a.pathname = ajax.pathname;
-        return a.toString();
-      }
-      
-        // -------------- AIZ noUiSlider auto-init (safe-call) --------------
-        // Init the old slider only if it isn't already initialized
-        const sliderEl = document.getElementById('input-slider-range');
-        if (window.AIZ?.plugins?.noUiSlider && sliderEl && !sliderEl.noUiSlider) {
-        AIZ.plugins.noUiSlider();
-        }
+    scoped_min: @json($scopedMin ?? null),
+    scoped_max: @json($scopedMax ?? null),
+  };
 
+  // ========= Helpers =========
+  const qs  = (s,ctx=document)=>ctx.querySelector(s);
+  const qsa = (s,ctx=document)=>Array.from(ctx.querySelectorAll(s));
 
-        // -------------- Expose current scoped bounds (from server) --------------
-        state.scoped_min = @json($scopedMin ?? null);
-        state.scoped_max = @json($scopedMax ?? null);
+  const productGrid   = qs('#product-grid');
+  const sentinel      = qs('#infinite-sentinel');
+  const sortSelect    = qs('#sort_by');
+  const pillsBar      = qs('#active-filters');
+  const clearBtn      = qs('#clear-filters');
 
-        // -------------- Shim: old global functions --------------
-        window.filter = function () {
-            state.append = false;
-            fetchProducts(ajaxUrl, false);
-        };
+  function gatherCategorySelection() {
+    const checked = qs('.js-cat-radio:checked');
+    state.category_id = checked ? Number(checked.value) : null;
 
-        window.rangefilter = function (arg) {
-            const low  = Number(arg?.[0] ?? 0);
-            const high = Number(arg?.[1] ?? 0);
+    const label = checked?.dataset?.label || null;
+    const crumb = qs('#crumb-selected');
+    if (crumb) crumb.textContent = label ? `"${label}"` : "{{ translate('All Products') }}";
 
-            // Keep hidden inputs in sync (old template expects them)
-            const hidLow  = document.querySelector('input[name="min_price"]');
-            const hidHigh = document.querySelector('input[name="max_price"]');
-            if (hidLow)  hidLow.value  = low;
-            if (hidHigh) hidHigh.value = high;
+    const title = qs('#list-title');
+    if (title) title.textContent = label || "{{ translate('All Products') }}";
+  }
 
-            state.min_price = low;
-            state.max_price = high;
+  function gatherAttributeSelections() {
+    state.selected_attribute_values = qsa('.js-attr-checkbox:checked').map(i => i.value);
+  }
 
-            state.append = false;
-            fetchProducts(ajaxUrl, false);
-        };
+  function buildParams(url) {
+    const u = new URL(url, window.location.origin);
+    const p = u.searchParams;
 
+    if (state.keyword)   p.set('keyword', state.keyword);
+    if (state.sort_by)   p.set('sort_by', state.sort_by);
+    if (state.min_price != null) p.set('min_price', state.min_price);
+    if (state.max_price != null) p.set('max_price', state.max_price);
 
-        // -------------- Helper: sync slider range & handles --------------
-        function syncSliderBounds(sMin, sMax) {
-            const el = document.getElementById('input-slider-range');
-            if (!el || !el.noUiSlider) return;
+    // Route scope only if still present
+    if (state.route_category_id != null) p.set('route_category_id', state.route_category_id);
+    if (state.route_brand_id)            p.set('route_brand_id', state.route_brand_id);
 
-            // Update min/max range
-            try {
-                el.noUiSlider.updateOptions({
-                range: { min: Number(sMin), max: Number(sMax) }
-                }, false); // don't trigger extra events
-            } catch (_) {}
+    // Single category
+    if (state.category_id != null) p.set('category_id', state.category_id);
+    if (state.color) p.set('color', state.color);
+    state.selected_attribute_values.forEach(v => p.append('selected_attribute_values[]', v));
+    return u.toString();
+  }
 
-            // Respect current state if set; otherwise snap to scoped bounds
-            let low  = (state.min_price != null) ? Number(state.min_price) : Number(sMin);
-            let high = (state.max_price != null) ? Number(state.max_price) : Number(sMax);
+  function normalizeToAjax(url) {
+    const a = new URL(url, window.location.origin);
+    const ajax = new URL(ajaxUrl, window.location.origin);
+    a.pathname = ajax.pathname;
+    return a.toString();
+  }
 
-            // Clamp & fix ordering
-            low  = Math.max(Number(sMin), Math.min(low,  Number(sMax)));
-            high = Math.max(Number(sMin), Math.min(high, Number(sMax)));
-            if (low > high) [low, high] = [high, low];
+  // ========== Old slider safe-init ==========
+  const sliderEl = document.getElementById('input-slider-range');
+  if (window.AIZ?.plugins?.noUiSlider && sliderEl && !sliderEl.noUiSlider) {
+    AIZ.plugins.noUiSlider();
+  }
 
-            try { el.noUiSlider.set([low, high]); } catch (_) {}
-        }
+  window.filter = function () {
+    state.append = false;
+    fetchProducts(ajaxUrl, false);
+  };
 
+  window.rangefilter = function (arg) {
+    const low  = Number(arg?.[0] ?? 0);
+    const high = Number(arg?.[1] ?? 0);
 
-        // -------------- First paint: align slider to current scoped bounds --------------
-        if (state.scoped_min != null && state.scoped_max != null) {
-            // Defer a tick so AIZ's auto-init has time to create the slider
-            setTimeout(function(){
-            syncSliderBounds(Number(state.scoped_min), Number(state.scoped_max));
-            }, 0);
-        }
+    const hidLow  = document.querySelector('input[name="min_price"]');
+    const hidHigh = document.querySelector('input[name="max_price"]');
+    if (hidLow)  hidLow.value  = low;
+    if (hidHigh) hidHigh.value = high;
 
-  
-      async function fetchProducts(url, append=false) {
-        if (state.loading) return;
-        state.loading = true;
-        sentinel.style.opacity = '1';
-        
-        const finalUrl = normalizeToAjax(buildParams(url));
-        const res = await fetch(finalUrl, { headers: { 'X-Requested-With':'XMLHttpRequest' }});
-        const json = await res.json();
-        // Update local state (optional)
-        if (typeof json.per_page !== 'undefined') {
-          state.page_size = Number(json.per_page);
-        }
+    state.min_price = low;
+    state.max_price = high;
 
-        // Update a small metrics label in the UI
-        const metrics = document.querySelector('#page-metrics');
-        if (metrics && typeof json.per_page !== 'undefined' && typeof json.total_pages !== 'undefined' && typeof json.total !== 'undefined') {
-          metrics.textContent = `Per page: ${json.per_page} • Total pages: ${json.total_pages} • Total products: ${json.total}`;
-        }
+    state.append = false;
+    fetchProducts(ajaxUrl, false);
+  };
 
-        if (!append) productGrid.innerHTML = json.html;
-        else productGrid.insertAdjacentHTML('beforeend', json.html);
-        
-        state.next_page_url = json.next_page_url;
-        state.loading = false;
-        sentinel.style.opacity = state.next_page_url ? '1' : '0.3';
-        
-        // ====== NEW: update price bounds to SCOPED values from server        
-        // Keep the slider in sync with server-scoped bounds on every AJAX response
-        if (typeof json.scoped_min !== 'undefined' && typeof json.scoped_max !== 'undefined') {
-        syncSliderBounds(Number(json.scoped_min), Number(json.scoped_max));
-        }
+  function syncSliderBounds(sMin, sMax) {
+    const el = document.getElementById('input-slider-range');
+    if (!el || !el.noUiSlider) return;
+    try {
+      el.noUiSlider.updateOptions({ range: { min: Number(sMin), max: Number(sMax) } }, false);
+    } catch(_) {}
+    let low  = (state.min_price != null) ? Number(state.min_price) : Number(sMin);
+    let high = (state.max_price != null) ? Number(state.max_price) : Number(sMax);
+    low  = Math.max(Number(sMin), Math.min(low,  Number(sMax)));
+    high = Math.max(Number(sMin), Math.min(high, Number(sMax)));
+    if (low > high) [low, high] = [high, low];
+    try { el.noUiSlider.set([low, high]); } catch(_) {}
+  }
 
-        
-        // Update address bar (shallow) for shareable filters
-        const share = new URL(window.location.href);
-        share.search = new URL(buildParams(ajaxUrl)).search;
-        window.history.replaceState(null, '', share.toString());
+  if (state.scoped_min != null && state.scoped_max != null) {
+    setTimeout(() => syncSliderBounds(Number(state.scoped_min), Number(state.scoped_max)), 0);
+  }
 
-        // ADDED: re-render pills after each fetch
-        renderPills();
+  async function fetchProducts(url, append=false) {
+    if (state.loading) return;
+    state.loading = true;
+    sentinel.style.opacity = '1';
+
+    const finalUrl = normalizeToAjax(buildParams(url));
+    const res = await fetch(finalUrl, { headers: { 'X-Requested-With':'XMLHttpRequest' }});
+    const json = await res.json();
+
+    if (typeof json.per_page !== 'undefined') {
+      state.page_size = Number(json.per_page);
     }
-    
-      // ========== NEW: Pills rendering ==========
+
+    const metrics = document.querySelector('#page-metrics');
+    if (metrics && json.per_page !== undefined && json.total_pages !== undefined && json.total !== undefined) {
+      metrics.textContent = `Per page: ${json.per_page} • Total pages: ${json.total_pages} • Total products: ${json.total}`;
+    }
+
+    if (!append) productGrid.innerHTML = json.html;
+    else productGrid.insertAdjacentHTML('beforeend', json.html);
+
+    // swap attributes panel built from choice_options
+    const attrHolder = document.getElementById('attributes-filter');
+    if (attrHolder && typeof json.attributes_html !== 'undefined') {
+      attrHolder.innerHTML = json.attributes_html;
+    }
+
+    // ---- FIX: replace if exists, otherwise insert after attributes ----
+    if (typeof json.colors_html !== 'undefined') {
+      const existing = document.getElementById('color-filter');
+
+      if (json.colors_html) {
+        if (existing) {
+          // replace current color block
+          existing.outerHTML = json.colors_html;
+        } else if (attrHolder) {
+          // first time: append AFTER the attributes section
+          attrHolder.insertAdjacentHTML('afterend', json.colors_html);
+        }
+      } else if (existing) {
+        // response says "no colors" -> remove if present
+        existing.remove();
+      }
+    }
+
+    state.next_page_url = json.next_page_url;
+    state.loading = false;
+    sentinel.style.opacity = state.next_page_url ? '1' : '0.3';
+
+    if (json.scoped_min !== undefined && json.scoped_max !== undefined) {
+      syncSliderBounds(Number(json.scoped_min), Number(json.scoped_max));
+    }
+
+    // Shareable URL (drop-in)
+    const share = new URL(window.location.href);
+    share.search = new URL(buildParams(ajaxUrl)).search;
+    window.history.replaceState(null, '', share.toString());
+
+    renderPills();
+  }
+
+  // ======== Pills (single category) ========
   function hasActiveFilters() {
-    return (state.category_ids.length > 0)
+    return (state.category_id != null)
         || (state.selected_attribute_values.length > 0)
-        || (state.min_price != null && state.max_price != null);
+        || (state.min_price != null && state.max_price != null)
+        || (state.color != null);
   }
 
   function renderPills() {
-    // remove old pills (keep Clear button element)
     qsa('.js-filter-pill', pillsBar).forEach(n => n.remove());
 
-    // Category pills (use checkbox labels)
-    state.category_ids.forEach(id => {
-      const input = qs(`.js-cat-checkbox[value="${CSS.escape(id)}"]`);
+    if (state.category_id != null) {
+      const input = qs(`.js-cat-radio[value="${CSS.escape(String(state.category_id))}"]`);
       const label = input?.dataset?.label || '{{ translate("Category") }}';
-      addPill({ type:'category', value:id, text: label });
-    });
+      addPill({ type:'category', value:String(state.category_id), text: label });
+    }
 
-    // Attribute pills
     state.selected_attribute_values.forEach(val => {
       addPill({ type:'attribute', value:val, text: val });
     });
 
-    // Price pill
+    if (state.color != null) {
+      addPill({ type:'color', value:state.color, text: state.color });
+    }
+
     if (state.min_price != null && state.max_price != null) {
       addPill({ type:'price', value:'price', text: `${state.min_price} – ${state.max_price}` });
     }
@@ -327,20 +343,27 @@
 
   function removePill(type, value) {
     if (type === 'category') {
-      const input = qs(`.js-cat-checkbox[value="${CSS.escape(value)}"]`);
-      if (input) { input.checked = false; }
-      gatherCategorySelections();
+      const checked = qs('.js-cat-radio:checked');
+      if (checked) checked.checked = false;
+      state.category_id = null;
+      gatherCategorySelection();
     } else if (type === 'attribute') {
       const input = qs(`.js-attr-checkbox[value="${cssValue(value)}"]`);
-      if (input) { input.checked = false; }
+      if (input) input.checked = false;
       gatherAttributeSelections();
+    }  else if (type === 'color') {
+      // Unselect color radio (= choose blank)
+      const checked = document.querySelector('.js-color-radio:checked');
+      if (checked) checked.checked = false;
+      const any = document.querySelector('.js-color-radio[value=""]');
+      if (any) any.checked = true;
+      state.color = null;
     } else if (type === 'price') {
       const minInput = qs('#min_price');
       const maxInput = qs('#max_price');
       state.min_price = null;
       state.max_price = null;
       if (minInput && maxInput) {
-        // reset to scoped bounds currently in inputs' min/max
         minInput.value = minInput.min ?? '';
         maxInput.value = maxInput.max ?? '';
       }
@@ -352,90 +375,147 @@
   function cssValue(v){ return v.replace(/(["\\])/g,'\\$1'); }
   function escapeHtml(s){ return (s ?? '').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+  // ========= Events =========
+  // Sort
+  sortSelect.addEventListener('change', () => {
+    state.sort_by = sortSelect.value || '';
+    state.append = false;
+    fetchProducts(ajaxUrl, false);
+  });
 
-    // ========== Events ==========
-    // Sort
-    sortSelect.addEventListener('change', () => {
-      state.sort_by = sortSelect.value || '';
-      state.append = false;
-      fetchProducts(ajaxUrl, false);
-    });
-    
-    // Category checkboxes (change)
-    document.addEventListener('change', async (e) => {
-      if (!e.target.matches('.js-cat-checkbox')) return;
-      gatherCategorySelections();
-      gatherAttributeSelections();
-      
-      // Drilldown: if the clicked item has children, fetch and render them below
-      if (e.target.dataset.hasChildren === '1') {
-        const holder = document.getElementById('children-of-' + e.target.value);
-        if (holder && holder.dataset.loaded !== '1' && e.target.checked) {
-          const r = await fetch(childUrl(e.target.value), { headers: {'X-Requested-With':'XMLHttpRequest'} });
-          const j = await r.json();
-          holder.innerHTML = j.children.map(c => `
-          <label class="aiz-checkbox mb-2 d-block ml-3">
-            <input type="checkbox" class="js-cat-checkbox" value="${c.id}" data-label="${c.name}" data-has-children="${c.has_children?1:0}">
-                <span class="aiz-square-check"></span>
-                <span class="fs-14 fw-400 text-dark">${c.name}</span>
-                </label>
-            <div id="children-of-${c.id}" data-loaded="0"></div>
-            `).join('');
-            holder.dataset.loaded = '1';
-          }
-        }
-        state.append = false;
-        fetchProducts(ajaxUrl, false);
-      });
+  // Category (radio)
+  document.addEventListener('change', (e) => {
+    if (!e.target.matches('.js-cat-radio')) return;
 
-      // ADDED: Attribute checkboxes (change)
-      document.addEventListener('change', (e) => {
-        if (!e.target.matches('.js-attr-checkbox')) return;
-        gatherAttributeSelections();
-        state.append = false;
-        fetchProducts(ajaxUrl, false);
-      });
+    gatherCategorySelection();
 
-      // ADDED: Clear all button
-      clearBtn.addEventListener('click', () => {
-        // uncheck all categories & attributes
-        qsa('.js-cat-checkbox:checked').forEach(i => i.checked = false);
-        qsa('.js-attr-checkbox:checked').forEach(i => i.checked = false);
+    // If we were on /category/{slug} and the picked category differs, drop the route scope.
+    if (state.route_category_id != null && String(state.category_id) !== String(state.route_category_id)) {
+      state.route_category_id = null;
 
-        // reset state
-        state.category_ids = [];
-        state.selected_attribute_values = [];
-        state.min_price = null;
-        state.max_price = null;
+      // move URL to /search with the same query (so the page is shareable)
+      const share = new URL(baseBrowseUrl, window.location.origin);
+      // buildParams returns a full URL — we only want its ?query part
+      share.search = new URL(buildParams(ajaxUrl)).search;
+      window.history.replaceState(null, '', share.toString());
+    }
 
-        // reset inputs to current scoped bounds
-        const mn = qs('#min_price'), mx = qs('#max_price');
-        if (mn && mx) { mn.value = mn.min ?? ''; mx.value = mx.max ?? ''; }
+    state.append = false;
+    fetchProducts(ajaxUrl, false);
+  });
 
-        state.append = false;
-        fetchProducts(ajaxUrl, false);
-      });
-
-      // Infinite Scroll
-      const io = new IntersectionObserver(async (entries) => {
-        const ent = entries[0];
-        if (ent.isIntersecting && state.next_page_url) {
-          await fetchProducts(state.next_page_url, true);
-        }
-      }, { rootMargin: '200px' });
-      io.observe(sentinel);
-
-    // ===== First paint: pre-check DOM from server & sync UI =====
-    qsa('.js-cat-checkbox').forEach(inp => {
-        const id = isNaN(+inp.value) ? inp.value : +inp.value;
-        if (state.category_ids.includes(id)) inp.checked = true;
-    });
-
-    // Initial gather (if some are pre-checked server-side)
-    gatherCategorySelections();
+  // Attributes
+  document.addEventListener('change', (e) => {
+    if (!e.target.matches('.js-attr-checkbox')) return;
     gatherAttributeSelections();
+    state.append = false;
+    fetchProducts(ajaxUrl, false);
+  });
+
+  document.addEventListener('change', (e) => {
+    if (!e.target.matches('.js-color-radio')) return;
+    // radio: value "" means clear
+    state.color = e.target.value || null;
+    state.append = false;
+    fetchProducts(ajaxUrl, false);
+  });
+
+  // Clear all (also drop route scope to show global listing)
+  clearBtn.addEventListener('click', () => {
+    const checked = qs('.js-cat-radio:checked');
+    if (checked) checked.checked = false;
+
+    qsa('.js-attr-checkbox:checked').forEach(i => i.checked = false);
+
+    state.category_id = null;
+    state.selected_attribute_values = [];
+    state.min_price = null;
+    state.max_price = null;
+
+    // If we landed via /category/{slug}, clear route scope & rewrite URL to /search
+    if (state.route_category_id != null) {
+      state.route_category_id = null;
+      window.history.replaceState(null, '', baseBrowseUrl);
+    }
+
+    // color
+    const clrChecked = document.querySelector('.js-color-radio:checked');
+    if (clrChecked) clrChecked.checked = false;
+    const any = document.querySelector('.js-color-radio[value=""]');
+    if (any) any.checked = true;
+    state.color = null;
+    
+    state.append = false;
+    gatherCategorySelection();
     renderPills();
-  })();
-  </script>
-  @endsection
-  
+    fetchProducts(ajaxUrl, false);
+  });
+
+  // Infinite Scroll
+  const io = new IntersectionObserver(async (entries) => {
+    const ent = entries[0];
+    if (ent.isIntersecting && state.next_page_url) {
+      await fetchProducts(state.next_page_url, true);
+    }
+  }, { rootMargin: '200px' });
+  io.observe(sentinel);
+
+  // ===== First paint =====
+  // If server didn’t pre-check (should be), ensure radio matches state
+  if (state.category_id != null) {
+    const pre = qs(`.js-cat-radio[value="${CSS.escape(String(state.category_id))}"]`);
+    if (pre && !pre.checked) pre.checked = true;
+  }
+  gatherCategorySelection();
+  gatherAttributeSelections();
+  renderPills();
+
+  // --- View More / View Less for categories (root + each branch)
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.js-toggle-more');
+  if (!btn) return;
+  e.preventDefault();
+
+  const parentId = btn.dataset.parentId;
+  const selector = parentId === 'root'
+    ? '.cat-node-wrap.root[data-collapsible="1"]'
+    : `.cat-node-wrap[data-parent="${CSS.escape(parentId)}"][data-collapsible="1"]`;
+
+  const rows = Array.from(document.querySelectorAll(selector));
+  const expanded = btn.dataset.state === 'expanded';
+
+  if (!expanded) {
+    rows.forEach(el => el.classList.remove('is-collapsed'));
+    btn.dataset.state = 'expanded';
+    btn.textContent   = btn.dataset.lessText || 'View Less';
+  } else {
+    rows.forEach(el => el.classList.add('is-collapsed'));
+    const hiddenCount = rows.length;
+    const moreText    = btn.dataset.moreText || 'View More';
+    btn.dataset.state = 'collapsed';
+    btn.textContent   = `${moreText} (${hiddenCount})`;
+  }
+});
+
+// --- Ensure the selected radio (if any) is visible (auto-expand its hidden ancestors)
+(function revealSelectedCategory() {
+  const checked = document.querySelector('.js-cat-radio:checked');
+  if (!checked) return;
+
+  // Uncollapse any hidden wrappers up the tree
+  let wrap = checked.closest('.cat-node-wrap');
+  while (wrap) {
+    if (wrap.matches('[data-collapsible="1"].is-collapsed')) {
+      wrap.classList.remove('is-collapsed');
+      const parentId = wrap.getAttribute('data-parent') || 'root';
+      const btn = document.querySelector(`.js-toggle-more[data-parent-id="${parentId}"]`);
+      if (btn) { btn.dataset.state = 'expanded'; btn.textContent = btn.dataset.lessText || 'View Less'; }
+    }
+    wrap = wrap.parentElement?.closest('.cat-node-wrap');
+  }
+})();
+
+
+})();
+</script>
+@endsection
