@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Models\Country;
 use App\Models\UserDetails;
 use App\Utility\EmailUtility;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 use Hash;
 
 class CustomerController extends Controller
@@ -40,7 +42,7 @@ class CustomerController extends Controller
         if ($sort_search != null){
             $sort_search = $request->search;
             $users->where(function ($q) use ($sort_search){
-                $q->where('name', 'like', '%'.$sort_search.'%')->orWhere('email', 'like', '%'.$sort_search.'%')->orWhere('phone', 'like', '%'.$sort_search.'%')->orWhere('tel_number', 'like', '%'.$sort_search.'%');
+                $q->where('name', 'like', '%'.$sort_search.'%')->orWhere('email', 'like', '%'.$sort_search.'%')->orWhere('phone', 'like', '%'.$sort_search.'%');
             });
         }
 
@@ -139,8 +141,8 @@ class CustomerController extends Controller
             $users->where(function ($q) use ($sort_search) {
                 $q->where('name', 'like', '%'.$sort_search.'%')
                 ->orWhere('email', 'like', '%'.$sort_search.'%')
-                ->orWhere('phone', 'like', '%'.$sort_search.'%')
-                ->orWhere('tel_number', 'like', '%'.$sort_search.'%');
+                ->orWhere('phone', 'like', '%'.$sort_search.'%');
+                // ->orWhere('tel_number', 'like', '%'.$sort_search.'%');
             });
         }
 
@@ -510,4 +512,72 @@ class CustomerController extends Controller
         return back();
 
     }
+
+
+    public function update_credit(Request $request)
+    {
+        try {
+            // ✅ Validate request data
+            $validator = \Validator::make($request->all(), [
+                'user_id'       => 'required|exists:users,id',
+                'credit_status' => 'required|in:active,deactive',
+                'credit_limit'  => 'required|numeric|min:0',
+            ]);
+
+            if ($validator->fails()) {
+                // Laravel will automatically redirect back with errors
+                return back()
+                    ->withErrors($validator)
+                    ->withInput()
+                    ->with('open_modal', true); // Optional flag if you reopen a modal
+            }
+
+            $validated = $validator->validated();
+
+            $user = User::findOrFail($validated['user_id']);
+
+            $statusStr = $validated['credit_status'];
+            $statusVal = $statusStr === 'active' ? 1 : 0;
+            $newLimit  = (int) $validated['credit_limit'];
+
+            DB::beginTransaction();
+
+            $oldLimit  = (int) ($user->credit_limit ?? 0);
+            $oldRemain = (int) ($user->credit_remain ?? 0);
+
+            // ✅ Safe rule for remain
+            $delta     = $newLimit - $oldLimit;
+            $newRemain = $oldRemain;
+
+            if ($delta > 0) {
+                $newRemain = min($newLimit, $oldRemain + $delta);
+            } elseif ($delta < 0) {
+                $newRemain = min($newLimit, $oldRemain);
+            }
+
+            $newRemain = max(0, $newRemain);
+
+            // ✅ Update user
+            $user->update([
+                'credit_status' => $statusVal,
+                'credit_limit'  => $newLimit,
+                'credit_remain' => $newRemain,
+            ]);
+
+            DB::commit();
+
+            // ✅ Flash success + redirect back
+            flash(translate('Credit details updated successfully'))->success();
+            return back();
+
+        } catch (\Throwable $e) {
+            DB::rollBack(); // ✅ Always rollback on error
+            report($e);
+
+            flash(translate('Something went wrong: ' . $e->getMessage()))->error();
+            return back()->withInput();
+        }
+    }
+
+
 }
