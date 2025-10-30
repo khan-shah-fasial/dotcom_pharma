@@ -18,9 +18,9 @@
 
 /* Multi-level indentation using data-depth or .cat-children nesting */
 .cat-children .cat-node {
-  padding-left: 1.5rem;
-  border-left: 1px dashed #ddd;
-  margin-left: 0.75rem;
+  padding-left: 0rem;
+  border-left: 0px dashed #ddd;
+  margin-left: 0rem;
 }
 
 /* Each deeper level gets progressively indented */
@@ -47,7 +47,7 @@
   left: 0.75rem;
   top: 0;
   bottom: 0;
-  border-left: 1px dashed #ddd;
+  border-left: 0px dashed #ddd;
 }
 
 /* Tidy spacing and readability */

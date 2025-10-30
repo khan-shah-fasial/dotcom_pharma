@@ -22,14 +22,64 @@
   </div>
 </section>
 
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <!-- Top bar -->
+        <div class="d-flex align-items-center flex-wrap justify-content-between mb-3">
+          <h1 class="fs-20 fs-md-24 fw-700 text-dark text-capitalize mb-0" id="list-title">
+            @if($category_id)
+              {{ $category->getTranslation('name') }}
+            @elseif($query)
+              {{ translate('Search result for ') }}"{{ $query }}"
+            @else
+              {{ translate('All Products') }}
+            @endif
+          </h1>
+
+          <!-- Sort + Filter buttons -->
+          <div class="d-flex align-items-center gap-2 filter-mobile-btn">
+
+          <!-- Mobile Filter Button -->
+            <button type="button" class="btn btn-outline-dark d-xl-none mr-md-3 mr-2" onclick="toggleMobileFilter()">
+              <i class="las la-sliders-h me-1"></i> Filters
+            </button>
+
+            <div class="w-lg-200px short-by-width">
+              <select class="form-control form-control-sm aiz-selectpicker rounded-0" id="sort_by">
+                <option value="">{{ translate('Sort by') }}</option>
+                <option value="newest"     @selected(($sort_by??'')==='newest')>{{ translate('Newest') }}</option>
+                <option value="oldest"     @selected(($sort_by??'')==='oldest')>{{ translate('Oldest') }}</option>
+                <option value="price-asc"  @selected(($sort_by??'')==='price-asc')>{{ translate('Price low to high') }}</option>
+                <option value="price-desc" @selected(($sort_by??'')==='price-desc')>{{ translate('Price high to low') }}</option>
+              </select>
+            </div>
+
+
+          </div>
+        </div>
+
+        <!-- Active filters -->
+        <div id="page-metrics" class="mb-2 text-muted fs-12">
+          Per page: {{ $perPage }} • Total pages: {{ $totalPages }} • Total products: {{ $total }}
+        </div>
+        <div id="active-filters" class="mb-3 d-flex align-items-center flex-wrap gap-2">
+          <button id="clear-filters" type="button" class="btn btn-sm btn-outline-secondary d-none">
+            {{ translate('Clear all') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="mb-4 pt-2">
   <div class="container sm-px-0">
     <div class="row">
       <!-- Left Filters -->
-      <div class="col-xl-3">
-
+      <div class="col-xl-3 d-none d-xl-block"> 
         {{-- CATEGORY FILTER COMPONENT --}}
-        {{-- CATEGORY FILTER (server-rendered tree with preloaded branches) --}}
         @include('frontend.'.get_setting('homepage_select').'.partials.filters.category_filter', [
           'categories'            => $categories,
           'category'              => $category,
@@ -60,55 +110,76 @@
           'colors'         => $colors,
           'selected_color' => $color ?? null,
         ])
-
       </div>
+      
 
-      <!-- Products -->
+      <!-- Products Section -->
       <div class="col-xl-9">
-        <div id="page-metrics" class="mb-2 text-muted fs-12">
-          Per page: {{ $perPage }} • Total pages: {{ $totalPages }} • Total products: {{ $total }}
-        </div>
-        <!-- Active filters toolbar -->
-        <div id="active-filters" class="mb-3 d-flex align-items-center flex-wrap gap-2">
-          <!-- Pills will be injected by JS -->
-          <button id="clear-filters" type="button" class="btn btn-sm btn-outline-secondary d-none">
-            {{ translate('Clear all') }}
-          </button>
-        </div>
 
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <h1 class="fs-20 fs-md-24 fw-700 text-dark text-capitalize mb-0" id="list-title">
-            @if($category_id)
-              {{ $category->getTranslation('name') }}
-            @elseif($query)
-              {{ translate('Search result for ') }}"{{ $query }}"
-            @else
-              {{ translate('All Products') }}
-            @endif
-          </h1>
 
-          <div class="w-lg-200px">
-            <select class="form-control form-control-sm aiz-selectpicker rounded-0" id="sort_by">
-              <option value="">{{ translate('Sort by') }}</option>
-              <option value="newest"     @selected(($sort_by??'')==='newest')>{{ translate('Newest') }}</option>
-              <option value="oldest"     @selected(($sort_by??'')==='oldest')>{{ translate('Oldest') }}</option>
-              <option value="price-asc"  @selected(($sort_by??'')==='price-asc')>{{ translate('Price low to high') }}</option>
-              <option value="price-desc" @selected(($sort_by??'')==='price-desc')>{{ translate('Price high to low') }}</option>
-            </select>
-          </div>
-        </div>
+        
 
-        {{-- PRODUCT GRID COMPONENT --}}
+        <!-- Product Grid -->
         <div id="product-grid">
           @include('frontend.'.get_setting('homepage_select').'.partials.product_grid', ['products'=>$products])
         </div>
 
-        {{-- Infinite scroll sentinel --}}
         <div id="infinite-sentinel" class="py-4 text-center text-muted">{{ translate('Loading…') }}</div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- 🔥 MOBILE OVERLAY FILTER (Hidden on desktop) -->
+<div class="filter-overlay d-xl-none" onclick="toggleMobileFilter()"></div>
+
+<nav class="mobile-filter d-xl-none">
+  <div class="filter-header d-flex justify-content-between align-items-center">
+    <h5 class="text-white mb-0">Filters</h5>
+    <button class="btn text-white fs-5" onclick="toggleMobileFilter()">✕</button>
+  </div>
+
+  <div class="filter-body">
+    {{-- CATEGORY FILTER COMPONENT --}}
+    @include('frontend.'.get_setting('homepage_select').'.partials.filters.category_filter', [
+      'categories'            => $categories,
+      'category'              => $category,
+      'category_id'           => $category_id,
+      'selected_category_ids' => $selected_category_id ?? null,
+      'preloadedChildren'     => $preloadedChildren ?? [],
+      'expandedIds'           => $expandedIds ?? [],
+    ])
+
+    {{-- PRICE FILTER COMPONENT --}}
+    @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
+      'globalMin'   => $globalMin,
+      'globalMax'   => $globalMax,
+      'min_price'   => $min_price,
+      'max_price'   => $max_price,
+    ])
+
+    {{-- ATTRIBUTES FILTER COMPONENT --}}
+    <div id="attributes-filter">
+      @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
+        'attributes' => $attributes,
+        'selected_attribute_values' => $selected_attribute_values ?? [],
+      ])
+    </div>
+
+    {{-- COLOR FILTER --}}
+    @include('frontend.'.get_setting('homepage_select').'.partials.filters.color_filter', [
+      'colors'         => $colors,
+      'selected_color' => $color ?? null,
+    ])
+
+    <div class="p-3">
+      <button type="button" class="btn btn-danger w-100" onclick="toggleMobileFilter()">
+        {{ translate('Apply Filters') }}
+      </button>
+    </div>
+  </div>
+</nav>
+
 @endsection
 
 @section('script')
@@ -333,7 +404,7 @@
   function addPill({type, value, text}) {
     const pill = document.createElement('button');
     pill.type = 'button';
-    pill.className = 'btn btn-sm btn-outline-primary js-filter-pill mr-2 mb-2';
+    pill.className = 'btn btn-sm btn-outline-primary js-filter-pill mr-2';
     pill.dataset.type = type;
     pill.dataset.value = value;
     pill.innerHTML = `${escapeHtml(text)} <span aria-hidden="true">×</span>`;
@@ -519,3 +590,95 @@ document.addEventListener('click', (e) => {
 })();
 </script>
 @endsection
+
+<style>
+  /* --- MOBILE FILTER OVERLAY --- */
+.mobile-filter {
+  position: fixed;
+  top: 0;
+  left: -320px;
+  width: 320px;
+  height: 100vh;
+  background: #fff;
+  z-index: 9999;
+  overflow-y: auto;
+  transition: left 0.3s ease;
+}
+.mobile-filter.active { left: 0; }
+
+.filter-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+}
+.filter-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Red header bar */
+.filter-header {
+  background: #52535d;
+  padding: 5px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.filter-header .btn{
+    padding: 5px 10px;
+}
+
+.cat-children .cat-children .cat-node label{
+  margin-left: 0px !important;
+  padding-left: 2rem !important;
+}
+
+/* .filter-mobile-btn .dropdown-menu.show{ */
+  /* min-width: 11rem !important; */
+  /* right: 0 !important; */
+/* } */
+
+/* .short-by-width.show .dropdown-menu{
+  right: 0 !important;
+} */
+
+.filter-body {
+  padding: 12px 0;
+}
+
+/* Desktop unaffected */
+@media (min-width: 1200px) {
+  .mobile-filter, .filter-overlay {
+    display: none !important;
+  }
+}
+
+@media (max-width: 991px) {
+  .filter-mobile-btn .btn {
+    padding: 8px 10px;
+  }
+
+  .filter-mobile-btn .dropdown-menu.show{
+    /* min-width: 11rem !important; */
+    right: 0 !important;
+  }
+}
+
+</style>
+
+<script>
+function toggleMobileFilter() {
+  const filter = document.querySelector('.mobile-filter');
+  const overlay = document.querySelector('.filter-overlay');
+  const body = document.body;
+  filter.classList.toggle('active');
+  overlay.classList.toggle('active');
+  body.classList.toggle('overflow-hidden');
+}
+</script>
+
