@@ -227,6 +227,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
         Route::get('/customers_view/{id}', 'view')->name('customers.view');
         Route::any('/customers_approval', 'approval')->name('customers.approval');
+
+        Route::post('/customers/credit/update','update_credit')->name('customers.credits.update');
     });
 
     Route::middleware(['auth','can:admin'])->group(function () {

@@ -54,6 +54,17 @@ class HomeController extends Controller
             $topCatVeterinary = [];
         }
 
+        $category = Category::whereRaw('LOWER(name) = ?', [strtolower('veterinary')])->first();
+
+        if (!Session::has('web_type') || Session::get('web_type_name') != strtolower($category->name)) {
+            if ($category) {
+                Session::put('web_type', $category->id);
+                Session::put('web_type_name', strtolower($category->name));
+                // Cache::flush();
+            }
+        }
+
+
         $featured_categories = Cache::rememberForever('featured_categories_veterinary', function () use ($topCatVeterinary) {
             return Category::select('id', 'parent_id', 'name', 'slug', 'icon')
                 ->whereIn('id', $topCatVeterinary)
@@ -62,15 +73,6 @@ class HomeController extends Controller
         });
 
         // $featured_categories = null;
-
-        if (!Session::has('web_type')) {
-            $category = Category::whereRaw('LOWER(name) = ?', [strtolower('veterinary')])->first();
-            if ($category) {
-                Session::put('web_type', $category->id);
-                session()->put('web_type_name', strtolower($category->name));
-                Cache::flush();
-            }
-        }
 
         $categories = Category::where('parent_id', 0)
         ->where('digital', 0)
@@ -1233,8 +1235,6 @@ class HomeController extends Controller
 
             return response()->json(['success' => true]);
         }
-
-
 
         return response()->json(['success' => false]);
     }

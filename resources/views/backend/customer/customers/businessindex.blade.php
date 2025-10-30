@@ -3,7 +3,7 @@
 @section('content')
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
-            <h1 class="h3">{{ translate('All Customers') }}</h1>
+            <h1 class="h3">{{ translate('All Business Customers') }}</h1>
         </div>
         @can('add_customer')
             {{-- <div class="col text-right">
@@ -56,13 +56,13 @@
                     </div>
 
                     <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="verification_status" onchange1="sort_customers()"
-                            data-selected="{{ $verification_status }}">
+                        <select class="form-control aiz-selectpicker" name="verification_status"
+                            onchange1="sort_customers()" data-selected="{{ $verification_status }}">
                             <option value="">{{ translate('Filter by Approval Status') }}</option>
                             <option value="verified">{{ translate('Verified') }}</option>
                             <option value="un_verified">{{ translate('Unverified') }}</option>
                         </select>
-                    </div>                    
+                    </div>
 
                     <div class="col-md-3">
                         <select class="form-control aiz-selectpicker" name="country_id" onchange1="sort_customers()"
@@ -72,7 +72,7 @@
                                 <option value="{{ $c->id }}">{{ ucwords($c->name) }}</option>
                             @endforeach
                         </select>
-                    </div>                    
+                    </div>
 
                     <div class="col-md-3">
                         <select class="form-control aiz-selectpicker" name="state_id" onchange1="sort_customers()"
@@ -102,7 +102,7 @@
                                 <option value="{{ $did }}">{{ ucwords($did) }}</option>
                             @endforeach
                         </select>
-                    </div>                    
+                    </div>
 
 
 
@@ -149,25 +149,30 @@
                             <th>
                                 Sr No.
                                 <!-- <div class="form-group">
-                                        <div class="aiz-checkbox-inline">
-                                            <label class="aiz-checkbox">
-                                                <input type="checkbox" class="check-all">
-                                                <span class="aiz-square-check"></span>
-                                            </label>
-                                        </div>
-                                    </div> -->
+                                                                <div class="aiz-checkbox-inline">
+                                                                    <label class="aiz-checkbox">
+                                                                        <input type="checkbox" class="check-all">
+                                                                        <span class="aiz-square-check"></span>
+                                                                    </label>
+                                                                </div>
+                                                            </div> -->
                             </th>
                             <th>{{ translate('Company Name') }}</th>
                             <th>{{ translate('Post') }}</th>
                             <th>{{ translate('Destrict') }}</th>
-                            <!-- <th>{{ translate('Country Code') }}</th> -->
+
+                            {{-- <th>{{ translate('Country Code') }}</th> --}}
+
                             <th data-breakpoints="lg">{{ translate('Email Address') }}</th>
                             <th data-breakpoints="lg">{{ translate('Phone') }}</th>
-                            <!-- <th data-breakpoints="lg">{{ translate('Package') }}</th>
-                                <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> -->
+
+                            {{-- <th data-breakpoints="lg">{{ translate('Package') }}</th>
+                                                        <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> --}}
                             {{-- <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th> --}}
                             {{-- <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th> --}}
+
                             <th data-breakpoints="lg">{{ translate('Approval Status') }}</th>
+                            <th data-breakpoints="lg">{{ translate('Credit Status') }}</th>
                             <th class="">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
@@ -176,17 +181,17 @@
                             @if ($user != null)
                                 <tr>
                                     <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
-                                    <!-- <td>
-                                            <div class="form-group">
-                                                <div class="aiz-checkbox-inline">
-                                                    <label class="aiz-checkbox">
-                                                        <input type="checkbox" class="check-one" name="id[]"
-                                                            value="{{ $user->id }}">
-                                                        <span class="aiz-square-check"></span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </td> -->
+                                    {{-- <td>
+                                                                    <div class="form-group">
+                                                                        <div class="aiz-checkbox-inline">
+                                                                            <label class="aiz-checkbox">
+                                                                                <input type="checkbox" class="check-one" name="id[]"
+                                                                                    value="{{ $user->id }}">
+                                                                                <span class="aiz-square-check"></span>
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </td> --}}
                                     <td>
                                         @if ($user->banned == 1)
                                             <i class="fa fa-ban text-danger" aria-hidden="true"></i>
@@ -194,15 +199,15 @@
                                     </td>
                                     <td>{{ $user->details->post_business ?? ($user->details->post ?? '-') }}</td>
                                     <td>{{ $user->details->district_business ?? ($user->details->district ?? '-') }}</td>
-                                    <!-- <td>{{ $user->details->country_code_business ?? ($user->details->country_code ?? '-') }}</td> -->
+                                    {{-- <td>{{ $user->details->country_code_business ?? ($user->details->country_code ?? '-') }}</td> --}}
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->phone }}</td>
-                                    <!-- <td>
-                                            @if ($user->customer_package != null)
+                                    {{-- <td>
+                                                                    @if ($user->customer_package != null)
     {{ $user->customer_package->getTranslation('name') }}
     @endif
-                                        </td>
-                                        <td>{{ single_price($user->balance) }}</td> -->
+                                                                </td>
+                                                                <td>{{ single_price($user->balance) }}</td> --}}
                                     {{-- <td>
                                         @if ($user->email_verified_at != null)
                                             <span
@@ -227,6 +232,15 @@
                                             </span>
                                         @else
                                             <span class="badge badge-inline badge-warning">{{ translate('Unverified') }}
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($user->credit_status == 1)
+                                            <span class="badge badge-inline badge-success">{{ translate('Active') }}
+                                            </span>
+                                        @else
+                                            <span class="badge badge-inline badge-warning">{{ translate('Deactive') }}
                                             </span>
                                         @endif
                                     </td>
@@ -300,6 +314,15 @@
                                                             <span class="ms-1">{{ translate('Unban') }}</span>
                                                         </a>
                                                     @endif
+
+
+                                                    <a href="#"
+                                                        onclick="show_credit_modal({{ $user->id }}, '{{ $user->credit_status == 1 ? 'active' : 'deactive' }}', {{ (int) $user->credit_limit }}); return false;"
+                                                        title="Credit Manage" class="btn">
+                                                        <i
+                                                            class="las la-edit btn-soft-success btn-icon btn-circle btn-sm mr-2"></i>
+                                                        <span class="ms-1">Credit</span>
+                                                    </a>
                                                 @endcan
 
                                                 <!-- Delete -->
@@ -437,6 +460,61 @@
     </div>
 
     {{-- - //------------------------------ approval modal -----------------------// -- --}}
+
+    {{-- - //------------------------------ Credit Manage modal -----------------------// -- --}}
+    <!-- Credit Manage Modal -->
+    <div class="modal fade" id="creditManageModal" tabindex="-1" role="dialog" aria-labelledby="creditManageLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="creditManageForm" action="{{ route('customers.credits.update') }}" method="POST"
+                class="modal-content">
+                @csrf
+                {{-- If you prefer PATCH: @method('PATCH') --}}
+
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="creditManageLabel">Credit Manage</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="credit_user_id" name="user_id" value="{{ old('user_id') }}">
+
+                    <div class="form-group">
+                        <label for="credit_status" class="mb-1">Credit Status</label>
+                        <select class="form-control @error('credit_status') is-invalid @enderror" id="credit_status"
+                            name="credit_status" required>
+                            <option value="active" {{ old('credit_status') === 'active' ? 'selected' : '' }}>Active
+                            </option>
+                            <option value="deactive" {{ old('credit_status') === 'deactive' ? 'selected' : '' }}>Deactive
+                            </option>
+                        </select>
+                        @error('credit_status')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="credit_limit" class="mb-1">Credit Limit</label>
+                        <input type="number" min="0" step="1"
+                            class="form-control @error('credit_limit') is-invalid @enderror" id="credit_limit"
+                            name="credit_limit" placeholder="Enter credit limit" value="{{ old('credit_limit') }}"
+                            required>
+                        @error('credit_limit')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {{-- - //------------------------------ Credit Manage modal -----------------------// -- --}}
 @endsection
 
 @section('modal')
@@ -535,7 +613,7 @@
                 $('#user-role').val(role);
             }
 
-
+            {{--
             // $('#approval-status option').each(function () {
             //     if ($(this).val() !== status) {
             //         $(this).hide();
@@ -543,12 +621,21 @@
             //         $(this).show();
             //     }
             // });
+            --}}
 
             // Trigger the toggleNote function to ensure the note section visibility is updated
             toggleNote();
 
             // Show the modal
             $('#approval_model').modal('show');
+        }
+    </script>
+    <script>
+        function show_credit_modal(userId, status, limit) {
+            $('#credit_user_id').val(userId);
+            $('#credit_status').val(status);
+            $('#credit_limit').val(limit || 0);
+            $('#creditManageModal').modal('show');
         }
     </script>
 @endsection

@@ -39,6 +39,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'aadhaar_no',
         'pan_no',
         'passport_no',
+        'credit_status',
+        'credit_limit',
+        'credit_remain',
         'step'
     ];
 

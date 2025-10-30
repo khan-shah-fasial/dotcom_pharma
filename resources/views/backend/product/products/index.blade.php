@@ -21,11 +21,11 @@
             @if ($type != 'Seller' && auth()->user()->can('add_new_product'))
                 <div class="col text-right">
                     <a href="{{ route('products.create') }}" class="btn btn-circle btn-info">
-                        <span>{{ translate('Add New Product') }}</span>
+                        <span>{{ translate('Create Product') }}</span>
                     </a>
-                    <button id="downloadExcelBtn" class="btn btn-circle btn-success mx-1">Download Excel</button>
+                    <button id="downloadExcelBtn" class="btn btn-circle btn-success mx-1">Export Products</button>
                     <button type="button" class="btn btn-primary btn-circle mx-1" id="openModalBtn">
-                        Upload Price Update File
+                        Upload Product Prices
                     </button>
                 </div>
             @endif
@@ -375,6 +375,14 @@
                         <button type="button" class="btn-close upload-close-btn-admin" data-bs-dismiss="modal" id="closeModalBtn"><i class="las fs-18 la-minus"></i></button>
                     </div>
                     <div class="modal-body">
+                        <div class="alert alert-info small mb-3">
+                            <strong>Note:</strong><br>
+                            During bulk price updates, any rows with blank <em>Price</em> or <em>PTS Percentage</em> values 
+                            will be skipped automatically.<br><br>
+                            Before uploading, always <strong>download the latest product Excel file</strong> and update prices 
+                            in that file only. This ensures data accuracy, as product variants may have been added or removed 
+                            since the last update.
+                        </div>                        
                         <input type="file" name="price_file" accept=".xlsx,.xls,.csv" required>
                     </div>
                     <div class="modal-footer">
