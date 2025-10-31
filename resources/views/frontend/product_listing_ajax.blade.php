@@ -65,7 +65,7 @@
           Per page: {{ $perPage }} • Total pages: {{ $totalPages }} • Total products: {{ $total }}
         </div>
         <div id="active-filters" class="mb-3 d-flex align-items-center flex-wrap gap-2">
-          <button id="clear-filters" type="button" class="btn btn-sm btn-outline-secondary d-none">
+          <button id="clear-filters" type="button" class="btn btn-sm text-danger d-none">
             {{ translate('Clear all') }}
           </button>
         </div>
