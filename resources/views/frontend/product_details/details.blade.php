@@ -21,12 +21,13 @@
 
     <!-- Reviews -->
     @if ($detailedProduct->auction_product != 1)
-        @if($detailedProduct->reviews->where('status', 1)->count() != 0)
+        @if ($detailedProduct->reviews->where('status', 1)->count() != 0)
             <div class="mb-2 d-flex align-items-center gap-2">
                 <span class="rating rating-mr-1 detail-gray-color">
                     {{ renderStarRating($detailedProduct->rating) }}
                 </span>
-                <span class="detail-gray-color detail-font-14px fs-6">({{ $detailedProduct->reviews->where('status', 1)->count() }}
+                <span
+                    class="detail-gray-color detail-font-14px fs-6">({{ $detailedProduct->reviews->where('status', 1)->count() }}
                     {{ translate('Customer Reviews') }})</span>
             </div>
         @endif
@@ -34,62 +35,61 @@
 
     <div class="row ml-0 mr-0 pt-4">
 
-       
-            @if (!empty($detailedProduct->brand->name))
-                <div class="col-md-5 col-6 pl-0 mb-md-0 mb-2">
-                    <span class="detail-font-14px detail-gray-color">{{ translate('Brand / Mfg') }}:</span><br>
-                    <span class="fw-500 fs-14">{{ $detailedProduct->brand->name ?? '-' }}</span>
-                </div>
-            @endif
-            <div class="col-md-3 pl-0 mb-md-0 mb-2">
-                <span class="detail-font-14px detail-gray-color">{{ translate('SKU') }}:</span><br>
-                <span id="sku-product-details" class="fw-500 fs-14"></span>
+
+        @if (!empty($detailedProduct->brand->name))
+            <div class="col-md-5 col-6 pl-0 mb-md-0 mb-2">
+                <span class="detail-font-14px detail-gray-color">{{ translate('Brand / Mfg') }}:</span><br>
+                <span class="fw-500 fs-14">{{ $detailedProduct->brand->name ?? '-' }}</span>
             </div>
-       
+        @endif
+        <div class="col-md-3 pl-0 mb-md-0 mb-2">
+            <span class="detail-font-14px detail-gray-color">{{ translate('SKU') }}:</span><br>
+            <span id="sku-product-details" class="fw-500 fs-14"></span>
+        </div>
 
-         @if (!is_null($detailedProduct->prescription_req))
-                <!-- Discount percentage -->
-                <div class="col-md-4 pl-md-0 mb-md-0 mb-2">
-                    <span class="detail-font-14px detail-gray-color">{{ translate('Prescription Required') }}:</span><br>
-                    <span
-                        class="fw-500 fs-14 detail-red-color">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
-                </div>
-            @endif
 
-       
+        @if (!is_null($detailedProduct->prescription_req))
+            <!-- Discount percentage -->
+            <div class="col-md-4 pl-md-0 mb-md-0 mb-2">
+                <span class="detail-font-14px detail-gray-color">{{ translate('Prescription Required') }}:</span><br>
+                <span
+                    class="fw-500 fs-14 detail-red-color">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
+            </div>
+        @endif
+
+
 
         <div class="col-12 pl-0 d-flex mt-md-3">
             <span class="detail-font-14px detail-gray-color">{{ translate('MRP') }}:</span>
             <span id="mrp-unit" class="detail-font-14px detail-gray-color"></span>
         </div>
 
-        
-            
+
+
         {{-- Pricing Row --}}
 
         @auth
             @if (auth()->user()->user_subtype !== null)
                 <div class="col-12 pl-0 mt-3 pb-0">
                     <span class="detail-font-14px detail-gray-color">{{ translate('Price') }}:</span>
-                    <span id="without-tax-product" class="without-tax-product-1"></span> <!-- <span class="without-tax-product-gst without-tax-product-1"> excl. GST</span> -->
+                    <span id="without-tax-product" class="without-tax-product-1"></span>
+                    <!-- <span class="without-tax-product-gst without-tax-product-1"> excl. GST</span> -->
                 </div>
-             @endif
+            @endif
         @endauth
 
         <div class="col-12 pl-0 mt-3 pb-0">
             <span class="text-secondary fs-14">
                 <span id="per-piece-price-product-details" class="per-piece-price-product-details-gst"></span>
                 <!-- <span id="per-piece-price-product-details" class="                    
-                    @if(auth()->check() && auth()->user()->user_subtype !== null) 
-                        per-piece-price-product-details-gst 
+                    @if (auth()->check() && auth()->user()->user_subtype !== null) per-piece-price-product-details-gst 
                     @else 
-                        per-piece-price-product-details-gst
-                    @endif"></span> -->
+                        per-piece-price-product-details-gst @endif"></span> -->
                 <span class="">
-                    @if(auth()->check() && auth()->user()->user_subtype !== null)
+                    @if (auth()->check() && auth()->user()->user_subtype !== null)
                         incl. GST
                     @endif
-                </span> 
+                </span>
                 / Piece
             </span>
             {{-- <span class="fw-500 fs-14 text-dark ml-3">{{ translate('Count') }}:</span>
@@ -97,7 +97,7 @@
                 {{ $detailedProduct->product_count ?? '-' }} / Count</span> --}}
         </div>
 
-        
+
 
         <div id="discount-show" class="col-12 pl-0 mt-3 pb-0 d-none">
             {{-- @if (discount_in_percentage($detailedProduct) > 0)
@@ -105,10 +105,11 @@
                 <span class=" fs-18 text-center"
                     style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span> ({{ discount_in_percentage($detailedProduct) }}%)</span>
             @else --}}
-                    <span class=" fs-18 text-center"
-                    style="color: #E31E24 !important;"><span class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price" class="fs-18 text-center" style="color: #E31E24 !important;"></span>
-                    <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>    
-                    </span>
+            <span class=" fs-18 text-center" style="color: #E31E24 !important;"><span
+                    class="detail-font-14px detail-gray-color">You Save: </span> <span id="discount-product-price"
+                    class="fs-18 text-center" style="color: #E31E24 !important;"></span>
+                <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>
+            </span>
             {{-- @endif --}}
         </div>
 
@@ -122,12 +123,12 @@
                 </div>
                 <div class="col-12 pl-0 mt-3 pb-0">
                     {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
-                    {{-- <span id="tax-product-details" class="text-secondary fs-14"></span>
+        {{-- <span id="tax-product-details" class="text-secondary fs-14"></span>
                     <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </div>
             @endif --}}
         {{-- @else --}}
-            {{-- <div class="col-12 pl-0 mt-3 pb-0">
+        {{-- <div class="col-12 pl-0 mt-3 pb-0">
                 <p class="fw-500 fs-14 text-dark">
                     <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
                 </p>
@@ -140,7 +141,7 @@
             <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
         </div>
 
-        
+
 
 
         {{-- Pack Size --}}
@@ -152,151 +153,159 @@
         <button class="btn btn-outline-secondary btn-sm">40ml</button>
     </div> --}}
 
-        
 
 
-    @if ($detailedProduct->auction_product != 1)
-        <div class="col-12 pl-0 pb-0">
-            <!--Display price & vairation to only loggedin user [by nexgeno]-->
-            <form id="option-choice-form">
-                @csrf
-                <input type="hidden" name="id" value="{{ $detailedProduct->id }}">
 
-                @if ($detailedProduct->digital == 0)
-                    <!-- Choice Options -->
-                    @if ($detailedProduct->choice_options != null)
-                        @foreach (json_decode($detailedProduct->choice_options) as $key => $choice)
-                            <!--<div class="row no-gutters mb-3">--> <!--old code-->
-                            <div class="row no-gutters mt-3 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
-                                <!--hiding 1st attribute ROLE [by nexgeno]-->
-                                <div class="col-sm-12">
-                                    <div class="text-dark fs-14 fw-500 mt-0 mb-2">
-                                        {{ get_single_attribute_name($choice->attribute_id) }}
+        @if ($detailedProduct->auction_product != 1)
+            <div class="col-12 pl-0 pb-0">
+                <!--Display price & vairation to only loggedin user [by nexgeno]-->
+                <form id="option-choice-form">
+                    @csrf
+                    <input type="hidden" name="id" value="{{ $detailedProduct->id }}">
+
+                    @if ($detailedProduct->digital == 0)
+                        <!-- Choice Options -->
+                        @if ($detailedProduct->choice_options != null)
+                            @foreach (json_decode($detailedProduct->choice_options) as $key => $choice)
+                                <!--<div class="row no-gutters mb-3">--> <!--old code-->
+                                <div class="row no-gutters mt-3 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
+                                    <!--hiding 1st attribute ROLE [by nexgeno]-->
+                                    <div class="col-sm-12">
+                                        <div class="text-dark fs-14 fw-500 mt-0 mb-2">
+                                            {{ get_single_attribute_name($choice->attribute_id) }}
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12">
+                                        <div class="aiz-radio-inline">
+                                            @foreach ($choice->values as $key => $value)
+                                                <label class="aiz-megabox pl-0 mr-1 mb-2">
+                                                    <!--<input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
+                                                        value="{{ $value }}"
+                                                        @if ($key == 0) checked @endif>-->
+                                                    <!--old code-->
+                                                    <input type="radio"
+                                                        name="attribute_id_{{ $choice->attribute_id }}"
+                                                        value="{{ $value }}"
+                                                        @if ($key == 0 || get_user_subtype() == strtolower($value)) checked @endif>
+                                                    <!--added user_subtype role condition for role wise price based on session [by nexgeno]-->
+                                                    <span
+                                                        class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3 fs-12 text-secondary"
+                                                        style="border-radius:5px !important">
+                                                        {{ $value }}
+                                                    </span>
+                                                </label>
+                                            @endforeach
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-sm-12">
+                            @endforeach
+                        @endif
+
+                        <!-- Color Options -->
+                        @if ($detailedProduct->colors != null && count(json_decode($detailedProduct->colors)) > 0)
+                            <div class="row no-gutters mb-3">
+                                <div class="col-sm-2">
+                                    <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Color') }}</div>
+                                </div>
+                                <div class="col-sm-10">
                                     <div class="aiz-radio-inline">
-                                        @foreach ($choice->values as $key => $value)
-                                            <label class="aiz-megabox pl-0 mr-1 mb-2">
-                                                <!--<input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
-                                                        value="{{ $value }}"
-                                                        @if ($key == 0) checked @endif>--> <!--old code-->
-                                                <input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
-                                                    value="{{ $value }}"
-                                                    @if ($key == 0 || get_user_subtype() == strtolower($value)) checked @endif>
-                                                <!--added user_subtype role condition for role wise price based on session [by nexgeno]-->
+                                        @foreach (json_decode($detailedProduct->colors) as $key => $color)
+                                            <label class="aiz-megabox pl-0 mr-1 mb-2" data-toggle="tooltip"
+                                                data-title="{{ get_single_color_name($color) }}">
+                                                <input type="radio" name="color"
+                                                    value="{{ get_single_color_name($color) }}"
+                                                    @if ($key == 0) checked @endif>
                                                 <span
-                                                    class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3 fs-12 text-secondary"
-                                                    style="border-radius:5px !important">
-                                                    {{ $value }}
+                                                    class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center p-1">
+                                                    <span class="size-25px d-inline-block rounded"
+                                                        style="background: {{ $color }};"></span>
                                                 </span>
                                             </label>
                                         @endforeach
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
-                    @endif
+                        @endif
 
-                    <!-- Color Options -->
-                    @if ($detailedProduct->colors != null && count(json_decode($detailedProduct->colors)) > 0)
-                        <div class="row no-gutters mb-3">
-                            <div class="col-sm-2">
-                                <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Color') }}</div>
-                            </div>
-                            <div class="col-sm-10">
-                                <div class="aiz-radio-inline">
-                                    @foreach (json_decode($detailedProduct->colors) as $key => $color)
-                                        <label class="aiz-megabox pl-0 mr-1 mb-2" data-toggle="tooltip"
-                                            data-title="{{ get_single_color_name($color) }}">
-                                            <input type="radio" name="color" value="{{ get_single_color_name($color) }}"
-                                                @if ($key == 0) checked @endif>
-                                            <span
-                                                class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center p-1">
-                                                <span class="size-25px d-inline-block rounded"
-                                                    style="background: {{ $color }};"></span>
-                                            </span>
-                                        </label>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    @endif
 
-                    
-                    <!-- Quantity + Add to cart -->
-                    <div class="row no-gutters">
-                        <div class="col-md-3 col-12 pl-0 mt-3 pb-0">
-                            {{--  --}}
-                            <div class="">
-                                <div class="fw-500 fs-14 text-dark mt-2 mb-2">{{ translate('Quantity') }}</div>
-                            </div>
-                            <div class="">
-                                <div class="product-quantity d-flex align-items-center">
-                                    <div class="row no-gutters align-items-center aiz-plus-minus mr-3" style="width: 130px; border: 1px solid #dfdfdf">
-                                        <button class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color" type="button"
-                                            data-type="minus" data-field="quantity" disabled="">
-                                            <i class="las la-minus"></i>
-                                        </button>
-                                        <input type="number" name="quantity"
-                                            class="col border-0 text-center flex-grow-1 fs-16 input-number new-bg-color" placeholder="1"
-                                            value="{{ $detailedProduct->min_qty }}" min="{{ $detailedProduct->min_qty }}"
-                                            max="10" lang="en">
-                                        <button class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color" type="button"
-                                            data-type="plus" data-field="quantity">
-                                            <i class="las la-plus"></i>
-                                        </button>
-                                    </div>
-                                    @php
-                                        $qty = 0;
-                                        foreach ($detailedProduct->stocks as $key => $stock) {
-                                            $qty += $stock->qty;
-                                        }
-                                    @endphp
-                                    <div class="avialable-amount opacity-60 d-none">
-                                        @if ($detailedProduct->stock_visibility_state == 'quantity')
-                                            (<span id="available-quantity">{{ $qty }}</span>
-                                            {{ translate('available') }})
-                                        @elseif($detailedProduct->stock_visibility_state == 'text' && $qty >= 1)
-                                            (<span id="available-quantity" class="">{{ translate('In Stock') }}</span>)
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                            {{--  --}}
-                        </div>
-                        <div class="col-md-9 col-12 pl-0 mt-3 pb-0">
-                            <!-- Total Price -->
-                            <div class="" id="chosen_price_div">
+                        <!-- Quantity + Add to cart -->
+                        <div class="row no-gutters">
+                            <div class="col-md-3 col-12 pl-0 mt-3 pb-0">
+                                {{--  --}}
                                 <div class="">
-                                    <div class="fw-500 fs-14 text-dark mt-2 mb-2">{{ translate('Total Amount Product Wise') }}:</div>
+                                    <div class="fw-500 fs-14 text-dark mt-2 mb-2">{{ translate('Quantity') }}</div>
                                 </div>
                                 <div class="">
-                                    <div class="product-price">
-                                        <strong id="chosen_price" class="fs-24 fw-500" style="color:#123498;">
+                                    <div class="product-quantity d-flex align-items-center">
+                                        <div class="row no-gutters align-items-center aiz-plus-minus mr-3"
+                                            style="width: 130px; border: 1px solid #dfdfdf">
+                                            <button
+                                                class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color"
+                                                type="button" data-type="minus" data-field="quantity" disabled="">
+                                                <i class="las la-minus"></i>
+                                            </button>
+                                            <input type="number" name="quantity"
+                                                class="col border-0 text-center flex-grow-1 fs-16 input-number new-bg-color"
+                                                placeholder="1" value="{{ $detailedProduct->min_qty }}"
+                                                min="{{ $detailedProduct->min_qty }}" max="10" lang="en">
+                                            <button
+                                                class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color"
+                                                type="button" data-type="plus" data-field="quantity">
+                                                <i class="las la-plus"></i>
+                                            </button>
+                                        </div>
+                                        @php
+                                            $qty = 0;
+                                            foreach ($detailedProduct->stocks as $key => $stock) {
+                                                $qty += $stock->qty;
+                                            }
+                                        @endphp
+                                        <div class="avialable-amount opacity-60 d-none">
+                                            @if ($detailedProduct->stock_visibility_state == 'quantity')
+                                                (<span id="available-quantity">{{ $qty }}</span>
+                                                {{ translate('available') }})
+                                            @elseif($detailedProduct->stock_visibility_state == 'text' && $qty >= 1)
+                                                (<span id="available-quantity"
+                                                    class="">{{ translate('In Stock') }}</span>)
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                {{--  --}}
+                            </div>
+                            <div class="col-md-9 col-12 pl-0 mt-3 pb-0">
+                                <!-- Total Price -->
+                                <div class="" id="chosen_price_div">
+                                    <div class="">
+                                        <div class="fw-500 fs-14 text-dark mt-2 mb-2">
+                                            {{ translate('Total Amount Product Wise') }}:</div>
+                                    </div>
+                                    <div class="">
+                                        <div class="product-price">
+                                            <strong id="chosen_price" class="fs-24 fw-500" style="color:#123498;">
 
-                                        </strong>
+                                            </strong>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                @else
-                    <!-- Quantity -->
-                    <input type="hidden" name="quantity" value="1">
-                @endif
+                    @else
+                        <!-- Quantity -->
+                        <input type="hidden" name="quantity" value="1">
+                    @endif
 
-                
 
-            </form>
-        </div>
-    @endif
+
+                </form>
+            </div>
+        @endif
 
 
 
         <!-- Add to cart & Buy now Buttons -->
         <div class="mt-4">
-          
+
             @if ($detailedProduct->digital == 0)
                 @if (
                     (get_setting('product_external_link_for_seller') == 1 &&
@@ -319,7 +328,8 @@
                         <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
                     </button>
                 @endif
-                <button type="button" class="btn btn-secondary out-of-stock fw-600 d-none border-radius-50 mb-md-0 mb-2 mt-2" disabled>
+                <button type="button"
+                    class="btn btn-secondary out-of-stock fw-600 d-none border-radius-50 mb-md-0 mb-2 mt-2" disabled>
                     <i class="la la-cart-arrow-down"></i> {{ translate('Out of Stock') }}
                 </button>
             @elseif ($detailedProduct->digital == 1)
@@ -340,46 +350,64 @@
                 <i class="las la-question-circle fs-20 position_btn"></i> {{ translate('Product Enquiry') }}
             </button>
         </div>
-        
-  @if (!is_user_loggedin())
-                <p class="fs-14 pt-3">Please login / register to buy or to get detailed information of the product</p>
-            @endif
-        
 
-        
+        @if (!is_user_loggedin())
+            <p class="fs-14 pt-3">Please login / register to buy or to get detailed information of the product</p>
+        @endif
+
+
+
 
         <div class="col-12 d-flex flex-wrap mt-4 pt-4 pb-2 pl-4 pr-2 detail-border-1px bg-white">
             <div class="col-12 col-md-12 text-left pl-0 pr-0">
                 <h5 class="fe-semibold mb-4">Product Specifications</h5>
             </div>
 
-             @if ($detailedProduct->pharma_categories)
+            @if ($detailedProduct->pharma_categories)
                 <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
                     <div class="detail-product-specs rounded h-100">
 
 
-                     <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-check-icon lucide-copy-check"><path d="m12 15 2 2 4-4"/><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></div>
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-copy-check-icon lucide-copy-check">
+                                    <path d="m12 15 2 2 4-4" />
+                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                                </svg></div>
                             <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Pharma Categories') }}:</p>
+                                <p class="detail-font-14px detail-gray-color mb-0">
+                                    {{ translate('Pharma Categories') }}:</p>
                                 <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->pharma_categories ?? '-' }}</p>
                             </div>
                         </div>
-                    
+
                     </div>
                 </div>
             @endif
 
             @if ($detailedProduct->product_form)
                 <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
-                     <div class="detail-product-specs rounded h-100">
+                    <div class="detail-product-specs rounded h-100">
                         <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-copy-icon lucide-book-copy"><path d="M5 7a2 2 0 0 0-2 2v11"/><path d="M5.803 18H5a2 2 0 0 0 0 4h9.5a.5.5 0 0 0 .5-.5V21"/><path d="M9 15V4a2 2 0 0 1 2-2h9.5a.5.5 0 0 1 .5.5v14a.5.5 0 0 1-.5.5H11a2 2 0 0 1 0-4h10"/></svg></div>
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-book-copy-icon lucide-book-copy">
+                                    <path d="M5 7a2 2 0 0 0-2 2v11" />
+                                    <path d="M5.803 18H5a2 2 0 0 0 0 4h9.5a.5.5 0 0 0 .5-.5V21" />
+                                    <path
+                                        d="M9 15V4a2 2 0 0 1 2-2h9.5a.5.5 0 0 1 .5.5v14a.5.5 0 0 1-.5.5H11a2 2 0 0 1 0-4h10" />
+                                </svg></div>
                             <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Product Form') }}:</p>
-                                <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_form ?? '-' }}</p></div>
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Product Form') }}:
+                                </p>
+                                <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_form ?? '-' }}</p>
                             </div>
-                     
+                        </div>
+
                     </div>
                 </div>
             @endif
@@ -390,7 +418,17 @@
                 <div class="col-12 col-md-12 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
                         <div class="display_flex3">
-                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                    <path
+                                        d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
+                                    </path>
+                                    <path d="M12 22V12"></path>
+                                    <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
+                                    <path d="m7.5 4.27 9 5.15"></path>
+                                </svg></div>
                             <div class="">
                                 <p class="detail-font-14px detail-gray-color mb-0"> {{ translate('Type') }}:</p>
                                 <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_type ?? '-' }}</p>
@@ -404,14 +442,21 @@
             @if ($detailedProduct->product_material)
                 <div class="col-12 col-md-12 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                         <div class="display_flex3">
-                               <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg></div>
-                               <div class="">
-                                   <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Material') }}:</p>
-                                    <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_material ?? '-' }}</p>
-                               </div>
-                         </div>
-                    
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                    <path d="M4.5 3h15"></path>
+                                    <path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path>
+                                    <path d="M6 14h12"></path>
+                                </svg></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Material') }}:</p>
+                                <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_material ?? '-' }}</p>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             @endif
@@ -421,45 +466,76 @@
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
                         <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Country of Origin') }}:</p>
-                            <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_origin ?? '-' }}</p>
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-map-pin w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                    <path
+                                        d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0">
+                                    </path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">
+                                    {{ translate('Country of Origin') }}:</p>
+                                <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_origin ?? '-' }}</p>
+                            </div>
                         </div>
-                        </div>
-                        
-                        
+
+
                     </div>
                 </div>
             @endif
 
             {{-- Min Pack Size --}}
             {{-- @if ($detailedProduct->product_min_pack_size) --}}
-                <div class="col-12 col-md-6 pl-0 mb-3">
-                    <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
-                            <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Minimum Pack Size') }}:</p>
-                                <p id="min-package-count-product-details" class="fw-500 fs-14 mb-0"></p>
-                            </div>
+            <div class="col-12 col-md-6 pl-0 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                <path
+                                    d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
+                                </path>
+                                <path d="M12 22V12"></path>
+                                <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
+                                <path d="m7.5 4.27 9 5.15"></path>
+                            </svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Minimum Pack Size') }}:
+                            </p>
+                            <p id="min-package-count-product-details" class="fw-500 fs-14 mb-0"></p>
                         </div>
-                        
                     </div>
+
                 </div>
+            </div>
 
 
-                <div class="col-12 col-md-6 pl-0 mb-3">
-                    <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
-                            <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Per Count') }}:</p>
-                        <p id="package-count-product-details" class="fw-500 fs-14 mb-0"></p>
-                            </div>
+            <div class="col-12 col-md-6 pl-0 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                <path
+                                    d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
+                                </path>
+                                <path d="M12 22V12"></path>
+                                <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
+                                <path d="m7.5 4.27 9 5.15"></path>
+                            </svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Per Count') }}:</p>
+                            <p id="package-count-product-details" class="fw-500 fs-14 mb-0"></p>
                         </div>
-                        
                     </div>
+
                 </div>
+            </div>
 
             {{-- @endif --}}
 
@@ -468,49 +544,88 @@
             <div class="col-12 col-md-6 pl-0 mb-3">
                 <div class="detail-product-specs rounded h-100">
                     <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg></div>
-                            <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Stock Available') }}:</p>
-                                <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p></div>
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-activity w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                <path
+                                    d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2">
+                                </path>
+                            </svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Stock Available') }}:</p>
+                            <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p>
                         </div>
-                   
+                    </div>
+
                 </div>
             </div>
 
             @if (!empty($detailedProduct->product_exp_date))
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                         <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg></div>
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-calendar w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                    <path d="M8 2v4"></path>
+                                    <path d="M16 2v4"></path>
+                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                    <path d="M3 10h18"></path>
+                                </svg></div>
                             <div class="">
                                 <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Expiry Date') }}:</p>
-                                <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_exp_date ?? '-' }}</p></div>
+                                <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_exp_date ?? '-' }}</p>
+                            </div>
                         </div>
-                        
+
                     </div>
                 </div>
             @endif
 
             <div class="col-12 col-md-6 pl-0 mb-3">
                 <div class="detail-product-specs rounded h-100">
-                     <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Category') }}:</p>
-                    <p class="fw-500 fs-14 mb-0 pl21">{{ ucfirst($category_name ?? '-') }}</p></div>
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                <path d="M10 9H8"></path>
+                                <path d="M16 13H8"></path>
+                                <path d="M16 17H8"></path>
+                            </svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Category') }}:</p>
+                            <p class="fw-500 fs-14 mb-0 pl21">{{ ucfirst($category_name ?? '-') }}</p>
                         </div>
-                    
+                    </div>
+
                 </div>
             </div>
 
             @if (!empty($detailedProduct->product_hsn))
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                         <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('HSN Code') }}:</p>
-                        <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_hsn ?? '-' }}</p></div>
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                                    <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                    <path d="M10 9H8"></path>
+                                    <path d="M16 13H8"></path>
+                                    <path d="M16 17H8"></path>
+                                </svg></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('HSN Code') }}:</p>
+                                <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_hsn ?? '-' }}</p>
+                            </div>
                         </div>
-                        
+
                     </div>
                 </div>
             @endif
@@ -518,66 +633,177 @@
             @if (!empty($detailedProduct->product_hs))
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                         <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('HS Code') }}:</p>
-                        <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_hs ?? '-' }}</p></div>
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                                    <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                    <path d="M10 9H8"></path>
+                                    <path d="M16 13H8"></path>
+                                    <path d="M16 17H8"></path>
+                                </svg></div>
+                            <div class="">
+                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('HS Code') }}:</p>
+                                <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_hs ?? '-' }}</p>
+                            </div>
                         </div>
-                        
+
                     </div>
                 </div>
             @endif
 
             <div class="col-12 col-md-6 pl-0 mb-3">
                 <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Dimentions') }}:</p>
-                    <p id="dimentions-product-details" class="fw-500 fs-14 mb-0"></p></div>
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                <path
+                                    d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
+                                </path>
+                                <path d="M12 22V12"></path>
+                                <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
+                                <path d="m7.5 4.27 9 5.15"></path>
+                            </svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Dimentions') }}:</p>
+                            <p id="dimentions-product-details" class="fw-500 fs-14 mb-0"></p>
+                        </div>
                     </div>
-                    
+
                 </div>
             </div>
 
             <div class="col-12 col-md-6 pl-0 mb-3">
                 <div class="detail-product-specs rounded h-100">
                     <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M4.5 3h15"></path><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path><path d="M6 14h12"></path></svg></div>
-                            <div class=""><p class="detail-font-14px detail-gray-color mb-0">{{ translate('Weight / Volume') }}:</p>
-                    <p id="weight-volume-product-details" class="fw-500 fs-14 mb-0"></p></div>
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-beaker w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                <path d="M4.5 3h15"></path>
+                                <path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"></path>
+                                <path d="M6 14h12"></path>
+                            </svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Weight / Volume') }}:</p>
+                            <p id="weight-volume-product-details" class="fw-500 fs-14 mb-0"></p>
                         </div>
-                    
+                    </div>
+
                 </div>
             </div>
 
             @if (!empty($detailedProduct->tags))
                 <div class="col-12 col-md-12 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
-                         <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tags-icon lucide-tags"><path d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z"/><path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193"/><circle cx="10.5" cy="6.5" r=".5" fill="currentColor"/></svg></div>
-                            <div class=""><p class="detail-font-14pxx detail-gray-color mb-1">{{ translate('Tags') }}</p>
+                        <div class="display_flex3">
+                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-tags-icon lucide-tags">
+                                    <path
+                                        d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z" />
+                                    <path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193" />
+                                    <circle cx="10.5" cy="6.5" r=".5" fill="currentColor" />
+                                </svg></div>
+                            <div class="">
+                                <p class="detail-font-14pxx detail-gray-color mb-1">{{ translate('Tags') }}</p>
                                 <p class="fw-400 fs-12 mb-0 pl21 tags-span-main">
-    @foreach(explode(',', $detailedProduct->tags) as $tag)
-        <span> <a href="/search" target="_blank">{{ trim($tag) }}</a> </span>
+                                    @foreach (explode(',', $detailedProduct->tags) as $tag)
+                                        <span> <a href="/search" target="_blank">{{ trim($tag) }}</a> </span>
+                                    @endforeach
+                                </p>
 
-    @endforeach
-</p>
 
 
-                    
+                            </div>
                         </div>
-                        </div>
-                        
+
                     </div>
                 </div>
             @endif
-            
+
+
+
+            <div id="rolePriceParentDiv" class="col-12 col-md-12 pl-0 mb-3" style="display: none;">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                <path d="M10 9H8"></path>
+                                <path d="M16 13H8"></path>
+                                <path d="M16 17H8"></path>
+                            </svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Role Base Price') }}:</p>
+
+                            <div id="rolePriceDiv" style="display: none;">
+                                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+                                    <table id="rolePriceTable" class="min-w-[300px] border border-gray-200 rounded-lg text-center">
+                                        <thead class="bg-gray-100">
+                                            <tr>
+                                                <th
+                                                    class="px-6 py-3 text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
+                                                    Role
+                                                </th>
+                                                <th
+                                                    class="px-6 py-3 text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
+                                                    Price (₹)
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100 bg-white"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div id="coaParentDiv" class="col-12 col-md-12 pl-0 mb-3" style="display: none;">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                <path d="M10 9H8"></path>
+                                <path d="M16 13H8"></path>
+                                <path d="M16 17H8"></path>
+                            </svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('COA') }}:</p>
+
+                            <div id="coaDiv"></div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+
         </div>
-        
 
-        
 
-    
+
+
+
 
     </div>
 
@@ -603,7 +829,8 @@
     @if (get_setting('product_query_activation') == 1)
         <!-- Ask about this product -->
         <div class="col-xl-3 col-lg-4 col-md-3 col-sm-4 mb-3">
-            <a href="javascript:void();" onclick="goToView('product_query')" class="text-primary fs-14 fw-600 d-flex">
+            <a href="javascript:void();" onclick="goToView('product_query')"
+                class="text-primary fs-14 fw-600 d-flex">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32">
                     <g id="Group_25571" data-name="Group 25571" transform="translate(-975 -411)">
                         <g id="Path_32843" data-name="Path 32843" transform="translate(975 411)" fill="#fff">
@@ -978,7 +1205,7 @@
             </div> --}}
     @endif
 
-    
+
 
 
     {{-- <hr> --}}
@@ -993,13 +1220,28 @@
         </div> --}}
 
         <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield w-6 h-6 text-medical-info"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg></div>
+            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-shield w-6 h-6 text-medical-info">
+                    <path
+                        d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z">
+                    </path>
+                </svg></div>
             <p>Secure Transaction</p>
             <p>100% secure payment</p>
         </div>
 
         <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-award w-6 h-6 text-medical-info"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path><circle cx="12" cy="8" r="6"></circle></svg></div>
+            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-award w-6 h-6 text-medical-info">
+                    <path
+                        d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526">
+                    </path>
+                    <circle cx="12" cy="8" r="6"></circle>
+                </svg></div>
             <p>Top Brand</p>
             <p>Trusted quality</p>
         </div>
@@ -1010,169 +1252,141 @@
         </div> --}}
 
         <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw w-6 h-6 text-medical-info"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg></div>
+            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-rotate-ccw w-6 h-6 text-medical-info">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                </svg></div>
             <p>Non Return</p>
             <p>Due to hygiene</p>
         </div>
 
     </div>
 
-@php
-    $dynamicTabs = json_decode($detailedProduct->contents, true) ?? [];
-    $hasDescription = !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->description)))));
-    $hasVideo = !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->video_link)))));
-    $hasPdf = !empty(trim(str_replace("\u00a0", '', strip_tags(html_entity_decode($detailedProduct->pdf)))));
-@endphp
+    @php
+        $dynamicTabs = json_decode($detailedProduct->contents, true) ?? [];
+        $hasDescription = !empty(
+            trim(str_replace('\u00a0', '', strip_tags(html_entity_decode($detailedProduct->description))))
+        );
+        $hasVideo = !empty(
+            trim(str_replace('\u00a0', '', strip_tags(html_entity_decode($detailedProduct->video_link))))
+        );
+        $hasPdf = !empty(trim(str_replace('\u00a0', '', strip_tags(html_entity_decode($detailedProduct->pdf)))));
+    @endphp
 
-@if($hasDescription || (!empty($dynamicTabs) && count($dynamicTabs) > 0) || $hasVideo || $hasPdf)
-<div class="productAccordion_box">
-  <div class="accordion accordion-custom" id="productAccordion">
+    @if ($hasDescription || (!empty($dynamicTabs) && count($dynamicTabs) > 0) || $hasVideo || $hasPdf)
+        <div class="productAccordion_box">
+            <div class="accordion accordion-custom" id="productAccordion">
 
-    {{-- Description --}}
-    @if($hasDescription)
-      <div class="card">
-        <div class="card-header" id="headingDescription">
-          <h2 class="mb-0">
-            <button
-              class="btn btn-link"
-              type="button"
-              data-toggle="collapse"
-              data-target="#collapseDescription"
-              aria-expanded="true"
-              aria-controls="collapseDescription"
-            >
-              {{ translate('Description') }}
-              <i class="fas fa-chevron-down"></i>
-            </button>
-          </h2>
-        </div>
-        <div
-          id="collapseDescription"
-          class="collapse show"
-          aria-labelledby="headingDescription"
-          data-parent="#productAccordion"
-        >
-          <div class="card-body aiz-editor-data">
-            {!! $detailedProduct->getTranslation('description') !!}
-          </div>
-        </div>
-      </div>
-    @endif
+                {{-- Description --}}
+                @if ($hasDescription)
+                    <div class="card">
+                        <div class="card-header" id="headingDescription">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link" type="button" data-toggle="collapse"
+                                    data-target="#collapseDescription" aria-expanded="true"
+                                    aria-controls="collapseDescription">
+                                    {{ translate('Description') }}
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapseDescription" class="collapse show" aria-labelledby="headingDescription"
+                            data-parent="#productAccordion">
+                            <div class="card-body aiz-editor-data">
+                                {!! $detailedProduct->getTranslation('description') !!}
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
-    {{-- Dynamic Tabs --}}
-    @if (!empty($dynamicTabs) && count($dynamicTabs) > 0)
-      @foreach ($dynamicTabs as $index => $tab)
-        <div class="card">
-          <div class="card-header" id="headingDynamic{{ $index }}">
-            <h2 class="mb-0">
-              <button
-                class="btn btn-link collapsed"
-                type="button"
-                data-toggle="collapse"
-                data-target="#collapseDynamic{{ $index }}"
-                aria-expanded="false"
-                aria-controls="collapseDynamic{{ $index }}"
-              >
-                {{ $tab['title'] ?? 'Tab ' . ($index + 1) }}
-                <i class="fas fa-chevron-down"></i>
-              </button>
-            </h2>
-          </div>
-          <div
-            id="collapseDynamic{{ $index }}"
-            class="collapse"
-            aria-labelledby="headingDynamic{{ $index }}"
-            data-parent="#productAccordion"
-          >
-            <div class="card-body aiz-editor-data">
-              {!! $tab['content'] ?? '' !!}
+                {{-- Dynamic Tabs --}}
+                @if (!empty($dynamicTabs) && count($dynamicTabs) > 0)
+                    @foreach ($dynamicTabs as $index => $tab)
+                        <div class="card">
+                            <div class="card-header" id="headingDynamic{{ $index }}">
+                                <h2 class="mb-0">
+                                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                        data-target="#collapseDynamic{{ $index }}" aria-expanded="false"
+                                        aria-controls="collapseDynamic{{ $index }}">
+                                        {{ $tab['title'] ?? 'Tab ' . ($index + 1) }}
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </h2>
+                            </div>
+                            <div id="collapseDynamic{{ $index }}" class="collapse"
+                                aria-labelledby="headingDynamic{{ $index }}" data-parent="#productAccordion">
+                                <div class="card-body aiz-editor-data">
+                                    {!! $tab['content'] ?? '' !!}
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
+
+                {{-- Video --}}
+                @if ($hasVideo)
+                    <div class="card">
+                        <div class="card-header" id="headingVideo">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                    data-target="#collapseVideo" aria-expanded="false" aria-controls="collapseVideo">
+                                    {{ translate('Video') }}
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapseVideo" class="collapse" aria-labelledby="headingVideo"
+                            data-parent="#productAccordion">
+                            <div class="card-body">
+                                <div class="embed-responsive embed-responsive-16by9">
+                                    @if ($detailedProduct->video_provider == 'youtube')
+                                        <iframe class="embed-responsive-item"
+                                            src="{{ $detailedProduct->video_link }}"></iframe>
+                                    @elseif ($detailedProduct->video_provider == 'dailymotion' && isset(explode('video/', $detailedProduct->video_link)[1]))
+                                        <iframe class="embed-responsive-item"
+                                            src="https://www.dailymotion.com/embed/video/{{ explode('video/', $detailedProduct->video_link)[1] }}"></iframe>
+                                    @elseif ($detailedProduct->video_provider == 'vimeo' && isset(explode('vimeo.com/', $detailedProduct->video_link)[1]))
+                                        <iframe class="embed-responsive-item"
+                                            src="https://player.vimeo.com/video/{{ explode('vimeo.com/', $detailedProduct->video_link)[1] }}"
+                                            width="500" height="281" frameborder="0" webkitallowfullscreen
+                                            mozallowfullscreen allowfullscreen></iframe>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- PDF Download --}}
+                @if ($hasPdf)
+                    <div class="card">
+                        <div class="card-header" id="headingPdf">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                    data-target="#collapsePdf" aria-expanded="false" aria-controls="collapsePdf">
+                                    {{ translate('Downloads') }}
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapsePdf" class="collapse" aria-labelledby="headingPdf"
+                            data-parent="#productAccordion">
+                            <div class="card-body text-center">
+                                <a href="{{ uploaded_asset($detailedProduct->pdf) }}" class="btn btn-primary"
+                                    target="_blank">
+                                    {{ translate('Download') }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
             </div>
-          </div>
         </div>
-      @endforeach
     @endif
-
-    {{-- Video --}}
-    @if($hasVideo)
-      <div class="card">
-        <div class="card-header" id="headingVideo">
-          <h2 class="mb-0">
-            <button
-              class="btn btn-link collapsed"
-              type="button"
-              data-toggle="collapse"
-              data-target="#collapseVideo"
-              aria-expanded="false"
-              aria-controls="collapseVideo"
-            >
-              {{ translate('Video') }}
-              <i class="fas fa-chevron-down"></i>
-            </button>
-          </h2>
-        </div>
-        <div
-          id="collapseVideo"
-          class="collapse"
-          aria-labelledby="headingVideo"
-          data-parent="#productAccordion"
-        >
-          <div class="card-body">
-            <div class="embed-responsive embed-responsive-16by9">
-              @if ($detailedProduct->video_provider == 'youtube')
-                <iframe class="embed-responsive-item"
-                        src="{{ $detailedProduct->video_link }}"></iframe>
-              @elseif ($detailedProduct->video_provider == 'dailymotion' && isset(explode('video/', $detailedProduct->video_link)[1]))
-                <iframe class="embed-responsive-item"
-                        src="https://www.dailymotion.com/embed/video/{{ explode('video/', $detailedProduct->video_link)[1] }}"></iframe>
-              @elseif ($detailedProduct->video_provider == 'vimeo' && isset(explode('vimeo.com/', $detailedProduct->video_link)[1]))
-                <iframe class="embed-responsive-item"
-                        src="https://player.vimeo.com/video/{{ explode('vimeo.com/', $detailedProduct->video_link)[1] }}"
-                        width="500" height="281" frameborder="0"
-                        webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
-              @endif
-            </div>
-          </div>
-        </div>
-      </div>
-    @endif
-
-    {{-- PDF Download --}}
-    @if($hasPdf)
-      <div class="card">
-        <div class="card-header" id="headingPdf">
-          <h2 class="mb-0">
-            <button
-              class="btn btn-link collapsed"
-              type="button"
-              data-toggle="collapse"
-              data-target="#collapsePdf"
-              aria-expanded="false"
-              aria-controls="collapsePdf"
-            >
-              {{ translate('Downloads') }}
-              <i class="fas fa-chevron-down"></i>
-            </button>
-          </h2>
-        </div>
-        <div
-          id="collapsePdf"
-          class="collapse"
-          aria-labelledby="headingPdf"
-          data-parent="#productAccordion"
-        >
-          <div class="card-body text-center">
-            <a href="{{ uploaded_asset($detailedProduct->pdf) }}"
-              class="btn btn-primary" target="_blank">
-              {{ translate('Download') }}
-            </a>
-          </div>
-        </div>
-      </div>
-    @endif
-
-  </div>
-</div>
-@endif
 
     <!-- Promote Link -->
     <div class="d-table width-100 mt-3">
@@ -1284,22 +1498,24 @@
 
                     <!-- Product Name (Optional Display) -->
                     <div class="form-group">
-                        <label for="enquiry_product_name" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Product') }}</label>
+                        <label for="enquiry_product_name"
+                            class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Product') }}</label>
                         <input type="text" id="enquiry_product_name" class="form-control rounded-0" readonly>
                     </div>
 
                     <div class="d-flex justify-content-between product-enquiry-form-name-email">
                         <!-- Name -->
                         <div class="form-group">
-                            <label for="name" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Name') }} <span
-                                    class="text-danger">*</span></label>
+                            <label for="name" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Name') }}
+                                <span class="text-danger">*</span></label>
                             <input type="text" class="form-control rounded-0"
                                 placeholder="{{ translate('Enter Your Name') }}" name="name" required>
                         </div>
 
                         <!-- Email -->
                         <div class="form-group">
-                            <label for="email" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Email') }} <span
+                            <label for="email"
+                                class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Email') }} <span
                                     class="text-danger">*</span></label>
                             <input type="email" class="form-control rounded-0"
                                 placeholder="{{ translate('Enter Your Email') }}" name="email" required>
@@ -1308,7 +1524,8 @@
 
                     <!-- Phone -->
                     <div class="form-group">
-                        <label for="phone" class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Phone no.') }} <span
+                        <label for="phone"
+                            class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Phone no.') }} <span
                                 class="text-danger">*</span></label>
                         <input type="tel" class="form-control rounded-0"
                             placeholder="{{ translate('Enter Your Phone') }}" name="phone" required>
@@ -1389,103 +1606,111 @@
 
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const enquiryButtons = document.querySelectorAll('.detail-product-enquiry-btn');
+    document.addEventListener('DOMContentLoaded', function() {
+        const enquiryButtons = document.querySelectorAll('.detail-product-enquiry-btn');
 
-    enquiryButtons.forEach(btn => {
-        btn.addEventListener('click', function () {
-            const productId = this.getAttribute('data-product-id');
-            const productName = this.getAttribute('data-product-name');
+        enquiryButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const productName = this.getAttribute('data-product-name');
 
-            document.getElementById('enquiry_product_id').value = productId;
-            document.getElementById('current_url').value = window.location.href;
-            document.getElementById('enquiry_product_name').value = productName;
+                document.getElementById('enquiry_product_id').value = productId;
+                document.getElementById('current_url').value = window.location.href;
+                document.getElementById('enquiry_product_name').value = productName;
 
-            $('#productEnquiryModal').modal('show'); // Bootstrap 4 modal open
+                $('#productEnquiryModal').modal('show'); // Bootstrap 4 modal open
+            });
         });
     });
-});
 </script>
 
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  // Select the <p> that comes right after your label
-  const targets = document.querySelectorAll('.detail-font-14px + p');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select the <p> that comes right after your label
+        const targets = document.querySelectorAll('.detail-font-14px + p');
 
-  targets.forEach(function(p) {
-    // add clamp class
-    p.classList.add('clamped-text');
+        targets.forEach(function(p) {
+            // add clamp class
+            p.classList.add('clamped-text');
 
-    // create toggle button
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'view-toggle';
-    toggle.textContent = 'View More';
+            // create toggle button
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'view-toggle';
+            toggle.textContent = 'View More';
 
-    // insert toggle after the paragraph
-    p.insertAdjacentElement('afterend', toggle);
+            // insert toggle after the paragraph
+            p.insertAdjacentElement('afterend', toggle);
 
-    // check if text overflows
-    requestAnimationFrame(() => {
-      if (p.scrollHeight <= p.clientHeight + 1) {
-        toggle.style.display = 'none'; // hide toggle if short text
-      }
+            // check if text overflows
+            requestAnimationFrame(() => {
+                if (p.scrollHeight <= p.clientHeight + 1) {
+                    toggle.style.display = 'none'; // hide toggle if short text
+                }
+            });
+
+            // toggle expand/collapse
+            toggle.addEventListener('click', function() {
+                const expanded = p.classList.toggle('expanded');
+                toggle.textContent = expanded ? 'View Less' : 'View More';
+            });
+        });
     });
-
-    // toggle expand/collapse
-    toggle.addEventListener('click', function () {
-      const expanded = p.classList.toggle('expanded');
-      toggle.textContent = expanded ? 'View Less' : 'View More';
-    });
-  });
-});
 </script>
 
 
 <style>
+    /* clamp styles */
+    .clamped-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        /* show only 2 lines */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: normal;
+        transition: max-height .2s ease;
+        line-height: 1.6;
+    }
 
-/* clamp styles */
-.clamped-text {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;        /* show only 2 lines */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: normal;
-  transition: max-height .2s ease;
-  line-height: 1.6;
-}
+    /* expanded state */
+    .clamped-text.expanded {
+        -webkit-line-clamp: initial;
+        max-height: none;
+    }
 
-/* expanded state */
-.clamped-text.expanded {
-  -webkit-line-clamp: initial;
-  max-height: none;
-}
+    /* toggle button (looks like a link) */
+    .view-toggle {
+        cursor: pointer;
+        display: inline-block;
+        margin-top: 0px !important;
+        font-size: 13px;
+        border: none;
+        background: none;
+        padding: 0;
+        color: #2b56a1;
+        /* bootstrap primary */
+    }
 
-/* toggle button (looks like a link) */
-.view-toggle {
-  cursor: pointer;
-  display: inline-block;
-  margin-top: 0px !important;
-  font-size: 13px;
-  border: none;
-  background: none;
-  padding: 0;
-  color: #2b56a1; /* bootstrap primary */
-}
+    @media (min-width: 768px) {
 
-    @media (min-width: 768px) { /* md and up */
+        /* md and up */
         #productEnquiryModal .modal-dialog {
-            max-width: 440px; /* width adjust kar sakte ho */
+            max-width: 440px;
+            /* width adjust kar sakte ho */
             display: flex;
-            align-items: center; /* vertically center */
-            justify-content: center; /* horizontally center */
+            align-items: center;
+            /* vertically center */
+            justify-content: center;
+            /* horizontally center */
         }
 
         #productEnquiryModal .modal-content {
-            height: 100%; /* modal-content modal-dialog ka height fill kare */
-            overflow-y: auto; /* agar content zyada ho toh scroll */
+            height: 100%;
+            /* modal-content modal-dialog ka height fill kare */
+            overflow-y: auto;
+            /* agar content zyada ho toh scroll */
         }
     }
 </style>
