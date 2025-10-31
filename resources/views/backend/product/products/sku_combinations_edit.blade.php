@@ -30,6 +30,9 @@
                     {{ translate('Quantity') }}
                 </td>
                 <td class="text-center" data-breakpoints="lg">
+                    {{ translate('COA') }}
+                </td>
+                <td class="text-center" data-breakpoints="lg">
                     {{ translate('Photo') }}
                 </td>
             </tr>
@@ -193,6 +196,31 @@
                             } @endphp"
                                 min="0" step="1" class="form-control" required>
                         </td>
+
+                        <td>
+                            <div class="input-group" data-toggle="aizuploader" data-type="document">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text bg-soft-secondary font-weight-medium">
+                                        {{ translate('Browse') }}
+                                    </div>
+                                </div>
+                                <div class="form-control file-amount text-truncate">
+                                    {{ translate('Choose PDF File') }}
+                                </div>
+
+                                <input type="hidden" name="coa_{{ $str }}" class="selected-files"
+                                    value="{{ $stock && $stock->coa ? $stock->coa : '' }}">
+                            </div>
+
+                            <div class="file-preview box sm">
+                                {{-- @if ($stock && $stock->coa)
+                                    <a href="{{ uploaded_asset($stock->coa) }}" target="_blank" class="btn btn-soft-primary btn-sm mt-2">
+                                        <i class="las la-file-pdf"></i> {{ translate('View Current PDF') }}
+                                    </a>
+                                @endif --}}
+                            </div>
+                        </td>
+
                         <td>
                             <div class="input-group" data-toggle="aizuploader" data-type="image">
                                 <div class="input-group-prepend">

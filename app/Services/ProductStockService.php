@@ -44,6 +44,9 @@ class ProductStockService
 
                 $product_stock->sku = request()['sku_' . str_replace('.', '_', $str)];
                 $product_stock->qty = request()['qty_' . str_replace('.', '_', $str)];
+
+                $product_stock->coa = request()['coa_' . str_replace('.', '_', $str)];
+
                 $product_stock->image = request()['img_' . str_replace('.', '_', $str)];
                 $product_stock->save();
 
@@ -142,6 +145,7 @@ class ProductStockService
 
                 $productStock->sku = request()['sku_' . str_replace('.', '_', $str)];
                 $productStock->qty = request()['qty_' . str_replace('.', '_', $str)];
+                $productStock->coa = request()['coa_' . str_replace('.', '_', $str)];
                 $productStock->image = request()['img_' . str_replace('.', '_', $str)];
 
                 $productStock->save();

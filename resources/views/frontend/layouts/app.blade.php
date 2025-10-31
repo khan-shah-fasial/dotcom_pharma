@@ -818,6 +818,13 @@
                     url: '{{ route('products.variant_price') }}',
                     data: $('#option-choice-form').serializeArray(),
                     success: function(data){
+
+                        const $roleTableBody = $('#rolePriceTable tbody');
+                        const $coaDiv = $('#coaDiv'); 
+
+                        $coaDiv.empty();
+                        $roleTableBody.empty();
+
                         $('.product-gallery-thumb .carousel-box').each(function (i) {
                             if($(this).data('variation') && data.variation == $(this).data('variation')){
                                 $('.product-gallery-thumb').slick('slickGoTo', i);
@@ -891,6 +898,45 @@
                             $('#product-dimentions-div').addClass('d-none');
                             $('#product-dimentions').html('-'); // optional fallback if needed
                         }
+
+
+                        let Roleprices = data?.role_base_price ?? [];
+                        if (Roleprices && Object.keys(Roleprices).length > 0) {
+                            $('#rolePriceDiv').show(); // show the div
+                            $('#rolePriceParentDiv').show(); // show the div
+                            let tableBody = $('#rolePriceTable tbody');
+                            tableBody.empty();
+
+                            $.each(Roleprices, function(role, price) {
+                                tableBody.append(`
+                                    <tr>
+                                        <td>${role.toUpperCase()}</td>
+                                        <td>${price}</td>
+                                    </tr>
+                                `);
+                            });
+                        } else {
+                            $('#rolePriceParentDiv').hide(); // hide the div
+                            $('#rolePriceDiv').hide(); // hide if empty
+                        }
+
+                        let coa_url = data?.coa_url ?? Null;
+
+                        if (coa_url) {
+                            $('#coaParentDiv').show();
+                            $coaDiv.html(`
+                                <div class="mt-4 text-center">
+                                    <a href="${coa_url}" target="_blank"
+                                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-black text-sm font-semibold rounded hover:bg-blue-700 transition">
+                                        View COA
+                                    </a>
+                                </div>
+                            `);
+                        } else {
+                            $('#coaParentDiv').hide();
+                            $coaDiv.empty(); // Hide if no COA
+                        }
+
 
                         $('.input-number').prop('max', data.max_limit);
                         if(parseInt(data.in_stock) == 0 && data.digital  == 0){
