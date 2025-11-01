@@ -595,6 +595,15 @@
             // Initial check when the document is ready
             checkRegStep();
 
+
+            function passport_clear() {
+                console.dir('passport clear');
+                const passportField = document.getElementById('passport_no');
+                if (passportField) {
+                    passportField.value = '';
+                }
+            };
+
         });
 
 // ---------------------------------------------------------------------------------------------------------------//
@@ -967,6 +976,10 @@
 
                         validate_form(step);
 
+                        if(step == 2){
+                            intil_input('phone_code');
+                        }
+
                         if(step == 5){
                             selectCountry();
                             intil_input('phone_code');
@@ -1264,33 +1277,38 @@
                                 let data = response.data ? response.data : response;
 
                                 if (fieldId == "gst_no") {
-                                    $('#street_add_first_business').val(data.contact_details.principal.address);
-                                    $('#registration_date').val(data.date_of_registration);
-                                    $('#const_of_business').val(data.constitution_of_business);
-                                    $('#gstin_current_status').val(data.gstin_status);
-                                    $('#company_name').val(data.business_name);
-                                    $('#phone_code').val(data.contact_details.principal.mobile);
-                                    $('#whats_app_no').val(data.contact_details.principal.mobile);
-                                    $('#prim_email_business').val(data.contact_details.principal.email);
+
+                                    // --------------- Temp comment ------------- //
+                                    // $('#street_add_first_business').val(data.contact_details.principal.address);
+                                    // $('#registration_date').val(data.date_of_registration);
+                                    // $('#const_of_business').val(data.constitution_of_business);
+                                    // $('#gstin_current_status').val(data.gstin_status);
+                                    // $('#company_name').val(data.business_name);
+                                    // $('#phone_code').val(data.contact_details.principal.mobile);
+                                    // $('#whats_app_no').val(data.contact_details.principal.mobile);
+                                    // $('#prim_email_business').val(data.contact_details.principal.email);
+                                    // --------------- Temp comment ------------- //
+
 
                                     // Correctly accessing the first promoter, or showing an empty string if it doesn't exist
-                                    $('#con_person_name').val(data.promoters.length > 0 ? data.promoters[0] : '');
+                                    // $('#con_person_name').val(data.promoters.length > 0 ? data.promoters[0] : '');
                                 } 
 
                                 if (fieldId == "iec_no") {
-                                    $('#street_add_first_business').val(data.address);
-                                    $('#registration_date').val(data.iec_issuance_date);
+
+                                    // $('#street_add_first_business').val(data.address);
+                                    // $('#registration_date').val(data.iec_issuance_date);
 
                                     // $('#const_of_business').val(data.constitution_of_business);
 
-                                    $('#uin_current_status').val(data.iec_status);
-                                    $('#company_name').val(data.firm_name);
-                                    $('#phone_code').val(data.firm_mobile_no);
-                                    $('#whats_app_no').val(data.firm_mobile_no);
-                                    $('#prim_email_business').val(data.firm_email_id);
+                                    // $('#uin_current_status').val(data.iec_status);
+                                    // $('#company_name').val(data.firm_name);
+                                    // $('#phone_code').val(data.firm_mobile_no);
+                                    // $('#whats_app_no').val(data.firm_mobile_no);
+                                    // $('#prim_email_business').val(data.firm_email_id);
 
                                     // Correctly accessing the first promoter, or showing an empty string if it doesn't exist
-                                    $('#con_person_name').val(data.director_details.length > 0 ? data.director_details[0].name : '');
+                                    // $('#con_person_name').val(data.director_details.length > 0 ? data.director_details[0].name : '');
                                 }
 
                                 if (fieldId == "aadhaar_no" && data == "open") {
@@ -1428,6 +1446,14 @@
                     console.dir(`Removed error for: ${fieldName}`);
                 }
             }
+
+            function passport_clear() {
+                console.dir('passport clear');
+                const passportField = document.getElementById('passport_no');
+                if (passportField) {
+                    passportField.value = '';
+                }
+            };
 
     </script>
 @endsection
