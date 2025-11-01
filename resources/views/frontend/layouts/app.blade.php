@@ -900,25 +900,25 @@
                         }
 
 
-                        let Roleprices = data?.role_base_price ?? [];
-                        if (Roleprices && Object.keys(Roleprices).length > 0) {
-                            $('#rolePriceDiv').show(); // show the div
-                            $('#rolePriceParentDiv').show(); // show the div
-                            let tableBody = $('#rolePriceTable tbody');
-                            tableBody.empty();
+                        // let Roleprices = data?.role_base_price ?? [];
+                        // if (Roleprices && Object.keys(Roleprices).length > 0) {
+                        //     $('#rolePriceDiv').show(); // show the div
+                        //     $('#rolePriceParentDiv').show(); // show the div
+                        //     let tableBody = $('#rolePriceTable tbody');
+                        //     tableBody.empty();
 
-                            $.each(Roleprices, function(role, price) {
-                                tableBody.append(`
-                                    <tr>
-                                        <td>${role.toUpperCase()}</td>
-                                        <td>${price}</td>
-                                    </tr>
-                                `);
-                            });
-                        } else {
-                            $('#rolePriceParentDiv').hide(); // hide the div
-                            $('#rolePriceDiv').hide(); // hide if empty
-                        }
+                        //     $.each(Roleprices, function(role, price) {
+                        //         tableBody.append(`
+                        //             <tr>
+                        //                 <td>${role.toUpperCase()}</td>
+                        //                 <td>${price}</td>
+                        //             </tr>
+                        //         `);
+                        //     });
+                        // } else {
+                        //     $('#rolePriceParentDiv').hide(); // hide the div
+                        //     $('#rolePriceDiv').hide(); // hide if empty
+                        // }
 
                         let coa_url = data?.coa_url ?? Null;
 

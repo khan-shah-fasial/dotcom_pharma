@@ -729,7 +729,7 @@
 
 
 
-            <div id="rolePriceParentDiv" class="col-12 col-md-12 pl-0 mb-3" style="display: none;">
+            {{-- <div id="rolePriceParentDiv" class="col-12 col-md-12 pl-0 mb-3" style="display: none;">
                 <div class="detail-product-specs rounded h-100">
                     <div class="display_flex3">
                         <div class=""> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
@@ -769,7 +769,7 @@
                     </div>
 
                 </div>
-            </div>
+            </div> --}}
 
 
             <div id="coaParentDiv" class="col-12 col-md-12 pl-0 mb-3" style="display: none;">

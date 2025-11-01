@@ -889,8 +889,8 @@ class HomeController extends Controller
         $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
         $base = $product_stock->mrp_price ?? $product->mrp_price; //price by role
 
-        $role_base_price = $product_stock->role_price ?? $product->role_price;
-        $role_base_price = json_decode($role_base_price, true); // decode JSON to array
+        // $role_base_price = $product_stock->role_price ?? $product->role_price;
+        // $role_base_price = json_decode($role_base_price, true); // decode JSON to array
         
 
         $sku = $product_stock->sku;
@@ -996,7 +996,7 @@ class HomeController extends Controller
             'package_count' => $count,
             'discount_percentage' => round($dis_percentage, 2),
             'discount_price' => number_format($discount_temp, 2),
-            'role_base_price' => $role_base_price,
+            // 'role_base_price' => $role_base_price,
             'coa_url' => $coa_url,
         );
     }

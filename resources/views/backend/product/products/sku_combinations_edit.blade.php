@@ -35,6 +35,9 @@
                 <td class="text-center" data-breakpoints="lg">
                     {{ translate('Photo') }}
                 </td>
+                <td class="text-center" data-breakpoints="lg">
+                    {{ translate('Role Base Price') }}
+                </td>
             </tr>
         </thead>
         <tbody>
@@ -240,6 +243,48 @@
                             </div>
                             <div class="file-preview box sm"></div>
                         </td>
+
+
+                        <td>
+                            @php
+                                $role_base_price = json_decode($stock->role_price, true); // decode JSON to array
+                            @endphp
+
+                            @if(!empty($role_base_price) && count($role_base_price) > 0)
+                                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+                                    <table id="rolePriceTable" class="border border-gray-200 rounded-lg text-center">
+                                        <thead class="bg-gray-100">
+                                            <tr>
+                                                <th class="text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
+                                                    Role
+                                                </th>
+                                                <th class="text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
+                                                    Price
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100 bg-white">
+                                            @foreach ($role_base_price as $role => $price)
+                                                <tr>
+                                                    <td class="text-sm text-gray-700 text-center">
+                                                        {{ strtoupper($role) }}
+                                                    </td>
+                                                    <td class="text-sm text-gray-700 text-center">
+                                                        {{ $price }}
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <p>No data</p>
+                            @endif
+                        </td>
+
+
+
+
                     </tr>
                 @endif
             @endforeach
