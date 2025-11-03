@@ -56,48 +56,12 @@
   </div>
 </section>
 
-<section>
+<!-- <section>
   <div class="container">
     <div class="row">
       <div class="col-12">
-        <!-- Top bar -->
-        <div class="d-flex align-items-center flex-wrap justify-content-between mb-3">
-          <h1 class="fs-20 fs-md-24 fw-700 text-dark text-capitalize mb-0" id="list-title">
-            @if($category_id)
-              {{ $category->getTranslation('name') }}
-            @elseif($query)
-              {{ translate('Search result for ') }}"{{ $query }}"
-            @else
-              {{ translate('All Products') }}
-            @endif
-          </h1>
 
-          <!-- Sort + Filter buttons -->
-          <div class="d-flex align-items-center gap-2 filter-mobile-btn">
-
-          <!-- Mobile Filter Button -->
-            <button type="button" class="btn btn-outline-dark d-xl-none mr-md-3 mr-2" onclick="toggleMobileFilter()">
-              <i class="las la-sliders-h me-1"></i> Filters
-            </button>
-
-            <div class="w-lg-200px short-by-width">
-              <select class="form-control form-control-sm aiz-selectpicker rounded-0" id="sort_by">
-                <option value="">{{ translate('Sort by') }}</option>
-                <option value="newest"     @selected(($sort_by??'')==='newest')>{{ translate('Newest') }}</option>
-                <option value="oldest"     @selected(($sort_by??'')==='oldest')>{{ translate('Oldest') }}</option>
-                <option value="price-asc"  @selected(($sort_by??'')==='price-asc')>{{ translate('Price low to high') }}</option>
-                <option value="price-desc" @selected(($sort_by??'')==='price-desc')>{{ translate('Price high to low') }}</option>
-              </select>
-            </div>
-
-
-          </div>
-        </div>
-
-        <!-- Active filters -->
-        <div id="page-metrics" class="mb-2 text-muted fs-12">
-          Per page: {{ $perPage }} • Total pages: {{ $totalPages }} • Total products: {{ $total }}
-        </div>
+        
         <div id="active-filters" class="mb-3 d-flex align-items-center flex-wrap gap-2">
           <button id="clear-filters" type="button" class="btn btn-sm text-danger d-none">
             {{ translate('Clear all') }}
@@ -106,13 +70,13 @@
       </div>
     </div>
   </div>
-</section>
+</section> -->
 
 <section class="mb-4 pt-2">
   <div class="container sm-px-0">
     <div class="row">
       <!-- Left Filters -->
-      <div class="col-xl-3 d-none d-xl-block"> 
+      <div class="col-lg-3 d-none d-lg-block"> 
         {{-- CATEGORY FILTER COMPONENT --}}
         @include('frontend.'.get_setting('homepage_select').'.partials.filters.category_filter', [
           'categories'            => $categories,
@@ -125,12 +89,21 @@
         ])
 
         {{-- PRICE FILTER COMPONENT --}}
-        @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
+        {{-- @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
           'globalMin'   => $globalMin,
           'globalMax'   => $globalMax,
           'min_price'   => $min_price,
           'max_price'   => $max_price,
-        ])
+        ]) --}}
+
+        {{-- Render ONCE, desktop sidebar location --}}
+        <div id="price-filter-wrap">
+          @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
+            'globalMin' => $globalMin, 'globalMax' => $globalMax,
+            'min_price' => $min_price, 'max_price' => $max_price,
+          ])
+        </div>
+
 
         {{-- ATTRIBUTES FILTER COMPONENT --}}
         <div id="attributes-filter">
@@ -149,9 +122,60 @@
       
 
       <!-- Products Section -->
-      <div class="col-xl-9">
+      <div class="col-lg-9">
 
 
+          <!--  -->
+          
+
+              <!-- Top bar -->
+        <div class="d-flex align-items-center flex-wrap justify-content-between mb-2">
+          <h1 class="fs-20 fs-md-24 fw-700 text-dark text-capitalize mb-md-0 mb-2" id="list-title">
+            @if($category_id)
+              {{ $category->getTranslation('name') }}
+            @elseif($query)
+              {{ translate('Search result for ') }}"{{ $query }}"
+            @else
+              {{ translate('All Products') }}
+            @endif
+          </h1>
+
+          <!-- Sort + Filter buttons -->
+          <div class="d-flex align-items-center gap-2 filter-mobile-btn mb-md-0 mb-2">
+
+          <!-- Mobile Filter Button -->
+            <button type="button" class="btn btn-outline-dark d-lg-none mr-md-3 mr-2" onclick="toggleMobileFilter()">
+              <i class="las la-sliders-h me-1"></i> Filters
+            </button>
+
+            <div class="w-lg-200px short-by-width">
+              <select class="form-control form-control-sm aiz-selectpicker rounded-0" id="sort_by">
+                <option value="">{{ translate('Sort by') }}</option>
+                <option value="newest"     @selected(($sort_by??'')==='newest')>{{ translate('Newest') }}</option>
+                <option value="oldest"     @selected(($sort_by??'')==='oldest')>{{ translate('Oldest') }}</option>
+                <option value="price-asc"  @selected(($sort_by??'')==='price-asc')>{{ translate('Price low to high') }}</option>
+                <option value="price-desc" @selected(($sort_by??'')==='price-desc')>{{ translate('Price high to low') }}</option>
+              </select>
+            </div>
+
+
+          </div>
+        </div>
+
+          <!-- Active filters -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-md-3 mb-2 mt-md-3 mt-2">
+          <div id="page-metrics" class=" text-muted fs-12 mb-md-0 mb-2">
+          Per page: {{ $perPage }} • Total pages: {{ $totalPages }} <br> Total products: {{ $total }}
+        </div>
+
+        <!-- clear filter -->
+          <div id="active-filters" class=" d-flex align-items-center flex-wrap gap-2 mb-md-0 mb-2">
+            <button id="clear-filters" type="button" class="btn btn-sm text-danger d-none pl-0 pr-0">
+              {{ translate('Clear all') }}
+            </button>
+          </div>
+        </div>
+          <!--  -->
         
 
         <!-- Product Grid -->
@@ -159,7 +183,7 @@
           @include('frontend.'.get_setting('homepage_select').'.partials.product_grid', ['products'=>$products])
         </div>
 
-        <div id="infinite-sentinel" class="py-4 text-center text-muted">{{ translate('Loading…') }}</div>
+        <div id="infinite-sentinel" class="py-4 fs-24 text-center text-muted">{{ translate('Loading…') }}</div>
       </div>
     </div>
   </div>
@@ -185,13 +209,8 @@
       'expandedIds'           => $expandedIds ?? [],
     ])
 
-    {{-- PRICE FILTER COMPONENT --}}
-    @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
-      'globalMin'   => $globalMin,
-      'globalMax'   => $globalMax,
-      'min_price'   => $min_price,
-      'max_price'   => $max_price,
-    ])
+    {{-- In the mobile drawer, just a slot --}}
+      <div id="price-filter-slot-mobile"></div>
 
     {{-- ATTRIBUTES FILTER COMPONENT --}}
     <div id="attributes-filter">
@@ -687,6 +706,33 @@ document.addEventListener('click', function(e) {
 
 
 })();
+// Move node helper (no cloning)
+function movePriceFilter(toMobile) {
+  const el = document.querySelector('#price-filter-wrap');
+  const slot = document.querySelector('#price-filter-slot-mobile');
+  if (!el || !slot) return;
+
+  if (toMobile && !slot.firstChild) {
+    slot.appendChild(el); // move into drawer
+  } else if (!toMobile && !document.querySelector('#price-filter-wrap')) {
+    // put it back right after the slot (or wherever you want)
+    slot.parentNode.insertAdjacentElement('beforebegin', el);
+  }
+}
+
+function toggleMobileFilter() {
+  const filter = document.querySelector('.mobile-filter');
+  const overlay = document.querySelector('.filter-overlay');
+  const body = document.body;
+
+  const willOpen = !filter.classList.contains('active');
+  filter.classList.toggle('active');
+  overlay.classList.toggle('active');
+  body.classList.toggle('overflow-hidden');
+
+  movePriceFilter(willOpen); // ← move on open/close
+}
+
 </script>
 @endsection
 

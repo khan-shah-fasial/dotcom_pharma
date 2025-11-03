@@ -29,7 +29,7 @@
         }
     @endphp
 
-    <div class="light_bg_gray mb-3">
+    <div class="light_bg_gray mb-0">
         <div class="fs-16 fw-700 p-3">
             <a href="javascript:void(0)"
                class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between"
@@ -51,7 +51,7 @@
                     @endphp
 
                     <label
-                        class="aiz-checkbox mb-3 attr-val-item {{ $shouldHide ? 'd-none' : '' }}"
+                        class="aiz-checkbox mb-2 attr-val-item {{ $shouldHide ? 'd-none' : '' }}"
                         data-attr="{{ $collapseId }}"
                     >
                         <input

@@ -19,11 +19,6 @@
 <div class="cat-node" data-node-id="{{ $node->id }}">
   <div class="cat-head" data-cat-toggle="{{ $node->id }}">
     <div class="cat-head-title">
-      @if($hasKids)
-        <span class="cat-arrow {{ $isExpanded ? 'rotated' : '' }}" data-arrow="{{ $node->id }}">➤</span>
-      @else
-        <span style="width:1.2rem; display:inline-block;"></span>
-      @endif
       <label class="cat-radio-label mb-0">
         <input
           type="radio"
@@ -41,6 +36,11 @@
           {{-- @endif --}}
         </span>
       </label>
+      @if($hasKids)
+        <span class="cat-arrow {{ $isExpanded ? 'rotated' : '' }}" data-arrow="{{ $node->id }}"><i class="las la-angle-right"></i></span>
+      @else
+        <span style="width:1.2rem; display:inline-block;"></span>
+      @endif
     </div>
   </div>
 

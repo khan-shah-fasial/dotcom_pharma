@@ -27,6 +27,7 @@ li {
 
 .light_bg_gray {
     background: #609A380D !important;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .copy_rights_section a {

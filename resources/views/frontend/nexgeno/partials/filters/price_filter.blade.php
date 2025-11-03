@@ -1,5 +1,5 @@
 <!-- Price range (OLD SLIDER: UNCHANGED) -->
-<div class="light_bg_gray mb-3">
+<div class="light_bg_gray mb-0">
   <div class="fs-16 fw-700 p-3">
       {{ translate('Price Range')}}
   </div>
@@ -46,3 +46,47 @@
   <input type="hidden" name="min_price" value="">
   <input type="hidden" name="max_price" value="">
 </div>
+
+
+<style>
+    /* Force the slider to render with a fixed height */
+.aiz-range-slider #input-slider-range,
+.aiz-range-slider .noUi-target {
+  display: block;
+  height: 10px !important;
+  min-height: 10px !important;
+}
+
+/* Make the blue track fill the height */
+.aiz-range-slider .noUi-connects,
+.aiz-range-slider .noUi-connect {
+  height: 100% !important;
+}
+
+/* Keep handles visible on small screens */
+.aiz-range-slider,
+.aiz-range-slider #input-slider-range,
+.aiz-range-slider .noUi-target {
+  overflow: visible !important;
+}
+
+/* Handle size/position so they don't get clipped */
+.aiz-range-slider .noUi-handle {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50%;
+  top: -5px !important;   /* centers the handle over a 10px track */
+  box-shadow: none;
+  border: 0;
+}
+
+/* If a mobile breakpoint hides it accidentally, undo that */
+@media (max-width: 576px) {
+  .aiz-range-slider #input-slider-range,
+  .aiz-range-slider .noUi-target {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+</style>

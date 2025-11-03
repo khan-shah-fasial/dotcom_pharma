@@ -1,5 +1,5 @@
 @if (get_setting('color_filter_activation') && ($colors ?? collect())->count())
-<div class="light_bg_gray mb-3" id="color-filter">
+<div class="light_bg_gray mb-0" id="color-filter">
   <div class="fs-16 fw-700 p-3">
     <a href="#" class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between"
        data-toggle="collapse" data-target="#collapse_color">

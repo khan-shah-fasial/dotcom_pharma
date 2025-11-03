@@ -138,7 +138,7 @@
                                 </div>
 
                                 <!-- Price range -->
-                                <div class="light_bg_gray mb-3">
+                                <div class="light_bg_gray mb-0">
                                     <div class="fs-16 fw-700 p-3">
                                         {{ translate('Price Range')}}
                                     </div>
@@ -188,7 +188,7 @@
                                 
                                 <!-- Attributes -->
                                 @foreach ($attributes as $attribute)
-                                    <div class="light_bg_gray mb-3">
+                                    <div class="light_bg_gray mb-0">
                                         <div class="fs-16 fw-700 p-3">
                                             <a href="#" class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between" 
                                                 data-toggle="collapse" data-target="#collapse_{{ str_replace(' ', '_', $attribute->name) }}" style="white-space: normal;">
@@ -224,7 +224,7 @@
                                     
                                 <!-- Color -->
                                 @if (get_setting('color_filter_activation'))
-                                    <div class="light_bg_gray mb-3">
+                                    <div class="light_bg_gray mb-0">
                                         <div class="fs-16 fw-700 p-3">
                                             <a href="#" class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between" data-toggle="collapse" data-target="#collapse_color">
                                                 {{ translate('Filter by color')}}
