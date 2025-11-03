@@ -30,7 +30,13 @@
                     {{ translate('Quantity') }}
                 </td>
                 <td class="text-center" data-breakpoints="lg">
+                    {{ translate('COA') }}
+                </td>
+                <td class="text-center" data-breakpoints="lg">
                     {{ translate('Photo') }}
+                </td>
+                <td class="text-center" data-breakpoints="lg">
+                    {{ translate('Role Base Price') }}
                 </td>
             </tr>
         </thead>
@@ -193,6 +199,31 @@
                             } @endphp"
                                 min="0" step="1" class="form-control" required>
                         </td>
+
+                        <td>
+                            <div class="input-group" data-toggle="aizuploader" data-type="document">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text bg-soft-secondary font-weight-medium">
+                                        {{ translate('Browse') }}
+                                    </div>
+                                </div>
+                                <div class="form-control file-amount text-truncate">
+                                    {{ translate('Choose PDF File') }}
+                                </div>
+
+                                <input type="hidden" name="coa_{{ $str }}" class="selected-files"
+                                    value="{{ $stock && $stock->coa ? $stock->coa : '' }}">
+                            </div>
+
+                            <div class="file-preview box sm">
+                                {{-- @if ($stock && $stock->coa)
+                                    <a href="{{ uploaded_asset($stock->coa) }}" target="_blank" class="btn btn-soft-primary btn-sm mt-2">
+                                        <i class="las la-file-pdf"></i> {{ translate('View Current PDF') }}
+                                    </a>
+                                @endif --}}
+                            </div>
+                        </td>
+
                         <td>
                             <div class="input-group" data-toggle="aizuploader" data-type="image">
                                 <div class="input-group-prepend">
@@ -212,6 +243,48 @@
                             </div>
                             <div class="file-preview box sm"></div>
                         </td>
+
+
+                        <td>
+                            @php
+                                $role_base_price = json_decode($stock->role_price, true); // decode JSON to array
+                            @endphp
+
+                            @if(!empty($role_base_price) && count($role_base_price) > 0)
+                                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+                                    <table id="rolePriceTable" class="border border-gray-200 rounded-lg text-center">
+                                        <thead class="bg-gray-100">
+                                            <tr>
+                                                <th class="text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
+                                                    Role
+                                                </th>
+                                                <th class="text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
+                                                    Price
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100 bg-white">
+                                            @foreach ($role_base_price as $role => $price)
+                                                <tr>
+                                                    <td class="text-sm text-gray-700 text-center">
+                                                        {{ strtoupper($role) }}
+                                                    </td>
+                                                    <td class="text-sm text-gray-700 text-center">
+                                                        {{ $price }}
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @else
+                                <p>No data</p>
+                            @endif
+                        </td>
+
+
+
+
                     </tr>
                 @endif
             @endforeach

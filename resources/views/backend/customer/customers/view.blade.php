@@ -10,7 +10,7 @@
                     <hr>
                     <br>
 
-                    @php
+                    {{-- @php
                         $limit = (int) ($user2->credit_limit ?? 0);
                         $remainRaw = (int) ($user2->credit_remain ?? 0);
                         $remain = max(0, min($remainRaw, $limit)); // clamp 0..limit
@@ -64,7 +64,7 @@
                                 <span>₹ {{ $fmt($remain) }} left</span>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="card p-3">
                         <h5> Business Details </h5>

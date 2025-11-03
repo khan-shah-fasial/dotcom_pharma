@@ -888,6 +888,9 @@ class HomeController extends Controller
         //$price = $product_stock->price;
         $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
         $base = $product_stock->mrp_price ?? $product->mrp_price; //price by role
+
+        // $role_base_price = $product_stock->role_price ?? $product->role_price;
+        // $role_base_price = json_decode($role_base_price, true); // decode JSON to array
         
 
         $sku = $product_stock->sku;
@@ -896,6 +899,15 @@ class HomeController extends Controller
         $length = $product_stock->length ?? $product->length;
         $breadth = $product_stock->weight ?? $product->weight;
         $height = $product_stock->height ?? $product->height;
+
+        // $coa = $product_stock->coa ?? $product->coa;
+        $coa = $product_stock->coa ?? null;
+
+        if (!empty($coa)) {
+            $coa_url = uploaded_asset($coa);
+        } else {
+            $coa_url = null;
+        }
 
 
         $dimension = 
@@ -964,7 +976,7 @@ class HomeController extends Controller
             }
         }
 
-        $price += $tax;
+        // $price += $tax;
 
         return array(
             'price' => single_price($price * $request->quantity),
@@ -983,7 +995,9 @@ class HomeController extends Controller
             'weight_volume' => $weight,
             'package_count' => $count,
             'discount_percentage' => round($dis_percentage, 2),
-            'discount_price' => number_format($discount_temp, 2)
+            'discount_price' => number_format($discount_temp, 2),
+            // 'role_base_price' => $role_base_price,
+            'coa_url' => $coa_url,
         );
     }
 
