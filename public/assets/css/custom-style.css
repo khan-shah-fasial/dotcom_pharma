@@ -1095,7 +1095,8 @@ ul.dropdown-menu {
 
 .product_listing_box {
     padding: 0 !important;
-    margin-bottom: 15px;
+    /* margin-bottom: 15px; */
+    margin-bottom: 5rem;
     border: 0px !important;
 }
 

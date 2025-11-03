@@ -4,6 +4,40 @@
 @section('meta_description'){{ $meta_description ?? ($category?->meta_description ?? get_setting('meta_description')) }}@stop
 
 @section('content')
+<style>
+/* Primary: when input is directly followed by the element */
+.aiz-megabox input[type="radio"]:checked + .aiz-megabox-elem {
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12) !important;
+  outline: none !important;
+}
+
+/* Slight scale for inner swatch */
+.aiz-megabox input[type="radio"]:checked + .aiz-megabox-elem .size-30px {
+  transform: scale(1.06);
+  transition: transform 0.18s ease;
+}
+.aiz-megabox.selected .aiz-megabox-elem {
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(0,123,255,0.12) !important;
+}
+.aiz-megabox.selected .aiz-megabox-elem .size-30px {
+  transform: scale(1.06);
+  transition: transform 0.18s ease;
+}
+
+/* Extra: label-level highlight (works in modern browsers) */
+.aiz-megabox:has(input[type="radio"]:checked) .aiz-megabox-elem {
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12) !important;
+}
+
+/* Fallback using sibling-of-anywhere (if there is intervening text/nodes) */
+.aiz-megabox input[type="radio"]:checked ~ .aiz-megabox-elem {
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12) !important;
+}
+</style>
 <section class="pt-2">
   <div class="container">
     <ul class="breadcrumb bg-transparent p-0 justify-content-start mb-0 pb-3">
@@ -87,6 +121,7 @@
           'selected_category_ids' => $selected_category_id ?? null,
           'preloadedChildren'     => $preloadedChildren ?? [],
           'expandedIds'           => $expandedIds ?? [],
+          'categoryCounts'    => $categoryCounts ?? [],
         ])
 
         {{-- PRICE FILTER COMPONENT --}}
@@ -567,6 +602,70 @@ document.addEventListener('click', (e) => {
     btn.textContent   = `${moreText} (${hiddenCount})`;
   }
 });
+// --- Attribute "Show More / Show Less" (works after AJAX because it's delegated)
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.js-attr-show-more');
+  if (!btn) return;
+
+  const targetId = btn.dataset.target;
+  const state    = btn.dataset.state || 'collapsed';
+  const moreText = btn.dataset.moreText || 'Show More';
+  const lessText = btn.dataset.lessText || 'Show Less';
+
+  const wrap = document.getElementById(targetId);
+  if (!wrap) return;
+
+  // all items for this attribute
+  const items = wrap.querySelectorAll('.attr-val-item[data-attr="'+targetId+'"]');
+
+  if (state === 'collapsed') {
+    // show all
+    items.forEach(function(item){
+      item.classList.remove('d-none');
+    });
+    btn.dataset.state = 'expanded';
+    btn.textContent = lessText;
+  } else {
+    // collapse back to 5 but keep checked ones visible
+    let shown = 0;
+    items.forEach(function(item){
+      const input = item.querySelector('input[type="checkbox"]');
+      const isChecked = input && input.checked;
+
+      if (shown < 5 || isChecked) {
+        item.classList.remove('d-none');
+      } else {
+        item.classList.add('d-none');
+      }
+
+      if (!isChecked) {
+        shown++;
+      }
+    });
+
+    // recalc hidden for button text
+    const hidden = Array.from(items).filter(i => i.classList.contains('d-none')).length;
+    btn.dataset.state = 'collapsed';
+    btn.textContent = hidden > 0 ? (moreText + ' (' + hidden + ')') : lessText;
+  }
+}, { capture: true });
+
+// --- Category dropdown toggle (sidebar + mobile)
+document.addEventListener('click', function(e) {
+  const head = e.target.closest('[data-cat-toggle]');
+  if (!head) return;
+
+  const id = head.getAttribute('data-cat-toggle');
+  const panel = document.getElementById('children-of-' + id);
+  const arrow = document.querySelector('[data-arrow="'+id+'"]');
+
+  if (panel) {
+    const isHidden = panel.classList.contains('d-none');
+    panel.classList.toggle('d-none', !isHidden);
+    if (arrow) arrow.classList.toggle('rotated', isHidden);
+  }
+}, { capture: true });
+
 
 // --- Ensure the selected radio (if any) is visible (auto-expand its hidden ancestors)
 (function revealSelectedCategory() {

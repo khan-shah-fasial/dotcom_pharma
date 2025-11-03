@@ -49,12 +49,10 @@ class Search2Controller extends Controller
         // Single selected category id (from radio OR from array OR from route)
         $selected_category_id = null;
 
-        // Query string can send category_id (radio)
         if ($request->filled('category_id')) {
             $selected_category_id = (int)$request->input('category_id');
         }
 
-        // Backward compat: if someone still hits with category_ids[]=.. take the first
         if ($selected_category_id === null) {
             $catIdsRaw = (array)$request->input('category_ids', []);
             if (!empty($catIdsRaw)) {
@@ -62,20 +60,14 @@ class Search2Controller extends Controller
             }
         }
 
-        // If on /category/{slug} route and still nothing selected, default to route category
         if ($selected_category_id === null && $category_id) {
             $selected_category_id = (int)$category_id;
         }
 
-
         $pageSize    = (int)($request->input('page_size', 24) ?: 24);
 
-        // Base filter datasets
-        $attributes = Attribute::all();
-        // $colors     = Color::all();
         $category   = null;
-
-        $products = Product::query();
+        $products   = Product::query();
 
         // -------- BRAND --------
         if ($brand_id) {
@@ -85,23 +77,14 @@ class Search2Controller extends Controller
             if ($brand) $products->where('brand_id', $brand->id);
         }
 
-        // -------- CATEGORY SCOPE (affects products) --------
+        // -------- CATEGORY SCOPE --------
         if ($category_id) {
-            // Route page still scopes by route subtree
             $catTree   = CategoryUtility::children_ids($category_id);
             $catTree[] = $category_id;
             $category  = Category::with('childrenCategories')->findOrFail($category_id);
             $products->whereIn('category_id', $catTree);
-
-            // $attribute_ids = AttributeCategory::whereIn('category_id', $catTree)->pluck('attribute_id');
-            // if ($attribute_ids->count() > 0) $attributes = Attribute::whereIn('id', $attribute_ids)->get();
-
         } elseif ($selected_category_id) {
-            // Search page + radio selected: filter by the single id (or its subtree if you prefer)
             $products->where('category_id', $selected_category_id);
-
-            // $attribute_ids = AttributeCategory::where('category_id', $selected_category_id)->pluck('attribute_id');
-            // if ($attribute_ids->count() > 0) $attributes = Attribute::whereIn('id', $attribute_ids)->get();
         }
 
         // -------- KEYWORD --------
@@ -110,9 +93,9 @@ class Search2Controller extends Controller
                 foreach (explode(' ', $query) as $word) {
                     $q->where(function ($qq) use ($word) {
                         $qq->where('name', 'like', '%'.$word.'%')
-                           ->orWhere('tags', 'like', '%'.$word.'%')
-                           ->orWhereHas('product_translations', fn($qt) => $qt->where('name', 'like', '%'.$word.'%'))
-                           ->orWhereHas('stocks', fn($qs) => $qs->where('sku', 'like', '%'.$word.'%'));
+                        ->orWhere('tags', 'like', '%'.$word.'%')
+                        ->orWhereHas('product_translations', fn($qt) => $qt->where('name', 'like', '%'.$word.'%'))
+                        ->orWhereHas('stocks', fn($qs) => $qs->where('sku', 'like', '%'.$word.'%'));
                     });
                 }
             });
@@ -126,17 +109,67 @@ class Search2Controller extends Controller
         // Did we scope by category (route or radio)?
         $hasCategoryScope = !is_null($category_id) || !is_null($selected_category_id);
 
+        // ============================================================
+        // 2) BASE QUERY FOR COUNTS (this one should be LESS SCOPED)
+        //    -> same brand, same keyword
+        //    -> BUT **NO** category filter
+        // ============================================================
+        $countsBase = Product::query();
+
+        // apply brand to counts also
+        if ($brand_id) {
+            $countsBase->where('brand_id', $brand_id);
+        } elseif ($request->filled('brand')) {
+            $brand = Brand::where('slug', $request->brand)->first();
+            if ($brand) {
+                $countsBase->where('brand_id', $brand->id);
+            }
+        }
+
+        // apply keyword to counts also
+        if ($query !== '') {
+            $countsBase->where(function ($q) use ($query) {
+                foreach (explode(' ', $query) as $word) {
+                    $q->where(function ($qq) use ($word) {
+                        $qq->where('name', 'like', '%'.$word.'%')
+                        ->orWhere('tags', 'like', '%'.$word.'%')
+                        ->orWhereHas('product_translations', fn($qt) => $qt->where('name', 'like', '%'.$word.'%'))
+                        ->orWhereHas('stocks', fn($qs) => $qs->where('sku', 'like', '%'.$word.'%'));
+                    });
+                }
+            });
+        }
+
+        // final counts source
+        $countsSource = filter_products(clone $countsBase);
+
+        // ====== CATEGORY COUNTS (for tree) ======
+        $categoryCounts = (clone $countsSource)
+            ->selectRaw('category_id, COUNT(*) as aggregate')
+            ->groupBy('category_id')
+            ->pluck('aggregate', 'category_id')
+            ->toArray();
+            
         /**
-         * ======= Build ATTRIBUTES for the panel from choice_options =======
-         * Use the product scope BEFORE applying attribute/price filters,
-         * so the panel reflects what exists in the current pool.
+         * ------- PANEL SOURCE SCOPE (for counts) -------
+         * This is the pool BEFORE attribute/color/price filters.
          */
-        $attributes = $this->buildAttributesFromChoiceOptions(clone $products);
-        $colors     = $hasCategoryScope
-            ? $this->buildColorsFromProducts(clone $products) // only colors present in this pool
-            : Color::orderBy('name')->get();
-          
-        // -------- ATTRIBUTES (OR across selected) --------
+        $scopedForPanel = filter_products(clone $products);
+
+        // ====== ATTRIBUTES (+ COUNTS) ======
+        [$attributes, $attributeValueCounts] = $this->buildAttributesFromChoiceOptions(clone $products);
+
+        // ====== COLORS (+ COUNTS) ======
+        if ($hasCategoryScope) {
+            // build colors from the current product pool (products table HAS "colors" column)
+            [$colors, $colorCounts] = $this->buildColorsFromProducts(clone $products);
+        } else {
+            // no category/brand/keyword scope → just show master colors, no counts
+            $colors      = Color::orderBy('name')->get();
+            $colorCounts = [];
+        }
+
+        // -------- ATTRIBUTES FILTER APPLIED --------
         if (!empty($selected_attribute_values)) {
             $products->where(function ($q) use ($selected_attribute_values) {
                 foreach ($selected_attribute_values as $value) {
@@ -144,20 +177,17 @@ class Search2Controller extends Controller
                 }
             });
         }
-        // -------- COLOR --------
-        // -------- COLOR (robust & case-insensitive) --------
-        $color = $request->filled('color') ? urldecode((string) $request->color) : null;
 
+        // -------- COLOR FILTER APPLIED --------
+        $color = $request->filled('color') ? urldecode((string) $request->color) : null;
         if ($request->has('color')) {
             $str = '"' . $request->color . '"';
             $products->where('colors', 'like', '%' . $str . '%');
             $selected_color = $request->color;
         }
 
-
         // ----- SCOPED BOUNDS (pre-price) -----
-        $scopedForBounds = filter_products(clone $products);
-        $bounds = (clone $scopedForBounds)
+        $bounds = (clone $scopedForPanel)
             ->selectRaw('MIN(unit_price) AS min_price, MAX(unit_price) AS max_price')
             ->first();
         $scopedMin = (int)($bounds->min_price ?? 0);
@@ -190,6 +220,17 @@ class Search2Controller extends Controller
         $roots = $preloadedChildren->get(0, collect())->merge($preloadedChildren->get(null, collect()));
         $categories = $roots;
 
+        // -------- Figure parent chain to auto-open --------
+        $expandedIds = [];
+        if ($selected_category_id) {
+            $byId = $allCats->keyBy('id');
+            $curr = $selected_category_id;
+            while ($curr && isset($byId[$curr])) {
+                $expandedIds[] = $curr;
+                $curr = $byId[$curr]->parent_id;
+            }
+        }
+
         // For breadcrumbs/title
         $selected_category_name = null;
         if ($selected_category_id) {
@@ -206,8 +247,10 @@ class Search2Controller extends Controller
             'query','sort_by','min_price','max_price',
             'attributes','selected_attribute_values','colors','selected_color',
             'categories','category','category_id','brand_id',
-            'globalMin','globalMax','scopedMin','scopedMax', 'selected_category_id','selected_category_name',
-            'preloadedChildren', 'color'
+            'globalMin','globalMax','scopedMin','scopedMax',
+            'selected_category_id','selected_category_name',
+            'preloadedChildren','color',
+            'categoryCounts','attributeValueCounts','colorCounts','expandedIds'
         );
 
         $perPage     = $products->perPage();
@@ -244,6 +287,7 @@ class Search2Controller extends Controller
             [
                 'attributes'                => $viewData['attributes'],
                 'selected_attribute_values' => $viewData['selected_attribute_values'] ?? [],
+                'attributeValueCounts'      => $viewData['attributeValueCounts'] ?? [],
             ]
         )->render();
 
@@ -254,6 +298,7 @@ class Search2Controller extends Controller
                 [
                     'colors'         => $viewData['colors'],
                     'selected_color' => $viewData['color'] ?? null,
+                    'colorCounts'    => $viewData['colorCounts'] ?? [],
                 ]
             )->render();
         }
@@ -350,66 +395,92 @@ class Search2Controller extends Controller
      */
     private function buildAttributesFromChoiceOptions($baseProducts)
     {
-        // pluck only the JSON column to keep it light
+        // get only choice_options from current product pool
         $rows = (clone $baseProducts)->select('choice_options')->get()->pluck('choice_options')->filter();
 
-        $valueMap = []; // [attribute_id => ['val1'=>true, 'val2'=>true, ...]]
+        $valueMap         = []; // [attribute_id => ['val1'=>true, ...]]  → for showing only used values
+        $valueCountNested = []; // [attribute_id => [ 'Value' => count, ... ]]
+
         foreach ($rows as $json) {
             $arr = json_decode($json, true);
-            if (!is_array($arr)) continue;
+            if (!is_array($arr)) {
+                continue;
+            }
 
             foreach ($arr as $item) {
-                // Some dbs may have 'attribute_at' by mistake; support both
+                // handle both attribute_id / attribute_at
                 $aid = (int)($item['attribute_id'] ?? ($item['attribute_at'] ?? 0));
-                if (!$aid) continue;
+                if (!$aid) {
+                    continue;
+                }
 
                 $vals = (array)($item['values'] ?? []);
                 foreach ($vals as $v) {
-                    if ($v === null || $v === '') continue;
+                    if ($v === null || $v === '') {
+                        continue;
+                    }
+
+                    // for filtering the panel
                     $valueMap[$aid][$v] = true;
+
+                    // for counts
+                    if (!isset($valueCountNested[$aid])) {
+                        $valueCountNested[$aid] = [];
+                    }
+                    if (!isset($valueCountNested[$aid][$v])) {
+                        $valueCountNested[$aid][$v] = 0;
+                    }
+                    $valueCountNested[$aid][$v] += 1;
                 }
             }
         }
 
+        // if nothing → return empty
         if (empty($valueMap)) {
-            return collect(); // nothing to show
+            return [collect(), []];
         }
 
-        $attrIds = array_keys($valueMap);
-
-        // Load attributes with all their values, then shrink in-memory to only the present ones
+        $attrIds    = array_keys($valueMap);
         $attributes = Attribute::with('attribute_values')->whereIn('id', $attrIds)->get();
 
+        // trim values to only ones actually present
         foreach ($attributes as $attr) {
             $allowed = array_keys($valueMap[$attr->id] ?? []);
             $attr->setRelation(
                 'attribute_values',
                 $attr->attribute_values
-                     ->filter(fn($v) => in_array($v->value, $allowed, true))
-                     ->values()
+                    ->filter(fn($v) => in_array($v->value, $allowed, true))
+                    ->values()
             );
         }
 
-        // Optional: sort attributes by name if you prefer
-        // return $attributes->sortBy('name')->values();
-
-        return $attributes;
+        // IMPORTANT: now we return the **nested** structure
+        return [$attributes, $valueCountNested];
     }
+
 
     private function buildColorsFromProducts($baseProducts)
     {
         $rows  = (clone $baseProducts)->select('colors')->get()->pluck('colors')->filter();
         $codes = [];
+        $codeCounts = [];   // "COLORCODE" => count
+
         foreach ($rows as $json) {
             $arr = json_decode($json, true);
             if (!is_array($arr)) continue;
+
             foreach ($arr as $code) {
                 if (!is_string($code) || $code === '') continue;
-                $codes[strtoupper(trim($code))] = true;   // normalize to uppercase
+                $norm = strtoupper(trim($code));
+                $codes[$norm] = true;
+
+                if (!isset($codeCounts[$norm])) $codeCounts[$norm] = 0;
+                $codeCounts[$norm] += 1;
             }
         }
+
         $codes = array_keys($codes);
-        if (empty($codes)) return collect();
+        if (empty($codes)) return [collect(), []];
 
         $tableColors = \App\Models\Color::whereIn('code', $codes)->get()->keyBy(function($c){
             return strtoupper($c->code);
@@ -428,8 +499,9 @@ class Search2Controller extends Controller
                 $out->push($o);
             }
         }
-        return $out;
+        return [$out, $codeCounts];
     }
+
 
 
 }
