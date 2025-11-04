@@ -182,8 +182,8 @@
         <div id="product-grid">
           @include('frontend.'.get_setting('homepage_select').'.partials.product_grid', ['products'=>$products])
         </div>
-
-        <div id="infinite-sentinel" class="py-4 fs-24 text-center text-muted">{{ translate('Loading…') }}</div>
+        <div id="infinite-trigger" style="height: 1px;"></div>
+        <div id="infinite-sentinel" class="py-4 fs-24 text-center text-muted d-none">{{ translate('Loading…') }}</div>
       </div>
     </div>
   </div>
@@ -270,6 +270,7 @@
 
   const productGrid   = qs('#product-grid');
   const sentinel      = qs('#infinite-sentinel');
+  const trigger       = qs('#infinite-trigger');
   const sortSelect    = qs('#sort_by');
   const pillsBar      = qs('#active-filters');
   const clearBtn      = qs('#clear-filters');
@@ -365,7 +366,8 @@
   async function fetchProducts(url, append=false) {
     if (state.loading) return;
     state.loading = true;
-    sentinel.style.opacity = '1';
+    // sentinel.style.opacity = '1';
+    if (sentinel) sentinel.classList.remove('d-none');
 
     const finalUrl = normalizeToAjax(buildParams(url));
     const res = await fetch(finalUrl, { headers: { 'X-Requested-With':'XMLHttpRequest' }});
@@ -409,8 +411,15 @@
 
     state.next_page_url = json.next_page_url;
     state.loading = false;
-    sentinel.style.opacity = state.next_page_url ? '1' : '0.3';
+    // sentinel.style.opacity = state.next_page_url ? '1' : '0.3';
 
+    // if there is another page, keep it visible (for next load)
+    // else hide it
+    if (state.next_page_url) {
+      sentinel.classList.add('d-none'); // hide after current load
+    } else {
+      sentinel.classList.add('d-none');
+    }
     if (json.scoped_min !== undefined && json.scoped_max !== undefined) {
       syncSliderBounds(Number(json.scoped_min), Number(json.scoped_max));
     }
@@ -580,10 +589,16 @@
   const io = new IntersectionObserver(async (entries) => {
     const ent = entries[0];
     if (ent.isIntersecting && state.next_page_url) {
+      if (sentinel) sentinel.classList.remove('d-none');
       await fetchProducts(state.next_page_url, true);
     }
   }, { rootMargin: '200px' });
-  io.observe(sentinel);
+  // io.observe(sentinel);
+  
+  // observe the trigger, not the text
+  if (trigger) {
+    io.observe(trigger);
+  }
 
   // ===== First paint =====
   // If server didn’t pre-check (should be), ensure radio matches state

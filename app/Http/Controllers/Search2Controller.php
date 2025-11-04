@@ -8,9 +8,10 @@ use App\Models\Color;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Attribute;
-use App\Models\AttributeCategory;
-use App\Utility\CategoryUtility;
 use Illuminate\Http\Request;
+use App\Utility\CategoryUtility;
+use App\Models\AttributeCategory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
 
 class Search2Controller extends Controller
@@ -82,9 +83,13 @@ class Search2Controller extends Controller
             $catTree   = CategoryUtility::children_ids($category_id);
             $catTree[] = $category_id;
             $category  = Category::with('childrenCategories')->findOrFail($category_id);
-            $products->whereIn('category_id', $catTree);
+            // apply to products using pivot + fallback to products.category_id
+            $this->applyCategoryScope($products, $catTree);
+
+            // $products->whereIn('category_id', $catTree);
         } elseif ($selected_category_id) {
-            $products->where('category_id', $selected_category_id);
+            // $products->where('category_id', $selected_category_id);
+            $this->applyCategoryScope($products, [$selected_category_id]);
         }
 
         // -------- KEYWORD --------
@@ -144,11 +149,37 @@ class Search2Controller extends Controller
         $countsSource = filter_products(clone $countsBase);
 
         // ====== CATEGORY COUNTS (for tree) ======
-        $categoryCounts = (clone $countsSource)
+        // earlier: ->groupBy('category_id') on products
+        // now: get counts from pivot product_categories BUT limited to products in $countsSource
+        $categoryCounts = DB::table('product_categories as pc')
+            ->joinSub(
+                $countsSource->select('id'),
+                'src',
+                'src.id',
+                '=',
+                'pc.product_id'
+            )
+            ->select('pc.category_id', DB::raw('COUNT(DISTINCT pc.product_id) as aggregate'))
+            ->groupBy('pc.category_id')
+            ->pluck('aggregate', 'pc.category_id')
+            ->toArray();
+
+        // also merge old direct products.category_id counts (for backward data)
+        $directCategoryCounts = (clone $countsSource)
+            ->whereNotNull('category_id')
             ->selectRaw('category_id, COUNT(*) as aggregate')
             ->groupBy('category_id')
             ->pluck('aggregate', 'category_id')
             ->toArray();
+
+        $categoryCounts = array_replace($directCategoryCounts, $categoryCounts);
+
+        // // ====== CATEGORY COUNTS (for tree) ======
+        // $categoryCounts = (clone $countsSource)
+        //     ->selectRaw('category_id, COUNT(*) as aggregate')
+        //     ->groupBy('category_id')
+        //     ->pluck('aggregate', 'category_id')
+        //     ->toArray();
             
         /**
          * ------- PANEL SOURCE SCOPE (for counts) -------
@@ -456,6 +487,26 @@ class Search2Controller extends Controller
 
         // IMPORTANT: now we return the **nested** structure
         return [$attributes, $valueCountNested];
+    }
+
+    
+    /**
+     * Apply category filter using BOTH:
+     * - product_categories pivot
+     * - products.category_id (fallback)
+     */
+    private function applyCategoryScope($builder, array $categoryIds): void
+    {
+        $builder->where(function ($q) use ($categoryIds) {
+            // from pivot
+            $q->whereIn('id', function ($sub) use ($categoryIds) {
+                $sub->from('product_categories')
+                    ->selectRaw('DISTINCT product_id')
+                    ->whereIn('category_id', $categoryIds);
+            })
+            // plus legacy column
+            ->orWhereIn('category_id', $categoryIds);
+        });
     }
 
 

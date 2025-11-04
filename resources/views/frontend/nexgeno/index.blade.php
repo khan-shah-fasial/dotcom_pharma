@@ -63,10 +63,13 @@
                         @foreach ($featured_categories as $key => $category)
                             @php
                                 $category_name = $category->getTranslation('name');
-                                $items_count = DB::table('product_categories')
-                                    ->where('category_id', $category->id)
-                                    // ->where('published', 1)
-                                    ->count();
+
+                                $items_count = category_published_product_count($category->id);
+
+                                // $items_count = DB::table('product_categories')
+                                //     ->where('category_id', $category->id)
+                                //     ->where('published', 1)
+                                //     ->count();
                             @endphp
                             <a href="{{ route('products.category', $category->slug) }}"
                                 class="d-block text-decoration-none">

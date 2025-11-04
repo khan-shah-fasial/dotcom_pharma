@@ -41,7 +41,8 @@
           </div>
           {{-- Count below name (muted, only when >0) --}}
           <div class="fs-12 text-center text-muted">
-            {{ $cnt > 0 ? '(' . $cnt . ')' : '' }}
+            {{-- {{ $cnt > 0 ? '(' . $cnt . ')' : '' }} --}}
+            {{  '(' . $cnt . ')' }}
           </div>
         </label>
         @endif

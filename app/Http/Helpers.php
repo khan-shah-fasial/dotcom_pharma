@@ -152,6 +152,28 @@ if (!function_exists('filter_products')) {
     }
 }
 
+if (!function_exists('category_published_product_count')) {
+    function category_published_product_count($categoryId)
+    {
+        // base query: products that are either directly in this category
+        // OR mapped through pivot
+        $query = Product::query()
+            ->where(function ($q) use ($categoryId) {
+                $q->where('category_id', $categoryId)
+                  ->orWhereIn('id', function ($sub) use ($categoryId) {
+                      $sub->from('product_categories')
+                          ->selectRaw('DISTINCT product_id')
+                          ->where('category_id', $categoryId);
+                  });
+            });
+
+        // now apply your existing product filters
+        $query = filter_products($query);
+
+        return $query->count();
+    }
+}
+
 //cache products based on category
 if (!function_exists('get_cached_products')) {
     function get_cached_products($category_id = null)
