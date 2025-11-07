@@ -30,6 +30,26 @@ class CheckoutController extends Controller
         //
     }
 
+    private function runShipmentForCombinedOrder(CombinedOrder $combined_order)
+    {
+        $shipmentResolver = new \App\Http\Controllers\Shipment\ShipmentController;
+
+        // get the shipping method the user selected at checkout
+        $selectedShippingMethodId = session('shipping_method_id'); // from step 1
+        $selectedShippingSlug    = get_shipping_method_slug_by_id($selectedShippingMethodId) ?? 'shipway'; // fallback
+
+        foreach ($combined_order->orders as $order) {
+            $shipmentResolver->createShipment($selectedShippingSlug, $order, [
+                'shipping_type'       => $order->shipping_type ?? null,
+                'carrier_id'          => $order->carrier_id ?? null,
+                'shipping_method_id'  => $selectedShippingMethodId,
+                'warehouse_id'        => config('shipway.warehouse_id'),
+                'return_warehouse_id' => config('shipway.return_warehouse_id'),
+            ]);
+        }
+        Session::forget('shipping_method_id');
+    }
+
     public function index(Request $request)
     {
         if(get_setting('guest_checkout_activation') == 0 && auth()->user() == null){
@@ -183,6 +203,10 @@ class CheckoutController extends Controller
 
         $request->session()->put('payment_type', 'cart_payment');
 
+        if ($request->has('shipping_method_id')) {
+            $request->session()->put('shipping_method_id', $request->shipping_method_id);
+        }
+
         $data['combined_order_id'] = $request->session()->get('combined_order_id');
         $data['payment_method'] = $request->payment_option;
         $request->session()->put('payment_data', $data);
@@ -205,6 +229,8 @@ class CheckoutController extends Controller
                     $order->manual_payment_data = json_encode($manual_payment_data);
                     $order->save();
                 }
+                // run shipments
+                $this->runShipmentForCombinedOrder($combined_order);
                 flash(translate('Your order has been placed successfully.'))->success();
                 return redirect()->route('order_confirmed');
             }
@@ -311,6 +337,10 @@ class CheckoutController extends Controller
             // Calculate Commission from seller, Customer Affiliate earning and Customers Club Point
             calculateCommissionAffilationClubPoint($order);
         }
+
+        // run shipments
+        $this->runShipmentForCombinedOrder($combined_order);
+        
         Session::put('combined_order_id', $combined_order_id);
         return redirect()->route('order_confirmed');
     }

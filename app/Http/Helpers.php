@@ -44,6 +44,7 @@ use App\Utility\SendSMSUtility;;
 use App\Models\AuctionProductBid;
 use App\Models\ManualPaymentMethod;
 use App\Models\SellerPackagePayment;
+use App\Models\ShippingMethod;
 use App\Utility\NotificationUtility;
 use App\Http\Resources\V2\CarrierCollection;
 use App\Http\Controllers\AffiliateController;
@@ -2584,6 +2585,29 @@ if (!function_exists('get_activate_payment_methods')) {
         return $payment_methods->get();
     }
 }
+
+if (!function_exists('get_active_shipping_methods')) {
+    /**
+     * Get all active shipping methods (like Shipway, etc.)
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    function get_active_shipping_methods()
+    {
+        // basic version
+        return ShippingMethod::where('is_active', 1)->get();
+    }
+}
+
+if (!function_exists('get_shipping_method_slug_by_id')) {
+    function get_shipping_method_slug_by_id($id)
+    {
+        if (!$id) return null;
+        $method = ShippingMethod::find($id);
+        return $method ? $method->slug : null;
+    }
+}
+
 // notification
 if (! function_exists('flash_message')) {
     function flash_message($message, $level = 'info')

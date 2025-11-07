@@ -59,6 +59,7 @@
                                 <div id="collapseDeliveryInfo" class="collapse show" aria-labelledby="headingDeliveryInfo" data-parent="#accordioncCheckoutInfo">
                                     <div class="card-body pt-0" id="delivery_info">
                                         @include('frontend.partials.cart.delivery_info', ['carts' => $carts, 'carrier_list' => $carrier_list, 'shipping_info' => $shipping_info])
+                                        @include('frontend.partials.cart.shipping_service', ['shipping_methods' => get_active_shipping_methods()])
                                     </div>
                                 </div>
                             </div>
