@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Shipment;
 
-use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderShipment;
 use App\Models\ShippingMethod;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
+use Exception;
 
 class ShipwayController extends Controller
 {
@@ -16,91 +18,167 @@ class ShipwayController extends Controller
         $secret    = env('SHIPWAY_SECRET_KEY');
         $token     = base64_encode($useremail . ':' . $secret);
 
+        Log::debug('[Shipway][Auth] Generated Basic Auth header', [
+            'useremail' => $useremail,
+            'secret_present' => !empty($secret),
+        ]);
+
         return 'Basic ' . $token;
     }
 
-    
-    /**
-     * Build dimensions & weight from order lines.
-     * - if variation: use product_stocks
-     * - else: use products
-     * - weight: sum(weight * qty)
-     * - length/width/height: take max
-     */
-    protected function buildPackageFromOrder(Order $order): array
+    protected function httpBase()
     {
-        $totalWeight = 0;
-        $maxLength   = 0;
-        $maxWidth    = 0;
-        $maxHeight   = 0;
-
-        foreach ($order->orderDetails as $detail) {
-            $product = $detail->product;
-            $qty     = (int) $detail->quantity;
-
-            $length = 0;
-            $width  = 0;
-            $height = 0;
-            $weight = 0;
-
-            // variation-based dimensions
-            if (!empty($detail->variation) && $product && $product->relationLoaded('stocks') ?? true) {
-                $stock = $product->stocks->where('variant', $detail->variation)->first();
-                if ($stock) {
-                    $length = (float) ($stock->length ?? 0);
-                    $width  = (float) ($stock->width ?? 0);
-                    $height = (float) ($stock->height ?? 0);
-                    $weight = (float) ($stock->weight ?? 0);
-                }
-            }
-
-            // fallback to product master
-            if ($length == 0 && $width == 0 && $height == 0 && $weight == 0 && $product) {
-                $length = (float) ($product->length ?? 0);
-                $width  = (float) ($product->width ?? 0);
-                $height = (float) ($product->height ?? 0);
-                $weight = (float) ($product->weight ?? 0);
-            }
-
-            // apply quantity
-            $lineWeight = $weight * $qty;
-
-            // aggregate
-            $totalWeight += $lineWeight;
-            $maxLength = max($maxLength, $length);
-            $maxWidth  = max($maxWidth,  $width);
-            $maxHeight = max($maxHeight, $height);
-        }
-
-        // sensible fallbacks
-        if ($totalWeight <= 0) $totalWeight = 100;
-        if ($maxLength  <= 0) $maxLength  = 10;
-        if ($maxWidth   <= 0) $maxWidth   = 10;
-        if ($maxHeight  <= 0) $maxHeight  = 10;
-
-        return [
-            'order_weight' => (string) $totalWeight,
-            'box_length'   => (string) $maxLength,
-            'box_breadth'  => (string) $maxWidth,
-            'box_height'   => (string) $maxHeight,
-        ];
+        return Http::withHeaders([
+            'Authorization' => $this->authHeader(),
+            'Content-Type'  => 'application/json',
+        ]);
     }
 
     /**
-     * Create shipment on Shipway for a given order
-     *
-     * @param \App\Models\Order $order
-     * @param array $extra  // carrier_id, warehouse_id, etc.
-     * @return array|null
+     * 1) get warehouses and return the default one (or the first)
+     */
+    protected function getDefaultWarehouse(): ?array
+    {
+        $res = $this->httpBase()->get('https://app.shipway.com/api/getwarehouses');
+        $json = $res->json();
+
+        if (!($json['success'] ?? 0)) {
+            return null;
+        }
+
+        // message is an object keyed by warehouse_id
+        $warehouses = $json['message'] ?? [];
+        if (empty($warehouses)) {
+            return null;
+        }
+
+        // find default
+        foreach ($warehouses as $wh) {
+            if (($wh['default'] ?? '0') == '1') {
+                return $wh;
+            }
+        }
+
+        // else just return first
+        return reset($warehouses);
+    }
+
+    /**
+     * Build dimensions & weights from order items
+     */
+    protected function buildPackageFromOrder(Order $order): array
+    {
+        Log::info('[Shipway][BuildPackage] Start building package metrics', ['order_id' => $order->id]);
+
+        $totalWeight = 0.0;
+        $totalLength = $totalWidth = $totalHeight = 0.0;
+        $boxL = $boxW = $boxH = 0.0;
+
+        $count = $order->orderDetails->count();
+        Log::debug('[Shipway][BuildPackage] Found order details', ['count' => $count]);
+
+        foreach ($order->orderDetails as $detail) {
+            $product = $detail->product;
+            $qty = (int) $detail->quantity;
+
+            // Get dimensions (priority: variant → product → default)
+            $stock = (!empty($detail->variation) && $product)
+                ? $product->stocks->where('variant', $detail->variation)->first()
+                : null;
+
+            $length = (float) ($stock->length ?? $product->length ?? 10);
+            $width  = (float) ($stock->width  ?? $product->width  ?? 10);
+            $height = (float) ($stock->height ?? $product->height ?? 10);
+            $weight = (float) ($stock->weight ?? $product->weight ?? 0.21);
+
+            $totalLength += $length * $qty;
+            $totalWidth += $width * $qty;
+            $totalHeight += $height * $qty;
+            $totalWeight += $weight * $qty;
+        }
+
+        if ($totalWeight <= 0) {
+            Log::warning('[Shipway][BuildPackage] total physical weight <= 0, defaulting to 0.21kg');
+            $totalWeight = 0.21;
+        }
+
+        // ensure fallback box dimensions
+        $boxL = $totalLength > 0 ? $totalLength : 10;
+        $boxW = $totalWidth > 0 ? $totalWidth : 10;
+        $boxH = $totalHeight > 0 ? $totalHeight : 10;
+
+        // compute volumetric and chargeable weight
+        $volW = round(($boxL * $boxW * $boxH) / 5000.0, 2);
+        $charged = $totalWeight;
+        // $charged = (float) round(max($totalWeight, $volW), 2);
+        
+        $package = [
+            'order_id'              => $order->id,
+            'sum_length'            => number_format($totalLength, 2, '.', ''),
+            'sum_width'             => number_format($totalWidth, 2, '.', ''),
+            'sum_height'            => number_format($totalHeight, 2, '.', ''),
+            'total_physical_weight' => number_format($totalWeight, 2, '.', ''),
+            'box_length'            => number_format($boxL, 2, '.', ''),
+            'box_breadth'           => number_format($boxW, 2, '.', ''),
+            'box_height'            => number_format($boxH, 2, '.', ''),
+            'volumetric_weight'     => number_format($volW, 2, '.', ''),
+            'charged_weight'        => number_format($charged, 2, '.', ''),
+        ];
+
+        Log::info('[Shipway][BuildPackage] Final package computed', $package);
+
+        return $package;
+    }
+
+    /**
+     * Create shipment request on Shipway
      */
     public function create(Order $order, array $extra = [])
     {
-        // get shipping method row (so we can save its id later)
+        Log::info('[Shipway][Create] Starting shipment creation', [
+            'order_id' => $order->id,
+            'order_code' => $order->code,
+        ]);
+
         $method = ShippingMethod::where('slug', 'shipway')->first();
+        if (!$method) {
+            Log::warning('[Shipway][Create] Shipping method not found (slug=shipway)');
+        }
 
         $addr = json_decode($order->shipping_address ?? '{}', true) ?: [];
+        Log::debug('[Shipway][Create] Shipping address parsed', $addr);
 
-        // build products from order details
+        // 1) get default warehouse
+        $warehouse = $this->getDefaultWarehouse();
+        $warehouseId  = $extra['warehouse_id']        ?? ($warehouse['warehouse_id'] ?? null);
+        $fromPincode  = $warehouse['pincode']         ?? null;
+        $returnWhId   = $extra['return_warehouse_id'] ?? $warehouseId;
+
+        // 2) Build package metrics
+        $package = $this->buildPackageFromOrder($order);
+
+        // 3) figure out destination pincode
+        $toPincode = $addr['postal_code'] ?? $addr['zipcode'] ?? null;
+
+        // 4) payment type for rate api
+        $paymentType = ($order->payment_type == 'cash_on_delivery') ? 'cod' : 'prepaid';
+
+        // 5) get carrier rates
+        $selectedCarrierId = $extra['carrier_id'] ?? null;
+        if (!$selectedCarrierId && $fromPincode && $toPincode) {
+            $rates = $this->getCarrierRates($fromPincode, $toPincode, $paymentType, $package);
+
+            if (!empty($rates)) {
+                // for now pick the first one
+                $first = $rates[0];
+                $selectedCarrierId = $first['carrier_id'] ?? null;
+            }
+        }
+
+        // Convert weight (kg → grams) and ensure float type
+        $orderWeightGrams = isset($package['charged_weight']) ? round($package['charged_weight'] * 1000, 2) : round(($package['total_physical_weight'] ?? 0) * 1000, 2);
+        
+        // Prepare product list
         $products = [];
         foreach ($order->orderDetails as $detail) {
             $products[] = [
@@ -113,80 +191,85 @@ class ShipwayController extends Controller
                 'tax_title'        => 'GST',
             ];
         }
+        Log::debug('[Shipway][Create] Product list built', ['count' => count($products)]);
 
-        // dynamic package
-        $package = $this->buildPackageFromOrder($order);
-
+        // Payload assembly
         $payload = [
             "order_id"             => $order->code,
-            "carrier_id"           => $extra['carrier_id'] ?? '',
-            "warehouse_id"         => $extra['warehouse_id'] ?? 54211,
-            "return_warehouse_id"  => $extra['return_warehouse_id'] ?? 54211,
+            "carrier_id"           => $selectedCarrierId ?? '',
+            "warehouse_id"         => $warehouseId ?? '',
+            "return_warehouse_id"  => $returnWhId ?? '',
             "products"             => $products,
             "discount"             => 0,
             "shipping"             => 0,
-            // "shipping"             => (string) $order->orderDetails->sum('shipping_cost'),
             "order_total"          => (string) $order->grand_total,
             "gift_card_amt"        => 0,
             "taxes"                => 0,
             "payment_type"         => $order->payment_type == 'cash_on_delivery' ? 'C' : 'P',
             "email"                => $addr['email'] ?? 'customer@example.com',
             "billing_address"      => $addr['address'] ?? '',
-            "billing_address2"     => $addr['address2'] ?? '',
             "billing_city"         => $addr['city'] ?? '',
             "billing_state"        => $addr['state'] ?? '',
             "billing_country"      => $addr['country'] ?? 'India',
             "billing_firstname"    => $addr['name'] ?? '',
-            "billing_lastname"     => '',
             "billing_phone"        => $addr['phone'] ?? '',
             "billing_zipcode"      => $addr['postal_code'] ?? '',
             "shipping_address"     => $addr['address'] ?? '',
-            "shipping_address2"    => $addr['address2'] ?? '',
             "shipping_city"        => $addr['city'] ?? '',
             "shipping_state"       => $addr['state'] ?? '',
             "shipping_country"     => $addr['country'] ?? 'India',
             "shipping_firstname"   => $addr['name'] ?? '',
-            "shipping_lastname"    => '',
             "shipping_phone"       => $addr['phone'] ?? '',
             "shipping_zipcode"     => $addr['postal_code'] ?? '',
-            "order_weight"         => $package['order_weight'] ?? "",
+            "order_weight"          => $orderWeightGrams, // float in grams ✅
+            // "order_weight"         => $package['charged_weight'] ?? $package['total_physical_weight'],
             "box_length"           => $package['box_length'] ?? "",
             "box_breadth"          => $package['box_breadth'] ?? "",
             "box_height"           => $package['box_height'] ?? "",
             "order_date"           => now()->format('Y-m-d H:i:s'),
         ];
+        Log::debug('[Shipway][Create] Final payload ready', $payload);
 
-        // NOTE: if your Shipway endpoint is different (typo earlier 'v2orders'), update the URL.
-        $response = Http::withHeaders([
-            'Authorization' => $this->authHeader(),
-            'Content-Type'  => 'application/json',
-        ])->post('https://app.shipway.com/api/v2orders', $payload);
+        try {
+            $response = $this->httpBase()->post('https://app.shipway.com/api/v2orders', $payload);
+            $data = $response->json();
+            Log::info('[Shipway][Create] API response received', [
+                'status' => $response->status(),
+                'success' => $data['success'] ?? null,
+            ]);
+            Log::debug('[Shipway][Create] Full API response', $data);
+        } catch (Exception $e) {
+            Log::error('[Shipway][Create] API call failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
 
-        $data = $response->json();
+        $awb         = $data['awb_response']['AWB'] ?? null;
+        // $labelUrl    = $data['awb_response']['shipping_url'] ?? null;
+        $carrierId   = $data['awb_response']['carrier_id'] ?? $payload['carrier_id'];
+        $trackingUrl = $awb ? "https://track.shipway.com/t/{$awb}" : null;
 
-        // extract things we care about (defensive)
-        $awb          = $data['awb_response']['AWB'] ?? null;
-        $labelUrl     = $data['awb_response']['shipping_url'] ?? null;
-        $carrierId    = $data['awb_response']['carrier_id'] ?? $payload['carrier_id'];
-        $trackingUrl  = $awb ? "https://track.shipway.com/t/{$awb}" : null;
+        Log::info('[Shipway][Create] Extracted response data', [
+            'awb' => $awb,
+            'carrier_id' => $carrierId,
+            'tracking_url' => $trackingUrl,
+        ]);
 
-        // Persist shipment using the fields declared in your OrderShipment model
         OrderShipment::updateOrCreate(
             ['order_id' => $order->id],
             [
-                'shipping_method_id' => $method?->id ?? null,
-                // 'shipping_id' in your model used to store the AWB / external shipment id
+                'shipping_method_id' => $method?->id,
                 'shipping_id'        => $awb,
-                // your model expects 'tracking_url' (not tracking_number)
                 'tracking_url'       => $trackingUrl,
-                // keep the shipping_type if provided
                 'shipping_type'      => $extra['shipping_type'] ?? null,
-                // store the full raw response as JSON string (safe to inspect later)
                 'raw_response'       => json_encode($data),
-                // set status based on API success boolean (fallback to 'error' if absent/false)
-                'status'             => ($data['success'] ?? false) ? 'created' : 'errors',
+                'status'             => ($data['success'] ?? false) ? 'created' : 'error',
             ]
         );
+
+        Log::info('[Shipway][Create] Shipment record updated', ['order_id' => $order->id]);
 
         return $data;
     }

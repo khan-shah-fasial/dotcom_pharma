@@ -40,11 +40,11 @@ class CheckoutController extends Controller
 
         foreach ($combined_order->orders as $order) {
             $shipmentResolver->createShipment($selectedShippingSlug, $order, [
-                'shipping_type'       => $order->shipping_type ?? null,
-                'carrier_id'          => $order->carrier_id ?? null,
+                // 'shipping_type'       => $order->shipping_type ?? null,
+                // 'carrier_id'          => $order->carrier_id ?? null,
                 'shipping_method_id'  => $selectedShippingMethodId,
-                'warehouse_id'        => config('shipway.warehouse_id'),
-                'return_warehouse_id' => config('shipway.return_warehouse_id'),
+                // 'warehouse_id'        => config('shipway.warehouse_id'),
+                // 'return_warehouse_id' => config('shipway.return_warehouse_id'),
             ]);
         }
         Session::forget('shipping_method_id');
@@ -229,8 +229,7 @@ class CheckoutController extends Controller
                     $order->manual_payment_data = json_encode($manual_payment_data);
                     $order->save();
                 }
-                // run shipments
-                $this->runShipmentForCombinedOrder($combined_order);
+
                 flash(translate('Your order has been placed successfully.'))->success();
                 return redirect()->route('order_confirmed');
             }
@@ -338,9 +337,6 @@ class CheckoutController extends Controller
             calculateCommissionAffilationClubPoint($order);
         }
 
-        // run shipments
-        $this->runShipmentForCombinedOrder($combined_order);
-        
         Session::put('combined_order_id', $combined_order_id);
         return redirect()->route('order_confirmed');
     }
@@ -670,6 +666,9 @@ class CheckoutController extends Controller
 
         // Cart::where('user_id', $combined_order->user_id)
         //     ->delete();
+
+        // run shipments
+        $this->runShipmentForCombinedOrder($combined_order);
 
         Session::forget('club_point');
         Session::forget('combined_order_id');

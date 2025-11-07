@@ -18,11 +18,11 @@ class PurchaseHistoryController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
     public function index()
     {
-        $orders = Order::with('orderDetails')->where('user_id', Auth::user()->id)->orderBy('code', 'desc')->paginate(10);
+        $orders = Order::with(['orderDetails', 'shipment'])->where('user_id', Auth::user()->id)->orderBy('code', 'desc')->paginate(10);
         return view('frontend.user.purchase_history', compact('orders'));
     }
 

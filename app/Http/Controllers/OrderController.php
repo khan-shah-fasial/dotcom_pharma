@@ -50,7 +50,8 @@ class OrderController extends Controller
         $payment_status = '';
         $order_type = '';
 
-        $orders = Order::orderBy('id', 'desc');
+        // $orders = Order::orderBy('id', 'desc');
+        $orders = Order::with(['orderDetails', 'shipment'])->orderBy('id', 'desc');
         $admin_user_id = get_admin()->id;
 
         if (Route::currentRouteName() == 'inhouse_orders.index' && Auth::user()->can('view_inhouse_orders')) {
