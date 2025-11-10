@@ -8,7 +8,7 @@
 /* Primary: when input is directly followed by the element */
 .aiz-megabox input[type="radio"]:checked + .aiz-megabox-elem {
   border: 2px solid var(--primary) !important;
-  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 1) !important;
   outline: none !important;
 }
 
@@ -19,7 +19,7 @@
 }
 .aiz-megabox.selected .aiz-megabox-elem {
   border: 2px solid var(--primary) !important;
-  box-shadow: 0 0 0 4px rgba(0,123,255,0.12) !important;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 1) !important;
 }
 .aiz-megabox.selected .aiz-megabox-elem .size-30px {
   transform: scale(1.06);
@@ -35,8 +35,18 @@
 /* Fallback using sibling-of-anywhere (if there is intervening text/nodes) */
 .aiz-megabox input[type="radio"]:checked ~ .aiz-megabox-elem {
   border: 2px solid var(--primary) !important;
-  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 1) !important;
 }
+
+#color-filter .aiz-megabox-elem{
+  border: 0px solid #ffffff01 !important;
+  background: none !important;
+}
+
+#color-filter .mega-gap-between {
+  gap: 5px;
+}
+
 </style>
 <section class="pt-2">
   <div class="container">

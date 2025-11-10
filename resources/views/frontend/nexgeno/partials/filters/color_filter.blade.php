@@ -23,7 +23,7 @@
         @endphp
 
         @if($code)
-        <label class="aiz-megabox pl-0 mr-2 text-center {{ $sel === $code ? 'selected' : '' }}">
+        <label class="aiz-megabox mega-gap-between d-flex align-items-center justify-content-start pl-0 mr-2 text-center {{ $sel === $code ? 'selected' : '' }}">
           <input
             type="radio"
             class="js-color-radio"
@@ -31,16 +31,16 @@
             value="{{ $code }}"
             @checked($sel === $code)
           >
-          <span class="aiz-megabox-elem rounded d-flex align-items-center justify-content-center p-1 mb-2">
-            <span class="size-30px d-inline-block rounded" style="background: {{ $code }};"></span>
+          <span class="aiz-megabox-elem rounded-circle d-flex align-items-center justify-content-center p-0">
+            <span class="size-15px d-inline-block rounded-circle" style="background: {{ $code }};"></span>
           </span>
 
           {{-- Name below swatch (matches original muted small text) --}}
-          <div class="fs-12 text-center text-dark" style="line-height:1;">
+          <div class="fs-14 text-center text-dark" style="line-height:1;">
             {{ $name }}
           </div>
           {{-- Count below name (muted, only when >0) --}}
-          <div class="fs-12 text-center text-muted">
+          <div class="fs-14 text-center text-muted">
             {{-- {{ $cnt > 0 ? '(' . $cnt . ')' : '' }} --}}
             {{  '(' . $cnt . ')' }}
           </div>
