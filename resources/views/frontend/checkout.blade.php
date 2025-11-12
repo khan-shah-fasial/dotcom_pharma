@@ -135,6 +135,7 @@
 
 @section('script')
     <script type="text/javascript">
+        window.checkoutOwnerId = @json(optional($carts->first())->owner_id ?? 1);
 
         $(document).ready(function() {
             $(".online_payment").click(function() {
@@ -409,6 +410,32 @@
                 $('.aiz-refresh').removeClass('active');
             });
             AIZ.plugins.bootstrapSelect("refresh");
+        }
+
+        function updateDeliveryInfoByShipping(el){
+            $('.aiz-refresh').addClass('active');
+            $.post('{{ route('checkout.updateDeliveryInfoByShipping') }}', {
+                _token: AIZ.data.csrf,
+                shipping_name: el.dataset.provider,     // e.g. 'shipway'
+                carrier_id:   el.dataset.carrierId,     // numeric ID
+                charge:       el.dataset.charge || 0,   // delivery charge
+                user_id:      (window.checkoutOwnerId || 1)
+            }, function (html) {
+                $('#cart_summary').html(html);
+                stepCompletionDeliveryInfo();
+                $('.aiz-refresh').removeClass('active');
+            });
+            AIZ.plugins.bootstrapSelect("refresh");
+        }
+
+        function setFodFreeShipping(){
+            $.post('{{ route('checkout.setFodShipping') }}', {
+                _token: AIZ.data.csrf,
+                user_id: (window.checkoutOwnerId || 1)
+            }, function(html){
+                $('#cart_summary').html(html);
+                stepCompletionDeliveryInfo();
+            });
         }
 
         function show_pickup_point(el, user_id) {

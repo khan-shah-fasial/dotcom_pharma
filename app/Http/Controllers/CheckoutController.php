@@ -803,6 +803,60 @@ class CheckoutController extends Controller
         return view('frontend.partials.cart.cart_summary', compact('carts', 'proceed'))->render();
     }
 
+    public function updateDeliveryInfoByShipping(Request $request)
+    {
+        $proceed = 0;
+        $user    = auth()->user();
+
+        $carts = $user ? Cart::where('user_id', $user->id)->active()->get() : (Cart::where('temp_user_id', $request->session()->get('temp_user_id'))->active()->get() ?: collect());
+
+        if ($carts->isEmpty()) {
+            return view('frontend.partials.cart.cart_summary', compact('carts','proceed'))->render();
+        }
+
+        $ownerId   = (int) $request->user_id;
+        $carrierId = (int) $request->carrier_id;
+        $fee       = (float) ($request->input('charge', 0));
+
+        // apply to this owner's items; charge once
+        $userCarts = $carts->where('owner_id', $ownerId)->values();
+        foreach ($userCarts as $i => $item) {
+            $item->shipping_type = 'carrier';
+            $item->carrier_id    = $carrierId;
+            $item->shipping_cost = $i === 0 ? $fee : 0.0;
+            $item->save();
+        }
+
+        $carts = $carts->fresh();
+        return view('frontend.partials.cart.cart_summary', compact('carts','proceed'))->render();
+    }
+
+    public function setFodShipping(Request $request)
+    {
+        $proceed = 0;
+        $user = auth()->user();
+
+        $carts = $user ? Cart::where('user_id', $user->id)->active()->get() : Cart::where('temp_user_id', $request->session()->get('temp_user_id'))->active()->get();
+
+        if ($carts->isEmpty()) {
+            return view('frontend.partials.cart.cart_summary', compact('carts','proceed'))->render();
+        }
+
+        $ownerId = (int) $request->input('user_id');
+
+        // Zero-out shipping for this owner and clear carrier
+        $userCarts = $carts->where('owner_id', $ownerId)->values();
+        foreach ($userCarts as $item) {
+            $item->shipping_type = 'home_delivery'; // or 'fod' if you store it specifically
+            $item->carrier_id    = null;
+            $item->shipping_cost = 0.0;
+            $item->save();
+        }
+
+        $carts = $carts->fresh();
+        return view('frontend.partials.cart.cart_summary', compact('carts','proceed'))->render();
+    }
+
     public function orderRePayment(Request $request){
         $order = Order::findOrFail($request->order_id);
         if($order != null){

@@ -47,6 +47,7 @@ use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Search2Controller;
+use App\Http\Controllers\Shipment\ShipmentController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SupportTicketController;
@@ -57,6 +58,8 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\RequestDocController;
 use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\CronjobController;
+use Illuminate\Http\Request;
+
 /*
   |--------------------------------------------------------------------------
   | Web Routes
@@ -362,11 +365,36 @@ Route::group(['prefix' => 'checkout'], function () {
         Route::post('/guest-customer-info-check', 'guestCustomerInfoCheck')->name('guest_customer_info_check');
         Route::post('/updateDeliveryAddress', 'updateDeliveryAddress')->name('checkout.updateDeliveryAddress');
         Route::post('/updateDeliveryInfo', 'updateDeliveryInfo')->name('checkout.updateDeliveryInfo');
+        Route::post('/updateDeliveryInfoByShipping', 'updateDeliveryInfoByShipping')->name('checkout.updateDeliveryInfoByShipping');
+        Route::post('/setFodShipping', 'setFodShipping')->name('checkout.setFodShipping');
+
         //Club point
         // Route::post('/apply-club-point', 'apply_club_point')->name('checkout.apply_club_point');
         // Route::post('/remove-club-point', 'remove_club_point')->name('checkout.remove_club_point');
     });
 });
+
+// shipping Routes
+Route::get('/shipment/rates', function (Request $request) {
+    // read params from the injected request
+    $provider    = (string) $request->input('provider', '');
+    $addressId   = $request->input('address_id');   // optional (logged-in users)
+    $toPincode   = $request->input('to_pincode');   // optional (guests)
+    $paymentType = $request->input('payment_type', 'prepaid');
+
+    if ($provider === '') {
+        return response()->json(['success' => false, 'data' => [], 'message' => 'provider is required'], 422);
+    }
+
+    $class = 'App\\Http\\Controllers\\Shipment\\' . ucfirst($provider) . 'Controller';
+    if (!class_exists($class) || !method_exists($class, 'rates')) {
+        return response()->json(['success' => false, 'data' => [], 'message' => 'Provider not available'], 404);
+    }
+
+    // Hand the SAME Request to the provider controller (no order on checkout)
+    // ShipwayController::rates($request) will read address_id/to_pincode and build package from cart.
+    return app($class)->rates($request);
+})->name('shipment.rates');
 
 Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function () {
 
