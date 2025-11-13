@@ -120,6 +120,7 @@
           @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
             'attributes' => $attributes,
             'selected_attribute_values' => $selected_attribute_values ?? [],
+            'is_mobile' => false,
           ])
         </div>
 
@@ -227,6 +228,7 @@
       @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
         'attributes' => $attributes,
         'selected_attribute_values' => $selected_attribute_values ?? [],
+        'is_mobile' => true,
       ])
     </div>
 

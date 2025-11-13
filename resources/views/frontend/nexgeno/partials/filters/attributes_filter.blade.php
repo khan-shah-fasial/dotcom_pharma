@@ -1,8 +1,14 @@
 <!-- Attributes -->
+@php
+  $isMobile = $is_mobile ?? false;
+  $instanceSuffix = $isMobile ? '_mobile' : '';
+@endphp
+
 @foreach ($attributes as $attribute)
     @php
         $attrName    = $attribute->getTranslation('name');
-        $collapseId  = 'collapse_' . str_replace(' ', '_', $attribute->name);
+        // $collapseId  = 'collapse_' . str_replace(' ', '_', $attribute->name);
+        $collapseId  = 'collapse_attr_' . $attribute->id . $instanceSuffix;
         $visibleLimit = 5;
 
         $selectedValues = $selected_attribute_values ?? [];
