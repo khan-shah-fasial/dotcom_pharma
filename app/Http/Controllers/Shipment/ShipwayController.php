@@ -282,16 +282,17 @@ class ShipwayController extends Controller
         $paymentType = ($order->payment_type == 'cash_on_delivery') ? 'cod' : 'prepaid';
 
         // 5) get carrier rates
-        $selectedCarrierId = $extra['carrier_id'] ?? null;
-        if (!$selectedCarrierId && $fromPincode && $toPincode) {
-            $rates = $this->getCarrierRates($fromPincode, $toPincode, $paymentType, $package);
+        // $selectedCarrierId = $extra['carrier_id'] ?? null;
+        $selectedCarrierId = $extra['carrier_id'] ?? $order->shipping_courier_id ?? null;
+        // if (!$selectedCarrierId && $fromPincode && $toPincode) {
+        //     $rates = $this->getCarrierRates($fromPincode, $toPincode, $paymentType, $package);
 
-            if (!empty($rates)) {
-                // for now pick the first one
-                $first = $rates[0];
-                $selectedCarrierId = $first['carrier_id'] ?? null;
-            }
-        }
+        //     if (!empty($rates)) {
+        //         // for now pick the first one
+        //         $first = $rates[0];
+        //         $selectedCarrierId = $first['carrier_id'] ?? null;
+        //     }
+        // }
 
         // Convert weight (kg → grams) and ensure float type
         $orderWeightGrams = isset($package['charged_weight']) ? round($package['charged_weight'] * 1000, 2) : round(($package['total_physical_weight'] ?? 0) * 1000, 2);
@@ -311,12 +312,16 @@ class ShipwayController extends Controller
         }
         Log::debug('[Shipway][Create] Product list built', ['count' => count($products)]);
 
+        // Determine whether to request booking (label generation) or push-only.
+        // Booking requires at least a carrier OR warehouse info. If neither present -> push-only.
+        $canBook = !empty($selectedCarrierId) || (!empty($warehouseId) && !empty($returnWhId));
+
         // Payload assembly
         $payload = [
             "order_id"             => $order->code,
-            "carrier_id"           => $selectedCarrierId ?? '',
-            "warehouse_id"         => $warehouseId ?? '',
-            "return_warehouse_id"  => $returnWhId ?? '',
+            // "carrier_id"           => $selectedCarrierId ?? '',
+            // "warehouse_id"         => $warehouseId ?? '',
+            // "return_warehouse_id"  => $returnWhId ?? '',
             "products"             => $products,
             "discount"             => 0,
             "shipping"             => 0,
@@ -346,6 +351,22 @@ class ShipwayController extends Controller
             "box_height"           => $package['box_height'] ?? "",
             "order_date"           => now()->format('Y-m-d H:i:s'),
         ];
+        
+        // If booking is intended, add booking-specific fields.
+        if ($canBook) {
+            // Only set carrier_id if we have one; leave empty if we let Shipway recommend (docs allow empty).
+            $payload['carrier_id'] = $selectedCarrierId ?? '';
+            // warehouse_id and return_warehouse_id are required for booking flow in your integration
+            $payload['warehouse_id'] = $warehouseId ?? '';
+            $payload['return_warehouse_id'] = $returnWhId ?? '';
+        } else {
+            // Push-only: ensure booking/label fields are NOT present (remove if set)
+            unset($payload['carrier_id'], $payload['warehouse_id'], $payload['return_warehouse_id']);
+            Log::info('[Shipway][Create] No carrier/warehouse available — performing push-only (no booking).', [
+                'order_id' => $order->id,
+            ]);
+        }
+
         Log::debug('[Shipway][Create] Final payload ready', $payload);
 
         try {

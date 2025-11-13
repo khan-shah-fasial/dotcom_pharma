@@ -9,6 +9,16 @@
         <div class="card-body">
             <div class="row gutters-5">
                 <div class="col text-md-left text-center">
+                    {{-- show.blade.php --}}
+                    @if(isset($order) && $order->shipping_choice === 'courier' && !$order->shipment)
+                        <button id="create-shipment-btn"
+                                class="btn btn-primary"
+                                data-order="{{ encrypt($order->id) }}"
+                                data-provider="{{ $order->shipping_by ?? '' }}"
+                                type="button">
+                            Create Shipment
+                        </button>
+                    @endif
                 </div>
                 @php
                     $delivery_status = $order->delivery_status;
@@ -360,6 +370,60 @@
 
 @section('script')
     <script type="text/javascript">
+
+        // === Create Shipment ===
+        $('#create-shipment-btn').on('click', function () {
+            const btn = $(this);
+            const provider = btn.data('provider');
+            const orderEnc = btn.data('order');
+
+            if (!provider || provider === 'N/A') {
+                AIZ.plugins.notify('danger', 'No shipment provider configured for this order.');
+                return;
+            }
+
+            if (!confirm('Create shipment with provider: ' + provider + ' ?')) return;
+
+            btn.prop('disabled', true);
+            const oldText = btn.text();
+            btn.text('Creating...');
+
+            $.ajax({
+                url: "{{ route('shipment.create') }}",
+                type: 'POST',
+                data: {
+                    provider: provider,
+                    order: orderEnc
+                },
+                headers: {
+                    'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'   // ensure Laravel returns JSON error responses
+                },
+                success: function (payload) {
+                    console.log('Shipment create response:', payload);
+                    if (payload && payload.success) {
+                        AIZ.plugins.notify('success', payload.message || 'Shipment created successfully.');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        AIZ.plugins.notify('danger', payload.message || 'Failed to create shipment. Check logs.');
+                        console.error(payload);
+                        btn.prop('disabled', false).text(oldText);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('AJAX error', status, error, xhr.responseText);
+                    let msg = 'Unexpected error occurred. Please check logs.';
+                    try {
+                        const json = JSON.parse(xhr.responseText || "{}");
+                        msg = json.message || msg;
+                    } catch (e) {}
+                    AIZ.plugins.notify('danger', msg);
+                    btn.prop('disabled', false).text(oldText);
+                }
+            });
+        });
+        
         $('#assign_deliver_boy').on('change', function() {
             var order_id = {{ $order->id }};
             var delivery_boy = $('#assign_deliver_boy').val();

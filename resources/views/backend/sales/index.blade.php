@@ -118,6 +118,8 @@
                             <th data-breakpoints="md">{{ translate('Payment method') }}</th>
                             <th data-breakpoints="md">{{ translate('Payment Status') }}</th>
                             <th data-breakpoints="md">{{ translate('Tracking') }}</th>
+                            <th data-breakpoints="md">{{ translate('Shipping Method') }}</th>
+                            <th data-breakpoints="md">{{ translate('Shipping Type') }}</th>
                             @if (addon_is_activated('refund_request'))
                                 <th>{{ translate('Refund') }}</th>
                             @endif
@@ -213,6 +215,12 @@
                                     @else
                                         <span class="text-muted">{{ translate('Not Available') }}</span>
                                     @endif
+                                </td>
+                                <td>
+                                    {{ $order->shipping_choice }}
+                                </td>
+                                <td>
+                                    {{ $order->shipping_by }}
                                 </td>
                                 @if (addon_is_activated('refund_request'))
                                     <td>

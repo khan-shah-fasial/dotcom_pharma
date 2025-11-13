@@ -59,8 +59,8 @@
                                 <div id="collapseDeliveryInfo" class="collapse show" aria-labelledby="headingDeliveryInfo" data-parent="#accordioncCheckoutInfo">
                                     <div class="card-body pt-0" id="delivery_info">
                                         @include('frontend.partials.cart.delivery_info', ['carts' => $carts, 'carrier_list' => $carrier_list, 'shipping_info' => $shipping_info])
-                                        @include('frontend.partials.cart.shipping_service', ['shipping_methods' => get_active_shipping_methods()])
                                     </div>
+                                    @include('frontend.partials.cart.shipping_service', ['shipping_methods' => get_active_shipping_methods()])
                                 </div>
                             </div>
 
@@ -521,6 +521,22 @@
 
     @include('frontend.partials.address.address_js')
 
+    @php
+        $is_address_selected = false;
+        if(Auth::check()){
+            foreach (Auth::user()->addresses as $key => $address){
+                if ($address->id == $address_id) {
+                    $is_address_selected = true;
+                    break;
+                }
+            
+            }
+        }
+    @endphp
+
+    @if ($is_address_selected === false && Auth::user()->addresses->count() === 0)
+        <script>add_new_address();</script>
+    @endif
 
     @if (get_setting('google_map') == 1)
         @include('frontend.partials.google_map')

@@ -59,6 +59,7 @@ use App\Http\Controllers\RequestDocController;
 use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\CronjobController;
 use Illuminate\Http\Request;
+use App\Models\Order;
 
 /*
   |--------------------------------------------------------------------------
@@ -395,6 +396,43 @@ Route::get('/shipment/rates', function (Request $request) {
     // ShipwayController::rates($request) will read address_id/to_pincode and build package from cart.
     return app($class)->rates($request);
 })->name('shipment.rates');
+
+Route::post('/shipment/create', function (Request $request) {
+    $provider = $request->input('provider');
+    $orderEnc = $request->input('order');
+
+    if (! $provider || ! $orderEnc) {
+        return response()->json(['success' => false, 'message' => 'provider and order required'], 422);
+    }
+
+    $class = "App\\Http\\Controllers\\Shipment\\" . ucfirst($provider) . "Controller";
+    if (! class_exists($class) || ! method_exists($class, 'create')) {
+        return response()->json(['success' => false, 'message' => 'provider not found'], 404);
+    }
+
+    try {
+        $orderId = decrypt($orderEnc);
+        $order = Order::with(['orderDetails.product.stocks', 'shipment'])->findOrFail($orderId);
+    } catch (\Throwable $e) {
+        \Log::error('[Shipment][Create] Order resolve failed', ['err' => $e->getMessage(), 'payload' => $request->all()]);
+        return response()->json(['success' => false, 'message' => 'Invalid order token or order not found'], 422);
+    }
+
+    try {
+        $res = app($class)->create($order);
+    } catch (\Throwable $e) {
+        \Log::error('[Shipment][Create] Provider create() threw', ['err' => $e->getMessage()]);
+        return response()->json(['success' => false, 'message' => 'Provider create failed'], 500);
+    }
+
+    // Normalize provider response (works with arrays or JsonResponse)
+    $data = (is_object($res) && method_exists($res, 'getData')) ? $res->getData(true) : $res;
+    $success = !empty($data['success']) || ($data['status'] ?? '') === 'success';
+    $message = $data['message'] ?? $data['msg'] ?? ($success ? 'Shipment created' : 'Shipment creation failed');
+
+    return response()->json(['success' => (bool) $success, 'message' => $message, 'data' => $data]);
+})->name('shipment.create')->middleware('auth');
+
 
 Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function () {
 

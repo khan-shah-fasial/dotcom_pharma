@@ -815,14 +815,14 @@ class CheckoutController extends Controller
         }
 
         $ownerId   = (int) $request->user_id;
-        $carrierId = (int) $request->carrier_id;
+        // $carrierId = (int) $request->carrier_id;
         $fee       = (float) ($request->input('charge', 0));
 
         // apply to this owner's items; charge once
         $userCarts = $carts->where('owner_id', $ownerId)->values();
         foreach ($userCarts as $i => $item) {
-            $item->shipping_type = 'carrier';
-            $item->carrier_id    = $carrierId;
+            // $item->shipping_type = 'carrier';
+            // $item->carrier_id    = $carrierId;
             $item->shipping_cost = $i === 0 ? $fee : 0.0;
             $item->save();
         }
