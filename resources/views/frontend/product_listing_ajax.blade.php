@@ -45,6 +45,9 @@
 
 #color-filter .mega-gap-between {
   gap: 5px;
+  display: flex !important;
+  justify-content: space-between !important;
+  padding-bottom: 10px;
 }
 
 </style>
@@ -87,47 +90,49 @@
     <div class="row">
       <!-- Left Filters -->
       <div class="col-lg-3 d-none d-lg-block"> 
-        {{-- CATEGORY FILTER COMPONENT --}}
-        @include('frontend.'.get_setting('homepage_select').'.partials.filters.category_filter', [
-          'categories'            => $categories,
-          'category'              => $category,
-          'category_id'           => $category_id,
-          'selected_category_ids' => $selected_category_id ?? null,
-          'preloadedChildren'     => $preloadedChildren ?? [],
-          'expandedIds'           => $expandedIds ?? [],
-          'categoryCounts'    => $categoryCounts ?? [],
-        ])
+        <div class="filter-main-div-container">
+          {{-- CATEGORY FILTER COMPONENT --}}
+          @include('frontend.'.get_setting('homepage_select').'.partials.filters.category_filter', [
+            'categories'            => $categories,
+            'category'              => $category,
+            'category_id'           => $category_id,
+            'selected_category_ids' => $selected_category_id ?? null,
+            'preloadedChildren'     => $preloadedChildren ?? [],
+            'expandedIds'           => $expandedIds ?? [],
+            'categoryCounts'    => $categoryCounts ?? [],
+          ])
 
-        {{-- PRICE FILTER COMPONENT --}}
-        {{-- @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
-          'globalMin'   => $globalMin,
-          'globalMax'   => $globalMax,
-          'min_price'   => $min_price,
-          'max_price'   => $max_price,
-        ]) --}}
+          {{-- PRICE FILTER COMPONENT --}}
+          {{-- @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
+            'globalMin'   => $globalMin,
+            'globalMax'   => $globalMax,
+            'min_price'   => $min_price,
+            'max_price'   => $max_price,
+          ]) --}}
 
-        {{-- Render ONCE, desktop sidebar location --}}
-        <div id="price-filter-wrap">
-          @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
-            'globalMin' => $globalMin, 'globalMax' => $globalMax,
-            'min_price' => $min_price, 'max_price' => $max_price,
+          {{-- Render ONCE, desktop sidebar location --}}
+          <div id="price-filter-wrap">
+            @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
+              'globalMin' => $globalMin, 'globalMax' => $globalMax,
+              'min_price' => $min_price, 'max_price' => $max_price,
+            ])
+          </div>
+
+
+          {{-- ATTRIBUTES FILTER COMPONENT --}}
+          <div id="attributes-filter">
+            @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
+              'attributes' => $attributes,
+              'selected_attribute_values' => $selected_attribute_values ?? [],
+            ])
+          </div>
+
+          {{-- COLOR FILTER (AJAX-replaceable) --}}
+          @include('frontend.'.get_setting('homepage_select').'.partials.filters.color_filter', [
+            'colors'         => $colors,
+            'selected_color' => $color ?? null,
           ])
         </div>
-
-
-        {{-- ATTRIBUTES FILTER COMPONENT --}}
-        <div id="attributes-filter">
-          @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
-            'attributes' => $attributes,
-            'selected_attribute_values' => $selected_attribute_values ?? [],
-          ])
-        </div>
-
-        {{-- COLOR FILTER (AJAX-replaceable) --}}
-        @include('frontend.'.get_setting('homepage_select').'.partials.filters.color_filter', [
-          'colors'         => $colors,
-          'selected_color' => $color ?? null,
-        ])
       </div>
       
 
@@ -139,7 +144,7 @@
           
 
               <!-- Top bar -->
-        <div class="d-flex align-items-center flex-wrap justify-content-between mb-2">
+        <div class="d-flex align-items-center flex-wrap justify-content-between mb-2 pl-2 pb-1">
           <h1 class="fs-20 fs-md-24 fw-700 text-dark text-capitalize mb-md-0 mb-2" id="list-title">
             @if($category_id)
               {{ $category->getTranslation('name') }}
@@ -149,6 +154,62 @@
               {{ translate('All Products') }}
             @endif
           </h1>
+
+          <script>
+/**
+ * Build chain like "Root » Parent » Child" by walking up .cat-node containers.
+ * Assumes each .cat-node has .cat-name inside it (matches your markup).
+ */
+function buildCategoryChainFromRadio(radioEl) {
+  if(!radioEl) return '';
+  const names = [];
+  // start from the radio's closest .cat-node
+  let cur = radioEl.closest('.cat-node');
+  while (cur) {
+    const nameEl = cur.querySelector('.cat-name');
+    if (nameEl) {
+      const txt = nameEl.textContent.trim();
+      if (txt) names.push(txt);
+    }
+    // move to the parent .cat-node (the container that holds this node)
+    cur = cur.parentElement ? cur.parentElement.closest('.cat-node') : null;
+  }
+  // we collected [current, parent, grandparent ...] -> reverse for root->...->current
+  return names.reverse().join(' / ');
+}
+
+function setListTitle(text) {
+  const h1 = document.getElementById('list-title');
+  if (!h1) return;
+  // If you want to preserve translation / other branches when no category selected,
+  // only overwrite when text is non-empty.
+  if (text && text.length) {
+    h1.textContent = text;
+  }
+}
+
+/* Event handler when a category radio changes */
+function onCategoryRadioChange(ev) {
+  const radio = ev.target;
+  if (!radio.matches('.js-cat-radio')) return;
+  const chain = buildCategoryChainFromRadio(radio);
+  setListTitle(chain);
+}
+
+/* Init: bind events and set initial title if a radio is pre-checked */
+document.addEventListener('DOMContentLoaded', function () {
+  // delegate change events (works if radios are added later too)
+  document.addEventListener('change', onCategoryRadioChange);
+
+  // on page load: if one radio is checked, build breadcrumb
+  const preChecked = document.querySelector('.js-cat-radio:checked');
+  if (preChecked) {
+    const chain = buildCategoryChainFromRadio(preChecked);
+    setListTitle(chain);
+  }
+});
+</script>
+
 
           <!-- Sort + Filter buttons -->
           <div class="d-flex align-items-center gap-2 filter-mobile-btn mb-md-0 mb-2">
@@ -172,18 +233,21 @@
           </div>
         </div>
 
-          <!-- Active filters -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap mb-md-3 mb-2 mt-md-3 mt-2">
-          <div id="page-metrics" class=" text-muted fs-12 mb-md-0 mb-2">
-          Per page: {{ $perPage }} • Total pages: {{ $totalPages }} <br> Total products: {{ $total }}
-        </div>
 
         <!-- clear filter -->
-          <div id="active-filters" class=" d-flex align-items-center flex-wrap gap-2 mb-md-0 mb-2">
-            <button id="clear-filters" type="button" class="btn btn-sm text-danger d-none pl-0 pr-0">
-              {{ translate('Clear all') }}
-            </button>
-          </div>
+        <div id="active-filters" class=" d-flex align-items-center flex-wrap gap-2 mb-md-0 mb-2 pl-2">
+          <button id="clear-filters" type="button" class="btn btn-sm text-danger d-none pl-0 pr-0">
+            {{ translate('Clear all') }}
+          </button>
+        </div>
+
+          <!-- Active filters -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-md-3 mb-2 mt-md-3 mt-2 pl-2">
+          <div id="page-metrics" class=" text-muted fs-12 mb-md-0 mb-2">
+          Per page: {{ $perPage }} • Total pages: {{ $totalPages }} Total products: {{ $total }}
+        </div>
+
+        
         </div>
           <!--  -->
         
@@ -477,7 +541,7 @@
   function addPill({type, value, text}) {
     const pill = document.createElement('button');
     pill.type = 'button';
-    pill.className = 'btn btn-sm btn-outline-primary js-filter-pill mr-2';
+    pill.className = 'btn btn-sm btn-outline-primary js-filter-pill mr-2 blue-butn-filter';
     pill.dataset.type = type;
     pill.dataset.value = value;
     pill.innerHTML = `${escapeHtml(text)} <span aria-hidden="true">×</span>`;
@@ -808,6 +872,34 @@ function toggleMobileFilter() {
   padding-left: 2rem !important;
 }
 
+.filter-main-div-container{
+  /* background-color: #eff5ec !important; */
+  background-color: #ffffffff !important;
+  border-radius: 10px;
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.10);
+  border: 1px solid #e5e7eb;
+  padding: 15px 24px 15px 5px;
+}
+
+.filter-main-div-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px; /* this = EXACT border thickness */
+  background: linear-gradient(45deg, #777777ff, #777777ff); /* your colors */
+  filter: blur(6px); /* blur amount */
+  z-index: -1;
+
+  /* creates only the border */
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+
+}
+
 /* .filter-mobile-btn .dropdown-menu.show{ */
   /* min-width: 11rem !important; */
   /* right: 0 !important; */
@@ -819,6 +911,23 @@ function toggleMobileFilter() {
 
 .filter-body {
   padding: 12px 0;
+}
+
+#active-filters button {
+    border-radius: 25px;
+}
+
+.blue-butn-filter{
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: var(--white) !important;
+}
+
+.blue-butn-filter span{
+  background: #096c9a;;
+  padding: 0px 5px;
+  border-radius: 24px;
+  margin-left: 5px;
 }
 
 /* Desktop unaffected */

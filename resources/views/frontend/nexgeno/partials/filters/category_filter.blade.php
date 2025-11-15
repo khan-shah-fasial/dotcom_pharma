@@ -19,14 +19,15 @@
     align-items: center;
     justify-content: space-between;
     gap: .5rem;
-    padding: .45rem .25rem .45rem 0;
+    /* padding: .45rem .25rem .45rem 0; */
+    padding-bottom:15px;
     cursor: pointer;
   }
   .cat-head-title {
     display: flex;
     align-items: center;
     gap: .45rem;
-    justify-content: space-between;
+    justify-content: start;
     width: 100%
   }
   .cat-children-panel {
@@ -51,13 +52,14 @@
   }
 
   .cat-radio-label span.cat-name {
-    font-size: .875rem;
+    font-size: 16px !important;
     color: #333;
     cursor: pointer;
   }
 
   .cat-radio-label input[type="radio"]:checked + span.cat-name {
   font-weight: 700;
+  color: #096c9a;
 }
 
   /* child item */
@@ -77,6 +79,12 @@
     display: none;
   }
 
+  /* .cat-radio-label .count-number-filter{
+      position: relative;
+      float: right;
+      right: -175px;
+  } */
+
   #cat-root {
     max-height: 250px;
     overflow-y: auto;
@@ -88,15 +96,18 @@
 
 .cat-child-item .cat-head{
   padding-top: 0px;
-  padding-bottom: 0px;
+  padding-bottom: 10px;
 }
 
 #cat-root #children-of-90{
   margin-left: 15px;
+  /* border-left: 2px solid #a9a2a2;
+  padding-left: 10px; */
 }
 
 .cat-child-item .cat-children-panel{
   margin-left: 15px;
+  /* border-left: 2px solid #a9a2a2; */
 }
 
 /* Chrome, Edge, Safari scrollbar styling */
@@ -120,11 +131,11 @@
 </style>
 
 <div id="{{ $accordionId }}">
-  <div class="light_bg_gray mb-0">
-    <div class="fs-16 fw-700 p-3">
+  <div class=" background-none-filterlight_bg_gray mb-0">
+    <div class="fs-18 fw-700 p-3">
       <a
         href="javascript:void(0)"
-        class="dropdown-toggle filter-section text-dark d-flex align-items-center justify-content-between {{ $catShouldShow ? '' : 'collapsed' }}"
+        class="fs-18 dropdown-toggle filter-section text-dark d-flex align-items-center justify-content-between {{ $catShouldShow ? '' : 'collapsed' }}"
         data-toggle="collapse"
         data-target="#{{ $catCollapseId }}"
         data-parent="#{{ $accordionId }}"

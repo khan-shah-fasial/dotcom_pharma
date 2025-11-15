@@ -1,6 +1,6 @@
 <!-- Price range (OLD SLIDER: UNCHANGED) -->
-<div class="light_bg_gray mb-0">
-  <div class="fs-16 fw-700 p-3">
+<div class="background-none-filter light_bg_gray mb-0">
+  <div class="fs-18 fw-700 p-3">
       {{ translate('Price Range')}}
   </div>
   <div class="p-3 mr-3">

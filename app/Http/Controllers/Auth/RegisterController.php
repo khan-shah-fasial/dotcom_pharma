@@ -87,6 +87,7 @@ class RegisterController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
+                'approval_status' => 1,
             ]);
         }
         else {
@@ -96,7 +97,8 @@ class RegisterController extends Controller
                     'phone' => '+'.$data['country_code'].'-'.$data['phone'],
                     'password' => Hash::make($data['password']),
                     // 'verification_code' => rand(100000, 999999)
-                    'verification_code' => '123456'
+                    'verification_code' => '123456',
+                    'approval_status' => 1,
                 ]);
 
                 $otpController = new OTPVerificationController;

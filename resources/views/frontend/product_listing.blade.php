@@ -87,7 +87,7 @@
                                 </div>
 
                                 <!-- Categories -->
-                                <div class=" mb-3 light_bg_gray">
+                                <div class=" mb-3 background-none-filter light_bg_gray">
                                     <div class="fs-16 fw-700 p-3">
                                         <a href="#collapse_1" class="dropdown-toggle filter-section text-dark d-flex align-items-center justify-content-between" data-toggle="collapse">
                                             {{ translate('Categories')}}
@@ -138,7 +138,7 @@
                                 </div>
 
                                 <!-- Price range -->
-                                <div class="light_bg_gray mb-0">
+                                <div class="background-none-filter light_bg_gray mb-0">
                                     <div class="fs-16 fw-700 p-3">
                                         {{ translate('Price Range')}}
                                     </div>
@@ -188,8 +188,8 @@
                                 
                                 <!-- Attributes -->
                                 @foreach ($attributes as $attribute)
-                                    <div class="light_bg_gray mb-0">
-                                        <div class="fs-16 fw-700 p-3">
+                                    <div class="background-none-filter light_bg_gray mb-0">
+                                        <div class="fs-18 fw-700 p-3">
                                             <a href="#" class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between" 
                                                 data-toggle="collapse" data-target="#collapse_{{ str_replace(' ', '_', $attribute->name) }}" style="white-space: normal;">
                                                 {{ $attribute->getTranslation('name') }}
@@ -214,7 +214,7 @@
                                                             onchange="filter()"
                                                         >
                                                         <span class="aiz-square-check"></span>
-                                                        <span class="fs-14 fw-400 text-dark">{{ $attribute_value->value }}</span>
+                                                        <span class="fs-16 fw-400 text-dark">{{ $attribute_value->value }}</span>
                                                     </label>
                                                 @endforeach
                                             </div>
@@ -224,8 +224,8 @@
                                     
                                 <!-- Color -->
                                 @if (get_setting('color_filter_activation'))
-                                    <div class="light_bg_gray mb-0">
-                                        <div class="fs-16 fw-700 p-3">
+                                    <div class="background-none-filter light_bg_gray mb-0">
+                                        <div class="fs-18 fw-700 p-3">
                                             <a href="#" class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between" data-toggle="collapse" data-target="#collapse_color">
                                                 {{ translate('Filter by color')}}
                                             </a>
