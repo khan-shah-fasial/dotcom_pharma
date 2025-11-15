@@ -145,19 +145,21 @@
                 var priceText = (it.price==null)? '' : ('₹'+Number(it.price).toFixed(2));
                 html += `
                 <div class="col-xl-4 col-md-6">
-                    <label class="aiz-megabox d-block mb-3" for="${id}">
-                    <input id="${id}" type="radio" name="courier_service"
-                            value="${it.carrier_id||''}" ${i===0?'checked':''}
-                            data-provider="${it.provider||''}"
-                            data-carrier-id="${it.carrier_id||''}"
-                            data-charge="${it.price??''}"
-                            onchange="updateDeliveryInfoByShipping(this)">
-                    <span class="d-flex flex-column aiz-megabox-elem rounded-0 p-3">
-                        <span class="fw-600">${it.name||'Carrier'}</span>
-                        ${priceText?`<span class="fs-13 text-muted">${priceText}</span>`:''}
-                        <span class="fs-11 text-muted">${(it.provider||'').toUpperCase()}</span>
-                    </span>
-                    </label>
+                    <div class="h=100">
+                        <label class="aiz-megabox d-block mb-3" for="${id}">
+                        <input id="${id}" type="radio" name="courier_service"
+                                value="${it.carrier_id||''}" ${i===0?'checked':''}
+                                data-provider="${it.provider||''}"
+                                data-carrier-id="${it.carrier_id||''}"
+                                data-charge="${it.price??''}"
+                                onchange="updateDeliveryInfoByShipping(this)">
+                        <span class="d-flex flex-column aiz-megabox-elem rounded-0 p-3">
+                            <span class="fs-12 fw-600">${it.name||'Carrier'}</span>
+                            ${priceText?`<span class="fs-13 ">${priceText}</span>`:''}
+                            <span class="fs-11">${(it.provider||'').toUpperCase()}</span>
+                        </span>
+                        </label>    
+                    </div>
                 </div>`;
             });
             html += '</div>';
