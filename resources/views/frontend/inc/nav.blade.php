@@ -984,7 +984,7 @@ body .translater_menu .select2-container {
                                     </a>
 
                                     @if($cat->childrenCategories->isNotEmpty())
-                                        <div class="dropdown-menu dropdown-menu-bottom-top"
+                                        <div class="dropdown-menu"
                                             aria-labelledby="injectionsDropdown_{{ $cat->id }}">
                                             @foreach ($cat->childrenCategories as $childCategory)
                                                 <a class="dropdown-item"
