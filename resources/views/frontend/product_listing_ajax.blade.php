@@ -89,7 +89,7 @@
   <div class="container sm-px-0">
     <div class="row">
       <!-- Left Filters -->
-      <div class="col-lg-3 d-none d-lg-block"> 
+      <div class="col-lg-3 d-none d-lg-block filtration_css"> 
         <div class="filter-main-div-container">
           {{-- CATEGORY FILTER COMPONENT --}}
           @include('frontend.'.get_setting('homepage_select').'.partials.filters.category_filter', [
@@ -889,16 +889,18 @@ function toggleMobileFilter() {
   padding-left: 2rem !important;
 }
 
-.filter-main-div-container{
+.filtration_css{
   /* background-color: #eff5ec !important; */
   background-color: #ffffffff !important;
   border-radius: 10px;
   box-shadow: 0 1px 12px rgba(0, 0, 0, 0.10);
   border: 1px solid #e5e7eb;
   padding: 15px 24px 15px 5px;
+      max-width: 24% !important;
+    margin-left: 1%;
 }
 
-.filter-main-div-container::before {
+.filtration_css::before {
   content: "";
   position: absolute;
   inset: 0;

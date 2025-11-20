@@ -36,7 +36,7 @@
     @endphp
 
     <div class="background-none-filter light_bg_gray mb-0">
-        <div class="fs-18 fw-700 p-3">
+        <div class="fs-18 fw-600 p-3">
             <a href="javascript:void(0)"
                class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between"
                data-toggle="collapse"

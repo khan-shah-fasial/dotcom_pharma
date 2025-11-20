@@ -132,7 +132,7 @@
 
 <div id="{{ $accordionId }}">
   <div class=" background-none-filterlight_bg_gray mb-0">
-    <div class="fs-18 fw-700 p-3">
+    <div class="fs-18 fw-600 p-3">
       <a
         href="javascript:void(0)"
         class="fs-18 dropdown-toggle filter-section text-dark d-flex align-items-center justify-content-between {{ $catShouldShow ? '' : 'collapsed' }}"
