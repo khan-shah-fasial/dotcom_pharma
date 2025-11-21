@@ -301,7 +301,7 @@ class OrderController extends Controller
             $combined_order->grand_total += $order->grand_total;
 
 
-            $order->quote_grand_total = single_price($order->grand_total);
+            $order->quote_grand_total = $order->grand_total;
             $order->quote_currency_code = Session::get('currency_code');
             $order->quote_currency_exchange_rate = Session::get('currency_exchange_rate');
 
