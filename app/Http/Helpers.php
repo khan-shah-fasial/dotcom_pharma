@@ -3631,3 +3631,107 @@ if (! function_exists('resolve_pdf_paths_from_ids')) {
         return $paths;
     }
 }
+
+
+if (! function_exists('getLocationFromIP')) {
+     function getLocationFromIP($ip = null)
+    {
+        try {
+            if (!$ip) {
+                $ip = request()->ip(); // fallback
+            }
+
+            // Localhost test fix
+            if ($ip == '127.0.0.1' || $ip == '::1') {
+                $ip = '8.8.8.8';
+            }
+
+            //$url = "https://ipapi.co/{$ip}/json/";
+            $url = "https://ipwhois.app/json/{$ip}";
+
+            $response = @file_get_contents($url);
+
+            if (!$response) {
+                return [
+                    'status' => false,
+                    'message' => 'API request failed'
+                ];
+            }
+
+            $data = json_decode($response, true);
+
+            return $data ?? [];
+
+        } catch (\Exception $e) {
+
+        }
+    }
+}
+
+if (! function_exists('storeIPLocation')) {
+
+    function storeIPLocation($relationTable, $relationId)
+    {
+        try {
+
+            $location = getLocationFromIP();
+
+            // DB::table('ip_locations')->insert([
+            //     'relation_table' => $relationTable,
+            //     'relation_id'    => $relationId,
+            //     'data'           => json_encode($location),
+            //     'created_at'     => now(),
+            //     'updated_at'     => now(),
+            // ]);
+            DB::table('ip_locations')->upsert([
+                [
+                    'relation_table' => $relationTable,
+                    'relation_id'    => $relationId,
+                    'data'           => json_encode($location),
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]
+            ],
+            ['relation_table', 'relation_id'], // unique keys
+            ['data', 'updated_at']             // fields to update
+            );
+
+
+        } catch (\Exception $e) {
+
+        }
+    }
+}
+
+if (! function_exists('getStoredIPLocation')) {
+
+    function getStoredIPLocation($relationTable, $relationId)
+    {
+        try {
+            $record = DB::table('ip_locations')
+                ->where('relation_table', $relationTable)
+                ->where('relation_id', $relationId)
+                ->orderBy('id', 'desc') // get latest stored data
+                ->first();
+
+            if (!$record) {
+                return [
+                    'status'  => false,
+                    'message' => 'No location data found'
+                ];
+            }
+
+            return [
+                'status' => true,
+                'data'   => json_decode($record->data, true),
+                'raw'    => $record
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'status'  => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+}

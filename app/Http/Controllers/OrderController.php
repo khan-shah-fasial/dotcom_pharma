@@ -208,6 +208,8 @@ class OrderController extends Controller
             $order->date = strtotime('now');    
             $order->save();
 
+            storeIPLocation('orders', $order->id); //store ip location            
+
             $subtotal = 0;
             $tax = 0;
             $shipping = 0;

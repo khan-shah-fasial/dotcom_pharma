@@ -342,6 +342,9 @@
 
         </div>
     </div>
+
+    @include('components.location-info', ['data' => getStoredIPLocation('orders', $order->id)])
+
 @endsection
 
 @section('modal')
