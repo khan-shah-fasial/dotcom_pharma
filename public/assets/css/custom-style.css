@@ -40,6 +40,15 @@ li {
     color: #096c9a !important;
 }
 
+.color-name-fix {
+  max-width: 120px;            /* keep text inside container */
+  white-space: normal;         /* allow wrapping */
+  overflow-wrap: anywhere;     /* break long single words */
+  word-break: break-word;      /* fallback */
+  line-height: 1.1;
+}
+
+
 .copy_rights_section a {
     color: #fff;
 }
@@ -217,7 +226,7 @@ li.list-inline-item.human_btn {
 .product_img_bg img {
     margin-top: 15px;
     margin-bottom: 15px;
-    height: 250px;
+    height: 240px;
     object-fit: scale-down;
     width: 89%;
     display: block;
@@ -1107,7 +1116,7 @@ ul.dropdown-menu {
 .product_listing_box {
     padding: 0 !important;
     /* margin-bottom: 15px; */
-    margin-bottom: 5rem;
+    margin-bottom: 1.5rem;
     border: 0px !important;
 }
 

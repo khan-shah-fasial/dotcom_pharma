@@ -10,7 +10,7 @@
             }
         @endphp
         <!-- Image -->
-        <a href="{{ $product_url }}" class="d-block h-100">
+        <a href="{{ $product_url }}" class="d-block">
             <img class="lazyload mx-auto img-fit has-transition"
                 src="{{ get_image($product->thumbnail) }}"
                 alt="{{ $product->getTranslation('name') }}"

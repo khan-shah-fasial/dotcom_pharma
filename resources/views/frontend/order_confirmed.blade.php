@@ -81,7 +81,7 @@
                         <h5 class="fw-600 mb-3 fs-16 text-soft-dark pb-2 border-bottom">{{ translate('Order Summary')}}</h5>
                         <div class="row">
                             <div class="col-md-6">
-                                <table class="table fs-14 text-soft-dark">
+                                <table class="table fs-14 text-soft-dark table-responsive-md">
                                     <tr>
                                         <td class="w-50 fw-600 border-top-0 pl-0 py-2">{{ translate('Order date')}}:</td>
                                         <td class="border-top-0 py-2">{{ date('d-m-Y H:i A', $first_order->date) }}</td>

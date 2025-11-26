@@ -1,6 +1,6 @@
 @if (get_setting('color_filter_activation') && ($colors ?? collect())->count())
 <div class="background-none-filter light_bg_gray mb-0" id="color-filter">
-  <div class="fs-18 fw-600 p-3">
+  <div class="fs-16 fw-600 p-3">
     <a href="#" class="dropdown-toggle text-dark filter-section collapsed d-flex align-items-center justify-content-between"
        data-toggle="collapse" data-target="#collapse_color">
       {{ translate('Filter by color') }}
@@ -37,12 +37,12 @@
               </span>
 
             {{-- Name below swatch (matches original muted small text) --}}
-            <div class="fs-16 text-center text-dark bd-chked-clr" style="line-height:1;">
+            <div class="fs-14 text-center text-dark bd-chked-clr color-name-fix" style="line-height:1; white-space: normal; word-break: break-word;">
               {{ $name }}
             </div>
           </div>
           {{-- Count below name (muted, only when >0) --}}
-          <div class="fs-16 text-center text-muted">
+          <div class="fs-14 text-center text-muted">
             {{-- {{ $cnt > 0 ? '(' . $cnt . ')' : '' }} --}}
             {{  '(' . $cnt . ')' }}
           </div>

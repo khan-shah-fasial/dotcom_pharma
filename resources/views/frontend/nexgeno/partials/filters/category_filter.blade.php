@@ -52,7 +52,7 @@
   }
 
   .cat-radio-label span.cat-name {
-    font-size: 16px !important;
+    font-size: 14px !important;
     color: #333;
     cursor: pointer;
   }
@@ -132,7 +132,7 @@
 
 <div id="{{ $accordionId }}">
   <div class=" background-none-filterlight_bg_gray mb-0">
-    <div class="fs-18 fw-600 p-3">
+    <div class="fs-16 fw-600 p-3">
       <a
         href="javascript:void(0)"
         class="fs-18 dropdown-toggle filter-section text-dark d-flex align-items-center justify-content-between {{ $catShouldShow ? '' : 'collapsed' }}"
