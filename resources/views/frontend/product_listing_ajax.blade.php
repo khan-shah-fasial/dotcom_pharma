@@ -132,21 +132,6 @@
             'selected_color' => $color ?? null,
           ])
         </div>
-
-        {{-- ATTRIBUTES FILTER COMPONENT --}}
-        <div id="attributes-filter">
-          @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
-            'attributes' => $attributes,
-            'selected_attribute_values' => $selected_attribute_values ?? [],
-            'is_mobile' => false,
-          ])
-        </div>
-
-        {{-- COLOR FILTER (AJAX-replaceable) --}}
-        @include('frontend.'.get_setting('homepage_select').'.partials.filters.color_filter', [
-          'colors'         => $colors,
-          'selected_color' => $color ?? null,
-        ])
       </div>
       
       <!-- Products Section -->
