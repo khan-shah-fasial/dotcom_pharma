@@ -217,7 +217,7 @@
 </head>
 <body>
     <!-- aiz-main-wrapper -->
-    <div class="aiz-main-wrapper d-flex flex-column" style="background: #f5f5f5">
+    <div class="aiz-main-wrapper d-flex flex-column bg-white">
         @php
             $user = auth()->user();
             $user_avatar = null;
