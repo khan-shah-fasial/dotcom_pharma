@@ -89,7 +89,7 @@
   <div class="container sm-px-0">
     <div class="row">
       <!-- Left Filters -->
-      <div class="col-xl-2 col-lg-3 d-none d-lg-block filtration_css pl-0 pr-0 pt-1"> 
+      <div class="col-xl-2 col-lg-3 d-none d-lg-block filtration_css pl-0 pr-0 pt-1 h-100"> 
         <div class="filter-main-div-container">
           {{-- CATEGORY FILTER COMPONENT --}}
           @include('frontend.'.get_setting('homepage_select').'.partials.filters.category_filter', [
@@ -152,7 +152,7 @@
       <!-- Products Section -->
       <div class="col-xl-10 col-lg-9">
         <!-- Top bar -->
-        <div class="d-flex align-items-center flex-wrap justify-content-between mb-2 pl-2 pb-1">
+        <div class="d-flex align-items-center flex-wrap justify-content-between mb-2 pl-md-2 pb-1">
           <h1 class="fs-20 fs-md-24 fw-700 text-dark text-capitalize mb-md-0 mb-2" id="list-title">
             @if($category_id)
               {{ $category->getTranslation('name') }}
@@ -240,14 +240,14 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
 
         <!-- clear filter -->
-        <div id="active-filters" class=" d-flex align-items-center flex-wrap gap-2 mb-md-0 mb-2 pl-2">
+        <div id="active-filters" class=" d-flex align-items-center flex-wrap gap-2 mb-md-0 mb-2 pl-md-2">
           <button id="clear-filters" type="button" class="btn btn-sm text-danger d-none pl-0 pr-0">
             {{ translate('Clear all') }}
           </button>
         </div>
 
         <!-- Active filters -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap mb-md-3 mb-2 mt-md-3 mt-2 pl-2">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-md-3 mb-2 mt-md-3 mt-2 pl-md-2">
           <div id="page-metrics" class=" text-muted fs-12 mb-md-0 mb-2">
           Per page: {{ $perPage }} • Total pages: {{ $totalPages }} Total products: {{ $total }}
         </div>
@@ -302,11 +302,11 @@ document.addEventListener('DOMContentLoaded', function () {
       'selected_color' => $color ?? null,
     ])
 
-    <div class="p-3">
+    <!-- <div class="p-3">
       <button type="button" class="btn btn-danger w-100" onclick="toggleMobileFilter()">
         {{ translate('Apply Filters') }}
       </button>
-    </div>
+    </div> -->
   </div>
 </nav>
 
@@ -858,7 +858,7 @@ function toggleMobileFilter() {
 
 /* Red header bar */
 .filter-header {
-  background: #52535d;
+  background: #2b56a1;
   padding: 5px 16px;
   position: sticky;
   top: 0;

@@ -105,6 +105,10 @@
   padding-left: 10px; */
 }
 
+#children-of-118 {
+  margin-left: 15px;
+}
+
 .cat-child-item .cat-children-panel{
   margin-left: 15px;
   /* border-left: 2px solid #a9a2a2; */

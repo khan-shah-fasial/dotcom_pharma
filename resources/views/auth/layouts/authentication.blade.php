@@ -51,6 +51,12 @@
     width: 180px !important;
 }
 
+@media (max-width: 425px) {
+    .login-logo-all {
+        width: 60px !important;
+    }
+}
+
 .form-control {
     border: 1px solid #363636CC;
     border-radius: 15px !important;

@@ -34,7 +34,7 @@
           data-has-children="{{ $hasKids ? 1 : 0 }}"
           @checked($isChecked)
         >
-        <span class="cat-name fw-500">
+        <span class="cat-name fw-400">
           {{ $label }}
 
         </span>
