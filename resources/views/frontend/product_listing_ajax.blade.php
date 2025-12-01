@@ -5,6 +5,10 @@
 
 @section('content')
 <style>
+body {
+  background-color: #f5f5f5 !important;
+}
+
 /* Primary: when input is directly followed by the element */
 .aiz-megabox input[type="radio"]:checked + .aiz-megabox-elem {
   border: 2px solid var(--primary) !important;
