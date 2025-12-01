@@ -52,7 +52,7 @@
   }
 
   .cat-radio-label span.cat-name {
-    font-size: 12px !important;
+    font-size: 14px !important;
     color: #333;
     cursor: pointer;
   }
