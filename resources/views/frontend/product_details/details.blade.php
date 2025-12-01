@@ -355,6 +355,34 @@
             <p class="fs-14 pt-3">Please login / register to buy or to get detailed information of the product</p>
         @endif
 
+        @if ($detailedProduct->gem_portal_link)
+            <div class="col-12 d-flex flex-wrap mt-4 pt-4 pb-2 pl-4 pr-2 detail-border-1px bg-white">
+                <div class="col-12 col-md-12 text-left pl-0 pr-0">
+                    <h5 class="fe-semibold mb-3">{{ translate('GEM Portal') }}</h5>
+                </div>
+                <div class="col-12 col-md-12 pl-0 mb-2">
+                    <div class="detail-product-specs rounded h-100 d-flex align-items-center justify-content-between flex-wrap">
+                        <div class="d-flex align-items-center">
+                            <span class="mr-3 d-inline-flex align-items-center justify-content-center rounded-circle bg-soft-primary p-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link">
+                                    <path d="M15 3h6v6" />
+                                    <path d="M10 14 21 3" />
+                                    <path d="M18 13v7a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V7a1 1 0 0 1 1-1h7" />
+                                </svg>
+                            </span>
+                            <div>
+                                <p class="detail-font-14px detail-gray-color mb-1">{{ translate('View on GEM Portal') }}</p>
+                                <a href="{{ $detailedProduct->gem_portal_link }}" class="fw-500 fs-14 text-primary text-break" target="_blank" rel="noopener" style="word-break: break-all;">
+                                    {{ $detailedProduct->gem_portal_link }}
+                                </a>
+                            </div>
+                        </div>
+                        <a href="{{ $detailedProduct->gem_portal_link }}" class="btn btn-outline-primary btn-sm mt-3 mt-md-0" target="_blank" rel="noopener">{{ translate('Open Link') }}</a>
+                    </div>
+                </div>
+            </div>
+        @endif
+
 
 
 

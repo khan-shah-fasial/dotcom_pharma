@@ -152,6 +152,14 @@
                                             </div>
                                         </div>
 
+                                        <!-- GEM portal link -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{ translate('GEM portal link') }}</label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control @error('gem_portal_link') is-invalid @enderror" name="gem_portal_link" value="{{ old('gem_portal_link') }}" placeholder="{{ translate('https://...') }}">
+                                            </div>
+                                        </div>
+
                                         <!-- Drug Name -->
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Drug Name')}} </label>

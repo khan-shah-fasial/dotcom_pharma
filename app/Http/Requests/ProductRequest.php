@@ -30,6 +30,7 @@ class ProductRequest extends FormRequest
         $rules = [];
 
         $rules['name']          = 'required|max:255';
+        $rules['gem_portal_link'] = 'sometimes|nullable|url';
         $rules['category_ids']  = 'required';
         $rules['category_id']   = ['required', Rule::in($this->category_ids)];
         $rules['unit']         = 'sometimes|required';
