@@ -1122,7 +1122,7 @@ ul.dropdown-menu {
 
 .product_listing_box .product_img_bg {
     /* background: #609A380D; */
-    background: white;
+    background: white !important;
     border-radius: 10px;
 }
 

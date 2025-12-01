@@ -870,6 +870,10 @@ function toggleMobileFilter() {
   margin-left: 1%;
 }
 
+.light_bg_gray:last-of-type {
+  border-bottom: none;
+}
+
 .filtration_css::before {
   content: "";
   position: absolute;
