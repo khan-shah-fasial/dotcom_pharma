@@ -89,7 +89,7 @@ body {
   </div>
 </section> -->
 
-<section class="mb-4 pt-2" style="background: #f5f5f5">
+<section class="pb-4 pt-2" style="background: #f5f5f5">
   <div class="container sm-px-0">
     <div class="row">
       <!-- Left Filters -->
