@@ -817,6 +817,10 @@ function toggleMobileFilter() {
 @endsection
 
 <style>
+body {
+  background-color: #f5f5f5 !important;
+}
+
   /* --- MOBILE FILTER OVERLAY --- */
 .mobile-filter {
   position: fixed;
