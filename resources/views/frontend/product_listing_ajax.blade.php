@@ -5,6 +5,10 @@
 
 @section('content')
 <style>
+body {
+  background-color: #f5f5f5 !important;
+}
+
 /* Primary: when input is directly followed by the element */
 .aiz-megabox input[type="radio"]:checked + .aiz-megabox-elem {
   border: 2px solid var(--primary) !important;
@@ -51,7 +55,7 @@
 }
 
 </style>
-<section class="pt-2">
+<section class="pt-2" style="background: #f5f5f5">
   <div class="container">
     <ul class="breadcrumb bg-transparent p-0 justify-content-start mb-0 pb-3">
       <li class="breadcrumb-item"><a class="text-reset fs-14" href="{{ route('home') }}">{{ translate('Home') }}</a></li>
@@ -85,11 +89,11 @@
   </div>
 </section> -->
 
-<section class="mb-4 pt-2">
+<section class="pb-4 pt-2" style="background: #f5f5f5">
   <div class="container sm-px-0">
     <div class="row">
       <!-- Left Filters -->
-      <div class="col-lg-3 d-none d-lg-block filtration_css"> 
+      <div class="col-xl-2 col-lg-3 d-none d-lg-block filtration_css pl-0 pr-0 pt-1 h-100"> 
         <div class="filter-main-div-container">
           {{-- CATEGORY FILTER COMPONENT --}}
           @include('frontend.'.get_setting('homepage_select').'.partials.filters.category_filter', [
@@ -118,7 +122,6 @@
             ])
           </div>
 
-
           {{-- ATTRIBUTES FILTER COMPONENT --}}
           <div id="attributes-filter">
             @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
@@ -133,34 +136,12 @@
             'selected_color' => $color ?? null,
           ])
         </div>
-
-
-        {{-- ATTRIBUTES FILTER COMPONENT --}}
-        <div id="attributes-filter">
-          @include('frontend.'.get_setting('homepage_select').'.partials.filters.attributes_filter', [
-            'attributes' => $attributes,
-            'selected_attribute_values' => $selected_attribute_values ?? [],
-            'is_mobile' => false,
-          ])
-        </div>
-
-        {{-- COLOR FILTER (AJAX-replaceable) --}}
-        @include('frontend.'.get_setting('homepage_select').'.partials.filters.color_filter', [
-          'colors'         => $colors,
-          'selected_color' => $color ?? null,
-        ])
       </div>
       
-
       <!-- Products Section -->
-      <div class="col-lg-9">
-
-
-          <!--  -->
-          
-
-              <!-- Top bar -->
-        <div class="d-flex align-items-center flex-wrap justify-content-between mb-2 pl-2 pb-1">
+      <div class="col-xl-10 col-lg-9">
+        <!-- Top bar -->
+        <div class="d-flex align-items-center flex-wrap justify-content-between mb-2 pl-md-2 pb-1">
           <h1 class="fs-20 fs-md-24 fw-700 text-dark text-capitalize mb-md-0 mb-2" id="list-title">
             @if($category_id)
               {{ $category->getTranslation('name') }}
@@ -226,7 +207,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-
           <!-- Sort + Filter buttons -->
           <div class="d-flex align-items-center gap-2 filter-mobile-btn mb-md-0 mb-2">
 
@@ -245,28 +225,22 @@ document.addEventListener('DOMContentLoaded', function () {
               </select>
             </div>
 
-
           </div>
         </div>
 
-
         <!-- clear filter -->
-        <div id="active-filters" class=" d-flex align-items-center flex-wrap gap-2 mb-md-0 mb-2 pl-2">
+        <div id="active-filters" class=" d-flex align-items-center flex-wrap gap-2 mb-md-0 mb-2 pl-md-2">
           <button id="clear-filters" type="button" class="btn btn-sm text-danger d-none pl-0 pr-0">
             {{ translate('Clear all') }}
           </button>
         </div>
 
-          <!-- Active filters -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap mb-md-3 mb-2 mt-md-3 mt-2 pl-2">
+        <!-- Active filters -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-md-3 mb-2 mt-md-3 mt-2 pl-md-2">
           <div id="page-metrics" class=" text-muted fs-12 mb-md-0 mb-2">
           Per page: {{ $perPage }} • Total pages: {{ $totalPages }} Total products: {{ $total }}
         </div>
-
-        
         </div>
-          <!--  -->
-        
 
         <!-- Product Grid -->
         <div id="product-grid">
@@ -317,11 +291,11 @@ document.addEventListener('DOMContentLoaded', function () {
       'selected_color' => $color ?? null,
     ])
 
-    <div class="p-3">
+    <!-- <div class="p-3">
       <button type="button" class="btn btn-danger w-100" onclick="toggleMobileFilter()">
         {{ translate('Apply Filters') }}
       </button>
-    </div>
+    </div> -->
   </div>
 </nav>
 
@@ -843,6 +817,10 @@ function toggleMobileFilter() {
 @endsection
 
 <style>
+body {
+  background-color: #f5f5f5 !important;
+}
+
   /* --- MOBILE FILTER OVERLAY --- */
 .mobile-filter {
   position: fixed;
@@ -873,7 +851,7 @@ function toggleMobileFilter() {
 
 /* Red header bar */
 .filter-header {
-  background: #52535d;
+  background: #2b56a1;
   padding: 5px 16px;
   position: sticky;
   top: 0;
@@ -896,8 +874,12 @@ function toggleMobileFilter() {
   box-shadow: 0 1px 12px rgba(0, 0, 0, 0.10);
   border: 1px solid #e5e7eb;
   padding: 15px 24px 15px 5px;
-      max-width: 24% !important;
-    margin-left: 1%;
+  max-width: 15% !important;
+  margin-left: 1%;
+}
+
+.light_bg_gray:last-of-type {
+  border-bottom: none;
 }
 
 .filtration_css::before {

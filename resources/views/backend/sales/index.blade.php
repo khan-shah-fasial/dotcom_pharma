@@ -117,6 +117,9 @@
                             <th data-breakpoints="md">{{ translate('Delivery Status') }}</th>
                             <th data-breakpoints="md">{{ translate('Payment method') }}</th>
                             <th data-breakpoints="md">{{ translate('Payment Status') }}</th>
+                            <th data-breakpoints="md">{{ translate('Tracking') }}</th>
+                            <th data-breakpoints="md">{{ translate('Shipping Method') }}</th>
+                            <th data-breakpoints="md">{{ translate('Shipping Type') }}</th>
                             @if (addon_is_activated('refund_request'))
                                 <th>{{ translate('Refund') }}</th>
                             @endif
@@ -188,6 +191,36 @@
                                     @else
                                         <span class="badge badge-inline badge-danger">{{ translate('Unpaid') }}</span>
                                     @endif
+                                </td>
+                                <td>
+                                    @php 
+                                        $shipment = $order->shipment ?? null;
+                                        $trackingUrl = optional($shipment)->tracking_url;
+                                        $awb = optional($shipment)->shipping_id; // AWB or tracking number
+                                        $carrier = optional($shipment)->shipping_type; // courier name
+                                    @endphp
+
+                                    @if($trackingUrl)
+                                        <div class="small mb-1">
+                                            @if($carrier)
+                                                <strong>{{ $carrier }}</strong>
+                                            @endif
+                                            @if($awb)
+                                                <span class="text-muted"> | {{ translate('AWB:') }} {{ $awb }}</span>
+                                            @endif
+                                        </div>
+                                        <a href="{{ $trackingUrl }}" target="_blank" rel="noopener" class="btn btn-soft-primary btn-sm rounded-pill px-3 py-1">
+                                            {{ translate('Track') }}
+                                        </a>
+                                    @else
+                                        <span class="text-muted">{{ translate('Not Available') }}</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    {{ $order->shipping_choice }}
+                                </td>
+                                <td>
+                                    {{ $order->shipping_by }}
                                 </td>
                                 @if (addon_is_activated('refund_request'))
                                     <td>

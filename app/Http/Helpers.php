@@ -44,6 +44,7 @@ use App\Utility\SendSMSUtility;;
 use App\Models\AuctionProductBid;
 use App\Models\ManualPaymentMethod;
 use App\Models\SellerPackagePayment;
+use App\Models\ShippingMethod;
 use App\Utility\NotificationUtility;
 use App\Http\Resources\V2\CarrierCollection;
 use App\Http\Controllers\AffiliateController;
@@ -155,22 +156,26 @@ if (!function_exists('filter_products')) {
 if (!function_exists('category_published_product_count')) {
     function category_published_product_count($categoryId)
     {
-        // base query: products that are either directly in this category
-        // OR mapped through pivot
-        $query = Product::query()
-            ->where(function ($q) use ($categoryId) {
-                $q->where('category_id', $categoryId)
-                  ->orWhereIn('id', function ($sub) use ($categoryId) {
-                      $sub->from('product_categories')
-                          ->selectRaw('DISTINCT product_id')
-                          ->where('category_id', $categoryId);
-                  });
-            });
+        $cacheKey = 'category_published_product_count_' . $categoryId;
 
-        // now apply your existing product filters
-        $query = filter_products($query);
+        return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($categoryId) {
+            // base query: products that are either directly in this category
+            // OR mapped through pivot
+            $query = Product::query()
+                ->where(function ($q) use ($categoryId) {
+                    $q->where('category_id', $categoryId)
+                        ->orWhereIn('id', function ($sub) use ($categoryId) {
+                            $sub->from('product_categories')
+                                ->selectRaw('DISTINCT product_id')
+                                ->where('category_id', $categoryId);
+                        });
+                });
 
-        return $query->count();
+            // now apply your existing product filters
+            $query = filter_products($query);
+
+            return $query->count();
+        });
     }
 }
 
@@ -2584,6 +2589,29 @@ if (!function_exists('get_activate_payment_methods')) {
         return $payment_methods->get();
     }
 }
+
+if (!function_exists('get_active_shipping_methods')) {
+    /**
+     * Get all active shipping methods (like Shipway, etc.)
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    function get_active_shipping_methods()
+    {
+        // basic version
+        return ShippingMethod::where('is_active', 1)->get();
+    }
+}
+
+if (!function_exists('get_shipping_method_slug_by_id')) {
+    function get_shipping_method_slug_by_id($id)
+    {
+        if (!$id) return null;
+        $method = ShippingMethod::find($id);
+        return $method ? $method->slug : null;
+    }
+}
+
 // notification
 if (! function_exists('flash_message')) {
     function flash_message($message, $level = 'info')
@@ -3605,5 +3633,109 @@ if (! function_exists('resolve_pdf_paths_from_ids')) {
         }
 
         return $paths;
+    }
+}
+
+
+if (! function_exists('getLocationFromIP')) {
+     function getLocationFromIP($ip = null)
+    {
+        try {
+            if (!$ip) {
+                $ip = request()->ip(); // fallback
+            }
+
+            // Localhost test fix
+            if ($ip == '127.0.0.1' || $ip == '::1') {
+                $ip = '8.8.8.8';
+            }
+
+            //$url = "https://ipapi.co/{$ip}/json/";
+            $url = "https://ipwhois.app/json/{$ip}";
+
+            $response = @file_get_contents($url);
+
+            if (!$response) {
+                return [
+                    'status' => false,
+                    'message' => 'API request failed'
+                ];
+            }
+
+            $data = json_decode($response, true);
+
+            return $data ?? [];
+
+        } catch (\Exception $e) {
+
+        }
+    }
+}
+
+if (! function_exists('storeIPLocation')) {
+
+    function storeIPLocation($relationTable, $relationId)
+    {
+        try {
+
+            $location = getLocationFromIP();
+
+            // DB::table('ip_locations')->insert([
+            //     'relation_table' => $relationTable,
+            //     'relation_id'    => $relationId,
+            //     'data'           => json_encode($location),
+            //     'created_at'     => now(),
+            //     'updated_at'     => now(),
+            // ]);
+            DB::table('ip_locations')->upsert([
+                [
+                    'relation_table' => $relationTable,
+                    'relation_id'    => $relationId,
+                    'data'           => json_encode($location),
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]
+            ],
+            ['relation_table', 'relation_id'], // unique keys
+            ['data', 'updated_at']             // fields to update
+            );
+
+
+        } catch (\Exception $e) {
+
+        }
+    }
+}
+
+if (! function_exists('getStoredIPLocation')) {
+
+    function getStoredIPLocation($relationTable, $relationId)
+    {
+        try {
+            $record = DB::table('ip_locations')
+                ->where('relation_table', $relationTable)
+                ->where('relation_id', $relationId)
+                ->orderBy('id', 'desc') // get latest stored data
+                ->first();
+
+            if (!$record) {
+                return [
+                    'status'  => false,
+                    'message' => 'No location data found'
+                ];
+            }
+
+            return [
+                'status' => true,
+                'data'   => json_decode($record->data, true),
+                'raw'    => $record
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'status'  => false,
+                'message' => $e->getMessage()
+            ];
+        }
     }
 }

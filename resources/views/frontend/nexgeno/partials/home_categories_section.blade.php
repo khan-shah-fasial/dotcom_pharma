@@ -15,11 +15,16 @@
                             <!-- Home category banner & name -->
                             <div class="px-0 pt-0 pb-3 p-sm-4">
                                 <div class="w-sm-260px h-260px mx-auto">
+                                    @php
+                                        $cover_image = isset($category->coverImage->file_name) ? my_asset($category->coverImage->file_name) : static_asset('assets/img/placeholder.jpg');
+                                    @endphp
                                     <a href="{{ route('products.category', $category->slug) }}" class="d-block h-100 w-100 w-xl-auto hov-scale-img overflow-hidden home-category-banner">
                                         <span class="position-absolute h-100 w-100 overflow-hidden">
-                                            <img src="{{ isset($category->coverImage->file_name) ? my_asset($category->coverImage->file_name) : static_asset('assets/img/placeholder.jpg') }}"
+                                            <img src="{{ static_asset('assets/img/placeholder.jpg') }}"
+                                                data-src="{{ $cover_image }}"
                                                 alt="{{ $category_name }}"
-                                                class="img-fit h-100 has-transition"
+                                                class="img-fit h-100 has-transition lazyload"
+                                                loading="lazy" decoding="async"
                                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                                         </span>
                                         <span class="home-category-name fs-15 fw-600 text-white text-center">

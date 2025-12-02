@@ -48,6 +48,31 @@
                                     @if($order->payment_status_viewed == 0)
                                         <span class="ml-2" style="color:green"><strong>*</strong></span>
                                     @endif
+                                    <!-- Tracking info below payment status -->
+                                    @php
+                                        $shipment = $order->shipment; // already eager loaded
+                                        $trackingUrl = optional($shipment)->tracking_url;
+                                        $awb = optional($shipment)->shipping_id; // if you store AWB in shipping_id
+                                        $carrier = optional($shipment)->shipping_type; // if shipping_type stores courier name
+                                    @endphp
+
+                                    @if($trackingUrl)
+                                        <div class="mt-2 small">
+                                            @if($carrier || $awb)
+                                                <div class="text-muted mb-1">
+                                                    @if($carrier) <strong>{{ $carrier }}</strong> @endif
+                                                    @if($awb) &nbsp;|&nbsp; {{ translate('AWB:') }} {{ $awb }} @endif
+                                                </div>
+                                            @endif
+                                            <a href="{{ $trackingUrl }}" target="_blank" rel="noopener" class="btn btn-soft-primary btn-sm rounded-pill px-3 py-1">
+                                                {{ translate('Track Order') }}
+                                            </a>
+                                        </div>
+                                    @else
+                                        <div class="mt-2 text-muted small">
+                                            {{ translate('Tracking Not Available') }}
+                                        </div>
+                                    @endif
                                 </td>
                                 <!-- Options -->
                                 <td class="text-right pr-0">

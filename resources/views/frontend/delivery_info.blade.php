@@ -142,7 +142,7 @@
                                                                 data-target=".pickup_point_id_admin"
                                                                 checked
                                                             >
-                                                            <span class="d-flex aiz-megabox-elem rounded-0" style="padding: 0.75rem 1.2rem;">
+                                                            <span class="d-flex aiz-megabox-elem rounded-0" style="padding: 0.70rem 0.60rem !important;">
                                                                 <span class="aiz-rounded-check flex-shrink-0 mt-1"></span>
                                                                 <span class="flex-grow-1 pl-3 fw-600">{{  translate('Home Delivery') }}</span>
                                                             </span>
@@ -160,7 +160,7 @@
                                                                 data-target=".pickup_point_id_admin"
                                                                 checked
                                                             >
-                                                            <span class="d-flex aiz-megabox-elem rounded-0" style="padding: 0.75rem 1.2rem;">
+                                                            <span class="d-flex aiz-megabox-elem rounded-0" style="padding: 0.70rem 0.60rem !important;">
                                                                 <span class="aiz-rounded-check flex-shrink-0 mt-1"></span>
                                                                 <span class="flex-grow-1 pl-3 fw-600">{{  translate('Carrier') }}</span>
                                                             </span>
@@ -178,7 +178,7 @@
                                                                 onchange="show_pickup_point(this, 'admin')"
                                                                 data-target=".pickup_point_id_admin"
                                                             >
-                                                            <span class="d-flex aiz-megabox-elem rounded-0" style="padding: 0.75rem 1.2rem;">
+                                                            <span class="d-flex aiz-megabox-elem rounded-0" style="padding: 0.70rem 0.60rem !important;">
                                                                 <span class="aiz-rounded-check flex-shrink-0 mt-1"></span>
                                                                 <span class="flex-grow-1 pl-3 fw-600">{{  translate('Local Pickup') }}</span>
                                                             </span>

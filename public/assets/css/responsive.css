@@ -706,6 +706,9 @@
         margin-left: 70px;
     }
 
+    .filtration_css{
+        max-width: 24% !important;
+    }
     
 }
 

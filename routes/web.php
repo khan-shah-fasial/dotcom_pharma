@@ -47,6 +47,7 @@ use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Search2Controller;
+use App\Http\Controllers\Shipment\ShipmentController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SupportTicketController;
@@ -57,6 +58,9 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\RequestDocController;
 use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\CronjobController;
+use Illuminate\Http\Request;
+use App\Models\Order;
+
 /*
   |--------------------------------------------------------------------------
   | Web Routes
@@ -362,11 +366,73 @@ Route::group(['prefix' => 'checkout'], function () {
         Route::post('/guest-customer-info-check', 'guestCustomerInfoCheck')->name('guest_customer_info_check');
         Route::post('/updateDeliveryAddress', 'updateDeliveryAddress')->name('checkout.updateDeliveryAddress');
         Route::post('/updateDeliveryInfo', 'updateDeliveryInfo')->name('checkout.updateDeliveryInfo');
+        Route::post('/updateDeliveryInfoByShipping', 'updateDeliveryInfoByShipping')->name('checkout.updateDeliveryInfoByShipping');
+        Route::post('/setFodShipping', 'setFodShipping')->name('checkout.setFodShipping');
+
         //Club point
         // Route::post('/apply-club-point', 'apply_club_point')->name('checkout.apply_club_point');
         // Route::post('/remove-club-point', 'remove_club_point')->name('checkout.remove_club_point');
     });
 });
+
+// shipping Routes
+Route::get('/shipment/rates', function (Request $request) {
+    // read params from the injected request
+    $provider    = (string) $request->input('provider', '');
+    $addressId   = $request->input('address_id');   // optional (logged-in users)
+    $toPincode   = $request->input('to_pincode');   // optional (guests)
+    $paymentType = $request->input('payment_type', 'prepaid');
+
+    if ($provider === '') {
+        return response()->json(['success' => false, 'data' => [], 'message' => 'provider is required'], 422);
+    }
+
+    $class = 'App\\Http\\Controllers\\Shipment\\' . ucfirst($provider) . 'Controller';
+    if (!class_exists($class) || !method_exists($class, 'rates')) {
+        return response()->json(['success' => false, 'data' => [], 'message' => 'Provider not available'], 404);
+    }
+
+    // Hand the SAME Request to the provider controller (no order on checkout)
+    // ShipwayController::rates($request) will read address_id/to_pincode and build package from cart.
+    return app($class)->rates($request);
+})->name('shipment.rates');
+
+Route::post('/shipment/create', function (Request $request) {
+    $provider = $request->input('provider');
+    $orderEnc = $request->input('order');
+
+    if (! $provider || ! $orderEnc) {
+        return response()->json(['success' => false, 'message' => 'provider and order required'], 422);
+    }
+
+    $class = "App\\Http\\Controllers\\Shipment\\" . ucfirst($provider) . "Controller";
+    if (! class_exists($class) || ! method_exists($class, 'create')) {
+        return response()->json(['success' => false, 'message' => 'provider not found'], 404);
+    }
+
+    try {
+        $orderId = decrypt($orderEnc);
+        $order = Order::with(['orderDetails.product.stocks', 'shipment'])->findOrFail($orderId);
+    } catch (\Throwable $e) {
+        \Log::error('[Shipment][Create] Order resolve failed', ['err' => $e->getMessage(), 'payload' => $request->all()]);
+        return response()->json(['success' => false, 'message' => 'Invalid order token or order not found'], 422);
+    }
+
+    try {
+        $res = app($class)->create($order);
+    } catch (\Throwable $e) {
+        \Log::error('[Shipment][Create] Provider create() threw', ['err' => $e->getMessage()]);
+        return response()->json(['success' => false, 'message' => 'Provider create failed'], 500);
+    }
+
+    // Normalize provider response (works with arrays or JsonResponse)
+    $data = (is_object($res) && method_exists($res, 'getData')) ? $res->getData(true) : $res;
+    $success = !empty($data['success']) || ($data['status'] ?? '') === 'success';
+    $message = $data['message'] ?? $data['msg'] ?? ($success ? 'Shipment created' : 'Shipment creation failed');
+
+    return response()->json(['success' => (bool) $success, 'message' => $message, 'data' => $data]);
+})->name('shipment.create')->middleware('auth');
+
 
 Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function () {
 

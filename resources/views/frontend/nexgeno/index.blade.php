@@ -15,6 +15,39 @@
                 margin-bottom: -4px;
             }
         }
+
+        .top-category-product-carousel:not(.slick-initialized) {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem 0;
+        }
+
+        .top-category-product-carousel:not(.slick-initialized) > a {
+            flex: 0 0 calc(100% / 7);
+            max-width: calc(100% / 7);
+        }
+
+        @media (max-width: 1199.98px) {
+            .top-category-product-carousel:not(.slick-initialized) > a {
+                flex: 0 0 calc(100% / 5);
+                max-width: calc(100% / 5);
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .top-category-product-carousel:not(.slick-initialized) > a {
+                flex: 0 0 calc(100% / 4);
+                max-width: calc(100% / 4);
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .top-category-product-carousel:not(.slick-initialized) > a {
+                flex: 0 0 calc(100% / 2);
+                max-width: calc(100% / 2);
+            }
+        }
     </style>
 
     @php $lang = get_system_language()->code;  @endphp
@@ -42,7 +75,7 @@
         </div>
     </section>
 
-    <!-- Featured Categories -->
+    <!-- Top Categories -->
     @if (count($featured_categories) > 0)
         <section class="mb-4 mb-lg-5 mb-md-4 mt-4 mt-lg-5 mt-md-4">
             <div class="container">
@@ -63,8 +96,8 @@
                         @foreach ($featured_categories as $key => $category)
                             @php
                                 $category_name = $category->getTranslation('name');
-
                                 $items_count = category_published_product_count($category->id);
+                                $category_icon = isset($category->catIcon->file_name) ? my_asset($category->catIcon->file_name) : static_asset('assets/img/placeholder.jpg');
 
                                 // $items_count = DB::table('product_categories')
                                 //     ->where('category_id', $category->id)
@@ -78,8 +111,10 @@
                                         <div class="w-xl-auto position-relative hov-scale-img overflow-hidden p-1">
                                             <div class="category_borders">
                                                 <div class="category_images">
-                                                    <img src="{{ isset($category->catIcon->file_name) ? my_asset($category->catIcon->file_name) : static_asset('assets/img/placeholder.jpg') }}"
-                                                        alt="{{ $category_name }}" class="img-fit has-transition"
+                                                    <img src="{{ static_asset('assets/img/placeholder.jpg') }}"
+                                                        data-src="{{ $category_icon }}"
+                                                        alt="{{ $category_name }}" class="img-fit has-transition lazyload"
+                                                        loading="lazy" decoding="async"
                                                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                                                 </div>
                                             </div>
@@ -328,12 +363,12 @@
 
         <!--  -->
         <div class="container">
+            @php
+                $best_selling_products = get_setting('best_selling') == 1 ? get_best_selling_products(20) : collect();
+            @endphp
             <div class="row">
                 <div class="col-lg-4 col-md-6">
                     <div class="sale_box_main">
-                        @php
-                            $best_selling_products = get_best_selling_products(20);
-                        @endphp
                         @if (get_setting('best_selling') == 1 && count($best_selling_products) > 0)
                             <section class="mb-2 mb-md-3 mt-2 mt-md-3">
                                 <div class="container">
@@ -376,9 +411,6 @@
 
                 <div class="col-lg-4 col-md-6">
                     <div class="sale_box_main sales_box_gren">
-                        @php
-                            $best_selling_products = get_best_selling_products(20);
-                        @endphp
                         @if (get_setting('best_selling') == 1 && count($best_selling_products) > 0)
                             <section class="mb-2 mb-md-3 mt-2 mt-md-3">
                                 <div class="container">
@@ -421,9 +453,6 @@
 
                 <div class="col-lg-4 col-md-6">
                     <div class="sale_box_main">
-                        @php
-                            $best_selling_products = get_best_selling_products(20);
-                        @endphp
                         @if (get_setting('best_selling') == 1 && count($best_selling_products) > 0)
                             <section class="mb-2 mb-md-3 mt-2 mt-md-3">
                                 <div class="container">

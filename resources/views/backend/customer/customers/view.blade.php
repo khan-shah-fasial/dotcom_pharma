@@ -973,6 +973,7 @@
     {{-- - //------------------------------ approval modal -----------------------// -- --}}
 
 
+    @include('components.location-info', ['data' => getStoredIPLocation('users', $user->user_id ?? $user2->id)])
 
 @endsection
 

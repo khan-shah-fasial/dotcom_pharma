@@ -20,7 +20,7 @@
     justify-content: space-between;
     gap: .5rem;
     /* padding: .45rem .25rem .45rem 0; */
-    padding-bottom:15px;
+    padding-bottom:10px;
     cursor: pointer;
   }
   .cat-head-title {
@@ -30,6 +30,11 @@
     justify-content: start;
     width: 100%
   }
+
+  .cat-head .count-number-filter{
+    font-size: 11px;
+  }
+
   .cat-children-panel {
     margin-left: 1.7rem;  /* sit under arrow */
     padding-bottom: .35rem;
@@ -52,7 +57,7 @@
   }
 
   .cat-radio-label span.cat-name {
-    font-size: 16px !important;
+    font-size: 12px !important;
     color: #333;
     cursor: pointer;
   }
@@ -96,13 +101,17 @@
 
 .cat-child-item .cat-head{
   padding-top: 0px;
-  padding-bottom: 10px;
+  padding-bottom: 5px !important;
 }
 
 #cat-root #children-of-90{
   margin-left: 15px;
   /* border-left: 2px solid #a9a2a2;
   padding-left: 10px; */
+}
+
+#children-of-118 {
+  margin-left: 15px;
 }
 
 .cat-child-item .cat-children-panel{
@@ -132,10 +141,10 @@
 
 <div id="{{ $accordionId }}">
   <div class=" background-none-filterlight_bg_gray mb-0">
-    <div class="fs-18 fw-600 p-3">
+    <div class="fs-14 fw-600 p-3">
       <a
         href="javascript:void(0)"
-        class="fs-18 dropdown-toggle filter-section text-dark d-flex align-items-center justify-content-between {{ $catShouldShow ? '' : 'collapsed' }}"
+        class="fs-14 dropdown-toggle filter-section text-dark d-flex align-items-center justify-content-between {{ $catShouldShow ? '' : 'collapsed' }}"
         data-toggle="collapse"
         data-target="#{{ $catCollapseId }}"
         data-parent="#{{ $accordionId }}"

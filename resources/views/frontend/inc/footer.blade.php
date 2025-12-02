@@ -164,7 +164,7 @@
 @php
     $col_values = ((get_setting('vendor_system_activation') == 1) || addon_is_activated('delivery_boy')) ? "col-lg-3 col-md-6 col-sm-6" : "col-md-4 col-sm-6";
 @endphp
-<section class="gray_light text-light footer-widget pt-md-5 pt-4 pb-md-5 pb-3">
+<section class="gray_light text-light footer-widget pt-md-5 pt-3 pb-md-5 pb-3">
     <!-- footer widgets ========== [Accordion Fotter widgets are bellow from this]-->
     <div class="container d-lg-block">
         <div class="row">

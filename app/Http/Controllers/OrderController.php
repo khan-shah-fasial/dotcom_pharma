@@ -50,7 +50,8 @@ class OrderController extends Controller
         $payment_status = '';
         $order_type = '';
 
-        $orders = Order::orderBy('id', 'desc');
+        // $orders = Order::orderBy('id', 'desc');
+        $orders = Order::with(['orderDetails', 'shipment'])->orderBy('id', 'desc');
         $admin_user_id = get_admin()->id;
 
         if (Route::currentRouteName() == 'inhouse_orders.index' && Auth::user()->can('view_inhouse_orders')) {
@@ -116,7 +117,8 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::findOrFail(decrypt($id));
+        // $order = Order::findOrFail(decrypt($id));
+        $order = Order::with(['orderDetails', 'shipment'])->findOrFail(decrypt($id));
         
         $order_shipping_address = json_decode($order->shipping_address);
         $delivery_boys = User::where('city', $order_shipping_address->city)
@@ -196,11 +198,17 @@ class OrderController extends Controller
             $order->shipping_address = $combined_order->shipping_address;
             $order->additional_info = $request->additional_info;
             $order->payment_type = $request->payment_option;
+            $order->shipping_choice = $request->shipping_method;
+            $order->shipping_by = $request->shipping_method === 'courier' ? (get_shipping_method_slug_by_id($request->shipping_method_id) ?? 'shipway') : ($request->shipping_method === 'fod' ? null : 'N/A');
+            $order->fod_mode = $request->shipping_method === 'courier' ? null : $request->fod_mode;
+            $order->shipping_courier_id = $request->shipping_method === 'fod' ? null : $request->courier_service;
             $order->delivery_viewed = '0';
             $order->payment_status_viewed = '0';
             $order->code = date('Ymd-His') . rand(10, 99);
-            $order->date = strtotime('now');
+            $order->date = strtotime('now');    
             $order->save();
+
+            storeIPLocation('orders', $order->id); //store ip location            
 
             $subtotal = 0;
             $tax = 0;
@@ -293,7 +301,7 @@ class OrderController extends Controller
             $combined_order->grand_total += $order->grand_total;
 
 
-            $order->quote_grand_total = single_price($order->grand_total);
+            $order->quote_grand_total = $order->grand_total;
             $order->quote_currency_code = Session::get('currency_code');
             $order->quote_currency_exchange_rate = Session::get('currency_exchange_rate');
 

@@ -42,7 +42,7 @@
 @endphp
 
 @if (count($newest_products) > 0 && $newest_products->isNotEmpty())
-    <section class="pt-0 pt-md-0 pb-3 pb-lg-3 pb-md-0">
+    <section class="pt-0 pt-md-0 pb-2 pb-lg-3 pb-md-0">
         <div class="container">
             <div class="row">
                 <div class="col-lg-9 col-12 width_80 pt-4 pr-md-4">
@@ -95,7 +95,7 @@
 
                                 <div class="row">
                                     @forelse ($filter_newest_products as $new_product)
-                                        <div class="col-6 col-md-4 col-lg-3 mb-3">
+                                        <div class="col-6 col-md-4 col-lg-3 mb-md-3 mb-0">
                                             @include(
                                                 'frontend.' .
                                                     get_setting('homepage_select') .

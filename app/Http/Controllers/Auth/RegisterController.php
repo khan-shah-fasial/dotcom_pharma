@@ -151,6 +151,8 @@ class RegisterController extends Controller
 
         $user = $this->create($request->all());
 
+        storeIPLocation('users', $user->id); // store ip location
+
         $this->guard()->login($user);
 
         if($user->email != null){
@@ -2026,6 +2028,8 @@ class RegisterController extends Controller
 
 
         $user = User::find($user->id);
+
+        storeIPLocation('users', $user->id); // store ip location
 
         $this->guard()->login($user);
 

@@ -62,4 +62,12 @@ class Order extends Model
     {
         return $this->hasOne(CommissionHistory::class);
     }
+
+    /**
+     * One-to-one relation to order_shipments table
+     */
+    public function shipment()
+    {
+        return $this->hasOne(OrderShipment::class, 'order_id', 'id');
+    }
 }
