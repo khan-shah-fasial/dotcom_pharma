@@ -159,20 +159,21 @@
                             </th>
                             <th>{{ translate('Company Name') }}</th>
                             <th>{{ translate('Post') }}</th>
-                            <th>{{ translate('Destrict') }}</th>
+                            <th>{{ translate('District') }}</th>
+                            <th>{{ translate('State') }}</th>
 
                             {{-- <th>{{ translate('Country Code') }}</th> --}}
 
-                            <th data-breakpoints="lg">{{ translate('Email Address') }}</th>
-                            <th data-breakpoints="lg">{{ translate('Phone') }}</th>
+                            <th>{{ translate('Email Address') }}</th>
+                            <th>{{ translate('Phone') }}</th>
 
                             {{-- <th data-breakpoints="lg">{{ translate('Package') }}</th>
                                                         <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> --}}
                             {{-- <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th> --}}
                             {{-- <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th> --}}
 
-                            <th data-breakpoints="lg">{{ translate('Approval Status') }}</th>
-                            <th data-breakpoints="lg">{{ translate('Credit Status') }}</th>
+                            <th data-breakpoints="xs sm md lg xl">{{ translate('Approval Status') }}</th>
+                            <th data-breakpoints="xs sm md lg xl">{{ translate('Credit Status') }}</th>
                             <th class="">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
@@ -199,6 +200,16 @@
                                     </td>
                                     <td>{{ $user->details->post_business ?? ($user->details->post ?? '-') }}</td>
                                     <td>{{ $user->details->district_business ?? ($user->details->district ?? '-') }}</td>
+                                    @php
+                                        $stateName = null;
+                                        if (!empty($user->details->state_id_business)) {
+                                            $stateName = getParticularData('states', 'name', (int) $user->details->state_id_business);
+                                        }
+                                        if (!$stateName && !empty($user->details->state_id)) {
+                                            $stateName = getParticularData('states', 'name', (int) $user->details->state_id);
+                                        }
+                                    @endphp
+                                    <td>{{ $stateName ?? '-' }}</td>
                                     {{-- <td>{{ $user->details->country_code_business ?? ($user->details->country_code ?? '-') }}</td> --}}
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->phone }}</td>

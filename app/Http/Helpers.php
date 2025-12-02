@@ -2941,9 +2941,11 @@ if(!function_exists('sendEmail')){
 if(!function_exists('getParticularData')){
     function getParticularData(string $tableName, string $fieldName, int $id)
     {
-        return DB::table($tableName)
-            ->where('id', $id)
-            ->value($fieldName);
+        // return DB::table($tableName)
+        //     ->where('id', $id)
+        //     ->value($fieldName);
+        $value = DB::table($tableName)->where('id', $id)->value($fieldName);
+        return $value ?: null; // convert empty string to null
     } 
 }
 

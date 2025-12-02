@@ -222,8 +222,8 @@
 
                                 <div class="form-group">
                                     <label class="form-label" for="country__code">Country</label>
-                                    <p> {{ getParticularData('countries', 'name', $user->country_id_business ?? 0) ?? '-' }}
-                                    </p>
+                                    <p>{{ getParticularData('countries', 'name', (int)($user->country_id_business ?? 0)) ?? '-' }}</p>
+                                    {{-- <p>{{ getParticularData('countries', 'name', $user->country_id_business ?? 0) ?? '-' }}</p> --}}
 
                                 </div>
 
@@ -578,7 +578,8 @@
 
                                 <div class="form-group">
                                     <label class="form-label" for="country__code">Country</label>
-                                    <p> {{ getParticularData('countries', 'name', $user->country_id ?? 0) ?? '-' }}</p>
+                                    <p> {{ getParticularData('countries', 'name', (int)($user->country_id ?? 0)) ?? '-'}}</p>
+                                    {{-- <p> {{ getParticularData('countries', 'name', $user->country_id ?? 0) ?? '-' }}</p> --}}
 
                                 </div>
 
