@@ -6,9 +6,13 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Country;
 use App\Models\UserDetails;
+use App\Models\State;
+use App\Models\City;
 use App\Utility\EmailUtility;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Cache;
 use Hash;
 
 class CustomerController extends Controller
@@ -391,11 +395,26 @@ class CustomerController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function edit($id)
     {
-        //
+        $user = User::with('details')->findOrFail($id);
+        $details = $user->details;
+
+        // Load only countries; states/cities will be fetched via AJAX on demand.
+        $countries = Cache::remember('countries_for_customer_edit', 86400, function () {
+            return Country::select('id', 'name')->orderBy('name')->get();
+        });
+        $states = collect();
+        $cities = collect();
+
+        return view('backend.customer.customers.edit', compact(
+            'user',
+            'details',
+            'countries',
+            'states',
+            'cities'
+        ));
     }
 
     /**
@@ -403,11 +422,360 @@ class CustomerController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
-        //
+        $user = User::with('details')->findOrFail($id);
+        $details = $user->details ?? new UserDetails(['user_id' => $user->id]);
+        $typeOption = $request->input('type_option', $details->type_option ?? 'domestic');
+
+        $businessRules = [
+            'type_option' => 'required|in:domestic,international',
+            'registration_date' => ['required'],
+            'const_of_business' => ['required'],
+            'con_person_name' => ['required', 'string', 'regex:/^[A-Za-z\\s]+$/', 'min:1', 'max:50'],
+            'company_name' => ['required', 'string', 'min:1', 'max:150'],
+            'street_add_first_business' => ['required', 'string', 'min:1', 'max:150'],
+            'street_add_sec_business' => ['nullable', 'string', 'min:1', 'max:150'],
+            'locality_land_mark_business' => ['required', 'string', 'min:1', 'max:150'],
+            'village_business' => ['required', 'string', 'min:1', 'max:150'],
+            'post_business' => ['required', 'string', 'min:1', 'max:150'],
+            'district_business' => ['required', 'string', 'min:1', 'max:150'],
+            'country_code_business' => ['required', 'string', 'min:1', 'max:150'],
+            'pincode_business' => ['required', 'regex:/^\\d{6}$/'],
+            'city_id_business' => ['required'],
+            'state_id_business' => ['required'],
+            'country_id_business' => ['required'],
+            'phone_business' => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
+            'alternate_mob_no_business' => ['nullable', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
+            'whats_app_no_business' => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
+            'alternate_whats_app_no_business' => ['nullable', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
+            'prim_email_business' => ['required', 'email'],
+            'alt_email_business' => ['nullable', 'email'],
+            'website_business' => ['nullable'],
+            'bank_name_business' => ['required', 'string', 'max:255'],
+            'account_no_business' => ['required', 'regex:/^\\d+$/', 'max:20'],
+            'account_name_business' => ['required', 'string', 'max:255'],
+            'branch_code_business' => ['required', 'string', 'max:50'],
+            'branch_name_business' => ['required', 'string', 'max:255'],
+            'branch_address_business' => ['required', 'string', 'max:255'],
+            'ifsc_code_business' => ['required', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            // Optional / conditional docs
+            'gst_no' => ['nullable', 'regex:/^[0-9A-Z]{15}$/i'],
+            'gst_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'gstin_current_status' => ['nullable', 'string'],
+            'iec_no' => ['nullable', 'regex:/^[0-9A-Z]{10}$/i'],
+            'iec_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'uin_current_status' => ['nullable', 'string'],
+            'micr_code_business' => ['nullable', 'regex:/^\\d{9}$/'],
+            'ad_code_business' => ['nullable', 'string', 'max:255'],
+        ];
+
+        $personalRules = [
+            'photo_file' => [$details->photo_file ? 'nullable' : 'required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'name_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'father_name' => ['required', 'string', 'min:1', 'max:150'],
+            'dob' => ['required'],
+            'street_add_first_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'street_add_sec_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'locality_land_mark_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'village_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'post_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'district_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'country_code_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'pincode_personal' => ['required', 'regex:/^\\d{6}$/'],
+            'city_id_personal' => ['required'],
+            'state_id_personal' => ['required'],
+            'country_id_personal' => ['required'],
+            'phone_personal' => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
+            'alternate_mob_no_personal' => ['nullable', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
+            'whats_app_no_personal' => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
+            'alternate_whats_app_no_personal' => ['nullable', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
+            'prim_email_personal' => ['required', 'email'],
+            'alt_email_personal' => ['nullable', 'email'],
+            'bank_name_personal' => ['required', 'string', 'max:255'],
+            'account_no_personal' => ['required', 'regex:/^\\d+$/', 'max:20'],
+            'account_name_personal' => ['required', 'string', 'max:255'],
+            'branch_code_personal' => ['required', 'string', 'max:50'],
+            'branch_name_personal' => ['required', 'string', 'max:255'],
+            'branch_address_personal' => ['required', 'string', 'max:255'],
+            'ifsc_code_personal' => ['required', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'aadhaar_no' => ['nullable', 'regex:/^[0-9]{12}$/i'],
+            'aadhaar_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'pan_no' => ['nullable', 'regex:/^[0-9A-Z]{10}$/i'],
+            'pan_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'passport_no' => ['nullable', 'regex:/^[0-9A-Z]{1,15}$/i'],
+            'passport_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'micr_code_personal' => ['nullable', 'regex:/^\\d{9}$/'],
+            'ad_code_personal' => ['nullable', 'string', 'max:255'],
+        ];
+
+        $licenseRules = [
+            'd_l_no_1' => ['nullable', 'string', 'max:255'],
+            'd_l_no_1_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'd_l_no_2' => ['nullable', 'string', 'max:255'],
+            'd_l_no_2_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'd_l_no_3' => ['nullable', 'string', 'max:255'],
+            'd_l_no_3_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'doctor_hospital_reg_no' => ['nullable', 'string', 'max:255'],
+            'doctor_hospital_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'dairy_trust_ngo_reg_no' => ['nullable', 'string', 'max:255'],
+            'dairy_trust_ngo_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'cc_mdl_reg_no' => ['nullable', 'string', 'max:255'],
+            'cc_mdl_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'other_reg_no' => ['nullable', 'string', 'max:255'],
+            'other_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+        ];
+
+        $validator = \Validator::make($request->all(), array_merge($businessRules, $personalRules, $licenseRules));
+
+        $validator->after(function ($v) use ($request, $details, $typeOption) {
+            $hasGst = filled($request->gst_no);
+            $hasAadhaar = filled($request->aadhaar_no);
+            $hasPan = filled($request->pan_no);
+            $hasIEC = filled($request->iec_no);
+            $hasPassport = filled($request->passport_no);
+
+            if ($typeOption === 'domestic') {
+                if (!$hasGst && !$hasAadhaar && !$hasPan) {
+                    $v->errors()->add('type_option', translate('Provide GST or Aadhaar/PAN for domestic customers.'));
+                }
+                if ($hasGst && !$request->hasFile('gst_no_file') && empty($details->gst_no_file)) {
+                    $v->errors()->add('gst_no_file', translate('GST document is required.'));
+                }
+                if ($hasAadhaar && !$request->hasFile('aadhaar_no_file') && empty($details->aadhaar_no_file)) {
+                    $v->errors()->add('aadhaar_no_file', translate('Aadhaar document is required.'));
+                }
+                if ($hasPan && !$request->hasFile('pan_no_file') && empty($details->pan_no_file)) {
+                    $v->errors()->add('pan_no_file', translate('PAN document is required.'));
+                }
+            } else {
+                if (!$hasIEC && !$hasPassport) {
+                    $v->errors()->add('type_option', translate('Provide IEC or Passport for international customers.'));
+                }
+                if ($hasIEC && !$request->hasFile('iec_no_file') && empty($details->iec_no_file)) {
+                    $v->errors()->add('iec_no_file', translate('IEC document is required.'));
+                }
+                if ($hasPassport && !$request->hasFile('passport_no_file') && empty($details->passport_no_file)) {
+                    $v->errors()->add('passport_no_file', translate('Passport document is required.'));
+                }
+            }
+        });
+
+        $validated = $validator->validate();
+
+        $documentPath = public_path('uploads/document');
+        if (!File::exists($documentPath)) {
+            File::makeDirectory($documentPath, 0777, true, true);
+        }
+
+        $gstFile = $details->gst_no_file;
+        if ($request->hasFile('gst_no_file')) {
+            $file = $request->file('gst_no_file');
+            $documentName = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $documentName);
+            $gstFile = 'uploads/document/' . $documentName;
+        }
+
+        $iecFile = $details->iec_no_file;
+        if ($request->hasFile('iec_no_file')) {
+            $file = $request->file('iec_no_file');
+            $documentName = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $documentName);
+            $iecFile = 'uploads/document/' . $documentName;
+        }
+
+        $photoFile = $details->photo_file;
+        if ($request->hasFile('photo_file')) {
+            $file = $request->file('photo_file');
+            $documentName = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $documentName);
+            $photoFile = 'uploads/document/' . $documentName;
+        }
+
+        $aadhaarFile = $details->aadhaar_no_file;
+        if ($request->hasFile('aadhaar_no_file')) {
+            $file = $request->file('aadhaar_no_file');
+            $documentName = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $documentName);
+            $aadhaarFile = 'uploads/document/' . $documentName;
+        }
+
+        $panFile = $details->pan_no_file;
+        if ($request->hasFile('pan_no_file')) {
+            $file = $request->file('pan_no_file');
+            $documentName = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $documentName);
+            $panFile = 'uploads/document/' . $documentName;
+        }
+
+        $passportFile = $details->passport_no_file;
+        if ($request->hasFile('passport_no_file')) {
+            $file = $request->file('passport_no_file');
+            $documentName = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+            $file->move($documentPath, $documentName);
+            $passportFile = 'uploads/document/' . $documentName;
+        }
+
+        $removeLicense = $request->input('remove_license', []);
+
+        $licenseFiles = [
+            'd_l_no_1_file' => $details->d_l_no_1_file,
+            'd_l_no_2_file' => $details->d_l_no_2_file,
+            'd_l_no_3_file' => $details->d_l_no_3_file,
+            'doctor_hospital_reg_no_file' => $details->doctor_hospital_reg_no_file,
+            'dairy_trust_ngo_reg_no_file' => $details->dairy_trust_ngo_reg_no_file,
+            'cc_mdl_reg_no_file' => $details->cc_mdl_reg_no_file,
+            'other_reg_no_file' => $details->other_reg_no_file,
+        ];
+
+        foreach ($licenseFiles as $field => $current) {
+            if ($request->hasFile($field)) {
+                $file = $request->file($field);
+                $documentName = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+                $file->move($documentPath, $documentName);
+                $licenseFiles[$field] = 'uploads/document/' . $documentName;
+            } elseif (isset($removeLicense[str_replace('_file', '', $field)])) {
+                $licenseFiles[$field] = null;
+            }
+        }
+
+        $businessPrimaryCode = $request->input('country_code_phone_code_business', $details->country_code_business ?? '');
+        $businessAltCode = $request->input('country_code_alternate_mob_no_business', $details->country_code_business ?? '');
+        $businessWhatsCode = $request->input('country_code_whats_app_no_business', $details->country_code_business ?? '');
+        $businessAltWhatsCode = $request->input('country_code_alternate_whats_app_no_business', $details->country_code_business ?? '');
+
+        $personalPrimaryCode = $request->input('country_code_phone_code_personal', $details->country_code ?? '');
+        $personalAltCode = $request->input('country_code_alternate_mob_no_personal', $details->country_code ?? '');
+        $personalWhatsCode = $request->input('country_code_whats_app_no_personal', $details->country_code ?? '');
+        $personalAltWhatsCode = $request->input('country_code_alternate_whats_app_no_personal', $details->country_code ?? '');
+
+        $user->update([
+            'type_option' => $typeOption,
+            'email' => $validated['prim_email_personal'],
+            'phone' => '+' . $personalPrimaryCode . '-' . $validated['phone_personal'],
+            'gst_no' => $typeOption === 'domestic' ? ($validated['gst_no'] ?? null) : null,
+            'iec_no' => $typeOption === 'international' ? ($validated['iec_no'] ?? null) : null,
+            'aadhaar_no' => $validated['aadhaar_no'] ?? null,
+            'pan_no' => $validated['pan_no'] ?? null,
+            'passport_no' => $validated['passport_no'] ?? null,
+        ]);
+
+        $details->fill([
+            'type_option' => $typeOption,
+            'gst_no' => $typeOption === 'domestic' ? ($validated['gst_no'] ?? $details->gst_no) : null,
+            'gst_no_file' => $gstFile,
+            'iec_no' => $typeOption === 'international' ? ($validated['iec_no'] ?? $details->iec_no) : null,
+            'iec_no_file' => $iecFile,
+            'registration_date' => $validated['registration_date'],
+            'const_of_business' => $validated['const_of_business'],
+            'gstin_current_status' => $typeOption === 'domestic' ? ($validated['gstin_current_status'] ?? $details->gstin_current_status) : null,
+            'uin_current_status' => $typeOption === 'international' ? ($validated['uin_current_status'] ?? $details->uin_current_status) : null,
+            'con_person_name' => $validated['con_person_name'],
+            'company_name' => $validated['company_name'],
+            'street_add_first_business' => $validated['street_add_first_business'],
+            'street_add_sec_business' => $validated['street_add_sec_business'] ?? null,
+            'locality_land_mark_business' => $validated['locality_land_mark_business'],
+            'village_business' => $validated['village_business'],
+            'post_business' => $validated['post_business'],
+            'city_id_business' => $validated['city_id_business'],
+            'district_business' => $validated['district_business'],
+            'state_id_business' => $validated['state_id_business'],
+            'pincode_business' => $validated['pincode_business'],
+            'country_id_business' => $validated['country_id_business'],
+            'country_code_business' => $validated['country_code_business'],
+            'prim_mobile_no_business' => $businessPrimaryCode . '-' . $validated['phone_business'],
+            'prim_mobile_no_business_meta' => $request->input('phone_code_meta', ''),
+            'alt_mobile_no_business' => $businessAltCode && $request->filled('alternate_mob_no_business')
+                ? $businessAltCode . '-' . ($validated['alternate_mob_no_business'] ?? '')
+                : null,
+            'alt_mobile_no_business_meta' => $request->input('alternate_mob_no_business_meta', ''),
+            'prim_whats_app_no_business' => $businessWhatsCode . '-' . $validated['whats_app_no_business'],
+            'prim_whats_app_no_business_meta' => $request->input('whats_app_no_business_meta', ''),
+            'alternate_whats_app_no_business' => $businessAltWhatsCode && $request->filled('alternate_whats_app_no_business')
+                ? $businessAltWhatsCode . '-' . ($validated['alternate_whats_app_no_business'] ?? '')
+                : null,
+            'alternate_whats_app_no_business_meta' => $request->input('alternate_whats_app_no_business_meta', ''),
+            'prim_email_business' => $validated['prim_email_business'],
+            'alt_email_business' => $validated['alt_email_business'] ?? null,
+            'website_business' => $validated['website_business'] ?? null,
+            'bank_name_business' => $validated['bank_name_business'],
+            'account_no_business' => $validated['account_no_business'],
+            'account_name_business' => $validated['account_name_business'],
+            'branch_code_business' => $validated['branch_code_business'],
+            'branch_name_business' => $validated['branch_name_business'],
+            'branch_address_business' => $validated['branch_address_business'],
+            'ifsc_code_business' => $validated['ifsc_code_business'],
+            'micr_code_business' => $typeOption === 'international' ? ($validated['micr_code_business'] ?? null) : null,
+            'ad_code_business' => $typeOption === 'international' ? ($validated['ad_code_business'] ?? null) : null,
+
+            // Personal
+            'name' => $validated['name_personal'],
+            'father_name' => $validated['father_name'],
+            'dob' => $validated['dob'],
+            'street_add_first' => $validated['street_add_first_personal'],
+            'street_add_sec' => $validated['street_add_sec_personal'] ?? null,
+            'locality_land_mark' => $validated['locality_land_mark_personal'],
+            'village' => $validated['village_personal'],
+            'post' => $validated['post_personal'],
+            'city_id' => $validated['city_id_personal'],
+            'district' => $validated['district_personal'],
+            'state_id' => $validated['state_id_personal'],
+            'pincode' => $validated['pincode_personal'],
+            'country_id' => $validated['country_id_personal'],
+            'country_code' => $validated['country_code_personal'],
+            'prim_mobile_no' => $personalPrimaryCode . '-' . $validated['phone_personal'],
+            'prim_mobile_no_meta' => $request->input('phone_personal_meta', ''),
+            'alt_mobile_no' => $personalAltCode && $request->filled('alternate_mob_no_personal')
+                ? $personalAltCode . '-' . ($validated['alternate_mob_no_personal'] ?? '')
+                : null,
+            'alt_mobile_no_meta' => $request->input('alternate_mob_no_personal_meta', ''),
+            'prim_whats_app_no' => $personalWhatsCode . '-' . $validated['whats_app_no_personal'],
+            'prim_whats_app_no_meta' => $request->input('whats_app_no_personal_meta', ''),
+            'alt_whats_app_no' => $personalAltWhatsCode && $request->filled('alternate_whats_app_no_personal')
+                ? $personalAltWhatsCode . '-' . ($validated['alternate_whats_app_no_personal'] ?? '')
+                : null,
+            'alt_whats_app_no_meta' => $request->input('alternate_whats_app_no_personal_meta', ''),
+            'prim_email_personal' => $validated['prim_email_personal'],
+            'alt_email_personal' => $validated['alt_email_personal'] ?? null,
+            'bank_name_personal' => $validated['bank_name_personal'],
+            'account_no_personal' => $validated['account_no_personal'],
+            'account_name_personal' => $validated['account_name_personal'],
+            'branch_code_personal' => $validated['branch_code_personal'],
+            'branch_name_personal' => $validated['branch_name_personal'],
+            'branch_address_personal' => $validated['branch_address_personal'],
+            'ifsc_code_personal' => $validated['ifsc_code_personal'],
+            'micr_code_personal' => $typeOption === 'international' ? ($validated['micr_code_personal'] ?? $details->micr_code_personal) : null,
+            'ad_code_personal' => $typeOption === 'international' ? ($validated['ad_code_personal'] ?? $details->ad_code_personal) : null,
+            'photo_file' => $photoFile,
+            'aadhaar_no' => $validated['aadhaar_no'] ?? $details->aadhaar_no,
+            'aadhaar_no_file' => $aadhaarFile,
+            'pan_no' => $validated['pan_no'] ?? $details->pan_no,
+            'pan_no_file' => $panFile,
+            'passport_no' => $validated['passport_no'] ?? $details->passport_no,
+            'passport_no_file' => $passportFile,
+
+            // License
+            'd_l_no_1' => isset($removeLicense['d_l_no_1']) ? null : ($request->filled('d_l_no_1') ? $validated['d_l_no_1'] : ($request->has('d_l_no_1') ? null : $details->d_l_no_1)),
+            'd_l_no_1_file' => $licenseFiles['d_l_no_1_file'],
+            'd_l_no_2' => isset($removeLicense['d_l_no_2']) ? null : ($request->filled('d_l_no_2') ? $validated['d_l_no_2'] : ($request->has('d_l_no_2') ? null : $details->d_l_no_2)),
+            'd_l_no_2_file' => $licenseFiles['d_l_no_2_file'],
+            'd_l_no_3' => isset($removeLicense['d_l_no_3']) ? null : ($request->filled('d_l_no_3') ? $validated['d_l_no_3'] : ($request->has('d_l_no_3') ? null : $details->d_l_no_3)),
+            'd_l_no_3_file' => $licenseFiles['d_l_no_3_file'],
+            'doctor_hospital_reg_no' => isset($removeLicense['doctor_hospital_reg_no']) ? null : ($request->filled('doctor_hospital_reg_no') ? $validated['doctor_hospital_reg_no'] : ($request->has('doctor_hospital_reg_no') ? null : $details->doctor_hospital_reg_no)),
+            'doctor_hospital_reg_no_file' => $licenseFiles['doctor_hospital_reg_no_file'],
+            'dairy_trust_ngo_reg_no' => isset($removeLicense['dairy_trust_ngo_reg_no']) ? null : ($request->filled('dairy_trust_ngo_reg_no') ? $validated['dairy_trust_ngo_reg_no'] : ($request->has('dairy_trust_ngo_reg_no') ? null : $details->dairy_trust_ngo_reg_no)),
+            'dairy_trust_ngo_reg_no_file' => $licenseFiles['dairy_trust_ngo_reg_no_file'],
+            'cc_mdl_reg_no' => isset($removeLicense['cc_mdl_reg_no']) ? null : ($request->filled('cc_mdl_reg_no') ? $validated['cc_mdl_reg_no'] : ($request->has('cc_mdl_reg_no') ? null : $details->cc_mdl_reg_no)),
+            'cc_mdl_reg_no_file' => $licenseFiles['cc_mdl_reg_no_file'],
+            'other_reg_no' => isset($removeLicense['other_reg_no']) ? null : ($request->filled('other_reg_no') ? $validated['other_reg_no'] : ($request->has('other_reg_no') ? null : $details->other_reg_no)),
+            'other_reg_no_file' => $licenseFiles['other_reg_no_file'],
+        ]);
+        $details->save();
+
+        flash(translate('Customer details updated successfully'))->success();
+
+        return redirect()->route('customers.business');
     }
 
     /**

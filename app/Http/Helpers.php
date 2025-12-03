@@ -33,6 +33,7 @@ use App\Models\BlogCategory;
 use App\Models\Conversation;
 use App\Models\FollowSeller;
 use App\Models\ProductStock;
+use App\Models\State;
 use App\Models\CombinedOrder;
 use App\Models\SellerPackage;
 use App\Models\AffiliateConfig;
@@ -195,6 +196,80 @@ if (!function_exists('verified_sellers_id')) {
         return Cache::rememberForever('verified_sellers_id', function () {
             return Shop::where('verification_status', 1)->pluck('user_id')->toArray();
         });
+    }
+}
+
+if (!function_exists('get_country_by_id')) {
+    /**
+     * Lightweight country fetcher by ID.
+     */
+    function get_country_by_id($countryId)
+    {
+        return $countryId ? Country::find($countryId) : null;
+    }
+}
+
+if (!function_exists('get_state_by_id')) {
+    /**
+     * Lightweight state fetcher by ID.
+     */
+    function get_state_by_id($stateId)
+    {
+        return $stateId ? State::find($stateId) : null;
+    }
+}
+
+if (!function_exists('get_city_by_id')) {
+    /**
+     * Lightweight city fetcher by ID.
+     */
+    function get_city_by_id($cityId)
+    {
+        return $cityId ? City::find($cityId) : null;
+    }
+}
+
+if (!function_exists('get_user_location_bundle')) {
+    /**
+     * Returns the user's country + state + city plus the selectable state/city lists for that country/state.
+     * Accepts a User model or user ID.
+     */
+    function get_user_location_bundle($userOrId)
+    {
+        $user = $userOrId instanceof User
+            ? $userOrId
+            : User::with('details')->find($userOrId);
+
+        if (!$user) {
+            return null;
+        }
+
+        $details = $user->details;
+
+        // Prefer business values, then personal/user fallbacks.
+        $countryId = $details->country_id_business ?? $details->country_id ?? $user->country ?? null;
+        $stateId   = $details->state_id_business ?? $details->state_id ?? $user->state ?? null;
+        $cityId    = $details->city_id_business ?? $details->city_id ?? $user->city ?? null;
+
+        $country = get_country_by_id($countryId);
+        $state   = get_state_by_id($stateId);
+        $city    = get_city_by_id($cityId);
+
+        $states = $countryId
+            ? State::where('country_id', $countryId)->orderBy('name')->get()
+            : collect();
+
+        $cities = $stateId
+            ? City::where('state_id', $stateId)->orderBy('name')->get()
+            : collect();
+
+        return [
+            'country' => $country,
+            'state'   => $state,
+            'city'    => $city,
+            'states'  => $states,
+            'cities'  => $cities,
+        ];
     }
 }
 

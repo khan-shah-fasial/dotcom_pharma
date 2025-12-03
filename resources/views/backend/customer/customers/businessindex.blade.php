@@ -259,11 +259,19 @@
                                         <div class="dropdown">
                                             <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button"
                                                 id="customerActionDropdown{{ $user->id }}" data-toggle="dropdown"
-                                                aria-haspopup="true" aria-expanded="false">
+                                            aria-haspopup="true" aria-expanded="false">
                                                 <i class="las la-ellipsis-v"></i>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-right p-2"
                                                 aria-labelledby="customerActionDropdown{{ $user->id }}">
+
+                                                <!-- Edit -->
+                                                <a href="{{ route('customers.edit', $user->id) }}" class="btn"
+                                                    title="{{ translate('Edit this Customer') }}">
+                                                    <i
+                                                        class="las la-pen btn-soft-primary btn-icon btn-circle btn-sm mr-2"></i>
+                                                    <span class="ms-1">{{ translate('Edit') }}</span>
+                                                </a>
 
                                                 <!-- View -->
                                                 <a href="{{ route('customers.view', encrypt($user->id)) }}"
