@@ -401,19 +401,14 @@ class CustomerController extends Controller
         $user = User::with('details')->findOrFail($id);
         $details = $user->details;
 
-        // Load only countries; states/cities will be fetched via AJAX on demand.
         $countries = Cache::remember('countries_for_customer_edit', 86400, function () {
             return Country::select('id', 'name')->orderBy('name')->get();
         });
-        $states = collect();
-        $cities = collect();
 
         return view('backend.customer.customers.edit', compact(
             'user',
             'details',
             'countries',
-            'states',
-            'cities'
         ));
     }
 
@@ -429,6 +424,9 @@ class CustomerController extends Controller
         $details = $user->details ?? new UserDetails(['user_id' => $user->id]);
         $typeOption = $request->input('type_option', $details->type_option ?? 'domestic');
 
+        $domesticChoice = $request->input('domestic_identity_selection', 'gst');
+        $internationalChoice = $request->input('international_identity_selection', 'iec');
+
         $businessRules = [
             'type_option' => 'required|in:domestic,international',
             'registration_date' => ['required'],
@@ -443,8 +441,8 @@ class CustomerController extends Controller
             'district_business' => ['required', 'string', 'min:1', 'max:150'],
             'country_code_business' => ['required', 'string', 'min:1', 'max:150'],
             'pincode_business' => ['required', 'regex:/^\\d{6}$/'],
-            'city_id_business' => ['required'],
-            'state_id_business' => ['required'],
+            'city_id_business' => ['required', 'string', 'max:255'],
+            'state_id_business' => ['required', 'string', 'max:255'],
             'country_id_business' => ['required'],
             'phone_business' => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
             'alternate_mob_no_business' => ['nullable', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
@@ -484,8 +482,8 @@ class CustomerController extends Controller
             'district_personal' => ['required', 'string', 'min:1', 'max:150'],
             'country_code_personal' => ['required', 'string', 'min:1', 'max:150'],
             'pincode_personal' => ['required', 'regex:/^\\d{6}$/'],
-            'city_id_personal' => ['required'],
-            'state_id_personal' => ['required'],
+            'city_id_personal' => ['required', 'string', 'max:255'],
+            'state_id_personal' => ['required', 'string', 'max:255'],
             'country_id_personal' => ['required'],
             'phone_personal' => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
             'alternate_mob_no_personal' => ['nullable', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
@@ -529,7 +527,7 @@ class CustomerController extends Controller
 
         $validator = \Validator::make($request->all(), array_merge($businessRules, $personalRules, $licenseRules));
 
-        $validator->after(function ($v) use ($request, $details, $typeOption) {
+        $validator->after(function ($v) use ($request, $details, $typeOption, $domesticChoice, $internationalChoice) {
             $hasGst = filled($request->gst_no);
             $hasAadhaar = filled($request->aadhaar_no);
             $hasPan = filled($request->pan_no);
@@ -537,27 +535,39 @@ class CustomerController extends Controller
             $hasPassport = filled($request->passport_no);
 
             if ($typeOption === 'domestic') {
-                if (!$hasGst && !$hasAadhaar && !$hasPan) {
-                    $v->errors()->add('type_option', translate('Provide GST or Aadhaar/PAN for domestic customers.'));
-                }
-                if ($hasGst && !$request->hasFile('gst_no_file') && empty($details->gst_no_file)) {
-                    $v->errors()->add('gst_no_file', translate('GST document is required.'));
-                }
-                if ($hasAadhaar && !$request->hasFile('aadhaar_no_file') && empty($details->aadhaar_no_file)) {
-                    $v->errors()->add('aadhaar_no_file', translate('Aadhaar document is required.'));
-                }
-                if ($hasPan && !$request->hasFile('pan_no_file') && empty($details->pan_no_file)) {
-                    $v->errors()->add('pan_no_file', translate('PAN document is required.'));
+                if ($domesticChoice === 'gst') {
+                    if (!$hasGst) {
+                        $v->errors()->add('gst_no', translate('GST number is required.'));
+                    }
+                    if ($hasGst && !$request->hasFile('gst_no_file') && empty($details->gst_no_file)) {
+                        $v->errors()->add('gst_no_file', translate('GST document is required.'));
+                    }
+                } else {
+                    if (!$hasAadhaar || !$hasPan) {
+                        $v->errors()->add('aadhaar_no', translate('Aadhaar and PAN are required when GST is not provided.'));
+                    }
+                    if ($hasAadhaar && !$request->hasFile('aadhaar_no_file') && empty($details->aadhaar_no_file)) {
+                        $v->errors()->add('aadhaar_no_file', translate('Aadhaar document is required.'));
+                    }
+                    if ($hasPan && !$request->hasFile('pan_no_file') && empty($details->pan_no_file)) {
+                        $v->errors()->add('pan_no_file', translate('PAN document is required.'));
+                    }
                 }
             } else {
-                if (!$hasIEC && !$hasPassport) {
-                    $v->errors()->add('type_option', translate('Provide IEC or Passport for international customers.'));
-                }
-                if ($hasIEC && !$request->hasFile('iec_no_file') && empty($details->iec_no_file)) {
-                    $v->errors()->add('iec_no_file', translate('IEC document is required.'));
-                }
-                if ($hasPassport && !$request->hasFile('passport_no_file') && empty($details->passport_no_file)) {
-                    $v->errors()->add('passport_no_file', translate('Passport document is required.'));
+                if ($internationalChoice === 'iec') {
+                    if (!$hasIEC) {
+                        $v->errors()->add('iec_no', translate('IEC number is required.'));
+                    }
+                    if ($hasIEC && !$request->hasFile('iec_no_file') && empty($details->iec_no_file)) {
+                        $v->errors()->add('iec_no_file', translate('IEC document is required.'));
+                    }
+                } else {
+                    if (!$hasPassport) {
+                        $v->errors()->add('passport_no', translate('Passport number is required.'));
+                    }
+                    if ($hasPassport && !$request->hasFile('passport_no_file') && empty($details->passport_no_file)) {
+                        $v->errors()->add('passport_no_file', translate('Passport document is required.'));
+                    }
                 }
             }
         });

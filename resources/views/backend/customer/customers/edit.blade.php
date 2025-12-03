@@ -20,12 +20,12 @@
                     <div class="col-md-6 mb-3">
                         <div class="form-check form-check-inline">
                             <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_domestic"
-                                   value="domestic" {{ old('type_option', $details->type_option ?? 'domestic') === 'domestic' ? 'checked' : '' }}>
+                                   value="domestic" {{ old('type_option', $user->type_option ?? 'domestic') === 'domestic' ? 'checked' : '' }}>
                             <label class="form-check-label" for="type_domestic">{{ translate('Domestic') }}</label>
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_international"
-                                   value="international" {{ old('type_option', $details->type_option) === 'international' ? 'checked' : '' }}>
+                                   value="international" {{ old('type_option', $user->type_option) === 'international' ? 'checked' : '' }}>
                             <label class="form-check-label" for="type_international">{{ translate('International') }}</label>
                         </div>
                         @error('type_option')
@@ -37,8 +37,21 @@
                 <hr>
 
                 {{-- Business Identification --}}
+                <div class="row locality-domestic locality-block mb-2">
+                    <div class="col-md-12">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_gst" value="gst" {{ ($details->gst_no ?? null) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="domestic_identity_gst">{{ translate('GST') }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_aadhaar" value="aadhaar_pan" {{ ($details->gst_no ?? null) ? '' : 'checked' }}>
+                            <label class="form-check-label" for="domestic_identity_aadhaar">{{ translate('Aadhaar / PAN') }}</label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row locality-domestic locality-block mb-4">
-                    <div class="col-md-4">
+                    <div class="col-md-4 domestic-gst-block">
                         <div class="form-group">
                             <label class="form-label" for="gst_no">{{ translate('GST No') }} *</label>
                             <input type="text" id="gst_no" name="gst_no" class="form-control"
@@ -48,7 +61,7 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 domestic-gst-block">
                         <div class="form-group">
                             <label class="form-label" for="gst_no_file">{{ translate('GST Document') }}</label>
                             <input type="file" id="gst_no_file" name="gst_no_file" class="form-control">
@@ -62,7 +75,7 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 domestic-gst-block">
                         <div class="form-group">
                             <label class="form-label" for="gstin_current_status">{{ translate('GSTIN Status / Current Status') }} *</label>
                             <input type="text" id="gstin_current_status" name="gstin_current_status" class="form-control"
@@ -72,10 +85,44 @@
                             @enderror
                         </div>
                     </div>
+
+                    <div class="col-md-4 domestic-aadhaar-block">
+                        <label class="form-label" for="aadhaar_no_domestic">{{ translate('Aadhaar No') }}</label>
+                        <input type="text" id="aadhaar_no_domestic" name="aadhaar_no" class="form-control" value="{{ old('aadhaar_no', $details->aadhaar_no) }}">
+                        @error('aadhaar_no') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <input type="file" name="aadhaar_no_file" class="form-control mt-2">
+                        @if (!empty($details->aadhaar_no_file))
+                            <small class="d-block mt-1"><a href="{{ asset(custom_file($details->aadhaar_no_file)) }}" target="_blank">{{ translate('Current Aadhaar file') }}</a></small>
+                        @endif
+                        @error('aadhaar_no_file') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4 domestic-aadhaar-block">
+                        <label class="form-label" for="pan_no_domestic">{{ translate('PAN No') }}</label>
+                        <input type="text" id="pan_no_domestic" name="pan_no" class="form-control" value="{{ old('pan_no', $details->pan_no) }}">
+                        @error('pan_no') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <input type="file" name="pan_no_file" class="form-control mt-2">
+                        @if (!empty($details->pan_no_file))
+                            <small class="d-block mt-1"><a href="{{ asset(custom_file($details->pan_no_file)) }}" target="_blank">{{ translate('Current PAN file') }}</a></small>
+                        @endif
+                        @error('pan_no_file') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <div class="row locality-international locality-block mb-2">
+                    <div class="col-md-12">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_iec" value="iec" {{ ($details->iec_no ?? null) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="international_identity_iec">{{ translate('IEC') }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_passport" value="passport" {{ ($details->iec_no ?? null) ? '' : 'checked' }}>
+                            <label class="form-check-label" for="international_identity_passport">{{ translate('Passport') }}</label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row locality-international locality-block mb-4">
-                    <div class="col-md-4">
+                    <div class="col-md-4 intl-iec-block">
                         <div class="form-group">
                             <label class="form-label" for="iec_no">{{ translate('IEC No') }} *</label>
                             <input type="text" id="iec_no" name="iec_no" class="form-control"
@@ -85,7 +132,7 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 intl-iec-block">
                         <div class="form-group">
                             <label class="form-label" for="iec_no_file">{{ translate('IEC Document') }}</label>
                             <input type="file" id="iec_no_file" name="iec_no_file" class="form-control">
@@ -99,7 +146,7 @@
                             @enderror
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 intl-iec-block">
                         <div class="form-group">
                             <label class="form-label" for="uin_current_status">{{ translate('UIN Status / Current Status') }} *</label>
                             <input type="text" id="uin_current_status" name="uin_current_status" class="form-control"
@@ -108,6 +155,16 @@
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
                         </div>
+                    </div>
+                    <div class="col-md-4 intl-passport-block">
+                        <label class="form-label" for="passport_no">{{ translate('Passport No') }}</label>
+                        <input type="text" id="passport_no" name="passport_no" class="form-control" value="{{ old('passport_no', $details->passport_no) }}">
+                        @error('passport_no') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <input type="file" name="passport_no_file" class="form-control mt-2">
+                        @if (!empty($details->passport_no_file))
+                            <small class="d-block mt-1"><a href="{{ asset(custom_file($details->passport_no_file)) }}" target="_blank">{{ translate('Current Passport file') }}</a></small>
+                        @endif
+                        @error('passport_no_file') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
 
@@ -210,16 +267,12 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="state_id_business">{{ translate('State') }} *</label>
-                        <select name="state_id_business" id="state_id_business" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ old('state_id_business', $details->state_id_business) }}">
-                            <option value="">{{ translate('Select State') }}</option>
-                        </select>
+                        <input type="text" name="state_id_business" id="state_id_business" class="form-control" value="{{ old('state_id_business', $details->state_id_business) }}">
                         @error('state_id_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="city_id_business">{{ translate('City') }} *</label>
-                        <select name="city_id_business" id="city_id_business" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ old('city_id_business', $details->city_id_business) }}">
-                            <option value="">{{ translate('Select City') }}</option>
-                        </select>
+                        <input type="text" name="city_id_business" id="city_id_business" class="form-control" value="{{ old('city_id_business', $details->city_id_business) }}">
                         @error('city_id_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
@@ -435,16 +488,12 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="state_id_personal">{{ translate('State') }} *</label>
-                        <select name="state_id_personal" id="state_id_personal" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ old('state_id_personal', $details->state_id) }}">
-                            <option value="">{{ translate('Select State') }}</option>
-                        </select>
+                        <input type="text" name="state_id_personal" id="state_id_personal" class="form-control" value="{{ old('state_id_personal', $details->state_id) }}">
                         @error('state_id_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="city_id_personal">{{ translate('City') }} *</label>
-                        <select name="city_id_personal" id="city_id_personal" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ old('city_id_personal', $details->city_id) }}">
-                            <option value="">{{ translate('Select City') }}</option>
-                        </select>
+                        <input type="text" name="city_id_personal" id="city_id_personal" class="form-control" value="{{ old('city_id_personal', $details->city_id) }}">
                         @error('city_id_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
@@ -560,43 +609,6 @@
                     </div>
                 </div>
 
-                {{-- Personal KYC --}}
-                <div class="row">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('KYC Documents') }}</h5>
-                    </div>
-                    <div class="col-md-4 mb-3 locality-domestic locality-block">
-                        <label class="form-label" for="aadhaar_no">{{ translate('Aadhaar No') }}</label>
-                        <input type="text" id="aadhaar_no" name="aadhaar_no" class="form-control" value="{{ old('aadhaar_no', $details->aadhaar_no) }}">
-                        @error('aadhaar_no') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="file" name="aadhaar_no_file" class="form-control mt-2">
-                        @if (!empty($details->aadhaar_no_file))
-                            <small class="d-block mt-1"><a href="{{ asset(custom_file($details->aadhaar_no_file)) }}" target="_blank">{{ translate('Current Aadhaar file') }}</a></small>
-                        @endif
-                        @error('aadhaar_no_file') <div class="text-danger small">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4 mb-3 locality-domestic locality-block">
-                        <label class="form-label" for="pan_no">{{ translate('PAN No') }}</label>
-                        <input type="text" id="pan_no" name="pan_no" class="form-control" value="{{ old('pan_no', $details->pan_no) }}">
-                        @error('pan_no') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="file" name="pan_no_file" class="form-control mt-2">
-                        @if (!empty($details->pan_no_file))
-                            <small class="d-block mt-1"><a href="{{ asset(custom_file($details->pan_no_file)) }}" target="_blank">{{ translate('Current PAN file') }}</a></small>
-                        @endif
-                        @error('pan_no_file') <div class="text-danger small">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4 mb-3 locality-international locality-block">
-                        <label class="form-label" for="passport_no">{{ translate('Passport No') }}</label>
-                        <input type="text" id="passport_no" name="passport_no" class="form-control" value="{{ old('passport_no', $details->passport_no) }}">
-                        @error('passport_no') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="file" name="passport_no_file" class="form-control mt-2">
-                        @if (!empty($details->passport_no_file))
-                            <small class="d-block mt-1"><a href="{{ asset(custom_file($details->passport_no_file)) }}" target="_blank">{{ translate('Current Passport file') }}</a></small>
-                        @endif
-                        @error('passport_no_file') <div class="text-danger small">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-
                 {{-- License Details --}}
                 <div class="row">
                     <div class="col-md-12">
@@ -673,9 +685,6 @@
 
 @section('script')
     <script>
-        const statesCache = {};
-        const citiesCache = {};
-
         function toggleLocalityBlocks() {
             const selected = document.querySelector('input[name="type_option"]:checked')?.value || 'domestic';
             document.querySelectorAll('.locality-block').forEach(block => block.classList.add('d-none'));
@@ -686,86 +695,14 @@
             }
         }
 
-        function populateSelect(selectEl, html) {
-            selectEl.innerHTML = html;
-            const selectedVal = selectEl.dataset.selected || '';
-            if (selectedVal) {
-                selectEl.value = selectedVal;
-            }
-            AIZ.plugins.bootstrapSelect('refresh');
-        }
+        function toggleIdentityBlocks() {
+            const domChoice = document.querySelector('input[name="domestic_identity_selection"]:checked')?.value || 'gst';
+            document.querySelectorAll('.domestic-gst-block').forEach(el => el.classList.toggle('d-none', domChoice !== 'gst'));
+            document.querySelectorAll('.domestic-aadhaar-block').forEach(el => el.classList.toggle('d-none', domChoice !== 'aadhaar_pan'));
 
-        function fetchStates(countryId, targetId, cityTargetId) {
-            if (!countryId) {
-                populateSelect(document.getElementById(targetId), '<option value="">{{ translate("Select State") }}</option>');
-                return;
-            }
-            if (statesCache[countryId]) {
-                populateSelect(document.getElementById(targetId), statesCache[countryId]);
-                // if we already have the selected state, maybe load cities too
-                const stateEl = document.getElementById(targetId);
-                if (cityTargetId && stateEl && stateEl.value) {
-                    fetchCities(stateEl.value, cityTargetId);
-                }
-                return;
-            }
-            $.post('{{ route('get-state') }}', {
-                _token: '{{ csrf_token() }}',
-                country_id: countryId
-            }, function (data) {
-                statesCache[countryId] = data;
-                populateSelect(document.getElementById(targetId), data);
-                const stateEl = document.getElementById(targetId);
-                if (cityTargetId && stateEl && stateEl.value) {
-                    fetchCities(stateEl.value, cityTargetId);
-                }
-            });
-        }
-
-        function fetchCities(stateId, targetId) {
-            if (!stateId) {
-                populateSelect(document.getElementById(targetId), '<option value="">{{ translate("Select City") }}</option>');
-                return;
-            }
-            if (citiesCache[stateId]) {
-                populateSelect(document.getElementById(targetId), citiesCache[stateId]);
-                return;
-            }
-            $.post('{{ route('get-city') }}', {
-                _token: '{{ csrf_token() }}',
-                state_id: stateId
-            }, function (data) {
-                citiesCache[stateId] = data;
-                populateSelect(document.getElementById(targetId), data);
-            });
-        }
-
-        function setupLocationHandlers(prefix) {
-            const countrySel = document.getElementById(`country_id_${prefix}`);
-            const stateSel = document.getElementById(`state_id_${prefix}`);
-            const citySel = document.getElementById(`city_id_${prefix}`);
-
-            if (countrySel) {
-                countrySel.addEventListener('change', function () {
-                    fetchStates(this.value, stateSel.id, citySel.id);
-                    populateSelect(citySel, '<option value="">{{ translate("Select City") }}</option>');
-                });
-
-                // load initial states/cities when page loads if there is a selected country
-                if (countrySel.value) {
-                    fetchStates(countrySel.value, stateSel.id, citySel.id);
-                }
-            }
-            if (stateSel) {
-                stateSel.addEventListener('change', function () {
-                    fetchCities(this.value, citySel.id);
-                });
-
-                // load initial cities if state preselected
-                if (stateSel.dataset.selected) {
-                    fetchCities(stateSel.dataset.selected, citySel.id);
-                }
-            }
+            const intlChoice = document.querySelector('input[name="international_identity_selection"]:checked')?.value || 'iec';
+            document.querySelectorAll('.intl-iec-block').forEach(el => el.classList.toggle('d-none', intlChoice !== 'iec'));
+            document.querySelectorAll('.intl-passport-block').forEach(el => el.classList.toggle('d-none', intlChoice !== 'passport'));
         }
 
         const licenseFieldMap = {
@@ -836,13 +773,17 @@
             if (e.target.classList.contains('locality-toggle')) {
                 toggleLocalityBlocks();
             }
+            if (e.target.classList.contains('domestic-identity-toggle') || e.target.classList.contains('intl-identity-toggle')) {
+                toggleIdentityBlocks();
+            }
         });
 
         toggleLocalityBlocks();
+        toggleIdentityBlocks();
         AIZ.plugins.bootstrapSelect('refresh');
 
-        setupLocationHandlers('business');
-        setupLocationHandlers('personal');
+        
+        
         // helper to sync dropdown disabled state with visible license blocks
         function refreshLicenseSelect() {
             const selector = document.getElementById('license_field_selector');
