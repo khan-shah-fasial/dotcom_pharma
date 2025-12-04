@@ -19,11 +19,11 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_domestic" value="domestic" {{ old('type_option', $user->type_option ?? 'domestic') === 'domestic' ? 'checked' : '' }}>
+                            <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_domestic" value="domestic" {{ (old('type_option') ?: ($user->type_option ?: 'domestic')) === 'domestic' ? 'checked' : '' }}>
                             <label class="form-check-label" for="type_domestic">{{ translate('Domestic') }}</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_international" value="international" {{ old('type_option', $user->type_option) === 'international' ? 'checked' : '' }}>
+                            <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_international" value="international" {{ (old('type_option') ?: $user->type_option) === 'international' ? 'checked' : '' }}>
                             <label class="form-check-label" for="type_international">{{ translate('International') }}</label>
                         </div>
                         @error('type_option')
@@ -38,11 +38,11 @@
                 <div class="row locality-domestic locality-block mb-2">
                     <div class="col-md-12">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_gst" value="gst" {{ ($details->gst_no ?? null) ? 'checked' : '' }}>
+                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_gst" value="gst" {{ ($details->gst_no ?: null) ? 'checked' : '' }}>
                             <label class="form-check-label" for="domestic_identity_gst">{{ translate('GST') }}</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_aadhaar" value="aadhaar_pan" {{ ($details->gst_no ?? null) ? '' : 'checked' }}>
+                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_aadhaar" value="aadhaar_pan" {{ ($details->gst_no ?: null) ? '' : 'checked' }}>
                             <label class="form-check-label" for="domestic_identity_aadhaar">{{ translate('Aadhaar / PAN') }}</label>
                         </div>
                     </div>
@@ -53,7 +53,7 @@
                         <div class="form-group">
                             <label class="form-label" for="gst_no">{{ translate('GST No') }} *</label>
                             <input type="text" id="gst_no" name="gst_no" class="form-control"
-                                   value="{{ old('gst_no', $details->gst_no) }}" placeholder="22AAAAA0000A1Z5">
+                                  value="{{ old('gst_no') ?: ($details->gst_no ?: $user->gst_no) }}" placeholder="22AAAAA0000A1Z5">
                             @error('gst_no')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -136,11 +136,11 @@
                 <div class="row locality-international locality-block mb-2">
                     <div class="col-md-12">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_iec" value="iec" {{ ($details->iec_no ?? null) ? 'checked' : '' }}>
+                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_iec" value="iec" {{ ($details->iec_no ?: null) ? 'checked' : '' }}>
                             <label class="form-check-label" for="international_identity_iec">{{ translate('IEC') }}</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_passport" value="passport" {{ ($details->iec_no ?? null) ? '' : 'checked' }}>
+                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_passport" value="passport" {{ ($details->iec_no ?: null) ? '' : 'checked' }}>
                             <label class="form-check-label" for="international_identity_passport">{{ translate('Passport') }}</label>
                         </div>
                     </div>
@@ -342,7 +342,7 @@
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="phone_business">{{ translate('Primary Mobile') }} *</label>
                         <input type="text" id="phone_business" name="phone_business" class="form-control" required
-                               value="{{ old('phone_business', optional($details)->prim_mobile_no_business ? explode('-', $details->prim_mobile_no_business)[1] ?? $details->prim_mobile_no_business : '') }}">
+                               value="{{ old('phone_business') ?: (optional($details)->prim_mobile_no_business ? (explode('-', $details->prim_mobile_no_business)[1] ?: $details->prim_mobile_no_business) : '') }}">
                         @error('phone_business') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="phone_code_meta" value="{{ old('phone_code_meta', $details->prim_mobile_no_business_meta) }}">
                         <input type="hidden" name="country_code_phone_code_business" value="{{ old('country_code_phone_code_business', $details->country_code_business) }}">
@@ -352,7 +352,7 @@
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_mob_no_business">{{ translate('Alternate Mobile (Contact Person)') }}</label>
                         <input type="text" id="alternate_mob_no_business" name="alternate_mob_no_business" class="form-control"
-                               value="{{ old('alternate_mob_no_business', optional($details)->alt_mobile_no_business ? explode('-', $details->alt_mobile_no_business)[1] ?? $details->alt_mobile_no_business : '') }}">
+                               value="{{ old('alternate_mob_no_business') ?: (optional($details)->alt_mobile_no_business ? (explode('-', $details->alt_mobile_no_business)[1] ?: $details->alt_mobile_no_business) : '') }}">
                         @error('alternate_mob_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="alternate_mob_no_business_meta" value="{{ old('alternate_mob_no_business_meta', $details->alt_mobile_no_business_meta) }}">
                         <input type="hidden" name="country_code_alternate_mob_no_business" value="{{ old('country_code_alternate_mob_no_business', $details->country_code_business) }}">
@@ -360,7 +360,7 @@
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="whats_app_no_business">{{ translate('Primary WhatsApp') }} *</label>
                         <input type="text" id="whats_app_no_business" name="whats_app_no_business" class="form-control" required
-                               value="{{ old('whats_app_no_business', optional($details)->prim_whats_app_no_business ? explode('-', $details->prim_whats_app_no_business)[1] ?? $details->prim_whats_app_no_business : '') }}">
+                               value="{{ old('whats_app_no_business') ?: (optional($details)->prim_whats_app_no_business ? (explode('-', $details->prim_whats_app_no_business)[1] ?: $details->prim_whats_app_no_business) : '') }}">
                         @error('whats_app_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="whats_app_no_business_meta" value="{{ old('whats_app_no_business_meta', $details->prim_whats_app_no_business_meta) }}">
                         <input type="hidden" name="country_code_whats_app_no_business" value="{{ old('country_code_whats_app_no_business', $details->country_code_business) }}">
@@ -368,7 +368,7 @@
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_whats_app_no_business">{{ translate('Alternate WhatsApp') }}</label>
                         <input type="text" id="alternate_whats_app_no_business" name="alternate_whats_app_no_business" class="form-control"
-                               value="{{ old('alternate_whats_app_no_business', optional($details)->alternate_whats_app_no_business ? explode('-', $details->alternate_whats_app_no_business)[1] ?? $details->alternate_whats_app_no_business : '') }}">
+                               value="{{ old('alternate_whats_app_no_business') ?: (optional($details)->alternate_whats_app_no_business ? (explode('-', $details->alternate_whats_app_no_business)[1] ?: $details->alternate_whats_app_no_business) : '') }}">
                         @error('alternate_whats_app_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="alternate_whats_app_no_business_meta" value="{{ old('alternate_whats_app_no_business_meta', $details->alternate_whats_app_no_business_meta) }}">
                         <input type="hidden" name="country_code_alternate_whats_app_no_business" value="{{ old('country_code_alternate_whats_app_no_business', $details->country_code_business) }}">
@@ -376,13 +376,13 @@
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="prim_email_business">{{ translate('Primary Email') }} *</label>
                         <input type="email" id="prim_email_business" name="prim_email_business" class="form-control" required
-                               value="{{ old('prim_email_business', $details->prim_email_business ?? $user->email) }}">
+                               value="{{ old('prim_email_business') ?: ($details->prim_email_business ?: $user->email) }}">
                         @error('prim_email_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alt_email_business">{{ translate('Alternate Email') }}</label>
                         <input type="email" id="alt_email_business" name="alt_email_business" class="form-control"
-                               value="{{ old('alt_email_business', $details->alt_email_business) }}">
+                               value="{{ old('alt_email_business') ?: $details->alt_email_business }}">
                         @error('alt_email_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
@@ -471,7 +471,7 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="name_personal">{{ translate('Name') }} *</label>
-                        <input type="text" id="name_personal" name="name_personal" class="form-control" value="{{ old('name_personal', $details->name ?? $user->name) }}" required>
+                        <input type="text" id="name_personal" name="name_personal" class="form-control" value="{{ old('name_personal', $details->name ?: $user->name) }}" required>
                         @error('name_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
@@ -545,7 +545,7 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="pincode_personal">{{ translate('Pincode') }} *</label>
-                        <input type="text" id="pincode_personal" name="pincode_personal" class="form-control" onchange="pincode_info(this);" value="{{ old('pincode_personal', $details->pincode) }}" required>
+                        <input type="text" id="pincode_personal" name="pincode_personal" class="form-control" onchange="pincode_info(this);" value="{{ old('pincode_personal', $details->pincode ?: $user->postal_code) }}" required>
                         @error('pincode_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
@@ -562,8 +562,14 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="phone_personal">{{ translate('Primary Mobile') }} *</label>
-                        <input type="text" id="phone_personal" name="phone_personal" class="form-control" required
-                               value="{{ old('phone_personal', optional($details)->prim_mobile_no ? explode('-', $details->prim_mobile_no)[1] ?? $details->prim_mobile_no : '') }}">
+                        <input type="text" id="phone_personal" name="phone_personal" class="form-control" required 
+                        value="{{ 
+                            old('phone_personal')
+                            ?: (optional($details)->prim_mobile_no 
+                                ? (explode('-', $details->prim_mobile_no)[1] ?: $details->prim_mobile_no) 
+                                : ($user->phone ?: '')
+                            ) 
+                        }}">
                         @error('phone_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="phone_personal_meta" value="{{ old('phone_personal_meta', $details->prim_mobile_no_meta) }}">
                         <input type="hidden" name="country_code_phone_code_personal" value="{{ old('country_code_phone_code_personal', $details->country_code) }}">
@@ -572,7 +578,7 @@
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_mob_no_personal">{{ translate('Alternate Mobile') }}</label>
                         <input type="text" id="alternate_mob_no_personal" name="alternate_mob_no_personal" class="form-control"
-                               value="{{ old('alternate_mob_no_personal', optional($details)->alt_mobile_no ? explode('-', $details->alt_mobile_no)[1] ?? $details->alt_mobile_no : '') }}">
+                               value="{{ old('alternate_mob_no_personal') ?: (optional($details)->alt_mobile_no ? (explode('-', $details->alt_mobile_no)[1] ?: $details->alt_mobile_no) : '') }}">
                         @error('alternate_mob_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="alternate_mob_no_personal_meta" value="{{ old('alternate_mob_no_personal_meta', $details->alt_mobile_no_meta) }}">
                         <input type="hidden" name="country_code_alternate_mob_no_personal" value="{{ old('country_code_alternate_mob_no_personal', $details->country_code) }}">
@@ -580,7 +586,7 @@
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="whats_app_no_personal">{{ translate('Primary WhatsApp') }} *</label>
                         <input type="text" id="whats_app_no_personal" name="whats_app_no_personal" class="form-control" required
-                               value="{{ old('whats_app_no_personal', optional($details)->prim_whats_app_no ? explode('-', $details->prim_whats_app_no)[1] ?? $details->prim_whats_app_no : '') }}">
+                               value="{{ old('whats_app_no_personal') ?: (optional($details)->prim_whats_app_no ? (explode('-', $details->prim_whats_app_no)[1] ?: $details->prim_whats_app_no) : '') }}">
                         @error('whats_app_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="whats_app_no_personal_meta" value="{{ old('whats_app_no_personal_meta', $details->prim_whats_app_no_meta) }}">
                         <input type="hidden" name="country_code_whats_app_no_personal" value="{{ old('country_code_whats_app_no_personal', $details->country_code) }}">
@@ -588,19 +594,20 @@
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_whats_app_no_personal">{{ translate('Alternate WhatsApp') }}</label>
                         <input type="text" id="alternate_whats_app_no_personal" name="alternate_whats_app_no_personal" class="form-control"
-                               value="{{ old('alternate_whats_app_no_personal', optional($details)->alt_whats_app_no ? explode('-', $details->alt_whats_app_no)[1] ?? $details->alt_whats_app_no : '') }}">
+                               value="{{ old('alternate_whats_app_no_personal') ?: (optional($details)->alt_whats_app_no ? (explode('-', $details->alt_whats_app_no)[1] ?: $details->alt_whats_app_no) : '') }}">
                         @error('alternate_whats_app_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="alternate_whats_app_no_personal_meta" value="{{ old('alternate_whats_app_no_personal_meta', $details->alternate_whats_app_no_meta) }}">
                         <input type="hidden" name="country_code_alternate_whats_app_no_personal" value="{{ old('country_code_alternate_whats_app_no_personal', $details->country_code) }}">
                     </div>
+                    {{-- {{ dd(old('prim_email_personal'), $details->prim_email_personal, $user->email) }} --}}
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="prim_email_personal">{{ translate('Primary Email') }} *</label>
-                        <input type="email" id="prim_email_personal" name="prim_email_personal" class="form-control" value="{{ old('prim_email_personal', $details->prim_email_personal ?? $user->email) }}" required>
+                        <input type="email" id="prim_email_personal" name="prim_email_personal" class="form-control" value="{{ old('prim_email_personal') ?: $details->prim_email_personal ?: $user->email }}" required>
                         @error('prim_email_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alt_email_personal">{{ translate('Alternate Email') }}</label>
-                        <input type="email" id="alt_email_personal" name="alt_email_personal" class="form-control" value="{{ old('alt_email_personal', $details->alt_email_personal) }}">
+                        <input type="email" id="alt_email_personal" name="alt_email_personal" class="form-control" value="{{ old('alt_email_personal') ?: $details->alt_email_personal }}">
                         @error('alt_email_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -678,6 +685,7 @@
                                             <option value="cc_mdl_reg_no" {{ $details->cc_mdl_reg_no ? 'disabled' : '' }}>{{ translate('CC / MDL Registration No') }}</option>
                                             <option value="other_reg_no" {{ $details->other_reg_no ? 'disabled' : '' }}>{{ translate('Other Registration No') }}</option>
                                         </select>
+                                        <div id="license-required-error" class="text-danger small mt-1 d-none">{{ translate('At least one license / registration entry is required.') }}</div>
                                     </div>
                                 </div>
                                 @php
@@ -705,8 +713,8 @@
                                                             <label class="form-label mb-0" for="{{ $key }}">{{ $item['label'] }}</label>
                                                             <button type="button" class="btn btn-sm btn-outline-danger" data-remove-existing="{{ $key }}">{{ translate('Remove') }}</button>
                                                         </div>
-                                                        <input type="text" id="{{ $key }}" name="{{ $key }}" class="form-control mb-2" value="{{ $val }}">
-                                                        <input type="file" name="{{ $key }}_file" class="form-control">
+                                                        <input type="text" id="{{ $key }}" name="{{ $key }}" class="form-control mb-2" value="{{ $val }}" required>
+                                                        <input type="file" name="{{ $key }}_file" class="form-control" {{ empty($item['file']) ? 'required' : '' }}>
                                                         @if (!empty($item['file']))
                                                             <small class="d-block mt-1"><a href="{{ asset(custom_file($item['file'])) }}" target="_blank">{{ translate('Current file') }}</a></small>
                                                         @endif
@@ -840,7 +848,7 @@
                         iti.setCountry(matched.iso2);
                     }
                 } else {
-                    iti.setCountry('{{ old('type_option', $user->type_option ?? 'domestic') === 'international' ? 'us' : 'in' }}');
+                    iti.setCountry('{{ old('type_option', $user->type_option ?: 'domestic') === 'international' ? 'us' : 'in' }}');
                 }
 
                 const selected = iti.getSelectedCountryData();
@@ -1064,6 +1072,36 @@
                 refreshLicenseSelect();
             });
         });
+
+        // Frontend guard: at least one license entry required
+        function hasAnyLicense() {
+            const licenseKeys = Object.keys(licenseFieldMap);
+            for (const key of licenseKeys) {
+                const textVal = (document.querySelector(`input[name="${key}"]`)?.value || '').trim();
+                const fileEl = document.querySelector(`input[name="${key}_file"]`);
+                const filePresent = fileEl && (fileEl.files?.length || fileEl.getAttribute('data-existing'));
+                if (textVal || filePresent) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        const licenseError = document.getElementById('license-required-error');
+        const editForm = document.getElementById('edit-customer-form');
+        if (editForm) {
+            editForm.addEventListener('submit', function (e) {
+                if (!hasAnyLicense()) {
+                    e.preventDefault();
+                    if (licenseError) {
+                        licenseError.classList.remove('d-none');
+                        licenseError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                } else if (licenseError) {
+                    licenseError.classList.add('d-none');
+                }
+            });
+        }
 
         // Initial sync for options based on existing data
         refreshLicenseSelect();
