@@ -217,13 +217,15 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     });
 
     // Customer
-    Route::resource('customers', CustomerController::class);
+    // Route::resource('customers', CustomerController::class);
+    Route::resource('customers', CustomerController::class)->except(['update', 'destroy']);
     Route::controller(CustomerController::class)->group(function () {
         Route::get('customers-business', 'business_index')->name('customers.business');
         Route::get('customers_ban/{customer}', 'ban')->name('customers.ban');
         Route::get('/customers/login/{id}', 'login')->name('customers.login');
         Route::get('/customers/destroy/{id}', 'destroy')->name('customers.destroy');
         Route::post('/bulk-customer-delete', 'bulk_customer_delete')->name('bulk-customer-delete');
+        Route::match(['post', 'put', 'patch'], 'customers/update/{id}', 'update')->name('customers.update');
 
         Route::get('/customers_view/{id}', 'view')->name('customers.view');
         Route::any('/customers_approval', 'approval')->name('customers.approval');

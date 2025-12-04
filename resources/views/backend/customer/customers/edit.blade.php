@@ -10,8 +10,8 @@
     <div class="card">
         <form id="edit-customer-form" action="{{ route('customers.update', $user->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
-            @method('PUT')
             <div class="card-body">
+                <div id="form-error-box" class="alert alert-danger d-none"></div>
                 {{-- Type --}}
                 <div class="row">
                     <div class="col-md-12">
@@ -35,14 +35,17 @@
                 <hr>
 
                 {{-- Business Identification --}}
+                @php
+                    $domChoice = old('domestic_identity_selection') ?: (($details->gst_no ?? '') ? 'gst' : 'aadhaar_pan');
+                @endphp
                 <div class="row locality-domestic locality-block mb-2">
                     <div class="col-md-12">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_gst" value="gst" {{ ($details->gst_no ?: null) ? 'checked' : '' }}>
+                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_gst" value="gst" {{ $domChoice === 'gst' ? 'checked' : '' }}>
                             <label class="form-check-label" for="domestic_identity_gst">{{ translate('GST') }}</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_aadhaar" value="aadhaar_pan" {{ ($details->gst_no ?: null) ? '' : 'checked' }}>
+                            <input class="form-check-input domestic-identity-toggle" type="radio" name="domestic_identity_selection" id="domestic_identity_aadhaar" value="aadhaar_pan" {{ $domChoice === 'aadhaar_pan' ? 'checked' : '' }}>
                             <label class="form-check-label" for="domestic_identity_aadhaar">{{ translate('Aadhaar / PAN') }}</label>
                         </div>
                     </div>
@@ -62,7 +65,7 @@
                     <div class="col-md-4 domestic-gst-block">
                         <div class="form-group">
                             <label class="form-label" for="gst_no_file">{{ translate('GST Document') }} *</label>
-                            <input type="file" id="gst_no_file" name="gst_no_file" class="form-control" data-existing="{{ $details->gst_no_file ? '1' : '' }}">
+                            <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="gst_no_file" name="gst_no_file" class="form-control" data-existing="{{ $details->gst_no_file ? '1' : '' }}">
                             @if (!empty($details->gst_no_file))
                                 <small class="d-block mt-1">
                                     <a href="{{ asset(custom_file($details->gst_no_file)) }}" target="_blank">{{ translate('Current file') }}</a>
@@ -95,7 +98,7 @@
                     <div class="col-md-3 domestic-aadhaar-block">
                         <!-- Aadhaar Upload -->
                         <label class="form-label mb-0 mt-3" for="aadhaar_no_file">{{ translate('Aadhaar Upload') }} *</label>
-                        <input type="file" id="aadhaar_no_file" name="aadhaar_no_file" class="form-control m-0" data-existing="{{ $details->aadhaar_no_file ? '1' : '' }}">
+                        <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="aadhaar_no_file" name="aadhaar_no_file" class="form-control m-0" data-existing="{{ $details->aadhaar_no_file ? '1' : '' }}">
                         @if (!empty($details->aadhaar_no_file))
                             <small class="d-block mt-1">
                                 <a href="{{ asset(custom_file($details->aadhaar_no_file)) }}" target="_blank">
@@ -119,7 +122,7 @@
                     <div class="col-md-3 domestic-aadhaar-block">
                         <!-- PAN Upload -->
                         <label class="form-label mb-0 mt-3" for="pan_no_file">{{ translate('PAN Upload') }} *</label>
-                        <input type="file" id="pan_no_file" name="pan_no_file" class="form-control m-0" data-existing="{{ !empty($details->pan_no_file) ? '1' : '' }}" >
+                        <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="pan_no_file" name="pan_no_file" class="form-control m-0" data-existing="{{ !empty($details->pan_no_file) ? '1' : '' }}" >
                         @if (!empty($details->pan_no_file))
                             <small class="d-block mt-1">
                                 <a href="{{ asset(custom_file($details->pan_no_file)) }}" target="_blank">
@@ -191,7 +194,7 @@
                         <!-- File input -->
                         <label class="form-label mt-3" for="passport_no_file">{{ translate('Passport Upload') }}</label>
                         <div class="input-group">
-                            <input type="file" id="passport_no_file" name="passport_no_file" class="form-control {{ $errors->has('passport_no_file') ? 'is-invalid' : '' }}" accept=".pdf,image/*" data-existing="{{ !empty($details->passport_no_file) ? '1' : '' }}" aria-describedby="passportFileHelp" >
+                            <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="passport_no_file" name="passport_no_file" class="form-control {{ $errors->has('passport_no_file') ? 'is-invalid' : '' }}" accept=".pdf,image/*" data-existing="{{ !empty($details->passport_no_file) ? '1' : '' }}" aria-describedby="passportFileHelp" >
                             <button type="button" class="btn btn-outline-secondary" id="passportFileReset" style="display:none;">
                             {{ translate('Remove') }}
                             </button>
@@ -304,7 +307,7 @@
                         <select name="country_id_business" id="country_id_business" class="form-control aiz-selectpicker" data-live-search="true" required>
                             <option value="">{{ translate('Select Country') }}</option>
                             @foreach ($countries as $country)
-                                <option value="{{ $country->id }}" {{ (string) old('country_id_business', $details->country_id_business) === (string) $country->id ? 'selected' : '' }}>
+                                <option value="{{ $country->id }}" {{ (string) (old('country_id_business') ?: ($details->country_id_business ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
                                     {{ $country->name }}
                                 </option>
                             @endforeach
@@ -313,66 +316,140 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="state_id_business">{{ translate('State') }} *</label>
-                        <input type="text" name="state_id_business" id="state_id_business" class="form-control" value="{{ old('state_id_business', $details->state_id_business) }}" required>
+                        <input type="text" name="state_id_business" id="state_id_business" class="form-control" value="{{ old('state_id_business') ?: ($details->state_id_business ?: $user->state) }}" required>
                         @error('state_id_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="city_id_business">{{ translate('City') }} *</label>
-                        <input type="text" name="city_id_business" id="city_id_business" class="form-control" value="{{ old('city_id_business', $details->city_id_business) }}" required>
+                        <input type="text" name="city_id_business" id="city_id_business" class="form-control" value="{{ old('city_id_business') ?: ($details->city_id_business ?: $user->city) }}" required>
                         @error('city_id_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="pincode_business">{{ translate('Pincode') }} *</label>
-                        <input type="text" name="pincode_business" id="pincode_business" class="form-control" onchange="pincode_info(this);" required value="{{ old('pincode_business', $details->pincode_business) }}">
+                        <input type="text" name="pincode_business" id="pincode_business" class="form-control" onchange="pincode_info(this);" required value="{{ old('pincode_business') ?: ($details->pincode_business ?: $user->postal_code) }}">
                         @error('pincode_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="country_code_business">{{ translate('Country Code') }} *</label>
                         <input type="text" name="country_code_business" id="country_code_business" class="form-control" required
-                               value="{{ old('country_code_business', $details->country_code_business) }}">
+                               value="{{ old('country_code_business') ?: ($details->country_code_business ?: $user->country) }}">
                         @error('country_code_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
+                @php
+                    // helper: split on first '-' into ['dial','number']
+                    $parsePhone = function ($raw, $defaultDial = '91') {
+                        $raw = $raw ?? '';
+                        if ($raw === '') {
+                            return ['dial' => $defaultDial, 'number' => ''];
+                        }
+                        $parts = explode('-', $raw, 2);
+                        if (count($parts) === 2) {
+                            $dial = $parts[0] !== '' ? $parts[0] : $defaultDial;
+                            $number = $parts[1];
+                        } else {
+                            $dial = $defaultDial;
+                            $number = $parts[0];
+                        }
+                        return ['dial' => $dial, 'number' => $number];
+                    };
+
+                    // fallback default dial
+                    $defaultDial = $details->country_code_business ?? '91';
+
+                    // Primary business phone
+                    if (old('country_code_phone_code_business') !== null || old('phone_business') !== null) {
+                        // if old separate fields exist combine them to parse
+                        $primRaw = (old('country_code_phone_code_business', '') !== '' ? old('country_code_phone_code_business') . '-' : '')
+                                . old('phone_business', '');
+                    } else {
+                        $primRaw = optional($details)->prim_mobile_no_business ?? ($user->phone ?? '');
+                    }
+                    $prim = $parsePhone($primRaw, $defaultDial);
+                    $primVisible = old('phone_business', $prim['number'] ?: ($user->phone ?? ''));
+
+                    // Alternate business phone
+                    if (old('country_code_alternate_mob_no_business') !== null || old('alternate_mob_no_business') !== null) {
+                        $altRaw = (old('country_code_alternate_mob_no_business', '') !== '' ? old('country_code_alternate_mob_no_business') . '-' : '')
+                                . old('alternate_mob_no_business', '');
+                    } else {
+                        $altRaw = optional($details)->alt_mobile_no_business ?? '';
+                    }
+                    $alt = $parsePhone($altRaw, $defaultDial);
+
+                    // Primary WhatsApp
+                    if (old('country_code_whats_app_no_business') !== null || old('whats_app_no_business') !== null) {
+                        $waRaw = (old('country_code_whats_app_no_business', '') !== '' ? old('country_code_whats_app_no_business') . '-' : '')
+                            . old('whats_app_no_business', '');
+                    } else {
+                        $waRaw = optional($details)->prim_whats_app_no_business ?? '';
+                    }
+                    $wa = $parsePhone($waRaw, $defaultDial);
+                    if (!$wa['dial']) { $wa['dial'] = '91'; }
+
+                    // Alternate WhatsApp
+                    if (old('country_code_alternate_whats_app_no_business') !== null || old('alternate_whats_app_no_business') !== null) {
+                        $altWaRaw = (old('country_code_alternate_whats_app_no_business', '') !== '' ? old('country_code_alternate_whats_app_no_business') . '-' : '')
+                                . old('alternate_whats_app_no_business', '');
+                    } else {
+                        $altWaRaw = optional($details)->alternate_whats_app_no_business ?? '';
+                    }
+                    $altWa = $parsePhone($altWaRaw, $defaultDial);
+                @endphp
 
                 {{-- Business Contact --}}
                 <div class="row business-requires-gst">
                     <div class="col-md-12">
                         <h5 class="mb-3">{{ translate('Business Contact') }}</h5>
                     </div>
+
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="phone_business">{{ translate('Primary Mobile') }} *</label>
                         <input type="text" id="phone_business" name="phone_business" class="form-control" required
-                               value="{{ old('phone_business') ?: (optional($details)->prim_mobile_no_business ? (explode('-', $details->prim_mobile_no_business)[1] ?: $details->prim_mobile_no_business) : '') }}">
+                            value="{{ $primVisible }}" />
+
                         @error('phone_business') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="hidden" name="phone_code_meta" value="{{ old('phone_code_meta', $details->prim_mobile_no_business_meta) }}">
-                        <input type="hidden" name="country_code_phone_code_business" value="{{ old('country_code_phone_code_business', $details->country_code_business) }}">
-                        <input type="hidden" name="phone_business_meta" value="{{ old('phone_code_meta', $details->prim_mobile_no_business_meta) }}">
-                        <input type="hidden" name="country_code_phone_business" value="{{ old('country_code_phone_code_business', $details->country_code_business) }}">
+
+                        {{-- meta & dial hidden fields --}}
+                        <input type="hidden" name="phone_code_meta" value="{{ old('phone_code_meta', $details->prim_mobile_no_business_meta ?? '') }}">
+                        <input type="hidden" name="country_code_phone_code_business" value="{{ old('country_code_phone_code_business', $prim['dial']) }}">
+                        <input type="hidden" name="phone_business_meta" value="{{ old('phone_business_meta', $details->prim_mobile_no_business_meta ?? '') }}">
+                        <input type="hidden" name="country_code_phone_business" value="{{ old('country_code_phone_business', $prim['dial']) }}">
                     </div>
+
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_mob_no_business">{{ translate('Alternate Mobile (Contact Person)') }}</label>
                         <input type="text" id="alternate_mob_no_business" name="alternate_mob_no_business" class="form-control"
-                               value="{{ old('alternate_mob_no_business') ?: (optional($details)->alt_mobile_no_business ? (explode('-', $details->alt_mobile_no_business)[1] ?: $details->alt_mobile_no_business) : '') }}">
+                            value="{{ old('alternate_mob_no_business', $alt['number']) }}">
+
                         @error('alternate_mob_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="hidden" name="alternate_mob_no_business_meta" value="{{ old('alternate_mob_no_business_meta', $details->alt_mobile_no_business_meta) }}">
-                        <input type="hidden" name="country_code_alternate_mob_no_business" value="{{ old('country_code_alternate_mob_no_business', $details->country_code_business) }}">
+
+                        <input type="hidden" name="alternate_mob_no_business_meta" value="{{ old('alternate_mob_no_business_meta', $details->alt_mobile_no_business_meta ?? '') }}">
+                        <input type="hidden" name="country_code_alternate_mob_no_business" value="{{ old('country_code_alternate_mob_no_business', $alt['dial']) }}">
                     </div>
+
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="whats_app_no_business">{{ translate('Primary WhatsApp') }} *</label>
                         <input type="text" id="whats_app_no_business" name="whats_app_no_business" class="form-control" required
-                               value="{{ old('whats_app_no_business') ?: (optional($details)->prim_whats_app_no_business ? (explode('-', $details->prim_whats_app_no_business)[1] ?: $details->prim_whats_app_no_business) : '') }}">
+                            value="{{ old('whats_app_no_business', $wa['number']) }}">
+
                         @error('whats_app_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="hidden" name="whats_app_no_business_meta" value="{{ old('whats_app_no_business_meta', $details->prim_whats_app_no_business_meta) }}">
-                        <input type="hidden" name="country_code_whats_app_no_business" value="{{ old('country_code_whats_app_no_business', $details->country_code_business) }}">
+
+                        <input type="hidden" name="whats_app_no_business_meta" value="{{ old('whats_app_no_business_meta', $details->prim_whats_app_no_business_meta ?? '') }}">
+                        <input type="hidden" name="country_code_whats_app_no_business" value="{{ old('country_code_whats_app_no_business', $wa['dial']) }}">
                     </div>
+
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_whats_app_no_business">{{ translate('Alternate WhatsApp') }}</label>
                         <input type="text" id="alternate_whats_app_no_business" name="alternate_whats_app_no_business" class="form-control"
-                               value="{{ old('alternate_whats_app_no_business') ?: (optional($details)->alternate_whats_app_no_business ? (explode('-', $details->alternate_whats_app_no_business)[1] ?: $details->alternate_whats_app_no_business) : '') }}">
+                            value="{{ old('alternate_whats_app_no_business', $altWa['number']) }}">
+
                         @error('alternate_whats_app_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="hidden" name="alternate_whats_app_no_business_meta" value="{{ old('alternate_whats_app_no_business_meta', $details->alternate_whats_app_no_business_meta) }}">
-                        <input type="hidden" name="country_code_alternate_whats_app_no_business" value="{{ old('country_code_alternate_whats_app_no_business', $details->country_code_business) }}">
+
+                        <input type="hidden" name="alternate_whats_app_no_business_meta" value="{{ old('alternate_whats_app_no_business_meta', $details->alternate_whats_app_no_business_meta ?? '') }}">
+                        <input type="hidden" name="country_code_alternate_whats_app_no_business" value="{{ old('country_code_alternate_whats_app_no_business', $altWa['dial']) }}">
                     </div>
+
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="prim_email_business">{{ translate('Primary Email') }} *</label>
                         <input type="email" id="prim_email_business" name="prim_email_business" class="form-control" required
@@ -463,7 +540,7 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="photo_file">{{ translate('Photo') }} *</label>
-                        <input type="file" id="photo_file" name="photo_file" class="form-control" {{ $details->photo_file ? '' : 'required' }}>
+                        <input accept=".jpg,.jpeg,.png,.webp" type="file" id="photo_file" name="photo_file" class="form-control" {{ $details->photo_file ? '' : 'required' }}>
                         @if (!empty($details->photo_file))
                             <small class="d-block mt-1"><a href="{{ asset(custom_file($details->photo_file)) }}" target="_blank">{{ translate('Current file') }}</a></small>
                         @endif
@@ -526,7 +603,7 @@
                         <select name="country_id_personal" id="country_id_personal" class="form-control aiz-selectpicker" data-live-search="true" required>
                             <option value="">{{ translate('Select Country') }}</option>
                             @foreach ($countries as $country)
-                                <option value="{{ $country->id }}" {{ (string) old('country_id_personal', $details->country_id) === (string) $country->id ? 'selected' : '' }}>
+                                <option value="{{ $country->id }}" {{ (string) (old('country_id_personal') ?: ($details->country_id ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
                                     {{ $country->name }}
                                 </option>
                             @endforeach
@@ -560,6 +637,24 @@
                     <div class="col-md-12">
                         <h5 class="mb-3">{{ translate('Personal Contact') }}</h5>
                     </div>
+                    @php
+                        $primPersonalDial = old('country_code_phone_code_personal')
+                            ?: ((isset($details->prim_mobile_no) && str_contains($details->prim_mobile_no, '-'))
+                                ? explode('-', $details->prim_mobile_no, 2)[0]
+                                : ($details->country_code ?? ''));
+                        $altPersonalDial = old('country_code_alternate_mob_no_personal')
+                            ?: ((isset($details->alt_mobile_no) && str_contains($details->alt_mobile_no, '-'))
+                                ? explode('-', $details->alt_mobile_no, 2)[0]
+                                : ($details->country_code ?? ''));
+                        $waPersonalDial = old('country_code_whats_app_no_personal')
+                            ?: ((isset($details->prim_whats_app_no) && str_contains($details->prim_whats_app_no, '-'))
+                                ? explode('-', $details->prim_whats_app_no, 2)[0]
+                                : ($details->country_code ?? ''));
+                        $altWaPersonalDial = old('country_code_alternate_whats_app_no_personal')
+                            ?: ((isset($details->alt_whats_app_no) && str_contains($details->alt_whats_app_no, '-'))
+                                ? explode('-', $details->alt_whats_app_no, 2)[0]
+                                : ($details->country_code ?? ''));
+                    @endphp
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="phone_personal">{{ translate('Primary Mobile') }} *</label>
                         <input type="text" id="phone_personal" name="phone_personal" class="form-control" required 
@@ -572,8 +667,8 @@
                         }}">
                         @error('phone_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="phone_personal_meta" value="{{ old('phone_personal_meta', $details->prim_mobile_no_meta) }}">
-                        <input type="hidden" name="country_code_phone_code_personal" value="{{ old('country_code_phone_code_personal', $details->country_code) }}">
-                        <input type="hidden" name="country_code_phone_personal" value="{{ old('country_code_phone_code_personal', $details->country_code) }}">
+                        <input type="hidden" name="country_code_phone_code_personal" value="{{ $primPersonalDial }}">
+                        <input type="hidden" name="country_code_phone_personal" value="{{ $primPersonalDial }}">
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_mob_no_personal">{{ translate('Alternate Mobile') }}</label>
@@ -581,7 +676,7 @@
                                value="{{ old('alternate_mob_no_personal') ?: (optional($details)->alt_mobile_no ? (explode('-', $details->alt_mobile_no)[1] ?: $details->alt_mobile_no) : '') }}">
                         @error('alternate_mob_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="alternate_mob_no_personal_meta" value="{{ old('alternate_mob_no_personal_meta', $details->alt_mobile_no_meta) }}">
-                        <input type="hidden" name="country_code_alternate_mob_no_personal" value="{{ old('country_code_alternate_mob_no_personal', $details->country_code) }}">
+                        <input type="hidden" name="country_code_alternate_mob_no_personal" value="{{ $altPersonalDial }}">
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="whats_app_no_personal">{{ translate('Primary WhatsApp') }} *</label>
@@ -589,7 +684,7 @@
                                value="{{ old('whats_app_no_personal') ?: (optional($details)->prim_whats_app_no ? (explode('-', $details->prim_whats_app_no)[1] ?: $details->prim_whats_app_no) : '') }}">
                         @error('whats_app_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="whats_app_no_personal_meta" value="{{ old('whats_app_no_personal_meta', $details->prim_whats_app_no_meta) }}">
-                        <input type="hidden" name="country_code_whats_app_no_personal" value="{{ old('country_code_whats_app_no_personal', $details->country_code) }}">
+                        <input type="hidden" name="country_code_whats_app_no_personal" value="{{ $waPersonalDial }}">
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_whats_app_no_personal">{{ translate('Alternate WhatsApp') }}</label>
@@ -597,7 +692,7 @@
                                value="{{ old('alternate_whats_app_no_personal') ?: (optional($details)->alt_whats_app_no ? (explode('-', $details->alt_whats_app_no)[1] ?: $details->alt_whats_app_no) : '') }}">
                         @error('alternate_whats_app_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="alternate_whats_app_no_personal_meta" value="{{ old('alternate_whats_app_no_personal_meta', $details->alternate_whats_app_no_meta) }}">
-                        <input type="hidden" name="country_code_alternate_whats_app_no_personal" value="{{ old('country_code_alternate_whats_app_no_personal', $details->country_code) }}">
+                        <input type="hidden" name="country_code_alternate_whats_app_no_personal" value="{{ $altWaPersonalDial }}">
                     </div>
                     {{-- {{ dd(old('prim_email_personal'), $details->prim_email_personal, $user->email) }} --}}
                     <div class="col-md-3 mb-3">
@@ -714,7 +809,7 @@
                                                             <button type="button" class="btn btn-sm btn-outline-danger" data-remove-existing="{{ $key }}">{{ translate('Remove') }}</button>
                                                         </div>
                                                         <input type="text" id="{{ $key }}" name="{{ $key }}" class="form-control mb-2" value="{{ $val }}" required>
-                                                        <input type="file" name="{{ $key }}_file" class="form-control" {{ empty($item['file']) ? 'required' : '' }}>
+                                                        <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" name="{{ $key }}_file" class="form-control" {{ empty($item['file']) ? 'required' : '' }}>
                                                         @if (!empty($item['file']))
                                                             <small class="d-block mt-1"><a href="{{ asset(custom_file($item['file'])) }}" target="_blank">{{ translate('Current file') }}</a></small>
                                                         @endif
@@ -845,7 +940,7 @@
                 if (existingDial) {
                     const matched = countryData.find(c => c.dialCode === existingDial);
                     if (matched) {
-                        iti.setCountry(matched.iso2);
+                        try { iti.setCountry(matched.iso2); } catch (e) {}
                     }
                 } else {
                     iti.setCountry('{{ old('type_option', $user->type_option ?: 'domestic') === 'international' ? 'us' : 'in' }}');
@@ -860,6 +955,8 @@
                     if (phoneMetaField) phoneMetaField.value = updated.dialCode;
                     if (metaField) metaField.value = updated.iso2;
                 });
+
+                return iti;
             }
         }
 
@@ -904,7 +1001,7 @@
                             </div>
                             <div class="form-group mb-0">
                                 <label>{{ translate('Upload') }} ${def.label}</label>
-                                <input type="file" name="${def.file}" class="form-control" accept=".jpg,.jpeg,.webp,.png,.pdf" required>
+                                <input type="file" name="${def.file}" class="form-control" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" required>
                             </div>
                         </div>
                     </div>
@@ -974,39 +1071,108 @@
         }
         cacheOriginalRequiredFlags();
         
-        // Initialize intlTelInput on edit form and sync values to existing hidden fields used by controller
+        // Initialize intlTelInput on edit form and sync values to hidden fields used by controller
         function initEditIntlTel(name, codeTargets = [], metaTargets = []) {
             if (typeof intil_input !== 'function') return;
-            intil_input(name);
-            const propagate = () => {
-                const codeVal = document.querySelector(`input[name="country_code_${name}"]`)?.value || '';
-                const metaVal = document.querySelector(`input[name="${name}_meta"]`)?.value || '';
+            const inputEl = document.getElementById(name);
+            if (!inputEl) return;
+
+            // Split prefilled value like "44-9732749387" into dial code + number
+            const rawVal = (inputEl.value || '').trim();
+            let dialFromNumber = '';
+            let numberOnly = rawVal;
+            if (rawVal.includes('-')) {
+                const parts = rawVal.split('-', 2);
+                if (parts[0] && typeof parts[1] !== 'undefined') {
+                    dialFromNumber = parts[0];
+                    numberOnly = parts[1];
+                }
+            }
+            if (numberOnly.includes(' ')) {
+                numberOnly = numberOnly.split(' ')[0];
+            }
+            inputEl.value = numberOnly;
+
+            const iti = intil_input(name);
+            if (!iti) return;
+
+            const setTargets = (dial, iso) => {
                 codeTargets.forEach(sel => {
                     const t = document.querySelector(sel);
-                    if (t) t.value = codeVal;
+                    if (t) t.value = dial || '';
                 });
                 metaTargets.forEach(sel => {
                     const t = document.querySelector(sel);
-                    if (t) t.value = metaVal;
+                    if (t) t.value = iso || '';
                 });
             };
-            propagate();
-            const inputEl = document.getElementById(name);
-            if (inputEl) {
-                inputEl.addEventListener('countrychange', propagate);
-            }
+
+            const selectByDial = (dial) => {
+                if (!dial || !window.intlTelInputGlobals?.getCountryData) return null;
+                const found = window.intlTelInputGlobals.getCountryData().find(c => String(c.dialCode) === String(dial));
+                if (found) {
+                    try {
+                        iti.setCountry(found.iso2);
+                    } catch (e) {
+                        // ignore bad iso
+                    }
+                    return found;
+                }
+                return null;
+            };
+
+            const initialCountry = dialFromNumber ? selectByDial(dialFromNumber) : null;
+            const initialData = initialCountry || iti.getSelectedCountryData();
+            setTargets(initialData?.dialCode, initialData?.iso2);
+
+            inputEl.addEventListener('countrychange', () => {
+                const data = iti.getSelectedCountryData();
+                setTargets(data?.dialCode, data?.iso2);
+            });
         }
 
         function initIntlInputsEdit() {
-            initEditIntlTel('phone_business', ['input[name="country_code_phone_code_business"]'], ['input[name="phone_code_meta"]']);
-            initEditIntlTel('alternate_mob_no_business', ['input[name="country_code_alternate_mob_no_business"]'], ['input[name="alternate_mob_no_business_meta"]']);
-            initEditIntlTel('whats_app_no_business', ['input[name="country_code_whats_app_no_business"]'], ['input[name="whats_app_no_business_meta"]']);
-            initEditIntlTel('alternate_whats_app_no_business', ['input[name="country_code_alternate_whats_app_no_business"]'], ['input[name="alternate_whats_app_no_business_meta"]']);
+            initEditIntlTel(
+                'phone_business',
+                ['input[name="country_code_phone_business"]', 'input[name="country_code_phone_code_business"]'],
+                ['input[name="phone_business_meta"]', 'input[name="phone_code_meta"]']
+            );
+            initEditIntlTel(
+                'alternate_mob_no_business',
+                ['input[name="country_code_alternate_mob_no_business"]'],
+                ['input[name="alternate_mob_no_business_meta"]']
+            );
+            initEditIntlTel(
+                'whats_app_no_business',
+                ['input[name="country_code_whats_app_no_business"]'],
+                ['input[name="whats_app_no_business_meta"]']
+            );
+            initEditIntlTel(
+                'alternate_whats_app_no_business',
+                ['input[name="country_code_alternate_whats_app_no_business"]'],
+                ['input[name="alternate_whats_app_no_business_meta"]']
+            );
 
-            initEditIntlTel('phone_personal', ['input[name="country_code_phone_code_personal"]'], ['input[name="phone_personal_meta"]']);
-            initEditIntlTel('alternate_mob_no_personal', ['input[name="country_code_alternate_mob_no_personal"]'], ['input[name="alternate_mob_no_personal_meta"]']);
-            initEditIntlTel('whats_app_no_personal', ['input[name="country_code_whats_app_no_personal"]'], ['input[name="whats_app_no_personal_meta"]']);
-            initEditIntlTel('alternate_whats_app_no_personal', ['input[name="country_code_alternate_whats_app_no_personal"]'], ['input[name="alternate_whats_app_no_personal_meta"]']);
+            initEditIntlTel(
+                'phone_personal',
+                ['input[name="country_code_phone_personal"]', 'input[name="country_code_phone_code_personal"]'],
+                ['input[name="phone_personal_meta"]']
+            );
+            initEditIntlTel(
+                'alternate_mob_no_personal',
+                ['input[name="country_code_alternate_mob_no_personal"]'],
+                ['input[name="alternate_mob_no_personal_meta"]']
+            );
+            initEditIntlTel(
+                'whats_app_no_personal',
+                ['input[name="country_code_whats_app_no_personal"]'],
+                ['input[name="whats_app_no_personal_meta"]']
+            );
+            initEditIntlTel(
+                'alternate_whats_app_no_personal',
+                ['input[name="country_code_alternate_whats_app_no_personal"]'],
+                ['input[name="alternate_whats_app_no_personal_meta"]']
+            );
         }
 
 
@@ -1024,6 +1190,88 @@
         initIntlInputsEdit();
         AIZ.plugins.bootstrapSelect('refresh');
         initValidate('#edit-customer-form');
+
+        // AJAX form submit to keep user on page and handle validation gracefully
+        (function setupAjaxSubmit() {
+            const form = document.getElementById('edit-customer-form');
+            if (!form || !window.fetch) return;
+            const errorBox = document.getElementById('form-error-box');
+            const submitBtn = form.querySelector('button[type="submit"]');
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (typeof $ !== 'undefined' && typeof $(form).valid === 'function' && !$(form).valid()) {
+                    return;
+                }
+
+                if (errorBox) {
+                    errorBox.classList.add('d-none');
+                    errorBox.innerHTML = '';
+                }
+                // clear previous field errors
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                form.querySelectorAll('.invalid-feedback.dynamic-error').forEach(el => el.remove());
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.dataset.originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '{{ translate('Saving...') }}';
+                }
+
+                const formData = new FormData(form);
+                // Ensure method override is aligned with route
+                formData.set('_method', 'PUT');
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }).then(async (resp) => {
+                    const contentType = resp.headers.get('content-type') || '';
+                    let payload = null;
+                    if (contentType.includes('application/json')) {
+                        payload = await resp.json();
+                    }
+                    if (resp.ok && payload && payload.redirect_url) {
+                        window.location.reload();
+                        // window.location.href = payload.redirect_url;
+                        return;
+                    }
+                    if (!resp.ok && payload && payload.errors) {
+                        const entries = Object.entries(payload.errors);
+                        entries.forEach(([key, msgs]) => {
+                            const field = form.querySelector(`[name="${key}"]`);
+                            if (field) {
+                                field.classList.add('is-invalid');
+                                const fb = document.createElement('div');
+                                fb.className = 'invalid-feedback dynamic-error';
+                                fb.innerHTML = msgs.join('<br>');
+                                field.insertAdjacentElement('afterend', fb);
+                            }
+                        });
+                        const messages = entries.map(([, msg]) => msg.join('<br>')).join('<br>');
+                        if (errorBox && messages) {
+                            errorBox.innerHTML = messages;
+                            errorBox.classList.remove('d-none');
+                            errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        return;
+                    }
+                    // fallback: if not JSON or other issue, do full submit
+                    form.submit();
+                }).catch(() => {
+                    form.submit();
+                }).finally(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = submitBtn.dataset.originalText || submitBtn.innerHTML;
+                    }
+                });
+            });
+        })();
 
         
         

@@ -428,6 +428,10 @@ class CustomerController extends Controller
         $internationalChoice = $request->input('international_identity_selection', 'iec');
         $businessRequired = ($typeOption === 'domestic' && $domesticChoice === 'gst') || ($typeOption === 'international' && $internationalChoice === 'iec');
 
+        $gstRule = ($typeOption === 'domestic' && $domesticChoice === 'gst')
+            ? ['nullable', 'regex:/^[0-9A-Z]{15}$/i']
+            : ['nullable', 'string', 'max:255'];
+
         $businessRules = [
             'type_option' => 'required|in:domestic,international',
             'registration_date' => [$businessRequired ? 'required' : 'nullable'],
@@ -441,7 +445,9 @@ class CustomerController extends Controller
             'post_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'min:1', 'max:150'],
             'district_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'min:1', 'max:150'],
             'country_code_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'min:1', 'max:150'],
-            'pincode_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^\\d{6}$/'],
+            'pincode_business' => $businessRequired
+                ? ['required', 'regex:/^\\d{6}$/']
+                : ['nullable'],
             'city_id_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
             'state_id_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
             'country_id_business' => [$businessRequired ? 'required' : 'nullable'],
@@ -460,7 +466,7 @@ class CustomerController extends Controller
             'branch_address_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
             'ifsc_code_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
             // Optional / conditional docs
-            'gst_no' => ['nullable', 'regex:/^[0-9A-Z]{15}$/i'],
+            'gst_no' => $gstRule,
             'gst_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
             'gstin_current_status' => ['nullable', 'string'],
             'iec_no' => ['nullable', 'regex:/^[0-9A-Z]{10}$/i'],
@@ -572,8 +578,13 @@ class CustomerController extends Controller
                 }
             }
         });
-
-        $validated = $validator->validate();
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            throw new ValidationException($validator);
+        }
+        $validated = $validator->validated();
 
         $documentPath = public_path('uploads/document');
         if (!File::exists($documentPath)) {
@@ -661,10 +672,22 @@ class CustomerController extends Controller
         $personalWhatsCode = $request->input('country_code_whats_app_no_personal', $details->country_code ?? '');
         $personalAltWhatsCode = $request->input('country_code_alternate_whats_app_no_personal', $details->country_code ?? '');
 
+        // Persist core user columns (users table)
         $user->update([
             'type_option' => $typeOption,
+            'name' => $validated['name_personal'],
             'email' => $validated['prim_email_personal'],
             'phone' => '+' . $personalPrimaryCode . '-' . $validated['phone_personal'],
+            'address' => implode(',', array_filter([
+                $validated['street_add_first_personal'],
+                $validated['street_add_sec_personal'] ?? '',
+                $validated['locality_land_mark_personal'],
+                $validated['village_personal'],
+            ])),
+            'city' => $validated['city_id_personal'],
+            'state' => $validated['state_id_personal'],
+            'country' => $validated['country_id_personal'],
+            'postal_code' => $validated['pincode_personal'],
             'gst_no' => $typeOption === 'domestic' ? ($validated['gst_no'] ?? null) : null,
             'iec_no' => $typeOption === 'international' ? ($validated['iec_no'] ?? null) : null,
             'aadhaar_no' => $validated['aadhaar_no'] ?? null,
@@ -788,10 +811,18 @@ class CustomerController extends Controller
         ]);
         $details->save();
 
-        flash(translate('Customer details updated successfully'))->success();
+          if ($request->ajax()) {
+              return response()->json([
+                  'message' => translate('Customer details updated successfully'),
+                //   'redirect_url' => back()
+                //   'redirect_url' => route('customers.business')
+              ]);
+          }
 
-        return redirect()->route('customers.business');
-    }
+          flash(translate('Customer details updated successfully'))->success();
+
+          return redirect()->back();
+      }
 
     /**
      * Remove the specified resource from storage.
