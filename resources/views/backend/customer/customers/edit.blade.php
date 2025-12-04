@@ -201,7 +201,7 @@
                             <div class="mt-2" id="currentPassportFile">
                             <small class="d-block">
                                 <a href="{{ asset(custom_file($details->passport_no_file)) }}" target="_blank" rel="noopener">{{ translate('Current Passport file') }} </a>
-                                <span class="badge bg-secondary ms-2">{{ pathinfo($details->passport_no_file, PATHINFO_BASENAME) }}</span>
+                                {{-- <span class="badge bg-secondary ms-2">{{ pathinfo($details->passport_no_file, PATHINFO_BASENAME) }}</span> --}}
                             </small>
                             </div>
                         @else
@@ -215,7 +215,7 @@
                 </div>
 
                 {{-- Business core --}}
-                <div class="row">
+                <div class="row business-requires-gst">
                     <div class="col-md-3">
                         <div class="form-group">
                             <label class="form-label" for="registration_date">{{ translate('Registration Date') }} *</label>
@@ -259,7 +259,7 @@
                 </div>
 
                 {{-- Business Address --}}
-                <div class="row">
+                <div class="row business-requires-gst">
                     <div class="col-md-12">
                         <h5 class="mb-3">{{ translate('Business Address') }}</h5>
                     </div>
@@ -335,7 +335,7 @@
                 </div>
 
                 {{-- Business Contact --}}
-                <div class="row">
+                <div class="row business-requires-gst">
                     <div class="col-md-12">
                         <h5 class="mb-3">{{ translate('Business Contact') }}</h5>
                     </div>
@@ -394,7 +394,7 @@
                 </div>
 
                 {{-- Business Bank --}}
-                <div class="row">
+                <div class="row business-requires-gst">
                     <div class="col-md-12">
                         <h5 class="mb-3">{{ translate('Business Bank Details') }}</h5>
                     </div>
@@ -790,6 +790,23 @@
             setReq('#passport_no', intlChoice !== 'iec');
             const hasPassportFile = hasFileOrExisting('input[name="passport_no_file"]');
             setReq('input[name="passport_no_file"]', intlChoice !== 'iec' && !hasPassportFile);
+
+            // Business sections are captured only when GST (domestic) or IEC (international) is chosen
+            const typeOptionSelected = document.querySelector('input[name="type_option"]:checked')?.value || 'domestic';
+            const requireBusiness = (typeOptionSelected === 'domestic' && domChoice === 'gst') || (typeOptionSelected === 'international' && intlChoice === 'iec');
+            document.querySelectorAll('.business-requires-gst').forEach(section => {
+                section.classList.toggle('d-none', !requireBusiness);
+                section.querySelectorAll('input, select, textarea').forEach(el => {
+                    if (!requireBusiness) {
+                        if (el.hasAttribute('required')) {
+                            el.dataset.originalRequired = '1';
+                        }
+                        el.removeAttribute('required');
+                    } else if (el.dataset.originalRequired === '1') {
+                        el.setAttribute('required', 'required');
+                    }
+                });
+            });
         }
 
         // Fallback: define intil_input (intlTelInput initializer) if not already available from registration flow
@@ -938,6 +955,16 @@
                 });
             }, 300);
         }
+
+        // Cache original required flags so we can toggle business sections cleanly
+        function cacheOriginalRequiredFlags() {
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                if (el.hasAttribute('required') && !el.dataset.originalRequired) {
+                    el.dataset.originalRequired = '1';
+                }
+            });
+        }
+        cacheOriginalRequiredFlags();
         
         // Initialize intlTelInput on edit form and sync values to existing hidden fields used by controller
         function initEditIntlTel(name, codeTargets = [], metaTargets = []) {
