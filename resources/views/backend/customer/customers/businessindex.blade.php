@@ -49,6 +49,13 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <div class="form-group mb-0">
+                            <input type="text" class="form-control" id="account_number"
+                                name="account_number"@isset($account_number) value="{{ $account_number }}" @endisset
+                                placeholder="{{ translate('Account Number') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="form-group mb-0">
                             <input type="text" class="form-control" id="gst_no"
                                 name="gst_no"@isset($gst_no) value="{{ $gst_no }}" @endisset
                                 placeholder="{{ translate(' GST  / IEC / Aadhar / Passport / PAN ') }}">
@@ -94,7 +101,7 @@
                         </select>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-3 mt-2">
                         <select class="form-control aiz-selectpicker" name="district_id" onchange1="sort_customers()"
                             data-selected="{{ $filter_district_id }}" data-live-search="true"s>
                             <option value="">{{ translate('Filter by District') }}</option>
@@ -148,16 +155,23 @@
                             <!--<th data-breakpoints="lg">#</th>-->
                             <th>
                                 Sr No.
-                                <!-- <div class="form-group">
-                                                                <div class="aiz-checkbox-inline">
-                                                                    <label class="aiz-checkbox">
-                                                                        <input type="checkbox" class="check-all">
-                                                                        <span class="aiz-square-check"></span>
-                                                                    </label>
-                                                                </div>
-                                                            </div> -->
                             </th>
-                            <th>{{ translate('Company Name') }}</th>
+                            <th>
+                                <a href="{{ route('customers.business', array_merge(request()->all(), ['sort_by' => 'crm_id', 'sort_order' => (request('sort_by') === 'crm_id' && request('sort_order') === 'asc') ? 'desc' : 'asc'])) }}">
+                                    {{ translate('Account Number') }}
+                                    @if (request('sort_by') === 'crm_id')
+                                        <i class="las la-sort-amount-{{ request('sort_order') === 'asc' ? 'up' : 'down' }}"></i>
+                                    @endif
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ route('customers.business', array_merge(request()->all(), ['sort_by' => 'company_name', 'sort_order' => (request('sort_by') === 'company_name' && request('sort_order') === 'asc') ? 'desc' : 'asc'])) }}">
+                                    {{ translate('Company Name') }}
+                                    @if (request('sort_by') === 'company_name')
+                                        <i class="las la-sort-amount-{{ request('sort_order') === 'asc' ? 'up' : 'down' }}"></i>
+                                    @endif
+                                </a>
+                            </th>
                             <th>{{ translate('Post') }}</th>
                             <th>{{ translate('District') }}</th>
                             <th>{{ translate('State') }}</th>
@@ -193,6 +207,7 @@
                                                                         </div>
                                                                     </div>
                                                                 </td> --}}
+                                    <td>{{ $user->details->crm_id ?? '-' }}</td>
                                     <td>
                                         @if ($user->banned == 1)
                                             <i class="fa fa-ban text-danger" aria-hidden="true"></i>

@@ -120,6 +120,9 @@ class CustomerController extends Controller
         $license_details     = $request->license_details ?? null;
         $dl_expiry_Data      = $request->dl_expiry_Data ?? null;
         $gst_no              = $request->gst_no ?? null;
+        $account_number      = $request->account_number ?? null;
+        $sortBy              = $request->get('sort_by');
+        $sortOrder           = $request->get('sort_order', 'asc');
 
         // NEW: location filters (request)
         $filter_city_id     = $request->city_id ?? null;
@@ -154,6 +157,12 @@ class CustomerController extends Controller
         if ($company_name !== null) {
             $users->whereHas('details', function ($q) use ($company_name) {
                 $q->where('company_name', 'like', '%'.$company_name.'%');
+            });
+        }
+
+        if ($account_number !== null) {
+            $users->whereHas('details', function ($q) use ($account_number) {
+                $q->where('crm_id', 'like', '%'.$account_number.'%');
             });
         }
 
@@ -269,13 +278,28 @@ class CustomerController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Sorting
+        if ($sortBy === 'crm_id') {
+            $users = $users->orderBy(
+                UserDetails::select('crm_id')->whereColumn('user_details.user_id', 'users.id'),
+                $sortOrder
+            );
+        } elseif ($sortBy === 'company_name') {
+            $users = $users->orderBy(
+                UserDetails::select('company_name')->whereColumn('user_details.user_id', 'users.id'),
+                $sortOrder
+            );
+        } else {
+            $users = $users->orderBy('created_at', 'desc');
+        }
+
         $users = $users->paginate(15)->appends($request->query());
 
         return view('backend.customer.customers.businessindex', compact(
             'users', 'sort_search', 'company_name', 'bank_details', 'license_details', 'gst_no', 'verification_status',
             // new
             'cityIds', 'districtIds', 'stateIds', 'countries',
-            'filter_city_id', 'filter_district_id', 'filter_state_id', 'filter_country_id'
+            'filter_city_id', 'filter_district_id', 'filter_state_id', 'filter_country_id', 'account_number', 'sortBy', 'sortOrder'
         ));
     }
 
@@ -532,59 +556,23 @@ class CustomerController extends Controller
             'other_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
         ];
 
-        $validator = \Validator::make($request->all(), array_merge($businessRules, $personalRules, $licenseRules));
-
-        $validator->after(function ($v) use ($request, $details, $typeOption, $domesticChoice, $internationalChoice) {
-            $hasGst = filled($request->gst_no);
-            $hasAadhaar = filled($request->aadhaar_no);
-            $hasPan = filled($request->pan_no);
-            $hasIEC = filled($request->iec_no);
-            $hasPassport = filled($request->passport_no);
-
-            if ($typeOption === 'domestic') {
-                if ($domesticChoice === 'gst') {
-                    if (!$hasGst) {
-                        $v->errors()->add('gst_no', translate('GST number is required.'));
-                    }
-                    if ($hasGst && !$request->hasFile('gst_no_file') && empty($details->gst_no_file)) {
-                        $v->errors()->add('gst_no_file', translate('GST document is required.'));
-                    }
-                } else {
-                    if (!$hasAadhaar || !$hasPan) {
-                        $v->errors()->add('aadhaar_no', translate('Aadhaar and PAN are required when GST is not provided.'));
-                    }
-                    if ($hasAadhaar && !$request->hasFile('aadhaar_no_file') && empty($details->aadhaar_no_file)) {
-                        $v->errors()->add('aadhaar_no_file', translate('Aadhaar document is required.'));
-                    }
-                    if ($hasPan && !$request->hasFile('pan_no_file') && empty($details->pan_no_file)) {
-                        $v->errors()->add('pan_no_file', translate('PAN document is required.'));
-                    }
-                }
-            } else {
-                if ($internationalChoice === 'iec') {
-                    if (!$hasIEC) {
-                        $v->errors()->add('iec_no', translate('IEC number is required.'));
-                    }
-                    if ($hasIEC && !$request->hasFile('iec_no_file') && empty($details->iec_no_file)) {
-                        $v->errors()->add('iec_no_file', translate('IEC document is required.'));
-                    }
-                } else {
-                    if (!$hasPassport) {
-                        $v->errors()->add('passport_no', translate('Passport number is required.'));
-                    }
-                    if ($hasPassport && !$request->hasFile('passport_no_file') && empty($details->passport_no_file)) {
-                        $v->errors()->add('passport_no_file', translate('Passport document is required.'));
-                    }
-                }
-            }
-        });
+        // Simplified validation: only keep basic user email/phone checks per request; comment out the detailed rules above.
+        // $validator = \Validator::make($request->all(), array_merge($businessRules, $personalRules, $licenseRules));
+        // $validator->after(function ($v) use ($request, $details, $typeOption, $domesticChoice, $internationalChoice) { ... });
+        $validator = \Validator::make($request->all(), [
+            'prim_email_personal'  => ['required', 'email'],
+            // 'prim_email_business'  => ['nullable', 'email'],
+            'phone_personal'       => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
+            // 'phone_business'       => ['nullable'],
+        ]);
         if ($validator->fails()) {
             if ($request->ajax()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
             throw new ValidationException($validator);
         }
-        $validated = $validator->validated();
+        // Keep full payload so downstream assignments continue to work.
+        $validated = array_merge($request->all(), $validator->validated());
 
         $documentPath = public_path('uploads/document');
         if (!File::exists($documentPath)) {

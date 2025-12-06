@@ -337,23 +337,6 @@
                     </div>
                 </div>
                 @php
-                    // helper: split on first '-' into ['dial','number']
-                    $parsePhone = function ($raw, $defaultDial = '91') {
-                        $raw = $raw ?? '';
-                        if ($raw === '') {
-                            return ['dial' => $defaultDial, 'number' => ''];
-                        }
-                        $parts = explode('-', $raw, 2);
-                        if (count($parts) === 2) {
-                            $dial = $parts[0] !== '' ? $parts[0] : $defaultDial;
-                            $number = $parts[1];
-                        } else {
-                            $dial = $defaultDial;
-                            $number = $parts[0];
-                        }
-                        return ['dial' => $dial, 'number' => $number];
-                    };
-
                     // fallback default dial
                     $defaultDial = $details->country_code_business ?? '91';
 
@@ -365,7 +348,7 @@
                     } else {
                         $primRaw = optional($details)->prim_mobile_no_business ?? ($user->phone ?? '');
                     }
-                    $prim = $parsePhone($primRaw, $defaultDial);
+                    $prim = parse_phone_number($primRaw, $defaultDial);
                     $primVisible = old('phone_business', $prim['number'] ?: ($user->phone ?? ''));
 
                     // Alternate business phone
@@ -375,7 +358,7 @@
                     } else {
                         $altRaw = optional($details)->alt_mobile_no_business ?? '';
                     }
-                    $alt = $parsePhone($altRaw, $defaultDial);
+                    $alt = parse_phone_number($altRaw, $defaultDial);
 
                     // Primary WhatsApp
                     if (old('country_code_whats_app_no_business') !== null || old('whats_app_no_business') !== null) {
@@ -384,7 +367,7 @@
                     } else {
                         $waRaw = optional($details)->prim_whats_app_no_business ?? '';
                     }
-                    $wa = $parsePhone($waRaw, $defaultDial);
+                    $wa = parse_phone_number($waRaw, $defaultDial);
                     if (!$wa['dial']) { $wa['dial'] = '91'; }
 
                     // Alternate WhatsApp
@@ -394,7 +377,7 @@
                     } else {
                         $altWaRaw = optional($details)->alternate_whats_app_no_business ?? '';
                     }
-                    $altWa = $parsePhone($altWaRaw, $defaultDial);
+                    $altWa = parse_phone_number($altWaRaw, $defaultDial);
                 @endphp
 
                 {{-- Business Contact --}}
@@ -654,45 +637,60 @@
                             ?: ((isset($details->alt_whats_app_no) && str_contains($details->alt_whats_app_no, '-'))
                                 ? explode('-', $details->alt_whats_app_no, 2)[0]
                                 : ($details->country_code ?? ''));
+                        // reuse parse helper for personal contacts
+                        $personalDefaultDial = $details->country_code ?? '91';
+                        $personalPrimRaw = (old('country_code_phone_code_personal') || old('phone_personal'))
+                            ? (old('country_code_phone_code_personal', '') !== '' ? old('country_code_phone_code_personal') . '-' : '') . old('phone_personal', '')
+                            : (optional($details)->prim_mobile_no ?? ($user->phone ?? ''));
+                        $personalPrim = parse_phone_number($personalPrimRaw, $personalDefaultDial);
+
+                        $personalAltRaw = (old('country_code_alternate_mob_no_personal') || old('alternate_mob_no_personal'))
+                            ? (old('country_code_alternate_mob_no_personal', '') !== '' ? old('country_code_alternate_mob_no_personal') . '-' : '') . old('alternate_mob_no_personal', '')
+                            : (optional($details)->alt_mobile_no ?? '');
+                        $personalAlt = parse_phone_number($personalAltRaw, $personalDefaultDial);
+
+                        $personalWaRaw = (old('country_code_whats_app_no_personal') || old('whats_app_no_personal'))
+                            ? (old('country_code_whats_app_no_personal', '') !== '' ? old('country_code_whats_app_no_personal') . '-' : '') . old('whats_app_no_personal', '')
+                            : (optional($details)->prim_whats_app_no ?? '');
+                        $personalWa = parse_phone_number($personalWaRaw, $personalDefaultDial);
+
+                        $personalAltWaRaw = (old('country_code_alternate_whats_app_no_personal') || old('alternate_whats_app_no_personal'))
+                            ? (old('country_code_alternate_whats_app_no_personal', '') !== '' ? old('country_code_alternate_whats_app_no_personal') . '-' : '') . old('alternate_whats_app_no_personal', '')
+                            : (optional($details)->alt_whats_app_no ?? '');
+                        $personalAltWa = parse_phone_number($personalAltWaRaw, $personalDefaultDial);
                     @endphp
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="phone_personal">{{ translate('Primary Mobile') }} *</label>
                         <input type="text" id="phone_personal" name="phone_personal" class="form-control" required 
-                        value="{{ 
-                            old('phone_personal')
-                            ?: (optional($details)->prim_mobile_no 
-                                ? (explode('-', $details->prim_mobile_no)[1] ?: $details->prim_mobile_no) 
-                                : ($user->phone ?: '')
-                            ) 
-                        }}">
+                            value="{{ $personalPrim['number'] }}">
                         @error('phone_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="phone_personal_meta" value="{{ old('phone_personal_meta', $details->prim_mobile_no_meta) }}">
-                        <input type="hidden" name="country_code_phone_code_personal" value="{{ $primPersonalDial }}">
-                        <input type="hidden" name="country_code_phone_personal" value="{{ $primPersonalDial }}">
+                        <input type="hidden" name="country_code_phone_code_personal" value="{{ $personalPrim['dial'] }}">
+                        <input type="hidden" name="country_code_phone_personal" value="{{ $personalPrim['dial'] }}">
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_mob_no_personal">{{ translate('Alternate Mobile') }}</label>
                         <input type="text" id="alternate_mob_no_personal" name="alternate_mob_no_personal" class="form-control"
-                               value="{{ old('alternate_mob_no_personal') ?: (optional($details)->alt_mobile_no ? (explode('-', $details->alt_mobile_no)[1] ?: $details->alt_mobile_no) : '') }}">
+                               value="{{ $personalAlt['number'] }}">
                         @error('alternate_mob_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="alternate_mob_no_personal_meta" value="{{ old('alternate_mob_no_personal_meta', $details->alt_mobile_no_meta) }}">
-                        <input type="hidden" name="country_code_alternate_mob_no_personal" value="{{ $altPersonalDial }}">
+                        <input type="hidden" name="country_code_alternate_mob_no_personal" value="{{ $personalAlt['dial'] }}">
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="whats_app_no_personal">{{ translate('Primary WhatsApp') }} *</label>
                         <input type="text" id="whats_app_no_personal" name="whats_app_no_personal" class="form-control" required
-                               value="{{ old('whats_app_no_personal') ?: (optional($details)->prim_whats_app_no ? (explode('-', $details->prim_whats_app_no)[1] ?: $details->prim_whats_app_no) : '') }}">
+                               value="{{ $personalWa['number'] }}">
                         @error('whats_app_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="whats_app_no_personal_meta" value="{{ old('whats_app_no_personal_meta', $details->prim_whats_app_no_meta) }}">
-                        <input type="hidden" name="country_code_whats_app_no_personal" value="{{ $waPersonalDial }}">
+                        <input type="hidden" name="country_code_whats_app_no_personal" value="{{ $personalWa['dial'] }}">
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alternate_whats_app_no_personal">{{ translate('Alternate WhatsApp') }}</label>
                         <input type="text" id="alternate_whats_app_no_personal" name="alternate_whats_app_no_personal" class="form-control"
-                               value="{{ old('alternate_whats_app_no_personal') ?: (optional($details)->alt_whats_app_no ? (explode('-', $details->alt_whats_app_no)[1] ?: $details->alt_whats_app_no) : '') }}">
+                               value="{{ $personalAltWa['number'] }}">
                         @error('alternate_whats_app_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                         <input type="hidden" name="alternate_whats_app_no_personal_meta" value="{{ old('alternate_whats_app_no_personal_meta', $details->alternate_whats_app_no_meta) }}">
-                        <input type="hidden" name="country_code_alternate_whats_app_no_personal" value="{{ $altWaPersonalDial }}">
+                        <input type="hidden" name="country_code_alternate_whats_app_no_personal" value="{{ $personalAltWa['dial'] }}">
                     </div>
                     {{-- {{ dd(old('prim_email_personal'), $details->prim_email_personal, $user->email) }} --}}
                     <div class="col-md-3 mb-3">
@@ -846,6 +844,10 @@
             }
         }
 
+        function removeAllRequiredFlags() {
+            document.querySelectorAll('#edit-customer-form [required]').forEach(el => el.removeAttribute('required'));
+        }
+
         function toggleIdentityBlocks() {
             const domChoice = document.querySelector('input[name="domestic_identity_selection"]:checked')?.value || 'gst';
             document.querySelectorAll('.domestic-gst-block').forEach(el => el.classList.toggle('d-none', domChoice !== 'gst'));
@@ -859,11 +861,7 @@
             const setReq = (selector, on) => {
                 const el = document.querySelector(selector);
                 if (!el) return;
-                if (on) {
-                    el.setAttribute('required', 'required');
-                } else {
-                    el.removeAttribute('required');
-                }
+                el.removeAttribute('required'); // requested: no required on edit form
             };
             const hasFileOrExisting = (selector) => {
                 const el = document.querySelector(selector);
@@ -900,14 +898,7 @@
             document.querySelectorAll('.business-requires-gst').forEach(section => {
                 section.classList.toggle('d-none', !requireBusiness);
                 section.querySelectorAll('input, select, textarea').forEach(el => {
-                    if (!requireBusiness) {
-                        if (el.hasAttribute('required')) {
-                            el.dataset.originalRequired = '1';
-                        }
-                        el.removeAttribute('required');
-                    } else if (el.dataset.originalRequired === '1') {
-                        el.setAttribute('required', 'required');
-                    }
+                    el.removeAttribute('required');
                 });
             });
         }
@@ -922,6 +913,8 @@
 
                 const iti = intlTelInput(inputElement, {
                     separateDialCode: true,
+                    formatOnDisplay: false, // avoid auto-spacing/formatting
+                    nationalMode: false,
                     utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
                     onlyCountries: @php echo json_encode(get_active_countries()->pluck('code')->toArray()) @endphp,
                     customPlaceholder: function (selectedCountryPlaceholder, selectedCountryData) {
@@ -936,9 +929,13 @@
                 const metaField = document.querySelector(`input[name="${name}_meta"]`);
                 const countryData = window.intlTelInputGlobals ? window.intlTelInputGlobals.getCountryData() : [];
                 const existingDial = phoneMetaField ? phoneMetaField.value : '';
+                const existingIso = metaField ? metaField.value : '';
 
-                if (existingDial) {
-                    const matched = countryData.find(c => c.dialCode === existingDial);
+                // Prefer ISO (disambiguates shared dial codes like +1 for US vs AS)
+                if (existingIso) {
+                    try { iti.setCountry(existingIso); } catch (e) {}
+                } else if (existingDial) {
+                    const matched = countryData.find(c => String(c.dialCode) === String(existingDial));
                     if (matched) {
                         try { iti.setCountry(matched.iso2); } catch (e) {}
                     }
@@ -1070,28 +1067,13 @@
             });
         }
         cacheOriginalRequiredFlags();
+        removeAllRequiredFlags();
         
         // Initialize intlTelInput on edit form and sync values to hidden fields used by controller
         function initEditIntlTel(name, codeTargets = [], metaTargets = []) {
             if (typeof intil_input !== 'function') return;
             const inputEl = document.getElementById(name);
             if (!inputEl) return;
-
-            // Split prefilled value like "44-9732749387" into dial code + number
-            const rawVal = (inputEl.value || '').trim();
-            let dialFromNumber = '';
-            let numberOnly = rawVal;
-            if (rawVal.includes('-')) {
-                const parts = rawVal.split('-', 2);
-                if (parts[0] && typeof parts[1] !== 'undefined') {
-                    dialFromNumber = parts[0];
-                    numberOnly = parts[1];
-                }
-            }
-            if (numberOnly.includes(' ')) {
-                numberOnly = numberOnly.split(' ')[0];
-            }
-            inputEl.value = numberOnly;
 
             const iti = intil_input(name);
             if (!iti) return;
@@ -1107,27 +1089,22 @@
                 });
             };
 
-            const selectByDial = (dial) => {
-                if (!dial || !window.intlTelInputGlobals?.getCountryData) return null;
-                const found = window.intlTelInputGlobals.getCountryData().find(c => String(c.dialCode) === String(dial));
-                if (found) {
-                    try {
-                        iti.setCountry(found.iso2);
-                    } catch (e) {
-                        // ignore bad iso
-                    }
-                    return found;
-                }
-                return null;
-            };
-
-            const initialCountry = dialFromNumber ? selectByDial(dialFromNumber) : null;
-            const initialData = initialCountry || iti.getSelectedCountryData();
-            setTargets(initialData?.dialCode, initialData?.iso2);
+            // Prefer ISO from backend (disambiguates shared dial codes), fall back to dial, else current selection
+            const existingDial = document.querySelector(`input[name="country_code_${name}"]`)?.value || '';
+            const existingIso = document.querySelector(`input[name="${name}_meta"]`)?.value || '';
+            const initialData = existingIso || existingDial ? { dialCode: existingDial, iso2: existingIso } : iti.getSelectedCountryData();
+            if (initialData?.iso2) {
+                try { iti.setCountry(initialData.iso2); } catch (e) { /* ignore */ }
+            }
+            const current = iti.getSelectedCountryData();
+            setTargets(current?.dialCode, current?.iso2);
 
             inputEl.addEventListener('countrychange', () => {
                 const data = iti.getSelectedCountryData();
                 setTargets(data?.dialCode, data?.iso2);
+            });
+            inputEl.addEventListener('input', () => {
+                inputEl.value = inputEl.value.replace(/\s+/g, '');
             });
         }
 
@@ -1322,34 +1299,34 @@
         });
 
         // Frontend guard: at least one license entry required
-        function hasAnyLicense() {
-            const licenseKeys = Object.keys(licenseFieldMap);
-            for (const key of licenseKeys) {
-                const textVal = (document.querySelector(`input[name="${key}"]`)?.value || '').trim();
-                const fileEl = document.querySelector(`input[name="${key}_file"]`);
-                const filePresent = fileEl && (fileEl.files?.length || fileEl.getAttribute('data-existing'));
-                if (textVal || filePresent) {
-                    return true;
-                }
-            }
-            return false;
-        }
+        // function hasAnyLicense() {
+        //     const licenseKeys = Object.keys(licenseFieldMap);
+        //     for (const key of licenseKeys) {
+        //         const textVal = (document.querySelector(`input[name="${key}"]`)?.value || '').trim();
+        //         const fileEl = document.querySelector(`input[name="${key}_file"]`);
+        //         const filePresent = fileEl && (fileEl.files?.length || fileEl.getAttribute('data-existing'));
+        //         if (textVal || filePresent) {
+        //             return true;
+        //         }
+        //     }
+        //     return false;
+        // }
 
-        const licenseError = document.getElementById('license-required-error');
-        const editForm = document.getElementById('edit-customer-form');
-        if (editForm) {
-            editForm.addEventListener('submit', function (e) {
-                if (!hasAnyLicense()) {
-                    e.preventDefault();
-                    if (licenseError) {
-                        licenseError.classList.remove('d-none');
-                        licenseError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                } else if (licenseError) {
-                    licenseError.classList.add('d-none');
-                }
-            });
-        }
+        // const licenseError = document.getElementById('license-required-error');
+        // const editForm = document.getElementById('edit-customer-form');
+        // if (editForm) {
+        //     editForm.addEventListener('submit', function (e) {
+        //         if (!hasAnyLicense()) {
+        //             e.preventDefault();
+        //             if (licenseError) {
+        //                 licenseError.classList.remove('d-none');
+        //                 licenseError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        //             }
+        //         } else if (licenseError) {
+        //             licenseError.classList.add('d-none');
+        //         }
+        //     });
+        // }
 
         // Initial sync for options based on existing data
         refreshLicenseSelect();

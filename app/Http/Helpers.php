@@ -122,6 +122,28 @@ if (!function_exists('convert_to_kes')) {
     }
 }
 
+// Parse phone as "dial-number" into ['dial' => ..., 'number' => ...] with a fallback dial code.
+if (!function_exists('parse_phone_number')) {
+    function parse_phone_number($raw, $defaultDial = '91')
+    {
+        $raw = $raw ?? '';
+        if ($raw === '') {
+            return ['dial' => $defaultDial, 'number' => ''];
+        }
+
+        $parts = explode('-', $raw, 2);
+        if (count($parts) === 2) {
+            $dial = $parts[0] !== '' ? $parts[0] : $defaultDial;
+            $number = $parts[1];
+        } else {
+            $dial = $defaultDial;
+            $number = $parts[0];
+        }
+
+        return ['dial' => $dial, 'number' => $number];
+    }
+}
+
 // get all active countries
 if (!function_exists('get_active_countries')) {
     function get_active_countries()
