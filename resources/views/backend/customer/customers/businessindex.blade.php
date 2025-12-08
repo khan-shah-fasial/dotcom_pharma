@@ -111,6 +111,16 @@
                         </select>
                     </div>
 
+                    <div class="col-md-3 mt-2">
+                        <select class="form-control aiz-selectpicker" name="transport" onchange1="sort_customers()"
+                            data-selected="{{ $filter_transport }}" data-live-search="true">
+                            <option value="">{{ translate('Filter by Transport') }}</option>
+                            @foreach ($transportList as $transport)
+                                <option value="{{ $transport }}">{{ ucwords($transport) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
 
 
                     {{-- <div class="col-md-3 mb-3">

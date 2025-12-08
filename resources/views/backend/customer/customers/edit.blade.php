@@ -56,7 +56,7 @@
                         <div class="form-group">
                             <label class="form-label" for="gst_no">{{ translate('GST No') }} *</label>
                             <input type="text" id="gst_no" name="gst_no" class="form-control"
-                                  value="{{ old('gst_no') ?: ($details->gst_no ?: $user->gst_no) }}" placeholder="22AAAAA0000A1Z5">
+                                  value="{{ old('gst_no') ?: ($details->gst_no ?: $user->gst_no) }}" placeholder="22AAAAA0000A1Z5" oninput="validateGstFormat(this)">
                             @error('gst_no')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -302,12 +302,18 @@
                                value="{{ old('district_business', $details->district_business) }}">
                         @error('district_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="transport">{{ translate('Transport') }}</label>
+                        <input type="text" name="transport" id="transport" class="form-control"
+                               value="{{ old('transport', $details->transport) }}">
+                        @error('transport') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="country_id_business">{{ translate('Country') }} *</label>
-                        <select name="country_id_business" id="country_id_business" class="form-control aiz-selectpicker" data-live-search="true" required>
+                        <select name="country_id_business" id="country_id_business" class="form-control aiz-selectpicker" data-live-search="true">
                             <option value="">{{ translate('Select Country') }}</option>
                             @foreach ($countries as $country)
-                                <option value="{{ $country->id }}" {{ (string) (old('country_id_business') ?: ($details->country_id_business ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
+                                <option value="{{ $country->id }}" data-iso="{{ strtolower($country->code ?? '') }}" {{ (string) (old('country_id_business') ?: ($details->country_id_business ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
                                     {{ $country->name }}
                                 </option>
                             @endforeach
@@ -583,10 +589,10 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="country_id_personal">{{ translate('Country') }} *</label>
-                        <select name="country_id_personal" id="country_id_personal" class="form-control aiz-selectpicker" data-live-search="true" required>
+                        <select name="country_id_personal" id="country_id_personal" class="form-control aiz-selectpicker" data-live-search="true">
                             <option value="">{{ translate('Select Country') }}</option>
                             @foreach ($countries as $country)
-                                <option value="{{ $country->id }}" {{ (string) (old('country_id_personal') ?: ($details->country_id ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
+                                <option value="{{ $country->id }}" data-iso="{{ strtolower($country->code ?? '') }}" {{ (string) (old('country_id_personal') ?: ($details->country_id ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
                                     {{ $country->name }}
                                 </option>
                             @endforeach
@@ -994,11 +1000,11 @@
                             <button type="button" class="btn btn-sm btn-outline-danger position-absolute" style="top:4px; right:4px;" aria-label="Remove" data-remove-wrapper="${key}_wrapper" data-enable-option="${key}">{{ translate('Remove') }}</button>
                             <div class="form-group">
                                 <label>${def.label}</label>
-                                <input type="text" name="${def.name}" class="form-control" placeholder="${def.label}" required>
+                                <input type="text" name="${def.name}" class="form-control" placeholder="${def.label}" >
                             </div>
                             <div class="form-group mb-0">
                                 <label>{{ translate('Upload') }} ${def.label}</label>
-                                <input type="file" name="${def.file}" class="form-control" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" required>
+                                <input type="file" name="${def.file}" class="form-control" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" >
                             </div>
                         </div>
                     </div>
@@ -1026,6 +1032,59 @@
 
         let debounceTimeout;
 
+        function setCountryByIso(iso, isBusiness) {
+            if (!iso) return;
+            iso = iso.toLowerCase();
+            const selectId = isBusiness ? '#country_id_business' : '#country_id_personal';
+            const selectEl = document.querySelector(selectId);
+            if (selectEl) {
+                const opt = selectEl.querySelector(`option[data-iso="${iso}"]`);
+                if (opt) {
+                    selectEl.value = opt.value;
+                    if (typeof AIZ !== 'undefined' && AIZ.plugins?.bootstrapSelect) {
+                        AIZ.plugins.bootstrapSelect('refresh');
+                    }
+                }
+            }
+
+            const names = isBusiness
+                ? ['phone_business', 'alternate_mob_no_business', 'whats_app_no_business', 'alternate_whats_app_no_business']
+                : ['phone_personal', 'alternate_mob_no_personal', 'whats_app_no_personal', 'alternate_whats_app_no_personal'];
+
+            names.forEach(name => {
+                const inputEl = document.getElementById(name);
+                if (!inputEl || !window.intlTelInputGlobals?.getInstance) return;
+                const iti = window.intlTelInputGlobals.getInstance(inputEl);
+                if (!iti) return;
+                try { iti.setCountry(iso); } catch (e) {}
+            });
+        }
+
+        function autofillPanFromGst() {
+            const gstInput = document.getElementById('gst_no');
+            const panInput = document.getElementById('pan_no_domestic');
+            if (!gstInput || !panInput) return;
+            const raw = (gstInput.value || '').toUpperCase().trim();
+            // GST format: first 2 (state) + 10 (PAN) + 3 (entity/check)
+            if (raw.length >= 13) {
+                const pan = raw.substring(2, 12);
+                panInput.value = pan;
+            }
+        }
+
+        function validateGstFormat(el) {
+            if (!el) return true;
+            const val = (el.value || '').toUpperCase().trim();
+            // GSTIN: 2 digits (state) + 5 letters + 4 digits + 1 letter + 1 digit + Z + 1 alphanumeric
+            const isValid = /^\d{2}[A-Z]{5}\d{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/i.test(val);
+            if (!isValid && val.length > 0) {
+                el.classList.add('is-invalid');
+            } else {
+                el.classList.remove('is-invalid');
+            }
+            return isValid;
+        }
+
         function pincode_info(inputEl){
             clearTimeout(debounceTimeout);
             debounceTimeout = setTimeout(() => {
@@ -1048,10 +1107,14 @@
                         username: 'umair.makent'
                     },
                     success: function (data) {
+                        console.dir(data);
                         if (data.postalCodes && data.postalCodes.length > 0) {
                             const entry = data.postalCodes[0];
                             $city.val(entry.placeName || entry.adminName2 || '');
                             $state.val(entry.adminName1 || '');
+                            if (entry.countryCode) {
+                                setCountryByIso(entry.countryCode, isBusiness);
+                            }
                         }
                     }
                 });
@@ -1160,6 +1223,9 @@
             if (e.target.classList.contains('domestic-identity-toggle') || e.target.classList.contains('intl-identity-toggle')) {
                 toggleIdentityBlocks();
             }
+            if (e.target.id === 'gst_no') {
+                autofillPanFromGst();
+            }
         });
 
         toggleLocalityBlocks();
@@ -1167,6 +1233,13 @@
         initIntlInputsEdit();
         AIZ.plugins.bootstrapSelect('refresh');
         initValidate('#edit-customer-form');
+        autofillPanFromGst();
+
+        document.addEventListener('input', function (e) {
+            if (e.target.id === 'gst_no') {
+                autofillPanFromGst();
+            }
+        });
 
         // AJAX form submit to keep user on page and handle validation gracefully
         (function setupAjaxSubmit() {
@@ -1178,6 +1251,16 @@
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 if (typeof $ !== 'undefined' && typeof $(form).valid === 'function' && !$(form).valid()) {
+                    return;
+                }
+                // GST format guard
+                const gstField = document.getElementById('gst_no');
+                if (gstField && gstField.value && !validateGstFormat(gstField)) {
+                    if (errorBox) {
+                        errorBox.classList.remove('d-none');
+                        errorBox.innerHTML = '<div class=\"text-danger\">' + '{{ translate('The GST number format is invalid.') }}' + '</div>';
+                        errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                     return;
                 }
 

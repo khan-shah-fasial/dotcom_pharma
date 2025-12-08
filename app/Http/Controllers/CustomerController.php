@@ -129,6 +129,7 @@ class CustomerController extends Controller
         $filter_district_id = $request->district_id ?? null;
         $filter_state_id    = $request->state_id ?? null;
         $filter_country_id  = $request->country_id ?? null;
+        $filter_transport   = $request->transport ?? null;
 
         // Base query
         $users = User::with('details')
@@ -216,6 +217,12 @@ class CustomerController extends Controller
             });
         }
 
+        if ($filter_transport !== null && $filter_transport !== '') {
+            $users->whereHas('details', function ($q) use ($filter_transport) {
+                $q->where('transport', 'like', '%'.$filter_transport.'%');
+            });
+        }
+
         // Build dropdown options (unique & cleaned)
         // CITY
         $cityIds = collect()
@@ -250,6 +257,14 @@ class CustomerController extends Controller
                     ->where('district', '!=', '0')
                     ->pluck('district')
             )
+            ->unique()
+            ->sort()
+            ->values();
+
+        // TRANSPORT list
+        $transportList = UserDetails::whereNotNull('transport')
+            ->where('transport', '!=', '')
+            ->pluck('transport')
             ->unique()
             ->sort()
             ->values();
@@ -299,7 +314,7 @@ class CustomerController extends Controller
             'users', 'sort_search', 'company_name', 'bank_details', 'license_details', 'gst_no', 'verification_status',
             // new
             'cityIds', 'districtIds', 'stateIds', 'countries',
-            'filter_city_id', 'filter_district_id', 'filter_state_id', 'filter_country_id', 'account_number', 'sortBy', 'sortOrder'
+            'filter_city_id', 'filter_district_id', 'filter_state_id', 'filter_country_id', 'filter_transport', 'account_number', 'sortBy', 'sortOrder', 'transportList'
         ));
     }
 
@@ -426,7 +441,7 @@ class CustomerController extends Controller
         $details = $user->details;
 
         $countries = Cache::remember('countries_for_customer_edit', 86400, function () {
-            return Country::select('id', 'name')->orderBy('name')->get();
+            return Country::select('id', 'name', 'code')->orderBy('name')->get();
         });
 
         return view('backend.customer.customers.edit', compact(
@@ -452,9 +467,9 @@ class CustomerController extends Controller
         $internationalChoice = $request->input('international_identity_selection', 'iec');
         $businessRequired = ($typeOption === 'domestic' && $domesticChoice === 'gst') || ($typeOption === 'international' && $internationalChoice === 'iec');
 
-        $gstRule = ($typeOption === 'domestic' && $domesticChoice === 'gst')
-            ? ['nullable', 'regex:/^[0-9A-Z]{15}$/i']
-            : ['nullable', 'string', 'max:255'];
+        // $gstRule = ($typeOption === 'domestic' && $domesticChoice === 'gst')
+        //     ? ['nullable', 'regex:/^[0-9A-Z]{15}$/i']
+        //     : ['nullable', 'string', 'max:255'];
 
         $businessRules = [
             'type_option' => 'required|in:domestic,international',
@@ -490,7 +505,7 @@ class CustomerController extends Controller
             'branch_address_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
             'ifsc_code_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
             // Optional / conditional docs
-            'gst_no' => $gstRule,
+            // 'gst_no' => $gstRule,
             'gst_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
             'gstin_current_status' => ['nullable', 'string'],
             'iec_no' => ['nullable', 'regex:/^[0-9A-Z]{10}$/i'],
@@ -676,7 +691,8 @@ class CustomerController extends Controller
             'state' => $validated['state_id_personal'],
             'country' => $validated['country_id_personal'],
             'postal_code' => $validated['pincode_personal'],
-            'gst_no' => $typeOption === 'domestic' ? ($validated['gst_no'] ?? null) : null,
+            'gst_no' => $validated['gst_no'] ?? null,
+            // 'gst_no' => $typeOption === 'domestic' ? ($validated['gst_no'] ?? null) : null,
             'iec_no' => $typeOption === 'international' ? ($validated['iec_no'] ?? null) : null,
             'aadhaar_no' => $validated['aadhaar_no'] ?? null,
             'pan_no' => $validated['pan_no'] ?? null,
@@ -685,7 +701,8 @@ class CustomerController extends Controller
 
         $details->fill([
             'type_option' => $typeOption,
-            'gst_no' => $typeOption === 'domestic' ? ($validated['gst_no'] ?? $details->gst_no) : null,
+            'gst_no' => $validated['gst_no'] ?? null,
+            // 'gst_no' => $typeOption === 'domestic' ? ($validated['gst_no'] ?? $details->gst_no) : null,
             'gst_no_file' => $gstFile,
             'iec_no' => $typeOption === 'international' ? ($validated['iec_no'] ?? $details->iec_no) : null,
             'iec_no_file' => $iecFile,
@@ -734,6 +751,7 @@ class CustomerController extends Controller
             'ifsc_code_business' => $businessRequired ? ($validated['ifsc_code_business'] ?? $details->ifsc_code_business) : $details->ifsc_code_business,
             'micr_code_business' => $typeOption === 'international' ? ($validated['micr_code_business'] ?? null) : null,
             'ad_code_business' => $typeOption === 'international' ? ($validated['ad_code_business'] ?? null) : null,
+            'transport' => $businessRequired ? ($validated['transport'] ?? $details->transport) : $details->transport,
 
             // Personal
             'name' => $validated['name_personal'],
