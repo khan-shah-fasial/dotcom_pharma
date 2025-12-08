@@ -13,7 +13,9 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Hash;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CustomerController extends Controller
 {
@@ -1000,4 +1002,104 @@ class CustomerController extends Controller
     }
 
 
+    /**
+     * Import transport values from an Excel file located in /public.
+     * Expected columns: [0] crm_id, [1] transport.
+     */
+    public function importTransportFromExcel(Request $request)
+    {
+        Log::info("importTransportFromExcel: START", [
+            'input' => $request->all()
+        ]);
+
+        $fileInput = $request->input('file', 'transport.xlsx');
+        $fileName = basename($fileInput);
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        Log::info("File details", [
+            'file' => $fileName,
+            'extension' => $extension
+        ]);
+
+        if (!in_array($extension, ['xlsx', 'xls'])) {
+            Log::warning("Invalid file type", ['file' => $fileName]);
+            return response()->json(['message' => 'Invalid file type. Only .xlsx or .xls allowed.'], 422);
+        }
+
+        $path = public_path($fileName);
+
+        if (!File::exists($path)) {
+            Log::error("File not found", ['path' => $path]);
+            return response()->json(['message' => "File not found at {$path}."], 404);
+        }
+
+        try {
+            Log::info("Reading Excel file", ['path' => $path]);
+            $sheet = IOFactory::load($path)->getActiveSheet();
+            $rows = $sheet->toArray();
+        } catch (\Throwable $e) {
+            Log::error("Failed to read Excel", ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to read Excel file.', 'error' => $e->getMessage()], 500);
+        }
+
+        $updated = 0;
+        $missing = 0;
+        $skippedBlank = 0;
+
+        foreach ($rows as $index => $row) {
+            $crmId = trim((string) ($row[0] ?? ''));
+            $transport = isset($row[1]) ? trim((string) $row[1]) : null;
+
+            Log::info("Processing row", [
+                'row_index' => $index,
+                'crm_id' => $crmId,
+                'transport' => $transport
+            ]);
+
+            // Header skip
+            if ($index === 0 && strcasecmp($crmId, 'crm_id') === 0) {
+                Log::info("Header row skipped");
+                continue;
+            }
+
+            if ($crmId === '') {
+                $skippedBlank++;
+                Log::info("Skipped blank CRM ID row", ['row_index' => $index]);
+                continue;
+            }
+
+            $details = UserDetails::where('crm_id', $crmId)->first();
+
+            if (! $details) {
+                $missing++;
+                Log::warning("CRM ID not found", ['crm_id' => $crmId]);
+                continue;
+            }
+
+            // Save transport
+            $details->transport = $transport !== '' ? $transport : null;
+            $details->save();
+            $updated++;
+
+            Log::info("Updated transport", [
+                'crm_id' => $crmId,
+                'transport' => $transport
+            ]);
+        }
+
+        Log::info("IMPORT COMPLETE", [
+            'file' => $fileName,
+            'updated' => $updated,
+            'missing' => $missing,
+            'blank_skipped' => $skippedBlank
+        ]);
+
+        return response()->json([
+            'file' => $fileName,
+            'updated_rows' => $updated,
+            'missing_crm_ids' => $missing,
+            'blank_rows_skipped' => $skippedBlank,
+        ]);
+    }
 }
+

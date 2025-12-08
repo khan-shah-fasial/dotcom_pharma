@@ -54,6 +54,8 @@ class UserDetails extends Model
         'ifsc_code_business',
         'micr_code_business',
         'ad_code_business',
+        'crm_id',
+        'transport',
 
 
         'aadhaar_no',
