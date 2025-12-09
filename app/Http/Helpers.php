@@ -23,6 +23,7 @@ use App\Models\Language;
 use App\Models\Wishlist;
 use App\Models\Attribute;
 use App\Models\ClubPoint;
+use App\Models\UserDetails;
 use App\Models\FlashDeal;
 use App\Models\CouponUsage;
 use App\Models\DeliveryBoy;
@@ -292,6 +293,116 @@ if (!function_exists('get_user_location_bundle')) {
             'states'  => $states,
             'cities'  => $cities,
         ];
+    }
+}
+
+if (!function_exists('getUserDetailsLocationTree')) {
+    /**
+     * Build a grouped location tree (country > state > city > district) from user_details.
+     *
+     * @param  string $context  'business' (default) or 'personal'
+     * @return array            Nested arrays ready for dropdown rendering
+     */
+    function getUserDetailsLocationTree(string $context = 'business'): array
+    {
+        $isBusiness = $context === 'business';
+
+        $countryCol  = $isBusiness ? 'country_id_business' : 'country_id';
+        $stateCol    = $isBusiness ? 'state_id_business' : 'state_id';
+        $cityCol     = $isBusiness ? 'city_id_business' : 'city_id';
+        $districtCol = $isBusiness ? 'district_business' : 'district';
+
+        $cacheKey = 'user_details_location_tree_' . $context;
+
+        return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($countryCol, $stateCol, $cityCol, $districtCol) {
+            $rows = UserDetails::query()
+                ->select([
+                    $countryCol . ' as country_id',
+                    $stateCol . ' as state_id',
+                    $cityCol . ' as city_id',
+                    $districtCol . ' as district',
+                ])
+                ->whereNotNull($countryCol)
+                ->where($countryCol, '!=', '')
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return [];
+            }
+
+            $countryIds = $rows->pluck('country_id')->filter()->unique()->all();
+            $countries  = Country::whereIn('id', $countryIds)->get(['id', 'name'])->keyBy('id');
+
+            $tree = [];
+
+            foreach ($rows as $row) {
+                $countryId = (int) $row->country_id;
+                if (!$countryId) {
+                    continue;
+                }
+
+                if (!isset($tree[$countryId])) {
+                    $tree[$countryId] = [
+                        'id'     => $countryId,
+                        'name'   => $countries[$countryId]->name ?? (string) $countryId,
+                        'states' => [],
+                    ];
+                }
+
+                $stateVal = $row->state_id !== null ? trim((string) $row->state_id) : null;
+                if ($stateVal !== '' && !isset($tree[$countryId]['states'][$stateVal])) {
+                    $tree[$countryId]['states'][$stateVal] = [
+                        'id'     => $stateVal,
+                        'name'   => $stateVal,
+                        'cities' => [],
+                    ];
+                }
+
+                $cityVal = $row->city_id !== null ? trim((string) $row->city_id) : null;
+                if ($stateVal && $cityVal && !isset($tree[$countryId]['states'][$stateVal]['cities'][$cityVal])) {
+                    $tree[$countryId]['states'][$stateVal]['cities'][$cityVal] = [
+                        'id'        => $cityVal,
+                        'name'      => $cityVal,
+                        'districts' => [],
+                    ];
+                }
+
+                $district = $row->district;
+                if ($stateVal && $cityVal && $district !== null && $district !== '') {
+                    $districtKey = (string) $district;
+                    $tree[$countryId]['states'][$stateVal]['cities'][$cityVal]['districts'][$districtKey] = [
+                        'id'   => $districtKey,
+                        'name' => $districtKey,
+                    ];
+                }
+            }
+
+            return collect($tree)
+                ->sortBy('name')
+                ->map(function ($country) {
+                    $country['states'] = collect($country['states'])
+                        ->sortBy('name')
+                        ->map(function ($state) {
+                            $state['cities'] = collect($state['cities'])
+                                ->sortBy('name')
+                                ->map(function ($city) {
+                                    $city['districts'] = collect($city['districts'])
+                                        ->sortBy('name')
+                                        ->values()
+                                        ->all();
+                                    return $city;
+                                })
+                                ->values()
+                                ->all();
+                            return $state;
+                        })
+                        ->values()
+                        ->all();
+                    return $country;
+                })
+                ->values()
+                ->all();
+        });
     }
 }
 

@@ -17,146 +17,183 @@
 
     <div class="card">
         <form class="" id="sort_customers" action="" method="GET">
-            <div class="card-header row gutters-5">
-
-
-                {{-- <div class="dropdown mb-3 mb-md-0">
-                    <button class="btn border dropdown-toggle" type="button" data-toggle="dropdown">
-                        {{ translate('Bulk Action') }}
+            @php
+                $filtersApplied = $sort_search || $company_name || $account_number || $gst_no || $verification_status || $filter_transport || $hasBusinessLocationFilters || $hasPersonalLocationFilters;
+            @endphp
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                <div class="mb-2">
+                    <h5 class="mb-0 h6">{{ translate('Customers') }}</h5>
+                    @if ($filtersApplied)
+                        <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+                    @endif
+                </div>
+                <div class="d-flex flex-wrap align-items-center">
+                    <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal"
+                        data-target="#customerFilterModal">
+                        {{ translate('Open Filters') }}
                     </button>
-                    <div class="dropdown-menu dropdown-menu-right">
-                        <a class="dropdown-item confirm-alert" href="javascript:void(0)"
-                            data-target="#bulk-delete-modal">{{ translate('Delete selection') }}</a>
-                    </div>
-                </div> --}}
-                <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <h5 class="mb-0 h6">{{ translate('Customers') }}</h5>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="form-group mb-0">
-                            <input type="text" class="form-control" id="search"
-                                name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset
-                                placeholder="{{ translate('Type email or name & Phone & Telephone No Enter') }}">
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="form-group mb-0">
-                            <input type="text" class="form-control" id="company_name"
-                                name="company_name"@isset($company_name) value="{{ $company_name }}" @endisset
-                                placeholder="{{ translate('Type Company Name') }}">
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="form-group mb-0">
-                            <input type="text" class="form-control" id="account_number"
-                                name="account_number"@isset($account_number) value="{{ $account_number }}" @endisset
-                                placeholder="{{ translate('Account Number') }}">
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="form-group mb-0">
-                            <input type="text" class="form-control" id="gst_no"
-                                name="gst_no"@isset($gst_no) value="{{ $gst_no }}" @endisset
-                                placeholder="{{ translate(' GST  / IEC / Aadhar / Passport / PAN ') }}">
-                        </div>
-                    </div>
-
-                    <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="verification_status"
-                            onchange1="sort_customers()" data-selected="{{ $verification_status }}">
-                            <option value="">{{ translate('Filter by Approval Status') }}</option>
-                            <option value="verified">{{ translate('Verified') }}</option>
-                            <option value="un_verified">{{ translate('Unverified') }}</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="country_id" onchange1="sort_customers()"
-                            data-selected="{{ $filter_country_id }}" data-live-search="true">
-                            <option value="">{{ translate('Filter by Country') }}</option>
-                            @foreach ($countries as $c)
-                                <option value="{{ $c->id }}">{{ ucwords($c->name) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="state_id" onchange1="sort_customers()"
-                            data-selected="{{ $filter_state_id }}" data-live-search="true">
-                            <option value="">{{ translate('Filter by State') }}</option>
-                            @foreach ($stateIds as $sid)
-                                <option value="{{ $sid }}">{{ ucwords($sid) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <select class="form-control aiz-selectpicker" name="city_id" onchange1="sort_customers()"
-                            data-selected="{{ $filter_city_id }}" data-live-search="true">
-                            <option value="">{{ translate('Filter by City') }}</option>
-                            @foreach ($cityIds as $cid)
-                                <option value="{{ $cid }}">{{ ucwords($cid) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-3 mt-2">
-                        <select class="form-control aiz-selectpicker" name="district_id" onchange1="sort_customers()"
-                            data-selected="{{ $filter_district_id }}" data-live-search="true"s>
-                            <option value="">{{ translate('Filter by District') }}</option>
-                            @foreach ($districtIds as $did)
-                                <option value="{{ $did }}">{{ ucwords($did) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-3 mt-2">
-                        <select class="form-control aiz-selectpicker" name="transport" onchange1="sort_customers()"
-                            data-selected="{{ $filter_transport }}" data-live-search="true">
-                            <option value="">{{ translate('Filter by Transport') }}</option>
-                            @foreach ($transportList as $transport)
-                                <option value="{{ $transport }}">{{ ucwords($transport) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-
-
-                    {{-- <div class="col-md-3 mb-3">
-                        <div class="form-group mb-0">
-                            <input type="text" class="form-control" id="bank_details"
-                                name="bank_details"@isset($bank_details) value="{{ $bank_details }}" @endisset
-                                placeholder="{{ translate('Type Bank Name or Account No or Branch No or Branch Code & IFSC Code & MICR Code & Customer Care Executive Enter') }}">
-                        </div>
-                    </div> --}}
-                    {{-- <div class="col-md-3 mb-3">
-                        <div class="form-group mb-0">
-                            <input type="text" class="form-control" id="license_details"
-                                name="license_details"@isset($license_details) value="{{ $license_details }}" @endisset
-                                placeholder="{{ translate('Type CC No or D.L No 1 or D.L No 2 or D.L No 3 Enter') }}">
-                        </div>
-                    </div> --}}
-                    {{-- <div class="col-md-3 mb-3">
-                        <div class="form-group mb-0">
-                            <input type="date" class="form-control" id="dl_expiry_Data"
-                                name="dl_expiry_Data"@isset($dl_expiry_Data) value="{{ $dl_expiry_Data }}" @endisset>
-                        </div>
-                    </div> --}}
-                    {{-- <div class="col-md-3 mb-3">
-                        <div class="form-group mb-0">
-                            <input type="type" class="form-control" id="transport_Details"
-                                name="transport_Details"@isset($transport_Details) value="{{ $transport_Details }}" @endisset
-                                placeholder="{{ translate('Type Transport or Cargo & Booked To Enter') }}">
-                        </div>
-                    </div> --}}
-
-                    <div class="col-md-3 my-2">
-                        <button class="btn btn-primary" onclick="sort_customers()">Search</button>
-                        <a class="btn btn-danger" href="{{ url(route('customers.business')) }}" class="">Reset</a>
-                    </div>
+                    <a class="btn btn-danger mb-2" href="{{ route('customers.business') }}">{{ translate('Reset') }}</a>
                 </div>
             </div>
+
+            {{-- Filter Modal --}}
+            <div class="modal fade" id="customerFilterModal" tabindex="-1" role="dialog"
+                aria-labelledby="customerFilterModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="customerFilterModalLabel">{{ translate('Filter Customers') }}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row gutters-5">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="search">{{ translate('Search') }}</label>
+                                    <input type="text" class="form-control" id="search"
+                                        name="search" value="{{ $sort_search ?? '' }}"
+                                        placeholder="{{ translate('Type email or name & Phone & Telephone No Enter') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="company_name">{{ translate('Company Name') }}</label>
+                                    <input type="text" class="form-control" id="company_name"
+                                        name="company_name" value="{{ $company_name ?? '' }}"
+                                        placeholder="{{ translate('Type Company Name') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="account_number">{{ translate('Account Number') }}</label>
+                                    <input type="text" class="form-control" id="account_number"
+                                        name="account_number" value="{{ $account_number ?? '' }}"
+                                        placeholder="{{ translate('Account Number') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="gst_no">{{ translate('GST / IEC / Aadhaar / Passport / PAN') }}</label>
+                                    <input type="text" class="form-control" id="gst_no"
+                                        name="gst_no" value="{{ $gst_no ?? '' }}"
+                                        placeholder="{{ translate(' GST  / IEC / Aadhar / Passport / PAN ') }}">
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="verification_status">{{ translate('Approval Status') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="verification_status"
+                                        name="verification_status" data-live-search="true">
+                                        <option value="">{{ translate('All') }}</option>
+                                        <option value="verified" {{ $verification_status === 'verified' ? 'selected' : '' }}>
+                                            {{ translate('Verified') }}</option>
+                                        <option value="un_verified" {{ $verification_status === 'un_verified' ? 'selected' : '' }}>
+                                            {{ translate('Unverified') }}</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="transport">{{ translate('Transport') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="transport" name="transport"
+                                        data-live-search="true">
+                                        <option value="">{{ translate('All') }}</option>
+                                        @foreach ($transportList as $transport)
+                                            <option value="{{ $transport }}" {{ $filter_transport === $transport ? 'selected' : '' }}>
+                                            {{ ucwords($transport) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="border rounded p-3 h-100">
+                                        <h6 class="mb-3">{{ translate('Business Location') }}</h6>
+                                        <div class="row gutters-5">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="business_country_id">{{ translate('Country') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="business_country_id"
+                                                    name="business_country_id" data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                    @foreach ($businessCountryOptions as $c)
+                                                        <option value="{{ $c['id'] }}" {{ (string) ($businessCountryId ?? '') === (string) $c['id'] ? 'selected' : '' }}>
+                                                            {{ $c['name'] }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="business_state_id">{{ translate('State') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="business_state_id"
+                                                    name="business_state_id" data-selected="{{ $businessStateId ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="business_city_id">{{ translate('City') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="business_city_id"
+                                                    name="business_city_id" data-selected="{{ $businessCityId ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-0">
+                                                <label class="form-label" for="business_district">{{ translate('District') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="business_district"
+                                                    name="business_district" data-selected="{{ $businessDistrict ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="border rounded p-3 h-100">
+                                        <h6 class="mb-3">{{ translate('Personal Location') }}</h6>
+                                        <div class="row gutters-5">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="personal_country_id">{{ translate('Country') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="personal_country_id"
+                                                    name="personal_country_id" data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                    @foreach ($personalCountryOptions as $c)
+                                                        <option value="{{ $c['id'] }}" {{ (string) ($personalCountryId ?? '') === (string) $c['id'] ? 'selected' : '' }}>
+                                                            {{ $c['name'] }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="personal_state_id">{{ translate('State') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="personal_state_id"
+                                                    name="personal_state_id" data-selected="{{ $personalStateId ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="personal_city_id">{{ translate('City') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="personal_city_id"
+                                                    name="personal_city_id" data-selected="{{ $personalCityId ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-0">
+                                                <label class="form-label" for="personal_district">{{ translate('District') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="personal_district"
+                                                    name="personal_district" data-selected="{{ $personalDistrict ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Close') }}</button>
+                    <button type="button" class="btn btn-primary btn-apply-filters">{{ translate('Apply Filters') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
             <div class="card-body">
                 <table class="table aiz-table mb-0">
@@ -570,6 +607,121 @@
 
 @section('script')
     <script type="text/javascript">
+        const defaultLocationOption = @json(translate('All'));
+
+        function refreshPicker($el) {
+            if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.bootstrapSelect === 'function') {
+                AIZ.plugins.bootstrapSelect('refresh');
+            } else if ($.fn.selectpicker) {
+                $el.selectpicker('refresh');
+            }
+        }
+
+        function setLocationOptions(scope, field, options, selected) {
+            const $select = $('#' + scope + '_' + field);
+            const fallbackSelected = $select.val() || $select.data('selected') || '';
+            const finalSelected = selected !== undefined ? selected : fallbackSelected;
+
+            $select.empty();
+            $select.append(`<option value="">${defaultLocationOption}</option>`);
+
+            (options || []).forEach(function (opt) {
+                $select.append(`<option value="${opt.id}">${opt.name}</option>`);
+            });
+
+            if (finalSelected !== null && finalSelected !== undefined && finalSelected !== '') {
+                $select.val(String(finalSelected));
+            }
+
+            $select.data('selected', '');
+            refreshPicker($select);
+        }
+
+        function populateStates(scope, preserveSelected = false) {
+            const countryId = $('#' + scope + '_country_id').val();
+            if (!countryId) {
+                setLocationOptions(scope, 'state_id', [], '');
+                setLocationOptions(scope, 'city_id', [], '');
+                setLocationOptions(scope, 'district', [], '');
+                return;
+            }
+
+            $.get("{{ route('customers.location.options') }}", { country_id: countryId, scope: scope })
+                .done(function (resp) {
+                    const selected = preserveSelected ? $('#' + scope + '_state_id').data('selected') : '';
+                    setLocationOptions(scope, 'state_id', resp.states || [], selected);
+                    populateCities(scope, preserveSelected);
+                });
+        }
+
+        function populateCities(scope, preserveSelected = false) {
+            const countryId = $('#' + scope + '_country_id').val();
+            const stateId = $('#' + scope + '_state_id').val();
+            if (!countryId || !stateId) {
+                setLocationOptions(scope, 'city_id', [], '');
+                setLocationOptions(scope, 'district', [], '');
+                return;
+            }
+
+            $.get("{{ route('customers.location.options') }}", { country_id: countryId, state: stateId, scope: scope })
+                .done(function (resp) {
+                    const selected = preserveSelected ? $('#' + scope + '_city_id').data('selected') : '';
+                    setLocationOptions(scope, 'city_id', resp.cities || [], selected);
+                    populateDistricts(scope, preserveSelected);
+                });
+        }
+
+        function populateDistricts(scope, preserveSelected = false) {
+            const countryId = $('#' + scope + '_country_id').val();
+            const stateId = $('#' + scope + '_state_id').val();
+            const cityId = $('#' + scope + '_city_id').val();
+            if (!countryId || !stateId || !cityId) {
+                setLocationOptions(scope, 'district', [], '');
+                return;
+            }
+
+            $.get("{{ route('customers.location.options') }}", { country_id: countryId, state: stateId, city: cityId, scope: scope })
+                .done(function (resp) {
+                    const selected = preserveSelected ? $('#' + scope + '_district').data('selected') : '';
+                    setLocationOptions(scope, 'district', resp.districts || [], selected);
+                });
+        }
+
+        $(function () {
+            initLocationFilters();
+        });
+
+        function initLocationFilters() {
+            ['business', 'personal'].forEach(function (scope) {
+                populateStates(scope, true);
+
+                $('#' + scope + '_country_id').on('change', function () {
+                    populateStates(scope, false);
+                });
+
+                $('#' + scope + '_state_id').on('change', function () {
+                    populateCities(scope, false);
+                });
+
+                $('#' + scope + '_city_id').on('change', function () {
+                    populateDistricts(scope, false);
+                });
+
+                $('#' + scope + '_district').on('change', function () {
+                    // no auto-submit; wait for Apply
+                });
+            });
+
+            $('.btn-apply-filters').on('click', function () {
+                submitFilters();
+            });
+        }
+
+        function submitFilters() {
+            $('#customerFilterModal').modal('hide');
+            $('#sort_customers').submit();
+        }
+
         $(document).on("change", ".check-all", function() {
             if (this.checked) {
                 // Iterate each checkbox

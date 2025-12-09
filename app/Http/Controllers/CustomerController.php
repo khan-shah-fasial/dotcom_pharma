@@ -126,12 +126,18 @@ class CustomerController extends Controller
         $sortBy              = $request->get('sort_by');
         $sortOrder           = $request->get('sort_order', 'asc');
 
-        // NEW: location filters (request)
-        $filter_city_id     = $request->city_id ?? null;
-        $filter_district_id = $request->district_id ?? null;
-        $filter_state_id    = $request->state_id ?? null;
-        $filter_country_id  = $request->country_id ?? null;
-        $filter_transport   = $request->transport ?? null;
+        // NEW: location filters (request) - separated for business vs personal
+        $businessCountryId = $request->input('business_country_id');
+        $businessStateId   = $request->input('business_state_id');
+        $businessCityId    = $request->input('business_city_id');
+        $businessDistrict  = $request->input('business_district');
+
+        $personalCountryId = $request->input('personal_country_id');
+        $personalStateId   = $request->input('personal_state_id');
+        $personalCityId    = $request->input('personal_city_id');
+        $personalDistrict  = $request->input('personal_district');
+
+        $filter_transport  = $request->transport ?? null;
 
         // Base query
         $users = User::with('details')
@@ -180,42 +186,56 @@ class CustomerController extends Controller
             });
         }
 
-        // NEW: Location filters (match against business + personal)
-        if ($filter_city_id !== null && $filter_city_id !== '') {
-            $users->whereHas('details', function ($q) use ($filter_city_id) {
-                $q->where(function ($qq) use ($filter_city_id) {
-                    $qq->where('city_id_business', $filter_city_id)
-                    ->orWhere('city_id', $filter_city_id);
-                });
-            });
-        }
+        // Location filters with AND conditions per context
+        $businessLocationFilters = collect([
+            'country_id_business' => $businessCountryId,
+            'state_id_business'   => $businessStateId,
+            'city_id_business'    => $businessCityId,
+            'district_business'   => $businessDistrict,
+        ])->map(function ($value) {
+            return is_string($value) ? trim($value) : $value;
+        })->toArray();
 
-        if ($filter_district_id !== null && $filter_district_id !== '') {
-            $users->whereHas('details', function ($q) use ($filter_district_id) {
-                $q->where(function ($qq) use ($filter_district_id) {
-                    $qq->where('district_business', $filter_district_id)
-                    ->orWhere('district', $filter_district_id);
-                });
-            });
-        }
+        $personalLocationFilters = collect([
+            'country_id' => $personalCountryId,
+            'state_id'   => $personalStateId,
+            'city_id'    => $personalCityId,
+            'district'   => $personalDistrict,
+        ])->map(function ($value) {
+            return is_string($value) ? trim($value) : $value;
+        })->toArray();
 
-        if ($filter_state_id !== null && $filter_state_id !== '') {
-            $users->whereHas('details', function ($q) use ($filter_state_id) {
-                $q->where(function ($qq) use ($filter_state_id) {
-                    $qq->where('state_id_business', $filter_state_id)
-                    ->orWhere('state_id', $filter_state_id);
-                });
-            });
-        }
+        $hasBusinessLocationFilters = collect($businessLocationFilters)->filter(function ($value) {
+            return $value !== null && $value !== '';
+        })->isNotEmpty();
 
-        // Country: try both business & personal if you have both columns.
-        // If you only have one (e.g., `country_id`), keep just that condition.
-        if ($filter_country_id !== null && $filter_country_id !== '') {
-            $users->whereHas('details', function ($q) use ($filter_country_id) {
-                $q->where(function ($qq) use ($filter_country_id) {
-                    $qq->where('country_id_business', $filter_country_id)
-                    ->orWhere('country_id', $filter_country_id);
-                });
+        $hasPersonalLocationFilters = collect($personalLocationFilters)->filter(function ($value) {
+            return $value !== null && $value !== '';
+        })->isNotEmpty();
+
+        if ($hasBusinessLocationFilters || $hasPersonalLocationFilters) {
+            $users->whereHas('details', function ($q) use ($businessLocationFilters, $personalLocationFilters) {
+                foreach ($businessLocationFilters as $column => $value) {
+                    if ($value === null || $value === '') {
+                        continue;
+                    }
+                    if ($column === 'country_id_business') {
+                        $q->where($column, $value);
+                    } else {
+                        $q->whereRaw('LOWER(TRIM(' . $column . ')) = ?', [strtolower(trim((string) $value))]);
+                    }
+                }
+
+                foreach ($personalLocationFilters as $column => $value) {
+                    if ($value === null || $value === '') {
+                        continue;
+                    }
+                    if ($column === 'country_id') {
+                        $q->where($column, $value);
+                    } else {
+                        $q->whereRaw('LOWER(TRIM(' . $column . ')) = ?', [strtolower(trim((string) $value))]);
+                    }
+                }
             });
         }
 
@@ -225,44 +245,6 @@ class CustomerController extends Controller
             });
         }
 
-        // Build dropdown options (unique & cleaned)
-        // CITY
-        $cityIds = collect()
-            ->merge(
-                UserDetails::whereNotNull('city_id_business')
-                    ->where('city_id_business', '!=', '')
-                    ->where('city_id_business', '!=', '0')
-                    ->pluck('city_id_business')
-            )
-            ->merge(
-                UserDetails::whereNotNull('city_id')
-                    ->where('city_id', '!=', '')
-                    ->where('city_id', '!=', '0')
-                    ->pluck('city_id')
-            )
-            ->unique()
-            ->sort()
-            ->values();
-
-
-        // ✅ DISTRICT
-        $districtIds = collect()
-            ->merge(
-                UserDetails::whereNotNull('district_business')
-                    ->where('district_business', '!=', '')
-                    ->where('district_business', '!=', '0')
-                    ->pluck('district_business')
-            )
-            ->merge(
-                UserDetails::whereNotNull('district')
-                    ->where('district', '!=', '')
-                    ->where('district', '!=', '0')
-                    ->pluck('district')
-            )
-            ->unique()
-            ->sort()
-            ->values();
-
         // TRANSPORT list
         $transportList = UserDetails::whereNotNull('transport')
             ->where('transport', '!=', '')
@@ -271,29 +253,19 @@ class CustomerController extends Controller
             ->sort()
             ->values();
 
-
-        // ✅ STATE
-        $stateIds = collect()
-            ->merge(
-                UserDetails::whereNotNull('state_id_business')
-                    ->where('state_id_business', '!=', '')
-                    ->where('state_id_business', '!=', '0')
-                    ->pluck('state_id_business')
-            )
-            ->merge(
-                UserDetails::whereNotNull('state_id')
-                    ->where('state_id', '!=', '')
-                    ->where('state_id', '!=', '0')
-                    ->pluck('state_id')
-            )
-            ->unique()
-            ->sort()
-            ->values();
-
-        // COUNTRIES from table
-        $countries = Country::select('id', 'name')
-            ->orderBy('name')
-            ->get();
+        // Grouped location trees for modal dropdowns
+        $businessLocationTree = getUserDetailsLocationTree('business');
+        $personalLocationTree = getUserDetailsLocationTree('personal');
+        $businessCountryOptions = collect($businessLocationTree)
+            ->unique('id')
+            ->sortBy('name')
+            ->values()
+            ->all();
+        $personalCountryOptions = collect($personalLocationTree)
+            ->unique('id')
+            ->sortBy('name')
+            ->values()
+            ->all();
 
         // Sorting
         if ($sortBy === 'crm_id') {
@@ -313,10 +285,32 @@ class CustomerController extends Controller
         $users = $users->paginate(15)->appends($request->query());
 
         return view('backend.customer.customers.businessindex', compact(
-            'users', 'sort_search', 'company_name', 'bank_details', 'license_details', 'gst_no', 'verification_status',
-            // new
-            'cityIds', 'districtIds', 'stateIds', 'countries',
-            'filter_city_id', 'filter_district_id', 'filter_state_id', 'filter_country_id', 'filter_transport', 'account_number', 'sortBy', 'sortOrder', 'transportList'
+            'users',
+            'sort_search',
+            'company_name',
+            'bank_details',
+            'license_details',
+            'gst_no',
+            'verification_status',
+            'filter_transport',
+            'account_number',
+            'sortBy',
+            'sortOrder',
+            'transportList',
+            'businessCountryId',
+            'businessStateId',
+            'businessCityId',
+            'businessDistrict',
+            'personalCountryId',
+            'personalStateId',
+            'personalCityId',
+            'personalDistrict',
+            'businessLocationTree',
+            'personalLocationTree',
+            'businessCountryOptions',
+            'personalCountryOptions',
+            'hasBusinessLocationFilters',
+            'hasPersonalLocationFilters'
         ));
     }
 
@@ -1008,37 +1002,37 @@ class CustomerController extends Controller
      */
     public function importTransportFromExcel(Request $request)
     {
-        Log::info("importTransportFromExcel: START", [
-            'input' => $request->all()
-        ]);
+        // Log::info("importTransportFromExcel: START", [
+        //     'input' => $request->all()
+        // ]);
 
         $fileInput = $request->input('file', 'transport.xlsx');
         $fileName = basename($fileInput);
         $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-        Log::info("File details", [
-            'file' => $fileName,
-            'extension' => $extension
-        ]);
+        // Log::info("File details", [
+        //     'file' => $fileName,
+        //     'extension' => $extension
+        // ]);
 
         if (!in_array($extension, ['xlsx', 'xls'])) {
-            Log::warning("Invalid file type", ['file' => $fileName]);
+            // Log::warning("Invalid file type", ['file' => $fileName]);
             return response()->json(['message' => 'Invalid file type. Only .xlsx or .xls allowed.'], 422);
         }
 
         $path = public_path($fileName);
 
         if (!File::exists($path)) {
-            Log::error("File not found", ['path' => $path]);
+            // Log::error("File not found", ['path' => $path]);
             return response()->json(['message' => "File not found at {$path}."], 404);
         }
 
         try {
-            Log::info("Reading Excel file", ['path' => $path]);
+            // Log::info("Reading Excel file", ['path' => $path]);
             $sheet = IOFactory::load($path)->getActiveSheet();
             $rows = $sheet->toArray();
         } catch (\Throwable $e) {
-            Log::error("Failed to read Excel", ['error' => $e->getMessage()]);
+            // Log::error("Failed to read Excel", ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Failed to read Excel file.', 'error' => $e->getMessage()], 500);
         }
 
@@ -1050,21 +1044,21 @@ class CustomerController extends Controller
             $crmId = trim((string) ($row[0] ?? ''));
             $transport = isset($row[1]) ? trim((string) $row[1]) : null;
 
-            Log::info("Processing row", [
-                'row_index' => $index,
-                'crm_id' => $crmId,
-                'transport' => $transport
-            ]);
+            // Log::info("Processing row", [
+            //     'row_index' => $index,
+            //     'crm_id' => $crmId,
+            //     'transport' => $transport
+            // ]);
 
             // Header skip
             if ($index === 0 && strcasecmp($crmId, 'crm_id') === 0) {
-                Log::info("Header row skipped");
+                // Log::info("Header row skipped");
                 continue;
             }
 
             if ($crmId === '') {
                 $skippedBlank++;
-                Log::info("Skipped blank CRM ID row", ['row_index' => $index]);
+                // Log::info("Skipped blank CRM ID row", ['row_index' => $index]);
                 continue;
             }
 
@@ -1072,7 +1066,7 @@ class CustomerController extends Controller
 
             if (! $details) {
                 $missing++;
-                Log::warning("CRM ID not found", ['crm_id' => $crmId]);
+                // Log::warning("CRM ID not found", ['crm_id' => $crmId]);
                 continue;
             }
 
@@ -1081,18 +1075,18 @@ class CustomerController extends Controller
             $details->save();
             $updated++;
 
-            Log::info("Updated transport", [
-                'crm_id' => $crmId,
-                'transport' => $transport
-            ]);
+            // Log::info("Updated transport", [
+            //     'crm_id' => $crmId,
+            //     'transport' => $transport
+            // ]);
         }
 
-        Log::info("IMPORT COMPLETE", [
-            'file' => $fileName,
-            'updated' => $updated,
-            'missing' => $missing,
-            'blank_skipped' => $skippedBlank
-        ]);
+        // Log::info("IMPORT COMPLETE", [
+        //     'file' => $fileName,
+        //     'updated' => $updated,
+        //     'missing' => $missing,
+        //     'blank_skipped' => $skippedBlank
+        // ]);
 
         return response()->json([
             'file' => $fileName,
@@ -1101,5 +1095,87 @@ class CustomerController extends Controller
             'blank_rows_skipped' => $skippedBlank,
         ]);
     }
+
+
+    /**
+     * Ajax: dependent location options based on current selections.
+     */
+    public function locationOptions(Request $request)
+    {
+        $scope     = $request->input('scope', 'business'); // business | personal
+        $countryId = $request->input('country_id');
+        $stateName = $request->input('state');
+        $cityName  = $request->input('city');
+
+        $isBusiness = $scope === 'business';
+        $countryCol = $isBusiness ? 'country_id_business' : 'country_id';
+        $stateCol   = $isBusiness ? 'state_id_business' : 'state_id';
+        $cityCol    = $isBusiness ? 'city_id_business' : 'city_id';
+        $distCol    = $isBusiness ? 'district_business' : 'district';
+
+        $states = collect();
+        if ($countryId) {
+            $states = UserDetails::query()
+                ->where($countryCol, $countryId)
+                ->pluck($stateCol)
+                ->filter()
+                ->map(function ($val) {
+                    $val = trim((string) $val);
+                    return ['id' => $val, 'name' => $val];
+                })
+                ->unique('id')
+                ->sortBy('name')
+                ->values();
+        }
+
+        $cities = collect();
+        if ($countryId && $stateName) {
+            $stateName = trim((string) $stateName);
+            $cities = UserDetails::query()
+                ->where($countryCol, $countryId)
+                ->whereRaw('LOWER(TRIM(' . $stateCol . ')) = ?', [strtolower($stateName)])
+                ->pluck($cityCol)
+                ->filter()
+                ->map(function ($val) {
+                    $val = trim((string) $val);
+                    return ['id' => $val, 'name' => $val];
+                })
+                ->unique('id')
+                ->sortBy('name')
+                ->values();
+        }
+
+        $districts = collect();
+        if ($countryId && $stateName && $cityName) {
+            $stateName = trim((string) $stateName);
+            $cityName  = trim((string) $cityName);
+            $districts = UserDetails::query()
+                ->where($countryCol, $countryId)
+                ->whereRaw('LOWER(TRIM(' . $stateCol . ')) = ?', [strtolower($stateName)])
+                ->whereRaw('LOWER(TRIM(' . $cityCol . ')) = ?', [strtolower($cityName)])
+                ->pluck($distCol)
+                ->filter()
+                ->map(function ($val) {
+                    $val = trim((string) $val);
+                    return ['id' => $val, 'name' => $val];
+                })
+                ->unique('id')
+                ->sortBy('name')
+                ->values();
+        }
+
+        return response()->json([
+            'states'    => $states,
+            'cities'    => $cities,
+            'districts' => $districts,
+        ]);
+    }
 }
+
+
+
+
+
+
+
 

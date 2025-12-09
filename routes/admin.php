@@ -230,6 +230,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/customers/login/{id}', 'login')->name('customers.login');
         Route::get('/customers/destroy/{id}', 'destroy')->name('customers.destroy');
         Route::get('/customers-import-transport', 'importTransportFromExcel')->name('customers.import.transport.alt');
+        Route::get('/customers/location-options', 'locationOptions')->name('customers.location.options');
         Route::post('/bulk-customer-delete', 'bulk_customer_delete')->name('bulk-customer-delete');
         Route::match(['post', 'put', 'patch'], 'customers/update/{id}', 'update')->name('customers.update');
 
