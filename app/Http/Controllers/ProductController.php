@@ -393,7 +393,7 @@ class ProductController extends Controller
         //Product
         $product = $this->productService->update($request->except([
             '_token',
-            'sku',
+            // 'sku',
             'choice',
             'tax_id',
             'tax',
