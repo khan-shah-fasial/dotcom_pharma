@@ -850,7 +850,7 @@
                                     <div class="form-group row" id="quantity">
                                         <label class="col-md-3 col-from-label">{{translate('Quantity')}} <span class="text-danger">*</span></label>
                                         <div class="col-md-6">
-                                            <input type="number" lang="en" value="{{ $product->stocks->first()->qty ?: ($product->current_stock ?: 0) }}" step="1" placeholder="{{translate('Quantity')}}" name="current_stock" class="form-control" required>
+                                            <input type="number" lang="en" value="{{ optional($product->stocks->first())->qty ?? $product->current_stock ?? 0 }}" step="1" placeholder="{{translate('Quantity')}}" name="current_stock" class="form-control" required>
                                         </div>
                                     </div>
                                     <!-- SKU -->
@@ -859,7 +859,7 @@
                                             {{translate('SKU')}}
                                         </label>
                                         <div class="col-md-6">
-                                            <input type="text" placeholder="{{ translate('SKU') }}" value="{{ $product->stocks->first()->sku ?: ($product->sku ?: '') }}" name="sku" class="form-control">
+                                            <input type="text" placeholder="{{ optional($product->stocks->first())->sku ?? $product->sku ?? '' }}" name="sku" class="form-control">
                                         </div>
                                     </div>
                                 </div>

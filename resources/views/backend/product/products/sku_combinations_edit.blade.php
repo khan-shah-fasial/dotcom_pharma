@@ -247,7 +247,8 @@
 
                         <td>
                             @php
-                                $role_base_price = json_decode($stock->role_price, true); // decode JSON to array
+                                // Guard against missing stock so edit page doesn't error when variant has no saved stock
+                                $role_base_price = $stock ? json_decode($stock->role_price, true) : []; // decode JSON to array
                             @endphp
 
                             @if(!empty($role_base_price) && count($role_base_price) > 0)
