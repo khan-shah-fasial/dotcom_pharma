@@ -974,16 +974,20 @@ body .translater_menu .select2-container {
                             @php $category_top_menu = getCategoryTopMenu(); @endphp
 
                             @foreach ($category_top_menu as $cat)
-                                <li class="list-inline-item mr-3 animate-underline-white dropdown">
-                                    <a href="#"
-                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links @if($cat->childrenCategories->isNotEmpty()) dropdown-toggle @endif  pt-2 pb-2"
-                                        id="injectionsDropdown_{{ $cat->id }}"
-                                        data-toggle="dropdown" aria-haspopup="true"
-                                        aria-expanded="false">
+                                @php $hasChildren = $cat->childrenCategories->isNotEmpty(); @endphp
+                                <li class="list-inline-item mr-3 animate-underline-white @if($hasChildren) dropdown @endif">
+                                    <a href="{{ $hasChildren ? '#' : '/category/' . $cat->slug }}"
+                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links @if($hasChildren) dropdown-toggle @endif  pt-2 pb-2"
+                                        @if($hasChildren)
+                                            id="injectionsDropdown_{{ $cat->id }}"
+                                            data-toggle="dropdown" aria-haspopup="true"
+                                            aria-expanded="false"
+                                        @endif
+                                    >
                                         {{ $cat->name }}
                                     </a>
 
-                                    @if($cat->childrenCategories->isNotEmpty())
+                                    @if($hasChildren)
                                         <div class="dropdown-menu"
                                             aria-labelledby="injectionsDropdown_{{ $cat->id }}">
                                             @foreach ($cat->childrenCategories as $childCategory)

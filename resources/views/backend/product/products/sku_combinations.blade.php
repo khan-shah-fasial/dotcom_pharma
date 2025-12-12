@@ -93,7 +93,7 @@
 				</td>
 				<td>
 					<input type="number" lang="en" name="weight_{{ $str }}" class="form-control"
-						placeholder="Weight" step="0.01" min="0" required>
+						placeholder="Weight" step="0.001" min="0" required>
 				</td>
 				<td>
 					<input type="number" lang="en" name="count_{{ $str }}" class="form-control"

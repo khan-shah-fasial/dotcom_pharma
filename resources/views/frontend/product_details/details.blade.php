@@ -37,20 +37,20 @@
 
 
         @if (!empty($detailedProduct->brand->name))
-            <div class="col-md-5 col-6 pl-0 mb-md-0 mb-2">
+            <div class="col-md-6 col-6 pl-0 mb-md-0 mb-2">
                 <span class="detail-font-14px detail-gray-color">{{ translate('Brand / Mfg') }}:</span><br>
                 <span class="fw-500 fs-14">{{ $detailedProduct->brand->name ?? '-' }}</span>
             </div>
         @endif
-        <div class="col-md-3 pl-0 mb-md-0 mb-2">
+        {{-- <div class="col-md-3 pl-0 mb-md-0 mb-2">
             <span class="detail-font-14px detail-gray-color">{{ translate('SKU') }}:</span><br>
             <span id="sku-product-details" class="fw-500 fs-14"></span>
-        </div>
+        </div> --}}
 
 
         @if (!is_null($detailedProduct->prescription_req))
             <!-- Discount percentage -->
-            <div class="col-md-4 pl-md-0 pl-0 mb-md-0 mb-2">
+            <div class="col-md-6 pl-md-0 pl-0 mb-md-0 mb-2">
                 <span class="detail-font-14px detail-gray-color">{{ translate('Prescription Required') }}:</span><br>
                 <span
                     class="fw-500 fs-14 detail-red-color">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
@@ -440,10 +440,10 @@
                 </div>
             @endif
 
-
+        @if ($detailedProduct->product_type || $detailedProduct->product_material)
             {{-- Type --}}
             @if ($detailedProduct->product_type)
-                <div class="col-12 col-md-12 pl-0 mb-3">
+                <div class="col-6 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
                         <div class="display_flex3">
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
@@ -468,7 +468,7 @@
 
             {{-- Material --}}
             @if ($detailedProduct->product_material)
-                <div class="col-12 col-md-12 pl-0 mb-3">
+                <div class="col-6 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">
                         <div class="display_flex3">
                             <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
@@ -488,6 +488,7 @@
                     </div>
                 </div>
             @endif
+        @endif
 
             {{-- Origin --}}
             @if ($detailedProduct->product_origin)
@@ -719,6 +720,30 @@
                         <div class="">
                             <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Weight / Volume') }}:</p>
                             <p id="weight-volume-product-details" class="fw-500 fs-14 mb-0"></p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-12 col-md-6 pl-0 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class="">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-barcode w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                            <path d="M3 5v14"></path>
+                            <path d="M7 5v14"></path>
+                            <path d="M10 5v14"></path>
+                            <path d="M14 5v14"></path>
+                            <path d="M18 5v14"></path>
+                            <path d="M21 5v14"></path>
+                            </svg>
+                        </div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('SKU') }}:</p>
+                            <p id="sku-product-details" class="fw-500 fs-14 mb-0"></p>
                         </div>
                     </div>
 
@@ -1354,7 +1379,8 @@
                     @endforeach
                 @endif
 
-                {{-- Video --}}
+
+                {{-- Video 
                 @if ($hasVideo)
                     <div class="card">
                         <div class="card-header" id="headingVideo">
@@ -1371,8 +1397,19 @@
                             <div class="card-body">
                                 <div class="embed-responsive embed-responsive-16by9">
                                     @if ($detailedProduct->video_provider == 'youtube')
+                                        @php
+                                            $youtubeId = null;
+                                            if (preg_match('/youtu\\.be\\/([^?&]+)/', $detailedProduct->video_link, $match)) {
+                                                $youtubeId = $match[1];
+                                            } elseif (preg_match('/v=([^&]+)/', $detailedProduct->video_link, $match)) {
+                                                $youtubeId = $match[1];
+                                            } elseif (preg_match('/embed\\/([^?&]+)/', $detailedProduct->video_link, $match)) {
+                                                $youtubeId = $match[1];
+                                            }
+                                            $youtubeEmbed = $youtubeId ? 'https://www.youtube.com/embed/' . $youtubeId : $detailedProduct->video_link;
+                                        @endphp
                                         <iframe class="embed-responsive-item"
-                                            src="{{ $detailedProduct->video_link }}"></iframe>
+                                            src="{{ $youtubeEmbed }}" allowfullscreen></iframe>
                                     @elseif ($detailedProduct->video_provider == 'dailymotion' && isset(explode('video/', $detailedProduct->video_link)[1]))
                                         <iframe class="embed-responsive-item"
                                             src="https://www.dailymotion.com/embed/video/{{ explode('video/', $detailedProduct->video_link)[1] }}"></iframe>
@@ -1387,6 +1424,7 @@
                         </div>
                     </div>
                 @endif
+                --}}
 
                 {{-- PDF Download --}}
                 @if ($hasPdf)

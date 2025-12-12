@@ -631,7 +631,7 @@
                             @endcan
                             @can('view_all_customers')
                                 <li class="aiz-side-nav-item">
-                                    <a href="{{ route('customers.business') }}" class="aiz-side-nav-link">
+                                    <a href="{{ route('customers.business', ['sort_by' => 'crm_id', 'sort_order' => 'desc']) }}" class="aiz-side-nav-link">
                                         <span class="aiz-side-nav-text">{{ translate('Business Customer list') }}</span>
                                     </a>
                                 </li>

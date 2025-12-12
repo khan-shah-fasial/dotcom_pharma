@@ -3587,11 +3587,12 @@ if (!function_exists('calculatePrice')) {
         $calculatedPrice = $basePrice + ($basePrice * $percent / 100);
         $decimalPart = $calculatedPrice - floor($calculatedPrice);
 
-        if ($decimalPart >= 0.5) {
-            return ceil($calculatedPrice); // round up
-        } else {
-            return floor($calculatedPrice); // round down
-        }
+        return (float) number_format($calculatedPrice, 2, '.', '');
+        // if ($decimalPart >= 0.5) {
+        //     return ceil($calculatedPrice); // round up
+        // } else {
+        //     return floor($calculatedPrice); // round down
+        // }
     }
 }
 

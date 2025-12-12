@@ -7,14 +7,11 @@
             <div class="col">
                 <h1 class="h3">{{ translate('Edit Product') }}</h1>
             </div>
-            {{-- <div class="col text-right">
-                <a class="btn has-transition btn-xs p-0 hov-svg-danger" href="{{ route('home') }}"
-                    target="_blank" data-toggle="tooltip" data-placement="top" data-title="{{ translate('View Tutorial Video') }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="19.887" height="16" viewBox="0 0 19.887 16">
-                        <path id="_42fbab5a39cb8436403668a76e5a774b" data-name="42fbab5a39cb8436403668a76e5a774b" d="M18.723,8H5.5A3.333,3.333,0,0,0,2.17,11.333v9.333A3.333,3.333,0,0,0,5.5,24h13.22a3.333,3.333,0,0,0,3.333-3.333V11.333A3.333,3.333,0,0,0,18.723,8Zm-3.04,8.88-5.47,2.933a1,1,0,0,1-1.473-.88V13.067a1,1,0,0,1,1.473-.88l5.47,2.933a1,1,0,0,1,0,1.76Zm-5.61-3.257L14.5,16l-4.43,2.377Z" transform="translate(-2.17 -8)" fill="#9da3ae"/>
-                    </svg>
+            <div class="col-auto ml-auto text-right">
+                <a class="btn btn-primary" href="{{ route('product', $product->slug) }}" target="_blank">
+                    {{ translate('View Product') }}
                 </a>
-            </div> --}}
+            </div>
         </div>
     </div>
 

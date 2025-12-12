@@ -82,7 +82,7 @@
                         <td>
                             <input type="text" name="sku_{{ $str }}"
                                 value="@php
-                            if($stock != null) {
+if($stock != null) {
                                 echo $stock->sku;
                             }
                             else {
@@ -93,7 +93,7 @@
                         <td>
                             <input type="number" lang="en" name="mrp_price_{{ $str }}"
                                 value="@php
-                            if ($product->unit_price == $unit_price) {
+if ($product->unit_price == $unit_price) {
                                 if($stock != null){
                                     echo $stock->mrp_price;
                                 }
@@ -111,7 +111,7 @@
                         <td>
                             <input type="number" lang="en" name="price_{{ $str }}"
                                 value="@php
-                            if ($product->unit_price == $unit_price) {
+if ($product->unit_price == $unit_price) {
                                 if($stock != null){
                                     echo $stock->price;
                                 }
@@ -140,7 +140,7 @@
                         <td class="d-flex" style="gap:5px;">
                             <input type="number" lang="en" name="length_{{ $str }}"
                                 value="@php
-                            if($stock != null){
+if($stock != null){
                                 echo $stock->length;
                             }
                             else {
@@ -149,7 +149,7 @@
                                 class="form-control" placeholder="L (cm)" step="0.01" min="0" required>
                             <input type="number" lang="en" name="width_{{ $str }}"
                                 value="@php
-                            if($stock != null){
+if($stock != null){
                                 echo $stock->width;
                             }
                             else {
@@ -158,7 +158,7 @@
                                 class="form-control" placeholder="W (cm)" step="0.01" min="0" required>
                             <input type="number" lang="en" name="height_{{ $str }}"
                                 value="@php
-                            if($stock != null){
+if($stock != null){
                                 echo $stock->height;
                             }
                             else {
@@ -169,18 +169,18 @@
                         <td>
                             <input type="number" name="weight_{{ $str }}"
                                 value="@php
-                            if($stock != null) {
+if($stock != null) {
                                 echo $stock->weight;
                             }
                             else {
                                 echo $str;
                             } @endphp"
-                                class="form-control" step="0.01" min="0" required>
+                                class="form-control" step="0.001" min="0" required>
                         </td>
                         <td>
                             <input type="text" name="count_{{ $str }}"
                                 value="@php
-                            if($stock != null) {
+if($stock != null) {
                                 echo $stock->count;
                             }
                             else {
@@ -191,7 +191,7 @@
                         <td>
                             <input type="number" lang="en" name="qty_{{ $str }}"
                                 value="@php
-                            if($stock != null){
+if($stock != null){
                                 echo $stock->qty;
                             }
                             else{
@@ -234,7 +234,7 @@
                                 </div>
                                 <input type="hidden" name="img_{{ $str }}" class="selected-files"
                                     value="@php
-                                if($stock != null){
+if($stock != null){
                                     echo $stock->image;
                                 }
                                 else{
@@ -251,32 +251,46 @@
                                 $role_base_price = $stock ? json_decode($stock->role_price, true) : []; // decode JSON to array
                             @endphp
 
-                            @if(!empty($role_base_price) && count($role_base_price) > 0)
-                                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-                                    <table id="rolePriceTable" class="border border-gray-200 rounded-lg text-center">
-                                        <thead class="bg-gray-100">
-                                            <tr>
-                                                <th class="text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
-                                                    Role
-                                                </th>
-                                                <th class="text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
-                                                    Price
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-100 bg-white">
-                                            @foreach ($role_base_price as $role => $price)
-                                                <tr>
-                                                    <td class="text-sm text-gray-700 text-center">
-                                                        {{ strtoupper($role) }}
-                                                    </td>
-                                                    <td class="text-sm text-gray-700 text-center">
-                                                        {{ $price }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                            @if (!empty($role_base_price) && count($role_base_price) > 0)
+                                <div class="accordion" id="rolePriceAccordion_{{ $str }}">
+                                    @php $collapseId = 'rolePriceCollapse_'.$str; @endphp
+                                    <div class="card mb-1 border">
+                                        <div class="card-header p-1" id="heading_{{ $collapseId }}">
+                                            <h2 class="mb-0">
+                                                <button class="btn btn-link btn-block text-left p-2" type="button"
+                                                    data-toggle="collapse" data-target="#{{ $collapseId }}"
+                                                    aria-expanded="true" aria-controls="{{ $collapseId }}">
+                                                    {{ translate('Role price') }}
+                                                </button>
+                                            </h2>
+                                        </div>
+                                        <div id="{{ $collapseId }}" class="collapse"
+                                            aria-labelledby="heading_{{ $collapseId }}"
+                                            data-parent="#rolePriceAccordion_{{ $str }}">
+                                            <div class="card-body py-2">
+                                                <table class="table table-sm mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-sm text-gray-700">{{ translate('Role') }}
+                                                            </th>
+                                                            <th class="text-sm text-gray-700 text-right">
+                                                                {{ translate('Price') }}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach ($role_base_price as $role => $price)
+                                                            <tr>
+                                                                <td class="text-sm text-gray-700">
+                                                                    {{ strtoupper($role) }}</td>
+                                                                <td class="text-sm text-gray-700 text-right">
+                                                                    {{ $price }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             @else
                                 <p>No data</p>

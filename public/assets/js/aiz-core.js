@@ -773,6 +773,19 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                         function (data) {
                             $this.next(".file-preview").html(null);
 
+                            // Preserve the order defined in the hidden input so sorted previews stay consistent on reload
+                            if (files) {
+                                var fileOrder = {};
+                                files.split(",").forEach(function (id, idx) {
+                                    fileOrder[id] = idx;
+                                });
+                                data.sort(function (a, b) {
+                                    var orderA = fileOrder[a.id] ?? Number.MAX_SAFE_INTEGER;
+                                    var orderB = fileOrder[b.id] ?? Number.MAX_SAFE_INTEGER;
+                                    return orderA - orderB;
+                                });
+                            }
+
                             if (data.length > 0) {
                                 $this
                                     .find(".file-amount")
