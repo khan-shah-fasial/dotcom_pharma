@@ -398,7 +398,8 @@
 
 
                                                     <a href="#"
-                                                        onclick="show_credit_modal({{ $user->id }}, '{{ $user->credit_status == 1 ? 'active' : 'deactive' }}', {{ (int) $user->credit_limit }}); return false;"
+                                                        onclick="show_credit_modal({{ $user->id }}, '{{ $user->credit_status }}', {{ (int) $user->credit_limit }}, {{ $user->credit_days }}); return false;"
+                                                        {{-- onclick="show_credit_modal({{ $user->id }}, '{{ $user->credit_status == 1 ? 'active' : 'deactive' }}', {{ (int) $user->credit_limit }}); return false;" --}}
                                                         title="Credit Manage" class="btn">
                                                         <i
                                                             class="las la-edit btn-soft-success btn-icon btn-circle btn-sm mr-2"></i>
@@ -572,6 +573,17 @@
                             </option>
                         </select>
                         @error('credit_status')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="credit_days" class="mb-1">Number of Days</label>
+                        <input type="number" min="0" step="1"
+                            class="form-control @error('credit_days') is-invalid @enderror" id="credit_days"
+                            name="credit_days" placeholder="Enter number of days" value="{{ old('credit_days') }}"
+                            required>
+                        @error('credit_days')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -827,10 +839,13 @@
         }
     </script>
     <script>
-        function show_credit_modal(userId, status, limit) {
+        function show_credit_modal(userId, status, limit, days) {
             $('#credit_user_id').val(userId);
-            $('#credit_status').val(status);
+            if(status){
+                $('#credit_status').val(status);
+            }
             $('#credit_limit').val(limit || 0);
+            $('#credit_days').val(days || 0);
             $('#creditManageModal').modal('show');
         }
     </script>

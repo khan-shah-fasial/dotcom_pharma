@@ -938,6 +938,7 @@ class CustomerController extends Controller
                 'user_id'       => 'required|exists:users,id',
                 'credit_status' => 'required|in:active,deactive',
                 'credit_limit'  => 'required|numeric|min:0',
+                'credit_days'   => 'required|numeric|min:0',
             ]);
 
             if ($validator->fails()) {
@@ -952,9 +953,11 @@ class CustomerController extends Controller
 
             $user = User::findOrFail($validated['user_id']);
 
-            $statusStr = $validated['credit_status'];
-            $statusVal = $statusStr === 'active' ? 1 : 0;
+            $statusVal = $validated['credit_status'];
+            // $statusStr = $validated['credit_status'];
+            // $statusVal = $statusStr === 'active' ? 1 : 0;
             $newLimit  = (int) $validated['credit_limit'];
+            $creditDays = (int) $validated['credit_days'];
 
             DB::beginTransaction();
 
@@ -963,21 +966,22 @@ class CustomerController extends Controller
 
             // ✅ Safe rule for remain
             $delta     = $newLimit - $oldLimit;
-            $newRemain = $oldRemain;
+            // $newRemain = $oldRemain;
 
-            if ($delta > 0) {
-                $newRemain = min($newLimit, $oldRemain + $delta);
-            } elseif ($delta < 0) {
-                $newRemain = min($newLimit, $oldRemain);
-            }
+            // if ($delta > 0) {
+            //     $newRemain = min($newLimit, $oldRemain + $delta);
+            // } elseif ($delta < 0) {
+            //     $newRemain = min($newLimit, $oldRemain);
+            // }
 
-            $newRemain = max(0, $newRemain);
+            // $newRemain = max(0, $newRemain);
 
             // ✅ Update user
             $user->update([
                 'credit_status' => $statusVal,
                 'credit_limit'  => $newLimit,
-                'credit_remain' => $newRemain,
+                // 'credit_remain' => $newRemain,
+                'credit_days'   => $creditDays,
             ]);
 
             DB::commit();
@@ -1171,9 +1175,6 @@ class CustomerController extends Controller
         ]);
     }
 }
-
-
-
 
 
 

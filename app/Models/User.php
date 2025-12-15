@@ -40,6 +40,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'pan_no',
         'passport_no',
         'credit_status',
+        'credit_days',
         'credit_limit',
         'credit_remain',
         'step'

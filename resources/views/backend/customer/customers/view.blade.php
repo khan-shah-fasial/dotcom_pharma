@@ -1,12 +1,65 @@
 @extends('backend.layouts.app')
 
 @section('content')
-    <div class="container my-4">
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        .customer-print .section-title {
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6c757d;
+        }
+
+        .customer-print .field-label {
+            font-size: 11px;
+            color: #6c757d;
+            line-height: 1.2;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .customer-print .field-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: #212529;
+            line-height: 1.2;
+            word-break: break-word;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .customer-print .card {
+            border: 1px solid #e9ecef;
+        }
+    </style>
+
+    <div id="customer-print-content" class="d-none">
+        @component('components.customer-print', ['user' => $user ?? null, 'user2' => $user2 ?? null])@endcomponent
+    </div>
+
+    <div class="container my-4" id="customer-details">
         @if (!empty($user->type_option))
             <div class="card">
 
                 <div class="container my-3 mx-2">
-                    <h3> View Details of Customer - {{ $user->name ?? '-' }} </h3>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center no-print mb-3">
+                        <h3 class="mb-0"> View Details of Customer - {{ $user->name ?? '-' }} </h3>
+                        <div class="d-flex flex-wrap">
+                            <button type="button" class="btn btn-sm btn-outline-secondary mr-2 mb-2"
+                                onclick="printCustomerDetails()">
+                                Print or Save as PDF
+                            </button>
+                            {{-- <button type="button" class="btn btn-sm btn-primary mb-2" onclick="saveCustomerAsPDF()">
+                                Save as PDF
+                            </button> --}}
+                        </div>
+                    </div>
                     <hr>
                     <br>
 
@@ -911,7 +964,18 @@
                 </div>
             </div>
         @else
-            <h3> View Details of Customer {{ $user2->name ?? '-' }} </h3>
+            <div class="d-flex flex-wrap justify-content-between align-items-center no-print mb-3">
+                <h3 class="mb-0"> View Details of Customer {{ $user2->name ?? '-' }} </h3>
+                <div class="d-flex flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-secondary mr-2 mb-2" onclick="printCustomerDetails()">
+                        Print or Save as PDF
+                    </button>
+                    {{-- <button type="button" class="btn btn-sm btn-primary mb-2" onclick="saveCustomerAsPDF()">
+                        Save as PDF
+                    </button> --}}
+                </div>
+            </div>
+            <hr class="no-print">
             <div class="col-md-4 mb-4">
                 <div class="form-group">
                     <label class="form-label" for="name">Email ID</label>
@@ -988,5 +1052,71 @@
             // Show the modal
             $('#approval_model').modal('show');
         }
+
+        function openCustomerPrintWindow(onReady) {
+            var area = document.getElementById('customer-print-content') || document.getElementById('customer-details');
+            if (!area) {
+                return;
+            }
+
+            var printWindow = window.open('', '_blank', 'width=1200,height=900');
+            if (!printWindow) {
+                return;
+            }
+
+            // Build the head with base href so assets load with correct paths.
+            var headHtml = '<base href="{{ url('/') }}/">';
+            var styles = document.querySelectorAll('link[rel=\"stylesheet\"], style');
+            styles.forEach(function(node) {
+                headHtml += node.outerHTML;
+            });
+            headHtml += '<style>@media print { .no-print { display: none !important; } }</style>';
+
+            printWindow.document.open();
+            printWindow.document.write('<!DOCTYPE html><html><head><title>Customer Details</title>' + headHtml + '</head><body></body></html>');
+            printWindow.document.close();
+
+            printWindow.onload = function() {
+                var bodyClass = document.body.className || '';
+                printWindow.document.body.className = bodyClass;
+                var content = area.cloneNode(true);
+                content.id = 'customer-details-print';
+                content.classList.remove('d-none');
+                content.style.display = 'block';
+                printWindow.document.body.innerHTML = '';
+                printWindow.document.body.appendChild(content);
+
+                if (typeof onReady === 'function') {
+                    onReady(printWindow);
+                }
+            };
+        }
+
+        function printCustomerDetails() {
+            openCustomerPrintWindow(function(win) {
+                var closeWin = function() {
+                    try {
+                        win.close();
+                    } catch (e) {}
+                };
+                // Close after print or when focus returns (covers cancel case).
+                win.onafterprint = closeWin;
+                win.addEventListener('afterprint', closeWin);
+                win.onfocus = function() {
+                    setTimeout(closeWin, 300);
+                };
+
+                win.focus();
+                win.print();
+            });
+        }
+
+        // function saveCustomerAsPDF() {
+        //     openCustomerPrintWindow(function(win) {
+        //         win.document.title = 'customer-details';
+        //         win.focus();
+        //         win.print();
+        //     });
+        // }
     </script>
 @endsection
