@@ -976,16 +976,22 @@ body .translater_menu .select2-container {
                             @foreach ($category_top_menu as $cat)
                                 @php $hasChildren = $cat->childrenCategories->isNotEmpty(); @endphp
                                 <li class="list-inline-item mr-3 animate-underline-white @if($hasChildren) dropdown @endif">
-                                    <a href="{{ $hasChildren ? '#' : '/category/' . $cat->slug }}"
-                                        class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links @if($hasChildren) dropdown-toggle @endif  pt-2 pb-2"
+                                    <div class="d-inline-flex align-items-center">
+                                        <a href="/category/{{ $cat->slug }}"
+                                            class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links pt-2 pb-2">
+                                            {{ $cat->name }}
+                                        </a>
+
                                         @if($hasChildren)
-                                            id="injectionsDropdown_{{ $cat->id }}"
-                                            data-toggle="dropdown" aria-haspopup="true"
-                                            aria-expanded="false"
+                                            <button class="btn btn-link p-0 ml-1 dropdown-toggle dropdown-toggle-split fs-14 black_light_clr header_menu_links"
+                                                type="button"
+                                                id="injectionsDropdown_{{ $cat->id }}"
+                                                data-toggle="dropdown" aria-haspopup="true"
+                                                aria-expanded="false"
+                                                aria-label="{{ $cat->name }} submenu">
+                                            </button>
                                         @endif
-                                    >
-                                        {{ $cat->name }}
-                                    </a>
+                                    </div>
 
                                     @if($hasChildren)
                                         <div class="dropdown-menu"
