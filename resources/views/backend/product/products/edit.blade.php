@@ -461,6 +461,20 @@
                             <!-- Status -->
                             <h5 class="mb-3 mt-5 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Status')}}</h5>
                             <div class="w-100">
+                        
+                                <!-- Publish Status -->
+                                {{-- <div class="form-group row">
+                                    <label class="col-xxl-3 col-from-label fs-13">{{ translate('Publish Now') }}</label>
+                                    <div class="col-xxl-9">
+                                        <label class="aiz-switch aiz-switch-success mb-0">
+                                            <input type="hidden" id="published-input-edit" name="published" value="{{ old('published', $product->published) ? 1 : 0 }}">
+                                            <input type="checkbox" class="publish-toggle" data-target="#published-input-edit" {{ old('published', $product->published) ? 'checked' : '' }}>
+                                            <span></span>
+                                        </label>
+                                        <small class="text-muted d-block">{{ translate('Toggle off to keep this product unpublished.') }}</small>
+                                    </div>
+                                </div> --}}
+
                                 <!-- Featured -->
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Featured')}}</label>
@@ -733,13 +747,6 @@
                                     @endforeach
                                 </div>
 
-                                <div class="form-group row">
-                                    <label class="col-md-3 col-from-label">{{translate('MRP price')}} <span class="text-danger">*</span></label>
-                                    <div class="col-md-6">
-                                        <input type="text" placeholder="{{translate('Unit MRP price')}}" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" value="{{$product->mrp_price}}" required readonly>
-                                    </div>
-                                </div>
-
                                 <!-- Unit price -->
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Unit price')}} <span class="text-danger">*</span></label>
@@ -785,69 +792,7 @@
                                     </div>
                                 @endif
 
-                                <div id="show-hide-div">
-                                    <!-- Quantity -->
-                                    <div class="form-group row" id="quantity">
-                                        <label class="col-md-3 col-from-label">{{translate('Quantity')}} <span class="text-danger">*</span></label>
-                                        <div class="col-md-6">
-                                            <input type="number" lang="en" value="{{ optional($product->stocks->first())->qty ?? $product->current_stock ?? 0 }}" step="1" placeholder="{{translate('Quantity')}}" name="current_stock" class="form-control" required>
-                                        </div>
-                                    </div>
-                                    <!-- SKU -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">
-                                            {{translate('SKU')}}
-                                        </label>
-                                        <div class="col-md-6">
-                                            <input type="text" placeholder="{{ optional($product->stocks->first())->sku ?? $product->sku ?? '' }}" name="sku" class="form-control">
-                                        </div>
-                                    </div>
-                                    <!-- Minimum Purchase Qty -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Minimum Purchase Qty')}} <span class="text-danger h5">*</span></label>
-                                        <div class="col-md-6">
-                                            <input type="number" lang="en" min="1" step="1" name="min_qty" value="{{ optional($product->stocks->first())->min_qty ?? ($product->min_qty ?? 1) }}" class="form-control" required>
-                                            <small class="text-muted">{{translate("The minimum quantity needs to be purchased by your customer.")}}</small>
-                                        </div>
-                                    </div>
-                                    <!-- Product Minimum Pack Size -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Product Minimum Pack Size')}} <span class="text-danger h5">*</span></label>
-                                        <div class="col-md-6">
-                                            <input type="number" lang="en" min="1" step="1" name="product_min_pack_size" value="{{ optional($product->stocks->first())->product_min_pack_size ?? ($product->product_min_pack_size ?? 1) }}" class="form-control" required>
-                                        </div>
-                                    </div>
-                                    <!-- Product Expiry Date -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Product Expiry Date')}}</label>
-                                        <div class="col-md-6">
-                                            <input type="date" name="product_exp_date" value="{{ optional($product->stocks->first())->product_exp_date ?? $product->product_exp_date }}" class="form-control" placeholder="{{ translate('Product Expiry Date') }}">
-                                        </div>
-                                    </div>
-                                    <!-- Product Dimensions -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{ translate('Product Dimensions L x W x H (cm)') }} <span class="text-danger">*</span></label>
-                                        <div class="col-md-6 d-flex gap-2 flex-wrap">
-                                            <input type="number" min="0" step="0.01" class="form-control mx-1 mb-2" name="length" value="{{ optional($product->stocks->first())->length ?? $product->length }}" placeholder="{{ translate('L') }}" required>
-                                            <input type="number" min="0" step="0.01" class="form-control mx-1 mb-2" name="width" value="{{ optional($product->stocks->first())->width ?? $product->width }}" placeholder="{{ translate('W') }}" required>
-                                            <input type="number" min="0" step="0.01" class="form-control mx-1 mb-2" name="height" value="{{ optional($product->stocks->first())->height ?? $product->height }}" placeholder="{{ translate('H') }}" required>
-                                        </div>
-                                    </div>
-                                    <!-- Product Weight / Volume -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Product Weight / Volume')}} <span class="text-danger h5">*</span></label>
-                                        <div class="col-md-6">
-                                            <input type="number" min="0" step="0.001" name="weight" value="{{ optional($product->stocks->first())->weight ?? ($product->weight ?? $product->product_weight_vol ?? 0) }}" class="form-control" placeholder="{{ translate('Weight / Volume') }}" required>
-                                        </div>
-                                    </div>
-                                    <!-- Package Count -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Package Count')}}</label>
-                                        <div class="col-md-6">
-                                            <input type="number" lang="en" min="1" step="1" name="count" value="{{ optional($product->stocks->first())->count ?? 1 }}" class="form-control">
-                                        </div>
-                                    </div>
-                                </div>
+                              
                                 <!-- External link -->
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">
@@ -1391,11 +1336,9 @@
                         AIZ.uploader.previewGenerate();
                 }, "2000");
                 if (data.trim().length > 1) {
-                    $('#show-hide-div').hide();
                     AIZ.plugins.sectionFooTable('#sku_combination');
                 }
                 else {
-                    $('#show-hide-div').show();
                 }
            }
         });
@@ -1900,6 +1843,17 @@ $(document).ready(function () {
             });
         }
     });
+
+    // Sync publish toggle to hidden input
+    // document.addEventListener('change', function(e) {
+    //     if (e.target.classList.contains('publish-toggle')) {
+    //         var targetSelector = e.target.getAttribute('data-target');
+    //         var hiddenInput = document.querySelector(targetSelector);
+    //         if (hiddenInput) {
+    //             hiddenInput.value = e.target.checked ? 1 : 0;
+    //         }
+    //     }
+    // });
 </script>
 
 @endsection

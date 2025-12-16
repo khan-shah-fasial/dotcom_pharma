@@ -516,7 +516,12 @@ if (!function_exists('discount_in_percentage')) {
 //Shows Price on page based on carts
 if (!function_exists('cart_product_price')) {
     function cart_product_price($cart_product, $product, $formatted = true, $tax = true)
-    {
+    {        // 🚨 Guard clause: product deleted / unavailable
+        if (!$product) {
+            return $formatted ? format_price(0) : 0;
+        }
+
+        $price = 0;
         if ($product->auction_product == 0) {
             $str = '';
             if ($cart_product['variation'] != null) {

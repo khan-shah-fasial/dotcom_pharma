@@ -420,6 +420,20 @@
                             <!-- Status -->
                             <h5 class="mb-3 mt-5 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Status')}}</h5>
                             <div class="w-100">
+                                
+                                <!-- Publish Status -->
+                                {{-- <div class="form-group row">
+                                    <label class="col-xxl-3 col-from-label fs-13">{{ translate('Publish Now') }}</label>
+                                    <div class="col-xxl-9">
+                                        <label class="aiz-switch aiz-switch-success mb-0">
+                                            <input type="hidden" id="published-input-create" name="published" value="{{ old('published', 1) ? 1 : 0 }}">
+                                            <input type="checkbox" class="publish-toggle" data-target="#published-input-create" {{ old('published', 1) ? 'checked' : '' }}>
+                                            <span></span>
+                                        </label>
+                                        <small class="text-muted d-block">{{ translate('Toggle off to save as unpublished.') }}</small>
+                                    </div>
+                                </div> --}}
+
                                 <!-- Featured -->
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Featured')}}</label>
@@ -649,13 +663,6 @@
 
                                 </div>
 
-                                <div class="form-group row">
-                                    <label class="col-md-3 col-from-label">{{translate('MRP price (PTs)')}} <span class="text-danger h5">*</span></label>
-                                    <div class="col-md-6">
-                                        <input type="number" lang="en" min="0" step="0.01" placeholder="{{ translate('Unit MRP price') }}" value="0" name="mrp_price" class="form-control @error('mrp_price') is-invalid @enderror" required>
-                                    </div>
-                                </div>
-
                                 <!-- Unit price -->
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Unit price (PTs)')}} <span class="text-danger h5">*</span></label>
@@ -697,69 +704,6 @@
                                     </div>
                                 @endif
 
-                                <div id="show-hide-div">
-                                    <!-- Quantity -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Quantity')}} <span class="text-danger h5">*</span></label>
-                                        <div class="col-md-6">
-                                            <input type="number" lang="en" min="0" step="1" placeholder="{{ translate('Quantity') }}" name="current_stock" value="{{ old('current_stock', 0) }}" class="form-control" required>
-                                        </div>
-                                    </div>
-                                    <!-- SKU -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">
-                                            {{translate('SKU')}}
-                                        </label>
-                                        <div class="col-md-6">
-                                            <input type="text" placeholder="{{ translate('SKU') }}" name="sku" value="{{ old('sku') }}" class="form-control">
-                                        </div>
-                                    </div>
-                                    <!-- Minimum Purchase Qty -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Minimum Purchase Qty')}} <span class="text-danger h5">*</span></label>
-                                        <div class="col-md-6">
-                                            <input type="number" lang="en" min="1" step="1" name="min_qty" value="{{ old('min_qty', 1) }}" class="form-control" required>
-                                            <small class="text-muted">{{translate("The minimum quantity needs to be purchased by your customer.")}}</small>
-                                        </div>
-                                    </div>
-                                    <!-- Product Minimum Pack Size -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Product Minimum Pack Size')}} <span class="text-danger h5">*</span></label>
-                                        <div class="col-md-6">
-                                            <input type="number" lang="en" min="1" step="1" name="product_min_pack_size" value="{{ old('product_min_pack_size', 1) }}" class="form-control" required>
-                                        </div>
-                                    </div>
-                                    <!-- Product Expiry Date -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Product Expiry Date')}}</label>
-                                        <div class="col-md-6">
-                                            <input type="date" name="product_exp_date" value="{{ old('product_exp_date') }}" class="form-control" placeholder="{{ translate('Product Expiry Date') }}">
-                                        </div>
-                                    </div>
-                                    <!-- Product Dimensions -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{ translate('Product Dimensions L x W x H (cm)') }} <span class="text-danger">*</span></label>
-                                        <div class="col-md-6 d-flex gap-2 flex-wrap">
-                                            <input type="number" min="0" step="0.01" class="form-control mx-1 mb-2" name="length" value="{{ old('length') }}" placeholder="{{ translate('L') }}" required>
-                                            <input type="number" min="0" step="0.01" class="form-control mx-1 mb-2" name="width" value="{{ old('width') }}" placeholder="{{ translate('W') }}" required>
-                                            <input type="number" min="0" step="0.01" class="form-control mx-1 mb-2" name="height" value="{{ old('height') }}" placeholder="{{ translate('H') }}" required>
-                                        </div>
-                                    </div>
-                                    <!-- Product Weight / Volume -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Product Weight / Volume')}} <span class="text-danger h5">*</span></label>
-                                        <div class="col-md-6">
-                                            <input type="number" min="0" step="0.001" name="weight" value="{{ old('weight', 0) }}" class="form-control" placeholder="{{ translate('Weight / Volume') }}" required>
-                                        </div>
-                                    </div>
-                                    <!-- Package Count -->
-                                    <div class="form-group row">
-                                        <label class="col-md-3 col-from-label">{{translate('Package Count')}}</label>
-                                        <div class="col-md-6">
-                                            <input type="number" lang="en" min="1" step="1" name="count" value="{{ old('count', 1) }}" class="form-control">
-                                        </div>
-                                    </div>
-                                </div>
                                 <!-- External link -->
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">
@@ -1226,14 +1170,14 @@
                 AIZ.uploader.previewGenerate();
                 AIZ.plugins.sectionFooTable('#sku_combination');
                 if (data.trim().length > 1) {
-                   $('#show-hide-div').hide();
-                    // Remove 'required' from all input fields inside
-                    $('#show-hide-div').find('input').removeAttr('required');
+                //    $('#show-hide-div').hide();
+                //     // Remove 'required' from all input fields inside
+                //     $('#show-hide-div').find('input').removeAttr('required');
                 }
                 else {
-                    $('#show-hide-div').show();
-                    // Add 'required' back to the necessary fields
-                    $('#show-hide-div').find('input[name="current_stock"]').attr('required', 'required');
+                    // $('#show-hide-div').show();
+                    // // Add 'required' back to the necessary fields
+                    // $('#show-hide-div').find('input[name="current_stock"]').attr('required', 'required');
                 }
            }
        });
@@ -1676,6 +1620,17 @@ $(document).ready(function () {
             $el.next(".invalid-feedback.frontend").remove();
         }
     });
+
+    // Sync publish toggle to hidden input
+    // document.addEventListener('change', function(e) {
+    //     if (e.target.classList.contains('publish-toggle')) {
+    //         var targetSelector = e.target.getAttribute('data-target');
+    //         var hiddenInput = document.querySelector(targetSelector);
+    //         if (hiddenInput) {
+    //             hiddenInput.value = e.target.checked ? 1 : 0;
+    //         }
+    //     }
+    // });
 
 });
 </script>

@@ -95,7 +95,7 @@ if($stock != null) {
                                 echo $stock->sku;
                             }
                             else {
-                                echo $str;
+                                echo '';
                             } @endphp"
                                 class="form-control" required>
                         </td>
@@ -117,7 +117,7 @@ if($stock != null && $stock->price !== null){
                                 echo $stock->price;
                             }
                             else {
-                                echo '';
+                                echo 0;
                             } @endphp"
                                 min="0" step="0.01" class="form-control" required readonly>
                         </td>
