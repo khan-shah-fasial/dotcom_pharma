@@ -115,8 +115,9 @@ class CartController extends Controller
                         $shop_items_data_item["tax"] = single_price($tax);
                         $shop_items_data_item["shipping_cost"] = (float) $shop_items_raw_data_item["shipping_cost"];
                         $shop_items_data_item["quantity"] = intval($shop_items_raw_data_item["quantity"]);
-                        $shop_items_data_item["lower_limit"] = intval($product->min_qty);
-                        $shop_items_data_item["upper_limit"] = intval($product->stocks->where('variant', $shop_items_raw_data_item['variation'])->first()->qty);
+                        $cartStock = $product->stocks->where('variant', $shop_items_raw_data_item['variation'])->first();
+                        $shop_items_data_item["lower_limit"] = intval($cartStock->min_qty ?? $product->min_qty ?? 1);
+                        $shop_items_data_item["upper_limit"] = intval(optional($cartStock)->qty);
 
                         $sub_total += $price + $tax;
                         $shop_items_data[] = $shop_items_data_item;
@@ -179,19 +180,20 @@ class CartController extends Controller
             ], 200);
         }
 
-        if ($product->min_qty > $request->quantity) {
-            return response()->json([
-                'result' => false,
-                'temp_user_id' => $temp_user_id,
-                'message' => translate("Minimum") . " {$product->min_qty} " . translate("item(s) should be ordered")
-            ], 200);
-        }
-
         $variant = $request->variant;
         $tax = 0;
         $quantity = $request->quantity;
 
         $product_stock = $product->stocks->where('variant', $variant)->first();
+        $minQty = optional($product_stock)->min_qty ?? $product->min_qty ?? 1;
+
+        if ($quantity < $minQty) {
+            return response()->json([
+                'result' => false,
+                'temp_user_id' => $temp_user_id,
+                'message' => translate("Minimum") . " {$minQty} " . translate("item(s) should be ordered")
+            ], 200);
+        }
 
         if($user_id != null) {
             $cart = Cart::firstOrNew([
@@ -240,6 +242,14 @@ class CartController extends Controller
                 ]);
             }
             $quantity = $cart->quantity + $request['quantity'];
+
+            if ($quantity < $minQty) {
+                return response()->json([
+                    'result' => false,
+                    'temp_user_id' => $temp_user_id,
+                    'message' => translate("Minimum") . " {$minQty} " . translate("item(s) should be ordered")
+                ], 200);
+            }
         }
 
         $price = CartUtility::get_price($product, $product_stock, $request->quantity);
@@ -289,13 +299,16 @@ class CartController extends Controller
                 $cart_item = Cart::where('id', $cart_id)->first();
                 $product = Product::where('id', $cart_item->product_id)->first();
 
-                if ($product->min_qty > $cart_quantities[$i]) {
-                    return response()->json(['result' => false, 'message' => translate("Minimum") . " {$product->min_qty} " . translate("item(s) should be ordered for") . " {$product->name}"], 200);
+                $stockEntry = $cart_item->product->stocks->where('variant', $cart_item->variation)->first();
+                $stockMinQty = $stockEntry->min_qty ?? $product->min_qty ?? 1;
+
+                if ($stockMinQty > $cart_quantities[$i]) {
+                    return response()->json(['result' => false, 'message' => translate("Minimum") . " {$stockMinQty} " . translate("item(s) should be ordered for") . " {$product->name}"], 200);
                 }
 
-                $stock = $cart_item->product->stocks->where('variant', $cart_item->variation)->first()->qty;
+                $stock = optional($stockEntry)->qty;
                 $variant_string = $cart_item->variation != null && $cart_item->variation != "" ? " ($cart_item->variation)" : "";
-                if ($stock >= $cart_quantities[$i] || $product->digital == 1) {
+                if (($stock ?? 0) >= $cart_quantities[$i] || $product->digital == 1) {
                     $cart_item->update([
                         'quantity' => $cart_quantities[$i]
                     ]);

@@ -916,7 +916,7 @@ class HomeController extends Controller
             ($height ?? '-');
         
         $weight = $product_stock->weight ?? $product->product_weight_vol;
-        $count = $product_stock->count ?? $product->product_min_pack_size;
+        $count = $product_stock->product_min_pack_size ?? $product_stock->count ?? $product->product_min_pack_size;
 
 
         if ($product->wholesale_product) {

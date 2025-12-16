@@ -90,18 +90,19 @@ class CartController extends Controller
 
         $quantity = $request['quantity'];
 
-        if ($quantity < $product->min_qty) {
-            return array(
-                'status' => 0,
-                'cart_count' => count($carts),
-                'modal_view' => view('frontend.partials.minQtyNotSatisfied', ['min_qty' => $product->min_qty])->render(),
-                'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
-            );
-        }
-
         //check the color enabled or disabled for the product
         $str = CartUtility::create_cart_variant($product, $request->all());
         $product_stock = $product->stocks->where('variant', $str)->first();
+
+        $minQty = optional($product_stock)->min_qty ?? $product->min_qty ?? 1;
+        if ($quantity < $minQty) {
+            return array(
+                'status' => 0,
+                'cart_count' => count($carts),
+                'modal_view' => view('frontend.partials.minQtyNotSatisfied', ['min_qty' => $minQty])->render(),
+                'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
+            );
+        }
 
         if($authUser != null) {
             $user_id = $authUser->id;
@@ -137,6 +138,15 @@ class CartController extends Controller
                 );
             }
             $quantity = $cart->quantity + $request['quantity'];
+
+            if ($quantity < $minQty) {
+                return array(
+                    'status' => 0,
+                    'cart_count' => count($carts),
+                    'modal_view' => view('frontend.partials.minQtyNotSatisfied', ['min_qty' => $minQty])->render(),
+                    'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
+                );
+            }
         }
 
         $price = CartUtility::get_price($product, $product_stock, $request->quantity);
@@ -191,6 +201,7 @@ class CartController extends Controller
             $product = Product::find($cartItem['product_id']);
             $product_stock = $product->stocks->where('variant', $cartItem['variation'])->first();
             $quantity = $product_stock->qty;
+            $minQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
             //$price = $product_stock->price;
             $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
 
@@ -215,7 +226,7 @@ class CartController extends Controller
             }
 
             if ($quantity >= $request->quantity) {
-                if ($request->quantity >= $product->min_qty) {
+                if ($request->quantity >= $minQty) {
                     $cartItem['quantity'] = $request->quantity;
                 }
             }

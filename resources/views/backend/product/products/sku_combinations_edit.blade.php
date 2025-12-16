@@ -26,6 +26,15 @@
                 <td class="text-center">
                     {{ translate('Package Count') }}
                 </td>
+                <td class="text-center">
+                    {{ translate('Product Minimum Pack Size') }}
+                </td>
+                <td class="text-center">
+                    {{ translate('Minimum Purchase Qty') }}
+                </td>
+                <td class="text-center">
+                    {{ translate('Product Expiry Date') }}
+                </td>
                 <td class="text-center" data-breakpoints="lg">
                     {{ translate('Quantity') }}
                 </td>
@@ -93,36 +102,22 @@ if($stock != null) {
                         <td>
                             <input type="number" lang="en" name="mrp_price_{{ $str }}"
                                 value="@php
-if ($product->unit_price == $unit_price) {
-                                if($stock != null){
-                                    echo $stock->mrp_price;
-                                }
-                                else {
-                                    // echo $unit_price;
-                                    echo 0;
-                                }
+if($stock != null && $stock->mrp_price !== null){
+                                echo $stock->mrp_price;
                             }
-                            else{
-                                // echo $unit_price;
-                                echo 0;
+                            else {
+                                echo '';
                             } @endphp"
                                 min="0" step="0.01" class="form-control" required>
                         </td>
                         <td>
                             <input type="number" lang="en" name="price_{{ $str }}"
                                 value="@php
-if ($product->unit_price == $unit_price) {
-                                if($stock != null){
-                                    echo $stock->price;
-                                }
-                                else {
-                                    // echo $unit_price;
-                                    echo 0;
-                                }
+if($stock != null && $stock->price !== null){
+                                echo $stock->price;
                             }
-                            else{
-                                // echo $unit_price;
-                                echo 0;
+                            else {
+                                echo '';
                             } @endphp"
                                 min="0" step="0.01" class="form-control" required readonly>
                         </td>
@@ -144,7 +139,7 @@ if($stock != null){
                                 echo $stock->length;
                             }
                             else {
-                                echo $str;
+                                echo '';
                             } @endphp"
                                 class="form-control" placeholder="L (cm)" step="0.01" min="0" required>
                             <input type="number" lang="en" name="width_{{ $str }}"
@@ -153,7 +148,7 @@ if($stock != null){
                                 echo $stock->width;
                             }
                             else {
-                                echo $str;
+                                echo '';
                             } @endphp"
                                 class="form-control" placeholder="W (cm)" step="0.01" min="0" required>
                             <input type="number" lang="en" name="height_{{ $str }}"
@@ -162,7 +157,7 @@ if($stock != null){
                                 echo $stock->height;
                             }
                             else {
-                                echo $str;
+                                echo '';
                             } @endphp"
                                 class="form-control" placeholder="H (cm)" step="0.01" min="0" required>
                         </td>
@@ -173,7 +168,7 @@ if($stock != null) {
                                 echo $stock->weight;
                             }
                             else {
-                                echo $str;
+                                echo '';
                             } @endphp"
                                 class="form-control" step="0.001" min="0" required>
                         </td>
@@ -184,9 +179,42 @@ if($stock != null) {
                                 echo $stock->count;
                             }
                             else {
-                                echo $str;
+                                echo '';
                             } @endphp"
                                 class="form-control" required>
+                        </td>
+                        <td>
+                            <input type="number" lang="en" name="product_min_pack_size_{{ $str }}"
+                                value="@php
+if($stock != null){
+                                echo $stock->product_min_pack_size ?? 1;
+                            }
+                            else{
+                                echo 1;
+                            } @endphp"
+                                min="1" step="1" class="form-control" required>
+                        </td>
+                        <td>
+                            <input type="number" lang="en" name="min_qty_{{ $str }}"
+                                value="@php
+if($stock != null){
+                                echo $stock->min_qty ?? 1;
+                            }
+                            else{
+                                echo 1;
+                            } @endphp"
+                                min="1" step="1" class="form-control" required>
+                        </td>
+                        <td>
+                            <input type="date" name="product_exp_date_{{ $str }}"
+                                value="@php
+if($stock != null){
+                                echo $stock->product_exp_date;
+                            }
+                            else {
+                                echo null;
+                            } @endphp"
+                                class="form-control">
                         </td>
                         <td>
                             <input type="number" lang="en" name="qty_{{ $str }}"

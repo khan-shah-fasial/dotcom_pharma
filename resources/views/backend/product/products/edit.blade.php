@@ -269,21 +269,6 @@
                                                 @enderror
                                             </div>
                                         </div>
-                                        <!-- Weight -->
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Weight')}} <small>({{ translate('In Kg') }})</small></label>
-                                            <div class="col-xxl-9">
-                                                <input type="number" class="form-control" name="weight" value="{{ $product->weight }}" step="0.01" placeholder="0.00">
-                                            </div>
-                                        </div>
-                                        <!-- Quantity -->
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Minimum Purchase Qty')}} <span class="text-danger">*</span></label>
-                                            <div class="col-xxl-9">
-                                                <input type="number" lang="en" class="form-control @error('min_qty') is-invalid @enderror" name="min_qty" value="@if($product->min_qty <= 1){{1}}@else{{$product->min_qty}}@endif" min="1">
-                                                <small class="text-muted">{{translate("The minimum quantity needs to be purchased by your customer.")}}</small>
-                                            </div>
-                                        </div>
                                         <!-- Tags -->
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Tags')}}</label>
@@ -363,22 +348,6 @@
                                             </div>
                                         </div>
 
-                                        <!-- Product Minimum Pack Size  -->
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Minimum Pack Size ')}} <span class="text-danger">*</span></label>
-                                            <div class="col-xxl-9">
-                                                <input type="number" class="form-control @error('product_min_pack_size') is-invalid @enderror" name="product_min_pack_size"  placeholder="{{ translate('Product Minimum Pack Size') }}" value="{{ $product->product_min_pack_size }}" required>
-                                            </div>
-                                        </div>
-
-                                        <!-- Product Expiry Date  -->
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Expiry Date')}} </label>
-                                            <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_exp_date') is-invalid @enderror" name="product_exp_date" placeholder="{{ translate('Product Expiry Date') }}" value="{{ $product->product_exp_date }}">
-                                            </div>
-                                        </div>
-
                                         <!-- Product HSN / HS Code  -->
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product HSN Code')}} </label>
@@ -395,32 +364,6 @@
                                             </div>
                                         </div>
 
-                                        <!-- Product Dimentions  -->
-                                        {{-- <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Dimentions')}} <span class="text-danger">*</span></label>
-                                            <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_dimentions') is-invalid @enderror" name="product_dimentions" placeholder="{{ translate('Product Dimentions') }}" value="{{ $product->product_dimentions }}" required>
-                                            </div>
-                                        </div> --}}
-
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-form-label fs-13">{{ translate('Product Dimensions L x W x H (cm)') }} <span class="text-danger">*</span></label>
-                                            <div class="col-xxl-9 d-flex gap-2">
-                                                <input type="number" min="0" step="0.01" class="form-control mx-1 @error('length') is-invalid @enderror" name="length" value="{{ $product->length }}" placeholder="{{ translate('L') }}" required>
-
-                                                <input type="number" min="0" step="0.01" class="form-control mx-1 @error('width') is-invalid @enderror" name="width" value="{{ $product->width }}" placeholder="{{ translate('W') }}" required>
-
-                                                <input type="number" min="0" step="0.01" class="form-control mx-1 @error('height') is-invalid @enderror" name="height" value="{{ $product->height }}" placeholder="{{ translate('H') }}" required>
-                                            </div>
-                                        </div>
-
-                                        <!-- Product weight / volume  -->
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Weight / Volume')}} <span class="text-danger">*</span></label>
-                                            <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_weight_vol') is-invalid @enderror" name="product_weight_vol" placeholder="{{ translate('Product Weight / Volume') }}" value="{{ $product->product_weight_vol }}" required>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <!-- Product Category -->
@@ -857,6 +800,51 @@
                                         </label>
                                         <div class="col-md-6">
                                             <input type="text" placeholder="{{ optional($product->stocks->first())->sku ?? $product->sku ?? '' }}" name="sku" class="form-control">
+                                        </div>
+                                    </div>
+                                    <!-- Minimum Purchase Qty -->
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-from-label">{{translate('Minimum Purchase Qty')}} <span class="text-danger h5">*</span></label>
+                                        <div class="col-md-6">
+                                            <input type="number" lang="en" min="1" step="1" name="min_qty" value="{{ optional($product->stocks->first())->min_qty ?? ($product->min_qty ?? 1) }}" class="form-control" required>
+                                            <small class="text-muted">{{translate("The minimum quantity needs to be purchased by your customer.")}}</small>
+                                        </div>
+                                    </div>
+                                    <!-- Product Minimum Pack Size -->
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-from-label">{{translate('Product Minimum Pack Size')}} <span class="text-danger h5">*</span></label>
+                                        <div class="col-md-6">
+                                            <input type="number" lang="en" min="1" step="1" name="product_min_pack_size" value="{{ optional($product->stocks->first())->product_min_pack_size ?? ($product->product_min_pack_size ?? 1) }}" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <!-- Product Expiry Date -->
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-from-label">{{translate('Product Expiry Date')}}</label>
+                                        <div class="col-md-6">
+                                            <input type="date" name="product_exp_date" value="{{ optional($product->stocks->first())->product_exp_date ?? $product->product_exp_date }}" class="form-control" placeholder="{{ translate('Product Expiry Date') }}">
+                                        </div>
+                                    </div>
+                                    <!-- Product Dimensions -->
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-from-label">{{ translate('Product Dimensions L x W x H (cm)') }} <span class="text-danger">*</span></label>
+                                        <div class="col-md-6 d-flex gap-2 flex-wrap">
+                                            <input type="number" min="0" step="0.01" class="form-control mx-1 mb-2" name="length" value="{{ optional($product->stocks->first())->length ?? $product->length }}" placeholder="{{ translate('L') }}" required>
+                                            <input type="number" min="0" step="0.01" class="form-control mx-1 mb-2" name="width" value="{{ optional($product->stocks->first())->width ?? $product->width }}" placeholder="{{ translate('W') }}" required>
+                                            <input type="number" min="0" step="0.01" class="form-control mx-1 mb-2" name="height" value="{{ optional($product->stocks->first())->height ?? $product->height }}" placeholder="{{ translate('H') }}" required>
+                                        </div>
+                                    </div>
+                                    <!-- Product Weight / Volume -->
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-from-label">{{translate('Product Weight / Volume')}} <span class="text-danger h5">*</span></label>
+                                        <div class="col-md-6">
+                                            <input type="number" min="0" step="0.001" name="weight" value="{{ optional($product->stocks->first())->weight ?? ($product->weight ?? $product->product_weight_vol ?? 0) }}" class="form-control" placeholder="{{ translate('Weight / Volume') }}" required>
+                                        </div>
+                                    </div>
+                                    <!-- Package Count -->
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-from-label">{{translate('Package Count')}}</label>
+                                        <div class="col-md-6">
+                                            <input type="number" lang="en" min="1" step="1" name="count" value="{{ optional($product->stocks->first())->count ?? 1 }}" class="form-control">
                                         </div>
                                     </div>
                                 </div>
@@ -1746,38 +1734,7 @@ $(document).ready(function () {
                 }, 250);
 
                 return false;
-            } else {
-                // Remove error state if any
-                $('input[name="product_dimentions"]').removeAttr('required');
-                $('input[name="length"]').removeAttr('required');
-                $('input[name="width"]').removeAttr('required');
-                $('input[name="height"]').removeAttr('required');
-                $('input[name="product_weight_vol"]').removeAttr('required');
             }
-        } else {
-            // Remove error state if any
-            $('input[name="product_dimentions"]').attr('required', true);
-            $('input[name="length"]').attr('required', true);
-            $('input[name="width"]').attr('required', true);
-            $('input[name="height"]').attr('required', true);
-            $('input[name="product_weight_vol"]').attr('required', true);
-        }
-
-
-        const selectedChoices = $('#choice_attributes').val(); // returns array
-
-        if (!selectedChoices || selectedChoices.length > 0) {
-            $('input[name="product_dimentions"]').removeAttr('required');
-            $('input[name="length"]').removeAttr('required');
-            $('input[name="width"]').removeAttr('required');
-            $('input[name="height"]').removeAttr('required');
-            $('input[name="product_weight_vol"]').removeAttr('required');
-        } else {
-            $('input[name="product_dimentions"]').attr('required', true);
-            $('input[name="length"]').attr('required', true);
-            $('input[name="width"]').attr('required', true);
-            $('input[name="height"]').attr('required', true);
-            $('input[name="product_weight_vol"]').attr('required', true);
         }
 
         // Custom required field validation for all fields

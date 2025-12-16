@@ -280,6 +280,14 @@ class ProductController extends Controller
             'mrp_price',
             'sku',
             'current_stock',
+            'length',
+            'width',
+            'height',
+            'weight',
+            'count',
+            'product_min_pack_size',
+            'min_qty',
+            'product_exp_date',
             'product_id'
         ]), $product);
 
@@ -422,8 +430,16 @@ class ProductController extends Controller
                 'mrp_price',
                 'sku',
                 'current_stock',
-                'product_id'
-            ]), $product);
+                'length',
+                'width',
+            'height',
+            'weight',
+            'count',
+            'product_min_pack_size',
+            'min_qty',
+            'product_exp_date',
+            'product_id'
+        ]), $product);
 
         } else {
             //Product Stock
@@ -435,8 +451,16 @@ class ProductController extends Controller
                 'mrp_price',
                 'sku',
                 'current_stock',
-                'product_id'
-            ]), $product);
+                'length',
+                'width',
+            'height',
+            'weight',
+            'count',
+            'product_min_pack_size',
+            'min_qty',
+            'product_exp_date',
+            'product_id'
+        ]), $product);
 
         }
 
