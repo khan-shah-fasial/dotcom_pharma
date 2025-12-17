@@ -987,18 +987,23 @@ class HomeController extends Controller
 
         // $price += $tax;
 
+        $requestedQty = (int) ($request->quantity ?? 1);
+        $requestedQty = $requestedQty > 0 ? $requestedQty : 1;
+        $appliedQty   = max($requestedQty, $stock_min_qty);
+
         return array(
-            'price' => single_price($price * $request->quantity),
+            'price' => single_price($price * $appliedQty),
             'quantity' => $quantity,
             'sku' => $sku,
             'digital' => $product->digital,
             'variation' => $str,
             'stock_min_qty' => $stock_min_qty,
+            'applied_quantity' => $appliedQty,
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
             'per_piece_price' => single_price(round($price, 2)),
-            'without_tax_price' => single_price(($price - $tax) * $request->quantity),
-            'tax' => single_price($tax * $request->quantity),
+            'without_tax_price' => single_price(($price - $tax) * $appliedQty),
+            'tax' => single_price($tax * $appliedQty),
             // 'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),
             'original_price' => single_price($base),
             'dimension' => $dimension,

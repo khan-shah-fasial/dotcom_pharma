@@ -445,7 +445,7 @@
                 </div>
             @endif
 
-            <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
                 <div class="detail-product-specs rounded h-100">
                     <div class="display_flex3">
                         <div class="">

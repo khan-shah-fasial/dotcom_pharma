@@ -813,7 +813,7 @@
 
         let lastVariantKey = null; // remember last variant to decide when to reset qty
         let variantPriceTimer = null;
-        const variantPriceDebounceMs = 180;
+        const variantPriceDebounceMs = 250;
 
         function getVariantPrice(immediate = false){
             const invoke = function(){
