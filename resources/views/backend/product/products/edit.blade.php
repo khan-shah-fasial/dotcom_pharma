@@ -169,6 +169,22 @@
                                             </div>
                                         </div>
 
+                                        <!-- Role -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Role')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control" name="role_label" placeholder="{{ translate('Role') }}" value="{{ $product->role_label }}">
+                                            </div>
+                                        </div>
+
+                                        <!-- Schedule -->
+                                        <div class="form-group row">
+                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Schedule')}} </label>
+                                            <div class="col-xxl-9">
+                                                <input type="text" class="form-control" name="schedule" placeholder="{{ translate('Schedule') }}" value="{{ $product->schedule }}">
+                                            </div>
+                                        </div>
+
                                         <!-- Product Form -->
                                         <div class="form-group row">
                                             <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Form')}} </label>

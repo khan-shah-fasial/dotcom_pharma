@@ -37,9 +37,21 @@
 
 
         @if (!empty($detailedProduct->brand->name))
-            <div class="col-md-6 col-6 pl-0 mb-md-0 mb-2">
+            <div class="col-md-6 col-6 pl-0 mb-md-0 my-2">
                 <span class="detail-font-14px detail-gray-color">{{ translate('Brand / Mfg') }}:</span><br>
                 <span class="fw-500 fs-14">{{ $detailedProduct->brand->name ?? '-' }}</span>
+            </div>
+        @endif
+        @if (!empty($detailedProduct->role_label))
+            <div class="col-md-6 col-6 pl-0 mb-md-0 my-2">
+                <span class="detail-font-14px detail-gray-color">{{ translate('Role') }}:</span><br>
+                <span class="fw-500 fs-14">{{ $detailedProduct->role_label }}</span>
+            </div>
+        @endif
+        @if (!empty($detailedProduct->schedule))
+            <div class="col-md-6 col-6 pl-0 mb-md-0 my-2">
+                <span class="detail-font-14px detail-gray-color">{{ translate('Schedule') }}:</span><br>
+                <span class="fw-500 fs-14">{{ $detailedProduct->schedule }}</span>
             </div>
         @endif
         {{-- <div class="col-md-3 pl-0 mb-md-0 mb-2">
@@ -50,7 +62,7 @@
 
         @if (!is_null($detailedProduct->prescription_req))
             <!-- Discount percentage -->
-            <div class="col-md-6 pl-md-0 pl-0 mb-md-0 mb-2">
+            <div class="col-md-6 pl-md-0 pl-0 mb-md-0 my-2">
                 <span class="detail-font-14px detail-gray-color">{{ translate('Prescription Required') }}:</span><br>
                 <span
                     class="fw-500 fs-14 detail-red-color">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
