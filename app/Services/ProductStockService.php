@@ -43,6 +43,17 @@ class ProductStockService
                 $product_stock->count = request()->get('count_' . str_replace('.', '_', $str), null);
                 $product_stock->min_qty = request()->get('min_qty_' . str_replace('.', '_', $str), 1);
                 $product_stock->product_exp_date = request()->get('product_exp_date_' . str_replace('.', '_', $str), null);
+                $product_stock->qty_per_piece = request()->get('qty_per_piece_' . str_replace('.', '_', $str), null);
+                $product_stock->qty_per_buffer_box = request()->get('qty_per_buffer_box_' . str_replace('.', '_', $str), null);
+                $product_stock->total_qty_per_case = request()->get('total_qty_per_case_' . str_replace('.', '_', $str), null);
+                $product_stock->weight_buffer_box = request()->get('weight_buffer_box_' . str_replace('.', '_', $str), null);
+                $product_stock->weight_case = request()->get('weight_case_' . str_replace('.', '_', $str), null);
+                $product_stock->buffer_length = request()->get('buffer_length_' . str_replace('.', '_', $str), null);
+                $product_stock->buffer_width = request()->get('buffer_width_' . str_replace('.', '_', $str), null);
+                $product_stock->buffer_height = request()->get('buffer_height_' . str_replace('.', '_', $str), null);
+                $product_stock->case_length = request()->get('case_length_' . str_replace('.', '_', $str), null);
+                $product_stock->case_width = request()->get('case_width_' . str_replace('.', '_', $str), null);
+                $product_stock->case_height = request()->get('case_height_' . str_replace('.', '_', $str), null);
 
                 $product_stock->sku = request()['sku_' . str_replace('.', '_', $str)];
                 $product_stock->qty = request()['qty_' . str_replace('.', '_', $str)];
@@ -76,6 +87,17 @@ class ProductStockService
             $count = $collection['count'] ?? null;
             $min_qty = $collection['min_qty'] ?? 1;
             $product_exp_date = $collection['product_exp_date'] ?? null;
+            $qty_per_piece = $collection['qty_per_piece'] ?? null;
+            $qty_per_buffer_box = $collection['qty_per_buffer_box'] ?? null;
+            $total_qty_per_case = $collection['total_qty_per_case'] ?? null;
+            $weight_buffer_box = $collection['weight_buffer_box'] ?? null;
+            $weight_case = $collection['weight_case'] ?? null;
+            $buffer_length = $collection['buffer_length'] ?? null;
+            $buffer_width = $collection['buffer_width'] ?? null;
+            $buffer_height = $collection['buffer_height'] ?? null;
+            $case_length = $collection['case_length'] ?? null;
+            $case_width = $collection['case_width'] ?? null;
+            $case_height = $collection['case_height'] ?? null;
 
             unset($collection['current_stock']);
             unset($collection['dimension']);
@@ -83,7 +105,30 @@ class ProductStockService
 
             // $data = $collection->merge(compact('variant', 'qty', 'price', 'per_piece_price'))->toArray();
 
-            $data = $collection->merge(compact('variant', 'qty', 'price', 'mrp_price', 'length', 'width', 'height', 'weight', 'count', 'min_qty', 'product_exp_date'))->toArray();
+            $data = $collection->merge(compact(
+                'variant',
+                'qty',
+                'price',
+                'mrp_price',
+                'length',
+                'width',
+                'height',
+                'weight',
+                'count',
+                'min_qty',
+                'product_exp_date',
+                'qty_per_piece',
+                'qty_per_buffer_box',
+                'total_qty_per_case',
+                'weight_buffer_box',
+                'weight_case',
+                'buffer_length',
+                'buffer_width',
+                'buffer_height',
+                'case_length',
+                'case_width',
+                'case_height'
+            ))->toArray();
 
             ProductStock::create($data);
 
@@ -107,6 +152,17 @@ class ProductStockService
             $product_stock->count       = $stock->count;
             $product_stock->min_qty     = $stock->min_qty;
             $product_stock->product_exp_date = $stock->product_exp_date;
+            $product_stock->qty_per_piece = $stock->qty_per_piece;
+            $product_stock->qty_per_buffer_box = $stock->qty_per_buffer_box;
+            $product_stock->total_qty_per_case = $stock->total_qty_per_case;
+            $product_stock->weight_buffer_box = $stock->weight_buffer_box;
+            $product_stock->weight_case = $stock->weight_case;
+            $product_stock->buffer_length = $stock->buffer_length;
+            $product_stock->buffer_width = $stock->buffer_width;
+            $product_stock->buffer_height = $stock->buffer_height;
+            $product_stock->case_length = $stock->case_length;
+            $product_stock->case_width = $stock->case_width;
+            $product_stock->case_height = $stock->case_height;
             $product_stock->save();
         }
     }
@@ -156,6 +212,17 @@ class ProductStockService
                 $productStock->count = request()->get('count_' . str_replace('.', '_', $str), null);
                 $productStock->min_qty = request()->get('min_qty_' . str_replace('.', '_', $str), 1);
                 $productStock->product_exp_date = request()->get('product_exp_date_' . str_replace('.', '_', $str), null);
+                $productStock->qty_per_piece = request()->get('qty_per_piece_' . str_replace('.', '_', $str), null);
+                $productStock->qty_per_buffer_box = request()->get('qty_per_buffer_box_' . str_replace('.', '_', $str), null);
+                $productStock->total_qty_per_case = request()->get('total_qty_per_case_' . str_replace('.', '_', $str), null);
+                $productStock->weight_buffer_box = request()->get('weight_buffer_box_' . str_replace('.', '_', $str), null);
+                $productStock->weight_case = request()->get('weight_case_' . str_replace('.', '_', $str), null);
+                $productStock->buffer_length = request()->get('buffer_length_' . str_replace('.', '_', $str), null);
+                $productStock->buffer_width = request()->get('buffer_width_' . str_replace('.', '_', $str), null);
+                $productStock->buffer_height = request()->get('buffer_height_' . str_replace('.', '_', $str), null);
+                $productStock->case_length = request()->get('case_length_' . str_replace('.', '_', $str), null);
+                $productStock->case_width = request()->get('case_width_' . str_replace('.', '_', $str), null);
+                $productStock->case_height = request()->get('case_height_' . str_replace('.', '_', $str), null);
 
                 $productStock->sku = request()['sku_' . str_replace('.', '_', $str)];
                 $productStock->qty = request()['qty_' . str_replace('.', '_', $str)];
@@ -184,6 +251,17 @@ class ProductStockService
             $count = $collection['count'] ?? null;
             $min_qty = $collection['min_qty'] ?? 1;
             $product_exp_date = $collection['product_exp_date'] ?? null;
+            $qty_per_piece = $collection['qty_per_piece'] ?? null;
+            $qty_per_buffer_box = $collection['qty_per_buffer_box'] ?? null;
+            $total_qty_per_case = $collection['total_qty_per_case'] ?? null;
+            $weight_buffer_box = $collection['weight_buffer_box'] ?? null;
+            $weight_case = $collection['weight_case'] ?? null;
+            $buffer_length = $collection['buffer_length'] ?? null;
+            $buffer_width = $collection['buffer_width'] ?? null;
+            $buffer_height = $collection['buffer_height'] ?? null;
+            $case_length = $collection['case_length'] ?? null;
+            $case_width = $collection['case_width'] ?? null;
+            $case_height = $collection['case_height'] ?? null;
 
             unset($collection['current_stock']);
             // unset($collection['dimension']);
@@ -218,6 +296,17 @@ class ProductStockService
             $productStock->count = $count;
             $productStock->min_qty = $min_qty;
             $productStock->product_exp_date = $product_exp_date;
+            $productStock->qty_per_piece = $qty_per_piece;
+            $productStock->qty_per_buffer_box = $qty_per_buffer_box;
+            $productStock->total_qty_per_case = $total_qty_per_case;
+            $productStock->weight_buffer_box = $weight_buffer_box;
+            $productStock->weight_case = $weight_case;
+            $productStock->buffer_length = $buffer_length;
+            $productStock->buffer_width = $buffer_width;
+            $productStock->buffer_height = $buffer_height;
+            $productStock->case_length = $case_length;
+            $productStock->case_width = $case_width;
+            $productStock->case_height = $case_height;
 
             $productStock->save();
         }

@@ -287,6 +287,17 @@ class ProductController extends Controller
             'count',
             'min_qty',
             'product_exp_date',
+            'qty_per_piece',
+            'qty_per_buffer_box',
+            'total_qty_per_case',
+            'weight_buffer_box',
+            'weight_case',
+            'buffer_length',
+            'buffer_width',
+            'buffer_height',
+            'case_length',
+            'case_width',
+            'case_height',
             'product_id'
         ]), $product);
 
@@ -436,6 +447,17 @@ class ProductController extends Controller
             'count',
             'min_qty',
             'product_exp_date',
+            'qty_per_piece',
+            'qty_per_buffer_box',
+            'total_qty_per_case',
+            'weight_buffer_box',
+            'weight_case',
+            'buffer_length',
+            'buffer_width',
+            'buffer_height',
+            'case_length',
+            'case_width',
+            'case_height',
             'product_id'
         ]), $product);
 
@@ -456,6 +478,17 @@ class ProductController extends Controller
             'count',
             'min_qty',
             'product_exp_date',
+            'qty_per_piece',
+            'qty_per_buffer_box',
+            'total_qty_per_case',
+            'weight_buffer_box',
+            'weight_case',
+            'buffer_length',
+            'buffer_width',
+            'buffer_height',
+            'case_length',
+            'case_width',
+            'case_height',
             'product_id'
         ]), $product);
 
