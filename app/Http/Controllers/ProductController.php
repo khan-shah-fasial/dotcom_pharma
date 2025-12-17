@@ -285,7 +285,6 @@ class ProductController extends Controller
             'height',
             'weight',
             'count',
-            'product_min_pack_size',
             'min_qty',
             'product_exp_date',
             'product_id'
@@ -435,7 +434,6 @@ class ProductController extends Controller
             'height',
             'weight',
             'count',
-            'product_min_pack_size',
             'min_qty',
             'product_exp_date',
             'product_id'
@@ -456,7 +454,6 @@ class ProductController extends Controller
             'height',
             'weight',
             'count',
-            'product_min_pack_size',
             'min_qty',
             'product_exp_date',
             'product_id'

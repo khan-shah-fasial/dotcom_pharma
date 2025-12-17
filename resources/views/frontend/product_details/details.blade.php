@@ -244,7 +244,7 @@
                                                 type="button" data-type="minus" data-field="quantity" disabled="">
                                                 <i class="las la-minus"></i>
                                             </button>
-                                            <input type="number" name="quantity"
+                                            <input type="number" name="quantity" id="product_quantity"
                                                 class="col border-0 text-center flex-grow-1 fs-16 input-number new-bg-color"
                                                 placeholder="1" value="{{ $detailedProduct->min_qty }}"
                                                 min="{{ $detailedProduct->min_qty }}" max="10" lang="en">
@@ -386,6 +386,11 @@
 
 
 
+        @php
+            $initialExpiry = optional($detailedProduct->stocks->first())->product_exp_date;
+            $initialExpiryFormatted = $initialExpiry ? \Carbon\Carbon::parse($initialExpiry)->format('d M Y') : '-';
+        @endphp
+
         <div class="col-12 d-flex flex-wrap mt-4 pt-4 pb-2 pl-md-4 pl-3 pr-md-2 pr-0 detail-border-1px bg-white">
             <div class="col-12 col-md-12 text-left pl-0 pr-0">
                 <h5 class="fe-semibold mb-4">Product Specifications</h5>
@@ -439,6 +444,28 @@
                     </div>
                 </div>
             @endif
+
+            <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class="">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-clock">
+                                <path d="M21 7.5V6a2 2 0 0 0-2-2h-1" />
+                                <path d="M16 2v2" />
+                                <path d="M7 2v2" />
+                                <path d="M3 13V6a2 2 0 0 1 2-2h1" />
+                                <path d="M3 10h18" />
+                                <path d="M17.5 21.5 16 20v-3" />
+                                <circle cx="16" cy="16" r="6" />
+                            </svg>
+                        </div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Expiry Date') }}:</p>
+                            <p id="product-expiry-date" class="fw-500 fs-14 mb-0">{{ $initialExpiryFormatted }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         @if ($detailedProduct->product_type || $detailedProduct->product_material)
             {{-- Type --}}

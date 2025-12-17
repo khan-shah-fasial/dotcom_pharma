@@ -896,9 +896,9 @@ class HomeController extends Controller
         $sku = $product_stock->sku;
         // $per_piece_price = $product_stock->per_piece_price;
 
-        $length = $product_stock->length ?? $product->length;
-        $breadth = $product_stock->weight ?? $product->weight;
-        $height = $product_stock->height ?? $product->height;
+        $length = $product_stock->length ?? 0;
+        $breadth = $product_stock->width ?? 0;
+        $height = $product_stock->height ?? 0;
 
         // $coa = $product_stock->coa ?? $product->coa;
         $coa = $product_stock->coa ?? null;
@@ -916,7 +916,10 @@ class HomeController extends Controller
             ($height ?? '-');
         
         $weight = $product_stock->weight ?? $product->product_weight_vol;
-        $count = $product_stock->product_min_pack_size ?? $product_stock->count ?? $product->product_min_pack_size;
+        $count = $product_stock->count;
+        $stock_min_qty = $product_stock->min_qty;
+        $expiryDate = $product_stock->product_exp_date ?? null;
+        $formattedExpiry = $expiryDate ? Carbon::parse($expiryDate)->format('d M Y') : null;
 
 
         if ($product->wholesale_product) {
@@ -929,15 +932,21 @@ class HomeController extends Controller
         $quantity = $product_stock->qty;
         $max_limit = $product_stock->qty;
 
-        if ($quantity >= 1 && $product->min_qty <= $quantity) {
+        if ($quantity >= 1 && $stock_min_qty <= $quantity) {
             $in_stock = 1;
         } else {
             $in_stock = 0;
         }
+        // if ($quantity >= 1 && $product->min_qty <= $quantity) {
+        //     $in_stock = 1;
+        // } else {
+        //     $in_stock = 0;
+        // }
 
         //Product Stock Visibility
         if ($product->stock_visibility_state == 'text') {
-            if ($quantity >= 1 && $product->min_qty < $quantity) {
+            if ($quantity >= 1 && $stock_min_qty < $quantity) {
+            // if ($quantity >= 1 && $product->min_qty < $quantity) {
                 $quantity = translate('In Stock');
             } else {
                 $quantity = translate('Out Of Stock');
@@ -984,6 +993,7 @@ class HomeController extends Controller
             'sku' => $sku,
             'digital' => $product->digital,
             'variation' => $str,
+            'stock_min_qty' => $stock_min_qty,
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
             'per_piece_price' => single_price(round($price, 2)),
@@ -998,6 +1008,7 @@ class HomeController extends Controller
             'discount_price' => number_format($discount_temp, 2),
             // 'role_base_price' => $role_base_price,
             'coa_url' => $coa_url,
+            'expiry_date' => $formattedExpiry,
         );
     }
 

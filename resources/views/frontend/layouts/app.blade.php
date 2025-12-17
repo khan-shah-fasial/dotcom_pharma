@@ -811,13 +811,20 @@
             getVariantPrice();
         });
 
-        function getVariantPrice(){
-            if($('#option-choice-form input[name=quantity]').val() > 0 && checkAddToCartValidity()){
-                $.ajax({
-                    type:"POST",
-                    url: '{{ route('products.variant_price') }}',
-                    data: $('#option-choice-form').serializeArray(),
-                    success: function(data){
+        let lastVariantKey = null; // remember last variant to decide when to reset qty
+        let variantPriceTimer = null;
+        const variantPriceDebounceMs = 180;
+
+        function getVariantPrice(immediate = false){
+            const invoke = function(){
+                const requestedQty = parseInt($('#product_quantity').val(), 10) || 0;
+
+                if($('#option-choice-form input[name=quantity]').val() > 0 && checkAddToCartValidity()){
+                    $.ajax({
+                        type:"POST",
+                        url: '{{ route('products.variant_price') }}',
+                        data: $('#option-choice-form').serializeArray(),
+                        success: function(data){
 
                         const $roleTableBody = $('#rolePriceTable tbody');
                         const $coaDiv = $('#coaDiv'); 
@@ -850,6 +857,7 @@
                         $('#per-piece-price-product-details').html(price);
 
                         let package_count = data?.package_count ?? 1;
+                        let stock_min_qty = data?.stock_min_qty ?? 1;
                         let temp_per_piece_price = data?.per_piece_price?.replace(/[^0-9.]/g, "") || "";
 
                         let original = data?.per_piece_price || "";
@@ -864,6 +872,18 @@
                         );
 
                         $('#dimentions-product-details').html(data?.dimension ?? '-');
+
+                        // Reset qty when variant changes; otherwise respect user input but clamp to min
+                        const $qtyInput = $('#product_quantity');
+                        const isNewVariant = data?.variation !== lastVariantKey;
+                        let currentQty = isNewVariant ? stock_min_qty : Math.max(stock_min_qty, requestedQty);
+
+                        $qtyInput.attr('min', stock_min_qty)
+                                 .attr('max', data?.max_limit ?? $qtyInput.attr('max'))
+                                 .val(currentQty);
+                        // Re-enable +/- before recalculating state
+                        $qtyInput.siblings('[data-type="minus"], [data-type="plus"]').prop('disabled', false);
+                        lastVariantKey = data?.variation;
                         $('#weight-volume-product-details').html(data?.weight_volume ?? '-');
 
                         $('#min-package-count-product-details').html((data?.package_count ?? '-') + ' Pcs');
@@ -872,6 +892,7 @@
                         $('#mrp-unit').html(data?.original_price ?? '-');
 
                         $('#tax-product-details').html('Rs. ' + (data?.tax ?? '-'));
+                        $('#product-expiry-date').html(data?.expiry_date ?? '-');
 
                         let withoutTaxPrice = data?.without_tax_price ?? '-';
                         // remove decimal part if it's a number/string with decimals
@@ -920,7 +941,7 @@
                         //     $('#rolePriceDiv').hide(); // hide if empty
                         // }
 
-                        let coa_url = data?.coa_url ?? Null;
+                        let coa_url = data?.coa_url ?? null;
 
                         if (coa_url) {
                             $('#coaParentDiv').show();
@@ -953,7 +974,17 @@
                         AIZ.extra.plusMinus();
                     }
                 });
+            };
+
+            if (immediate) {
+                clearTimeout(variantPriceTimer);
+                invoke();
+                return;
             }
+            }
+
+            clearTimeout(variantPriceTimer);
+            variantPriceTimer = setTimeout(invoke, variantPriceDebounceMs);
         }
 
         function checkAddToCartValidity(){

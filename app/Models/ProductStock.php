@@ -12,7 +12,7 @@ class ProductStock extends Model
     // protected $fillable = ['product_id', 'variant', 'sku', 'price', 'per_piece_price', 'qty', 'image'];
     // protected $fillable = ['product_id', 'variant', 'sku', 'price','mrp_price','mrp_role_price','dimension','length','width','height','weight','count','qty', 'image'];
     // protected $fillable = ['product_id', 'variant', 'sku', 'price','mrp_price','mrp_role_price','length','width','height','weight','count','qty', 'image'];
-    protected $fillable = ['product_id', 'variant', 'sku', 'price','mrp_price','length','width','height','weight','count','product_min_pack_size','min_qty','product_exp_date','qty','coa', 'image'];
+    protected $fillable = ['product_id', 'variant', 'sku', 'price','mrp_price','length','width','height','weight','count','min_qty','product_exp_date','qty','coa', 'image'];
     //
     public function product(){
     	return $this->belongsTo(Product::class);

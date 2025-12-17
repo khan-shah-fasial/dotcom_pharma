@@ -27,9 +27,6 @@
 				{{translate('Package Count')}}
 			</td>
 			<td class="text-center">
-				{{translate('Product Minimum Pack Size')}}
-			</td>
-			<td class="text-center">
 				{{translate('Minimum Purchase Qty')}}
 			</td>
 			<td class="text-center">
@@ -107,10 +104,6 @@
 				<td>
 					<input type="number" lang="en" name="count_{{ $str }}" class="form-control"
 						placeholder="Count" step="0.01" min="0" required>
-				</td>
-				<td>
-					<input type="number" lang="en" name="product_min_pack_size_{{ $str }}" class="form-control"
-						placeholder="{{ translate('Min Pack Size') }}" step="1" min="1" value="1" required>
 				</td>
 				<td>
 					<input type="number" lang="en" name="min_qty_{{ $str }}" class="form-control"

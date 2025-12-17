@@ -27,9 +27,6 @@
                     {{ translate('Package Count') }}
                 </td>
                 <td class="text-center">
-                    {{ translate('Product Minimum Pack Size') }}
-                </td>
-                <td class="text-center">
                     {{ translate('Minimum Purchase Qty') }}
                 </td>
                 <td class="text-center">
@@ -182,17 +179,6 @@ if($stock != null) {
                                 echo '';
                             } @endphp"
                                 class="form-control" required>
-                        </td>
-                        <td>
-                            <input type="number" lang="en" name="product_min_pack_size_{{ $str }}"
-                                value="@php
-if($stock != null){
-                                echo $stock->product_min_pack_size ?? 1;
-                            }
-                            else{
-                                echo 1;
-                            } @endphp"
-                                min="1" step="1" class="form-control" required>
                         </td>
                         <td>
                             <input type="number" lang="en" name="min_qty_{{ $str }}"

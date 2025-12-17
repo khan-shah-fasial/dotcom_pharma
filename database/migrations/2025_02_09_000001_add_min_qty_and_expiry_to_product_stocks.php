@@ -18,12 +18,8 @@ class AddMinQtyAndExpiryToProductStocks extends Migration
                 $table->integer('min_qty')->default(1)->after('count');
             }
 
-            if (!Schema::hasColumn('product_stocks', 'product_min_pack_size')) {
-                $table->integer('product_min_pack_size')->default(1)->after('min_qty');
-            }
-
             if (!Schema::hasColumn('product_stocks', 'product_exp_date')) {
-                $table->string('product_exp_date')->nullable()->after('product_min_pack_size');
+                $table->string('product_exp_date')->nullable()->after('min_qty');
             }
         });
     }
@@ -38,10 +34,6 @@ class AddMinQtyAndExpiryToProductStocks extends Migration
         Schema::table('product_stocks', function (Blueprint $table) {
             if (Schema::hasColumn('product_stocks', 'product_exp_date')) {
                 $table->dropColumn('product_exp_date');
-            }
-
-            if (Schema::hasColumn('product_stocks', 'product_min_pack_size')) {
-                $table->dropColumn('product_min_pack_size');
             }
 
             if (Schema::hasColumn('product_stocks', 'min_qty')) {

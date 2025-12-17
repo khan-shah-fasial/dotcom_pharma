@@ -41,7 +41,6 @@ class ProductStockService
 
                 $product_stock->weight = request()->get('weight_' . str_replace('.', '_', $str), null);
                 $product_stock->count = request()->get('count_' . str_replace('.', '_', $str), null);
-                $product_stock->product_min_pack_size = request()->get('product_min_pack_size_' . str_replace('.', '_', $str), 1);
                 $product_stock->min_qty = request()->get('min_qty_' . str_replace('.', '_', $str), 1);
                 $product_stock->product_exp_date = request()->get('product_exp_date_' . str_replace('.', '_', $str), null);
 
@@ -75,7 +74,6 @@ class ProductStockService
 
             $weight = $collection['weight'] ?? null;
             $count = $collection['count'] ?? null;
-            $product_min_pack_size = $collection['product_min_pack_size'] ?? 1;
             $min_qty = $collection['min_qty'] ?? 1;
             $product_exp_date = $collection['product_exp_date'] ?? null;
 
@@ -85,7 +83,7 @@ class ProductStockService
 
             // $data = $collection->merge(compact('variant', 'qty', 'price', 'per_piece_price'))->toArray();
 
-            $data = $collection->merge(compact('variant', 'qty', 'price', 'mrp_price', 'length', 'width', 'height', 'weight', 'count', 'product_min_pack_size', 'min_qty', 'product_exp_date'))->toArray();
+            $data = $collection->merge(compact('variant', 'qty', 'price', 'mrp_price', 'length', 'width', 'height', 'weight', 'count', 'min_qty', 'product_exp_date'))->toArray();
 
             ProductStock::create($data);
 
@@ -107,7 +105,6 @@ class ProductStockService
             $product_stock->height      = $stock->height;
             $product_stock->weight      = $stock->weight;
             $product_stock->count       = $stock->count;
-            $product_stock->product_min_pack_size = $stock->product_min_pack_size;
             $product_stock->min_qty     = $stock->min_qty;
             $product_stock->product_exp_date = $stock->product_exp_date;
             $product_stock->save();
@@ -157,7 +154,6 @@ class ProductStockService
 
                 $productStock->weight = request()->get('weight_' . str_replace('.', '_', $str), null);
                 $productStock->count = request()->get('count_' . str_replace('.', '_', $str), null);
-                $productStock->product_min_pack_size = request()->get('product_min_pack_size_' . str_replace('.', '_', $str), 1);
                 $productStock->min_qty = request()->get('min_qty_' . str_replace('.', '_', $str), 1);
                 $productStock->product_exp_date = request()->get('product_exp_date_' . str_replace('.', '_', $str), null);
 
@@ -186,7 +182,6 @@ class ProductStockService
             $height = $collection['height'] ?? null;
             $weight = $collection['weight'] ?? null;
             $count = $collection['count'] ?? null;
-            $product_min_pack_size = $collection['product_min_pack_size'] ?? 1;
             $min_qty = $collection['min_qty'] ?? 1;
             $product_exp_date = $collection['product_exp_date'] ?? null;
 
@@ -221,7 +216,6 @@ class ProductStockService
             $productStock->height = $height;
             $productStock->weight = $weight;
             $productStock->count = $count;
-            $productStock->product_min_pack_size = $product_min_pack_size;
             $productStock->min_qty = $min_qty;
             $productStock->product_exp_date = $product_exp_date;
 
