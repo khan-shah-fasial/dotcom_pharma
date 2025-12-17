@@ -617,6 +617,115 @@
                 </div>
             </div>
 
+            {{-- Packaging Breakdown (individual cards) --}}
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M12 22V12"></path><path d="M3.3 7 12 12l8.7-5L12 2Z"></path><path d="M3 7v10l9 5 9-5V7"></path></svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Qty per Piece') }}:</p>
+                            <p id="qty-per-piece-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Weight of Each Piece') }}:</p>
+                            <p id="weight-per-piece-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ruler w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M3 18 17.94 3.06a2.12 2.12 0 1 1 3 3L6 21H3z"></path><path d="m14.5 5.5 2 2"></path><path d="m11 9 2 2"></path><path d="m7.5 12.5 2 2"></path></svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Piece Dimensions (L×W×H)') }}:</p>
+                            <p id="dimension-per-piece-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="m12 2 8 4-8 4-8-4Z"></path><path d="m4 10 8 4 8-4"></path><path d="m4 14 8 4 8-4"></path></svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Qty per Buffer Box / Shrink Pack') }}:</p>
+                            <p id="qty-per-buffer-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-weight w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M5 22h14"></path><path d="M5 11h14"></path><path d="M5 11a7 7 0 1 1 14 0"></path><path d="M6 11v11"></path><path d="M18 11v11"></path></svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Weight of Buffer Box / Shrink Pack') }}:</p>
+                            <p id="weight-buffer-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ruler w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M3 18 17.94 3.06a2.12 2.12 0 1 1 3 3L6 21H3z"></path><path d="m14.5 5.5 2 2"></path><path d="m11 9 2 2"></path><path d="m7.5 12.5 2 2"></path></svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Buffer Dimensions (L×W×H)') }}:</p>
+                            <p id="dimension-buffer-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="m12 2 8 4-8 4-8-4Z"></path><path d="m4 10 8 4 8-4"></path><path d="m4 14 8 4 8-4"></path></svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Total Qty per Case') }}:</p>
+                            <p id="qty-per-case-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-weight w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M5 22h14"></path><path d="M5 11h14"></path><path d="M5 11a7 7 0 1 1 14 0"></path><path d="M6 11v11"></path><path d="M18 11v11"></path></svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Total Weight per Case') }}:</p>
+                            <p id="weight-case-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-6 pl-0 mb-md-3 mb-3">
+                <div class="detail-product-specs rounded h-100">
+                    <div class="display_flex3">
+                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ruler w-5 h-5 text-medical-info mt-0.5 flex-shrink-0"><path d="M3 18 17.94 3.06a2.12 2.12 0 1 1 3 3L6 21H3z"></path><path d="m14.5 5.5 2 2"></path><path d="m11 9 2 2"></path><path d="m7.5 12.5 2 2"></path></svg></div>
+                        <div class="">
+                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Case Dimensions (L×W×H)') }}:</p>
+                            <p id="dimension-case-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             @if (!empty($detailedProduct->product_exp_date))
                 <div class="col-12 col-md-6 pl-0 mb-3">
                     <div class="detail-product-specs rounded h-100">

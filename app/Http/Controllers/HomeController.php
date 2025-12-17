@@ -920,6 +920,15 @@ class HomeController extends Controller
         $stock_min_qty = $product_stock->min_qty;
         $expiryDate = $product_stock->product_exp_date ?? null;
         $formattedExpiry = $expiryDate ? Carbon::parse($expiryDate)->format('d M Y') : null;
+        $qty_per_piece = $product_stock->qty_per_piece ?? null;
+        $qty_per_buffer_box = $product_stock->qty_per_buffer_box ?? null;
+        $buffer_box_per_case = $product_stock->buffer_box_per_case ?? null;
+        $total_qty_per_case = $product_stock->total_qty_per_case ?? null;
+        $weight_buffer_box = $product_stock->weight_buffer_box ?? null;
+        $weight_case = $product_stock->weight_case ?? null;
+
+        $buffer_dimension = ($product_stock->buffer_length ?? '-') . ' x ' . ($product_stock->buffer_width ?? '-') . ' x ' . ($product_stock->buffer_height ?? '-');
+        $case_dimension = ($product_stock->case_length ?? '-') . ' x ' . ($product_stock->case_width ?? '-') . ' x ' . ($product_stock->case_height ?? '-');
 
 
         if ($product->wholesale_product) {
@@ -1009,6 +1018,13 @@ class HomeController extends Controller
             'dimension' => $dimension,
             'weight_volume' => $weight,
             'package_count' => $count,
+            'qty_per_piece' => $qty_per_piece,
+            'qty_per_buffer_box' => $qty_per_buffer_box,
+            'total_qty_per_case' => $total_qty_per_case,
+            'weight_buffer_box' => $weight_buffer_box,
+            'weight_case' => $weight_case,
+            'buffer_dimension' => $buffer_dimension,
+            'case_dimension' => $case_dimension,
             'discount_percentage' => round($dis_percentage, 2),
             'discount_price' => number_format($discount_temp, 2),
             // 'role_base_price' => $role_base_price,

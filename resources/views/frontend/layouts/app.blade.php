@@ -912,6 +912,19 @@
                             $('#discount-show').addClass('d-none');
                         }
 
+                        // packaging breakdown dynamic fill
+                        $('#qty-per-piece-details').html(data?.qty_per_piece ?? '-');
+                        $('#weight-per-piece-details').html(data?.weight_volume ?? '-');
+                        $('#dimension-per-piece-details').html(data?.dimension ?? '-');
+
+                        $('#qty-per-buffer-details').html(data?.qty_per_buffer_box ?? '-');
+                        $('#weight-buffer-details').html(data?.weight_buffer_box ?? '-');
+                        $('#dimension-buffer-details').html(data?.buffer_dimension ?? '-');
+
+                        $('#qty-per-case-details').html(data?.total_qty_per_case ?? '-');
+                        $('#weight-case-details').html(data?.weight_case ?? '-');
+                        $('#dimension-case-details').html(data?.case_dimension ?? '-');
+
                         if (data?.dimension) {
                             $('#product-dimentions-div').removeClass('d-none');
                             $('#product-dimentions').html(data.dimension);
