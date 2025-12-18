@@ -106,6 +106,19 @@ body {
             'categoryCounts'    => $categoryCounts ?? [],
           ])
 
+          {{-- ADDITIONAL FILTERS (AJAX-replaceable) --}}
+          <div id="extra-filters-desktop">
+            @include('frontend.'.get_setting('homepage_select').'.partials.filters.additional_filters', [
+              'drug_name'             => $drug_name ?? '',
+              'filter_brand_id'       => $filter_brand_id ?? null,
+              'filter_role_label'     => $filter_role_label ?? '',
+              'filter_product_origin' => $filter_product_origin ?? '',
+              'brands'                => $filter_brands ?? collect(),
+              'roles'                 => $filter_roles ?? [],
+              'origins'               => $filter_origins ?? [],
+            ])
+          </div>
+
           {{-- PRICE FILTER COMPONENT --}}
           {{-- @include('frontend.'.get_setting('homepage_select').'.partials.filters.price_filter', [
             'globalMin'   => $globalMin,
@@ -273,6 +286,20 @@ document.addEventListener('DOMContentLoaded', function () {
       'expandedIds'           => $expandedIds ?? [],
     ])
 
+    {{-- ADDITIONAL FILTERS (AJAX-replaceable) --}}
+    <div id="extra-filters-mobile">
+      @include('frontend.'.get_setting('homepage_select').'.partials.filters.additional_filters', [
+        'is_mobile'             => true,
+        'drug_name'             => $drug_name ?? '',
+        'filter_brand_id'       => $filter_brand_id ?? null,
+        'filter_role_label'     => $filter_role_label ?? '',
+        'filter_product_origin' => $filter_product_origin ?? '',
+        'brands'                => $filter_brands ?? collect(),
+        'roles'                 => $filter_roles ?? [],
+        'origins'               => $filter_origins ?? [],
+      ])
+    </div>
+
     {{-- In the mobile drawer, just a slot --}}
       <div id="price-filter-slot-mobile"></div>
 
@@ -311,11 +338,15 @@ document.addEventListener('DOMContentLoaded', function () {
     route_category_id: @json($category_id),                 // page arrived via /category/{slug}?
     route_brand_id:    @json($brand_id ?? null),
     keyword:           @json($query ?? ''),
+    drug_name:         @json($drug_name ?? ''),
     sort_by:           @json($sort_by ?? ''),
     min_price:         @json($min_price ?? null),
     max_price:         @json($max_price ?? null),
     selected_attribute_values: @json($selected_attribute_values ?? []),
     color: @json($color ?? null),
+    filter_brand_id:       @json($filter_brand_id ?? null),
+    filter_role_label:     @json($filter_role_label ?? ''),
+    filter_product_origin: @json($filter_product_origin ?? ''),
     // SINGLE category id
     category_id:            @json($selected_category_id ?? ($category_id ?: null)),
     selected_category_name: @json($selected_category_name ?? null),
@@ -361,9 +392,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const p = u.searchParams;
 
     if (state.keyword)   p.set('keyword', state.keyword);
+    if (state.drug_name) p.set('drug_name', state.drug_name);
     if (state.sort_by)   p.set('sort_by', state.sort_by);
     if (state.min_price != null) p.set('min_price', state.min_price);
     if (state.max_price != null) p.set('max_price', state.max_price);
+    if (state.filter_brand_id != null && String(state.filter_brand_id) !== '') p.set('filter_brand_id', state.filter_brand_id);
+    if (state.filter_role_label) p.set('filter_role_label', state.filter_role_label);
+    if (state.filter_product_origin) p.set('filter_product_origin', state.filter_product_origin);
 
     // Route scope only if still present
     if (state.route_category_id != null) p.set('route_category_id', state.route_category_id);
@@ -456,6 +491,16 @@ document.addEventListener('DOMContentLoaded', function () {
       attrHolder.innerHTML = json.attributes_html;
     }
 
+    // swap additional filters (desktop + mobile)
+    if (typeof json.extra_filters_html !== 'undefined') {
+      const extraDesk = document.getElementById('extra-filters-desktop');
+      if (extraDesk) extraDesk.innerHTML = json.extra_filters_html;
+    }
+    if (typeof json.extra_filters_mobile_html !== 'undefined') {
+      const extraMob = document.getElementById('extra-filters-mobile');
+      if (extraMob) extraMob.innerHTML = json.extra_filters_mobile_html;
+    }
+
     // ---- FIX: replace if exists, otherwise insert after attributes ----
     if (typeof json.colors_html !== 'undefined') {
       const existing = document.getElementById('color-filter');
@@ -502,7 +547,24 @@ document.addEventListener('DOMContentLoaded', function () {
     return (state.category_id != null)
         || (state.selected_attribute_values.length > 0)
         || (state.min_price != null && state.max_price != null)
-        || (state.color != null);
+        || (state.color != null)
+        || (state.drug_name && state.drug_name.length > 0)
+        || (state.filter_brand_id != null && String(state.filter_brand_id) !== '')
+        || (state.filter_role_label && state.filter_role_label.length > 0)
+        || (state.filter_product_origin && state.filter_product_origin.length > 0);
+  }
+
+  function firstEl(sel){ return document.querySelector(sel); }
+  function setAll(sel, value) {
+    document.querySelectorAll(sel).forEach(el => {
+      if (el && el.value !== value) el.value = value;
+    });
+  }
+  function selectedText(sel) {
+    const el = firstEl(sel);
+    if (!el) return '';
+    const opt = el.selectedOptions && el.selectedOptions[0];
+    return (opt ? opt.textContent : el.value || '').trim();
   }
 
   function renderPills() {
@@ -512,6 +574,23 @@ document.addEventListener('DOMContentLoaded', function () {
       const input = qs(`.js-cat-radio[value="${CSS.escape(String(state.category_id))}"]`);
       const label = input?.dataset?.label || '{{ translate("Category") }}';
       addPill({ type:'category', value:String(state.category_id), text: label });
+    }
+
+    if (state.drug_name) {
+      addPill({ type:'drug_name', value:'drug_name', text: `{{ translate('Drug') }}: ${state.drug_name}` });
+    }
+
+    if (state.filter_brand_id != null && String(state.filter_brand_id) !== '') {
+      const txt = selectedText('.js-filter-brand') || String(state.filter_brand_id);
+      addPill({ type:'filter_brand_id', value:String(state.filter_brand_id), text: `{{ translate('Brand') }}: ${txt}` });
+    }
+
+    if (state.filter_role_label) {
+      addPill({ type:'filter_role_label', value:state.filter_role_label, text: `{{ translate('Role') }}: ${state.filter_role_label}` });
+    }
+
+    if (state.filter_product_origin) {
+      addPill({ type:'filter_product_origin', value:state.filter_product_origin, text: `{{ translate('Origin') }}: ${state.filter_product_origin}` });
     }
 
     state.selected_attribute_values.forEach(val => {
@@ -566,6 +645,18 @@ document.addEventListener('DOMContentLoaded', function () {
         minInput.value = minInput.min ?? '';
         maxInput.value = maxInput.max ?? '';
       }
+    } else if (type === 'drug_name') {
+      state.drug_name = '';
+      setAll('.js-filter-drug', '');
+    } else if (type === 'filter_brand_id') {
+      state.filter_brand_id = null;
+      setAll('.js-filter-brand', '');
+    } else if (type === 'filter_role_label') {
+      state.filter_role_label = '';
+      setAll('.js-filter-role', '');
+    } else if (type === 'filter_product_origin') {
+      state.filter_product_origin = '';
+      setAll('.js-filter-origin', '');
     }
     state.append = false;
     fetchProducts(ajaxUrl, false);
@@ -630,6 +721,10 @@ document.addEventListener('DOMContentLoaded', function () {
     state.selected_attribute_values = [];
     state.min_price = null;
     state.max_price = null;
+    state.drug_name = '';
+    state.filter_brand_id = null;
+    state.filter_role_label = '';
+    state.filter_product_origin = '';
 
     // If we landed via /category/{slug}, clear route scope & rewrite URL to /search
     if (state.route_category_id != null) {
@@ -643,6 +738,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const any = document.querySelector('.js-color-radio[value=""]');
     if (any) any.checked = true;
     state.color = null;
+    setAll('.js-filter-drug', '');
+    setAll('.js-filter-brand', '');
+    setAll('.js-filter-role', '');
+    setAll('.js-filter-origin', '');
     
     state.append = false;
     gatherCategorySelection();
@@ -674,6 +773,47 @@ document.addEventListener('DOMContentLoaded', function () {
   gatherCategorySelection();
   gatherAttributeSelections();
   renderPills();
+
+  // ========= Additional filters =========
+  let drugTimer = null;
+  document.addEventListener('input', (e) => {
+    if (!e.target.matches('.js-filter-drug')) return;
+    const v = (e.target.value || '').trim();
+    state.drug_name = v;
+    setAll('.js-filter-drug', e.target.value || '');
+    clearTimeout(drugTimer);
+    drugTimer = setTimeout(() => {
+      state.append = false;
+      fetchProducts(ajaxUrl, false);
+    }, 400);
+  });
+
+  document.addEventListener('change', (e) => {
+    if (e.target.matches('.js-filter-brand')) {
+      const v = e.target.value || '';
+      state.filter_brand_id = v ? Number(v) : null;
+      setAll('.js-filter-brand', v);
+      state.append = false;
+      fetchProducts(ajaxUrl, false);
+      return;
+    }
+    if (e.target.matches('.js-filter-role')) {
+      const v = e.target.value || '';
+      state.filter_role_label = v || '';
+      setAll('.js-filter-role', v);
+      state.append = false;
+      fetchProducts(ajaxUrl, false);
+      return;
+    }
+    if (e.target.matches('.js-filter-origin')) {
+      const v = e.target.value || '';
+      state.filter_product_origin = v || '';
+      setAll('.js-filter-origin', v);
+      state.append = false;
+      fetchProducts(ajaxUrl, false);
+      return;
+    }
+  });
 
   // --- View More / View Less for categories (root + each branch)
 document.addEventListener('click', (e) => {
@@ -961,4 +1101,3 @@ function toggleMobileFilter() {
   body.classList.toggle('overflow-hidden');
 }
 </script>
-

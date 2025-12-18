@@ -40,12 +40,17 @@ class Search2Controller extends Controller
     private function buildListing(Request $request, $category_id = null, $brand_id = null)
     {
         $query       = trim((string)$request->keyword);
+        $drug_name   = trim((string)$request->input('drug_name', ''));
         $sort_by     = $request->sort_by;
         $min_price   = $request->min_price;
         $max_price   = $request->max_price;
 
         $selected_attribute_values = (array)$request->input('selected_attribute_values', []);
         $selected_color            = null;
+
+        $filter_brand_id       = $request->filled('filter_brand_id') ? (int)$request->input('filter_brand_id') : null;
+        $filter_role_label     = trim((string)$request->input('filter_role_label', ''));
+        $filter_product_origin = trim((string)$request->input('filter_product_origin', ''));
 
         // Single selected category id (from radio OR from array OR from route)
         $selected_category_id = null;
@@ -73,6 +78,8 @@ class Search2Controller extends Controller
         // -------- BRAND --------
         if ($brand_id) {
             $products->where('brand_id', $brand_id);
+            // keep the filter dropdown in-sync with route
+            $filter_brand_id = (int) $brand_id;
         } elseif ($request->filled('brand')) {
             $brand = Brand::where('slug', $request->brand)->first();
             if ($brand) $products->where('brand_id', $brand->id);
@@ -109,6 +116,23 @@ class Search2Controller extends Controller
                 'CASE WHEN name LIKE ? THEN 1 WHEN name LIKE ? THEN 2 ELSE 3 END',
                 [$query.'%', '%'.$query.'%']
             );
+        }
+
+        // -------- DRUG NAME (left-side filter: searches drug_name + product name) --------
+        if ($drug_name !== '') {
+            $products->where(function ($q) use ($drug_name) {
+                foreach (preg_split('/\s+/', $drug_name) as $word) {
+                    $word = trim((string)$word);
+                    if ($word === '') {
+                        continue;
+                    }
+                    $q->where(function ($qq) use ($word) {
+                        $qq->where('drug_name', 'like', '%'.$word.'%')
+                            ->orWhere('name', 'like', '%'.$word.'%')
+                            ->orWhereHas('product_translations', fn($qt) => $qt->where('name', 'like', '%'.$word.'%'));
+                    });
+                }
+            });
         }
 
         // Did we scope by category (route or radio)?
@@ -229,6 +253,78 @@ class Search2Controller extends Controller
             $products->whereBetween('unit_price', [(float)$min_price, (float)$max_price]);
         }
 
+        // ============================================================
+        //  EXTRA FILTER FACETS (brand/role/origin lists)
+        //  Build them from the current pool, excluding their own filter
+        // ============================================================
+        $facetCommon = filter_products(clone $products);
+
+        // Brands (apply role/origin selections, exclude brand itself)
+        $brandFacet = clone $facetCommon;
+        if ($filter_role_label !== '') {
+            $brandFacet->where('role_label', $filter_role_label);
+        }
+        if ($filter_product_origin !== '') {
+            $brandFacet->where('product_origin', $filter_product_origin);
+        }
+        $brandIds = $brandFacet
+            ->whereNotNull('brand_id')
+            ->select('brand_id')
+            ->distinct()
+            ->pluck('brand_id')
+            ->filter()
+            ->values();
+        $filter_brands = $brandIds->isEmpty()
+            ? collect()
+            : Brand::whereIn('id', $brandIds)->orderBy('name')->get();
+
+        // Roles (apply brand/origin selections, exclude role itself)
+        $roleFacet = clone $facetCommon;
+        if (!empty($filter_brand_id)) {
+            $roleFacet->where('brand_id', $filter_brand_id);
+        }
+        if ($filter_product_origin !== '') {
+            $roleFacet->where('product_origin', $filter_product_origin);
+        }
+        $filter_roles = $roleFacet
+            ->whereNotNull('role_label')
+            ->where('role_label', '!=', '')
+            ->select('role_label')
+            ->distinct()
+            ->orderBy('role_label')
+            ->limit(200)
+            ->pluck('role_label')
+            ->toArray();
+
+        // Origins (apply brand/role selections, exclude origin itself)
+        $originFacet = clone $facetCommon;
+        if (!empty($filter_brand_id)) {
+            $originFacet->where('brand_id', $filter_brand_id);
+        }
+        if ($filter_role_label !== '') {
+            $originFacet->where('role_label', $filter_role_label);
+        }
+        $filter_origins = $originFacet
+            ->whereNotNull('product_origin')
+            ->where('product_origin', '!=', '')
+            ->select('product_origin')
+            ->distinct()
+            ->orderBy('product_origin')
+            ->limit(200)
+            ->pluck('product_origin')
+            ->toArray();
+
+        // -------- EXTRA FILTERS APPLIED (brand/role/origin) --------
+        if (!empty($filter_brand_id)) {
+            $products->where('brand_id', $filter_brand_id);
+        }
+        if ($filter_role_label !== '') {
+            $products->where('role_label', $filter_role_label);
+        }
+        if ($filter_product_origin !== '') {
+            $products->where('product_origin', $filter_product_origin);
+        }
+
         // -------- SORT --------
         match ($sort_by) {
             'newest'     => $products->orderBy('created_at', 'desc'),
@@ -275,7 +371,7 @@ class Search2Controller extends Controller
         $globalMax = (int) get_product_max_unit_price();
 
         $viewData = compact(
-            'query','sort_by','min_price','max_price',
+            'query','drug_name','sort_by','min_price','max_price',
             'attributes','selected_attribute_values','colors','selected_color',
             'categories','category','category_id','brand_id',
             'globalMin','globalMax','scopedMin','scopedMax',
@@ -283,6 +379,15 @@ class Search2Controller extends Controller
             'preloadedChildren','color',
             'categoryCounts','attributeValueCounts','colorCounts','expandedIds'
         );
+
+        $viewData = array_merge($viewData, [
+            'filter_brand_id'       => $filter_brand_id,
+            'filter_role_label'     => $filter_role_label,
+            'filter_product_origin' => $filter_product_origin,
+            'filter_brands'         => $filter_brands,
+            'filter_roles'          => $filter_roles,
+            'filter_origins'        => $filter_origins,
+        ]);
 
         $perPage     = $products->perPage();
         $totalPages  = $products->lastPage();
@@ -334,12 +439,40 @@ class Search2Controller extends Controller
             )->render();
         }
 
+        $extraFiltersHtml = View::make(
+            'frontend.'.get_setting('homepage_select').'.partials.filters.additional_filters',
+            [
+                'drug_name'             => $viewData['drug_name'] ?? '',
+                'filter_brand_id'       => $viewData['filter_brand_id'] ?? null,
+                'filter_role_label'     => $viewData['filter_role_label'] ?? '',
+                'filter_product_origin' => $viewData['filter_product_origin'] ?? '',
+                'brands'                => $viewData['filter_brands'] ?? collect(),
+                'roles'                 => $viewData['filter_roles'] ?? [],
+                'origins'               => $viewData['filter_origins'] ?? [],
+            ]
+        )->render();
+
+        $extraFiltersMobileHtml = View::make(
+            'frontend.'.get_setting('homepage_select').'.partials.filters.additional_filters',
+            [
+                'is_mobile'             => true,
+                'drug_name'             => $viewData['drug_name'] ?? '',
+                'filter_brand_id'       => $viewData['filter_brand_id'] ?? null,
+                'filter_role_label'     => $viewData['filter_role_label'] ?? '',
+                'filter_product_origin' => $viewData['filter_product_origin'] ?? '',
+                'brands'                => $viewData['filter_brands'] ?? collect(),
+                'roles'                 => $viewData['filter_roles'] ?? [],
+                'origins'               => $viewData['filter_origins'] ?? [],
+            ]
+        )->render();
 
         $products->withPath(route('search.ajax.products'));
 
         return response()->json([
             'attributes_html'   => $attributesHtml,
             'colors_html'       => $colorsHtml,
+            'extra_filters_html'        => $extraFiltersHtml,
+            'extra_filters_mobile_html' => $extraFiltersMobileHtml,
             'html'              => $gridHtml,
             'next_page_url'     => $products->nextPageUrl(),
             'total'             => $products->total(),
