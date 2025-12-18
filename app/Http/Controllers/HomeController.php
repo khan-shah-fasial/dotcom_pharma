@@ -639,7 +639,15 @@ class HomeController extends Controller
             session(['link' => url()->current()]);
         }
 
-        $detailedProduct  = Product::with('reviews', 'brand', 'stocks', 'user', 'user.shop')->where('auction_product', 0)->where('slug', $slug)->where('approved', 1)->first();
+        $detailedProduct  = Product::with([
+            'reviews',
+            'brand',
+            'stocks' => function ($q) {
+                $q->where('is_hidden', 0);
+            },
+            'user',
+            'user.shop'
+        ])->where('auction_product', 0)->where('slug', $slug)->where('approved', 1)->first();
 
         if ($detailedProduct != null && $detailedProduct->published) {
             if ((get_setting('vendor_system_activation') != 1) && $detailedProduct->added_by == 'seller') {
@@ -883,7 +891,43 @@ class HomeController extends Controller
             }
         }
 
-        $product_stock = $product->stocks->where('variant', $str)->first();
+        $product_stock = $product
+            ? $product->stocks()->where('variant', $str)->where('is_hidden', 0)->first()
+            : null;
+
+        // If variant is missing/hidden, return a consistent "out of stock" payload
+        if (!$product || !$product_stock) {
+            $fallbackMinQty = $product ? ($product->min_qty ?? 1) : 1;
+            return array(
+                'price' => single_price(0),
+                'quantity' => 0,
+                'sku' => '-',
+                'digital' => $product ? $product->digital : 0,
+                'variation' => $str,
+                'stock_min_qty' => $fallbackMinQty,
+                'applied_quantity' => $fallbackMinQty,
+                'max_limit' => 0,
+                'in_stock' => 0,
+                'per_piece_price' => single_price(0),
+                'without_tax_price' => single_price(0),
+                'tax' => single_price(0),
+                'original_price' => single_price(0),
+                'dimension' => null,
+                'weight_volume' => null,
+                'package_count' => null,
+                'qty_per_piece' => null,
+                'qty_per_buffer_box' => null,
+                'total_qty_per_case' => null,
+                'weight_buffer_box' => null,
+                'weight_case' => null,
+                'buffer_dimension' => null,
+                'case_dimension' => null,
+                'discount_percentage' => 0,
+                'discount_price' => number_format(0, 2),
+                'coa_url' => null,
+                'expiry_date' => null,
+            );
+        }
 
         //$price = $product_stock->price;
         $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role

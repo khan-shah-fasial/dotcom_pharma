@@ -15,6 +15,7 @@ class ProductStock extends Model
     protected $fillable = [
         'product_id',
         'variant',
+        'is_hidden',
         'sku',
         'price',
         'mrp_price',
@@ -39,6 +40,10 @@ class ProductStock extends Model
         'qty',
         'coa',
         'image'
+    ];
+
+    protected $casts = [
+        'is_hidden' => 'boolean',
     ];
     //
     public function product(){

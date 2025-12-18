@@ -31,6 +31,7 @@ class ProductStockService
                 // $product_stock->mrp_role_price = generateRoleBasedPrices(request()['mrp_price_' . str_replace('.', '_', $str)]); //mrp_price by role
 
                 $product_stock->variant = $str;
+                $product_stock->is_hidden = (int) request()->get('is_hidden_' . str_replace('.', '_', $str), 0);
                 $product_stock->price = request()['price_' . str_replace('.', '_', $str)];
                 $product_stock->role_price = generateRoleBasedPrices(request()['price_' . str_replace('.', '_', $str)]); //price by role
 
@@ -141,6 +142,7 @@ class ProductStockService
             $product_stock              = new ProductStock;
             $product_stock->product_id  = $product_new->id;
             $product_stock->variant     = $stock->variant;
+            $product_stock->is_hidden   = $stock->is_hidden ?? 0;
             $product_stock->price       = $stock->price;
             $product_stock->mrp_price   = $stock->mrp_price;
             $product_stock->sku         = $stock->sku;
@@ -199,6 +201,7 @@ class ProductStockService
 
                 // Update the fields
                 $productStock->mrp_price = request()->get('mrp_price_' . str_replace('.', '_', $str), null);
+                $productStock->is_hidden = (int) request()->get('is_hidden_' . str_replace('.', '_', $str), 0);
                 // $productStock->mrp_role_price = generateRoleBasedPrices(request()['mrp_price_' . str_replace('.', '_', $str)]);
 
                 // $productStock->price = request()['price_' . str_replace('.', '_', $str)];

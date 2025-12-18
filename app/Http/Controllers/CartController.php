@@ -92,7 +92,15 @@ class CartController extends Controller
 
         //check the color enabled or disabled for the product
         $str = CartUtility::create_cart_variant($product, $request->all());
-        $product_stock = $product->stocks->where('variant', $str)->first();
+        $product_stock = $product->stocks()->where('variant', $str)->where('is_hidden', 0)->first();
+        if (!$product_stock) {
+            return array(
+                'status' => 0,
+                'cart_count' => count($carts),
+                'modal_view' => view('frontend.partials.outOfStockCart')->render(),
+                'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
+            );
+        }
 
         $minQty = optional($product_stock)->min_qty ?? $product->min_qty ?? 1;
         if ($quantity < $minQty) {
@@ -199,47 +207,52 @@ class CartController extends Controller
 
         if ($cartItem['id'] == $request->id) {
             $product = Product::find($cartItem['product_id']);
-            $product_stock = $product->stocks->where('variant', $cartItem['variation'])->first();
-            $quantity = $product_stock->qty;
-            $minQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
-            //$price = $product_stock->price;
-            $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+            $product_stock = $product
+                ? $product->stocks()->where('variant', $cartItem['variation'])->where('is_hidden', 0)->first()
+                : null;
 
-            //discount calculation
-            $discount_applicable = false;
+            if ($product_stock) {
+                $quantity = $product_stock->qty;
+                $minQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
+                //$price = $product_stock->price;
+                $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
 
-            if ($product->discount_start_date == null) {
-                $discount_applicable = true;
-            } elseif (
-                strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
-                strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
-            ) {
-                $discount_applicable = true;
-            }
+                //discount calculation
+                $discount_applicable = false;
 
-            if ($discount_applicable) {
-                if ($product->discount_type == 'percent') {
-                    $price -= ($price * $product->discount) / 100;
-                } elseif ($product->discount_type == 'amount') {
-                    $price -= $product->discount;
+                if ($product->discount_start_date == null) {
+                    $discount_applicable = true;
+                } elseif (
+                    strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
+                    strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
+                ) {
+                    $discount_applicable = true;
                 }
-            }
 
-            if ($quantity >= $request->quantity) {
-                if ($request->quantity >= $minQty) {
-                    $cartItem['quantity'] = $request->quantity;
+                if ($discount_applicable) {
+                    if ($product->discount_type == 'percent') {
+                        $price -= ($price * $product->discount) / 100;
+                    } elseif ($product->discount_type == 'amount') {
+                        $price -= $product->discount;
+                    }
                 }
-            }
 
-            if ($product->wholesale_product) {
-                $wholesalePrice = $product_stock->wholesalePrices->where('min_qty', '<=', $request->quantity)->where('max_qty', '>=', $request->quantity)->first();
-                if ($wholesalePrice) {
-                    $price = $wholesalePrice->price;
+                if ($quantity >= $request->quantity) {
+                    if ($request->quantity >= $minQty) {
+                        $cartItem['quantity'] = $request->quantity;
+                    }
                 }
-            }
 
-            $cartItem['price'] = $price;
-            $cartItem->save();
+                if ($product->wholesale_product) {
+                    $wholesalePrice = $product_stock->wholesalePrices->where('min_qty', '<=', $request->quantity)->where('max_qty', '>=', $request->quantity)->first();
+                    if ($wholesalePrice) {
+                        $price = $wholesalePrice->price;
+                    }
+                }
+
+                $cartItem['price'] = $price;
+                $cartItem->save();
+            }
         }
 
         if (auth()->user() != null) {

@@ -61,6 +61,14 @@
 									<label class="form-label mb-1">{{ translate('SKU') }}</label>
 									<input type="text" name="sku_{{ $str }}" value="" class="form-control" required>
 								</div>
+								<div class="form-group mb-0">
+									<label class="form-label mb-1">{{ translate('Hide this variant') }}</label>
+									<label class="aiz-switch aiz-switch-success mb-0 d-block">
+										<input type="checkbox" name="is_hidden_{{ $str }}" value="1">
+										<span></span>
+									</label>
+									<small class="text-muted">{{ translate('If enabled, this variant will be hidden on the product details page.') }}</small>
+								</div>
 							</div>
 						</div>
 
