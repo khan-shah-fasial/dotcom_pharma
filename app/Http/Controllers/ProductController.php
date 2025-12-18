@@ -97,7 +97,7 @@ class ProductController extends Controller
                 });
         }
 
-        $products = $products->where('digital', 0)->orderBy('created_at', 'desc')->paginate(15);
+        $products = $products->where('digital', 0)->orderBy('created_at', 'desc')->paginate(10);
 
         return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'sort_search'));
     }
@@ -131,7 +131,7 @@ class ProductController extends Controller
             $sort_type = $request->type;
         }
         $products = $product_type == 'physical' ? $products->where('digital', 0) : $products->where('digital', 1);
-        $products = $products->orderBy('created_at', 'desc')->paginate(15);
+        $products = $products->orderBy('created_at', 'desc')->paginate(10);
         $type = 'Seller';
 
         if ($product_type == 'digital') {
@@ -179,7 +179,7 @@ class ProductController extends Controller
             $published_status = 'All';
         }
 
-        $products = $products->orderBy('created_at', 'desc')->paginate(15);
+        $products = $products->orderBy('created_at', 'desc')->paginate(10);
         $type = 'All';
 
         return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status'));

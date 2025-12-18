@@ -140,10 +140,10 @@
                                 <th data-breakpoints="lg">#</th>
                             @endif
                             <th>{{ translate('Name') }}</th>
-                            @if ($type == 'Seller' || $type == 'All')
+                            {{-- @if ($type == 'Seller' || $type == 'All')
                                 <th data-breakpoints="lg">{{ translate('Added By') }}</th>
                             @endif
-                            <th data-breakpoints="sm">{{ translate('Info') }}</th>
+                            <th data-breakpoints="sm">{{ translate('Info') }}</th> --}}
                             <th data-breakpoints="md">{{ translate('Total Stock') }}</th>
                             <th data-breakpoints="lg">{{ translate('Todays Deal') }}</th>
                             <th data-breakpoints="lg">{{ translate('Published') }}</th>
@@ -182,7 +182,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                @if ($type == 'Seller' || $type == 'All')
+                                {{-- @if ($type == 'Seller' || $type == 'All')
                                     <td>{{ optional($product->user)->name }}</td>
                                 @endif
                                 <td>
@@ -191,7 +191,7 @@
                                     <strong>{{ translate('Base Price') }}:</strong>
                                     {{ single_price($product->unit_price) }} </br>
                                     <strong>{{ translate('Rating') }}:</strong> {{ $product->rating }} </br>
-                                </td>
+                                </td> --}}
                                 {{-- <td>
                                     @if ($product->digital == 1)
                                         <span
