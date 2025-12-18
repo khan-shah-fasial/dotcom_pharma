@@ -370,7 +370,10 @@ class Search2Controller extends Controller
     public function ajax_search(Request $request)
     {
         $keywords = [];
-        $query = $request->search;
+        $query = trim((string) $request->search);
+        if ($query === '') {
+            return '0';
+        }
 
         $products = Product::where('published', 1)->where('tags', 'like', '%' . $query . '%')->get();
         foreach ($products as $product) {
@@ -388,9 +391,28 @@ class Search2Controller extends Controller
             ->where(function ($q) use ($query) {
                 foreach (explode(' ', trim($query)) as $word) {
                     $q->where('name', 'like', '%'.$word.'%')
+                        ->orWhere('drug_name', 'like', '%'.$word.'%')
                         ->orWhere('tags', 'like', '%'.$word.'%')
                         ->orWhereHas('product_translations', function ($q) use ($word) {
                             $q->where('name', 'like', '%'.$word.'%');
+                        })
+                        ->orWhereHas('brand', function ($q) use ($word) {
+                            $q->where('name', 'like', '%'.$word.'%')
+                                ->orWhereHas('brand_translations', function ($qt) use ($word) {
+                                    $qt->where('name', 'like', '%'.$word.'%');
+                                });
+                        })
+                        ->orWhereHas('categories', function ($q) use ($word) {
+                            $q->where('name', 'like', '%'.$word.'%')
+                                ->orWhereHas('category_translations', function ($qt) use ($word) {
+                                    $qt->where('name', 'like', '%'.$word.'%');
+                                });
+                        })
+                        ->orWhereHas('main_category', function ($q) use ($word) {
+                            $q->where('name', 'like', '%'.$word.'%')
+                                ->orWhereHas('category_translations', function ($qt) use ($word) {
+                                    $qt->where('name', 'like', '%'.$word.'%');
+                                });
                         })
                         ->orWhereHas('stocks', function ($q) use ($word) {
                             $q->where('sku', 'like', '%'.$word.'%');
@@ -407,12 +429,25 @@ class Search2Controller extends Controller
                 ELSE 3
                 END');
 
-        $products    = $products_query->limit(3)->get();
-        $categories  = Category::where('name', 'like', '%' . $query . '%')->take(3)->get();
+        $products    = $products_query->with('brand')->limit(3)->get();
+        $categories  = Category::where(function ($q) use ($query) {
+            $q->where('name', 'like', '%' . $query . '%')
+                ->orWhereHas('category_translations', function ($qt) use ($query) {
+                    $qt->where('name', 'like', '%' . $query . '%');
+                });
+        })->take(3)->get();
+
+        $brands  = Brand::where(function ($q) use ($query) {
+            $q->where('name', 'like', '%' . $query . '%')
+                ->orWhereHas('brand_translations', function ($qt) use ($query) {
+                    $qt->where('name', 'like', '%' . $query . '%');
+                });
+        })->take(3)->get();
+
         $shops       = Shop::whereIn('user_id', verified_sellers_id())->where('name', 'like', '%' . $query . '%')->take(3)->get();
 
-        if (count($keywords) > 0 || count($categories) > 0 || count($products) > 0 || count($shops) > 0) {
-            return view('frontend.partials.search_content', compact('products', 'categories', 'keywords', 'shops'));
+        if (count($keywords) > 0 || count($categories) > 0 || count($brands) > 0 || count($products) > 0 || count($shops) > 0) {
+            return view('frontend.partials.search_content', compact('products', 'categories', 'brands', 'keywords', 'shops'));
         }
         return '0';
     }

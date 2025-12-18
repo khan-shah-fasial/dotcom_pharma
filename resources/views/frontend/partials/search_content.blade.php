@@ -23,6 +23,18 @@
     @endif
 </div>
 <div class="">
+    @if (isset($brands) && count($brands) > 0)
+        <div class="px-2 py-1 text-uppercase fs-10 text-right text-muted bg-soft-secondary">{{translate('Brand Suggestions')}}</div>
+        <ul class="list-group list-group-raw">
+            @foreach ($brands as $key => $brand)
+                <li class="list-group-item py-1">
+                    <a class="text-reset hov-text-primary" href="{{ route('products.brand', $brand->slug) }}">{{ $brand->getTranslation('name') }}</a>
+                </li>
+            @endforeach
+        </ul>
+    @endif
+</div>
+<div class="">
     @if (count($products) > 0)
         <div class="px-2 py-1 text-uppercase fs-10 text-right text-muted bg-soft-secondary">{{translate('Products')}}</div>
         <ul class="list-group list-group-raw">
@@ -37,6 +49,16 @@
                                 <div class="product-name text-truncate fs-14 mb-5px">
                                     {{  $product->getTranslation('name')  }}
                                 </div>
+                                @if(!empty($product->drug_name) || $product->brand)
+                                    <div class="opacity-60 fs-12 text-truncate mb-5px">
+                                        @if(!empty($product->drug_name))
+                                            <span class="mr-2">{{ translate('Drug') }}: {{ $product->drug_name }}</span>
+                                        @endif
+                                        @if($product->brand)
+                                            <span>{{ translate('Brand') }}: {{ $product->brand->getTranslation('name') }}</span>
+                                        @endif
+                                    </div>
+                                @endif
                                 <div class="">
                                     @if(home_base_price($product) != home_discounted_base_price($product))
                                         <del class="opacity-60 fs-15">{{ home_base_price($product) }}</del>
