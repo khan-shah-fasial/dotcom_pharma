@@ -175,32 +175,6 @@
                     @csrf
                     <input type="hidden" name="id" value="{{ $detailedProduct->id }}">
 
-                    @php
-                        // Only show attribute values that exist in at least one visible (non-hidden) variant.
-                        $colorsActiveForVariant =
-                            $detailedProduct->colors != null && count(json_decode($detailedProduct->colors)) > 0;
-                        $visibleVariantTokens = $detailedProduct->stocks
-                            ->pluck('variant')
-                            ->filter()
-                            ->map(function ($variant) {
-                                return explode('-', $variant);
-                            });
-
-                        $allowedChoiceValues = [];
-                        if ($detailedProduct->choice_options != null && $visibleVariantTokens->count() > 0) {
-                            foreach (json_decode($detailedProduct->choice_options) as $choiceIndex => $choice) {
-                                $tokenIndex = $colorsActiveForVariant ? $choiceIndex + 1 : $choiceIndex;
-                                $allowed = [];
-                                foreach ($visibleVariantTokens as $tokens) {
-                                    if (isset($tokens[$tokenIndex])) {
-                                        $allowed[$tokens[$tokenIndex]] = true;
-                                    }
-                                }
-                                $allowedChoiceValues[$choice->attribute_id] = array_keys($allowed);
-                            }
-                        }
-                    @endphp
-
                     @if ($detailedProduct->digital == 0)
                         <!-- Choice Options -->
                         @if ($detailedProduct->choice_options != null)
@@ -215,13 +189,7 @@
                                     </div>
                                     <div class="col-sm-12">
                                         <div class="aiz-radio-inline">
-                                            @php $firstVisibleChoiceValue = true; @endphp
                                             @foreach ($choice->values as $key => $value)
-                                                @php
-                                                    $normalizedValue = str_replace(' ', '', $value);
-                                                    $allowedForAttribute = $allowedChoiceValues[$choice->attribute_id] ?? null;
-                                                @endphp
-                                                @if (!$allowedForAttribute || in_array($normalizedValue, $allowedForAttribute, true))
                                                 <label class="aiz-megabox pl-0 mr-1 mb-2">
                                                     <!--<input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
                                                         value="{{ $value }}"
@@ -230,7 +198,7 @@
                                                     <input type="radio"
                                                         name="attribute_id_{{ $choice->attribute_id }}"
                                                         value="{{ $value }}"
-                                                        @if ($firstVisibleChoiceValue || get_user_subtype() == strtolower($value)) checked @endif>
+                                                        @if ($key == 0 || get_user_subtype() == strtolower($value)) checked @endif>
                                                     <!--added user_subtype role condition for role wise price based on session [by nexgeno]-->
                                                     <span
                                                         class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3 fs-12 text-secondary"
@@ -238,8 +206,6 @@
                                                         {{ $value }}
                                                     </span>
                                                 </label>
-                                                @php $firstVisibleChoiceValue = false; @endphp
-                                                @endif
                                             @endforeach
                                         </div>
                                     </div>
@@ -281,10 +247,10 @@
                                 <div class="">
                                     <div class="fw-500 fs-14 text-dark mt-2 mb-2">{{ translate('Quantity') }}</div>
                                 </div>
-                                <div class="">
-                                    <div class="product-quantity d-flex align-items-center">
-                                        <div class="row no-gutters align-items-center aiz-plus-minus mr-3"
-                                            style="width: 130px; border: 1px solid #dfdfdf">
+                                        <div class="">
+                                            <div class="product-quantity d-flex align-items-center">
+                                                <div class="row no-gutters align-items-center aiz-plus-minus mr-3"
+                                                    style="width: 130px; border: 1px solid #dfdfdf">
                                             <button
                                                 class="btn col-auto btn-icon btn-sm btn-light rounded-0 new-bg-color"
                                                 type="button" data-type="minus" data-field="quantity" disabled="">
@@ -302,7 +268,7 @@
                                         </div>
                                         @php
                                             $qty = 0;
-                                            foreach ($detailedProduct->stocks as $key => $stock) {
+                                            foreach ($detailedProduct->stocks->where('is_hidden', 0) as $key => $stock) {
                                                 $qty += $stock->qty;
                                             }
                                         @endphp
