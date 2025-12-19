@@ -680,7 +680,7 @@
                                 </div>
 
                                 <!-- Unit price -->
-                                <div class="form-group row">
+                                <div class="form-group row d-none">
                                     <label class="col-md-3 col-from-label">{{translate('Unit price (PTs)')}} <span class="text-danger h5">*</span></label>
                                     <div class="col-md-6">
                                         <input type="number" lang="en" min="0" step="0.01" placeholder="{{ translate('Unit price') }}" value="0" name="unit_price" class="form-control @error('unit_price') is-invalid @enderror" required readonly>

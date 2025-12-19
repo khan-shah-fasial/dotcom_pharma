@@ -89,7 +89,7 @@
                                                     value="{{ $stock && $stock->mrp_price !== null ? $stock->mrp_price : '' }}"
                                                     min="0" step="0.01" class="form-control" required>
                                             </div>
-                                            <div class="col-sm-6 col-lg-3 mb-3">
+                                            <div class="col-sm-6 col-lg-3 mb-3 d-none">
                                                 <label class="form-label mb-1">{{ translate('Selling Price') }}</label>
                                                 <input type="number" lang="en" name="price_{{ $str }}"
                                                     value="{{ $stock && $stock->price !== null ? $stock->price : 0 }}"
