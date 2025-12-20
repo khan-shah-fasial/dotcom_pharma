@@ -1972,7 +1972,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .display_flex3 {
     display: flex;
     justify-content: start;
-    align-items: center;
+    align-items: baseline;
     gap: 12px;
 }
 
@@ -2211,4 +2211,29 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
         margin-right: 3px !important;
     }
 
+}
+
+/* Default: Mobile & Tablet */
+.product-left,
+.product-right {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+/* Desktop and above */
+@media (min-width: 992px) {
+    .product-left {
+        flex: 0 0 45%;
+        max-width: 45%;
+    }
+
+    .product-right {
+        flex: 0 0 55%;
+        max-width: 55%;
+    }
+}
+.line {
+  width: 100%;
+  height: 1.5px;
+  background: #e5e5e5;
 }

@@ -8,18 +8,17 @@
 
 @section('meta')
     @php
-        $availability = "out of stock";
+        $availability = 'out of stock';
         $qty = 0;
-        if($detailedProduct->variant_product) {
+        if ($detailedProduct->variant_product) {
             foreach ($detailedProduct->stocks as $key => $stock) {
                 $qty += $stock->qty;
             }
-        }
-        else {
+        } else {
             $qty = optional($detailedProduct->stocks->first())->qty;
         }
-        if($qty > 0){
-            $availability = "in stock";
+        if ($qty > 0) {
+            $availability = 'in stock';
         }
     @endphp
     <!-- Schema.org markup for Google+ -->
@@ -32,7 +31,8 @@
     <meta name="twitter:site" content="@publisher_handle">
     <meta name="twitter:title" content="{{ $detailedProduct->meta_title }}">
     <meta name="twitter:description" content="{{ $detailedProduct->meta_description }}">
-    <meta name="twitter:creator" content="@author_handle">
+    <meta name="twitter:creator"
+        content="@author_handle">
     <meta name="twitter:image" content="{{ uploaded_asset($detailedProduct->meta_img) }}">
     <meta name="twitter:data1" content="{{ single_price($detailedProduct->unit_price) }}">
     <meta name="twitter:label1" content="Price">
@@ -68,7 +68,7 @@
                 </li>
                 
                 
-                @if(!isset($category))
+                @if (!isset($category))
                     <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100">
                         {{ translate('All Categories') }}
                     </li>
@@ -89,7 +89,7 @@
                 
                 
                 @isset($detailedProduct)
-                    @if($detailedProduct->name && !empty(trim($detailedProduct->name)))
+                    @if ($detailedProduct->name && !empty(trim($detailedProduct->name)))
                         <li class="breadcrumb-item fw-700 text-dark">
                             {{ $detailedProduct->getTranslation('name') }}
                         </li>
@@ -97,14 +97,14 @@
                 @endisset
             </ul> -->
            <div class="col-md-12">
-                <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2 pt-2 pb-md-3 pb-0">
+                <ul class="breadcrumb bg-transparent py-0 px-1 pl-md-2 pt-2 pb-md-0 pb-2 mb-0">
                     <!-- 1. Home (Always shown) -->
                     <li class="breadcrumb-item has-transition opacity-50 hov-opacity-100 fs-12">
                         <a class="text-reset" href="{{ route('home') }}">{{ translate('Home') }}</a>
                     </li>
 
                     <!-- 3. FORCE Pharma Category (If exists) -->
-                    @if($detailedProduct->category_id != 'null')
+                    @if ($detailedProduct->category_id != 'null')
                         <li class="fw-500 breadcrumb-item text-capitalize fs-12">
                             <a class="text-reset" href="{{ route('products.category', \App\Models\Category::find($detailedProduct->category_id)->slug) }}">
                                 {{ \App\Models\Category::find($detailedProduct->category_id)->getTranslation('name') }}
@@ -113,7 +113,7 @@
                     @endif
 
                     <!-- 4. Product Name (Always shown if product exists) -->
-                    @if(isset($detailedProduct))
+                    @if (isset($detailedProduct))
                         <li class="breadcrumb-item text-dark fw-400 fs-12">
                             {{ $detailedProduct->getTranslation('name') }}
                         </li>
@@ -127,18 +127,19 @@
 
     <section class="new-bg-color mb-md-4 pt-0">
         <div class="container new-bg-color">
-            <div class="new-bg-color py-3">
-                <div class="row ml-0 mr-0">
-                    <!-- Product Image Gallery -->
-                    <div class="col-xl-6 col-lg-6 p-md-4 p-0 mb-4">
+            <div class="new-bg-color py-0">
+                <div class="row ml-0 mr-0 product-row">
+                    <!-- Product Image -->
+                    <div class="col-12 product-left p-md-4 p-0 mb-4 mb-lg-0">
                         @include('frontend.product_details.image_gallery')
                     </div>
 
                     <!-- Product Details -->
-                    <div class="col-xl-6 col-lg-6 p-md-4 p-0">
+                    <div class="col-12 product-right p-md-4 p-0">
                         @include('frontend.product_details.details')
                     </div>
                 </div>
+
             </div>
         </div>
     </section>
@@ -195,7 +196,7 @@
 
                         
                         <!-- Frequently Bought products -->
-                        @if(count(get_frequently_bought_products($detailedProduct)) > 0)
+                        @if (count(get_frequently_bought_products($detailedProduct)) > 0)
                             @include('frontend.product_details.frequently_bought_products')
                         @endif
                         
@@ -292,7 +293,7 @@
     </div>
 
     <!-- Bid Modal -->
-    @if($detailedProduct->auction_product == 1)
+    @if ($detailedProduct->auction_product == 1)
         @php 
             $highest_bid = $detailedProduct->bids->max('amount');
             $min_bid_amount = $highest_bid != null ? $highest_bid+1 : $detailedProduct->starting_bid; 
@@ -301,7 +302,7 @@
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">{{ translate('Bid For Product') }} <small>({{ translate('Min Bid Amount: ').$min_bid_amount }})</small> </h5>
+                        <h5 class="modal-title" id="exampleModalLabel">{{ translate('Bid For Product') }} <small>({{ translate('Min Bid Amount: ') . $min_bid_amount }})</small> </h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         </button>
                     </div>
@@ -311,7 +312,7 @@
                             <input type="hidden" name="product_id" value="{{ $detailedProduct->id }}">
                             <div class="form-group">
                                 <label class="form-label">
-                                    {{translate('Place Bid Price')}}
+                                    {{ translate('Place Bid Price') }}
                                     <span class="text-danger">*</span>
                                 </label>
                                 <div class="form-group">
@@ -349,7 +350,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
                 </div>
                 <div class="modal-body text-center c-scrollbar-light">
-                    @if($detailedProduct->warranty_note_id != null)
+                    @if ($detailedProduct->warranty_note_id != null)
                         <p>{{ $detailedProduct->warrantyNote->getTranslation('description') }}</p>
                     @endif
                 </div>
@@ -449,7 +450,7 @@
             @if (isCustomer() || isSeller())
                 $('#bid_for_detail_product').modal('show');
           	@elseif (isAdmin())
-                AIZ.plugins.notify('warning', '{{ translate("Sorry, Only customers & Sellers can Bid.") }}');
+                AIZ.plugins.notify('warning', '{{ translate('Sorry, Only customers & Sellers can Bid.') }}');
             @else
                 $('#login_modal').modal('show');
             @endif
@@ -469,32 +470,24 @@
                         AIZ.extra.inputRating();
                     });
                 @else
-                    AIZ.plugins.notify('warning', '{{ translate("Sorry, You need to buy this product to give review.") }}');
+                    AIZ.plugins.notify('warning', '{{ translate('Sorry, You need to buy this product to give review.') }}');
                 @endif
             @elseif (Auth::check() && !isCustomer())
-                AIZ.plugins.notify('warning', '{{ translate("Sorry, Only customers can give review.") }}');
+                AIZ.plugins.notify('warning', '{{ translate('Sorry, Only customers can give review.') }}');
             @else
-                $('#login_modal').modal('show');
-            @endif
+                $('#login_modal').modal('show'); @endif
         }
 
         function showSizeChartDetail(id, name){
             $('#size-chart-show-modal .modal-title').html('');
             $('#size-chart-show-modal .modal-body').html('');
             if (id == 0) {
-                AIZ.plugins.notify('warning', '{{ translate("Sorry, There is no size guide found for this product.") }}');
+                AIZ.plugins.notify('warning', '{{ translate('Sorry, There is no size guide found for this product.') }}');
                 return false;
             }
             $.ajax({
                 type: "GET",
-                url: "{{ route('size-charts-show', '') }}/"+id,
-                data: {},
-                success: function(data) {
-                    $('#size-chart-show-modal .modal-title').html(name);
-                    $('#size-chart-show-modal .modal-body').html(data);
-                    $('#size-chart-show-modal').modal('show');
-                }
-            });
-        }
-    </script>
+        url: "{{ route('size-charts-show', '') }}/" +id, data: {}, success: function(data) { $('#size-chart-show-modal
+        .modal-title').html(name); $('#size-chart-show-modal .modal-body').html(data);
+        $('#size-chart-show-modal').modal('show'); } }); } </script>
 @endsection
