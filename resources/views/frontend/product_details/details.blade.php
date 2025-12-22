@@ -27,7 +27,7 @@
             <!-- Drug Name -->
             @if (!empty($detailedProduct->drug_name))
                 <p class="mb-2 detail-gray-color fs-14">
-                    :{{ $detailedProduct->drug_name }}
+                    :&nbsp;{{ $detailedProduct->drug_name }}
                 </p>
             @endif
         </div>
@@ -43,7 +43,7 @@
         <div class="col-xl-10 col-lg-9 col-md-12 col-12">
             @if (!empty($detailedProduct->role_label))
                 <p class="mb-2 detail-gray-color fs-14">
-                    :{{ $detailedProduct->role_label }}
+                    :&nbsp;{{ $detailedProduct->role_label }}
                 </p>
             @endif
         </div>
