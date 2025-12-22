@@ -17,7 +17,7 @@
         <div class="col-xl-2 col-lg-3 col-md-12 col-12">
             <!-- Drug Name -->
             @if (!empty($detailedProduct->drug_name))
-                <p class="mb-lg-2 mb-0 detail-gray-color fs-14">
+                <p class="mb-0 detail-gray-color fs-14">
                     <span class="">{{ translate('Drug Name') }} </span>
                 </p>
             @endif
@@ -34,7 +34,7 @@
 
         <div class="col-xl-2 col-lg-3 col-md-12 col-12">
             @if (!empty($detailedProduct->role_label))
-                <p class="mb-lg-2 mb-0 detail-gray-color fs-14">
+                <p class="mb-0 detail-gray-color fs-14">
                     <span class="">{{ translate('Drug Role') }} </span>
                 </p>
             @endif
