@@ -14,42 +14,38 @@
 
 
     <div class="row">
-        <div class="mb-0">
-            <div class="col-xl-2 col-lg-3 col-md-12 col-12">
-                <!-- Drug Name -->
-                @if (!empty($detailedProduct->drug_name))
-                    <p class="mb-0 detail-gray-color fs-14">
-                        <span class="">{{ translate('Drug Name') }} </span>
-                    </p>
-                @endif
-            </div>
-
-            <div class="col-xl-10 col-lg-9 col-md-12 col-12">
-                <!-- Drug Name -->
-                @if (!empty($detailedProduct->drug_name))
-                    <p class="mb-0 detail-gray-color fs-14">
-                        :&nbsp;{{ $detailedProduct->drug_name }}
-                    </p>
-                @endif
-            </div>
+        <div class="col-xl-2 col-lg-3 col-md-12 col-12">
+            <!-- Drug Name -->
+            @if (!empty($detailedProduct->drug_name))
+                <p class="mb-0 detail-gray-color fs-14">
+                    <span class="">{{ translate('Drug Name') }} </span>
+                </p>
+            @endif
         </div>
 
-        <div class="mb-2">
-            <div class="col-xl-2 col-lg-3 col-md-12 col-12">
-                @if (!empty($detailedProduct->role_label))
-                    <p class="detail-gray-color fs-14">
-                        <span class="">{{ translate('Drug Role') }} </span>
-                    </p>
-                @endif
-            </div>
+        <div class="col-xl-10 col-lg-9 col-md-12 col-12">
+            <!-- Drug Name -->
+            @if (!empty($detailedProduct->drug_name))
+                <p class="mb-0 detail-gray-color fs-14">
+                    :&nbsp;{{ $detailedProduct->drug_name }}
+                </p>
+            @endif
+        </div>
 
-            <div class="col-xl-10 col-lg-9 col-md-12 col-12">
-                @if (!empty($detailedProduct->role_label))
-                    <p class="detail-gray-color fs-14">
-                        :&nbsp;{{ $detailedProduct->role_label }}
-                    </p>
-                @endif
-            </div>
+        <div class="col-xl-2 col-lg-3 col-md-12 col-12 mb-lg-2 mb-0">
+            @if (!empty($detailedProduct->role_label))
+                <p class="detail-gray-color fs-14">
+                    <span class="">{{ translate('Drug Role') }} </span>
+                </p>
+            @endif
+        </div>
+
+        <div class="col-xl-10 col-lg-9 col-md-12 col-12 mb-2">
+            @if (!empty($detailedProduct->role_label))
+                <p class="detail-gray-color fs-14">
+                    :&nbsp;{{ $detailedProduct->role_label }}
+                </p>
+            @endif
         </div>
 
         @if (!empty($detailedProduct->schedule))
