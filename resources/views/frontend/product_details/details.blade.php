@@ -1178,7 +1178,7 @@
                 </div>
             </div>
 
-            <div class="line-detail-page"></div>
+            <div class="line-detail-page mb-3"></div>
 
             <div class="col-12 col-md-6 pl-0 mb-3">
                 <div class="detail-product-specs rounded h-100">
