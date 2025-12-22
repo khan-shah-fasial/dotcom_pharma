@@ -32,9 +32,9 @@
             @endif
         </div>
 
-        <div class="col-xl-2 col-lg-3 col-md-12 col-12">
+        <div class="col-xl-2 col-lg-3 col-md-12 col-12 mb-2">
             @if (!empty($detailedProduct->role_label))
-                <p class="mb-2 detail-gray-color fs-14">
+                <p class="detail-gray-color fs-14">
                     <span class="">{{ translate('Drug Role') }} </span>
                 </p>
             @endif
@@ -42,7 +42,7 @@
 
         <div class="col-xl-10 col-lg-9 col-md-12 col-12">
             @if (!empty($detailedProduct->role_label))
-                <p class="mb-2 detail-gray-color fs-14">
+                <p class="detail-gray-color fs-14">
                     :&nbsp;{{ $detailedProduct->role_label }}
                 </p>
             @endif
