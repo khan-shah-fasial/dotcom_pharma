@@ -322,8 +322,8 @@
                                 <div class="col-md-12 mt-3">
                                     <h6 class="text-muted mb-2">{{ translate('Role Base Price') }}</h6>
                                     @if (!empty($role_base_price) && count($role_base_price) > 0)
-                                        <div class="accordion" id="rolePriceAccordion_{{ $str }}">
-                                            @php $collapseId = 'rolePriceCollapse_'.$str; @endphp
+                                        <div class="accordion" id="rolePriceAccordion_{{ md5($str) }}">
+                                            @php $collapseId = 'rolePriceCollapse_'.md5($str); @endphp
                                             <div class="card mb-1 border">
                                                 <div class="card-header p-1" id="heading_{{ $collapseId }}">
                                                     <h2 class="mb-0">
@@ -337,7 +337,7 @@
                                                 </div>
                                                 <div id="{{ $collapseId }}" class="collapse"
                                                     aria-labelledby="heading_{{ $collapseId }}"
-                                                    data-parent="#rolePriceAccordion_{{ $str }}">
+                                                    data-parent="#rolePriceAccordion_{{ md5($str) }}">
                                                     <div class="card-body py-2">
                                                         <table class="table table-sm mb-0">
                                                             <thead>
