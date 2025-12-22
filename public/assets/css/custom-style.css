@@ -1972,7 +1972,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .display_flex3 {
     display: flex;
     justify-content: start;
-    align-items: center;
+    align-items: baseline;
     gap: 12px;
 }
 
@@ -2211,4 +2211,10 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
         margin-right: 3px !important;
     }
 
+}
+
+.line-detail-page {
+  width: 100%;
+  height: 1px;
+  background: #e5e5e5;
 }
