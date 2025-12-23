@@ -92,8 +92,14 @@
 
 
         <div class="col-12 pl-0 d-flex mt-md-3">
-            <span class="detail-font-14px detail-gray-color">{{ translate('MRP') }}:</span>
-            <span id="mrp-unit" class="detail-font-14px detail-gray-color"></span>
+            <span class="fs-18 detail-gray-color">{{ translate('MRP') }}:</span>
+            <span id="mrp-unit" class="fs-18 detail-gray-color"></span>
+        </div>
+
+        <div class="col-12 pl-0 mt-md-2 mt-1 pb-0">
+            {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
+            {{-- <span id="tax-product-details" class="text-secondary fs-14"></span> --}}
+            <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
         </div>
 
 
@@ -167,11 +173,7 @@
             </div> --}}
         {{-- @endauth --}}
 
-        <div class="col-12 pl-0 mt-md-3 mt-2 pb-0">
-            {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
-            {{-- <span id="tax-product-details" class="text-secondary fs-14"></span> --}}
-            <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
-        </div>
+        
 
 
 
@@ -437,14 +439,16 @@
             $initialExpiryFormatted = $initialExpiry ? \Carbon\Carbon::parse($initialExpiry)->format('d M Y') : '-';
         @endphp
 
+
         <div class="productAccordion_box mt-4 w-100">
             <div class="accordion accordion-custom" id="productAccordion">
 
+                {{-- Batch & Stock Details --}}
                 <div class="card">
                     <div class="card-header" id="headingBatchStock">
                         <h2 class="mb-0">
-                            <button class="btn btn-link fw-500 fs-20 collapsed" type="button" data-toggle="collapse"
-                                data-target="#collapseBatchStock" aria-expanded="false"
+                            <button class="btn btn-link accordion-custom" type="button" data-toggle="collapse"
+                                data-target="#collapseBatchStock" aria-expanded="true"
                                 aria-controls="collapseBatchStock">
                                 {{ translate('Batch & Stock Details') }}
                                 <i class="fas fa-chevron-down"></i>
@@ -452,13 +456,9 @@
                         </h2>
                     </div>
 
-                    <div id="collapseBatchStock" class="collapse" aria-labelledby="headingBatchStock"
+                    <div id="collapseBatchStock" class="collapse show" aria-labelledby="headingBatchStock"
                         data-parent="#productAccordion">
-
                         <div class="card-body p-0">
-
-                            <!-- ================= ORIGINAL CODE START ================= -->
-
                             <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
                                 <div class="col-12 col-md-6 pl-0 mb-3">
                                     <div class="detail-product-specs rounded h-100">
@@ -609,28 +609,17 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                {{-- =================================================== --}}
                             </div>
-
-                            <!-- ================= ORIGINAL CODE END ================= -->
-
                         </div>
                     </div>
                 </div>
 
-            </div>
-        </div>
-
-
-        <div class="productAccordion_box mt-4 w-100">
-            <div class="accordion accordion-custom" id="productAccordion">
-
+                {{-- Product Specifications --}}
                 <div class="card">
                     <div class="card-header" id="headingProductSpecs">
                         <h2 class="mb-0">
-                            <button class="btn btn-link fw-500 fs-20 collapsed" type="button" data-toggle="collapse"
-                                data-target="#collapseProductSpecs" aria-expanded="false"
+                            <button class="btn btn-link accordion-custom collapsed" type="button"
+                                data-toggle="collapse" data-target="#collapseProductSpecs" aria-expanded="false"
                                 aria-controls="collapseProductSpecs">
                                 {{ translate('Product Specifications') }}
                                 <i class="fas fa-chevron-down"></i>
@@ -640,13 +629,8 @@
 
                     <div id="collapseProductSpecs" class="collapse" aria-labelledby="headingProductSpecs"
                         data-parent="#productAccordion">
-
                         <div class="card-body p-0">
-
-                            <!-- ================= ORIGINAL CODE START ================= -->
-
                             <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
-
                                 @if ($detailedProduct->pharma_categories)
                                     <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
                                         <div class="detail-product-specs rounded h-100">
@@ -840,7 +824,7 @@
                                                     </svg>
                                                 </div>
                                                 <div class="">
-                                                    <p class="detail-font-14pxx detail-gray-color mb-1">
+                                                    <p class="detail-font-14px detail-gray-color mb-1">
                                                         {{ translate('Tags') }}</p>
                                                     <p class="fw-400 fs-12 mb-0 pl21 tags-span-main">
                                                         @foreach (explode(',', $detailedProduct->tags) as $tag)
@@ -879,27 +863,17 @@
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
-
-                            <!-- ================= ORIGINAL CODE END ================= -->
-
                         </div>
                     </div>
                 </div>
 
-            </div>
-        </div>
-
-
-        <div class="productAccordion_box mt-4 w-100">
-            <div class="accordion accordion-custom" id="productAccordion">
-
+                {{-- Tax And Origin Details --}}
                 <div class="card">
                     <div class="card-header" id="headingTaxOrigin">
                         <h2 class="mb-0">
-                            <button class="btn btn-link fw-500 fs-20 collapsed" type="button" data-toggle="collapse"
-                                data-target="#collapseTaxOrigin" aria-expanded="false"
+                            <button class="btn btn-link accordion-custom collapsed" type="button"
+                                data-toggle="collapse" data-target="#collapseTaxOrigin" aria-expanded="false"
                                 aria-controls="collapseTaxOrigin">
                                 {{ translate('Tax And Origin Details') }}
                                 <i class="fas fa-chevron-down"></i>
@@ -909,13 +883,8 @@
 
                     <div id="collapseTaxOrigin" class="collapse" aria-labelledby="headingTaxOrigin"
                         data-parent="#productAccordion">
-
                         <div class="card-body p-0">
-
-                            <!-- ================= ORIGINAL CODE START ================= -->
-
                             <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
-
                                 @if (!empty($detailedProduct->product_hsn))
                                     <div class="col-12 col-md-6 pl-0 mb-3">
                                         <div class="detail-product-specs rounded h-100">
@@ -1022,31 +991,17 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                {{-- ==================== --}}
                             </div>
-
-                            <!-- ================= ORIGINAL CODE END ================= -->
-
                         </div>
                     </div>
                 </div>
 
-            </div>
-        </div>
-
-
-
-
-
-        <div class="productAccordion_box mt-4 w-100">
-            <div class="accordion accordion-custom" id="productAccordion">
-
+                {{-- Packing Details --}}
                 <div class="card">
                     <div class="card-header" id="headingPackingDetails">
                         <h2 class="mb-0">
-                            <button class="btn btn-link fw-500 fs-20 collapsed" type="button" data-toggle="collapse"
-                                data-target="#collapsePackingDetails" aria-expanded="false"
+                            <button class="btn btn-link accordion-custom collapsed" type="button"
+                                data-toggle="collapse" data-target="#collapsePackingDetails" aria-expanded="false"
                                 aria-controls="collapsePackingDetails">
                                 {{ translate('Packing Details') }}
                                 <i class="fas fa-chevron-down"></i>
@@ -1056,13 +1011,8 @@
 
                     <div id="collapsePackingDetails" class="collapse" aria-labelledby="headingPackingDetails"
                         data-parent="#productAccordion">
-
                         <div class="card-body p-0">
-
-                            <!-- ================= ORIGINAL CODE START ================= -->
-
                             <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
-
                                 <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
                                     <div class="detail-product-specs rounded h-100">
                                         <div class="display_flex3">
@@ -1323,7 +1273,7 @@
                                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                     class="lucide lucide-ruler w-5 h-5">
                                                     <path
-                                                        d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z">
+                                                        d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z">
                                                     </path>
                                                     <path d="m14.5 12.5 2-2"></path>
                                                     <path d="m11.5 9.5 2-2"></path>
@@ -1333,29 +1283,19 @@
                                             </div>
                                             <div class="">
                                                 <p class="detail-font-14px detail-gray-color mb-0">
-                                                    {{ translate('Dimentions') }}:</p>
-                                                <p id="dimentions-product-details" class="fw-500 fs-14 mb-0"></p>
+                                                    {{ translate('Dimensions') }}:</p>
+                                                <p id="dimensions-product-details" class="fw-500 fs-14 mb-0"></p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- ================= ORIGINAL CODE END ================= -->
-
                         </div>
                     </div>
                 </div>
 
             </div>
         </div>
-
-
-
-
-
-
-
     </div>
 
 
@@ -1837,15 +1777,16 @@
                     <div class="card">
                         <div class="card-header" id="headingDescription">
                             <h2 class="mb-0">
-                                <button class="btn btn-link" type="button" data-toggle="collapse"
-                                    data-target="#collapseDescription" aria-expanded="true"
+                                <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                    data-target="#collapseDescription" aria-expanded="false"
                                     aria-controls="collapseDescription">
                                     {{ translate('Description') }}
                                     <i class="fas fa-chevron-down"></i>
                                 </button>
                             </h2>
                         </div>
-                        <div id="collapseDescription" class="collapse show" aria-labelledby="headingDescription"
+
+                        <div id="collapseDescription" class="collapse" aria-labelledby="headingDescription"
                             data-parent="#productAccordion">
                             <div class="card-body aiz-editor-data">
                                 {!! $detailedProduct->getTranslation('description') !!}
