@@ -173,7 +173,7 @@
             </div> --}}
         {{-- @endauth --}}
 
-        
+
 
 
 
@@ -627,8 +627,7 @@
                         </h2>
                     </div>
 
-                    <div id="collapseProductSpecs" class="collapse" aria-labelledby="headingProductSpecs"
-                        data-parent="#productAccordion">
+                    <div id="collapseProductSpecs" class="collapse" aria-labelledby="headingProductSpecs">
                         <div class="card-body p-0">
                             <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
                                 @if ($detailedProduct->pharma_categories)
@@ -881,8 +880,7 @@
                         </h2>
                     </div>
 
-                    <div id="collapseTaxOrigin" class="collapse" aria-labelledby="headingTaxOrigin"
-                        data-parent="#productAccordion">
+                    <div id="collapseTaxOrigin" class="collapse" aria-labelledby="headingTaxOrigin">
                         <div class="card-body p-0">
                             <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
                                 @if (!empty($detailedProduct->product_hsn))
@@ -1009,8 +1007,7 @@
                         </h2>
                     </div>
 
-                    <div id="collapsePackingDetails" class="collapse" aria-labelledby="headingPackingDetails"
-                        data-parent="#productAccordion">
+                    <div id="collapsePackingDetails" class="collapse" aria-labelledby="headingPackingDetails">
                         <div class="card-body p-0">
                             <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
                                 <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
@@ -1293,7 +1290,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
