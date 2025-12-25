@@ -103,6 +103,12 @@
                                         <h6 class="mb-3">{{ translate('Business Location') }}</h6>
                                         <div class="row gutters-5">
                                             <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="pincode_business">{{ translate('Pincode') }}</label>
+                                                <input type="text" class="form-control" id="pincode_business"
+                                                    name="pincode_business" value="{{ $pincode_business ?? '' }}"
+                                                    placeholder="{{ translate('Pincode') }}">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
                                                 <label class="form-label" for="business_country_id">{{ translate('Country') }}</label>
                                                 <select class="form-control aiz-selectpicker js-location-filter" id="business_country_id"
                                                     name="business_country_id" data-live-search="true">
@@ -146,6 +152,12 @@
                                     <div class="border rounded p-3 h-100">
                                         <h6 class="mb-3">{{ translate('Personal Location') }}</h6>
                                         <div class="row gutters-5">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="pincode">{{ translate('Pincode') }}</label>
+                                                <input type="text" class="form-control" id="pincode"
+                                                    name="pincode" value="{{ $pincode ?? '' }}"
+                                                    placeholder="{{ translate('Pincode') }}">
+                                            </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label" for="personal_country_id">{{ translate('Country') }}</label>
                                                 <select class="form-control aiz-selectpicker js-location-filter" id="personal_country_id"
@@ -265,10 +277,12 @@
                                     @php
                                         $stateName = null;
                                         if (!empty($user->details->state_id_business)) {
-                                            $stateName = getParticularData('states', 'name', (int) $user->details->state_id_business);
+                                            // $stateName = getParticularData('states', 'name', (int) $user->details->state_id_business);
+                                            $stateName = $user->details->state_id_business;
                                         }
                                         if (!$stateName && !empty($user->details->state_id)) {
-                                            $stateName = getParticularData('states', 'name', (int) $user->details->state_id);
+                                            // $stateName = getParticularData('states', 'name', (int) $user->details->state_id);
+                                            $stateName = $user->details->state_id;
                                         }
                                     @endphp
                                     <td>{{ $stateName ?? '-' }}</td>

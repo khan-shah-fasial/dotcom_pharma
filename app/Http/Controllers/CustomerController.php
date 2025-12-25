@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Hash;
+use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CustomerController extends Controller
@@ -127,11 +128,13 @@ class CustomerController extends Controller
         $sortOrder           = $request->get('sort_order', 'asc');
 
         // NEW: location filters (request) - separated for business vs personal
+        $businessPincode   = $request->input('pincode_business');
         $businessCountryId = $request->input('business_country_id');
         $businessStateId   = $request->input('business_state_id');
         $businessCityId    = $request->input('business_city_id');
         $businessDistrict  = $request->input('business_district');
 
+        $personalPincode   = $request->input('pincode');
         $personalCountryId = $request->input('personal_country_id');
         $personalStateId   = $request->input('personal_state_id');
         $personalCityId    = $request->input('personal_city_id');
@@ -143,7 +146,12 @@ class CustomerController extends Controller
         $users = User::with('details')
             ->where('user_type', 'customer')
             ->whereNotNull('step')
-            ->orderBy('created_at', 'desc');
+            // ->orderBy('created_at', 'desc')
+            ->orderBy(
+                UserDetails::select('crm_id')
+                    ->whereColumn('user_details.user_id', 'users.id'),
+                'ASC'
+            );
 
         // Approval filter
         if ($verification_status !== null) {
@@ -188,6 +196,7 @@ class CustomerController extends Controller
 
         // Location filters with AND conditions per context
         $businessLocationFilters = collect([
+            'pincode_business'    => $businessPincode,
             'country_id_business' => $businessCountryId,
             'state_id_business'   => $businessStateId,
             'city_id_business'    => $businessCityId,
@@ -197,6 +206,7 @@ class CustomerController extends Controller
         })->toArray();
 
         $personalLocationFilters = collect([
+            'pincode'    => $personalPincode,
             'country_id' => $personalCountryId,
             'state_id'   => $personalStateId,
             'city_id'    => $personalCityId,
@@ -249,6 +259,10 @@ class CustomerController extends Controller
         $transportList = UserDetails::whereNotNull('transport')
             ->where('transport', '!=', '')
             ->pluck('transport')
+            ->map(function ($value) {
+                // Trim spaces and convert to lowercase
+                return Str::lower(trim($value));
+            })
             ->unique()
             ->sort()
             ->values();
@@ -567,6 +581,11 @@ class CustomerController extends Controller
             'other_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
         ];
 
+        $transportRules = [
+            'transport' => ['nullable', 'string', 'max:255'],
+            'booked_to' => ['nullable', 'string', 'max:255'],
+        ];
+
         // Simplified validation: only keep basic user email/phone checks per request; comment out the detailed rules above.
         // $validator = \Validator::make($request->all(), array_merge($businessRules, $personalRules, $licenseRules));
         // $validator->after(function ($v) use ($request, $details, $typeOption, $domesticChoice, $internationalChoice) { ... });
@@ -697,6 +716,10 @@ class CustomerController extends Controller
 
         $details->fill([
             'type_option' => $typeOption,
+
+            'transport' => $request->input('transport', $details->transport ?? null),
+            'booked_to' => $request->input('booked_to', $details->booked_to ?? null),
+
             'gst_no' => $validated['gst_no'] ?? null,
             // 'gst_no' => $typeOption === 'domestic' ? ($validated['gst_no'] ?? $details->gst_no) : null,
             'gst_no_file' => $gstFile,

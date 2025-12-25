@@ -165,7 +165,7 @@
 
                                 <div class="form-group">
                                     <label class="form-label" for="name">Registration Date</label>
-                                    <p>{{ $user->registration_date ?? '-' }}</p>
+                                    <p>{{ format_dd_mm_yy($user->registration_date) ?? '-' }}</p>
                                 </div>
 
                             </div>
@@ -265,8 +265,37 @@
                             <div class="col-md-4 mb-4">
 
                                 <div class="form-group">
-                                    <label class="form-label" for="name">Post</label>
-                                    <p>{{ $user->post_business ?? '-' }}</p>
+                                    <label class="form-label" for="country__code">City</label>
+                                    {{-- <p> {{ getParticularData('cities','name',$user->city_id_business ?? 0) ?? "-" }}</p> --}}
+                                    <p> {{ $user->city_id_business ?? '-' }}</p>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="pincode">District</label>
+                                    <p> {{ $user->district_business ?? '-' }}</p>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="country__code">state</label>
+                                    {{-- <p> {{ getParticularData('states','name',$user->state_id_business ?? 0) ?? "-" }}</p> --}}
+                                    <p> {{ $user->state_id_business ?? '-' }}</p>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="pincode">Pincode</label>
+                                    <p> {{ $user->pincode_business ?? '-' }}</p>
                                 </div>
 
                             </div>
@@ -281,40 +310,7 @@
                                 </div>
 
                             </div>
-                            <div class="col-md-4 mb-4">
 
-                                <div class="form-group">
-                                    <label class="form-label" for="country__code">state</label>
-                                    {{-- <p> {{ getParticularData('states','name',$user->state_id_business ?? 0) ?? "-" }}</p> --}}
-                                    <p> {{ $user->state_id_business ?? '-' }}</p>
-                                </div>
-
-                            </div>
-                            <div class="col-md-4 mb-4">
-
-                                <div class="form-group">
-                                    <label class="form-label" for="country__code">City</label>
-                                    {{-- <p> {{ getParticularData('cities','name',$user->city_id_business ?? 0) ?? "-" }}</p> --}}
-                                    <p> {{ $user->city_id_business ?? '-' }}</p>
-                                </div>
-
-                            </div>
-                            <div class="col-md-4 mb-4">
-
-                                <div class="form-group">
-                                    <label class="form-label" for="pincode">District</label>
-                                    <p> {{ $user->district_business ?? '-' }}</p>
-                                </div>
-
-                            </div>
-                            <div class="col-md-4 mb-4">
-
-                                <div class="form-group">
-                                    <label class="form-label" for="pincode">Pincode</label>
-                                    <p> {{ $user->pincode_business ?? '-' }}</p>
-                                </div>
-
-                            </div>
                             <div class="col-md-4 mb-4">
 
                                 <div class="form-group">
@@ -573,7 +569,7 @@
 
                                 <div class="form-group">
                                     <label class="form-label" for="name">D.O.B</label>
-                                    <p>{{ $user->dob ?? '-' }}</p>
+                                    <p>{{ format_dd_mm_yy($user->dob) ?? '-' }}</p>
                                 </div>
 
                             </div>
@@ -630,25 +626,6 @@
                             <div class="col-md-4 mb-4">
 
                                 <div class="form-group">
-                                    <label class="form-label" for="country__code">Country</label>
-                                    <p> {{ getParticularData('countries', 'name', (int)($user->country_id ?? 0)) ?? '-'}}</p>
-                                    {{-- <p> {{ getParticularData('countries', 'name', $user->country_id ?? 0) ?? '-' }}</p> --}}
-
-                                </div>
-
-                            </div>
-                            <div class="col-md-4 mb-4">
-
-                                <div class="form-group">
-                                    <label class="form-label" for="country__code">state</label>
-                                    {{-- <p> {{ getParticularData('states','name',$user->state_id ?? 0) ?? "-" }}</p> --}}
-                                    <p> {{ $user->state_id ?? '-' }}</p>
-                                </div>
-
-                            </div>
-                            <div class="col-md-4 mb-4">
-
-                                <div class="form-group">
                                     <label class="form-label" for="country__code">City</label>
                                     {{-- <p> {{ getParticularData('cities','name',$user->city_id ?? 0) ?? "-" }}</p> --}}
                                     <p> {{ $user->city_id ?? '-' }}</p>
@@ -663,6 +640,17 @@
                                 </div>
 
                             </div>
+
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="country__code">state</label>
+                                    {{-- <p> {{ getParticularData('states','name',$user->state_id ?? 0) ?? "-" }}</p> --}}
+                                    <p> {{ $user->state_id ?? '-' }}</p>
+                                </div>
+
+                            </div>
+
                             <div class="col-md-4 mb-4">
 
                                 <div class="form-group">
@@ -671,6 +659,18 @@
                                 </div>
 
                             </div>
+
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="country__code">Country</label>
+                                    <p> {{ getParticularData('countries', 'name', (int)($user->country_id ?? 0)) ?? '-'}}</p>
+                                    {{-- <p> {{ getParticularData('countries', 'name', $user->country_id ?? 0) ?? '-' }}</p> --}}
+
+                                </div>
+
+                            </div>
+
                             <div class="col-md-4 mb-4">
 
                                 <div class="form-group">
@@ -939,6 +939,31 @@
                                             view
                                         </a>
                                     @endif
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card p-3">
+                        <h5> Transport Details </h5>
+                        <hr>
+                        <br>
+                        <div class="row">
+
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Transport Name</label>
+                                    <p>{{ $user->transport ?? '-' }}</p>
+                                </div>
+
+                            </div>
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Booked to</label>
+                                    <p>{{ $user->booked_to ?? '-' }}</p>
                                 </div>
 
                             </div>

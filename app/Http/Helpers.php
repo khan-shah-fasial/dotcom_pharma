@@ -3955,3 +3955,19 @@ if (! function_exists('getStoredIPLocation')) {
         }
     }
 }
+
+
+if (!function_exists('format_dd_mm_yy')) {
+    function format_dd_mm_yy($date)
+    {
+        if (empty($date)) {
+            return '-';
+        }
+
+        if ($date == '0000-00-00' || $date == '1970-01-01') {
+            return '-';
+        }
+
+        return \Carbon\Carbon::parse($date)->format('d-m-Y');
+    }
+}

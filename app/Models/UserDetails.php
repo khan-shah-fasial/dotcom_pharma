@@ -10,6 +10,7 @@ class UserDetails extends Model
     protected $fillable = [
         'user_id',
         'type_option',
+        'booked_to',
         'gst_no',
         'gst_no_file',
         'iec_no',

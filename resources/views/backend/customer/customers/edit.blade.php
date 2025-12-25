@@ -829,6 +829,26 @@
                         </div>
                     </div>
                 </div>
+
+
+
+                {{-- Transport details --}}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h5 class="mb-3">{{ translate('Transport Details') }}</h5>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="transport">{{ translate('Transport Name') }} *</label>
+                        <input type="text" id="transport" name="transport" class="form-control" value="{{ old('transport', $details->transport) }}" required>
+                        @error('transport') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="booked_to">{{ translate('Booked To') }} *</label>
+                        <input type="text" id="booked_to" name="booked_to" class="form-control" value="{{ old('booked_to', $details->booked_to) }}" required>
+                        @error('booked_to') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
             </div>
             <div class="card-footer text-right">
                 <a href="{{ route('customers.business') }}" class="btn btn-soft-secondary">{{ translate('Cancel') }}</a>
