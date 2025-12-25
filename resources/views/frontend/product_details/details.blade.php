@@ -92,8 +92,14 @@
 
 
         <div class="col-12 pl-0 d-flex mt-md-3">
-            <span class="detail-font-14px detail-gray-color">{{ translate('MRP') }}:</span>
-            <span id="mrp-unit" class="detail-font-14px detail-gray-color"></span>
+            <span class="fs-18 detail-gray-color">{{ translate('MRP') }}:</span>
+            <span id="mrp-unit" class="fs-18 detail-gray-color"></span>
+        </div>
+
+        <div class="col-12 pl-0 mt-md-2 mt-1 pb-0">
+            {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
+            {{-- <span id="tax-product-details" class="text-secondary fs-14"></span> --}}
+            <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
         </div>
 
 
@@ -167,11 +173,7 @@
             </div> --}}
         {{-- @endauth --}}
 
-        <div class="col-12 pl-0 mt-md-3 mt-2 pb-0">
-            {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
-            {{-- <span id="tax-product-details" class="text-secondary fs-14"></span> --}}
-            <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
-        </div>
+
 
 
 
@@ -437,592 +439,859 @@
             $initialExpiryFormatted = $initialExpiry ? \Carbon\Carbon::parse($initialExpiry)->format('d M Y') : '-';
         @endphp
 
-        <div class="col-12 d-flex flex-wrap mt-4 pt-4 pb-2 pl-md-4 pl-3 pr-md-2 pr-0 detail-border-1px bg-white">
-            <div class="col-12 col-md-12 text-left pl-0 pr-0">
-                <h5 class="fe-semibold mb-4">Batch & Stock Details</h5>
-            </div>
 
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class="">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tag w-5 h-5">
-                                <path
-                                    d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z">
-                                </path>
-                                <circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle>
-                            </svg>
-                        </div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('SKU') }}:</p>
-                            <p id="sku-product-details" class="fw-500 fs-14 mb-0"></p>
-                        </div>
+        <div class="productAccordion_box mt-4 w-100">
+            <div class="accordion accordion-custom" id="productAccordion">
+
+                {{-- Batch & Stock Details --}}
+                <div class="card">
+                    <div class="card-header" id="headingBatchStock">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link accordion-custom" type="button" data-toggle="collapse"
+                                data-target="#collapseBatchStock" aria-expanded="true"
+                                aria-controls="collapseBatchStock">
+                                {{ translate('Batch & Stock Details') }}
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </h2>
                     </div>
 
-                </div>
-            </div>
+                    <div id="collapseBatchStock" class="collapse show" aria-labelledby="headingBatchStock"
+                        data-parent="#productAccordion">
+                        <div class="card-body p-0">
+                            <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-tag w-5 h-5">
+                                                    <path
+                                                        d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z">
+                                                    </path>
+                                                    <circle cx="7.5" cy="7.5" r=".5" fill="currentColor">
+                                                    </circle>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('SKU') }}:</p>
+                                                <p id="sku-product-details" class="fw-500 fs-14 mb-0"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class="">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hash w-5 h-5"><line x1="4" x2="20" y1="9" y2="9"></line><line x1="4" x2="20" y1="15" y2="15"></line><line x1="10" x2="8" y1="3" y2="21"></line><line x1="16" x2="14" y1="3" y2="21"></line></svg>
-                        </div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">Batch / Lot. No:</p>
-                            <p id="batch-lot-product-details" class="fw-500 fs-14 mb-0">AEJ-1301H@3</p>
-                        </div>
-                    </div>
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-hash w-5 h-5">
+                                                    <line x1="4" x2="20" y1="9"
+                                                        y2="9"></line>
+                                                    <line x1="4" x2="20" y1="15"
+                                                        y2="15"></line>
+                                                    <line x1="10" x2="8" y1="3"
+                                                        y2="21"></line>
+                                                    <line x1="16" x2="14" y1="3"
+                                                        y2="21"></line>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">Batch / Lot. No:</p>
+                                                <p id="batch-lot-product-details" class="fw-500 fs-14 mb-0">
+                                                    AEJ-1301H@3</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                </div>
-            </div>
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-package w-5 h-5">
+                                                    <path
+                                                        d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
+                                                    </path>
+                                                    <path d="M12 22V12"></path>
+                                                    <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
+                                                    <path d="m7.5 4.27 9 5.15"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Stock Available') }}:</p>
+                                                <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-package w-5 h-5"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path><path d="m7.5 4.27 9 5.15"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Stock Available') }}:</p>
-                            <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-calendar w-5 h-5">
+                                                    <path d="M8 2v4"></path>
+                                                    <path d="M16 2v4"></path>
+                                                    <rect width="18" height="18" x="3" y="4" rx="2">
+                                                    </rect>
+                                                    <path d="M3 10h18"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Expiry Date') }}:</p>
+                                                <p id="product-expiry-date" class="fw-500 fs-14 mb-0">
+                                                    {{ $initialExpiryFormatted }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-            <div class="col-12 col-md-6 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class="">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar w-5 h-5"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
-                        </div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Expiry Date') }}:</p>
-                            <p id="product-expiry-date" class="fw-500 fs-14 mb-0">{{ $initialExpiryFormatted }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-layers w-5 h-5">
+                                                    <path
+                                                        d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z">
+                                                    </path>
+                                                    <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path>
+                                                    <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Minimum Pack Size') }}:</p>
+                                                <p id="min-package-count-product-details" class="fw-500 fs-14 mb-0">
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-5 h-5"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"></path><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Minimum Pack Size') }}:
-                            </p>
-                            <p id="min-package-count-product-details" class="fw-500 fs-14 mb-0"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-cart w-5 h-5"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">Minimum Order Qty:
-                            </p>
-                            <p class="fw-500 fs-14 mb-0">06</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- =================================================== --}}
-        </div>
-
-        <div class="col-12 d-flex flex-wrap mt-4 pt-4 pb-2 pl-md-4 pl-3 pr-md-2 pr-0 detail-border-1px bg-white">
-            <div class="col-12 col-md-12 text-left pl-0 pr-0">
-                <h5 class="fe-semibold mb-4">Product Specifications</h5>
-            </div>
-
-            @if ($detailedProduct->pharma_categories)
-                <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
-                    <div class="detail-product-specs rounded h-100">
-
-
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-list w-5 h-5"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg></div>
-                            <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">
-                                    {{ translate('Pharma Categories') }}:</p>
-                                <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->pharma_categories ?? '-' }}</p>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            @endif
-
-            @if ($detailedProduct->product_form)
-                <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
-                    <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flask-conical w-5 h-5"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"></path><path d="M8.5 2h7"></path><path d="M7 16h10"></path></svg></div>
-                            <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Product Form') }}:
-                                </p>
-                                <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_form ?? '-' }}</p>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            @endif
-
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-tree w-5 h-5"><path d="M20 10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"></path><path d="M20 21a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.9a1 1 0 0 1-.88-.55l-.42-.85a1 1 0 0 0-.92-.6H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"></path><path d="M3 5a2 2 0 0 0 2 2h3"></path><path d="M3 3v13a2 2 0 0 0 2 2h3"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Category') }}:</p>
-                            <p class="fw-500 fs-14 mb-0 pl21">{{ ucfirst($category_name ?? '-') }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users w-5 h-5">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">Group:</p>
-                            <p class="fw-500 fs-14 mb-0 pl21">VI</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            @if ($detailedProduct->product_type || $detailedProduct->product_material)
-                {{-- Type --}}
-                @if ($detailedProduct->product_type)
-                    <div class="col-6 col-md-6 pl-0 mb-3">
-                        <div class="detail-product-specs rounded h-100">
-                            <div class="display_flex3">
-                                <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-syringe w-5 h-5"><path d="m18 2 4 4"></path><path d="m17 7 3-3"></path><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"></path><path d="m9 11 4 4"></path><path d="m5 19-3 3"></path><path d="m14 4 6 6"></path></svg></div>
-                                <div class="">
-                                    <p class="detail-font-14px detail-gray-color mb-0"> {{ translate('Type') }}:</p>
-                                    <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_type ?? '-' }}</p>
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-shopping-cart w-5 h-5">
+                                                    <circle cx="8" cy="21" r="1"></circle>
+                                                    <circle cx="19" cy="21" r="1"></circle>
+                                                    <path
+                                                        d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12">
+                                                    </path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">Minimum Order Qty:
+                                                </p>
+                                                <p class="fw-500 fs-14 mb-0">06</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                @endif
+                </div>
 
-                {{-- Material --}}
-                @if ($detailedProduct->product_material)
-                    <div class="col-6 col-md-6 pl-0 mb-3">
-                        <div class="detail-product-specs rounded h-100">
-                            <div class="display_flex3">
-                                <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-droplets w-5 h-5"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"></path><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"></path></svg></div>
-                                <div class="">
-                                    <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Material') }}:
-                                    </p>
-                                    <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_material ?? '-' }}
-                                    </p>
+                {{-- Product Specifications --}}
+                <div class="card">
+                    <div class="card-header" id="headingProductSpecs">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link accordion-custom collapsed" type="button"
+                                data-toggle="collapse" data-target="#collapseProductSpecs" aria-expanded="false"
+                                aria-controls="collapseProductSpecs">
+                                {{ translate('Product Specifications') }}
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </h2>
+                    </div>
+
+                    <div id="collapseProductSpecs" class="collapse" aria-labelledby="headingProductSpecs">
+                        <div class="card-body p-0">
+                            <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
+                                @if ($detailedProduct->pharma_categories)
+                                    <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
+                                        <div class="detail-product-specs rounded h-100">
+                                            <div class="display_flex3">
+                                                <div class="">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                        height="20" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        class="lucide lucide-clipboard-list w-5 h-5">
+                                                        <rect width="8" height="4" x="8" y="2"
+                                                            rx="1" ry="1"></rect>
+                                                        <path
+                                                            d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2">
+                                                        </path>
+                                                        <path d="M12 11h4"></path>
+                                                        <path d="M12 16h4"></path>
+                                                        <path d="M8 11h.01"></path>
+                                                        <path d="M8 16h.01"></path>
+                                                    </svg>
+                                                </div>
+                                                <div class="">
+                                                    <p class="detail-font-14px detail-gray-color mb-0">
+                                                        {{ translate('Pharma Categories') }}:
+                                                    </p>
+                                                    <p class="fw-500 fs-14 mb-0">
+                                                        {{ $detailedProduct->pharma_categories ?? '-' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if ($detailedProduct->product_form)
+                                    <div class="col-12 col-md-12 pl-0 mb-md-3 mb-3">
+                                        <div class="detail-product-specs rounded h-100">
+                                            <div class="display_flex3">
+                                                <div class="">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                        height="20" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        class="lucide lucide-flask-conical w-5 h-5">
+                                                        <path
+                                                            d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2">
+                                                        </path>
+                                                        <path d="M8.5 2h7"></path>
+                                                        <path d="M7 16h10"></path>
+                                                    </svg>
+                                                </div>
+                                                <div class="">
+                                                    <p class="detail-font-14px detail-gray-color mb-0">
+                                                        {{ translate('Product Form') }}:
+                                                    </p>
+                                                    <p class="fw-500 fs-14 mb-0">
+                                                        {{ $detailedProduct->product_form ?? '-' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-folder-tree w-5 h-5">
+                                                    <path
+                                                        d="M20 10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z">
+                                                    </path>
+                                                    <path
+                                                        d="M20 21a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.9a1 1 0 0 1-.88-.55l-.42-.85a1 1 0 0 0-.92-.6H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z">
+                                                    </path>
+                                                    <path d="M3 5a2 2 0 0 0 2 2h3"></path>
+                                                    <path d="M3 3v13a2 2 0 0 0 2 2h3"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Category') }}:</p>
+                                                <p class="fw-500 fs-14 mb-0 pl21">{{ ucfirst($category_name ?? '-') }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-users w-5 h-5">
+                                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                                    <circle cx="9" cy="7" r="4"></circle>
+                                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">Group:</p>
+                                                <p class="fw-500 fs-14 mb-0 pl21">VI</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if ($detailedProduct->product_type || $detailedProduct->product_material)
+                                    @if ($detailedProduct->product_type)
+                                        <div class="col-6 col-md-6 pl-0 mb-3">
+                                            <div class="detail-product-specs rounded h-100">
+                                                <div class="display_flex3">
+                                                    <div class="">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                            height="20" viewBox="0 0 24 24" fill="none"
+                                                            stroke="currentColor" stroke-width="2"
+                                                            stroke-linecap="round" stroke-linejoin="round"
+                                                            class="lucide lucide-syringe w-5 h-5">
+                                                            <path d="m18 2 4 4"></path>
+                                                            <path d="m17 7 3-3"></path>
+                                                            <path
+                                                                d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5">
+                                                            </path>
+                                                            <path d="m9 11 4 4"></path>
+                                                            <path d="m5 19-3 3"></path>
+                                                            <path d="m14 4 6 6"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <div class="">
+                                                        <p class="detail-font-14px detail-gray-color mb-0">
+                                                            {{ translate('Type') }}:</p>
+                                                        <p class="fw-500 fs-14 mb-0">
+                                                            {{ $detailedProduct->product_type ?? '-' }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if ($detailedProduct->product_material)
+                                        <div class="col-6 col-md-6 pl-0 mb-3">
+                                            <div class="detail-product-specs rounded h-100">
+                                                <div class="display_flex3">
+                                                    <div class="">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                            height="20" viewBox="0 0 24 24" fill="none"
+                                                            stroke="currentColor" stroke-width="2"
+                                                            stroke-linecap="round" stroke-linejoin="round"
+                                                            class="lucide lucide-droplets w-5 h-5">
+                                                            <path
+                                                                d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z">
+                                                            </path>
+                                                            <path
+                                                                d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97">
+                                                            </path>
+                                                        </svg>
+                                                    </div>
+                                                    <div class="">
+                                                        <p class="detail-font-14px detail-gray-color mb-0">
+                                                            {{ translate('Material') }}:</p>
+                                                        <p class="fw-500 fs-14 mb-0 pl21">
+                                                            {{ $detailedProduct->product_material ?? '-' }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endif
+
+                                @if (!empty($detailedProduct->tags))
+                                    <div class="col-12 col-md-12 pl-0 mb-3">
+                                        <div class="detail-product-specs rounded h-100">
+                                            <div class="display_flex3">
+                                                <div class="">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                        height="20" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        class="lucide lucide-tags-icon lucide-tags">
+                                                        <path
+                                                            d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z" />
+                                                        <path
+                                                            d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193" />
+                                                        <circle cx="10.5" cy="6.5" r=".5"
+                                                            fill="currentColor" />
+                                                    </svg>
+                                                </div>
+                                                <div class="">
+                                                    <p class="detail-font-14px detail-gray-color mb-1">
+                                                        {{ translate('Tags') }}</p>
+                                                    <p class="fw-400 fs-12 mb-0 pl21 tags-span-main">
+                                                        @foreach (explode(',', $detailedProduct->tags) as $tag)
+                                                            <span><a href="/search"
+                                                                    target="_blank">{{ trim($tag) }}</a></span>
+                                                        @endforeach
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div id="coaParentDiv" class="col-12 col-md-12 pl-0 mb-3" style="display: none;">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
+                                                    <path
+                                                        d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z">
+                                                    </path>
+                                                    <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                                    <path d="M10 9H8"></path>
+                                                    <path d="M16 13H8"></path>
+                                                    <path d="M16 17H8"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('COA') }}:</p>
+                                                <div id="coaDiv"></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
                         </div>
-                    </div>
-                @endif
-            @endif
-
-            {{-- Min Pack Size --}}
-            {{-- @if ($detailedProduct->product_min_pack_size) --}}
-
-
-
-            {{-- <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-package w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
-                                <path
-                                    d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
-                                </path>
-                                <path d="M12 22V12"></path>
-                                <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
-                                <path d="m7.5 4.27 9 5.15"></path>
-                            </svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Per Count') }}:</p>
-                            <p id="package-count-product-details" class="fw-500 fs-14 mb-0"></p>
-                        </div>
-                    </div>
-
-                </div>
-            </div> --}}
-
-            {{-- @endif --}}
-
-            {{-- @if (!empty($detailedProduct->product_exp_date))
-                <div class="col-12 col-md-6 pl-0 mb-3">
-                    <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
-                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                    class="lucide lucide-calendar w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
-                                    <path d="M8 2v4"></path>
-                                    <path d="M16 2v4"></path>
-                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-                                    <path d="M3 10h18"></path>
-                                </svg></div>
-                            <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Expiry Date') }}:</p>
-                                <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_exp_date ?? '-' }}</p>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
-            @endif --}}
 
-
-            @if (!empty($detailedProduct->tags))
-                <div class="col-12 col-md-12 pl-0 mb-3">
-                    <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20"
-                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                    class="lucide lucide-tags-icon lucide-tags">
-                                    <path
-                                        d="M13.172 2a2 2 0 0 1 1.414.586l6.71 6.71a2.4 2.4 0 0 1 0 3.408l-4.592 4.592a2.4 2.4 0 0 1-3.408 0l-6.71-6.71A2 2 0 0 1 6 9.172V3a1 1 0 0 1 1-1z" />
-                                    <path d="M2 7v6.172a2 2 0 0 0 .586 1.414l6.71 6.71a2.4 2.4 0 0 0 3.191.193" />
-                                    <circle cx="10.5" cy="6.5" r=".5" fill="currentColor" />
-                                </svg></div>
-                            <div class="">
-                                <p class="detail-font-14pxx detail-gray-color mb-1">{{ translate('Tags') }}</p>
-                                <p class="fw-400 fs-12 mb-0 pl21 tags-span-main">
-                                    @foreach (explode(',', $detailedProduct->tags) as $tag)
-                                        <span> <a href="/search" target="_blank">{{ trim($tag) }}</a> </span>
-                                    @endforeach
-                                </p>
-
-
-
-                            </div>
-                        </div>
-
+                {{-- Tax And Origin Details --}}
+                <div class="card">
+                    <div class="card-header" id="headingTaxOrigin">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link accordion-custom collapsed" type="button"
+                                data-toggle="collapse" data-target="#collapseTaxOrigin" aria-expanded="false"
+                                aria-controls="collapseTaxOrigin">
+                                {{ translate('Tax And Origin Details') }}
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </h2>
                     </div>
-                </div>
-            @endif
 
+                    <div id="collapseTaxOrigin" class="collapse" aria-labelledby="headingTaxOrigin">
+                        <div class="card-body p-0">
+                            <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
+                                @if (!empty($detailedProduct->product_hsn))
+                                    <div class="col-12 col-md-6 pl-0 mb-3">
+                                        <div class="detail-product-specs rounded h-100">
+                                            <div class="display_flex3">
+                                                <div class="">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                        height="20" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        class="lucide lucide-file-text w-5 h-5">
+                                                        <path
+                                                            d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z">
+                                                        </path>
+                                                        <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                                        <path d="M10 9H8"></path>
+                                                        <path d="M16 13H8"></path>
+                                                        <path d="M16 17H8"></path>
+                                                    </svg>
+                                                </div>
+                                                <div class="">
+                                                    <p class="detail-font-14px detail-gray-color mb-0">
+                                                        {{ translate('HSN Code') }}:</p>
+                                                    <p class="fw-500 fs-14 mb-0 pl21">
+                                                        {{ $detailedProduct->product_hsn ?? '-' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
 
+                                @if (!empty($detailedProduct->product_hs))
+                                    <div class="col-12 col-md-6 pl-0 mb-3">
+                                        <div class="detail-product-specs rounded h-100">
+                                            <div class="display_flex3">
+                                                <div class="">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                        height="20" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" class="lucide lucide-receipt w-5 h-5">
+                                                        <path
+                                                            d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z">
+                                                        </path>
+                                                        <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path>
+                                                        <path d="M12 17.5v-11"></path>
+                                                    </svg>
+                                                </div>
+                                                <div class="">
+                                                    <p class="detail-font-14px detail-gray-color mb-0">
+                                                        {{ translate('HS Code') }}:</p>
+                                                    <p class="fw-500 fs-14 mb-0 pl21">
+                                                        {{ $detailedProduct->product_hs ?? '-' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
 
-            {{-- <div id="rolePriceParentDiv" class="col-12 col-md-12 pl-0 mb-3" style="display: none;">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
-                                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-                                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                                <path d="M10 9H8"></path>
-                                <path d="M16 13H8"></path>
-                                <path d="M16 17H8"></path>
-                            </svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Role Base Price') }}:</p>
+                                @if ($detailedProduct->product_origin)
+                                    <div class="col-12 col-md-6 pl-0 mb-3">
+                                        <div class="detail-product-specs rounded h-100">
+                                            <div class="display_flex3">
+                                                <div class="">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20"
+                                                        height="20" viewBox="0 0 24 24" fill="none"
+                                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                        stroke-linejoin="round" class="lucide lucide-map-pin w-5 h-5">
+                                                        <path
+                                                            d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0">
+                                                        </path>
+                                                        <circle cx="12" cy="10" r="3"></circle>
+                                                    </svg>
+                                                </div>
+                                                <div class="">
+                                                    <p class="detail-font-14px detail-gray-color mb-0">
+                                                        {{ translate('Country of Origin') }}:
+                                                    </p>
+                                                    <p class="fw-500 fs-14 mb-0">
+                                                        {{ $detailedProduct->product_origin ?? '-' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
 
-                            <div id="rolePriceDiv" style="display: none;">
-                                <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-                                    <table id="rolePriceTable" class="min-w-[300px] border border-gray-200 rounded-lg text-center">
-                                        <thead class="bg-gray-100">
-                                            <tr>
-                                                <th
-                                                    class="px-6 py-3 text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
-                                                    Role
-                                                </th>
-                                                <th
-                                                    class="px-6 py-3 text-sm font-medium text-gray-600 uppercase tracking-wider text-center">
-                                                    Price (₹)
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-100 bg-white"></tbody>
-                                    </table>
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-indian-rupee w-5 h-5">
+                                                    <path d="M6 3h12"></path>
+                                                    <path d="M6 8h12"></path>
+                                                    <path d="m6 13 8.5 8"></path>
+                                                    <path d="M6 13h3"></path>
+                                                    <path d="M9 13c6.667 0 6.667-10 0-10"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">TAX:</p>
+                                                <p class="fw-500 fs-14 mb-0">5%</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
-
                 </div>
-            </div> --}}
 
-
-            <div id="coaParentDiv" class="col-12 col-md-12 pl-0 mb-3" style="display: none;">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-file-text w-5 h-5 text-medical-info mt-0.5 flex-shrink-0">
-                                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-                                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                                <path d="M10 9H8"></path>
-                                <path d="M16 13H8"></path>
-                                <path d="M16 17H8"></path>
-                            </svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('COA') }}:</p>
-
-                            <div id="coaDiv"></div>
-
-                        </div>
+                {{-- Packing Details --}}
+                <div class="card">
+                    <div class="card-header" id="headingPackingDetails">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link accordion-custom collapsed" type="button"
+                                data-toggle="collapse" data-target="#collapsePackingDetails" aria-expanded="false"
+                                aria-controls="collapsePackingDetails">
+                                {{ translate('Packing Details') }}
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </h2>
                     </div>
 
-                </div>
-            </div>
+                    <div id="collapsePackingDetails" class="collapse" aria-labelledby="headingPackingDetails">
+                        <div class="card-body p-0">
+                            <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
+                                <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-box w-5 h-5">
+                                                    <path
+                                                        d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z">
+                                                    </path>
+                                                    <path d="m3.3 7 8.7 5 8.7-5"></path>
+                                                    <path d="M12 22V12"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Qty per Piece') }}:</p>
+                                                <p id="qty-per-piece-details" class="fw-500 fs-14 mb-0 clamped-text">
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
+                                <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-scale w-5 h-5">
+                                                    <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path>
+                                                    <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path>
+                                                    <path d="M7 21h10"></path>
+                                                    <path d="M12 3v18"></path>
+                                                    <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Weight of Each Piece') }}:</p>
+                                                <p id="weight-per-piece-details"
+                                                    class="fw-500 fs-14 mb-0 clamped-text"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
+                                <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-ruler w-5 h-5">
+                                                    <path
+                                                        d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z">
+                                                    </path>
+                                                    <path d="m14.5 12.5 2-2"></path>
+                                                    <path d="m11.5 9.5 2-2"></path>
+                                                    <path d="m8.5 6.5 2-2"></path>
+                                                    <path d="m17.5 15.5 2-2"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Piece Dimensions (L×W×H)') }}:</p>
+                                                <p id="dimension-per-piece-details"
+                                                    class="fw-500 fs-14 mb-0 clamped-text"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-        </div>
+                                <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-layers w-5 h-5">
+                                                    <path
+                                                        d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z">
+                                                    </path>
+                                                    <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path>
+                                                    <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Qty per Buffer Box / Shrink Pack') }}:</p>
+                                                <p id="qty-per-buffer-details" class="fw-500 fs-14 mb-0 clamped-text">
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-        <div class="col-12 d-flex flex-wrap mt-4 pt-4 pb-2 pl-md-4 pl-3 pr-md-2 pr-0 detail-border-1px bg-white">
-            <div class="col-12 col-md-12 text-left pl-0 pr-0">
-                <h5 class="fe-semibold mb-4">Taz And Origin Details</h5>
-            </div>
+                                <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-weight w-5 h-5">
+                                                    <circle cx="12" cy="5" r="3"></circle>
+                                                    <path
+                                                        d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z">
+                                                    </path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Weight of Buffer Box / Shrink Pack') }}:</p>
+                                                <p id="weight-buffer-details" class="fw-500 fs-14 mb-0 clamped-text">
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-            @if (!empty($detailedProduct->product_hsn))
-                <div class="col-12 col-md-6 pl-0 mb-3">
-                    <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></div>
-                            <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('HSN Code') }}:</p>
-                                <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_hsn ?? '-' }}</p>
+                                <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-move3d w-5 h-5">
+                                                    <path d="M5 3v16h16"></path>
+                                                    <path d="m5 19 6-6"></path>
+                                                    <path d="m2 6 3-3 3 3"></path>
+                                                    <path d="m18 16 3 3-3 3"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Buffer Dimensions (L×W×H)') }}:</p>
+                                                <p id="dimension-buffer-details"
+                                                    class="fw-500 fs-14 mb-0 clamped-text"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-archive w-5 h-5">
+                                                    <rect width="20" height="5" x="2" y="3" rx="1">
+                                                    </rect>
+                                                    <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path>
+                                                    <path d="M10 12h4"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Total Qty per Case') }}:</p>
+                                                <p id="qty-per-case-details" class="fw-500 fs-14 mb-0 clamped-text">
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-container w-5 h-5">
+                                                    <path
+                                                        d="M22 7.7c0-.6-.4-1.2-.8-1.5l-6.3-3.9a1.72 1.72 0 0 0-1.7 0l-10.3 6c-.5.2-.9.8-.9 1.4v6.6c0 .5.4 1.2.8 1.5l6.3 3.9a1.72 1.72 0 0 0 1.7 0l10.3-6c.5-.3.9-1 .9-1.5Z">
+                                                    </path>
+                                                    <path d="M10 21.9V14L2.1 9.1"></path>
+                                                    <path d="m10 14 11.9-6.9"></path>
+                                                    <path d="M14 19.8v-8.1"></path>
+                                                    <path d="M18 17.5V9.4"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Total Weight per Case') }}:</p>
+                                                <p id="weight-case-details" class="fw-500 fs-14 mb-0 clamped-text">
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-maximize w-5 h-5">
+                                                    <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                                                    <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                                                    <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                                                    <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Case Dimensions (L×W×H)') }}:</p>
+                                                <p id="dimension-case-details" class="fw-500 fs-14 mb-0 clamped-text">
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="line-detail-page mb-3"></div>
+
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-scale w-5 h-5">
+                                                    <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path>
+                                                    <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path>
+                                                    <path d="M7 21h10"></path>
+                                                    <path d="M12 3v18"></path>
+                                                    <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Weight / Volume') }}:</p>
+                                                <p id="weight-volume-product-details" class="fw-500 fs-14 mb-0"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-ruler w-5 h-5">
+                                                    <path
+                                                        d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z">
+                                                    </path>
+                                                    <path d="m14.5 12.5 2-2"></path>
+                                                    <path d="m11.5 9.5 2-2"></path>
+                                                    <path d="m8.5 6.5 2-2"></path>
+                                                    <path d="m17.5 15.5 2-2"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Dimensions') }}:</p>
+                                                <p id="dimensions-product-details" class="fw-500 fs-14 mb-0"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
                     </div>
-                </div>
-            @endif
-
-            @if (!empty($detailedProduct->product_hs))
-                <div class="col-12 col-md-6 pl-0 mb-3">
-                    <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-receipt w-5 h-5"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 17.5v-11"></path></svg></div>
-                            <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">{{ translate('HS Code') }}:</p>
-                                <p class="fw-500 fs-14 mb-0 pl21">{{ $detailedProduct->product_hs ?? '-' }}</p>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            @endif
-
-            {{-- Origin --}}
-            @if ($detailedProduct->product_origin)
-                <div class="col-12 col-md-6 pl-0 mb-3">
-                    <div class="detail-product-specs rounded h-100">
-                        <div class="display_flex3">
-                            <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin w-5 h-5"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
-                            <div class="">
-                                <p class="detail-font-14px detail-gray-color mb-0">
-                                    {{ translate('Country of Origin') }}:</p>
-                                <p class="fw-500 fs-14 mb-0">{{ $detailedProduct->product_origin ?? '-' }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-indian-rupee w-5 h-5"><path d="M6 3h12"></path><path d="M6 8h12"></path><path d="m6 13 8.5 8"></path><path d="M6 13h3"></path><path d="M9 13c6.667 0 6.667-10 0-10"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">TAX:</p>
-                            <p class="fw-500 fs-14 mb-0">5%</p>
-                        </div>
-                    </div>
-
                 </div>
             </div>
-
-            {{-- ==================== --}}
         </div>
-
-
-
-
-        <div class="col-12 d-flex flex-wrap mt-4 pt-4 pb-2 pl-md-4 pl-3 pr-md-2 pr-0 detail-border-1px bg-white">
-            <div class="col-12 col-md-12 text-left pl-0 pr-0">
-                <h5 class="fe-semibold mb-4">Packing Details</h5>
-            </div>
-
-            {{-- Packaging Breakdown (individual cards) --}}
-            <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box w-5 h-5"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Qty per Piece') }}:</p>
-                            <p id="qty-per-piece-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale w-5 h-5"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="M7 21h10"></path><path d="M12 3v18"></path><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">
-                                {{ translate('Weight of Each Piece') }}:</p>
-                            <p id="weight-per-piece-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ruler w-5 h-5"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"></path><path d="m14.5 12.5 2-2"></path><path d="m11.5 9.5 2-2"></path><path d="m8.5 6.5 2-2"></path><path d="m17.5 15.5 2-2"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">
-                                {{ translate('Piece Dimensions (L×W×H)') }}:</p>
-                            <p id="dimension-per-piece-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layers w-5 h-5"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"></path><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">
-                                {{ translate('Qty per Buffer Box / Shrink Pack') }}:</p>
-                            <p id="qty-per-buffer-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-weight w-5 h-5"><circle cx="12" cy="5" r="3"></circle><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">
-                                {{ translate('Weight of Buffer Box / Shrink Pack') }}:</p>
-                            <p id="weight-buffer-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move3d w-5 h-5"><path d="M5 3v16h16"></path><path d="m5 19 6-6"></path><path d="m2 6 3-3 3 3"></path><path d="m18 16 3 3-3 3"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">
-                                {{ translate('Buffer Dimensions (L×W×H)') }}:</p>
-                            <p id="dimension-buffer-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-archive w-5 h-5"><rect width="20" height="5" x="2" y="3" rx="1"></rect><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"></path><path d="M10 12h4"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Total Qty per Case') }}:
-                            </p>
-                            <p id="qty-per-case-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-container w-5 h-5"><path d="M22 7.7c0-.6-.4-1.2-.8-1.5l-6.3-3.9a1.72 1.72 0 0 0-1.7 0l-10.3 6c-.5.2-.9.8-.9 1.4v6.6c0 .5.4 1.2.8 1.5l6.3 3.9a1.72 1.72 0 0 0 1.7 0l10.3-6c.5-.3.9-1 .9-1.5Z"></path><path d="M10 21.9V14L2.1 9.1"></path><path d="m10 14 11.9-6.9"></path><path d="M14 19.8v-8.1"></path><path d="M18 17.5V9.4"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">
-                                {{ translate('Total Weight per Case') }}:</p>
-                            <p id="weight-case-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4 pl-0 mb-md-3 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize w-5 h-5"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">
-                                {{ translate('Case Dimensions (L×W×H)') }}:</p>
-                            <p id="dimension-case-details" class="fw-500 fs-14 mb-0 clamped-text"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="line-detail-page mb-3"></div>
-
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale w-5 h-5"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="M7 21h10"></path><path d="M12 3v18"></path><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Weight / Volume') }}:</p>
-                            <p id="weight-volume-product-details" class="fw-500 fs-14 mb-0"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-6 pl-0 mb-3">
-                <div class="detail-product-specs rounded h-100">
-                    <div class="display_flex3">
-                        <div class=""><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ruler w-5 h-5"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"></path><path d="m14.5 12.5 2-2"></path><path d="m11.5 9.5 2-2"></path><path d="m8.5 6.5 2-2"></path><path d="m17.5 15.5 2-2"></path></svg></div>
-                        <div class="">
-                            <p class="detail-font-14px detail-gray-color mb-0">{{ translate('Dimentions') }}:</p>
-                            <p id="dimentions-product-details" class="fw-500 fs-14 mb-0"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            {{-- =============================== --}}
-        </div>
-
-
-
-
-
-
     </div>
 
 
@@ -1504,15 +1773,16 @@
                     <div class="card">
                         <div class="card-header" id="headingDescription">
                             <h2 class="mb-0">
-                                <button class="btn btn-link" type="button" data-toggle="collapse"
-                                    data-target="#collapseDescription" aria-expanded="true"
+                                <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                    data-target="#collapseDescription" aria-expanded="false"
                                     aria-controls="collapseDescription">
                                     {{ translate('Description') }}
                                     <i class="fas fa-chevron-down"></i>
                                 </button>
                             </h2>
                         </div>
-                        <div id="collapseDescription" class="collapse show" aria-labelledby="headingDescription"
+
+                        <div id="collapseDescription" class="collapse" aria-labelledby="headingDescription"
                             data-parent="#productAccordion">
                             <div class="card-body aiz-editor-data">
                                 {!! $detailedProduct->getTranslation('description') !!}
@@ -1536,7 +1806,8 @@
                                 </h2>
                             </div>
                             <div id="collapseDynamic{{ $index }}" class="collapse"
-                                aria-labelledby="headingDynamic{{ $index }}" data-parent="#productAccordion">
+                                aria-labelledby="headingDynamic{{ $index }}"
+                                data-parent="#productAccordion">
                                 <div class="card-body aiz-editor-data">
                                     {!! $tab['content'] ?? '' !!}
                                 </div>
