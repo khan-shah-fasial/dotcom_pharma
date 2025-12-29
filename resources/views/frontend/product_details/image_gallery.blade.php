@@ -41,13 +41,7 @@
     <div class="col-12 pl-md-0">
         <div class="aiz-carousel product-gallery arrow-inactive-transparent arrow-lg-none product_dt_img"
             data-nav-for='.product-gallery-thumb' data-fade='true' data-auto-height='true' data-arrows='true'>
-            @if ($videoEmbed)
-                <div class="carousel-box img-zoom rounded-0">
-                    <div class="embed-responsive embed-responsive-16by9">
-                        <iframe class="embed-responsive-item" src="{{ $videoEmbed }}" allowfullscreen></iframe>
-                    </div>
-                </div>
-            @endif
+
             @if ($detailedProduct->digital == 0)
                 @foreach ($detailedProduct->stocks as $key => $stock)
                     @if ($stock->image != null)
@@ -91,7 +85,13 @@
                     @endif
                 </div>
             @endforeach
-
+            @if ($videoEmbed)
+                <div class="carousel-box img-zoom rounded-0">
+                    <div class="embed-responsive embed-responsive-16by9">
+                        <iframe class="embed-responsive-item" src="{{ $videoEmbed }}" allowfullscreen></iframe>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
     <!-- Thumbnail Images -->
@@ -99,25 +99,7 @@
         <div class="aiz-carousel half-outside-arrow product-gallery-thumb" data-items='7' data-nav-for='.product-gallery'
             data-focus-select='true' data-arrows='true' data-vertical='false' data-auto-height='true'>
 
-            @if ($videoEmbed)
-                <div class="carousel-box c-pointer rounded-0">
-                    @if ($videoThumb)
-                        <div class="position-relative d-inline-block">
-                            <img class="lazyload mw-100 size-60px mx-auto border p-1"
-                                src="{{ static_asset('assets/img/placeholder.jpg') }}"
-                                data-src="{{ $videoThumb }}"
-                                onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                            <span class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center" style="top:0;left:0;">
-                                <i class="las la-play-circle text-primary" style="font-size: 24px;"></i>
-                            </span>
-                        </div>
-                    @else
-                        <div class="mw-100 size-60px mx-auto border p-1 d-flex align-items-center justify-content-center bg-light">
-                            <i class="las la-play-circle text-primary" style="font-size: 24px;"></i>
-                        </div>
-                    @endif
-                </div>
-            @endif
+
             @if ($detailedProduct->digital == 0)
                 @foreach ($detailedProduct->stocks as $key => $stock)
                     @if ($stock->image != null)
@@ -162,7 +144,25 @@
                 </div>
             @endforeach
 
-            
+            @if ($videoEmbed)
+                <div class="carousel-box c-pointer rounded-0">
+                    @if ($videoThumb)
+                        <div class="position-relative d-inline-block">
+                            <img class="lazyload mw-100 size-60px mx-auto border p-1"
+                                src="{{ static_asset('assets/img/placeholder.jpg') }}"
+                                data-src="{{ $videoThumb }}"
+                                onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                            <span class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center" style="top:0;left:0;">
+                                <i class="las la-play-circle text-primary" style="font-size: 24px;"></i>
+                            </span>
+                        </div>
+                    @else
+                        <div class="mw-100 size-60px mx-auto border p-1 d-flex align-items-center justify-content-center bg-light">
+                            <i class="las la-play-circle text-primary" style="font-size: 24px;"></i>
+                        </div>
+                    @endif
+                </div>
+            @endif
 
         </div>
     </div>
