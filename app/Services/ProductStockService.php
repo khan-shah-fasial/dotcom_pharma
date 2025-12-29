@@ -75,7 +75,8 @@ class ProductStockService
             }
         } else {
             unset($collection['colors_active'], $collection['colors'], $collection['choice_no']);
-            $qty = $collection['current_stock'];
+            $qty = $collection->get('current_stock', 0);
+            // $qty = $collection['current_stock'];
             $price = $collection['unit_price'];
 
             $mrp_price = $collection['mrp_price'] ?? null;
@@ -244,7 +245,8 @@ class ProductStockService
 
             $variant = ''; // single variant
 
-            $qty = $collection['current_stock'];
+            $qty = $collection->get('current_stock', 0);
+            // $qty = $collection['current_stock'];
             $price = $collection['unit_price'];
             $mrp_price = $collection['mrp_price'] ?? null;
             $length = $collection['length'] ?? null;
