@@ -129,6 +129,14 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="business_district">{{ translate('District') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="business_district"
+                                                    name="business_district" data-selected="{{ $businessDistrict ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
                                                 <label class="form-label" for="business_city_id">{{ translate('City') }}</label>
                                                 <select class="form-control aiz-selectpicker js-location-filter" id="business_city_id"
                                                     name="business_city_id" data-selected="{{ $businessCityId ?? '' }}"
@@ -136,10 +144,18 @@
                                                     <option value="">{{ translate('All') }}</option>
                                                 </select>
                                             </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="business_post">{{ translate('Post') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="business_post"
+                                                    name="business_post" data-selected="{{ $businessPost ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
                                             <div class="col-md-6 mb-0">
-                                                <label class="form-label" for="business_district">{{ translate('District') }}</label>
-                                                <select class="form-control aiz-selectpicker js-location-filter" id="business_district"
-                                                    name="business_district" data-selected="{{ $businessDistrict ?? '' }}"
+                                                <label class="form-label" for="business_village">{{ translate('Village') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="business_village"
+                                                    name="business_village" data-selected="{{ $businessVillage ?? '' }}"
                                                     data-live-search="true">
                                                     <option value="">{{ translate('All') }}</option>
                                                 </select>
@@ -179,6 +195,14 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="personal_district">{{ translate('District') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="personal_district"
+                                                    name="personal_district" data-selected="{{ $personalDistrict ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
                                                 <label class="form-label" for="personal_city_id">{{ translate('City') }}</label>
                                                 <select class="form-control aiz-selectpicker js-location-filter" id="personal_city_id"
                                                     name="personal_city_id" data-selected="{{ $personalCityId ?? '' }}"
@@ -186,10 +210,18 @@
                                                     <option value="">{{ translate('All') }}</option>
                                                 </select>
                                             </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label" for="personal_post">{{ translate('Post') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="personal_post"
+                                                    name="personal_post" data-selected="{{ $personalPost ?? '' }}"
+                                                    data-live-search="true">
+                                                    <option value="">{{ translate('All') }}</option>
+                                                </select>
+                                            </div>
                                             <div class="col-md-6 mb-0">
-                                                <label class="form-label" for="personal_district">{{ translate('District') }}</label>
-                                                <select class="form-control aiz-selectpicker js-location-filter" id="personal_district"
-                                                    name="personal_district" data-selected="{{ $personalDistrict ?? '' }}"
+                                                <label class="form-label" for="personal_village">{{ translate('Village') }}</label>
+                                                <select class="form-control aiz-selectpicker js-location-filter" id="personal_village"
+                                                    name="personal_village" data-selected="{{ $personalVillage ?? '' }}"
                                                     data-live-search="true">
                                                     <option value="">{{ translate('All') }}</option>
                                                 </select>
@@ -667,8 +699,10 @@
             const countryId = $('#' + scope + '_country_id').val();
             if (!countryId) {
                 setLocationOptions(scope, 'state_id', [], '');
-                setLocationOptions(scope, 'city_id', [], '');
                 setLocationOptions(scope, 'district', [], '');
+                setLocationOptions(scope, 'city_id', [], '');
+                setLocationOptions(scope, 'post', [], '');
+                setLocationOptions(scope, 'village', [], '');
                 return;
             }
 
@@ -676,23 +710,6 @@
                 .done(function (resp) {
                     const selected = preserveSelected ? $('#' + scope + '_state_id').data('selected') : '';
                     setLocationOptions(scope, 'state_id', resp.states || [], selected);
-                    populateCities(scope, preserveSelected);
-                });
-        }
-
-        function populateCities(scope, preserveSelected = false) {
-            const countryId = $('#' + scope + '_country_id').val();
-            const stateId = $('#' + scope + '_state_id').val();
-            if (!countryId || !stateId) {
-                setLocationOptions(scope, 'city_id', [], '');
-                setLocationOptions(scope, 'district', [], '');
-                return;
-            }
-
-            $.get("{{ route('customers.location.options') }}", { country_id: countryId, state: stateId, scope: scope })
-                .done(function (resp) {
-                    const selected = preserveSelected ? $('#' + scope + '_city_id').data('selected') : '';
-                    setLocationOptions(scope, 'city_id', resp.cities || [], selected);
                     populateDistricts(scope, preserveSelected);
                 });
         }
@@ -700,17 +717,88 @@
         function populateDistricts(scope, preserveSelected = false) {
             const countryId = $('#' + scope + '_country_id').val();
             const stateId = $('#' + scope + '_state_id').val();
-            const cityId = $('#' + scope + '_city_id').val();
-            if (!countryId || !stateId || !cityId) {
+            if (!countryId || !stateId) {
                 setLocationOptions(scope, 'district', [], '');
+                setLocationOptions(scope, 'city_id', [], '');
+                setLocationOptions(scope, 'post', [], '');
+                setLocationOptions(scope, 'village', [], '');
                 return;
             }
 
-            $.get("{{ route('customers.location.options') }}", { country_id: countryId, state: stateId, city: cityId, scope: scope })
+            $.get("{{ route('customers.location.options') }}", { country_id: countryId, state: stateId, scope: scope })
                 .done(function (resp) {
                     const selected = preserveSelected ? $('#' + scope + '_district').data('selected') : '';
                     setLocationOptions(scope, 'district', resp.districts || [], selected);
+                    populateCities(scope, preserveSelected);
                 });
+        }
+
+        function populateCities(scope, preserveSelected = false) {
+            const countryId = $('#' + scope + '_country_id').val();
+            const stateId = $('#' + scope + '_state_id').val();
+            const districtId = $('#' + scope + '_district').val();
+            const cityId = $('#' + scope + '_city_id').val();
+            if (!countryId || !stateId || !districtId) {
+                setLocationOptions(scope, 'city_id', [], '');
+                setLocationOptions(scope, 'post', [], '');
+                setLocationOptions(scope, 'village', [], '');
+                return;
+            }
+
+            $.get("{{ route('customers.location.options') }}", { country_id: countryId, state: stateId, district: districtId, scope: scope })
+                .done(function (resp) {
+                    const selected = preserveSelected ? $('#' + scope + '_city_id').data('selected') : cityId;
+                    setLocationOptions(scope, 'city_id', resp.cities || [], selected);
+                    populatePosts(scope, preserveSelected);
+                });
+        }
+
+        function populatePosts(scope, preserveSelected = false) {
+            const countryId = $('#' + scope + '_country_id').val();
+            const stateId = $('#' + scope + '_state_id').val();
+            const districtId = $('#' + scope + '_district').val();
+            const cityId = $('#' + scope + '_city_id').val();
+            if (!countryId || !stateId || !districtId || !cityId) {
+                setLocationOptions(scope, 'post', [], '');
+                setLocationOptions(scope, 'village', [], '');
+                return;
+            }
+
+            $.get("{{ route('customers.location.options') }}", {
+                country_id: countryId,
+                state: stateId,
+                district: districtId,
+                city: cityId,
+                scope: scope
+            }).done(function (resp) {
+                const selected = preserveSelected ? $('#' + scope + '_post').data('selected') : '';
+                setLocationOptions(scope, 'post', resp.posts || [], selected);
+                populateVillages(scope, preserveSelected);
+            });
+        }
+
+        function populateVillages(scope, preserveSelected = false) {
+            const countryId = $('#' + scope + '_country_id').val();
+            const stateId = $('#' + scope + '_state_id').val();
+            const districtId = $('#' + scope + '_district').val();
+            const cityId = $('#' + scope + '_city_id').val();
+            const postId = $('#' + scope + '_post').val();
+            if (!countryId || !stateId || !districtId || !cityId || !postId) {
+                setLocationOptions(scope, 'village', [], '');
+                return;
+            }
+
+            $.get("{{ route('customers.location.options') }}", {
+                country_id: countryId,
+                state: stateId,
+                district: districtId,
+                city: cityId,
+                post: postId,
+                scope: scope
+            }).done(function (resp) {
+                const selected = preserveSelected ? $('#' + scope + '_village').data('selected') : '';
+                setLocationOptions(scope, 'village', resp.villages || [], selected);
+            });
         }
 
         $(function () {
@@ -726,15 +814,19 @@
                 });
 
                 $('#' + scope + '_state_id').on('change', function () {
-                    populateCities(scope, false);
-                });
-
-                $('#' + scope + '_city_id').on('change', function () {
                     populateDistricts(scope, false);
                 });
 
                 $('#' + scope + '_district').on('change', function () {
-                    // no auto-submit; wait for Apply
+                    populateCities(scope, false);
+                });
+
+                $('#' + scope + '_city_id').on('change', function () {
+                    populatePosts(scope, false);
+                });
+
+                $('#' + scope + '_post').on('change', function () {
+                    populateVillages(scope, false);
                 });
             });
 

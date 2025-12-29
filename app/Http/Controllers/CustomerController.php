@@ -133,12 +133,16 @@ class CustomerController extends Controller
         $businessStateId   = $request->input('business_state_id');
         $businessCityId    = $request->input('business_city_id');
         $businessDistrict  = $request->input('business_district');
+        $businessPost      = $request->input('business_post');
+        $businessVillage   = $request->input('business_village');
 
         $personalPincode   = $request->input('pincode');
         $personalCountryId = $request->input('personal_country_id');
         $personalStateId   = $request->input('personal_state_id');
         $personalCityId    = $request->input('personal_city_id');
         $personalDistrict  = $request->input('personal_district');
+        $personalPost      = $request->input('personal_post');
+        $personalVillage   = $request->input('personal_village');
 
         $filter_transport  = $request->transport ?? null;
 
@@ -201,6 +205,8 @@ class CustomerController extends Controller
             'state_id_business'   => $businessStateId,
             'city_id_business'    => $businessCityId,
             'district_business'   => $businessDistrict,
+            'post_business'       => $businessPost,
+            'village_business'    => $businessVillage,
         ])->map(function ($value) {
             return is_string($value) ? trim($value) : $value;
         })->toArray();
@@ -211,6 +217,8 @@ class CustomerController extends Controller
             'state_id'   => $personalStateId,
             'city_id'    => $personalCityId,
             'district'   => $personalDistrict,
+            'post'       => $personalPost,
+            'village'    => $personalVillage,
         ])->map(function ($value) {
             return is_string($value) ? trim($value) : $value;
         })->toArray();
@@ -315,10 +323,14 @@ class CustomerController extends Controller
             'businessStateId',
             'businessCityId',
             'businessDistrict',
+            'businessPost',
+            'businessVillage',
             'personalCountryId',
             'personalStateId',
             'personalCityId',
             'personalDistrict',
+            'personalPost',
+            'personalVillage',
             'businessLocationTree',
             'personalLocationTree',
             'businessCountryOptions',
@@ -1132,13 +1144,17 @@ class CustomerController extends Controller
         $scope     = $request->input('scope', 'business'); // business | personal
         $countryId = $request->input('country_id');
         $stateName = $request->input('state');
+        $districtName = $request->input('district');
         $cityName  = $request->input('city');
+        $postName  = $request->input('post');
 
         $isBusiness = $scope === 'business';
         $countryCol = $isBusiness ? 'country_id_business' : 'country_id';
         $stateCol   = $isBusiness ? 'state_id_business' : 'state_id';
         $cityCol    = $isBusiness ? 'city_id_business' : 'city_id';
         $distCol    = $isBusiness ? 'district_business' : 'district';
+        $postCol    = $isBusiness ? 'post_business' : 'post';
+        $villageCol = $isBusiness ? 'village_business' : 'village';
 
         $states = collect();
         if ($countryId) {
@@ -1156,11 +1172,35 @@ class CustomerController extends Controller
         }
 
         $cities = collect();
+        $districts = collect();
+        $posts = collect();
+        $villages = collect();
+
         if ($countryId && $stateName) {
             $stateName = trim((string) $stateName);
+
+            $districts = UserDetails::query()
+                ->where($countryCol, $countryId)
+                ->whereRaw('LOWER(TRIM(' . $stateCol . ')) = ?', [strtolower($stateName)])
+                ->pluck($distCol)
+                ->filter()
+                ->map(function ($val) {
+                    $val = trim((string) $val);
+                    return ['id' => $val, 'name' => $val];
+                })
+                ->unique('id')
+                ->sortBy('name')
+                ->values();
+        }
+
+        if ($countryId && $stateName && $districtName) {
+            $stateName    = trim((string) $stateName);
+            $districtName = trim((string) $districtName);
+
             $cities = UserDetails::query()
                 ->where($countryCol, $countryId)
                 ->whereRaw('LOWER(TRIM(' . $stateCol . ')) = ?', [strtolower($stateName)])
+                ->whereRaw('LOWER(TRIM(' . $distCol . ')) = ?', [strtolower($districtName)])
                 ->pluck($cityCol)
                 ->filter()
                 ->map(function ($val) {
@@ -1172,15 +1212,40 @@ class CustomerController extends Controller
                 ->values();
         }
 
-        $districts = collect();
-        if ($countryId && $stateName && $cityName) {
-            $stateName = trim((string) $stateName);
-            $cityName  = trim((string) $cityName);
-            $districts = UserDetails::query()
+        if ($countryId && $stateName && $districtName && $cityName) {
+            $stateName    = trim((string) $stateName);
+            $districtName = trim((string) $districtName);
+            $cityName     = trim((string) $cityName);
+
+            $posts = UserDetails::query()
                 ->where($countryCol, $countryId)
                 ->whereRaw('LOWER(TRIM(' . $stateCol . ')) = ?', [strtolower($stateName)])
+                ->whereRaw('LOWER(TRIM(' . $distCol . ')) = ?', [strtolower($districtName)])
                 ->whereRaw('LOWER(TRIM(' . $cityCol . ')) = ?', [strtolower($cityName)])
-                ->pluck($distCol)
+                ->pluck($postCol)
+                ->filter()
+                ->map(function ($val) {
+                    $val = trim((string) $val);
+                    return ['id' => $val, 'name' => $val];
+                })
+                ->unique('id')
+                ->sortBy('name')
+                ->values();
+        }
+
+        if ($countryId && $stateName && $districtName && $cityName && $postName) {
+            $stateName    = trim((string) $stateName);
+            $districtName = trim((string) $districtName);
+            $cityName     = trim((string) $cityName);
+            $postName     = trim((string) $postName);
+
+            $villages = UserDetails::query()
+                ->where($countryCol, $countryId)
+                ->whereRaw('LOWER(TRIM(' . $stateCol . ')) = ?', [strtolower($stateName)])
+                ->whereRaw('LOWER(TRIM(' . $distCol . ')) = ?', [strtolower($districtName)])
+                ->whereRaw('LOWER(TRIM(' . $cityCol . ')) = ?', [strtolower($cityName)])
+                ->whereRaw('LOWER(TRIM(' . $postCol . ')) = ?', [strtolower($postName)])
+                ->pluck($villageCol)
                 ->filter()
                 ->map(function ($val) {
                     $val = trim((string) $val);
@@ -1193,8 +1258,10 @@ class CustomerController extends Controller
 
         return response()->json([
             'states'    => $states,
-            'cities'    => $cities,
             'districts' => $districts,
+            'cities'    => $cities,
+            'posts'     => $posts,
+            'villages'  => $villages,
         ]);
     }
 }
