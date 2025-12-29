@@ -90,11 +90,7 @@ class ProductController extends Controller
         }
         if ($request->search != null) {
             $sort_search = $request->search;
-            $products = $products
-                ->where('name', 'like', '%' . $sort_search . '%')
-                ->orWhereHas('stocks', function ($q) use ($sort_search) {
-                    $q->where('sku', 'like', '%' . $sort_search . '%');
-                });
+            $products = $this->applyBackendSearchFilters($products, $sort_search);
         }
 
         $products = $products->where('digital', 0)->orderBy('created_at', 'desc')->paginate(10);
@@ -119,9 +115,8 @@ class ProductController extends Controller
             $seller_id = $request->user_id;
         }
         if ($request->search != null) {
-            $products = $products
-                ->where('name', 'like', '%' . $request->search . '%');
             $sort_search = $request->search;
+            $products = $this->applyBackendSearchFilters($products, $sort_search);
         }
         if ($request->type != null) {
             $var = explode(",", $request->type);
@@ -157,11 +152,7 @@ class ProductController extends Controller
         }
         if ($request->search != null) {
             $sort_search = $request->search;
-            $products = $products
-                ->where('name', 'like', '%' . $sort_search . '%')
-                ->orWhereHas('stocks', function ($q) use ($sort_search) {
-                    $q->where('sku', 'like', '%' . $sort_search . '%');
-                });
+            $products = $this->applyBackendSearchFilters($products, $sort_search);
         }
         
         if ($request->type != null) {
@@ -183,6 +174,43 @@ class ProductController extends Controller
         $type = 'All';
 
         return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status'));
+    }
+
+    private function applyBackendSearchFilters($products, string $search)
+    {
+        $search = trim($search);
+
+        if ($search === '') {
+            return $products;
+        }
+
+        return $products->where(function ($query) use ($search) {
+            $query->where('name', 'like', '%' . $search . '%')
+                ->orWhere('drug_name', 'like', '%' . $search . '%')
+                ->orWhere('role_label', 'like', '%' . $search . '%')
+                ->orWhere('schedule', 'like', '%' . $search . '%')
+                ->orWhereHas('stocks', function ($stockQuery) use ($search) {
+                    $stockQuery->where('sku', 'like', '%' . $search . '%');
+                })
+                ->orWhereHas('brand', function ($brandQuery) use ($search) {
+                    $brandQuery->where('name', 'like', '%' . $search . '%')
+                        ->orWhereHas('brand_translations', function ($brandTranslationQuery) use ($search) {
+                            $brandTranslationQuery->where('name', 'like', '%' . $search . '%');
+                        });
+                })
+                ->orWhereHas('categories', function ($categoryQuery) use ($search) {
+                    $categoryQuery->where('name', 'like', '%' . $search . '%')
+                        ->orWhereHas('category_translations', function ($categoryTranslationQuery) use ($search) {
+                            $categoryTranslationQuery->where('name', 'like', '%' . $search . '%');
+                        });
+                })
+                ->orWhereHas('main_category', function ($categoryQuery) use ($search) {
+                    $categoryQuery->where('name', 'like', '%' . $search . '%')
+                        ->orWhereHas('category_translations', function ($categoryTranslationQuery) use ($search) {
+                            $categoryTranslationQuery->where('name', 'like', '%' . $search . '%');
+                        });
+                });
+        });
     }
 
 

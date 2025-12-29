@@ -105,7 +105,7 @@
                     <div class="form-group mb-0">
                         <input type="text" class="form-control form-control-sm" id="search"
                             name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset
-                            placeholder="{{ translate('Type & Enter') }}">
+                            placeholder="{{ translate('Search by Name, Drug, Role, SKU, Brand, Category or Schedule') }}">
                     </div>
                 </div>
                 <div class="col-md-2 ml-auto">
