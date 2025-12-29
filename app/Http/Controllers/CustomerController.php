@@ -146,12 +146,12 @@ class CustomerController extends Controller
         $users = User::with('details')
             ->where('user_type', 'customer')
             ->whereNotNull('step')
-            // ->orderBy('created_at', 'desc')
-            ->orderBy(
-                UserDetails::select('crm_id')
-                    ->whereColumn('user_details.user_id', 'users.id'),
-                'ASC'
-            );
+            ->orderBy('created_at', 'desc');
+            // ->orderBy(
+            //     UserDetails::select('crm_id')
+            //         ->whereColumn('user_details.user_id', 'users.id'),
+            //     'ASC'
+            // );
 
         // Approval filter
         if ($verification_status !== null) {
