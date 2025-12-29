@@ -1,3 +1,4 @@
+<div class="search-content-scroll" style="max-height: 420px; overflow-y: auto;">
 <div class="">
     @if (sizeof($keywords) > 0)
         <div class="px-2 py-1 text-uppercase fs-10 text-right text-muted bg-soft-secondary">{{translate('Popular Suggestions')}}</div>
@@ -49,10 +50,13 @@
                                 <div class="product-name text-truncate fs-14 mb-5px">
                                     {{  $product->getTranslation('name')  }}
                                 </div>
-                                @if(!empty($product->drug_name) || $product->brand)
+                                @if(!empty($product->drug_name) || $product->brand || !empty($product->role_label))
                                     <div class="opacity-60 fs-12 text-truncate mb-5px">
                                         @if(!empty($product->drug_name))
-                                            <span class="mr-2">{{ translate('Drug') }}: {{ $product->drug_name }}</span>
+                                            <span class="mr-2">{{ translate('Drug Name') }}: {{ $product->drug_name }}</span>
+                                        @endif
+                                        @if(!empty($product->role_label))
+                                            <span class="mr-2">{{ translate('Drug Role') }}: {{ $product->role_label }}</span>
                                         @endif
                                         @if($product->brand)
                                             <span>{{ translate('Brand') }}: {{ $product->brand->getTranslation('name') }}</span>
@@ -101,3 +105,4 @@
         @endif
     </div>
 @endif
+</div>

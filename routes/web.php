@@ -268,7 +268,7 @@ Route::controller(Search2Controller::class)->group(function () {
     // AJAX endpoints
     Route::get('/search/ajax/products', 'ajaxProducts')->name('search.ajax.products');
     Route::get('/search/ajax/categories/{id}/children', 'ajaxCategoryChildren')->name('search.ajax.category.children');
-
+    Route::get('/search?keyword={search}', 'index')->name('suggestion.search');
     Route::post('/ajax-search', 'ajax_search')->name('search.ajax') ;
     Route::get('/category/{category_slug}', 'listingByCategory')->name('products.category');
     Route::get('/brand/{brand_slug}', 'listingByBrand')->name('products.brand');
