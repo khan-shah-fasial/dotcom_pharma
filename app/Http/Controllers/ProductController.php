@@ -203,12 +203,12 @@ class ProductController extends Controller
                         ->orWhereHas('category_translations', function ($categoryTranslationQuery) use ($search) {
                             $categoryTranslationQuery->where('name', 'like', '%' . $search . '%');
                         });
-                })
-                ->orWhereHas('main_category', function ($categoryQuery) use ($search) {
-                    $categoryQuery->where('name', 'like', '%' . $search . '%')
-                        ->orWhereHas('category_translations', function ($categoryTranslationQuery) use ($search) {
-                            $categoryTranslationQuery->where('name', 'like', '%' . $search . '%');
-                        });
+                // })
+                // ->orWhereHas('main_category', function ($categoryQuery) use ($search) {
+                //     $categoryQuery->where('name', 'like', '%' . $search . '%')
+                //         ->orWhereHas('category_translations', function ($categoryTranslationQuery) use ($search) {
+                //             $categoryTranslationQuery->where('name', 'like', '%' . $search . '%');
+                //         });
                 });
         });
     }
