@@ -457,6 +457,24 @@
                                value="{{ old('website_business', $details->website_business) }}">
                         @error('website_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label" for="business_instagram_id">{{ translate('Instagram ID (Business)') }}</label>
+                        <input type="text" id="business_instagram_id" name="business_instagram_id" class="form-control"
+                               value="{{ old('business_instagram_id', $details->business_instagram_id) }}">
+                        @error('business_instagram_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label" for="business_facebook_id">{{ translate('Facebook ID (Business)') }}</label>
+                        <input type="text" id="business_facebook_id" name="business_facebook_id" class="form-control"
+                               value="{{ old('business_facebook_id', $details->business_facebook_id) }}">
+                        @error('business_facebook_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label" for="business_linkedin_id">{{ translate('LinkedIn ID (Business)') }}</label>
+                        <input type="text" id="business_linkedin_id" name="business_linkedin_id" class="form-control"
+                               value="{{ old('business_linkedin_id', $details->business_linkedin_id) }}">
+                        @error('business_linkedin_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
                 </div>
 
                 {{-- Business Bank --}}
@@ -846,6 +864,26 @@
                         <label class="form-label" for="booked_to">{{ translate('Booked To') }} *</label>
                         <input type="text" id="booked_to" name="booked_to" class="form-control" value="{{ old('booked_to', $details->booked_to) }}" required>
                         @error('booked_to') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="salesman">{{ translate('Salesman') }}</label>
+                        <input type="text" id="salesman" name="salesman" class="form-control" value="{{ old('salesman', $details->salesman) }}">
+                        @error('salesman') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="dl_expiry">{{ translate('DL Expiry') }}</label>
+                        <input type="text" id="dl_expiry" name="dl_expiry" class="form-control" value="{{ old('dl_expiry', $details->dl_expiry) }}" placeholder="DD-MM-YYYY">
+                        @error('dl_expiry') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="dl1">{{ translate('DL1') }}</label>
+                        <input type="text" id="dl1" name="dl1" class="form-control" value="{{ old('dl1', $details->dl1) }}">
+                        @error('dl1') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="dl2">{{ translate('DL2') }}</label>
+                        <input type="text" id="dl2" name="dl2" class="form-control" value="{{ old('dl2', $details->dl2) }}">
+                        @error('dl2') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
 

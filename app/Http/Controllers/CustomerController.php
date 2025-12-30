@@ -519,6 +519,9 @@ class CustomerController extends Controller
             'prim_email_business' => [$businessRequired ? 'required' : 'nullable', 'email'],
             'alt_email_business' => ['nullable', 'email'],
             'website_business' => ['nullable'],
+            'business_instagram_id' => ['nullable', 'string', 'max:255'],
+            'business_facebook_id' => ['nullable', 'string', 'max:255'],
+            'business_linkedin_id' => ['nullable', 'string', 'max:255'],
             'bank_name_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
             'account_no_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^\\d+$/', 'max:20'],
             'account_name_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
@@ -596,6 +599,10 @@ class CustomerController extends Controller
         $transportRules = [
             'transport' => ['nullable', 'string', 'max:255'],
             'booked_to' => ['nullable', 'string', 'max:255'],
+            'salesman' => ['nullable', 'string', 'max:255'],
+            'dl_expiry' => ['nullable', 'string', 'max:255'],
+            'dl1' => ['nullable', 'string', 'max:255'],
+            'dl2' => ['nullable', 'string', 'max:255'],
         ];
 
         // Simplified validation: only keep basic user email/phone checks per request; comment out the detailed rules above.
@@ -731,6 +738,10 @@ class CustomerController extends Controller
 
             'transport' => $request->input('transport', $details->transport ?? null),
             'booked_to' => $request->input('booked_to', $details->booked_to ?? null),
+            'salesman' => $request->input('salesman', $details->salesman ?? null),
+            'dl_expiry' => $request->input('dl_expiry', $details->dl_expiry ?? null),
+            'dl1' => $request->input('dl1', $details->dl1 ?? null),
+            'dl2' => $request->input('dl2', $details->dl2 ?? null),
 
             'gst_no' => $validated['gst_no'] ?? null,
             // 'gst_no' => $typeOption === 'domestic' ? ($validated['gst_no'] ?? $details->gst_no) : null,
@@ -773,6 +784,9 @@ class CustomerController extends Controller
             'prim_email_business' => $businessRequired ? ($validated['prim_email_business'] ?? $details->prim_email_business) : $details->prim_email_business,
             'alt_email_business' => $businessRequired ? ($validated['alt_email_business'] ?? null) : $details->alt_email_business,
             'website_business' => $businessRequired ? ($validated['website_business'] ?? null) : $details->website_business,
+            'business_instagram_id' => $businessRequired ? ($validated['business_instagram_id'] ?? $details->business_instagram_id) : $details->business_instagram_id,
+            'business_facebook_id' => $businessRequired ? ($validated['business_facebook_id'] ?? $details->business_facebook_id) : $details->business_facebook_id,
+            'business_linkedin_id' => $businessRequired ? ($validated['business_linkedin_id'] ?? $details->business_linkedin_id) : $details->business_linkedin_id,
             'bank_name_business' => $businessRequired ? ($validated['bank_name_business'] ?? $details->bank_name_business) : $details->bank_name_business,
             'account_no_business' => $businessRequired ? ($validated['account_no_business'] ?? $details->account_no_business) : $details->account_no_business,
             'account_name_business' => $businessRequired ? ($validated['account_name_business'] ?? $details->account_name_business) : $details->account_name_business,
@@ -1036,8 +1050,8 @@ class CustomerController extends Controller
 
 
     /**
-     * Import transport values from an Excel file located in /public.
-     * Expected columns: [0] crm_id, [1] transport.
+     * Import user detail values from an Excel file located in /public.
+     * Uses header row to decide which columns to update (must include crm_id).
      */
     public function importTransportFromExcel(Request $request)
     {
@@ -1045,7 +1059,8 @@ class CustomerController extends Controller
         //     'input' => $request->all()
         // ]);
 
-        $fileInput = $request->input('file', 'transport.xlsx');
+        $fileInput = $request->input('file', 'user_details.xls');
+        // $fileInput = $request->input('file', 'transport.xlsx');
         $fileName = basename($fileInput);
         $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
@@ -1079,25 +1094,48 @@ class CustomerController extends Controller
         $missing = 0;
         $skippedBlank = 0;
 
+        // Build column map from header row
+        $headerRow = $rows[0] ?? [];
+        $headerMap = [];
+        foreach ($headerRow as $colIndex => $header) {
+            $normalized = Str::snake(trim((string) $header));
+            if ($normalized === '' || in_array($normalized, $headerMap, true)) {
+                continue;
+            }
+            $headerMap[$colIndex] = $normalized;
+        }
+
+        if (! in_array('crm_id', $headerMap, true)) {
+            return response()->json(['message' => 'Missing required column: crm_id'], 422);
+        }
+
+        $crmIndex = array_search('crm_id', $headerMap, true);
+
+        // Only allow columns that are fillable on UserDetails (except crm_id/user_id)
+        $fillable = (new UserDetails())->getFillable();
+        $updatableColumns = [];
+        $ignoredColumns = [];
+        foreach ($headerMap as $colIndex => $columnName) {
+            if ($columnName === 'crm_id') {
+                continue;
+            }
+            if ($columnName === 'user_id' || ! in_array($columnName, $fillable, true)) {
+                $ignoredColumns[] = $columnName;
+                continue;
+            }
+            $updatableColumns[$colIndex] = $columnName;
+        }
+
         foreach ($rows as $index => $row) {
-            $crmId = trim((string) ($row[0] ?? ''));
-            $transport = isset($row[1]) ? trim((string) $row[1]) : null;
-
-            // Log::info("Processing row", [
-            //     'row_index' => $index,
-            //     'crm_id' => $crmId,
-            //     'transport' => $transport
-            // ]);
-
-            // Header skip
-            if ($index === 0 && strcasecmp($crmId, 'crm_id') === 0) {
-                // Log::info("Header row skipped");
+            if ($index === 0) {
+                // Header row already processed
                 continue;
             }
 
+            $crmId = trim((string) ($row[$crmIndex] ?? ''));
+
             if ($crmId === '') {
                 $skippedBlank++;
-                // Log::info("Skipped blank CRM ID row", ['row_index' => $index]);
                 continue;
             }
 
@@ -1105,26 +1143,30 @@ class CustomerController extends Controller
 
             if (! $details) {
                 $missing++;
-                // Log::warning("CRM ID not found", ['crm_id' => $crmId]);
                 continue;
             }
 
-            // Save transport
-            $details->transport = $transport !== '' ? $transport : null;
-            $details->save();
-            $updated++;
+            $changes = [];
+            foreach ($updatableColumns as $colIndex => $columnName) {
+                $value = $row[$colIndex] ?? null;
+                $value = is_string($value) ? trim($value) : $value;
+                $changes[$columnName] = ($value === '' || $value === null) ? null : $value;
+            }
 
-            // Log::info("Updated transport", [
-            //     'crm_id' => $crmId,
-            //     'transport' => $transport
-            // ]);
+            if (! empty($changes)) {
+                $details->fill($changes);
+                $details->save();
+                $updated++;
+            }
         }
 
         // Log::info("IMPORT COMPLETE", [
         //     'file' => $fileName,
         //     'updated' => $updated,
         //     'missing' => $missing,
-        //     'blank_skipped' => $skippedBlank
+        //     'blank_skipped' => $skippedBlank,
+        //     'columns_used' => array_values($updatableColumns),
+        //     'columns_ignored' => $ignoredColumns,
         // ]);
 
         return response()->json([
@@ -1132,6 +1174,8 @@ class CustomerController extends Controller
             'updated_rows' => $updated,
             'missing_crm_ids' => $missing,
             'blank_rows_skipped' => $skippedBlank,
+            'columns_updated' => array_values($updatableColumns),
+            'columns_ignored' => $ignoredColumns,
         ]);
     }
 
