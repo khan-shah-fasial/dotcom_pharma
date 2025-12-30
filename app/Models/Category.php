@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\PreventDemoModeChanges;
 use App;
+use Illuminate\Support\Facades\Artisan;
 
 class Category extends Model
 {
@@ -66,5 +67,16 @@ class Category extends Model
     public function sizeChart()
     {
         return $this->belongsTo(SizeChart::class, 'id', 'category_id');
+    }
+
+    protected static function booted()
+    {
+        $clearCache = function () {
+            // ensure category caches are flushed after create/update/delete
+            Artisan::call('cache:clear');
+        };
+
+        static::saved($clearCache);
+        static::deleted($clearCache);
     }
 }

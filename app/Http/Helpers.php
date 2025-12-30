@@ -3672,18 +3672,37 @@ if (! function_exists('getCategoryTopMenu')) {
 
         return Cache::remember($cacheKey, now()->addHours(6), function () use ($webTypeName, $webTypeId, $catHumanId, $catVeterinaryId) {
             if ($webTypeName == 'human') {
+                // return Category::select('id', 'parent_id', 'name', 'slug')
+                //     ->whereIn('id', $catHumanId)
+                //     ->where('parent_id', $webTypeId)
+                //     ->with('childrenCategories')
+                //     ->orderByRaw('FIELD(id, ' . implode(',', $catHumanId) . ')')
+                //     ->get();
+
+                // $humanCategory = Category::whereRaw('LOWER(name) = ?', ['human'])->first(['id']);
+                // if (!$humanCategory) {
+                //     return collect();
+                // }
                 return Category::select('id', 'parent_id', 'name', 'slug')
-                    ->whereIn('id', $catHumanId)
-                    ->where('parent_id', $webTypeId)
+                    ->where('parent_id', 118)
                     ->with('childrenCategories')
-                    ->orderByRaw('FIELD(id, ' . implode(',', $catHumanId) . ')')
+                    ->orderBy('name')
                     ->get();
             } elseif ($webTypeName == 'veterinary') {
+                // return Category::select('id', 'parent_id', 'name', 'slug')
+                //     ->whereIn('id', $catVeterinaryId)
+                //     ->where('parent_id', $webTypeId)
+                //     ->with('childrenCategories')
+                //     ->orderByRaw('FIELD(id, ' . implode(',', $catVeterinaryId) . ')')
+                //     ->get();
+                // $veterinaryCategory = Category::whereRaw('LOWER(name) = ?', ['veterinary'])->first(['id']);
+                // if (!$veterinaryCategory) {
+                //     return collect();
+                // }
                 return Category::select('id', 'parent_id', 'name', 'slug')
-                    ->whereIn('id', $catVeterinaryId)
-                    ->where('parent_id', $webTypeId)
+                    ->where('parent_id', 90)
                     ->with('childrenCategories')
-                    ->orderByRaw('FIELD(id, ' . implode(',', $catVeterinaryId) . ')')
+                    ->orderBy('name')
                     ->get();
             } else {
                 return collect();
