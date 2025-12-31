@@ -361,9 +361,15 @@
                         <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
                     </button>
                     <button type="button"
-                        class="btn detail-buy-now-btn btn-primary mr-2 buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50 mb-md-0 mb-2 mt-2"
+                        class="btn detail-buy-now-btn-g btn-primary mr-2 buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50 mb-md-0 mb-2 mt-2"
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
+                    </button>
+                    
+                    <button type="button"
+                        class="btn detail-buy-now-btn btn-primary mr-2 buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50 mb-md-0 mb-2 mt-2"
+                        @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
+                        <i class="la la-shopping-cart"></i> {{ translate('Buy on GeM') }}
                     </button>
                 @endif
                 <button type="button"

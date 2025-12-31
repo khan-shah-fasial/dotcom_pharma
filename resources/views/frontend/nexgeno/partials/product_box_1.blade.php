@@ -34,8 +34,8 @@
         @endif
         @if ($product->auction_product == 0)
             <!-- wishlisht & compare icons -->
-            <div class="absolute-top-right aiz-p-hov-icon d-none">
-                <a href="javascript:void(0)" class="hov-svg-white" onclick="addToWishList({{ $product->id }})"
+            <div class="absolute-top-right aiz-p-hov-icon">
+                <a href="javascript:void(0)" class="hov-svg-white d-flex justify-content-center align-items-center" onclick="addToWishList({{ $product->id }})"
                     data-toggle="tooltip" data-title="{{ translate('Add to wishlist') }}" data-placement="left">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="14.4" viewBox="0 0 16 14.4">
                         <g id="_51a3dbe0e593ba390ac13cba118295e4" data-name="51a3dbe0e593ba390ac13cba118295e4"
@@ -49,7 +49,7 @@
                         </g>
                     </svg>
                 </a>
-                <a href="javascript:void(0)" class="hov-svg-white" onclick="addToCompare({{ $product->id }})"
+                <a href="javascript:void(0)" class="hov-svg-white d-none" onclick="addToCompare({{ $product->id }})"
                     data-toggle="tooltip" data-title="{{ translate('Add to compare') }}" data-placement="left">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                         <path id="_9f8e765afedd47ec9e49cea83c37dfea" data-name="9f8e765afedd47ec9e49cea83c37dfea"
