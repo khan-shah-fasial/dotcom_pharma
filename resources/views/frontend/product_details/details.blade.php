@@ -365,12 +365,12 @@
                         @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
                         <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
                     </button>
-                    
-                    <button type="button"
-                        class="btn detail-buy-now-btn btn-primary mr-2 buy-now fw-600 add-to-cart min-w-100px rounded-0 border-radius-50 mb-md-0 mb-2 mt-2"
-                        @if (Auth::check() || get_Setting('guest_checkout_activation') == 1) onclick="addToCart()" @else onclick="showLoginModal()" @endif>
-                        <i class="la la-shopping-cart"></i> {{ translate('Buy on GeM') }}
-                    </button>
+                    @if(isset($detailedProduct->gem_portal_link) && !empty($detailedProduct->gem_portal_link))
+                        <a type="button" class="btn btn-primary buy-now fw-600 px-4 rounded-0"
+                            href="{{ $detailedProduct->gem_portal_link }}" target="_blank" rel="noopener">
+                            <i class="la la-shopping-cart"></i> {{ translate('Buy on GeM') }}
+                        </a>
+                    @endif
                 @endif
                 <button type="button"
                     class="btn btn-secondary out-of-stock fw-600 d-none border-radius-50 mb-md-0 mb-2 mt-2" disabled>
@@ -399,7 +399,7 @@
             <p class="fs-14 pt-3">Please login / register to buy or to get detailed information of the product</p>
         @endif
 
-        @if ($detailedProduct->gem_portal_link)
+        {{-- @if ($detailedProduct->gem_portal_link)
             <div class="col-12 d-flex flex-wrap mt-4 pt-4 pb-2 pl-4 pr-2 detail-border-1px bg-white">
                 <div class="col-12 col-md-12 text-left pl-0 pr-0">
                     <h5 class="fe-semibold mb-3">{{ translate('GEM Portal') }}</h5>
@@ -435,7 +435,7 @@
                     </div>
                 </div>
             </div>
-        @endif
+        @endif --}}
 
 
 
