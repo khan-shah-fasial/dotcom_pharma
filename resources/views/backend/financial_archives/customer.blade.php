@@ -5,7 +5,13 @@
         <div class="row align-items-center">
             <div class="col-md-6">
                 <h1 class="h3">{{ translate('Financial Archive') }}</h1>
-                <p class="text-muted mb-0">{{ translate('Manage archives for') }}: <strong>{{ $user->name }}</strong></p>
+                <p class="text-muted mb-0">
+                    {{ translate('Manage archives for') }}:
+                    <strong>{{ $user->name }}</strong>
+                    @if(optional($user->details)->company_name)
+                        <span class="ml-2 text-secondary">| {{ optional($user->details)->company_name }}</span>
+                    @endif
+                </p>
             </div>
             <div class="col-md-6 text-md-right">
                 <a href="{{ route('customers.business') }}" class="btn btn-soft-secondary">
