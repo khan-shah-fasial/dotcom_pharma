@@ -451,6 +451,13 @@
                                                             class="las la-edit btn-soft-success btn-icon btn-circle btn-sm mr-2"></i>
                                                         <span class="ms-1">Credit</span>
                                                     </a>
+
+                                                    <a href="{{ route('financial-archives.customer', $user->id) }}"
+                                                        title="{{ translate('Financial Archive') }}" class="btn">
+                                                        <i
+                                                            class="las la-folder-plus btn-soft-primary btn-icon btn-circle btn-sm mr-2"></i>
+                                                        <span class="ms-1">{{ translate('Financial Archive') }}</span>
+                                                    </a>
                                                 @endcan
 
                                                 <!-- Delete -->
@@ -517,9 +524,6 @@
             </div>
         </div>
     </div>
-
-
-
     {{-- - //------------------------------ approval modal -----------------------// -- --}}
 
     <div class="modal fade" id="approval_model" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel_phone"
@@ -954,5 +958,6 @@
             $('#credit_days').val(days || 0);
             $('#creditManageModal').modal('show');
         }
+
     </script>
 @endsection

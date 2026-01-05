@@ -26,6 +26,7 @@ use App\Http\Controllers\CustomerProductController;
 use App\Http\Controllers\DigitalProductController;
 use App\Http\Controllers\DynamicPopupController;
 use App\Http\Controllers\EmailTemplateController;
+use App\Http\Controllers\FinancialArchiveController;
 use App\Http\Controllers\FlashDealController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\MarketingController;
@@ -182,6 +183,15 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/note/edit/{id}', 'edit')->name('note.edit');
         Route::get('note/delete/{note}', 'destroy')->name('note.delete');
         // Route::post('/get-notes', 'getNotes')->name('get_notes');
+    });
+
+    // Financial Archive
+    Route::resource('financial-archives', FinancialArchiveController::class);
+    Route::controller(FinancialArchiveController::class)->group(function () {
+        Route::get('/financial-archives/edit/{id}', 'edit')->name('financial-archives.edit');
+        Route::get('/financial-archives/destroy/{id}', 'destroy')->name('financial-archives.destroy');
+        Route::get('/financial-archives/customer/{user}', 'customerArchives')->name('financial-archives.customer');
+        Route::post('/financial-archives/customer/store/{user}', 'storeForUser')->name('financial-archives.customer.store');
     });
 
     // Seller
