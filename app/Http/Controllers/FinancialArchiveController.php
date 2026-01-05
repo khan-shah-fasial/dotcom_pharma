@@ -18,6 +18,7 @@ class FinancialArchiveController extends Controller
         'eway_bill' => 'Eway Bill',
         'credit_debit_note' => 'Credit / Debit Note',
         'lr_copy' => 'LR Copy',
+        'challan' => 'Challan',
     ];
 
     /**
