@@ -188,7 +188,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     // Financial Archive
     Route::resource('financial-archives', FinancialArchiveController::class);
     Route::controller(FinancialArchiveController::class)->group(function () {
-        Route::get('/financial-archives/edit/{id}', 'edit')->name('financial-archives.edit');
+        // Route::get('/financial-archives/edit/{id}', 'edit')->name('financial-archives.edit');
         Route::get('/financial-archives/destroy/{id}', 'destroy')->name('financial-archives.destroy');
         Route::get('/financial-archives/customer/{user}', 'customerArchives')->name('financial-archives.customer');
         Route::post('/financial-archives/customer/store/{user}', 'storeForUser')->name('financial-archives.customer.store');
