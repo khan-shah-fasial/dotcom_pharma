@@ -157,7 +157,7 @@ class AizUploadController extends Controller
                         $extension = get_setting('uploaded_image_format');
                     }
                     try {
-                        $path = 'uploads/all/'. Str::random(40) . '.' .$extension;
+                        $path = 'uploads/all/' . date('Y/m') . '/' . Str::random(40) . '.' . $extension;
                         $img = Image::make($request->file('aiz_file')->getRealPath())->encode($extension, 75);
                         $height = $img->height();
                         $width = $img->width();
@@ -244,7 +244,8 @@ class AizUploadController extends Controller
                         //dd($e);
                     }
                 }else{
-                    $path = $request->file('aiz_file')->store('uploads/all', 'local');
+                    // $path = $request->file('aiz_file')->store('uploads/all', 'local');
+                    $path = $request->file('aiz_file')->store('uploads/all/' . date('Y/m'), 'local');
                 }
 
                 if (env('FILESYSTEM_DRIVER') != 'local') {

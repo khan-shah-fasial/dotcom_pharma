@@ -186,7 +186,8 @@ class FinancialArchiveController extends Controller
         $upload->file_size = $file->getSize();
         $upload->user_id = auth()->id();
         $upload->type = $typeMap[$extension] ?? 'document';
-        $upload->file_name = $file->store('uploads/all', 'local');
+        // $upload->file_name = $file->store('uploads/all', 'local');
+        $upload->file_name = $file->store('uploads/all/' . date('Y/m'), 'local');
         $upload->save();
 
         return $upload->id;
