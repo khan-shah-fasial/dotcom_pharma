@@ -108,7 +108,18 @@ class FinancialArchiveController extends Controller
         $upload->user_id = auth()->id();
         $upload->type = $typeMap[$extension] ?? 'document';
         // $upload->file_name = $file->store('uploads/all', 'local');
-        $upload->file_name = $file->store('uploads/all/' . date('Y/m'), 'local');
+        $path = 'uploads/all/' . date('Y/m');
+
+        // ADD: ensure directory exists on SAME disk
+        Storage::disk('local')->makeDirectory($path);
+
+        // ADD: force permission
+        @chmod(storage_path('app/' . $path), 0777);
+
+        // UNCHANGED (still local disk)
+        $upload->file_name = $file->store($path, 'local');
+        
+        // $upload->file_name = $file->store('uploads/all/' . date('Y/m'), 'local');
         $upload->save();
 
         return $upload->id;

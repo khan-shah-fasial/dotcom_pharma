@@ -10,6 +10,7 @@ use Storage;
 use Image;
 use enshrined\svgSanitize\Sanitizer;
 use Str;
+use Illuminate\Support\Facades\File;
 
 class AizUploadController extends Controller
 {
@@ -157,6 +158,13 @@ class AizUploadController extends Controller
                         $extension = get_setting('uploaded_image_format');
                     }
                     try {
+                        
+                        $dir = public_path('uploads/all/' . date('Y/m'));
+
+                        if (!File::exists($dir)) {
+                            File::makeDirectory($dir, 0777, true);
+                        }
+
                         $path = 'uploads/all/' . date('Y/m') . '/' . Str::random(40) . '.' . $extension;
                         $img = Image::make($request->file('aiz_file')->getRealPath())->encode($extension, 75);
                         $height = $img->height();
