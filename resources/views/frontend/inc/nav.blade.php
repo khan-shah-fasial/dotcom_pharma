@@ -845,6 +845,18 @@ body .translater_menu .select2-container {
                                                 class="user-top-menu-name has-transition ml-3">{{ translate('B2B Registration') }}</span></a>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
+                                        <a href="{{ route('financial-archives.user') }}"
+                                            class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                <g fill="none" fill-rule="evenodd">
+                                                    <path fill="#b5b5bf" d="M3 2.5A1.5 1.5 0 0 1 4.5 1h3.793a1.5 1.5 0 0 1 1.06.44L10.5 2.5H12A1.5 1.5 0 0 1 13.5 4v8A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V2.5H3Zm8.5 2A.5.5 0 0 0 11 4h-1a1 1 0 0 1-1-1V2h-4a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V4.5h-.5Z"/>
+                                                    <path fill="#b5b5bf" d="M5.75 6.5a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5H8a.5.5 0 0 1 0 1H6.25a.5.5 0 0 1-.5-.5Z"/>
+                                                </g>
+                                            </svg>
+                                            <span
+                                                class="user-top-menu-name has-transition ml-3">{{ translate('Financial Archive') }}</span></a>
+                                    </li>                                    
+                                    <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('digital_purchase_history.index') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16.001" height="16"
