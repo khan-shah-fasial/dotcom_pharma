@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\ProductTranslation;
 use App\Models\Category;
+use App\Models\Attribute;
 use App\Models\AttributeValue;
 use App\Models\Cart;
 use App\Models\ProductCategory;
@@ -184,7 +185,20 @@ class ProductController extends Controller
             return $products;
         }
 
-        return $products->where(function ($query) use ($search) {
+        $matchingAttributeIds = Attribute::query()
+            ->where('name', 'like', '%' . $search . '%')
+            ->orWhereHas('attribute_translations', function ($attributeTranslationQuery) use ($search) {
+                $attributeTranslationQuery->where('name', 'like', '%' . $search . '%');
+            })
+            ->pluck('id')
+            ->toArray();
+
+        $matchingAttributeValues = AttributeValue::query()
+            ->where('value', 'like', '%' . $search . '%')
+            ->pluck('value')
+            ->toArray();
+
+        return $products->where(function ($query) use ($search, $matchingAttributeIds, $matchingAttributeValues) {
             $query->where('name', 'like', '%' . $search . '%')
                 ->orWhere('drug_name', 'like', '%' . $search . '%')
                 ->orWhere('role_label', 'like', '%' . $search . '%')
@@ -192,6 +206,7 @@ class ProductController extends Controller
                 ->orWhereHas('stocks', function ($stockQuery) use ($search) {
                     $stockQuery->where('sku', 'like', '%' . $search . '%');
                 })
+                ->orWhere('choice_options', 'like', '%"' . $search . '"%')
                 ->orWhereHas('brand', function ($brandQuery) use ($search) {
                     $brandQuery->where('name', 'like', '%' . $search . '%')
                         ->orWhereHas('brand_translations', function ($brandTranslationQuery) use ($search) {
@@ -203,13 +218,23 @@ class ProductController extends Controller
                         ->orWhereHas('category_translations', function ($categoryTranslationQuery) use ($search) {
                             $categoryTranslationQuery->where('name', 'like', '%' . $search . '%');
                         });
-                // })
-                // ->orWhereHas('main_category', function ($categoryQuery) use ($search) {
-                //     $categoryQuery->where('name', 'like', '%' . $search . '%')
-                //         ->orWhereHas('category_translations', function ($categoryTranslationQuery) use ($search) {
-                //             $categoryTranslationQuery->where('name', 'like', '%' . $search . '%');
-                //         });
                 });
+
+            if (!empty($matchingAttributeIds)) {
+                $query->orWhere(function ($attributeIdQuery) use ($matchingAttributeIds) {
+                    foreach ($matchingAttributeIds as $attributeId) {
+                        $attributeIdQuery->orWhere('attributes', 'like', '%"' . $attributeId . '"%');
+                    }
+                });
+            }
+
+            if (!empty($matchingAttributeValues)) {
+                $query->orWhere(function ($attributeValueQuery) use ($matchingAttributeValues) {
+                    foreach ($matchingAttributeValues as $attributeValue) {
+                        $attributeValueQuery->orWhere('choice_options', 'like', '%"' . $attributeValue . '"%');
+                    }
+                });
+            }
         });
     }
 
