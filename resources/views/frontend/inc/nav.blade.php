@@ -822,7 +822,7 @@ body .translater_menu .select2-container {
                                                 </g>
                                             </svg>
                                             <span
-                                                class="user-top-menu-name has-transition ml-3">{{ translate('Purchase History') }}</span>
+                                                class="user-top-menu-name has-transition ml-3">{{ translate('My Orders') }}</span>
                                         </a>
                                     </li>
 

@@ -436,7 +436,7 @@ Route::post('/shipment/create', function (Request $request) {
 
 Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function () {
 
-    // Purchase History
+    // My Orders
     Route::resource('purchase_history', PurchaseHistoryController::class);
     Route::controller(PurchaseHistoryController::class)->group(function () {
         Route::get('/purchase_history/details/{id}', 'purchase_history_details')->name('purchase_history.details');
@@ -446,6 +446,9 @@ Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function ()
 
         Route::get('/re-order/{id}', 're_order')->name('re_order');
     });
+
+    // Financial Archive (frontend view only)
+    Route::get('/financial-archives', [\App\Http\Controllers\FinancialArchiveController::class, 'userArchives'])->name('financial-archives.user');
 
     // Wishlist
     Route::resource('wishlists', WishlistController::class);

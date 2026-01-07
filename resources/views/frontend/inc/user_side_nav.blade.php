@@ -59,7 +59,7 @@
                     $payment_status_viewed = get_count_by_payment_status_viewed();
                 @endphp
 
-                <!-- Purchase History -->
+                <!-- My Orders -->
                 <li class="aiz-side-nav-item">
                     <a href="{{ route('purchase_history.index') }}"
                         class="aiz-side-nav-link {{ areActiveRoutes(['purchase_history.index', 'purchase_history.details']) }}">
@@ -75,15 +75,29 @@
                                 <path id="Path_2960" data-name="Path 2960" d="M13.5,28.963h5a.5.5,0,0,1,0,1h-5a.5.5,0,0,1,0-1" transform="translate(20.966 525.5)" fill="#b5b5bf"/>
                             </g>
                         </svg>
-                        <span class="aiz-side-nav-text ml-3">{{ translate('Purchase History') }}</span>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('My Orders') }}</span>
                         @if ($delivery_viewed > 0 || $payment_status_viewed > 0)
                             <span class="badge badge-inline badge-success">{{ translate('New') }}</span>
                         @endif
                     </a>
                 </li>
 
-                <!-- Downloads -->
+                <!-- Financial Archive -->
                 <li class="aiz-side-nav-item">
+                    <a href="{{ route('financial-archives.user') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['financial-archives.user']) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                            <g fill="none" fill-rule="evenodd">
+                                <path fill="#b5b5bf" d="M3 2.5A1.5 1.5 0 0 1 4.5 1h3.793a1.5 1.5 0 0 1 1.06.44L10.5 2.5H12A1.5 1.5 0 0 1 13.5 4v8A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V2.5H3Zm8.5 2A.5.5 0 0 0 11 4h-1a1 1 0 0 1-1-1V2h-4a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V4.5h-.5Z"/>
+                                <path fill="#b5b5bf" d="M5.75 6.5a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5H8a.5.5 0 0 1 0 1H6.25a.5.5 0 0 1-.5-.5Z"/>
+                            </g>
+                        </svg>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Financial Archive') }}</span>
+                    </a>
+                </li>
+
+                <!-- Downloads -->
+                <li class="aiz-side-nav-item d-none">
                     <a href="{{ route('digital_purchase_history.index') }}"
                         class="aiz-side-nav-link {{ areActiveRoutes(['digital_purchase_history.index']) }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16.001" height="16" viewBox="0 0 16.001 16">
@@ -213,7 +227,7 @@
                             <li class="aiz-side-nav-item">
                                 <a href="{{ route('auction_product.purchase_history') }}"
                                     class="aiz-side-nav-link">
-                                    <span class="aiz-side-nav-text">{{ translate('Purchase History') }}</span>
+                                    <span class="aiz-side-nav-text">{{ translate('My Orders') }}</span>
                                 </a>
                             </li>
                         </ul>

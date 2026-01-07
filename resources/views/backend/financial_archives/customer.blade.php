@@ -56,7 +56,23 @@
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0 h6">{{ translate('Archive List') }}</h5>
+                    <div class="d-flex w-100 align-items-center justify-content-between">
+                        <h5 class="mb-0 h6">{{ translate('Archive List') }}</h5>
+                        <form class="form-inline" method="GET">
+                            <div class="form-group mr-2 mb-0">
+                                <select name="type" class="form-control aiz-selectpicker" data-live-search="true">
+                                    <option value="">{{ translate('All Types') }}</option>
+                                    @foreach ($types as $value => $label)
+                                        <option value="{{ $value }}" @selected($filterType == $value)>{{ translate($label) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group mr-2 mb-0">
+                                <input type="text" name="search" class="form-control" value="{{ $filterSearch }}" placeholder="{{ translate('Search by file name') }}">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">{{ translate('Filter') }}</button>
+                        </form>
+                    </div>
                 </div>
                 <div class="card-body">
                     <table class="table aiz-table mb-0">

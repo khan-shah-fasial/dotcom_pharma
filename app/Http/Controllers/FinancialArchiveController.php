@@ -6,6 +6,7 @@ use App\Models\FinancialArchive;
 use App\Models\Upload;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -158,17 +159,21 @@ class FinancialArchiveController extends Controller
     /**
      * Customer-specific listing with inline add form.
      */
-    public function customerArchives(User $user)
+    public function customerArchives(Request $request, User $user)
     {
-        $archives = FinancialArchive::with('upload')
+        $user->loadMissing('details');
+        $archives = $this->filteredArchivesQuery($request)
             ->where('user_id', $user->id)
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->appends($request->query());
 
         return view('backend.financial_archives.customer', [
             'user' => $user,
             'archives' => $archives,
             'types' => self::TYPES,
+            'filterType' => $request->type,
+            'filterSearch' => $request->search,
         ]);
     }
 
@@ -190,5 +195,43 @@ class FinancialArchiveController extends Controller
         flash(translate('Financial archive added for customer.'))->success();
 
         return back();
+    }
+
+    /**
+     * Frontend user listing.
+     */
+    public function userArchives(Request $request)
+    {
+        $user = Auth::user();
+
+        $archives = $this->filteredArchivesQuery($request)
+            ->where('user_id', $user->id)
+            ->latest()
+            ->paginate(15)
+            ->appends($request->query());
+
+        return view('frontend.user.financial_archive', [
+            'archives' => $archives,
+            'types' => self::TYPES,
+            'filterType' => $request->type,
+            'filterSearch' => $request->search,
+        ]);
+    }
+
+    /**
+     * Base query with optional filters.
+     */
+    protected function filteredArchivesQuery(Request $request)
+    {
+        return FinancialArchive::with('upload')
+            ->when($request->filled('type'), function ($q) use ($request) {
+                $q->where('type', $request->type);
+            })
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = trim($request->search);
+                $q->whereHas('upload', function ($uq) use ($search) {
+                    $uq->where('file_original_name', 'like', '%' . $search . '%');
+                });
+            });
     }
 }
