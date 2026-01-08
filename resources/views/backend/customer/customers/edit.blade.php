@@ -322,12 +322,16 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="state_id_business">{{ translate('State') }} *</label>
-                        <input type="text" name="state_id_business" id="state_id_business" class="form-control" value="{{ old('state_id_business') ?: ($details->state_id_business ?: $user->state) }}" required>
+                        <select name="state_id_business" id="state_id_business" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="business" data-selected="{{ old('state_id_business') ?: ($details->state_id_business ?: $user->state) }}" required>
+                            <option value="">{{ translate('Select State') }}</option>
+                        </select>
                         @error('state_id_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="city_id_business">{{ translate('City') }} *</label>
-                        <input type="text" name="city_id_business" id="city_id_business" class="form-control" value="{{ old('city_id_business') ?: ($details->city_id_business ?: $user->city) }}" required>
+                        <select name="city_id_business" id="city_id_business" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="business" data-selected="{{ old('city_id_business') ?: ($details->city_id_business ?: $user->city) }}" required>
+                            <option value="">{{ translate('Select City') }}</option>
+                        </select>
                         @error('city_id_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
@@ -619,12 +623,16 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="state_id_personal">{{ translate('State') }} *</label>
-                        <input type="text" name="state_id_personal" id="state_id_personal" class="form-control" value="{{ old('state_id_personal', $details->state_id) }}" required>
+                        <select name="state_id_personal" id="state_id_personal" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="personal" data-selected="{{ old('state_id_personal', $details->state_id) }}" required>
+                            <option value="">{{ translate('Select State') }}</option>
+                        </select>
                         @error('state_id_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="city_id_personal">{{ translate('City') }} *</label>
-                        <input type="text" name="city_id_personal" id="city_id_personal" class="form-control" value="{{ old('city_id_personal', $details->city_id) }}" required>
+                        <select name="city_id_personal" id="city_id_personal" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="personal" data-selected="{{ old('city_id_personal', $details->city_id) }}" required>
+                            <option value="">{{ translate('Select City') }}</option>
+                        </select>
                         @error('city_id_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
@@ -898,6 +906,98 @@
 
 @section('script')
     <script>
+        const locationStatesRoute = "{{ route('get-state') }}";
+        const locationCitiesRoute = "{{ route('get-city') }}";
+        const defaultStateText = @json(translate('Select State'));
+        const defaultCityText = @json(translate('Select City'));
+
+        function refreshPicker($el) {
+            if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.bootstrapSelect === 'function') {
+                AIZ.plugins.bootstrapSelect('refresh');
+            } else if ($.fn.selectpicker) {
+                $el.selectpicker('refresh');
+            }
+        }
+
+        function setOptions($select, html, placeholder, selected) {
+            $select.html(html || `<option value="">${placeholder}</option>`);
+            if (selected !== undefined && selected !== null && selected !== '') {
+                $select.val(String(selected));
+            }
+            $select.data('selected', '');
+            refreshPicker($select);
+        }
+
+        function loadStates(scope, preserveSelected = false) {
+            const $country = $('#country_id_' + scope);
+            const $state = $('#state_id_' + scope);
+            const $city = $('#city_id_' + scope);
+            const countryId = $country.val();
+            const selectedState = preserveSelected ? $state.data('selected') : '';
+
+            if (!countryId) {
+                setOptions($state, `<option value="">${defaultStateText}</option>`, defaultStateText, '');
+                setOptions($city, `<option value="">${defaultCityText}</option>`, defaultCityText, '');
+                return;
+            }
+
+            $.post(locationStatesRoute, {
+                _token: '{{ csrf_token() }}',
+                country_id: countryId
+            }).done(function (resp) {
+                let html = resp;
+                try {
+                    if (typeof resp === 'string' && resp.trim().startsWith('"')) {
+                        html = JSON.parse(resp);
+                    }
+                } catch (e) {}
+                setOptions($state, html, defaultStateText, selectedState);
+                loadCities(scope, true);
+            });
+        }
+
+        function loadCities(scope, preserveSelected = false) {
+            const $state = $('#state_id_' + scope);
+            const $city = $('#city_id_' + scope);
+            const stateId = $state.val();
+            const selectedCity = preserveSelected ? $city.data('selected') : '';
+
+            if (!stateId) {
+                setOptions($city, `<option value="">${defaultCityText}</option>`, defaultCityText, '');
+                return;
+            }
+
+            $.post(locationCitiesRoute, {
+                _token: '{{ csrf_token() }}',
+                state_id: stateId
+            }).done(function (resp) {
+                let html = resp;
+                try {
+                    if (typeof resp === 'string' && resp.trim().startsWith('"')) {
+                        html = JSON.parse(resp);
+                    }
+                } catch (e) {}
+                setOptions($city, html, defaultCityText, selectedCity);
+            });
+        }
+
+        function initEditLocationDropdowns() {
+            ['business', 'personal'].forEach(function (scope) {
+                loadStates(scope, true);
+
+                $('#country_id_' + scope).on('change', function () {
+                    $('#state_id_' + scope).data('selected', '');
+                    $('#city_id_' + scope).data('selected', '');
+                    loadStates(scope, false);
+                });
+
+                $('#state_id_' + scope).on('change', function () {
+                    $('#city_id_' + scope).data('selected', '');
+                    loadCities(scope, false);
+                });
+            });
+        }
+
         function toggleLocalityBlocks() {
             const selected = document.querySelector('input[name="type_option"]:checked')?.value || 'domestic';
             document.querySelectorAll('.locality-block').forEach(block => block.classList.add('d-none'));
@@ -1288,6 +1388,7 @@
 
         toggleLocalityBlocks();
         toggleIdentityBlocks();
+        initEditLocationDropdowns();
         initIntlInputsEdit();
         AIZ.plugins.bootstrapSelect('refresh');
         initValidate('#edit-customer-form');

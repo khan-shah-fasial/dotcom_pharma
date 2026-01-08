@@ -406,6 +406,171 @@ if (!function_exists('getUserDetailsLocationTree')) {
     }
 }
 
+if (!function_exists('sync_user_detail_location_ids')) {
+    /**
+     * Normalize user_details state/city fields so they store the canonical IDs from states and cities tables.
+     * Returns a summary of how many rows changed plus samples of any unmatched values.
+     */
+    function sync_user_detail_location_ids(): array
+    {
+        $normalize = function ($value) {
+            $value = preg_replace('/\s+/', ' ', (string) $value);
+            $value = trim($value);
+            return $value === '' ? null : strtolower($value);
+        };
+
+        $stateById = State::all(['id', 'name'])->keyBy('id');
+        $stateByName = [];
+        foreach ($stateById as $state) {
+            $key = $normalize($state->name);
+            if ($key !== null && !isset($stateByName[$key])) {
+                $stateByName[$key] = $state->id;
+            }
+        }
+
+        // Common spelling variants to smoothen lookups.
+        $stateAliases = [
+            'orissa'    => 'odisha',
+            'tamilnadu' => 'tamil nadu',
+        ];
+
+        $cityById = City::all(['id', 'name', 'state_id'])->keyBy('id');
+        $cityLookup = [];
+        $cityFallback = [];
+        foreach ($cityById as $city) {
+            $key = $normalize($city->name);
+            if ($key === null) {
+                continue;
+            }
+
+            $cityLookup[$city->state_id][$key] = $city->id;
+
+            if (!isset($cityFallback[$key])) {
+                $cityFallback[$key] = $city->id;
+            }
+        }
+
+        $stats = [
+            'processed' => 0,
+            'updated' => 0,
+            'unchanged' => 0,
+            'state_misses' => [],
+            'city_misses' => [],
+        ];
+
+        $resolveStateId = function ($raw, $field, $detailId) use ($stateById, $stateByName, $stateAliases, $normalize, &$stats) {
+            $rawString = trim((string) $raw);
+            $normalizedRaw = $normalize($rawString);
+            if ($normalizedRaw === null) {
+                return [null, null];
+            }
+
+            if (isset($stateAliases[$normalizedRaw])) {
+                $normalizedRaw = $stateAliases[$normalizedRaw];
+            }
+
+            if (ctype_digit($normalizedRaw)) {
+                $id = (int) $normalizedRaw;
+                if (isset($stateById[$id])) {
+                    return [$id, null];
+                }
+            }
+
+            if (isset($stateByName[$normalizedRaw])) {
+                return [$stateByName[$normalizedRaw], null];
+            }
+
+            if (count($stats['state_misses']) < 25) {
+                $stats['state_misses'][] = [
+                    'user_detail_id' => $detailId,
+                    'field' => $field,
+                    'value' => $rawString,
+                ];
+            }
+
+            return [null, $rawString];
+        };
+
+        $resolveCityId = function ($raw, $stateId, $field, $detailId) use ($cityById, $cityLookup, $cityFallback, $normalize, &$stats) {
+            $rawString = trim((string) $raw);
+            $normalizedRaw = $normalize($rawString);
+            if ($normalizedRaw === null) {
+                return [null, false];
+            }
+
+            if (ctype_digit($normalizedRaw)) {
+                $id = (int) $normalizedRaw;
+                if (isset($cityById[$id])) {
+                    return [$id, false];
+                }
+            }
+
+            if ($stateId !== null && isset($cityLookup[$stateId][$normalizedRaw])) {
+                return [$cityLookup[$stateId][$normalizedRaw], false];
+            }
+
+            if (isset($cityFallback[$normalizedRaw])) {
+                return [$cityFallback[$normalizedRaw], false];
+            }
+
+            if (count($stats['city_misses']) < 25) {
+                $stats['city_misses'][] = [
+                    'user_detail_id' => $detailId,
+                    'field' => $field,
+                    'value' => $rawString,
+                    'state_id_hint' => $stateId,
+                ];
+            }
+
+            return [null, true]; // flag to null-out mismatches
+        };
+
+        UserDetails::query()
+            ->select(['id', 'state_id', 'state_id_business', 'city_id', 'city_id_business'])
+            ->chunkById(3000, function ($chunk) use (&$stats, $resolveStateId, $resolveCityId) {
+                foreach ($chunk as $detail) {
+                    $stats['processed']++;
+                    $updates = [];
+
+                    [$stateId] = $resolveStateId($detail->state_id, 'state_id', $detail->id);
+                    [$stateIdBusiness] = $resolveStateId($detail->state_id_business, 'state_id_business', $detail->id);
+
+                    [$cityId, $nullCity] = $resolveCityId($detail->city_id, $stateId, 'city_id', $detail->id);
+                    [$cityIdBusiness, $nullCityBusiness] = $resolveCityId($detail->city_id_business, $stateIdBusiness, 'city_id_business', $detail->id);
+
+                    if ($stateId !== null && (string) $detail->state_id !== (string) $stateId) {
+                        $updates['state_id'] = $stateId;
+                    }
+
+                    if ($stateIdBusiness !== null && (string) $detail->state_id_business !== (string) $stateIdBusiness) {
+                        $updates['state_id_business'] = $stateIdBusiness;
+                    }
+
+                    if ($cityId !== null && (string) $detail->city_id !== (string) $cityId) {
+                        $updates['city_id'] = $cityId;
+                    } elseif ($nullCity && $detail->city_id !== null) {
+                        $updates['city_id'] = null;
+                    }
+
+                    if ($cityIdBusiness !== null && (string) $detail->city_id_business !== (string) $cityIdBusiness) {
+                        $updates['city_id_business'] = $cityIdBusiness;
+                    } elseif ($nullCityBusiness && $detail->city_id_business !== null) {
+                        $updates['city_id_business'] = null;
+                    }
+
+                    if (!empty($updates)) {
+                        $detail->forceFill($updates)->save();
+                        $stats['updated']++;
+                    } else {
+                        $stats['unchanged']++;
+                    }
+                }
+            });
+
+        return $stats;
+    }
+}
+
 // if (!function_exists('unbanned_sellers_id')) {
 //     function unbanned_sellers_id()
 //     {

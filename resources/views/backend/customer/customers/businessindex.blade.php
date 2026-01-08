@@ -265,6 +265,7 @@
                             </th>
                             <th>{{ translate('Post') }}</th>
                             <th>{{ translate('District') }}</th>
+                            <th>{{ translate('City') }}</th>
                             <th>{{ translate('State') }}</th>
 
                             {{-- <th>{{ translate('Country Code') }}</th> --}}
@@ -308,15 +309,18 @@
                                     <td>{{ $user->details->district_business ?? ($user->details->district ?? '-') }}</td>
                                     @php
                                         $stateName = null;
-                                        if (!empty($user->details->state_id_business)) {
-                                            // $stateName = getParticularData('states', 'name', (int) $user->details->state_id_business);
-                                            $stateName = $user->details->state_id_business;
+                                        $stateId = $user->details->state_id_business ?? $user->details->state_id;
+                                        if ($stateId) {
+                                            $stateName = $stateNames[$stateId] ?? $stateId;
                                         }
-                                        if (!$stateName && !empty($user->details->state_id)) {
-                                            // $stateName = getParticularData('states', 'name', (int) $user->details->state_id);
-                                            $stateName = $user->details->state_id;
+
+                                        $cityName = null;
+                                        $cityId = $user->details->city_id_business ?? $user->details->city_id;
+                                        if ($cityId) {
+                                            $cityName = $cityNames[$cityId] ?? $cityId;
                                         }
                                     @endphp
+                                    <td>{{ $cityName ?? '-' }}</td>
                                     <td>{{ $stateName ?? '-' }}</td>
                                     {{-- <td>{{ $user->details->country_code_business ?? ($user->details->country_code ?? '-') }}</td> --}}
                                     <td>{{ $user->email }}</td>

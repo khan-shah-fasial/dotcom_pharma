@@ -118,6 +118,16 @@ Route::get('/clear-session', function () {
     echo"clear";
 });
 
+Route::middleware(['auth'])->get('/utilities/sync-user-location-ids', function () {
+    $user = auth()->user();
+
+    if (!$user || $user->user_type !== 'admin') {
+        abort(403, 'Only administrators can run this task.');
+    }
+
+    return response()->json(sync_user_detail_location_ids());
+})->name('utilities.sync-user-location-ids');
+
 Route::get('/cron/update-currencies', [CronjobController::class, 'updateCurrencyRates'])
     ->name('cron.update-currencies');
 
