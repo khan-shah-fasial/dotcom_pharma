@@ -86,7 +86,7 @@ class OrderController extends Controller
             $order->payment_type = $request->payment_type;
             $order->delivery_viewed = '0';
             $order->payment_status_viewed = '0';
-            $order->code = date('Ymd-His') . rand(10, 99);
+            $order->code = generate_financial_year_order_code();
             $order->date = strtotime('now');
             if ($set_paid) {
                 $order->payment_status = 'paid';

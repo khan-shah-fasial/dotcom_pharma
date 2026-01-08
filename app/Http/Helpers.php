@@ -3990,3 +3990,34 @@ if (!function_exists('format_dd_mm_yy')) {
         return \Carbon\Carbon::parse($date)->format('d-m-Y');
     }
 }
+
+if (!function_exists('generate_financial_year_order_code')) {
+    /**
+     * Build an order code like 786-DP-S-25-26- 626 based on the current financial year (Apr-Mar).
+     */
+    function generate_financial_year_order_code(): string
+    {
+        $today = Carbon::now();
+        $financialYearStart = $today->month >= 4 ? $today->year : $today->year - 1;
+        $financialYearEnd = $financialYearStart + 1;
+
+        $fySegment = substr((string) $financialYearStart, -2) . '-' . substr((string) $financialYearEnd, -2);
+        $prefix = '786-DP-S-' . $fySegment . '-';
+
+        // Limit the lookup to the current financial year so a new year always starts at 1.
+        $fyStartDate = Carbon::create($financialYearStart, 4, 1, 0, 0, 0);
+        $fyEndDate = Carbon::create($financialYearEnd, 4, 1, 0, 0, 0)->subSecond();
+
+        $lastOrder = Order::whereBetween('created_at', [$fyStartDate, $fyEndDate])
+            ->where('code', 'like', $prefix . '%')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $nextSequence = 1;
+        if ($lastOrder && preg_match('/' . preg_quote($prefix, '/') . '\\s*(\\d+)/', $lastOrder->code, $matches)) {
+            $nextSequence = ((int) $matches[1]) + 1;
+        }
+
+        return $prefix . ' ' . $nextSequence;
+    }
+}

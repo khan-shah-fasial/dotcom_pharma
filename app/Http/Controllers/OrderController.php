@@ -204,7 +204,7 @@ class OrderController extends Controller
             $order->shipping_courier_id = $request->shipping_method === 'fod' ? null : $request->courier_service;
             $order->delivery_viewed = '0';
             $order->payment_status_viewed = '0';
-            $order->code = date('Ymd-His') . rand(10, 99);
+            $order->code = generate_financial_year_order_code();
             $order->date = strtotime('now');    
             $order->save();
 

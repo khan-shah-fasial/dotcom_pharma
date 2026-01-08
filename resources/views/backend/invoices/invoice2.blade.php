@@ -101,7 +101,7 @@
 </head>
 <body>
 @php
-    $siteName = get_setting('site_name') ?: 'Dotcom Pharma';
+    $siteName = get_setting('invoice_company_name') ?: 'Dotcom Pharma';
     $contactAddress = get_setting('contact_address', null, 'en');
     $contactPhone = get_setting('contact_phone');
     $contactSalesPhone = get_setting('contact_sales_phone');
@@ -109,6 +109,7 @@
     $contactEmail = get_setting('contact_email');
     // $contactWebsite = get_setting('website_name') ?: url('/');
     $contactWebsite = get_setting('website_url') ?: url('/');
+    $drugLicenceNumbers = array_filter(array_map('trim', explode(',', get_setting('drug_licence_numbers') ?? '')));
 
     $shipping = json_decode($order->shipping_address ?? '{}');
     $user = $order->user ?? null;
@@ -141,14 +142,18 @@
     $invoiceTime = $invoiceDateObj ? $invoiceDateObj->format('H:i:s') : '-';
     $creditDays = (int) ($user?->credit_days ?? 0);
     $dueDate = '-';
-    // if ($invoiceDateObj && $creditDays > 0) {
-    //     $dueDate = $invoiceDateObj->copy()->addDays($creditDays)->format('d-m-Y');
-    // }
-    $countryBusinessID = $userDetails?->country_id_business ?? '-';
-    $countryBusiness = $countryBusinessID != '-' ? optional(\App\Models\Country::find($countryBusinessID))->name : '-';
+    if ($invoiceDateObj && $creditDays > 0) {
+        $dueDate = $invoiceDateObj->copy()->addDays($creditDays)->format('d-m-Y');
+    }
+    $countryBusinessID = $userDetails?->country_id_business ?? null;
+    $countryBusiness = $countryBusinessID ? optional(\App\Models\Country::find($countryBusinessID))->name : '-';
     $postBusiness = $userDetails?->post_business ?? '-';
-    $stateBusiness = $userDetails?->state_id_business ?? '-';
+    $stateBusinessId = $userDetails?->state_id_business ?? null;
+    $stateBusiness = $stateBusinessId ? optional(\App\Models\State::find($stateBusinessId))->name : '-';
+    $isMaharashtra = $stateBusiness && strcasecmp(trim($stateBusiness), 'maharashtra') === 0;
     $bookTo = $userDetails?->booked_to ?? '-';
+    $transport = $userDetails?->transport ?? '-';
+    $orderNo = $userDetails?->salesman ?? '-';
     $dl1 = $userDetails?->dl1 ?? '-';
     $dl2 = $userDetails?->dl2 ?? '-';
     $dlExpiry = $userDetails?->dl_expiry ?? '-';
@@ -164,10 +169,26 @@
 
     $subTotal = $order->orderDetails->sum('price');
     $shippingTotal = $order->orderDetails->sum('shipping_cost');
-    $taxTotal = $order->orderDetails->sum('tax');
-    $discountTotal = $order->coupon_discount ?? 0;
+    $taxTotal = 0;
+    $lineDiscountTotal = 0; // order details do not carry a discount field
+    $couponDiscount = $order->coupon_discount ?? 0;
+    $discountTotal = $couponDiscount + $lineDiscountTotal;
     $grandTotal = $order->grand_total;
+    $ewbNumber = $grandTotal >= 50000 ? ($order->eway_bill ?? '-') : '-';
     $totalQty = $order->orderDetails->sum('quantity');
+    $schemeQtyTotal = $order->orderDetails->sum(function ($row) {
+        return $row->scheme_qty ?? 0;
+    });
+    $taxableTotal = $order->orderDetails->sum(function ($row) {
+        $lineGross = $row->price ?? 0;
+        $discount = $row->discount ?? 0;
+        return max($lineGross - $discount, 0);
+    });
+    $sgstTotal = 0;
+    $cgstTotal = 0;
+    $igstTotal = 0;
+    $exemptedValue = 0;
+    $roundOff = 0;
 @endphp
 <div class="invoice-wrap">
     <table class="band">
@@ -199,8 +220,8 @@
             </td>
             <td class="head">
                 {{ translate('Tax Invoice No.') }}: {{ $invoiceNo }}
-                <br>
-                {{ translate('Challan No.') }}: {{ $challanNo }}
+                {{-- <br>
+                {{ translate('Challan No.') }}: {{ $challanNo }} --}}
                 <br>
                 {{ translate('Dated') }}: {{ $invoiceDate }}
                 <br>
@@ -238,10 +259,10 @@
             <td class="head">{{ translate('DL Expiry') }}: {{ $dlExpiry }}</td>
         </tr>
         <tr>
-            <td class="head">{{ translate('TRP') }}: -</td>
+            <td class="head">{{ translate('Shipped By') }}: {{ $transport }}</td>
             <td class="head">{{ translate('Cases') }}: -</td>
             <td class="head">{{ translate('PM') }}: -</td>
-            <td class="head">{{ translate('Trp-GST') }}: -</td>
+            <td class="head">{{ translate('Shipment-GST') }}: -</td>
         </tr>
         <tr>
             <td class="head">{{ translate('L.R.NO') }}: -</td>
@@ -261,19 +282,20 @@
         <table class="items">
             <thead>
                 <tr>
-                    <th width="3%">{{ translate('Sr.') }}</th>
+                    <th width="3%">{{ translate('Sr. No.') }}</th>
+                    <th width="15%">{{ translate('Description') }}</th>
+                    <th width="6%">{{ translate('Pack') }}</th>
                     <th width="12%">{{ translate('Batch / Expiry') }}</th>
-                    <th width="16%">{{ translate('Description') }}</th>
-                    <th width="8%">{{ translate('Category') }}</th>
-                    <th width="6%">{{ translate('HSN') }}</th>
-                    <th width="7%">{{ translate('Pack') }}</th>
-                    <th width="7%">{{ translate('Total Qty') }}</th>
-                    <th width="8%">{{ translate('SGST') }}</th>
-                    <th width="8%">{{ translate('CGST') }}</th>
-                    <th width="8%">{{ translate('IGST') }}</th>
+                    <th width="7%">{{ translate('Category / HSN') }}</th>
+                    <th width="8%">{{ translate('MFG / MKT') }}</th>
+                    <th width="7%">{{ translate('Total Qty') }}<br><span class="small">{{ translate('Qty / SCM') }}</span></th>
+                    <th width="7%">{{ translate('SGST') }}<br><span class="small">{{ translate('SGST') }}%</span></th>
+                    <th width="7%">{{ translate('CGST') }}<br><span class="small">{{ translate('CGST') }}%</span></th>
+                    <th width="7%">{{ translate('IGST') }}<br><span class="small">{{ translate('IGST') }}%</span></th>
                     <th width="7%">{{ translate('GST Value') }}</th>
-                    <th width="6%">{{ translate('Rate') }}</th>
-                    <th width="6%">{{ translate('Gross') }}</th>
+                    <th width="7%">{{ translate('Rate / MRP') }}</th>
+                    <th width="7%">{{ translate('Gross Value') }}</th>
+                    <th width="6%">{{ translate('Amt Dis') }} %</th>
                     <th width="8%" class="text-right">{{ translate('Taxable Amount') }}</th>
                 </tr>
             </thead>
@@ -285,38 +307,87 @@
                         $category = optional($product?->main_category)->getTranslation('name') ?? '-';
                         $hsn = $product->product_hsn ?? '-';
                         $qty = $detail->quantity;
+                        $schemeQty = $detail->scheme_qty ?? 0;
                         $unitPrice = $qty > 0 ? $detail->price / $qty : $detail->price;
                         $lineGross = $detail->price;
                         $lineTax = $detail->tax;
                         $lineShipping = $detail->shipping_cost;
-                        $taxableAmount = $lineGross;
-                        $sgst = 0;
-                        $cgst = 0;
-                        $igst = $lineTax;
-                        $pack = $product?->unit ?? translate('Unit');
+                        $lineDiscountValue = 0; // order details do not store per-line discount
+                        $lineCouponDiscount = ($couponDiscount > 0 && $subTotal > 0)
+                            ? ($couponDiscount * ($lineGross / $subTotal))
+                            : 0;
+                        $discountValue = $lineDiscountValue + $lineCouponDiscount;
+                        $taxableAmount = max($lineGross - $discountValue, 0);
+                        if ($isMaharashtra) {
+                            $sgst = $lineTax / 2;
+                            $cgst = $lineTax / 2;
+                            $igst = 0;
+                        } else {
+                            $sgst = 0;
+                            $cgst = 0;
+                            $igst = $lineTax;
+                        }
+                        $sgstPercent = $taxableAmount > 0 ? round(($sgst / $taxableAmount) * 100, 2) : 0;
+                        $cgstPercent = $taxableAmount > 0 ? round(($cgst / $taxableAmount) * 100, 2) : 0;
+                        $igstPercent = $taxableAmount > 0 ? round(($igst / $taxableAmount) * 100, 2) : 0;
+                        $brandName = optional($product?->brand)->getTranslation('name') ?? optional($product?->brand)->name ?? '-';
+                        $matchingStock = $product?->stocks?->where('variant', $detail->variation)->first() ?? $product?->stocks?->first();
+                        $batchNo = '-';
+                        $expiryFormatted = '-';
+                        // $batchNo = $detail->batch_no ?? optional($product)->batch_no ?? '-';
+                        // $expiryDate = $detail->expiry_date ?? optional($matchingStock)->product_exp_date ?? optional($product)->product_exp_date ?? null;
+                        // $expiryFormatted = $expiryDate ? format_dd_mm_yy($expiryDate) : '-';
+                        $mrp = optional($matchingStock)->mrp_price ?? $product?->unit_price ?? $unitPrice;
+                        $grossWithShipping = $lineGross + $lineShipping;
+                        $discountPercent = $lineGross > 0 ? round(($discountValue / $lineGross) * 100, 2) : 0;
+                        $pack = $matchingStock?->variant ?? $detail->variation ?? '-';
+                        $sgstTotal += $sgst;
+                        $cgstTotal += $cgst;
+                        $igstTotal += $igst;
+                        $taxTotal += $lineTax;
                     @endphp
                     <tr>
                         <td class="text-center">{{ $idx + 1 }}</td>
-                        <td class="text-center">-</td>
                         <td>
                             {{ optional($product)->name ?? translate('Product Removed') }}{{ $variation }}
-                            @if($product && $product->stocks && $product->stocks->first())
-                                @php $stock = json_decode($product->stocks->first(), true); @endphp
-                                @if(!empty($stock['sku']))
-                                    <div class="small">{{ translate('SKU') }}: {{ $stock['sku'] }}</div>
-                                @endif
+                            @php $stockArray = $matchingStock ? $matchingStock->toArray() : []; @endphp
+                            @if(!empty($stockArray['sku']))
+                                <div class="small">{{ translate('SKU') }}: {{ $stockArray['sku'] }}</div>
                             @endif
                         </td>
-                        <td class="text-center">{{ $category }}</td>
-                        <td class="text-center">{{ $hsn }}</td>
                         <td class="text-center">{{ $pack }}</td>
-                        <td class="text-center">{{ $qty }}</td>
-                        <td class="text-center">{{ single_price($sgst) }}</td>
-                        <td class="text-center">{{ single_price($cgst) }}</td>
-                        <td class="text-center">{{ single_price($igst) }}</td>
+                        <td class="text-center">
+                            <div>{{ translate('Batch') }}: {{ $batchNo }}</div>
+                            <div>{{ translate('Expiry') }}: {{ $expiryFormatted }}</div>
+                        </td>
+                        <td class="text-center">{{ $category }} <br> {{ $hsn }}</td>
+                        <td class="text-center">{{ $brandName }}</td>
+                        <td class="text-center">
+                            <div class="label">{{ $qty }}</div>
+                            <div class="small">{{ translate('SCM') }}: {{ $schemeQty }}</div>
+                        </td>
+                        <td class="text-center">
+                            <div>{{ single_price($sgst) }}</div>
+                            <div class="small">{{ $sgstPercent }}%</div>
+                        </td>
+                        <td class="text-center">
+                            <div>{{ single_price($cgst) }}</div>
+                            <div class="small">{{ $cgstPercent }}%</div>
+                        </td>
+                        <td class="text-center">
+                            <div>{{ single_price($igst) }}</div>
+                            <div class="small">{{ $igstPercent }}%</div>
+                        </td>
                         <td class="text-center">{{ single_price($lineTax) }}</td>
-                        <td class="text-center">{{ single_price($unitPrice) }}</td>
-                        <td class="text-center">{{ single_price($lineGross + $lineShipping) }}</td>
+                        <td class="text-center">
+                            <div class="label">{{ single_price($unitPrice) }}</div>
+                            <div class="small red-color">{{ single_price($mrp) }}</div>
+                        </td>
+                        <td class="text-center">{{ single_price($grossWithShipping) }}</td>
+                        <td class="text-center">
+                            <div class="label">{{ single_price($discountValue) }}</div>
+                            <div class="small">{{ $discountPercent }}%</div>
+                        </td>
                         <td class="text-right">{{ single_price($taxableAmount) }}</td>
                     </tr>
                 @empty
@@ -330,20 +401,32 @@
 
     <table class="meta" style="margin-top: 8px;">
         <tr>
-            <td class="head">{{ translate('Qty') }}</td>
-            <td>{{ $totalQty }}</td>
-            <td class="head">{{ translate('Gross Value') }}</td>
-            <td>{{ single_price($subTotal) }}</td>
-            <td class="head">{{ translate('Total Taxable Amount') }}</td>
-            <td>{{ single_price($subTotal) }}</td>
+            <td colspan="2" class="head">{{ translate('Qty') }}: {{ $totalQty }}</td>
+            <td class="head">{{ translate('Gross Value') }}: {{ single_price($subTotal + $shippingTotal) }}</td>
+            <td class="head">{{ translate('SGST') }}: {{ single_price($sgstTotal) }}</td>
+            <td class="head">{{ translate('Total Taxable Amount') }}: {{ single_price($taxableTotal) }}</td>
         </tr>
         <tr>
-            <td class="head">{{ translate('Total GST Payable') }}</td>
-            <td>{{ single_price($taxTotal) }}</td>
-            <td class="head">{{ translate('CR/DR Note Adjusted') }}</td>
-            <td>{{ single_price(0) }}</td>
-            <td class="head">{{ translate('Grand Total') }}</td>
-            <td><strong>{{ single_price($grandTotal) }}</strong></td>
+            <td colspan="2" class="head">{{ translate('Scheme Qty (Free)') }}: {{ $schemeQtyTotal }}</td>
+            <td class="head">{{ translate('Less Discount') }}: {{ single_price($discountTotal) }}</td>
+            <td class="head">{{ translate('CGST') }}: {{ single_price($cgstTotal) }}</td>
+            <td class="head">{{ translate('Total GST Payable') }}: {{ single_price($taxTotal) }}</td>
+        </tr>
+        <tr>
+            <td colspan="2" class="head">{{ translate('Coupon Discount') }}: {{ single_price($couponDiscount) }}</td>
+            <td class="head">{{ translate('Line Discount') }}: {{ single_price($lineDiscountTotal) }}</td>
+            <td class="head">{{ translate('IGST') }}: {{ single_price($igstTotal) }}</td>
+            <td class="head">{{ translate('CR/DR Note Adjusted') }}: {{ single_price(0) }}</td>
+        </tr>
+        <tr>
+            <td colspan="2" class="head">{{ translate('Exempted Value') }}: {{ single_price($exemptedValue) }}</td>
+            <td class="head">{{ translate('Insurance / Packing') }}: {{ single_price(0) }}</td>
+            <td class="head">{{ translate('GST') }}: {{ single_price($taxTotal) }}</td>
+            <td class="head">{{ translate('Round Off') }}: {{ single_price($roundOff) }}</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="head text-right">{{ translate('Grand Total') }}</td>
+            <td colspan="1"><strong>{{ single_price($grandTotal) }}</strong></td>
         </tr>
     </table>
 
@@ -359,10 +442,15 @@
             <td width="52%" rowspan="2">                
                 <div class="label">{{ translate('Registered Under MSMED Act') }}</div>
                 <div>{{ translate('Account Name') }} : {{ $siteName }}</div>
-                <div>{{ translate('Bank') }} : {{ translate('Not provided') }}</div>
-                <div>{{ translate('IFSC.') }} : {{ get_setting('bank_ifsc') ?? '-' }}</div>
+                <div>{{ translate('Bank') }} : {{ get_setting('company_bank') ?? '-' }}</div>
+                <div>{{ translate('IFSC.') }} : {{ get_setting('company_bank_ifsc') ?? '-' }}</div>
                 <div>{{ translate('GST No.') }} : {{ get_setting('company_gst') ?? '-' }}</div>
                 <div>{{ translate('PAN No.') }} : {{ get_setting('company_pan') ?? '-' }}</div>
+                <div>{{ translate('Drug Licence') }} : 
+                    @foreach($drugLicenceNumbers as $dlNum)
+                        <br>{{ $dlNum }}
+                    @endforeach
+                </div>
             </td>
         </tr>
         <tr>
@@ -383,11 +471,11 @@
             <td colspan="3" style="border-top:0; padding-top:2px; font-size:10px;">
                 {{ translate('We hereby certify that my / our Registration Certificate under the Goods & Services Tax Act.2017 is in force on the date 1st July 2017 on which the sale of the goods specified in this GST invoice & Bill of Supply is made by me / us and that the transaction of sale covered by this GST invoice has been effected by me/ us and it shall be accounted for in the turnover of sales while filling of return and the due tax if any payable on the sale has been paid or shall be paid') }}
             </td>
-            <td width="10%" class="footer-box text-center">
+            <td class="footer-box text-center">
+                <br>
+                <br>
                 <div class="red-color label">{{ translate('Payment Terms') }}</div>
-                <div class="small">
-                    {{ translate('Immediate Payment / 15 Days Max') }}
-                </div>
+                <div>{{ translate('Immediate Payment / 15 Days Max') }}</div>
             </td>
         </tr>
         <tr>
@@ -401,7 +489,7 @@
                 <br>
                 <br>
                 <div class="label">{{ translate('For') }} <span class="red-color">{{ $siteName }}</span></div>
-                <div style="margin-top: 22px;">{{ translate('Authorised Signatory') }}</div>
+                <div>{{ translate('Authorised Signatory') }}</div>
             </td>
         </tr>
     </table>
