@@ -207,7 +207,7 @@
                                     <!--hiding 1st attribute ROLE [by nexgeno]-->
                                     <div class="col-sm-12">
                                         <div class="text-dark fs-14 fw-500 mt-0 mb-2">
-                                            {{ get_single_attribute_name($choice->attribute_id) }}
+                                            {{ str_replace('_', ' ', get_single_attribute_name($choice->attribute_id)) }}
                                         </div>
                                     </div>
                                     <div class="col-sm-12">
@@ -226,7 +226,7 @@
                                                     <span
                                                         class="aiz-megabox-elem rounded-0 d-flex align-items-center justify-content-center py-1 px-3 fs-12 text-secondary"
                                                         style="border-radius:5px !important">
-                                                        {{ $value }}
+                                                        {{ str_replace('_', ' ', $value) }}
                                                     </span>
                                                 </label>
                                             @endforeach
