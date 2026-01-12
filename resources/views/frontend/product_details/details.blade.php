@@ -212,7 +212,15 @@
                                     </div>
                                     <div class="col-sm-12">
                                         <div class="aiz-radio-inline">
-                                            @foreach ($choice->values as $key => $value)
+                                            @php
+                                                $sortedValues = collect($choice->values)
+                                                    ->sortBy(function ($val) {
+                                                        preg_match('/\\d+(\\.\\d+)?/', $val, $matches);
+                                                        return isset($matches[0]) ? (float) $matches[0] : $val;
+                                                    })
+                                                    ->values();
+                                            @endphp
+                                            @foreach ($sortedValues as $key => $value)
                                                 <label class="aiz-megabox pl-0 mr-1 mb-2">
                                                     <!--<input type="radio" name="attribute_id_{{ $choice->attribute_id }}"
                                                         value="{{ $value }}"
