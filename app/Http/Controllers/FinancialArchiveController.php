@@ -13,13 +13,16 @@ use Illuminate\Validation\Rule;
 class FinancialArchiveController extends Controller
 {
     private const TYPES = [
-        'product_purchased' => 'Product Purchased',
-        'ledger_statement' => 'Ledger Statement',
+        'order' => 'Order',
+        'challan' => 'Challan',
         'invoice' => 'Invoice',
         'eway_bill' => 'Eway Bill',
+        'lr_gr_doc' => 'LR/GR/Doc',
         'credit_debit_note' => 'Credit / Debit Note',
-        'lr_copy' => 'LR Copy',
-        'challan' => 'Challan',
+        'account_statement' => 'Account Statement',
+        // 'product_purchased' => 'Product Purchased',
+        // 'ledger_statement' => 'Ledger Statement',
+        // 'lr_copy' => 'LR Copy',
     ];
 
     /**
