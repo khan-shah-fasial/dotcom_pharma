@@ -309,13 +309,15 @@
                                     <td>{{ $user->details->district_business ?? ($user->details->district ?? '-') }}</td>
                                     @php
                                         $stateName = null;
-                                        $stateId = $user->details->state_id_business ?? $user->details->state_id;
+                                        $stateId = $user->details?->state_id_business ?? $user->details?->state_id;
+
                                         if ($stateId) {
                                             $stateName = $stateNames[$stateId] ?? $stateId;
                                         }
 
                                         $cityName = null;
-                                        $cityId = $user->details->city_id_business ?? $user->details->city_id;
+                                        $cityId = $user->details?->city_id_business ?? $user->details?->city_id;
+
                                         if ($cityId) {
                                             $cityName = $cityNames[$cityId] ?? $cityId;
                                         }
