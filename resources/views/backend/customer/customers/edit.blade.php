@@ -36,7 +36,7 @@
 
                 {{-- Business Identification --}}
                 @php
-                    $domChoice = old('domestic_identity_selection') ?: (($details->gst_no ?? '') ? 'gst' : 'aadhaar_pan');
+                    $domChoice = old('domestic_identity_selection') ?: (($details?->gst_no ?? '') ? 'gst' : 'aadhaar_pan');
                 @endphp
                 <div class="row locality-domestic locality-block mb-2">
                     <div class="col-md-12">
@@ -114,7 +114,7 @@
                     <div class="col-md-3 domestic-aadhaar-block">
                         <!-- PAN Number -->
                         <label class="form-label mb-0 mt-3" for="pan_no_domestic">{{ translate('PAN No') }} *</label>
-                        <input type="text" id="pan_no_domestic" name="pan_no" class="form-control" value="{{ old('pan_no', $details->pan_no) }}">
+                        <input type="text" id="pan_no_domestic" name="pan_no" class="form-control" value="{{ old('pan_no', $details?->pan_no) }}">
                         @error('pan_no')
                             <div class="text-danger small">{{ $message }}</div>
                         @enderror
@@ -122,10 +122,10 @@
                     <div class="col-md-3 domestic-aadhaar-block">
                         <!-- PAN Upload -->
                         <label class="form-label mb-0 mt-3" for="pan_no_file">{{ translate('PAN Upload') }} *</label>
-                        <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="pan_no_file" name="pan_no_file" class="form-control m-0" data-existing="{{ !empty($details->pan_no_file) ? '1' : '' }}" >
-                        @if (!empty($details->pan_no_file))
+                        <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="pan_no_file" name="pan_no_file" class="form-control m-0" data-existing="{{ !empty($details?->pan_no_file) ? '1' : '' }}" >
+                        @if (!empty($details?->pan_no_file))
                             <small class="d-block mt-1">
-                                <a href="{{ asset(custom_file($details->pan_no_file)) }}" target="_blank">
+                                <a href="{{ asset(custom_file($details?->pan_no_file)) }}" target="_blank">
                                     {{ translate('Current PAN file') }}
                                 </a>
                             </small>
@@ -139,11 +139,11 @@
                 <div class="row locality-international locality-block mb-2">
                     <div class="col-md-12">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_iec" value="iec" {{ ($details->iec_no ?: null) ? 'checked' : '' }}>
+                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_iec" value="iec" {{ ($details?->iec_no ?: null) ? 'checked' : '' }}>
                             <label class="form-check-label" for="international_identity_iec">{{ translate('IEC') }}</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_passport" value="passport" {{ ($details->iec_no ?: null) ? '' : 'checked' }}>
+                            <input class="form-check-input intl-identity-toggle" type="radio" name="international_identity_selection" id="international_identity_passport" value="passport" {{ ($details?->iec_no ?: null) ? '' : 'checked' }}>
                             <label class="form-check-label" for="international_identity_passport">{{ translate('Passport') }}</label>
                         </div>
                     </div>
@@ -153,7 +153,7 @@
                     <div class="col-md-4 intl-iec-block">
                         <div class="form-group">
                             <label class="form-label" for="iec_no">{{ translate('IEC No') }} *</label>
-                            <input type="text" id="iec_no" name="iec_no" class="form-control" value="{{ old('iec_no', $details->iec_no) }}" placeholder="1234567890">
+                            <input type="text" id="iec_no" name="iec_no" class="form-control" value="{{ old('iec_no', $details?->iec_no) }}" placeholder="1234567890">
                             @error('iec_no')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -162,10 +162,10 @@
                     <div class="col-md-4 intl-iec-block">
                         <div class="form-group">
                             <label class="form-label" for="iec_no_file">{{ translate('IEC Document') }}</label>
-                            <input type="file" id="iec_no_file" name="iec_no_file" class="form-control" data-existing="{{ !empty($details->iec_no_file) ? '1' : '' }}" >
-                            @if (!empty($details->iec_no_file))
+                            <input type="file" id="iec_no_file" name="iec_no_file" class="form-control" data-existing="{{ !empty($details?->iec_no_file) ? '1' : '' }}" >
+                            @if (!empty($details?->iec_no_file))
                                 <small class="d-block mt-1">
-                                    <a href="{{ asset(custom_file($details->iec_no_file)) }}" target="_blank">{{ translate('Current file') }}</a>
+                                    <a href="{{ asset(custom_file($details?->iec_no_file)) }}" target="_blank">{{ translate('Current file') }}</a>
                                 </small>
                             @endif
                             @error('iec_no_file')
@@ -176,7 +176,7 @@
                     <div class="col-md-4 intl-iec-block">
                         <div class="form-group">
                             <label class="form-label" for="uin_current_status">{{ translate('UIN Status / Current Status') }} *</label>
-                            <input type="text" id="uin_current_status" name="uin_current_status" class="form-control" value="{{ old('uin_current_status', $details->uin_current_status) }}">
+                            <input type="text" id="uin_current_status" name="uin_current_status" class="form-control" value="{{ old('uin_current_status', $details?->uin_current_status) }}">
                             @error('uin_current_status')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -185,7 +185,7 @@
                     <div class="col-md-6 intl-passport-block mb-3">
                         <label class="form-label mt-3" for="passport_no">{{ translate('Passport No') }}</label>
 
-                        <input type="text" id="passport_no" name="passport_no" class="form-control {{ $errors->has('passport_no') ? 'is-invalid' : '' }}" value="{{ old('passport_no', $details->passport_no) }}" maxlength="20" placeholder="{{ translate('Enter passport number') }}" aria-describedby="passportHelp">
+                        <input type="text" id="passport_no" name="passport_no" class="form-control {{ $errors->has('passport_no') ? 'is-invalid' : '' }}" value="{{ old('passport_no', $details?->passport_no) }}" maxlength="20" placeholder="{{ translate('Enter passport number') }}" aria-describedby="passportHelp">
                         @error('passport_no')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -194,17 +194,17 @@
                         <!-- File input -->
                         <label class="form-label mt-3" for="passport_no_file">{{ translate('Passport Upload') }}</label>
                         <div class="input-group">
-                            <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="passport_no_file" name="passport_no_file" class="form-control {{ $errors->has('passport_no_file') ? 'is-invalid' : '' }}" accept=".pdf,image/*" data-existing="{{ !empty($details->passport_no_file) ? '1' : '' }}" aria-describedby="passportFileHelp" >
+                            <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="passport_no_file" name="passport_no_file" class="form-control {{ $errors->has('passport_no_file') ? 'is-invalid' : '' }}" accept=".pdf,image/*" data-existing="{{ !empty($details?->passport_no_file) ? '1' : '' }}" aria-describedby="passportFileHelp" >
                             <button type="button" class="btn btn-outline-secondary" id="passportFileReset" style="display:none;">
                             {{ translate('Remove') }}
                             </button>
                         </div>
 
-                        @if (!empty($details->passport_no_file))
+                        @if (!empty($details?->passport_no_file))
                             <div class="mt-2" id="currentPassportFile">
                             <small class="d-block">
-                                <a href="{{ asset(custom_file($details->passport_no_file)) }}" target="_blank" rel="noopener">{{ translate('Current Passport file') }} </a>
-                                {{-- <span class="badge bg-secondary ms-2">{{ pathinfo($details->passport_no_file, PATHINFO_BASENAME) }}</span> --}}
+                                <a href="{{ asset(custom_file($details?->passport_no_file)) }}" target="_blank" rel="noopener">{{ translate('Current Passport file') }} </a>
+                                {{-- <span class="badge bg-secondary ms-2">{{ pathinfo($details?->passport_no_file, PATHINFO_BASENAME) }}</span> --}}
                             </small>
                             </div>
                         @else
@@ -223,7 +223,7 @@
                         <div class="form-group">
                             <label class="form-label" for="registration_date">{{ translate('Registration Date') }} *</label>
                             <input type="date" id="registration_date" name="registration_date" class="form-control" required
-                                   value="{{ old('registration_date', $details->registration_date) }}">
+                                   value="{{ old('registration_date', $details?->registration_date) }}">
                             @error('registration_date')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -233,7 +233,7 @@
                         <div class="form-group">
                             <label class="form-label" for="const_of_business">{{ translate('Constitution of Business') }} *</label>
                             <input type="text" id="const_of_business" name="const_of_business" class="form-control" required
-                                   value="{{ old('const_of_business', $details->const_of_business) }}">
+                                   value="{{ old('const_of_business', $details?->const_of_business) }}">
                             @error('const_of_business')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -243,7 +243,7 @@
                         <div class="form-group">
                             <label class="form-label" for="con_person_name">{{ translate('Concerned Person Name') }} *</label>
                             <input type="text" id="con_person_name" name="con_person_name" class="form-control" required
-                                   value="{{ old('con_person_name', $details->con_person_name) }}">
+                                   value="{{ old('con_person_name', $details?->con_person_name) }}">
                             @error('con_person_name')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -253,7 +253,7 @@
                         <div class="form-group">
                             <label class="form-label" for="company_name">{{ translate('Company Name') }} *</label>
                             <input type="text" id="company_name" name="company_name" class="form-control" required
-                                   value="{{ old('company_name', $details->company_name) }}">
+                                   value="{{ old('company_name', $details?->company_name) }}">
                             @error('company_name')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -269,43 +269,43 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="street_add_first_business">{{ translate('Street Address 1') }} *</label>
                         <input type="text" name="street_add_first_business" id="street_add_first_business" class="form-control" required
-                               value="{{ old('street_add_first_business', $details->street_add_first_business) }}">
+                               value="{{ old('street_add_first_business', $details?->street_add_first_business) }}">
                         @error('street_add_first_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="street_add_sec_business">{{ translate('Street Address 2') }}</label>
                         <input type="text" name="street_add_sec_business" id="street_add_sec_business" class="form-control"
-                               value="{{ old('street_add_sec_business', $details->street_add_sec_business) }}">
+                               value="{{ old('street_add_sec_business', $details?->street_add_sec_business) }}">
                         @error('street_add_sec_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="locality_land_mark_business">{{ translate('Locality / Landmark') }} *</label>
                         <input type="text" name="locality_land_mark_business" id="locality_land_mark_business" class="form-control" required
-                               value="{{ old('locality_land_mark_business', $details->locality_land_mark_business) }}">
+                               value="{{ old('locality_land_mark_business', $details?->locality_land_mark_business) }}">
                         @error('locality_land_mark_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="village_business">{{ translate('Village') }} *</label>
                         <input type="text" name="village_business" id="village_business" class="form-control" required
-                               value="{{ old('village_business', $details->village_business) }}">
+                               value="{{ old('village_business', $details?->village_business) }}">
                         @error('village_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="post_business">{{ translate('Post') }} *</label>
                         <input type="text" name="post_business" id="post_business" class="form-control" required
-                               value="{{ old('post_business', $details->post_business) }}">
+                               value="{{ old('post_business', $details?->post_business) }}">
                         @error('post_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="district_business">{{ translate('District') }} *</label>
                         <input type="text" name="district_business" id="district_business" class="form-control" required
-                               value="{{ old('district_business', $details->district_business) }}">
+                               value="{{ old('district_business', $details?->district_business) }}">
                         @error('district_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="transport">{{ translate('Transport') }}</label>
                         <input type="text" name="transport" id="transport" class="form-control"
-                               value="{{ old('transport', $details->transport) }}">
+                               value="{{ old('transport', $details?->transport) }}">
                         @error('transport') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
@@ -313,7 +313,7 @@
                         <select name="country_id_business" id="country_id_business" class="form-control aiz-selectpicker" data-live-search="true">
                             <option value="">{{ translate('Select Country') }}</option>
                             @foreach ($countries as $country)
-                                <option value="{{ $country->id }}" data-iso="{{ strtolower($country->code ?? '') }}" {{ (string) (old('country_id_business') ?: ($details->country_id_business ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
+                                <option value="{{ $country->id }}" data-iso="{{ strtolower($country->code ?? '') }}" {{ (string) (old('country_id_business') ?: ($details?->country_id_business ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
                                     {{ $country->name }}
                                 </option>
                             @endforeach
@@ -322,33 +322,33 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="state_id_business">{{ translate('State') }} *</label>
-                        <select name="state_id_business" id="state_id_business" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="business" data-selected="{{ old('state_id_business') ?: ($details->state_id_business ?: $user->state) }}" required>
+                        <select name="state_id_business" id="state_id_business" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="business" data-selected="{{ old('state_id_business') ?: ($details?->state_id_business ?: $user->state) }}" required>
                             <option value="">{{ translate('Select State') }}</option>
                         </select>
                         @error('state_id_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="city_id_business">{{ translate('City') }} *</label>
-                        <select name="city_id_business" id="city_id_business" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="business" data-selected="{{ old('city_id_business') ?: ($details->city_id_business ?: $user->city) }}" required>
+                        <select name="city_id_business" id="city_id_business" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="business" data-selected="{{ old('city_id_business') ?: ($details?->city_id_business ?: $user->city) }}" required>
                             <option value="">{{ translate('Select City') }}</option>
                         </select>
                         @error('city_id_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="pincode_business">{{ translate('Pincode') }} *</label>
-                        <input type="text" name="pincode_business" id="pincode_business" class="form-control" onchange="pincode_info(this);" required value="{{ old('pincode_business') ?: ($details->pincode_business ?: $user->postal_code) }}">
+                        <input type="text" name="pincode_business" id="pincode_business" class="form-control" onchange="pincode_info(this);" required value="{{ old('pincode_business') ?: ($details?->pincode_business ?: $user->postal_code) }}">
                         @error('pincode_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="country_code_business">{{ translate('Country Code') }} *</label>
                         <input type="text" name="country_code_business" id="country_code_business" class="form-control" required
-                               value="{{ old('country_code_business') ?: ($details->country_code_business ?: $user->country) }}">
+                               value="{{ old('country_code_business') ?: ($details?->country_code_business ?: $user->country) }}">
                         @error('country_code_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
                 @php
                     // fallback default dial
-                    $defaultDial = $details->country_code_business ?? '91';
+                    $defaultDial = $details?->country_code_business ?? '91';
 
                     // Primary business phone
                     if (old('country_code_phone_code_business') !== null || old('phone_business') !== null) {
@@ -404,9 +404,9 @@
                         @error('phone_business') <div class="text-danger small">{{ $message }}</div> @enderror
 
                         {{-- meta & dial hidden fields --}}
-                        <input type="hidden" name="phone_code_meta" value="{{ old('phone_code_meta', $details->prim_mobile_no_business_meta ?? '') }}">
+                        <input type="hidden" name="phone_code_meta" value="{{ old('phone_code_meta', $details?->prim_mobile_no_business_meta ?? '') }}">
                         <input type="hidden" name="country_code_phone_code_business" value="{{ old('country_code_phone_code_business', $prim['dial']) }}">
-                        <input type="hidden" name="phone_business_meta" value="{{ old('phone_business_meta', $details->prim_mobile_no_business_meta ?? '') }}">
+                        <input type="hidden" name="phone_business_meta" value="{{ old('phone_business_meta', $details?->prim_mobile_no_business_meta ?? '') }}">
                         <input type="hidden" name="country_code_phone_business" value="{{ old('country_code_phone_business', $prim['dial']) }}">
                     </div>
 
@@ -417,7 +417,7 @@
 
                         @error('alternate_mob_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
 
-                        <input type="hidden" name="alternate_mob_no_business_meta" value="{{ old('alternate_mob_no_business_meta', $details->alt_mobile_no_business_meta ?? '') }}">
+                        <input type="hidden" name="alternate_mob_no_business_meta" value="{{ old('alternate_mob_no_business_meta', $details?->alt_mobile_no_business_meta ?? '') }}">
                         <input type="hidden" name="country_code_alternate_mob_no_business" value="{{ old('country_code_alternate_mob_no_business', $alt['dial']) }}">
                     </div>
 
@@ -428,7 +428,7 @@
 
                         @error('whats_app_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
 
-                        <input type="hidden" name="whats_app_no_business_meta" value="{{ old('whats_app_no_business_meta', $details->prim_whats_app_no_business_meta ?? '') }}">
+                        <input type="hidden" name="whats_app_no_business_meta" value="{{ old('whats_app_no_business_meta', $details?->prim_whats_app_no_business_meta ?? '') }}">
                         <input type="hidden" name="country_code_whats_app_no_business" value="{{ old('country_code_whats_app_no_business', $wa['dial']) }}">
                     </div>
 
@@ -439,44 +439,44 @@
 
                         @error('alternate_whats_app_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
 
-                        <input type="hidden" name="alternate_whats_app_no_business_meta" value="{{ old('alternate_whats_app_no_business_meta', $details->alternate_whats_app_no_business_meta ?? '') }}">
+                        <input type="hidden" name="alternate_whats_app_no_business_meta" value="{{ old('alternate_whats_app_no_business_meta', $details?->alternate_whats_app_no_business_meta ?? '') }}">
                         <input type="hidden" name="country_code_alternate_whats_app_no_business" value="{{ old('country_code_alternate_whats_app_no_business', $altWa['dial']) }}">
                     </div>
 
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="prim_email_business">{{ translate('Primary Email') }} *</label>
                         <input type="email" id="prim_email_business" name="prim_email_business" class="form-control" required
-                               value="{{ old('prim_email_business') ?: ($details->prim_email_business ?: $user->email) }}">
+                               value="{{ old('prim_email_business') ?: ($details?->prim_email_business ?: $user->email) }}">
                         @error('prim_email_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alt_email_business">{{ translate('Alternate Email') }}</label>
                         <input type="email" id="alt_email_business" name="alt_email_business" class="form-control"
-                               value="{{ old('alt_email_business') ?: $details->alt_email_business }}">
+                               value="{{ old('alt_email_business') ?: $details?->alt_email_business }}">
                         @error('alt_email_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="website_business">{{ translate('Website') }}</label>
                         <input type="text" id="website_business" name="website_business" class="form-control"
-                               value="{{ old('website_business', $details->website_business) }}">
+                               value="{{ old('website_business', $details?->website_business) }}">
                         @error('website_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="business_instagram_id">{{ translate('Instagram ID (Business)') }}</label>
                         <input type="text" id="business_instagram_id" name="business_instagram_id" class="form-control"
-                               value="{{ old('business_instagram_id', $details->business_instagram_id) }}">
+                               value="{{ old('business_instagram_id', $details?->business_instagram_id) }}">
                         @error('business_instagram_id') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="business_facebook_id">{{ translate('Facebook ID (Business)') }}</label>
                         <input type="text" id="business_facebook_id" name="business_facebook_id" class="form-control"
-                               value="{{ old('business_facebook_id', $details->business_facebook_id) }}">
+                               value="{{ old('business_facebook_id', $details?->business_facebook_id) }}">
                         @error('business_facebook_id') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="business_linkedin_id">{{ translate('LinkedIn ID (Business)') }}</label>
                         <input type="text" id="business_linkedin_id" name="business_linkedin_id" class="form-control"
-                               value="{{ old('business_linkedin_id', $details->business_linkedin_id) }}">
+                               value="{{ old('business_linkedin_id', $details?->business_linkedin_id) }}">
                         @error('business_linkedin_id') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -489,55 +489,55 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="bank_name_business">{{ translate('Bank Name') }} *</label>
                         <input type="text" id="bank_name_business" name="bank_name_business" class="form-control" required
-                               value="{{ old('bank_name_business', $details->bank_name_business) }}">
+                               value="{{ old('bank_name_business', $details?->bank_name_business) }}">
                         @error('bank_name_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="account_no_business">{{ translate('Account No') }} *</label>
                         <input type="text" id="account_no_business" name="account_no_business" class="form-control" required
-                               value="{{ old('account_no_business', $details->account_no_business) }}">
+                               value="{{ old('account_no_business', $details?->account_no_business) }}">
                         @error('account_no_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="account_name_business">{{ translate('Account Name') }} *</label>
                         <input type="text" id="account_name_business" name="account_name_business" class="form-control" required
-                               value="{{ old('account_name_business', $details->account_name_business) }}">
+                               value="{{ old('account_name_business', $details?->account_name_business) }}">
                         @error('account_name_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="branch_code_business">{{ translate('Branch Code') }} *</label>
                         <input type="text" id="branch_code_business" name="branch_code_business" class="form-control" required
-                               value="{{ old('branch_code_business', $details->branch_code_business) }}">
+                               value="{{ old('branch_code_business', $details?->branch_code_business) }}">
                         @error('branch_code_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="branch_name_business">{{ translate('Branch Name') }} *</label>
                         <input type="text" id="branch_name_business" name="branch_name_business" class="form-control" required
-                               value="{{ old('branch_name_business', $details->branch_name_business) }}">
+                               value="{{ old('branch_name_business', $details?->branch_name_business) }}">
                         @error('branch_name_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="branch_address_business">{{ translate('Branch Address') }} *</label>
                         <input type="text" id="branch_address_business" name="branch_address_business" class="form-control" required
-                               value="{{ old('branch_address_business', $details->branch_address_business) }}">
+                               value="{{ old('branch_address_business', $details?->branch_address_business) }}">
                         @error('branch_address_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="ifsc_code_business">{{ translate('IFSC Code') }} *</label>
                         <input type="text" id="ifsc_code_business" name="ifsc_code_business" class="form-control" required
-                               value="{{ old('ifsc_code_business', $details->ifsc_code_business) }}">
+                               value="{{ old('ifsc_code_business', $details?->ifsc_code_business) }}">
                         @error('ifsc_code_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3 locality-international locality-block">
                         <label class="form-label" for="micr_code_business">{{ translate('MICR Code') }}</label>
                         <input type="text" id="micr_code_business" name="micr_code_business" class="form-control"
-                               value="{{ old('micr_code_business', $details->micr_code_business) }}">
+                               value="{{ old('micr_code_business', $details?->micr_code_business) }}">
                         @error('micr_code_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3 locality-international locality-block">
                         <label class="form-label" for="ad_code_business">{{ translate('AD Code') }}</label>
                         <input type="text" id="ad_code_business" name="ad_code_business" class="form-control"
-                               value="{{ old('ad_code_business', $details->ad_code_business) }}">
+                               value="{{ old('ad_code_business', $details?->ad_code_business) }}">
                         @error('ad_code_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -551,25 +551,25 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="photo_file">{{ translate('Photo') }} *</label>
-                        <input accept=".jpg,.jpeg,.png,.webp" type="file" id="photo_file" name="photo_file" class="form-control" {{ $details->photo_file ? '' : 'required' }}>
-                        @if (!empty($details->photo_file))
-                            <small class="d-block mt-1"><a href="{{ asset(custom_file($details->photo_file)) }}" target="_blank">{{ translate('Current file') }}</a></small>
+                        <input accept=".jpg,.jpeg,.png,.webp" type="file" id="photo_file" name="photo_file" class="form-control" {{ $details?->photo_file ? '' : 'required' }}>
+                        @if (!empty($details?->photo_file))
+                            <small class="d-block mt-1"><a href="{{ asset(custom_file($details?->photo_file)) }}" target="_blank">{{ translate('Current file') }}</a></small>
                         @endif
                         @error('photo_file') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="name_personal">{{ translate('Name') }} *</label>
-                        <input type="text" id="name_personal" name="name_personal" class="form-control" value="{{ old('name_personal', $details->name ?: $user->name) }}" required>
+                        <input type="text" id="name_personal" name="name_personal" class="form-control" value="{{ old('name_personal', $details?->name ?: $user->name) }}" required>
                         @error('name_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="father_name">{{ translate('Father Name') }} *</label>
-                        <input type="text" id="father_name" name="father_name" class="form-control" value="{{ old('father_name', $details->father_name) }}" required>
+                        <input type="text" id="father_name" name="father_name" class="form-control" value="{{ old('father_name', $details?->father_name) }}" required>
                         @error('father_name') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="dob">{{ translate('Date of Birth') }} *</label>
-                        <input type="date" id="dob" name="dob" class="form-control" value="{{ old('dob', $details->dob) }}" required>
+                        <input type="date" id="dob" name="dob" class="form-control" value="{{ old('dob', $details?->dob) }}" required>
                         @error('dob') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -581,32 +581,32 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="street_add_first_personal">{{ translate('Street Address 1') }} *</label>
-                        <input type="text" id="street_add_first_personal" name="street_add_first_personal" class="form-control" value="{{ old('street_add_first_personal', $details->street_add_first) }}" required>
+                        <input type="text" id="street_add_first_personal" name="street_add_first_personal" class="form-control" value="{{ old('street_add_first_personal', $details?->street_add_first) }}" required>
                         @error('street_add_first_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="street_add_sec_personal">{{ translate('Street Address 2') }}</label>
-                        <input type="text" id="street_add_sec_personal" name="street_add_sec_personal" class="form-control" value="{{ old('street_add_sec_personal', $details->street_add_sec) }}">
+                        <input type="text" id="street_add_sec_personal" name="street_add_sec_personal" class="form-control" value="{{ old('street_add_sec_personal', $details?->street_add_sec) }}">
                         @error('street_add_sec_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="locality_land_mark_personal">{{ translate('Locality / Landmark') }} *</label>
-                        <input type="text" id="locality_land_mark_personal" name="locality_land_mark_personal" class="form-control" value="{{ old('locality_land_mark_personal', $details->locality_land_mark) }}" required>
+                        <input type="text" id="locality_land_mark_personal" name="locality_land_mark_personal" class="form-control" value="{{ old('locality_land_mark_personal', $details?->locality_land_mark) }}" required>
                         @error('locality_land_mark_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="village_personal">{{ translate('Village') }} *</label>
-                        <input type="text" id="village_personal" name="village_personal" class="form-control" value="{{ old('village_personal', $details->village) }}" required>
+                        <input type="text" id="village_personal" name="village_personal" class="form-control" value="{{ old('village_personal', $details?->village) }}" required>
                         @error('village_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="post_personal">{{ translate('Post') }} *</label>
-                        <input type="text" id="post_personal" name="post_personal" class="form-control" value="{{ old('post_personal', $details->post) }}" required>
+                        <input type="text" id="post_personal" name="post_personal" class="form-control" value="{{ old('post_personal', $details?->post) }}" required>
                         @error('post_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="district_personal">{{ translate('District') }} *</label>
-                        <input type="text" id="district_personal" name="district_personal" class="form-control" value="{{ old('district_personal', $details->district) }}" required>
+                        <input type="text" id="district_personal" name="district_personal" class="form-control" value="{{ old('district_personal', $details?->district) }}" required>
                         @error('district_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
@@ -614,7 +614,7 @@
                         <select name="country_id_personal" id="country_id_personal" class="form-control aiz-selectpicker" data-live-search="true">
                             <option value="">{{ translate('Select Country') }}</option>
                             @foreach ($countries as $country)
-                                <option value="{{ $country->id }}" data-iso="{{ strtolower($country->code ?? '') }}" {{ (string) (old('country_id_personal') ?: ($details->country_id ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
+                                <option value="{{ $country->id }}" data-iso="{{ strtolower($country->code ?? '') }}" {{ (string) (old('country_id_personal') ?: ($details?->country_id ?: $user->country)) === (string) $country->id ? 'selected' : '' }}>
                                     {{ $country->name }}
                                 </option>
                             @endforeach
@@ -623,26 +623,26 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="state_id_personal">{{ translate('State') }} *</label>
-                        <select name="state_id_personal" id="state_id_personal" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="personal" data-selected="{{ old('state_id_personal', $details->state_id) }}" required>
+                        <select name="state_id_personal" id="state_id_personal" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="personal" data-selected="{{ old('state_id_personal', $details?->state_id) }}" required>
                             <option value="">{{ translate('Select State') }}</option>
                         </select>
                         @error('state_id_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="city_id_personal">{{ translate('City') }} *</label>
-                        <select name="city_id_personal" id="city_id_personal" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="personal" data-selected="{{ old('city_id_personal', $details->city_id) }}" required>
+                        <select name="city_id_personal" id="city_id_personal" class="form-control aiz-selectpicker js-edit-location" data-live-search="true" data-scope="personal" data-selected="{{ old('city_id_personal', $details?->city_id) }}" required>
                             <option value="">{{ translate('Select City') }}</option>
                         </select>
                         @error('city_id_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="pincode_personal">{{ translate('Pincode') }} *</label>
-                        <input type="text" id="pincode_personal" name="pincode_personal" class="form-control" onchange="pincode_info(this);" value="{{ old('pincode_personal', $details->pincode ?: $user->postal_code) }}" required>
+                        <input type="text" id="pincode_personal" name="pincode_personal" class="form-control" onchange="pincode_info(this);" value="{{ old('pincode_personal', $details?->pincode ?: $user->postal_code) }}" required>
                         @error('pincode_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="country_code_personal">{{ translate('Country Code') }} *</label>
-                        <input type="text" id="country_code_personal" name="country_code_personal" class="form-control" value="{{ old('country_code_personal', $details->country_code) }}" required>
+                        <input type="text" id="country_code_personal" name="country_code_personal" class="form-control" value="{{ old('country_code_personal', $details?->country_code) }}" required>
                         @error('country_code_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -654,23 +654,23 @@
                     </div>
                     @php
                         $primPersonalDial = old('country_code_phone_code_personal')
-                            ?: ((isset($details->prim_mobile_no) && str_contains($details->prim_mobile_no, '-'))
-                                ? explode('-', $details->prim_mobile_no, 2)[0]
-                                : ($details->country_code ?? ''));
+                            ?: ((isset($details?->prim_mobile_no) && str_contains($details?->prim_mobile_no, '-'))
+                                ? explode('-', $details?->prim_mobile_no, 2)[0]
+                                : ($details?->country_code ?? ''));
                         $altPersonalDial = old('country_code_alternate_mob_no_personal')
-                            ?: ((isset($details->alt_mobile_no) && str_contains($details->alt_mobile_no, '-'))
-                                ? explode('-', $details->alt_mobile_no, 2)[0]
-                                : ($details->country_code ?? ''));
+                            ?: ((isset($details?->alt_mobile_no) && str_contains($details?->alt_mobile_no, '-'))
+                                ? explode('-', $details?->alt_mobile_no, 2)[0]
+                                : ($details?->country_code ?? ''));
                         $waPersonalDial = old('country_code_whats_app_no_personal')
-                            ?: ((isset($details->prim_whats_app_no) && str_contains($details->prim_whats_app_no, '-'))
-                                ? explode('-', $details->prim_whats_app_no, 2)[0]
-                                : ($details->country_code ?? ''));
+                            ?: ((isset($details?->prim_whats_app_no) && str_contains($details?->prim_whats_app_no, '-'))
+                                ? explode('-', $details?->prim_whats_app_no, 2)[0]
+                                : ($details?->country_code ?? ''));
                         $altWaPersonalDial = old('country_code_alternate_whats_app_no_personal')
-                            ?: ((isset($details->alt_whats_app_no) && str_contains($details->alt_whats_app_no, '-'))
-                                ? explode('-', $details->alt_whats_app_no, 2)[0]
-                                : ($details->country_code ?? ''));
+                            ?: ((isset($details?->alt_whats_app_no) && str_contains($details?->alt_whats_app_no, '-'))
+                                ? explode('-', $details?->alt_whats_app_no, 2)[0]
+                                : ($details?->country_code ?? ''));
                         // reuse parse helper for personal contacts
-                        $personalDefaultDial = $details->country_code ?? '91';
+                        $personalDefaultDial = $details?->country_code ?? '91';
                         $personalPrimRaw = (old('country_code_phone_code_personal') || old('phone_personal'))
                             ? (old('country_code_phone_code_personal', '') !== '' ? old('country_code_phone_code_personal') . '-' : '') . old('phone_personal', '')
                             : (optional($details)->prim_mobile_no ?? ($user->phone ?? ''));
@@ -696,7 +696,7 @@
                         <input type="text" id="phone_personal" name="phone_personal" class="form-control" required 
                             value="{{ $personalPrim['number'] }}">
                         @error('phone_personal') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="hidden" name="phone_personal_meta" value="{{ old('phone_personal_meta', $details->prim_mobile_no_meta) }}">
+                        <input type="hidden" name="phone_personal_meta" value="{{ old('phone_personal_meta', $details?->prim_mobile_no_meta) }}">
                         <input type="hidden" name="country_code_phone_code_personal" value="{{ $personalPrim['dial'] }}">
                         <input type="hidden" name="country_code_phone_personal" value="{{ $personalPrim['dial'] }}">
                     </div>
@@ -705,7 +705,7 @@
                         <input type="text" id="alternate_mob_no_personal" name="alternate_mob_no_personal" class="form-control"
                                value="{{ $personalAlt['number'] }}">
                         @error('alternate_mob_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="hidden" name="alternate_mob_no_personal_meta" value="{{ old('alternate_mob_no_personal_meta', $details->alt_mobile_no_meta) }}">
+                        <input type="hidden" name="alternate_mob_no_personal_meta" value="{{ old('alternate_mob_no_personal_meta', $details?->alt_mobile_no_meta) }}">
                         <input type="hidden" name="country_code_alternate_mob_no_personal" value="{{ $personalAlt['dial'] }}">
                     </div>
                     <div class="col-md-3 mb-3">
@@ -713,7 +713,7 @@
                         <input type="text" id="whats_app_no_personal" name="whats_app_no_personal" class="form-control" required
                                value="{{ $personalWa['number'] }}">
                         @error('whats_app_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="hidden" name="whats_app_no_personal_meta" value="{{ old('whats_app_no_personal_meta', $details->prim_whats_app_no_meta) }}">
+                        <input type="hidden" name="whats_app_no_personal_meta" value="{{ old('whats_app_no_personal_meta', $details?->prim_whats_app_no_meta) }}">
                         <input type="hidden" name="country_code_whats_app_no_personal" value="{{ $personalWa['dial'] }}">
                     </div>
                     <div class="col-md-3 mb-3">
@@ -721,18 +721,18 @@
                         <input type="text" id="alternate_whats_app_no_personal" name="alternate_whats_app_no_personal" class="form-control"
                                value="{{ $personalAltWa['number'] }}">
                         @error('alternate_whats_app_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
-                        <input type="hidden" name="alternate_whats_app_no_personal_meta" value="{{ old('alternate_whats_app_no_personal_meta', $details->alternate_whats_app_no_meta) }}">
+                        <input type="hidden" name="alternate_whats_app_no_personal_meta" value="{{ old('alternate_whats_app_no_personal_meta', $details?->alternate_whats_app_no_meta) }}">
                         <input type="hidden" name="country_code_alternate_whats_app_no_personal" value="{{ $personalAltWa['dial'] }}">
                     </div>
-                    {{-- {{ dd(old('prim_email_personal'), $details->prim_email_personal, $user->email) }} --}}
+                    {{-- {{ dd(old('prim_email_personal'), $details?->prim_email_personal, $user->email) }} --}}
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="prim_email_personal">{{ translate('Primary Email') }} *</label>
-                        <input type="email" id="prim_email_personal" name="prim_email_personal" class="form-control" value="{{ old('prim_email_personal') ?: $details->prim_email_personal ?: $user->email }}" required>
+                        <input type="email" id="prim_email_personal" name="prim_email_personal" class="form-control" value="{{ old('prim_email_personal') ?: $details?->prim_email_personal ?: $user->email }}" required>
                         @error('prim_email_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="alt_email_personal">{{ translate('Alternate Email') }}</label>
-                        <input type="email" id="alt_email_personal" name="alt_email_personal" class="form-control" value="{{ old('alt_email_personal') ?: $details->alt_email_personal }}">
+                        <input type="email" id="alt_email_personal" name="alt_email_personal" class="form-control" value="{{ old('alt_email_personal') ?: $details?->alt_email_personal }}">
                         @error('alt_email_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -744,47 +744,47 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="bank_name_personal">{{ translate('Bank Name') }} *</label>
-                        <input type="text" id="bank_name_personal" name="bank_name_personal" class="form-control" value="{{ old('bank_name_personal', $details->bank_name_personal) }}" required>
+                        <input type="text" id="bank_name_personal" name="bank_name_personal" class="form-control" value="{{ old('bank_name_personal', $details?->bank_name_personal) }}" required>
                         @error('bank_name_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="account_no_personal">{{ translate('Account No') }} *</label>
-                        <input type="text" id="account_no_personal" name="account_no_personal" class="form-control" value="{{ old('account_no_personal', $details->account_no_personal) }}" required>
+                        <input type="text" id="account_no_personal" name="account_no_personal" class="form-control" value="{{ old('account_no_personal', $details?->account_no_personal) }}" required>
                         @error('account_no_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="account_name_personal">{{ translate('Account Name') }} *</label>
-                        <input type="text" id="account_name_personal" name="account_name_personal" class="form-control" value="{{ old('account_name_personal', $details->account_name_personal) }}" required>
+                        <input type="text" id="account_name_personal" name="account_name_personal" class="form-control" value="{{ old('account_name_personal', $details?->account_name_personal) }}" required>
                         @error('account_name_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="branch_code_personal">{{ translate('Branch Code') }} *</label>
-                        <input type="text" id="branch_code_personal" name="branch_code_personal" class="form-control" value="{{ old('branch_code_personal', $details->branch_code_personal) }}" required>
+                        <input type="text" id="branch_code_personal" name="branch_code_personal" class="form-control" value="{{ old('branch_code_personal', $details?->branch_code_personal) }}" required>
                         @error('branch_code_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="branch_name_personal">{{ translate('Branch Name') }} *</label>
-                        <input type="text" id="branch_name_personal" name="branch_name_personal" class="form-control" value="{{ old('branch_name_personal', $details->branch_name_personal) }}" required>
+                        <input type="text" id="branch_name_personal" name="branch_name_personal" class="form-control" value="{{ old('branch_name_personal', $details?->branch_name_personal) }}" required>
                         @error('branch_name_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="branch_address_personal">{{ translate('Branch Address') }} *</label>
-                        <input type="text" id="branch_address_personal" name="branch_address_personal" class="form-control" value="{{ old('branch_address_personal', $details->branch_address_personal) }}" required>
+                        <input type="text" id="branch_address_personal" name="branch_address_personal" class="form-control" value="{{ old('branch_address_personal', $details?->branch_address_personal) }}" required>
                         @error('branch_address_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="ifsc_code_personal">{{ translate('IFSC Code') }} *</label>
-                        <input type="text" id="ifsc_code_personal" name="ifsc_code_personal" class="form-control" value="{{ old('ifsc_code_personal', $details->ifsc_code_personal) }}" required>
+                        <input type="text" id="ifsc_code_personal" name="ifsc_code_personal" class="form-control" value="{{ old('ifsc_code_personal', $details?->ifsc_code_personal) }}" required>
                         @error('ifsc_code_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3 locality-international locality-block">
                         <label class="form-label" for="micr_code_personal">{{ translate('MICR Code') }}</label>
-                        <input type="text" id="micr_code_personal" name="micr_code_personal" class="form-control" value="{{ old('micr_code_personal', $details->micr_code_personal) }}">
+                        <input type="text" id="micr_code_personal" name="micr_code_personal" class="form-control" value="{{ old('micr_code_personal', $details?->micr_code_personal) }}">
                         @error('micr_code_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3 locality-international locality-block">
                         <label class="form-label" for="ad_code_personal">{{ translate('AD Code') }}</label>
-                        <input type="text" id="ad_code_personal" name="ad_code_personal" class="form-control" value="{{ old('ad_code_personal', $details->ad_code_personal) }}">
+                        <input type="text" id="ad_code_personal" name="ad_code_personal" class="form-control" value="{{ old('ad_code_personal', $details?->ad_code_personal) }}">
                         @error('ad_code_personal') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -802,26 +802,26 @@
                                         <label class="form-label" for="license_field_selector">{{ translate('Add License Field') }}</label>
                                         <select id="license_field_selector" class="form-control aiz-selectpicker" data-live-search="true">
                                             <option value="">{{ translate('Select field to add') }}</option>
-                                            <option value="d_l_no_1" {{ $details->d_l_no_1 ? 'disabled' : '' }}>{{ translate('Drug / Pharmacy Licence No 1') }}</option>
-                                            <option value="doctor_hospital_reg_no" {{ $details->doctor_hospital_reg_no ? 'disabled' : '' }}>{{ translate('Doctor / Pharmacist / Hospital Reg. No') }}</option>
-                                            <option value="d_l_no_2" {{ $details->d_l_no_2 ? 'disabled' : '' }}>{{ translate('Drug / Pharmacy Licence No 2') }}</option>
-                                            <option value="dairy_trust_ngo_reg_no" {{ $details->dairy_trust_ngo_reg_no ? 'disabled' : '' }}>{{ translate('Dairy / Trust / NGO / Other Reg. No') }}</option>
-                                            <option value="d_l_no_3" {{ $details->d_l_no_3 ? 'disabled' : '' }}>{{ translate('Drug / Pharmacy Licence No 3') }}</option>
-                                            <option value="cc_mdl_reg_no" {{ $details->cc_mdl_reg_no ? 'disabled' : '' }}>{{ translate('CC / MDL Registration No') }}</option>
-                                            <option value="other_reg_no" {{ $details->other_reg_no ? 'disabled' : '' }}>{{ translate('Other Registration No') }}</option>
+                                            <option value="d_l_no_1" {{ $details?->d_l_no_1 ? 'disabled' : '' }}>{{ translate('Drug / Pharmacy Licence No 1') }}</option>
+                                            <option value="doctor_hospital_reg_no" {{ $details?->doctor_hospital_reg_no ? 'disabled' : '' }}>{{ translate('Doctor / Pharmacist / Hospital Reg. No') }}</option>
+                                            <option value="d_l_no_2" {{ $details?->d_l_no_2 ? 'disabled' : '' }}>{{ translate('Drug / Pharmacy Licence No 2') }}</option>
+                                            <option value="dairy_trust_ngo_reg_no" {{ $details?->dairy_trust_ngo_reg_no ? 'disabled' : '' }}>{{ translate('Dairy / Trust / NGO / Other Reg. No') }}</option>
+                                            <option value="d_l_no_3" {{ $details?->d_l_no_3 ? 'disabled' : '' }}>{{ translate('Drug / Pharmacy Licence No 3') }}</option>
+                                            <option value="cc_mdl_reg_no" {{ $details?->cc_mdl_reg_no ? 'disabled' : '' }}>{{ translate('CC / MDL Registration No') }}</option>
+                                            <option value="other_reg_no" {{ $details?->other_reg_no ? 'disabled' : '' }}>{{ translate('Other Registration No') }}</option>
                                         </select>
                                         <div id="license-required-error" class="text-danger small mt-1 d-none">{{ translate('At least one license / registration entry is required.') }}</div>
                                     </div>
                                 </div>
                                 @php
                                     $licenseFieldsExisting = [
-                                        'd_l_no_1' => ['label' => translate('Drug / Pharmacy Licence No 1'), 'file' => $details->d_l_no_1_file, 'value' => $details->d_l_no_1],
-                                        'd_l_no_2' => ['label' => translate('Drug / Pharmacy Licence No 2'), 'file' => $details->d_l_no_2_file, 'value' => $details->d_l_no_2],
-                                        'd_l_no_3' => ['label' => translate('Drug / Pharmacy Licence No 3'), 'file' => $details->d_l_no_3_file, 'value' => $details->d_l_no_3],
-                                        'doctor_hospital_reg_no' => ['label' => translate('Doctor / Pharmacist / Hospital Reg. No'), 'file' => $details->doctor_hospital_reg_no_file, 'value' => $details->doctor_hospital_reg_no],
-                                        'dairy_trust_ngo_reg_no' => ['label' => translate('Dairy / Trust / NGO / Other Reg. No'), 'file' => $details->dairy_trust_ngo_reg_no_file, 'value' => $details->dairy_trust_ngo_reg_no],
-                                        'cc_mdl_reg_no' => ['label' => translate('CC / MDL Registration No'), 'file' => $details->cc_mdl_reg_no_file, 'value' => $details->cc_mdl_reg_no],
-                                        'other_reg_no' => ['label' => translate('Other Registration No'), 'file' => $details->other_reg_no_file, 'value' => $details->other_reg_no],
+                                        'd_l_no_1' => ['label' => translate('Drug / Pharmacy Licence No 1'), 'file' => $details?->d_l_no_1_file, 'value' => $details?->d_l_no_1],
+                                        'd_l_no_2' => ['label' => translate('Drug / Pharmacy Licence No 2'), 'file' => $details?->d_l_no_2_file, 'value' => $details?->d_l_no_2],
+                                        'd_l_no_3' => ['label' => translate('Drug / Pharmacy Licence No 3'), 'file' => $details?->d_l_no_3_file, 'value' => $details?->d_l_no_3],
+                                        'doctor_hospital_reg_no' => ['label' => translate('Doctor / Pharmacist / Hospital Reg. No'), 'file' => $details?->doctor_hospital_reg_no_file, 'value' => $details?->doctor_hospital_reg_no],
+                                        'dairy_trust_ngo_reg_no' => ['label' => translate('Dairy / Trust / NGO / Other Reg. No'), 'file' => $details?->dairy_trust_ngo_reg_no_file, 'value' => $details?->dairy_trust_ngo_reg_no],
+                                        'cc_mdl_reg_no' => ['label' => translate('CC / MDL Registration No'), 'file' => $details?->cc_mdl_reg_no_file, 'value' => $details?->cc_mdl_reg_no],
+                                        'other_reg_no' => ['label' => translate('Other Registration No'), 'file' => $details?->other_reg_no_file, 'value' => $details?->other_reg_no],
                                     ];
                                 @endphp
                                 <div class="row" id="existing_license_wrapper">
@@ -865,32 +865,32 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="transport">{{ translate('Transport Name') }} *</label>
-                        <input type="text" id="transport" name="transport" class="form-control" value="{{ old('transport', $details->transport) }}" required>
+                        <input type="text" id="transport" name="transport" class="form-control" value="{{ old('transport', $details?->transport) }}" required>
                         @error('transport') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="booked_to">{{ translate('Booked To') }} *</label>
-                        <input type="text" id="booked_to" name="booked_to" class="form-control" value="{{ old('booked_to', $details->booked_to) }}" required>
+                        <input type="text" id="booked_to" name="booked_to" class="form-control" value="{{ old('booked_to', $details?->booked_to) }}" required>
                         @error('booked_to') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="salesman">{{ translate('Salesman') }}</label>
-                        <input type="text" id="salesman" name="salesman" class="form-control" value="{{ old('salesman', $details->salesman) }}">
+                        <input type="text" id="salesman" name="salesman" class="form-control" value="{{ old('salesman', $details?->salesman) }}">
                         @error('salesman') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="dl_expiry">{{ translate('DL Expiry') }}</label>
-                        <input type="text" id="dl_expiry" name="dl_expiry" class="form-control" value="{{ old('dl_expiry', $details->dl_expiry) }}" placeholder="DD-MM-YYYY">
+                        <input type="text" id="dl_expiry" name="dl_expiry" class="form-control" value="{{ old('dl_expiry', $details?->dl_expiry) }}" placeholder="DD-MM-YYYY">
                         @error('dl_expiry') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="dl1">{{ translate('DL1') }}</label>
-                        <input type="text" id="dl1" name="dl1" class="form-control" value="{{ old('dl1', $details->dl1) }}">
+                        <input type="text" id="dl1" name="dl1" class="form-control" value="{{ old('dl1', $details?->dl1) }}">
                         @error('dl1') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="dl2">{{ translate('DL2') }}</label>
-                        <input type="text" id="dl2" name="dl2" class="form-control" value="{{ old('dl2', $details->dl2) }}">
+                        <input type="text" id="dl2" name="dl2" class="form-control" value="{{ old('dl2', $details?->dl2) }}">
                         @error('dl2') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
