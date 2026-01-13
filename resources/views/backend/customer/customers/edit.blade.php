@@ -56,7 +56,7 @@
                         <div class="form-group">
                             <label class="form-label" for="gst_no">{{ translate('GST No') }} *</label>
                             <input type="text" id="gst_no" name="gst_no" class="form-control"
-                                  value="{{ old('gst_no') ?: ($details->gst_no ?: $user->gst_no) }}" placeholder="22AAAAA0000A1Z5" oninput="validateGstFormat(this)">
+                                  value="{{ old('gst_no') ?? ($details?->gst_no ?? $user?->gst_no) }}" placeholder="22AAAAA0000A1Z5" oninput="validateGstFormat(this)">
                             @error('gst_no')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -65,10 +65,10 @@
                     <div class="col-md-4 domestic-gst-block">
                         <div class="form-group">
                             <label class="form-label" for="gst_no_file">{{ translate('GST Document') }} *</label>
-                            <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="gst_no_file" name="gst_no_file" class="form-control" data-existing="{{ $details->gst_no_file ? '1' : '' }}">
-                            @if (!empty($details->gst_no_file))
+                            <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="gst_no_file" name="gst_no_file" class="form-control" data-existing="{{ $details?->gst_no_file ? '1' : '' }}">
+                            @if (!empty($details?->gst_no_file))
                                 <small class="d-block mt-1">
-                                    <a href="{{ asset(custom_file($details->gst_no_file)) }}" target="_blank">{{ translate('Current file') }}</a>
+                                    <a href="{{ asset(custom_file($details?->gst_no_file)) }}" target="_blank">{{ translate('Current file') }}</a>
                                 </small>
                             @endif
                             @error('gst_no_file')
@@ -80,7 +80,7 @@
                         <div class="form-group">
                             <label class="form-label" for="gstin_current_status">{{ translate('GSTIN Status / Current Status') }} *</label>
                             <input type="text" id="gstin_current_status" name="gstin_current_status" class="form-control"
-                                   value="{{ old('gstin_current_status', $details->gstin_current_status) }}">
+                                   value="{{ old('gstin_current_status', $details?->gstin_current_status) }}">
                             @error('gstin_current_status')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -90,7 +90,7 @@
                     <div class="col-md-3 domestic-aadhaar-block">
                         <!-- Aadhaar Number -->
                         <label class="form-label mb-0 mt-3" for="aadhaar_no_domestic">{{ translate('Aadhaar No') }} *</label>
-                        <input type="text" id="aadhaar_no_domestic" name="aadhaar_no" class="form-control" value="{{ old('aadhaar_no', $details->aadhaar_no) }}">
+                        <input type="text" id="aadhaar_no_domestic" name="aadhaar_no" class="form-control" value="{{ old('aadhaar_no', $details?->aadhaar_no) }}">
                         @error('aadhaar_no')
                             <div class="text-danger small">{{ $message }}</div>
                         @enderror
@@ -98,10 +98,10 @@
                     <div class="col-md-3 domestic-aadhaar-block">
                         <!-- Aadhaar Upload -->
                         <label class="form-label mb-0 mt-3" for="aadhaar_no_file">{{ translate('Aadhaar Upload') }} *</label>
-                        <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="aadhaar_no_file" name="aadhaar_no_file" class="form-control m-0" data-existing="{{ $details->aadhaar_no_file ? '1' : '' }}">
-                        @if (!empty($details->aadhaar_no_file))
+                        <input accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx" type="file" id="aadhaar_no_file" name="aadhaar_no_file" class="form-control m-0" data-existing="{{ $details?->aadhaar_no_file ? '1' : '' }}">
+                        @if (!empty($details?->aadhaar_no_file))
                             <small class="d-block mt-1">
-                                <a href="{{ asset(custom_file($details->aadhaar_no_file)) }}" target="_blank">
+                                <a href="{{ asset(custom_file($details?->aadhaar_no_file)) }}" target="_blank">
                                     {{ translate('Current Aadhaar file') }}
                                 </a>
                             </small>
