@@ -85,6 +85,26 @@ body .translater_menu .select2-container {
     overflow-y: auto
 }
 
+/* Placeholder slider animation for search input */
+.search-input-box input::placeholder {
+    transition: opacity 0.3s ease;
+}
+
+.search-input-box input.placeholder-animate::placeholder {
+    animation: placeholderSlideUp 0.3s ease-out;
+}
+
+@keyframes placeholderSlideUp {
+    0% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 @media (max-width: 767px) {
     .translater_menu span.select2-selection.select2-selection--single {
         margin-top: 10px;
@@ -378,7 +398,7 @@ body .translater_menu .select2-container {
                                             @isset($query)
                                             value="{{ $query }}"
                                         @endisset
-                                            placeholder="{{ translate('I am shopping for...') }}" autocomplete="off">
+                                            placeholder="{{ translate('Search for ') }}" autocomplete="off" data-placeholder-slider="true">
 
                                         <svg id="Group_723" data-name="Group 723" xmlns="http://www.w3.org/2000/svg"
                                             width="20.001" height="20" viewBox="0 0 20.001 20">
@@ -1324,5 +1344,57 @@ body .translater_menu .select2-container {
                     AIZ.plugins.bootstrapSelect('refresh');
                 });
             }
+
+            // Placeholder text slider (with bottom-to-top animation)
+            $(document).ready(function() {
+                var searchInput = $('#search');
+                if (searchInput.length && searchInput.attr('data-placeholder-slider') === 'true') {
+                    var fixedText = '{{ translate("Search for") }}';
+                    var slidingTexts = [
+                        'Equipments',
+                        'Injections',
+                        'Instruments',
+                        'Intra-Uterine',
+                        'Ointments',
+                        'Sprays',
+                    ];
+                    
+                    var currentIndex = 0;
+                    var placeholderInterval;
+                    
+                    function updatePlaceholder() {
+                        // Only update if input is empty
+                        if (!searchInput.val() || searchInput.val().trim() === '') {
+                            var fullPlaceholder = fixedText + ' ' + slidingTexts[currentIndex];
+                            searchInput.attr('placeholder', fullPlaceholder);
+                            // Trigger animation class to slide text from bottom to top
+                            searchInput.addClass('placeholder-animate');
+                            setTimeout(function() {
+                                searchInput.removeClass('placeholder-animate');
+                            }, 350);
+
+                            currentIndex = (currentIndex + 1) % slidingTexts.length;
+                        }
+                    }
+                    
+                    // Start the interval
+                    placeholderInterval = setInterval(updatePlaceholder, 3000);
+                    
+                    // Pause when user focuses on input
+                    searchInput.on('focus', function() {
+                        clearInterval(placeholderInterval);
+                    });
+                    
+                    // Resume when user leaves input (if empty)
+                    searchInput.on('blur', function() {
+                        if (!searchInput.val() || searchInput.val().trim() === '') {
+                            placeholderInterval = setInterval(updatePlaceholder, 3000);
+                        }
+                    });
+                    
+                    // Initial update
+                    updatePlaceholder();
+                }
+            });
         </script>
     @endsection
