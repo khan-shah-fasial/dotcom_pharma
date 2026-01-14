@@ -85,13 +85,43 @@ body .translater_menu .select2-container {
     overflow-y: auto
 }
 
-/* Placeholder slider animation for search input */
-.search-input-box input::placeholder {
-    transition: opacity 0.3s ease;
+/* Custom placeholder slider animation */
+.search-input-box {
+    position: relative;
 }
 
-.search-input-box input.placeholder-animate::placeholder {
-    animation: placeholderSlideUp 0.3s ease-out;
+.custom-placeholder {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #999;
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.search-input-box input:focus ~ .custom-placeholder,
+.search-input-box input:not(:placeholder-shown) ~ .custom-placeholder,
+.search-input-box input[value]:not([value=""]) ~ .custom-placeholder {
+    display: none;
+}
+
+.placeholder-fixed {
+    color: #999;
+    font-weight: normal;
+}
+
+.placeholder-sliding {
+    
+    font-weight: bold;
+    display: inline-block;
+    transition: all 0.5s ease;
+}
+
+.placeholder-sliding.animate {
+    animation: placeholderSlideUp 0.5s ease-out;
 }
 
 @keyframes placeholderSlideUp {
@@ -391,14 +421,18 @@ body .translater_menu .select2-container {
                                         <button class="btn px-2" type="button"><i
                                                 class="la la-2x la-long-arrow-left"></i></button>
                                     </div>
-                                    <div class="search-input-box">
+                                    <div class="search-input-box position-relative">
                                         <input type="text"
                                             class="border border-soft-light form-control fs-14 hov-animate-outline"
                                             id="search" name="keyword"
                                             @isset($query)
                                             value="{{ $query }}"
                                         @endisset
-                                            placeholder="{{ translate('Search for ') }}" autocomplete="off" data-placeholder-slider="true">
+                                            placeholder=" " autocomplete="off" data-placeholder-slider="true">
+                                        <span class="custom-placeholder" id="custom-placeholder">
+                                            <span class="placeholder-fixed">{{ translate('Search for') }}</span>
+                                            <span class="placeholder-sliding"></span>
+                                        </span>
 
                                         <svg id="Group_723" data-name="Group 723" xmlns="http://www.w3.org/2000/svg"
                                             width="20.001" height="20" viewBox="0 0 20.001 20">
@@ -1348,16 +1382,28 @@ body .translater_menu .select2-container {
             // Placeholder text slider (with bottom-to-top animation)
             $(document).ready(function() {
                 var searchInput = $('#search');
+                var customPlaceholder = $('#custom-placeholder .placeholder-sliding');
+                
                 if (searchInput.length && searchInput.attr('data-placeholder-slider') === 'true') {
-                    var fixedText = '{{ translate("Search for") }}';
-                    var slidingTexts = [
-                        'Equipments',
-                        'Injections',
-                        'Instruments',
-                        'Intra-Uterine',
-                        'Ointments',
-                        'Sprays',
-                    ];
+                    @php
+                        $category_top_menu = getCategoryTopMenu();
+                        $categoryNames = $category_top_menu->map(function($cat) {
+                            return method_exists($cat, 'getTranslation') ? $cat->getTranslation('name') : $cat->name;
+                        })->toArray();
+                    @endphp
+                    var slidingTexts = @json($categoryNames);
+                    
+                    // Fallback to default if no categories found
+                    if (!slidingTexts || slidingTexts.length === 0) {
+                        slidingTexts = [
+                            'Equipments',
+                            'Injections',
+                            'Instruments',
+                            'Intra-Uterine',
+                            'Ointments',
+                            'Sprays',
+                        ];
+                    }
                     
                     var currentIndex = 0;
                     var placeholderInterval;
@@ -1365,14 +1411,14 @@ body .translater_menu .select2-container {
                     function updatePlaceholder() {
                         // Only update if input is empty
                         if (!searchInput.val() || searchInput.val().trim() === '') {
-                            var fullPlaceholder = fixedText + ' ' + slidingTexts[currentIndex];
-                            searchInput.attr('placeholder', fullPlaceholder);
                             // Trigger animation class to slide text from bottom to top
-                            searchInput.addClass('placeholder-animate');
+                            customPlaceholder.addClass('animate');
+                            
                             setTimeout(function() {
-                                searchInput.removeClass('placeholder-animate');
-                            }, 350);
-
+                                customPlaceholder.text(slidingTexts[currentIndex]);
+                                customPlaceholder.removeClass('animate');
+                            }, 150);
+                            
                             currentIndex = (currentIndex + 1) % slidingTexts.length;
                         }
                     }
@@ -1392,8 +1438,22 @@ body .translater_menu .select2-container {
                         }
                     });
                     
+                    // Hide/show custom placeholder based on input value
+                    searchInput.on('input', function() {
+                        if (searchInput.val() && searchInput.val().trim() !== '') {
+                            $('#custom-placeholder').hide();
+                        } else {
+                            $('#custom-placeholder').show();
+                        }
+                    });
+                    
                     // Initial update
-                    updatePlaceholder();
+                    if (searchInput.val() && searchInput.val().trim() !== '') {
+                        $('#custom-placeholder').hide();
+                    } else {
+                        customPlaceholder.text(slidingTexts[currentIndex]);
+                        currentIndex = (currentIndex + 1) % slidingTexts.length;
+                    }
                 }
             });
         </script>

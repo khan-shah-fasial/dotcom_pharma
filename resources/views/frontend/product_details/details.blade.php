@@ -3,6 +3,29 @@
         pointer-events: none;
         opacity: 0.5;
     }
+    
+    /* Social Share Buttons */
+    .social-share-btn {
+        transition: all 0.3s ease;
+        padding: 0 !important;
+        color: #000 !important;
+    }
+    
+    .social-share-btn i,
+    .social-share-btn span,
+    .social-share-btn svg {
+        margin: 0;
+        color: #000 !important;
+        font-size: 22px !important;
+    }
+    
+    .social-share-btn svg {
+        display: block;
+    }
+    
+    .copy-url-btn:hover {
+        opacity: 0.8;
+    }
 </style>
 
 <div class="text-left product_disc_text">
@@ -401,6 +424,68 @@
                 data-product-id="{{ $detailedProduct->id }}" data-product-name="{{ $detailedProduct->name }}">
                 <i class="las la-question-circle fs-20 position_btn"></i> {{ translate('Product Enquiry') }}
             </button>
+        </div>
+
+        <!-- Social Share Buttons -->
+        <div class="mt-md-4 mt-3">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="fs-14 fw-500 text-dark mr-2">{{ translate('Share') }}:</span>
+                @php
+                    $productUrl = route('product', $detailedProduct->slug);
+                    $productName = $detailedProduct->getTranslation('name');
+                    $productImage = uploaded_asset($detailedProduct->meta_img);
+                    $shareText = urlencode($productName . ' - ' . $productUrl);
+                @endphp
+                
+                <!-- WhatsApp -->
+                <a href="https://wa.me/?text={{ $shareText }}" 
+                   target="_blank" 
+                   class="btn btn-sm rounded-circle p-2 social-share-btn" 
+                   title="Share on WhatsApp"
+                   style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
+                    <i class="lab la-whatsapp fs-18 text-dark"></i>
+                </a>
+                
+                <!-- Facebook -->
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($productUrl) }}" 
+                   target="_blank" 
+                   class="btn btn-sm rounded-circle p-2 social-share-btn" 
+                   title="Share on Facebook"
+                   style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
+                    <i class="lab la-facebook-f fs-18 text-dark"></i>
+                </a>
+                
+                <!-- LinkedIn -->
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode($productUrl) }}" 
+                   target="_blank" 
+                   class="btn btn-sm rounded-circle p-2 social-share-btn" 
+                   title="Share on LinkedIn"
+                   style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
+                    <i class="lab la-linkedin-in fs-18 text-dark"></i>
+                </a>
+                
+                <!-- X (Twitter) -->
+                <a href="https://twitter.com/intent/tweet?url={{ urlencode($productUrl) }}&text={{ urlencode($productName) }}" 
+                   target="_blank" 
+                   class="btn btn-sm rounded-circle p-2 social-share-btn" 
+                   title="Share on X"
+                   style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="x-icon-svg">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="#000"/>
+                    </svg>
+                </a>
+                
+               
+                
+                <!-- Copy URL -->
+                <button type="button" 
+                        class="btn btn-sm rounded-circle p-2 social-share-btn copy-url-btn" 
+                        data-url="{{ $productUrl }}"
+                        title="Copy URL"
+                        style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
+                    <i class="las la-copy fs-18 text-dark"></i>
+                </button>
+            </div>
         </div>
 
         @if (!is_user_loggedin())
@@ -1714,58 +1799,7 @@
 
 
 
-    <div class="delivery_section">
-
-        {{-- <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/free_delivery.svg') }}"></div>
-            <p>Free Delivery</p>
-        </div> --}}
-
-        <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-shield w-6 h-6 text-medical-info">
-                    <path
-                        d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z">
-                    </path>
-                </svg></div>
-            <p>Secure Transaction</p>
-            <p>100% secure payment</p>
-        </div>
-
-        <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-award w-6 h-6 text-medical-info">
-                    <path
-                        d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526">
-                    </path>
-                    <circle cx="12" cy="8" r="6"></circle>
-                </svg></div>
-            <p>Top Brand</p>
-            <p>Trusted quality</p>
-        </div>
-
-        {{-- <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/cash_dilevery.svg') }}"></div>
-            <p>Cash on Delivery</p>
-        </div> --}}
-
-        <div class="delivery_boxex">
-            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-rotate-ccw w-6 h-6 text-medical-info">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                    <path d="M3 3v5h5"></path>
-                </svg></div>
-            <p>Non Return</p>
-            <p>Due to hygiene</p>
-        </div>
-
-    </div>
+    
 
     @php
         $dynamicTabs = json_decode($detailedProduct->contents, true) ?? [];
@@ -1904,6 +1938,59 @@
             </div>
         </div>
     @endif
+
+    <div class="delivery_section">
+
+        {{-- <div class="delivery_boxex">
+            <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/free_delivery.svg') }}"></div>
+            <p>Free Delivery</p>
+        </div> --}}
+
+        <div class="delivery_boxex">
+            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-shield w-6 h-6 text-medical-info">
+                    <path
+                        d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z">
+                    </path>
+                </svg></div>
+            <p>Secure Transaction</p>
+            <p>100% secure payment</p>
+        </div>
+
+        <div class="delivery_boxex">
+            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-award w-6 h-6 text-medical-info">
+                    <path
+                        d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526">
+                    </path>
+                    <circle cx="12" cy="8" r="6"></circle>
+                </svg></div>
+            <p>Top Brand</p>
+            <p>Trusted quality</p>
+        </div>
+
+        {{-- <div class="delivery_boxex">
+            <div class="delivery_boxex_img"><img src="{{ static_asset('assets/img/cash_dilevery.svg') }}"></div>
+            <p>Cash on Delivery</p>
+        </div> --}}
+
+        <div class="delivery_boxex">
+            <div class="delivery_boxex_img"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-rotate-ccw w-6 h-6 text-medical-info">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                </svg></div>
+            <p>Non Return</p>
+            <p>Due to hygiene</p>
+        </div>
+
+    </div>
 
     <!-- Promote Link -->
     <div class="d-table width-100 mt-3">
@@ -2143,6 +2230,91 @@
     });
 </script>
 
+<!-- Copy URL Functionality -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const copyUrlButtons = document.querySelectorAll('.copy-url-btn');
+        
+        copyUrlButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                const url = this.getAttribute('data-url');
+                const icon = this.querySelector('i');
+                
+                // Copy to clipboard
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(url).then(function() {
+                        // Success feedback
+                        icon.classList.remove('la-copy');
+                        icon.classList.add('la-check');
+                        button.classList.add('btn-success');
+                        button.classList.remove('btn-secondary');
+                        
+                        // Show notification if available
+                        if (typeof AIZ !== 'undefined' && AIZ.plugins && AIZ.plugins.notify) {
+                            AIZ.plugins.notify('success', '{{ translate("URL copied to clipboard!") }}');
+                        } else {
+                            alert('{{ translate("URL copied to clipboard!") }}');
+                        }
+                        
+                        // Reset after 2 seconds
+                        setTimeout(function() {
+                            icon.classList.remove('la-check');
+                            icon.classList.add('la-copy');
+                            button.classList.remove('btn-success');
+                            button.classList.add('btn-secondary');
+                        }, 2000);
+                    }).catch(function(err) {
+                        console.error('Failed to copy: ', err);
+                        fallbackCopyTextToClipboard(url, button, icon);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    fallbackCopyTextToClipboard(url, button, icon);
+                }
+            });
+        });
+        
+        function fallbackCopyTextToClipboard(text, button, icon) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    icon.classList.remove('la-copy');
+                    icon.classList.add('la-check');
+                    button.classList.add('btn-success');
+                    button.classList.remove('btn-secondary');
+                    
+                    if (typeof AIZ !== 'undefined' && AIZ.plugins && AIZ.plugins.notify) {
+                        AIZ.plugins.notify('success', '{{ translate("URL copied to clipboard!") }}');
+                    } else {
+                        alert('{{ translate("URL copied to clipboard!") }}');
+                    }
+                    
+                    setTimeout(function() {
+                        icon.classList.remove('la-check');
+                        icon.classList.add('la-copy');
+                        button.classList.remove('btn-success');
+                        button.classList.add('btn-secondary');
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                alert('{{ translate("Failed to copy URL") }}');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+    });
+</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
