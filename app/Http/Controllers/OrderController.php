@@ -160,20 +160,34 @@ class OrderController extends Controller
 
         $address = Address::where('id', $carts[0]['address_id'])->first();
 
-        $shippingAddress = [];
-        if ($address != null) {
-            $shippingAddress['name']        = Auth::user()->name;
-            $shippingAddress['email']       = Auth::user()->email;
-            $shippingAddress['address']     = $address->address;
-            $shippingAddress['country']     = $address->country->name;
-            $shippingAddress['state']       = $address->state->name;
-            $shippingAddress['city']        = $address->city->name;
-            $shippingAddress['postal_code'] = $address->postal_code;
-            $shippingAddress['phone']       = $address->phone;
-            if ($address->latitude || $address->longitude) {
-                $shippingAddress['lat_lang'] = $address->latitude . ',' . $address->longitude;
+        $buildAddressPayload = function (?Address $addr) {
+            if ($addr === null) {
+                return [];
             }
-        }
+
+            $payload = [
+                'name'        => Auth::user()->name,
+                'email'       => Auth::user()->email,
+                'address'     => $addr->address,
+                'country'     => optional($addr->country)->name,
+                'state'       => optional($addr->state)->name,
+                'city'        => optional($addr->city)->name,
+                'postal_code' => $addr->postal_code,
+                'phone'       => $addr->phone,
+            ];
+
+            if ($addr->latitude || $addr->longitude) {
+                $payload['lat_lang'] = $addr->latitude . ',' . $addr->longitude;
+            }
+
+            return $payload;
+        };
+
+        $shippingAddress = $buildAddressPayload($address);
+        $billingAddressModel = $request->filled('billing_address_id')
+            ? Address::find($request->billing_address_id)
+            : $address;
+        $billingAddress = $buildAddressPayload($billingAddressModel ?: $address);
 
         $combined_order = new CombinedOrder;
         $combined_order->user_id = Auth::user()->id;
@@ -196,6 +210,7 @@ class OrderController extends Controller
             $order->combined_order_id = $combined_order->id;
             $order->user_id = Auth::user()->id;
             $order->shipping_address = $combined_order->shipping_address;
+            $order->billing_address = json_encode(!empty($billingAddress) ? $billingAddress : $shippingAddress);
             $order->additional_info = $request->additional_info;
             $order->payment_type = $request->payment_option;
             $order->shipping_choice = $request->shipping_method;

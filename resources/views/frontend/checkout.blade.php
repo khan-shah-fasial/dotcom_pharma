@@ -1,6 +1,15 @@
 @extends('frontend.layouts.app')
 
 @section('content')
+    <style>
+        .aiz-megabox .aiz-megabox-elem:hover {
+            background-color: #2b56a1 !important;
+        }
+
+        .aiz-megabox>input:checked~.aiz-megabox-elem {
+            border-color: #2b56a1 !important;
+        }
+    </style>
     @php
         $file = base_path("/public/assets/myText.txt");
         $dev_mail = get_dev_mail();
@@ -27,6 +36,49 @@
 
                         <div class="accordion" id="accordioncCheckoutInfo">
 
+    <!-- Billing Info -->
+    <div class="card rounded-0 border shadow-none" style="margin-bottom: 2rem;">
+        <div class="card-header border-bottom-0 py-3 py-xl-4"
+            id="headingBillingInfo"
+            type="button"
+            data-toggle="collapse"
+            data-target="#collapseBillingInfo"
+            aria-expanded="true"
+            aria-controls="collapseBillingInfo">
+
+            <div class="d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+                    <path id="Path_42357" data-name="Path 42357"
+                        d="M58,48A10,10,0,1,0,68,58,10,10,0,0,0,58,48ZM56.457,61.543a.663.663,0,0,1-.423.212.693.693,0,0,1-.428-.216l-2.692-2.692.856-.856,2.269,2.269,6-6.043.841.87Z"
+                        transform="translate(-48 -48)" fill="#9d9da6" />
+                </svg>
+                <span class="ml-2 fs-19 fw-700">{{ translate('Billing Info') }}</span>
+            </div>
+
+            <i class="las la-angle-down fs-18"></i>
+        </div>
+
+        <div id="collapseBillingInfo"
+            class="collapse show"
+            aria-labelledby="headingBillingInfo"
+            data-parent="#accordioncCheckoutInfo">
+
+            <div class="card-body pt-0" id="billing_info">
+                @include('frontend.partials.cart.billing_info', ['billing_address_id' => $billing_address_id ?? null])
+                
+                <!-- Continue Button for Billing -->
+                <div class="text-center mt-4">
+                    <button type="button" class="btn btn-primary fs-14 fw-700 rounded-0 px-4" 
+                            id="continueToShippingBtn"
+                            style="background: #2b56a1 !important;">
+                        {{ translate('Continue to Shipping') }}
+                        <i class="las la-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Shipping Info -->
     <div class="card rounded-0 border shadow-none" style="margin-bottom: 2rem;">
         <div class="card-header border-bottom-0 py-3 py-xl-4"
@@ -34,7 +86,7 @@
             type="button"
             data-toggle="collapse"
             data-target="#collapseShippingInfo"
-            aria-expanded="true"
+            aria-expanded="false"
             aria-controls="collapseShippingInfo">
 
             <div class="d-flex align-items-center">
@@ -50,7 +102,7 @@
         </div>
 
         <div id="collapseShippingInfo"
-            class="collapse show"
+            class="collapse"
             aria-labelledby="headingShippingInfo"
             data-parent="#accordioncCheckoutInfo">
 
@@ -107,18 +159,6 @@
                 <!-- Delivery Form (initially hidden) -->
                 <div id="deliveryFormContent" style="display: none;">
                     @include('frontend.partials.cart.delivery_info', ['carts' => $carts, 'carrier_list' => $carrier_list, 'shipping_info' => $shipping_info])
-
-                    @include('frontend.partials.cart.shipping_service', ['shipping_methods' => get_active_shipping_methods()])
-                    
-                    <!-- Continue Button for Delivery -->
-                    <div class="text-center mt-4">
-                        <button type="button" class="btn btn-primary fs-14 fw-700 rounded-0 px-4" 
-                                id="continueToPaymentBtn"
-                                style="background: #2b56a1 !important;">
-                            {{ translate('Continue to Payment') }}
-                            <i class="las la-arrow-right ml-1"></i>
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -198,10 +238,11 @@
 </div>
 
 <script>
+    
     document.addEventListener('DOMContentLoaded', function() {
         // Elements
+        const continueToShippingBtn = document.getElementById('continueToShippingBtn');
         const continueToDeliveryBtn = document.getElementById('continueToDeliveryBtn');
-        const continueToPaymentBtn = document.getElementById('continueToPaymentBtn');
         
         const deliveryLockMessage = document.getElementById('deliveryLockMessage');
         const paymentLockMessage = document.getElementById('paymentLockMessage');
@@ -209,36 +250,53 @@
         const deliveryFormContent = document.getElementById('deliveryFormContent');
         const paymentFormContent = document.getElementById('paymentFormContent');
         
+        const collapseBillingInfo = document.getElementById('collapseBillingInfo');
         const collapseShippingInfo = document.getElementById('collapseShippingInfo');
         const collapseDeliveryInfo = document.getElementById('collapseDeliveryInfo');
         const collapsePaymentInfo = document.getElementById('collapsePaymentInfo');
         
+        const headingBillingInfo = document.getElementById('headingBillingInfo');
+        const headingShippingInfo = document.getElementById('headingShippingInfo');
         const headingDeliveryInfo = document.getElementById('headingDeliveryInfo');
         const headingPaymentInfo = document.getElementById('headingPaymentInfo');
 
         // Function to check if shipping form is valid
         function isShippingFormValid() {
-            // This function should check if all required shipping fields are filled
-            // You may need to customize this based on your actual form structure
-            // For now, we'll assume it's always valid to demonstrate the flow
-            return true;
-            
-            // Example implementation if you have form validation:
-            // const shippingForm = document.querySelector('#shipping_info form');
-            // return shippingForm && shippingForm.checkValidity();
+            return stepCompletionShippingInfo();
         }
 
         // Function to check if delivery form is valid
         function isDeliveryFormValid() {
-            // This function should check if all required delivery fields are filled
-            // You may need to customize this based on your actual form structure
-            // For now, we'll assume it's always valid to demonstrate the flow
-            return true;
+            return stepCompletionDeliveryInfo();
         }
+
+        // Function to check if billing form is valid
+        function isBillingFormValid() {
+            return stepCompletionBillingInfo();
+        }
+
+        // Continue to Shipping
+        continueToShippingBtn.addEventListener('click', function() {
+            if (isBillingFormValid()) {
+                $(collapseBillingInfo).collapse('hide');
+                setTimeout(function() {
+                    $(collapseShippingInfo).collapse('show');
+                }, 350);
+
+                headingShippingInfo.style.pointerEvents = 'auto';
+                headingShippingInfo.style.opacity = '1';
+
+                setTimeout(function() {
+                    collapseShippingInfo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 400);
+            } else {
+                alert('{{ translate("Please complete billing information first") }}');
+            }
+        });
 
         // Continue to Delivery
         continueToDeliveryBtn.addEventListener('click', function() {
-            if (isShippingFormValid()) {
+            if (isBillingFormValid() && isShippingFormValid()) {
                 // Hide lock message and show delivery form
                 deliveryLockMessage.style.display = 'none';
                 deliveryFormContent.style.display = 'block';
@@ -264,55 +322,71 @@
         });
 
         // Continue to Payment
-        continueToPaymentBtn.addEventListener('click', function() {
-            if (isDeliveryFormValid()) {
-                // Hide lock message and show payment form
-                paymentLockMessage.style.display = 'none';
-                paymentFormContent.style.display = 'block';
-                
-                // Close delivery and open payment automatically
-                $(collapseDeliveryInfo).collapse('hide');
-                // Use setTimeout to ensure smooth transition
-                setTimeout(function() {
-                    $(collapsePaymentInfo).collapse('show');
-                }, 350);
-                
-                // Enable payment section header
-                headingPaymentInfo.style.pointerEvents = 'auto';
-                headingPaymentInfo.style.opacity = '1';
-                
-                // Scroll to payment section after it opens
-                setTimeout(function() {
-                    collapsePaymentInfo.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 400);
-            } else {
-                alert('{{ translate("Please complete all required delivery information") }}');
-            }
-        });
+        // Delegated binding so the handler survives delivery block re-rendering
+        $(document)
+            .off('click.checkoutContinuePayment', '#continueToPaymentBtn')
+            .on('click.checkoutContinuePayment', '#continueToPaymentBtn', function() {
+                if (isBillingFormValid() && isShippingFormValid() && isDeliveryFormValid()) {
+                    // Hide lock message and show payment form
+                    paymentLockMessage.style.display = 'none';
+                    paymentFormContent.style.display = 'block';
+                    
+                    // Close delivery and open payment automatically
+                    $(collapseDeliveryInfo).collapse('hide');
+                    // Use setTimeout to ensure smooth transition
+                    setTimeout(function() {
+                        $(collapsePaymentInfo).collapse('show');
+                    }, 350);
+                    
+                    // Enable payment section header
+                    headingPaymentInfo.style.pointerEvents = 'auto';
+                    headingPaymentInfo.style.opacity = '1';
+                    
+                    // Scroll to payment section after it opens
+                    setTimeout(function() {
+                        collapsePaymentInfo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 400);
+                } else {
+                    alert('{{ translate("Please complete all required delivery information") }}');
+                }
+            });
 
-        // Initially disable delivery and payment sections
+        // Initially disable shipping, delivery and payment sections
+        headingShippingInfo.style.pointerEvents = 'none';
+        headingShippingInfo.style.opacity = '0.6';
+
         headingDeliveryInfo.style.pointerEvents = 'none';
         headingDeliveryInfo.style.opacity = '0.6';
         
         headingPaymentInfo.style.pointerEvents = 'none';
         headingPaymentInfo.style.opacity = '0.6';
 
-        // Prevent manual opening of delivery section if shipping is not completed
-        headingDeliveryInfo.addEventListener('click', function(e) {
-            if (!isShippingFormValid()) {
+        // Prevent manual opening of shipping section if billing is not completed
+        headingShippingInfo.addEventListener('click', function(e) {
+            if (!isBillingFormValid()) {
                 e.preventDefault();
                 e.stopPropagation();
-                alert('{{ translate("Please complete shipping information first") }}');
+                alert('{{ translate("Please complete billing information first") }}');
+                return false;
+            }
+        });
+
+        // Prevent manual opening of delivery section if shipping is not completed
+        headingDeliveryInfo.addEventListener('click', function(e) {
+            if (!isBillingFormValid() || !isShippingFormValid()) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('{{ translate("Please complete billing and shipping information first") }}');
                 return false;
             }
         });
 
         // Prevent manual opening of payment section if delivery is not completed
         headingPaymentInfo.addEventListener('click', function(e) {
-            if (!isDeliveryFormValid()) {
+            if (!isBillingFormValid() || !isShippingFormValid() || !isDeliveryFormValid()) {
                 e.preventDefault();
                 e.stopPropagation();
-                alert('{{ translate("Please complete delivery information first") }}');
+                alert('{{ translate("Please complete billing, shipping and delivery information first") }}');
                 return false;
             }
         });
@@ -320,7 +394,7 @@
         // Handle accordion events to maintain proper state
         $('#collapseShippingInfo').on('hidden.bs.collapse', function () {
             // When shipping closes, ensure delivery is ready to open if completed
-            if (isShippingFormValid()) {
+            if (isBillingFormValid() && isShippingFormValid()) {
                 headingDeliveryInfo.style.pointerEvents = 'auto';
                 headingDeliveryInfo.style.opacity = '1';
             }
@@ -335,14 +409,6 @@
         });
     });
 
-    // Your existing function
-    function stepCompletionPaymentInfo() {
-        // Your existing implementation
-    }
-
-    function submitOrder(button) {
-        // Your existing implementation
-    }
 </script>
                     </form>
                 </div>
@@ -389,7 +455,8 @@
                     var isOkShipping = stepCompletionShippingInfo();
                     var isOkDelivery = stepCompletionDeliveryInfo();
                     var isOkPayment = stepCompletionWalletPaymentInfo();
-                    if(isOkShipping && isOkDelivery && isOkPayment) {
+                    var isOkBilling = stepCompletionBillingInfo();
+                    if(isOkBilling && isOkShipping && isOkDelivery && isOkPayment) {
                         allIsOk = true;
                     }else{
                         AIZ.plugins.notify('danger', '{{ translate("Please fill in all mandatory fields!") }}');
@@ -428,10 +495,11 @@
                         $(el).prop('disabled', false);
                     } else {
                         var allIsOk = false;
+                        var isOkBilling = stepCompletionBillingInfo();
                         var isOkShipping = stepCompletionShippingInfo();
                         var isOkDelivery = stepCompletionDeliveryInfo();
                         var isOkPayment = stepCompletionPaymentInfo();
-                        if(isOkShipping && isOkDelivery && isOkPayment) {
+                        if(isOkBilling && isOkShipping && isOkDelivery && isOkPayment) {
                             allIsOk = true;
                         }else{
                             AIZ.plugins.notify('danger', '{{ translate("Please fill in all mandatory fields!") }}');
@@ -524,8 +592,35 @@
                 $('#delivery_info').html(data.delivery_info);
                 $('#cart_summary').html(data.cart_summary);
                 $('.aiz-refresh').removeClass('active');
+                // Re-init shipping widgets after delivery block is re-rendered
+                initShippingServiceSelector();
             });
             AIZ.plugins.bootstrapSelect("refresh");
+        }
+
+        function stepCompletionBillingInfo() {
+            var headColor = '#9d9da6';
+            var btnDisable = true;
+            var allOk = false;
+            @if (Auth::check())
+                var length = $('input[name="billing_address_id"]:checked').length;
+                if (length > 0) {
+                    headColor = '#15a405';
+                    btnDisable = false;
+                    allOk = true;
+                }
+            @else
+                headColor = '#15a405';
+                btnDisable = false;
+                allOk = true;
+            @endif
+
+            $('#headingBillingInfo svg *').css('fill', headColor);
+            $("#continueToShippingBtn").prop('disabled', btnDisable);
+            if(allOk){
+                $('#headingShippingInfo').css({'pointer-events': 'auto', 'opacity': '1'});
+            }
+            return allOk;
         }
 
         function stepCompletionShippingInfo() {
@@ -558,6 +653,12 @@
             $("#submitOrderBtn").prop('disabled', btnDisable);
             return allOk;
         }
+
+        $('#billing_info [required]').each(function (i, el) {
+            $(el).change(function(){
+                stepCompletionBillingInfo();
+            });
+        });
 
         $('#shipping_info [required]').each(function (i, el) {
             $(el).change(function(){
@@ -741,10 +842,253 @@
             stepCompletionPaymentInfo();
         });
 
+        function getServicesList() {
+            return document.getElementById('courier-services-list');
+        }
+        function getFodBlock() {
+            return document.getElementById('fod-block');
+        }
+        function getCourierBlock() {
+            return document.getElementById('courier-block');
+        }
+        function getServicesWrap() {
+            return document.getElementById('provider-services');
+        }
+
+        function initShippingServiceSelector() {
+            console.dir('Shipping service selector init');
+            // ===========================
+            // Shipping selector script
+            // ===========================
+            //
+            // CHANGES / ADDITIONS (this block):
+            // 1. Added hasAddressOrPincode() helper to detect whether we can use Courier.
+            // 2. AUTO-SWITCH: If no address/pincode on init, switch the main selector to FOD.
+            // 3. PREVENT SWITCH: When user tries to switch from FOD -> Courier but there's no
+            //    address/pincode, show AIZ.plugins.notify('warning', ...) and revert to FOD.
+            // 4. Added inline comments wherever logic was introduced/modified.
+            //
+            // Everything else (provider listing, loadCourierRates, renderServices) is kept intact.
+            // ===========================
+
+            // Blocks
+            var fodBlock = getFodBlock();
+            var courierBlock = getCourierBlock();
+            var servicesWrap = getServicesWrap();
+            var servicesList = getServicesList();
+
+            var ratesUrl = "{{ route('shipment.rates') }}";
+
+            function currentShipType() {
+                var el = document.querySelector('input[name="shipping_method"]:checked');
+                return el ? el.value : 'courier';
+            }
+
+            function currentProviderSlug() {
+                var checked = document.querySelector('#courier-block input[name="shipping_method_id"]:checked');
+                return checked ? (checked.dataset.provider || '') : '';
+            }
+
+            function currentAddressId() {
+                var el = document.querySelector('#shipping_info input[name="address_id"]:checked');
+                return el ? el.value : null;
+            }
+
+            function currentPincodeGuest() {
+                var input = document.querySelector('#shipping_info input[name="address_id"]:checked');
+                if (!input) return '';
+                // find nearest label container (input is nested inside label)
+                var label = input.closest('.aiz-megabox') || input.closest('label');
+                if (!label) return '';
+                var pc = label.querySelector('.address_postal_code');
+                return pc ? (pc.textContent || pc.value || '').trim() : '';
+            }
+
+            // NEW: helper to determine if courier can be used
+            function hasAddressOrPincode() {
+                // logged-in address selection OR guest pincode fallback
+                var addressId = currentAddressId();
+                var guestPincode = currentPincodeGuest();
+                return Boolean(addressId) || Boolean((guestPincode || '').trim());
+            }
+
+            function renderServices(items){
+                var servicesList = getServicesList();
+                if(!items || !items.length){ servicesList.innerHTML = '<p class="text-muted mb-0">No services.</p>'; return; }
+                var html = '<div class="row gutters-10">';
+                items.forEach(function(it, i){
+                    var id = 'svc_'+(it.carrier_id||i);
+                    var priceText = (it.price==null)? '' : ('₹'+Number(it.price).toFixed(2));
+                    html += `
+                    <div class="col-xl-4 col-md-6">
+                        <div class="h=100">
+                            <label class="aiz-megabox d-block mb-3" for="${id}">
+                            <input id="${id}" type="radio" name="courier_service"
+                                    value="${it.carrier_id||''}" ${i===0?'checked':''}
+                                    data-provider="${it.provider||''}"
+                                    data-carrier-id="${it.carrier_id||''}"
+                                    data-charge="${it.price??''}"
+                                    onchange="updateDeliveryInfoByShipping(this)">
+                            <span class="d-flex flex-column aiz-megabox-elem rounded-0 p-3">
+                                <span class="fs-12 fw-600">${it.name||'Carrier'}</span>
+                                ${priceText?`<span class="fs-13 ">${priceText}</span>`:''}
+                                <span class="fs-11">${(it.provider||'').toUpperCase()}</span>
+                            </span>
+                            </label>    
+                        </div>
+                    </div>`;
+                });
+                html += '</div>';
+                servicesList.innerHTML = html;
+
+                // fire once for default-checked
+                var first = servicesList.querySelector('input[name="courier_service"]:checked');
+                if (first) first.dispatchEvent(new Event('change', {bubbles:true}));
+            }
+
+            function loadCourierRates() {
+                var servicesWrap = getServicesWrap();
+                var servicesList = getServicesList();
+                if (!servicesWrap || currentShipType() !== 'courier') {
+                    if (servicesWrap) servicesWrap.style.display = 'none';
+                    return;
+                }
+
+                var provider = currentProviderSlug();
+                var addressId = currentAddressId();
+                var toPin = addressId ? '' : currentPincodeGuest();
+
+                if (!provider) {
+                    if (servicesWrap) servicesWrap.style.display = 'none';
+                    return;
+                }
+                if (!addressId && !toPin) {
+                    // Wait until user picks address or enters pincode
+                    if (servicesWrap) servicesWrap.style.display = 'none';
+                    return;
+                }
+
+                servicesWrap.style.display = 'block';
+                servicesList.innerHTML = '<p class="text-muted mb-0">{{ translate('Loading services...') }}</p>';
+
+                $.getJSON(
+                    ratesUrl, {
+                        provider: provider,
+                        address_id: addressId, // server will prefer this if present
+                        to_pincode: toPin || null, // guest fallback
+                        payment_type: 'prepaid' // or detect if you have COD on checkout
+                    }
+                ).done(function(resp) {
+                    if (resp && resp.success && Array.isArray(resp.data) && resp.data.length) {
+                        renderServices(resp.data);
+                    } else {
+                        servicesWrap.style.display = 'none';
+                    }
+                }).fail(function() {
+                    servicesWrap.style.display = 'none';
+                });
+            }
+
+            function toggleShippingBlocks(selected) {
+                var courierBlock = getCourierBlock();
+                var fodBlock = getFodBlock();
+                if (selected === 'courier') {
+                    fodBlock.style.display = 'none';
+                    courierBlock.style.display = 'block';
+
+                    // Ensure one provider is checked
+                    var firstProvider = courierBlock.querySelector('input[name="shipping_method_id"]');
+                    if (firstProvider && !document.querySelector(
+                            '#courier-block input[name="shipping_method_id"]:checked')) {
+                        firstProvider.checked = true;
+                    }
+                    loadCourierRates();
+                } else {
+                    fodBlock.style.display = 'block';
+                    courierBlock.style.display = 'none';
+                    if (servicesWrap) servicesWrap.style.display = 'none';
+                    setFodFreeShipping();
+                }
+            }
+
+            // === INIT: show Courier by default and fetch ===
+            // NOTE: we will auto-switch to FOD if there's no address/pincode (user requested behavior).
+            if (!hasAddressOrPincode()) {
+                // Auto-switch to FOD because no address/pincode exists.
+                var fodRadioInit = document.querySelector('input[name="shipping_method"][value="fod"]');
+                if (fodRadioInit) {
+                    fodRadioInit.checked = true;
+                }
+                toggleShippingBlocks('fod');
+            } else {
+                // normal behaviour: keep courier selected (or whatever is currently checked)
+                toggleShippingBlocks(currentShipType());
+            }
+
+            // === EVENTS ===
+
+            // Toggle FOD/Courier
+            // Replaced simple toggle with a check: prevent switching to courier if no address/pincode.
+            $(document).on('change', 'input[name="shipping_method"]', function() {
+                var selected = this.value;
+
+                // If user is switching to courier but we don't have an address/pincode, block it and warn.
+                if (selected === 'courier' && !hasAddressOrPincode()) {
+                    // Use AIZ notify if available (examples provided by you)
+                    if (typeof AIZ !== 'undefined' && AIZ.plugins && AIZ.plugins.notify) {
+                        AIZ.plugins.notify('warning', "{{ translate('Please add address details first.') }}");
+                    } else {
+                        // Fallback to alert for debugging if AIZ isn't defined
+                        console.dir('No address/pincode - cannot switch to courier.');
+                    }
+
+                    // Revert selection back to FOD
+                    var fodRadio = document.querySelector('input[name="shipping_method"][value="fod"]');
+                    if (fodRadio) fodRadio.checked = true;
+
+                    // Ensure the UI reflects the FOD block
+                    toggleShippingBlocks('fod');
+
+                    // Prevent any further courier actions
+                    return;
+                }
+
+                // allowed: proceed normally
+                toggleShippingBlocks(selected);
+            });
+
+            // Change provider
+            $(document).on('change', '#courier-block input[name="shipping_method_id"]', function() {
+                if (currentShipType() === 'courier') loadCourierRates();
+            });
+
+            // Address changed (delegated so it survives re-renders)
+            // $(document).on('change', '#shipping_info input[name="address_id"]', function() {
+            //     var address = document.querySelector('#shipping_info input[name="address_id"]:checked');
+            //     console.dir(address);
+            //     alert(1);
+            //     if (currentShipType() === 'courier') {
+            //         loadCourierRates();
+            //     } else {
+            //         setFodFreeShipping();
+            //     }
+            // });
+
+            // Guest pincode typed
+            // (kept commented in original - you may re-enable if needed)
+            // $(document).on('blur', '#shipping_info input[name="postal_code"], #shipping_info input[name="zipcode"]',
+            //     function() {
+            //         loadCourierRates();
+            //     });
+
+        };
+
         $(document).ready(function(){
+            stepCompletionBillingInfo();
             stepCompletionShippingInfo();
             stepCompletionDeliveryInfo();
             stepCompletionPaymentInfo();
+            initShippingServiceSelector();
         });
     </script>
 
@@ -764,7 +1108,7 @@
     @endphp
 
     @if ($is_address_selected === false && Auth::user()->addresses->count() === 0)
-        <script>add_new_address();</script>
+        <script>add_new_address('shipping');</script>
     @endif
 
     @if (get_setting('google_map') == 1)

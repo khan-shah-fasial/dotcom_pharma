@@ -156,4 +156,16 @@
             @endif
         </div>
     @endif
+
+    @include('frontend.partials.cart.shipping_service', ['shipping_methods' => get_active_shipping_methods()])
+    
+</div>
+<!-- Continue Button for Delivery -->
+<div class="text-center my-4">
+    <button type="button" class="btn btn-primary fs-14 fw-700 rounded-0 px-4" 
+            id="continueToPaymentBtn"
+            style="background: #2b56a1 !important;">
+        {{ translate('Continue to Payment') }}
+        <i class="las la-arrow-right ml-1"></i>
+    </button>
 </div>

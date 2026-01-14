@@ -112,25 +112,35 @@
     $drugLicenceNumbers = array_filter(array_map('trim', explode(',', get_setting('drug_licence_numbers') ?? '')));
 
     $shipping = json_decode($order->shipping_address ?? '{}');
+    $billing = json_decode($order->billing_address ?? '{}') ?: $shipping;
     $user = $order->user ?? null;
     $userID = $user->id ?? '-' ;
 
     $userDetails = $user->user_details;
-    $customerName = $shipping->name ?? optional($order->user)->name ?? translate('Customer');
-    $customerEmail = $shipping->email ?? optional($order->user)->email;
-    $customerPhone = $shipping->phone ?? optional($order->user)->phone;
-    $customerGst = optional($order->user)->gst_no ?? ($shipping->gst_no ?? null);
-    $customerPan = optional($order->user)->pan_no ?? ($shipping->pan_no ?? null);
-    $pinCode = $shipping->postal_code ?? null;
-    $addressParts = array_filter([
+    $customerName = $billing->name ?? optional($order->user)->name ?? translate('Customer');
+    $customerEmail = $billing->email ?? optional($order->user)->email;
+    $customerPhone = $billing->phone ?? optional($order->user)->phone;
+    $customerGst = optional($order->user)->gst_no ?? ($billing->gst_no ?? null);
+    $customerPan = optional($order->user)->pan_no ?? ($billing->pan_no ?? null);
+    $pinCode = $billing->postal_code ?? null;
+
+    $billingAddressParts = array_filter([
+        $billing->address ?? null,
+        $billing->city ?? null,
+        $billing->state ?? null,
+        $billing->country ?? null,
+    ]);
+    $billingAddress = implode(', ', $billingAddressParts);
+    $billing_state = $billing->state ?? "-";
+
+    // $shippingName = $shipping->name ?? $companyName;
+    $shippingAddressParts = array_filter([
         $shipping->address ?? null,
         $shipping->city ?? null,
         $shipping->state ?? null,
         $shipping->country ?? null,
-        // $shipping->postal_code ?? null,
     ]);
-    $billingAddress = implode(', ', $addressParts);
-    $shippingAddress = '-';
+    $shippingAddress = $shippingAddressParts ? implode(', ', $shippingAddressParts) : '-';
     $shipping_postal_code = $shipping->postal_code ?? "-";
     $shipping_state = $shipping->state ?? "-";
     $invoiceNo = $order->code ?? $order->id;
@@ -145,6 +155,7 @@
     if ($invoiceDateObj && $creditDays > 0) {
         $dueDate = $invoiceDateObj->copy()->addDays($creditDays)->format('d-m-Y');
     }
+    $companyName = $userDetails?->company_name ?? null;
     $countryBusinessID = $userDetails?->country_id_business ?? null;
     $countryBusiness = $countryBusinessID ? optional(\App\Models\Country::find($countryBusinessID))->name : '-';
     $postBusiness = $userDetails?->post_business ?? '-';
@@ -213,10 +224,10 @@
         <tr>
             <td colspan="3">
                 {{ translate('Billing Address') }}:
-                <span class="label">{{ $customerName }}</span>
+                <span class="label">{{ $companyName }}</span>
                 @if($billingAddress)<br>{{ $billingAddress }}@endif
                 <br>
-                {{ translate('Pin Code') }}: {{ $pinCode ?: '-' }} {{ $shipping_postal_code !== '-' ? '| ' . translate('Post') . ': ' . $shipping_postal_code : '' }} {{ $shipping_state !== '-' ? '| ' . translate('State') . ': ' . $shipping_state : '' }}
+                {{ translate('Pin Code') }}: {{ $pinCode ?: '-' }} {{ $billing_state !== '-' ? '| ' . translate('State') . ': ' . $billing_state : '' }}
             </td>
             <td class="head">
                 {{ translate('Tax Invoice No.') }}: {{ $invoiceNo }}
@@ -229,7 +240,13 @@
             </td>
         </tr>
         <tr>
-            <td colspan="3">{{ translate('Shipping Address') }}: -</td>
+            <td colspan="3">
+                {{ translate('Shipping Address') }}:
+                <span class="label">{{ $companyName }}</span>
+                @if($shippingAddress)<br>{{ $shippingAddress }}@endif
+                <br>
+                {{ translate('Pin Code') }}: {{ $shipping_postal_code ?: '-' }} {{ $shipping_state !== '-' ? '| ' . translate('State') . ': ' . $shipping_state : '' }}
+            </td>
             <td class="head">
                 {{ translate('Terms') }}: {{ $creditDays }} 
                 <br>

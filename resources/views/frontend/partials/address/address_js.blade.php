@@ -25,7 +25,8 @@
         });
     }
 
-    function add_new_address(){
+    function add_new_address(type = 'shipping'){
+        $('#address_type').val(type);
         $('#new-address-modal').modal('show');
     }
 

@@ -1,5 +1,6 @@
 <form class="form-default" role="form" action="{{ route('addresses.update', $address_data->id) }}" method="POST">
     @csrf
+    <input type="hidden" name="type" value="{{ $address_data->type ?? \App\Models\Address::TYPE_SHIPPING }}">
 
     <input type="hidden" id="phone_meta" value="{{ $address_data->phone_meta }}">
 

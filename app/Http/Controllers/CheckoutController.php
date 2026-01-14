@@ -63,6 +63,7 @@ class CheckoutController extends Controller
         $country_id = 0;
         $city_id = 0;
         $address_id = 0;
+        $billing_address_id = 0;
         $shipping_info = array();
 
         if (auth()->check()) {
@@ -70,15 +71,25 @@ class CheckoutController extends Controller
             $carts = Cart::where('user_id', $user_id)->active()->get();
             $addresses = Address::where('user_id', $user_id)->get();
             if(count($addresses)){
-                $address = $addresses->toQuery()->first();
-                $address_id = $address->id;
-                $country_id = $address->country_id;
-                $city_id = $address->city_id;
-                $default_address =$addresses->toQuery()->where('set_default', 1)->first();
-                if($default_address != null){
-                    $address_id = $default_address->id;
-                    $country_id = $default_address->country_id;
-                    $city_id = $default_address->city_id;
+                // Prefer a shipping-typed address; if none, fall back to default; else first available.
+                $shippingAddress = $addresses
+                    ->filter(function ($addr) {
+                        return $addr->type === Address::TYPE_SHIPPING;
+                    })
+                    ->firstWhere('set_default', 1)
+                    ?? $addresses->firstWhere('type', Address::TYPE_SHIPPING)
+                    ?? $addresses->firstWhere('set_default', 1)
+                    ?? $addresses->first();
+
+                if ($shippingAddress) {
+                    $address_id = $shippingAddress->id;
+                    $country_id = $shippingAddress->country_id;
+                    $city_id = $shippingAddress->city_id;
+                }
+
+                $billingAddress = $addresses->firstWhere('type', Address::TYPE_BILLING) ?? $shippingAddress;
+                if ($billingAddress) {
+                    $billing_address_id = $billingAddress->id;
                 }
             }
         }
@@ -136,7 +147,7 @@ class CheckoutController extends Controller
 
             $carts = $carts->fresh();
 
-            return view('frontend.checkout', compact('carts', 'address_id', 'total', 'carrier_list', 'shipping_info'));
+            return view('frontend.checkout', compact('carts', 'address_id', 'billing_address_id', 'total', 'carrier_list', 'shipping_info'));
         }
         flash(translate('Please Select cart items to Proceed'))->error();
         return back();
@@ -292,6 +303,7 @@ class CheckoutController extends Controller
         // User Address Create
         $address = new Address;
         $address->user_id       = $user->id;
+        $address->type          = Address::TYPE_SHIPPING;
         $address->address       = $guest_shipping_info['address'];
         $address->country_id    = $guest_shipping_info['country_id'];
         $address->state_id      = $guest_shipping_info['state_id'];
@@ -360,7 +372,7 @@ class CheckoutController extends Controller
             $categories = Category::all();
             return view('frontend.shipping_info', compact('categories', 'carts'));
         }
-        flash(translate('Your cart is empty'))->success();
+        flash(translate('Your cart is empty'))->success();  
         return back();
     }
 

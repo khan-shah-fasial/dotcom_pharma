@@ -10,6 +10,7 @@
             </div>
             <form class="form-default" role="form" action="{{ route('addresses.store') }}" method="POST">
                 @csrf
+                <input type="hidden" name="type" id="address_type" value="{{ \App\Models\Address::TYPE_SHIPPING }}">
                 <div class="modal-body c-scrollbar-light">
                     <div class="p-3">
                         <!-- Address -->

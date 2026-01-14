@@ -39,6 +39,10 @@ class AddressController extends Controller
     public function store(Request $request)
     {
         $address = new Address;
+        $requestedType = $request->input('type', Address::TYPE_SHIPPING);
+        $address->type = in_array($requestedType, [Address::TYPE_BILLING, Address::TYPE_SHIPPING], true)
+            ? $requestedType
+            : Address::TYPE_SHIPPING;
         if ($request->has('customer_id')) {
             $address->user_id   = $request->customer_id;
         } else {
@@ -97,6 +101,11 @@ class AddressController extends Controller
     public function update(Request $request, $id)
     {
         $address = Address::findOrFail($id);
+
+        $requestedType = $request->input('type', $address->type ?? Address::TYPE_SHIPPING);
+        $address->type = in_array($requestedType, [Address::TYPE_BILLING, Address::TYPE_SHIPPING], true)
+            ? $requestedType
+            : ($address->type ?? Address::TYPE_SHIPPING);
 
         $address->address       = $request->address;
         $address->country_id    = $request->country_id;

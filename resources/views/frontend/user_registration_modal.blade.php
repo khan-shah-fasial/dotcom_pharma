@@ -74,6 +74,108 @@
 {{-- - //------------------------------ Registration 1 modal -----------------------// -- --}}
 @endif
 
+@push('scripts')
+<script>
+    (function() {
+        const stateRoute = "{{ route('get-state') }}";
+        const cityRoute = "{{ route('get-city') }}";
+
+        function refreshPicker($el) {
+            if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.bootstrapSelect === 'function') {
+                AIZ.plugins.bootstrapSelect('refresh');
+            } else if ($.fn.selectpicker) {
+                $el.selectpicker('refresh');
+            }
+        }
+
+        function normalizeResponse(resp) {
+            if (typeof resp === 'string') {
+                try {
+                    return JSON.parse(resp);
+                } catch (e) {
+                    return resp;
+                }
+            }
+            return resp;
+        }
+
+        function setOptions($select, html, placeholder, selected) {
+            if (!html) {
+                html = `<option value="">${placeholder}</option>`;
+            }
+            $select.html(html);
+            if (selected !== undefined && selected !== null && selected !== '') {
+                $select.val(String(selected));
+            }
+            $select.data('selected', '');
+            refreshPicker($select);
+        }
+
+        function loadStates(countryId, $state, $city) {
+            if (!countryId) {
+                setOptions($state, '', "{{ translate('Select State') }}", '');
+                setOptions($city, '', "{{ translate('Select City') }}", '');
+                return;
+            }
+
+            const selectedState = $state.data('selected');
+
+            $.post(stateRoute, {
+                _token: '{{ csrf_token() }}',
+                country_id: countryId
+            }).done(function(resp) {
+                const html = normalizeResponse(resp);
+                setOptions($state, html, "{{ translate('Select State') }}", selectedState);
+                loadCities($state.val(), $city);
+            });
+        }
+
+        function loadCities(stateId, $city) {
+            if (!stateId) {
+                setOptions($city, '', "{{ translate('Select City') }}", '');
+                return;
+            }
+
+            const selectedCity = $city.data('selected');
+
+            $.post(cityRoute, {
+                _token: '{{ csrf_token() }}',
+                state_id: stateId
+            }).done(function(resp) {
+                const html = normalizeResponse(resp);
+                setOptions($city, html, "{{ translate('Select City') }}", selectedCity);
+            });
+        }
+
+        $(function() {
+            $('.js-country-select').each(function() {
+                const $country = $(this);
+                const $state = $($country.data('state-target'));
+                const $city = $($country.data('city-target'));
+                loadStates($country.val(), $state, $city);
+            });
+
+            $(document).on('change', '.js-country-select', function() {
+                const $country = $(this);
+                const $state = $($country.data('state-target'));
+                const $city = $($country.data('city-target'));
+                $state.data('selected', '');
+                $city.data('selected', '');
+                loadStates($country.val(), $state, $city);
+            });
+
+            $(document).on('change', '.js-state-select', function() {
+                const $state = $(this);
+                const $city = $(`select[data-state-target="#${$state.attr('id')}"]`).length
+                    ? $($(`select[data-state-target="#${$state.attr('id')}"]`).data('city-target'))
+                    : $state.closest('form').find('.js-city-select');
+                $city.data('selected', '');
+                loadCities($state.val(), $city);
+            });
+        });
+    })();
+</script>
+@endpush
 @if (Session::has('step') && Session::get('step') == 2)
 {{-- - //------------------------------ Registration 2 modal -----------------------// -- --}}
 
@@ -491,7 +593,7 @@
 
                                     <label class="form-label" for="country_business">Country *</label>
                                     
-                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" required>
+                                    <select class="form-control aiz-selectpicker rounded-0 js-country-select" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" data-state-target="#state_business" data-city-target="#city_id_business" required>
                                         <option value="">{{ translate('Select your country') }}</option>
                                         @foreach (get_active_countries() as $key => $country)
                                             <option value="{{ $country->id }}">{{ $country->name }}</option>
@@ -499,6 +601,8 @@
                                     </select>
 
                                     <input type="hidden" name="country__name" id="country__name" value="{{ $session_data_user['country_id_business'] ?? '' }}"/>
+                                    <input type="hidden" id="state_target_business" value="#state_business">
+                                    <input type="hidden" id="city_target_business" value="#city_id_business">
 
                             </div>
 
@@ -520,9 +624,9 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="state_business">State/Province/Region *</label>
-
-                                <input type="text" id="state" name="state_id"
-                                    class="form-control form-control-lg" value="{{ $session_data_user['state_id_business'] ?? '' }}" required />
+                                <select id="state_business" name="state_id" class="form-control form-control-lg aiz-selectpicker js-state-select" data-live-search="true" data-selected="{{ $session_data_user['state_id_business'] ?? '' }}" required>
+                                    <option value="">{{ translate('Select State') }}</option>
+                                </select>
 
                             </div>
 
@@ -543,9 +647,9 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="city_id_business">City / Town *</label>
-
-                                <input type="text" id="city" name="city_id"
-                                class="form-control form-control-lg" value="{{ $session_data_user['city_id_business'] ?? '' }}" required/>
+                                <select id="city_id_business" name="city_id" class="form-control form-control-lg aiz-selectpicker js-city-select" data-live-search="true" data-selected="{{ $session_data_user['city_id_business'] ?? '' }}" required>
+                                    <option value="">{{ translate('Select City') }}</option>
+                                </select>
 
                             </div>
 
@@ -1007,7 +1111,7 @@
                             <div class="form-group">
                                 <label class="form-label" for="country_personal">Country *</label>
 
-                                    <select class="form-control aiz-selectpicker rounded-0" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" required>
+                                    <select class="form-control aiz-selectpicker rounded-0 js-country-select" data-live-search="true" data-placeholder="{{ translate('Select your country') }}" name="country_id" placeholder="Select Country" data-state-target="#state_personal" data-city-target="#city_id_personal" required>
                                         <option value="">{{ translate('Select your country') }}</option>
                                         @foreach (get_active_countries() as $key => $country)
                                             <option value="{{ $country->id }}">{{ $country->name }}</option>
@@ -1015,6 +1119,8 @@
                                     </select> 
 
                                     <input type="hidden" name="country__name" id="country__name" value="{{ $session_data_user['country_id'] ?? '' }}"/>
+                                    <input type="hidden" id="state_target_personal" value="#state_personal">
+                                    <input type="hidden" id="city_target_personal" value="#city_id_personal">
 
                             </div>
 
@@ -1036,10 +1142,9 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="state_personal">State/Province/Region *</label>
-
-
-                                    <input type="text" id="state" name="state_id"
-                                    class="form-control form-control-lg" value="{{ $data['state_id'] ?? '' }}"  required/>
+                                <select id="state_personal" name="state_id" class="form-control form-control-lg aiz-selectpicker js-state-select" data-live-search="true" data-selected="{{ $data['state_id'] ?? '' }}" required>
+                                    <option value="">{{ translate('Select State') }}</option>
+                                </select>
 
                             </div>
 
@@ -1061,9 +1166,9 @@
 
                             <div class="form-group">
                                 <label class="form-label" for="city_id_personal">City / Town *</label>
-
-                                    <input type="text" id="city" name="city_id"
-                                    class="form-control form-control-lg" value="{{ $data['city_id'] ?? '' }}" required/>
+                                <select id="city_id_personal" name="city_id" class="form-control form-control-lg aiz-selectpicker js-city-select" data-live-search="true" data-selected="{{ $data['city_id'] ?? '' }}" required>
+                                    <option value="">{{ translate('Select City') }}</option>
+                                </select>
 
 
                                 </select>

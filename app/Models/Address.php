@@ -9,7 +9,22 @@ class Address extends Model
 {
     use PreventDemoModeChanges;
 
-    protected $fillable = ['set_default'];
+    public const TYPE_BILLING  = 'billing';
+    public const TYPE_SHIPPING = 'shipping';
+
+    protected $fillable = [
+        'user_id',
+        'type',
+        'address',
+        'country_id',
+        'state_id',
+        'city_id',
+        'longitude',
+        'latitude',
+        'postal_code',
+        'phone',
+        'set_default',
+    ];
 
     public function user()
     {
