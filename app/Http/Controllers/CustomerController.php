@@ -879,7 +879,7 @@ class CustomerController extends Controller
             'other_reg_no_file' => $licenseFiles['other_reg_no_file'],
         ]);
         $details->save();
-
+        sync_business_addresses_to_address_book($user, $details);
           if ($request->ajax()) {
               return response()->json([
                   'message' => translate('Customer details updated successfully'),

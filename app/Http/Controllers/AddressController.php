@@ -7,6 +7,7 @@ use App\Models\Address;
 use App\Models\City;
 use App\Models\State;
 use Auth;
+use App\Models\Country;
 
 class AddressController extends Controller
 {
@@ -164,6 +165,66 @@ class AddressController extends Controller
 
         echo json_encode($html);
     }
+
+    public function getLocation(Request $request)
+    {
+        $country = null;
+        if ($request->filled('country_id')) {
+            $country = Country::find($request->country_id);
+        }
+
+        $countryCode = $country ? $country->code : null;
+
+        // Fetch location data (will include country_code from response)
+        $locationData = get_location_by_postalcode($countryCode, $request->postal_code);
+
+        // If country not provided, attempt to resolve from lookup
+        if (!$country && !empty($locationData['country_code'])) {
+            $country = Country::where('code', strtoupper($locationData['country_code']))->first();
+        }
+
+        $stateName = isset($locationData['state']) ? trim($locationData['state']) : null;
+        $cityName = isset($locationData['city']) ? trim($locationData['city']) : null;
+
+        $normalized = function ($value) {
+            return $value !== null ? strtolower(trim($value)) : null;
+        };
+
+        $state = null;
+        if ($stateName !== null && $stateName !== '') {
+            $state = State::query()
+                ->when($country, function ($q) use ($country) {
+                    $q->where('country_id', $country->id);
+                })
+                ->whereRaw('LOWER(name) = ?', [$normalized($stateName)])
+                ->first();
+        }
+
+        $city = null;
+        if ($cityName !== null && $cityName !== '') {
+            $cityQuery = City::query()
+                ->whereRaw('LOWER(name) = ?', [$normalized($cityName)]);
+
+            if ($state) {
+                $cityQuery->where('state_id', $state->id);
+            } elseif ($country) {
+                $cityQuery->whereHas('state', function ($q) use ($country) {
+                    $q->where('country_id', $country->id);
+                });
+            }
+
+            $city = $cityQuery->first();
+        }
+
+        return response()->json([
+            'state_id' => $state ? $state->id : null,
+            'city_id' => $city ? $city->id : null,
+            'state_name' => $state ? $state->name : null,
+            'city_name' => $city ? $city->name : null,
+            'country_id' => $country ? $country->id : null,
+            'country_code' => $country ? $country->code : ($locationData['country_code'] ?? null),
+        ]);        
+    }  
 
     public function set_default($id)
     {

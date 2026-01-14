@@ -38,5 +38,7 @@ class VerifyCsrfToken extends Middleware
         '/phonepe*',
         '/payumoney/*',
         '/import-data',
+        '/get-states',
+        '/get-cities',
     ];
 }

@@ -1071,6 +1071,73 @@
             get_city(state_id);
         });
 
+        function parseOptions(resp) {
+            if (typeof resp === 'string') {
+                try {
+                    return JSON.parse(resp);
+                } catch (e) {
+                    return resp;
+                }
+            }
+            return resp;
+        }
+
+        function get_states(country_id) {
+            $('[name="state_id"]').html("");
+            $('[name="city_id"]').html("");
+            return $.ajax({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                url: "{{route('get-state')}}",
+                type: 'POST',
+                data: {
+                    country_id  : country_id
+                },
+                success: function (response) {
+                    var obj = parseOptions(response);
+                    if(obj != '') {
+                        var $state = $('[name="state_id"]');
+                        $state.html(obj);
+                        var selected = $state.data('selected');
+                        if (selected !== undefined && selected !== null && selected !== '') {
+                            $state.val(String(selected));
+                            $state.data('selected', '');
+                        }
+                        AIZ.plugins.bootstrapSelect('refresh');
+                    }
+                }
+            });
+        }
+
+        function get_city(state_id) {
+            $('[name="city_id"]').html("");
+            return $.ajax({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                url: "{{route('get-city')}}",
+                type: 'POST',
+                data: {
+                    state_id: state_id
+                },
+                success: function (response) {
+                    var obj = parseOptions(response);
+                    if(obj != '') {
+                        var $city = $('[name="city_id"]');
+                        $city.html(obj);
+                        var selected = $city.data('selected');
+                        if (selected !== undefined && selected !== null && selected !== '') {
+                            $city.val(String(selected));
+                            $city.data('selected', '');
+                        }
+                        AIZ.plugins.bootstrapSelect('refresh');
+                    }
+                }
+            });
+        }
+
+/*
         function get_states(country_id) {
             $('[name="state"]').html("");
             $.ajax({
@@ -1112,7 +1179,7 @@
                 }
             });
         }
-
+*/
         function getCsrfToken() {
             return $.get("/csrf-token"); // An endpoint that returns a new CSRF token
         }
@@ -1384,6 +1451,75 @@
 
          /* ----------------------------- Pincode ----------------------- */
 
+            function pincode_info(e){
+                const $input = e && e.target ? $(e.target) : $('#pincode');
+                clearTimeout($input.data('timer'));
+                
+                const timer = setTimeout(function() {
+                    const postalCode = ($input.val() || '').trim();
+                    const countryId = $('[name="country_id"]').val() || null;
+
+                    if (postalCode === '') {
+                        return;
+                    }
+
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        url: "{{ route('get-location') }}",
+                        type: 'POST',
+                        data: {
+                            postal_code: postalCode,
+                            country_id: countryId
+                        },
+                        success: function(response) {
+                            if (response.country_id) {
+                                $('[name="country_id"]').val(response.country_id).data('selected','');
+                                AIZ.plugins.bootstrapSelect('refresh');
+                            }
+
+                            if (response.state_id) {
+                                $('[name="state_id"]').data('selected', response.state_id);
+                            }
+
+                            if (response.city_id) {
+                                $('[name="city_id"]').data('selected', response.city_id);
+                            }
+
+                            // Trigger cascading load with slight delay so state -> city happens sequentially
+                            if (response.state_id) {
+                                setTimeout(function () {
+                                    get_states($('[name="country_id"]').val()).done(function () {
+                                        $('[name="state_id"]').val(String(response.state_id));
+                                        AIZ.plugins.bootstrapSelect('refresh');
+                                        // wait a bit to ensure cities are loaded before setting
+                                        setTimeout(function () {
+                                            if (response.city_id) {
+                                                get_city(response.state_id).done(function () {
+                                                    $('[name="city_id"]').val(String(response.city_id));
+                                                    AIZ.plugins.bootstrapSelect('refresh');
+                                                });
+                                            } else {
+                                                AIZ.plugins.bootstrapSelect('refresh');
+                                            }
+                                        }, 300);
+                                    });
+                                }, 200);
+                            } else {
+                                AIZ.plugins.bootstrapSelect('refresh');
+                            }
+                        },
+                        error: function() {
+                            AIZ.plugins.notify('danger', 'Error fetching location data');
+                        }
+                    });
+                }, 400);
+                
+                $input.data('timer', timer);
+            };
+
+            /*
             let debounceTimeout;
 
             function pincode_info(){
@@ -1420,6 +1556,7 @@
                     });
                 }, 100); // 500ms delay
             }
+            */
 
             // $(document).ready(function () {
                 // $('#pincode').on('input', pincode_info); // Use input event for real-time typing
