@@ -28,6 +28,7 @@
                         <th class="pl-0">{{ translate('Type') }}</th>
                         <th>{{ translate('File') }}</th>
                         <th data-breakpoints="md">{{ translate('Created At') }}</th>
+                        <th class="text-right">{{ translate('Download') }}</th>
                     </tr>
                 </thead>
                 <tbody class="fs-14">
@@ -47,10 +48,19 @@
                                 @endif
                             </td>
                             <td>{{ $archive->created_at?->format('d M Y') }}</td>
+                            <td class="text-right">
+                                @if ($archive->upload)
+                                    <a href="{{ uploaded_asset($archive->upload_id) }}" class="btn btn-primary btn-sm" download>
+                                        {{ translate('Download') }}
+                                    </a>
+                                @else
+                                    <button class="btn btn-secondary btn-sm" disabled>{{ translate('Download') }}</button>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center">{{ translate('No archives found.') }}</td>
+                            <td colspan="4" class="text-center">{{ translate('No archives found.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
