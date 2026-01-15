@@ -1378,8 +1378,12 @@ body .translater_menu .select2-container {
                     AIZ.plugins.bootstrapSelect('refresh');
                 });
             }
+        </script>
+    @endsection
 
-            // Placeholder text slider (with bottom-to-top animation)
+    @push('scripts')
+        <script type="text/javascript">
+            // Placeholder text slider (with bottom-to-top animation) - Global for all pages
             $(document).ready(function() {
                 var searchInput = $('#search');
                 var customPlaceholder = $('#custom-placeholder .placeholder-sliding');
@@ -1457,4 +1461,4 @@ body .translater_menu .select2-container {
                 }
             });
         </script>
-    @endsection
+    @endpush
