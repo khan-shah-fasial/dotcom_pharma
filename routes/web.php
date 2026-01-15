@@ -503,8 +503,10 @@ Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function ()
 Route::get('translation-check/{check}', [LanguageController::class, 'get_translation']);
 
 Route::controller(AddressController::class)->group(function () {
-    Route::post('/get-states', 'getStates')->name('get-state');
-    Route::post('/get-cities', 'getCities')->name('get-city');
+    // Allow both GET (for simple fetch) and POST (existing AJAX) to avoid 419 CSRF errors on direct hits.
+    Route::match(['get', 'post'], '/get-states', 'getStates')->name('get-state');
+    Route::match(['get', 'post'], '/get-cities', 'getCities')->name('get-city');
+    Route::post('/get-location', 'getLocation')->name('get-location');
 });
 
 Route::group(['middleware' => ['auth']], function () {

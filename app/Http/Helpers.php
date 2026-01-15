@@ -66,6 +66,46 @@ use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+
+if (!function_exists('get_location_by_postalcode')) {
+    /**
+     * Get city and state by country and postal code
+     *
+     * @param string $countryCode Two-letter country code (e.g., 'US', 'IN')
+     * @param string $postalCode Postal code/Zipcode/Pincode
+     * @return array|null Array with city and state info or null if not found
+     */
+    function get_location_by_postalcode($countryCode, $postalCode)
+    {
+        try {
+            $response = Http::get("https://secure.geonames.org/postalCodeSearchJSON", [
+                'postalcode' => $postalCode,
+                'country' => $countryCode ?: '',
+                'username' => 'umair.makent', // You need to register for a free GeoNames account to get a username
+            ]);
+            // $response = Http::get("https://api.zippopotam.us/{$countryCode}/{$postalCode}");
+            if ($response->successful()) {
+                $data = $response->json();
+                if (!empty($data['postalCodes'])) {
+                    $entry = $data['postalCodes'][0];
+                    return [
+                        'city'         => $entry['adminName2'] ?? $entry['placeName'] ?? null,
+                        'state'        => $entry['adminName1'] ?? null,
+                        'state_code'   => $entry['ISO3166-2'] ?? null,
+                        'country_code' => $entry['countryCode'] ?? null,
+                        'postal_code'  => $entry['postalCode'] ?? null,
+                        'placename'    => $entry['placeName'] ?? null,
+                    ];
+                }
+            }            
+            return [];
+        } catch (\Exception $e) {
+            \Log::error("Failed to fetch location data: " . $e->getMessage());
+            return null;
+        }
+    }
+}
 
 //sensSMS function for OTP
 if (!function_exists('sendSMS')) {
@@ -293,6 +333,72 @@ if (!function_exists('get_user_location_bundle')) {
             'states'  => $states,
             'cities'  => $cities,
         ];
+    }
+}
+
+if (!function_exists('sync_business_addresses_to_address_book')) {
+    /**
+     * Store or update billing and shipping address rows from business registration data.
+     */
+    function sync_business_addresses_to_address_book(User $user, ?UserDetails $details = null): void
+    {
+        $details = $details ?: $user->user_details;
+        if (!$details) {
+            return;
+        }
+
+        $addressLines = array_filter([
+            $details->street_add_first_business,
+            $details->street_add_sec_business,
+            $details->locality_land_mark_business,
+            $details->village_business,
+        ], function ($value) {
+            return filled($value);
+        });
+
+        $addressText = implode(', ', $addressLines);
+        $hasAddressData = $addressText !== ''
+            || filled($details->city_id_business)
+            || filled($details->state_id_business)
+            || filled($details->country_id_business)
+            || filled($details->pincode_business);
+
+        if (!$hasAddressData) {
+            return;
+        }
+
+        $phone = $details->prim_mobile_no_business ?: $user->phone;
+        $payload = [
+            'address' => $addressText,
+            'country_id' => $details->country_id_business,
+            'state_id' => $details->state_id_business,
+            'city_id' => $details->city_id_business,
+            'postal_code' => $details->pincode_business,
+            'phone' => $phone,
+        ];
+
+        $hasShipping = Address::where('user_id', $user->id)
+            ->where('type', Address::TYPE_SHIPPING)
+            ->exists();
+
+        foreach ([Address::TYPE_BILLING, Address::TYPE_SHIPPING] as $type) {
+            $address = Address::firstOrNew([
+                'user_id' => $user->id,
+                'type' => $type,
+            ]);
+
+            $address->fill($payload);
+            $address->type = $type;
+
+            if (!$address->exists) {
+                $hasTypeRecord = Address::where('user_id', $user->id)
+                    ->where('type', $type)
+                    ->exists();
+                $address->set_default = !$hasTypeRecord ? 1 : 0;
+            }
+
+            $address->save();
+        }
     }
 }
 
