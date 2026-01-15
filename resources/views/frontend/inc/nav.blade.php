@@ -122,9 +122,8 @@ body .translater_menu .select2-container {
 }
 
 .placeholder-sliding {
-    font-weight: bold;
+    font-weight: 600;
     display: block;
-    color: #000000;
     line-height: 20px;
     transform: translateY(0);
     opacity: 1;
@@ -1500,12 +1499,20 @@ body .translater_menu .select2-container {
                         }
                     });
                     
-                    // Initial update
+                    // Initial update - start animation immediately
                     if (searchInput.val() && searchInput.val().trim() !== '') {
                         $('#custom-placeholder').hide();
                     } else {
+                        // Set initial text
                         customPlaceholder.text(slidingTexts[currentIndex]);
                         currentIndex = (currentIndex + 1) % slidingTexts.length;
+                        
+                        // Start animation immediately (minimal delay for DOM readiness)
+                        setTimeout(function() {
+                            updatePlaceholder();
+                            // Then continue with interval
+                            placeholderInterval = setInterval(updatePlaceholder, 3500);
+                        }, 100);
                     }
                 }
             });
