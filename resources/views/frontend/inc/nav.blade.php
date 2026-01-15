@@ -113,21 +113,52 @@ body .translater_menu .select2-container {
     font-weight: normal;
 }
 
-.placeholder-sliding {
-    
-    font-weight: bold;
+.placeholder-sliding-container {
     display: inline-block;
-    transition: all 0.5s ease;
+    height: 20px;
+    overflow: hidden;
+    vertical-align: middle;
+    position: relative;
 }
 
-.placeholder-sliding.animate {
-    animation: placeholderSlideUp 0.5s ease-out;
+.placeholder-sliding {
+    font-weight: bold;
+    display: block;
+    color: #000000;
+    line-height: 20px;
+    transform: translateY(0);
+    opacity: 1;
 }
 
-@keyframes placeholderSlideUp {
+.placeholder-sliding.animate-out {
+    animation: placeholderScrollDown 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.placeholder-sliding.animate-in {
+    animation: placeholderScrollUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes placeholderScrollDown {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+}
+
+@keyframes placeholderScrollUp {
     0% {
         transform: translateY(100%);
         opacity: 0;
+    }
+    50% {
+        opacity: 0.5;
     }
     100% {
         transform: translateY(0);
@@ -431,7 +462,9 @@ body .translater_menu .select2-container {
                                             placeholder=" " autocomplete="off" data-placeholder-slider="true">
                                         <span class="custom-placeholder" id="custom-placeholder">
                                             <span class="placeholder-fixed">{{ translate('Search for') }}</span>
-                                            <span class="placeholder-sliding"></span>
+                                            <span class="placeholder-sliding-container">
+                                                <span class="placeholder-sliding"></span>
+                                            </span>
                                         </span>
 
                                         <svg id="Group_723" data-name="Group 723" xmlns="http://www.w3.org/2000/svg"
@@ -1415,20 +1448,36 @@ body .translater_menu .select2-container {
                     function updatePlaceholder() {
                         // Only update if input is empty
                         if (!searchInput.val() || searchInput.val().trim() === '') {
-                            // Trigger animation class to slide text from bottom to top
-                            customPlaceholder.addClass('animate');
+                            // Remove previous animation classes
+                            customPlaceholder.removeClass('animate-in animate-out');
                             
+                            // Force reflow to restart animation
+                            void customPlaceholder.offsetWidth;
+                            
+                            // First, animate out (scroll down) - same as coming but in reverse
+                            customPlaceholder.addClass('animate-out');
+                            
+                            // After exit animation completes, update text and animate in
                             setTimeout(function() {
+                                // Update text
                                 customPlaceholder.text(slidingTexts[currentIndex]);
-                                customPlaceholder.removeClass('animate');
-                            }, 150);
-                            
-                            currentIndex = (currentIndex + 1) % slidingTexts.length;
+                                
+                                // Remove exit animation and add entrance animation
+                                customPlaceholder.removeClass('animate-out');
+                                void customPlaceholder.offsetWidth; // Force reflow
+                                
+                                // Animate in (scroll up) - same transition as going out
+                                customPlaceholder.addClass('animate-in');
+                                
+                                // Remove animation class after animation completes
+                                setTimeout(function() {
+                                    customPlaceholder.removeClass('animate-in');
+                                }, 1200);
+                                
+                                currentIndex = (currentIndex + 1) % slidingTexts.length;
+                            }, 1200);
                         }
                     }
-                    
-                    // Start the interval
-                    placeholderInterval = setInterval(updatePlaceholder, 3000);
                     
                     // Pause when user focuses on input
                     searchInput.on('focus', function() {
@@ -1438,7 +1487,7 @@ body .translater_menu .select2-container {
                     // Resume when user leaves input (if empty)
                     searchInput.on('blur', function() {
                         if (!searchInput.val() || searchInput.val().trim() === '') {
-                            placeholderInterval = setInterval(updatePlaceholder, 3000);
+                            placeholderInterval = setInterval(updatePlaceholder, 3500);
                         }
                     });
                     
