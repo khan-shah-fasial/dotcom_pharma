@@ -45,8 +45,8 @@
             @if ($detailedProduct->digital == 0)
                 @foreach ($detailedProduct->stocks as $key => $stock)
                     @if ($stock->image != null)
-                        <div class="carousel-box img-zoom rounded-0">
-                            <img class="img-fluid h-auto lazyload mx-auto"
+                        <div class="carousel-box img-zoom rounded-0 product-zoom-slide">
+                            <img class="img-fluid h-auto lazyload mx-auto product-zoom-image"
                                 src="{{ static_asset('assets/img/placeholder.jpg') }}"
                                 data-src="{{ uploaded_asset($stock->image) }}"
                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
@@ -63,27 +63,28 @@
                 </div>
             @endforeach --}}
             @foreach ($photos as $key => $photo)
-                <div class="carousel-box img-zoom rounded-0">
-                    @php $type = check_asset_type($photo); @endphp
-
-                    @if ($type == 'image')
-                        <img class="img-fluid h-auto lazyload mx-auto"
+                @php $type = check_asset_type($photo); @endphp
+                @if ($type == 'image')
+                    <div class="carousel-box img-zoom rounded-0 product-zoom-slide">
+                        <img class="img-fluid h-auto lazyload mx-auto product-zoom-image"
                             src="{{ static_asset('assets/img/placeholder.jpg') }}"
                             data-src="{{ uploaded_asset($photo) }}"
                             onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                    
-                    @elseif ($type == 'video')
+                    </div>
+                @elseif ($type == 'video')
+                    <div class="carousel-box img-zoom rounded-0">
                         <video class="img-fluid h-auto lazyload mx-auto" controls>
                             <source src="{{ uploaded_asset($photo) }}" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
-                    
-                    @elseif ($type == 'file')
+                    </div>
+                @elseif ($type == 'file')
+                    <div class="carousel-box img-zoom rounded-0">
                         <a href="{{ uploaded_asset($photo) }}" target="_blank" class="btn btn-outline-secondary">
                             {{ translate('Download File') }}
                         </a>
-                    @endif
-                </div>
+                    </div>
+                @endif
             @endforeach
             @if ($videoEmbed)
                 <div class="carousel-box img-zoom rounded-0">
@@ -176,10 +177,96 @@
         "use strict";
         $(document).ready(function () {
             var $productGallery = $('.product_dt_img');
+            var isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+            var $zoomPreview = $('<div class="product-zoom-preview"></div>').appendTo('body');
+
+            function getSource($img) {
+                return $img[0].currentSrc || $img.attr('data-src') || $img.attr('src');
+            }
+
+            function hidePreview() {
+                $zoomPreview.removeClass('show');
+            }
+
+            function positionPreview(rect) {
+                var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                var left = rect.right + scrollLeft + 16; // gap to the right of main image
+                var top = rect.top + scrollTop;
+                $zoomPreview.css({
+                    top: top + 'px',
+                    left: left + 'px'
+                });
+            }
+
+            function bindZoom($slide) {
+                var $img = $slide.find('.product-zoom-image').first();
+                if (!$img.length) return;
+
+                var toggleState = false;
+
+                var updatePreview = function (event, fixedPosition) {
+                    var source = getSource($img);
+                    if (!source) return;
+
+                    var rect = $slide[0].getBoundingClientRect();
+                    positionPreview(rect);
+                    $zoomPreview.css('background-image', 'url(' + source + ')');
+
+                    var xPercent = 50;
+                    var yPercent = 50;
+
+                    if (!fixedPosition && event) {
+                        var offsetX = event.clientX - rect.left;
+                        var offsetY = event.clientY - rect.top;
+                        xPercent = (offsetX / rect.width) * 100;
+                        yPercent = (offsetY / rect.height) * 100;
+                    }
+
+                    $zoomPreview.css('background-position', xPercent + '% ' + yPercent + '%');
+                    $zoomPreview.addClass('show');
+                };
+
+                var resetPreview = function () {
+                    toggleState = false;
+                    hidePreview();
+                };
+
+                if (!isTouchDevice) {
+                    $slide.on('mousemove.productZoom', function (e) {
+                        updatePreview(e, false);
+                    }).on('mouseleave.productZoom', function () {
+                        resetPreview();
+                    });
+                } else {
+                    $slide.on('click.productZoom', function () {
+                        toggleState = !toggleState;
+                        if (toggleState) {
+                            updatePreview(null, true);
+                        } else {
+                            resetPreview();
+                        }
+                    });
+                }
+
+                $slide.data('resetZoom', resetPreview);
+            }
+
+            $productGallery.find('.product-zoom-slide').each(function () {
+                bindZoom($(this));
+            });
 
             if ($productGallery.length) {
                 $productGallery.on('beforeChange', function (event, slick, currentSlide) {
                     var $current = $(slick.$slides[currentSlide]);
+
+                    $current.find('.product-zoom-slide').each(function () {
+                        var resetHandler = $(this).data('resetZoom');
+                        if (typeof resetHandler === 'function') {
+                            resetHandler();
+                        }
+                    });
+                    hidePreview();
 
                     // Pause HTML5 videos
                     $current.find('video').each(function () {

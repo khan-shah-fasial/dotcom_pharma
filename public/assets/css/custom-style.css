@@ -1158,6 +1158,47 @@ ul.dropdown-menu {
     border-radius: 20px;
 }
 
+.product-zoom-slide {
+    position: relative;
+    overflow: hidden;
+    cursor: zoom-in;
+}
+
+.product-zoom-slide .product-zoom-image {
+    transition: transform 0.2s ease-out, transform-origin 0.1s ease-out;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.product-zoom-slide.is-zoomed {
+    cursor: crosshair;
+}
+
+.product-zoom-slide .product-zoom-image.is-zoomed {
+    will-change: transform;
+}
+
+.product-zoom-preview {
+    position: absolute;
+    width: 780px;
+    height: 600px;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    background-repeat: no-repeat;
+    background-size: 200% 200%;
+    background-position: center;
+    /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12); */
+    z-index: 1300;
+    display: none;
+    pointer-events: none;
+    background-color: #fff;
+}
+
+.product-zoom-preview.show {
+    display: block;
+}
+
 .discription_boxex button {
     color: #363636 !important;
     font-weight: 500;
