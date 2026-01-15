@@ -45,7 +45,7 @@
             @if ($detailedProduct->digital == 0)
                 @foreach ($detailedProduct->stocks as $key => $stock)
                     @if ($stock->image != null)
-                        <div class="carousel-box img-zoom rounded-0 product-zoom-slide">
+                        <div class="carousel-box rounded-0 product-zoom-slide">
                             <img class="img-fluid h-auto lazyload mx-auto product-zoom-image"
                                 src="{{ static_asset('assets/img/placeholder.jpg') }}"
                                 data-src="{{ uploaded_asset($stock->image) }}"
@@ -65,21 +65,21 @@
             @foreach ($photos as $key => $photo)
                 @php $type = check_asset_type($photo); @endphp
                 @if ($type == 'image')
-                    <div class="carousel-box img-zoom rounded-0 product-zoom-slide">
+                    <div class="carousel-box rounded-0 product-zoom-slide">
                         <img class="img-fluid h-auto lazyload mx-auto product-zoom-image"
                             src="{{ static_asset('assets/img/placeholder.jpg') }}"
                             data-src="{{ uploaded_asset($photo) }}"
                             onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                     </div>
                 @elseif ($type == 'video')
-                    <div class="carousel-box img-zoom rounded-0">
+                    <div class="carousel-box rounded-0">
                         <video class="img-fluid h-auto lazyload mx-auto" controls>
                             <source src="{{ uploaded_asset($photo) }}" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
                     </div>
                 @elseif ($type == 'file')
-                    <div class="carousel-box img-zoom rounded-0">
+                    <div class="carousel-box rounded-0">
                         <a href="{{ uploaded_asset($photo) }}" target="_blank" class="btn btn-outline-secondary">
                             {{ translate('Download File') }}
                         </a>
