@@ -488,6 +488,15 @@
                     </svg>
                 </a>
 
+                <!-- YouTube (redirect) -->
+                <a href="https://www.youtube.com/redirect?q={{ urlencode($productUrl) }}"
+                   target="_blank"
+                   class="btn btn-sm rounded-circle p-2 social-share-btn"
+                   title="Share on YouTube"
+                   style="background: #FF0000; border: none;">
+                    <i class="lab la-youtube fs-18 text-white"></i>
+                </a>
+
                 <!-- Email -->
                 <a href="mailto:?subject={{ $mailSubject }}&body={{ $mailBody }}"
                    class="btn btn-sm rounded-circle p-2 social-share-btn"
