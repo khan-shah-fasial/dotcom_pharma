@@ -446,6 +446,8 @@
                     $productName = $detailedProduct->getTranslation('name');
                     $productImage = uploaded_asset($detailedProduct->meta_img);
                     $shareText = urlencode($productName . ' - ' . $productUrl);
+                    $mailSubject = urlencode($productName);
+                    $mailBody = urlencode($productName . ' - ' . $productUrl);
                 @endphp
                 
                 <!-- WhatsApp -->
@@ -484,6 +486,14 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="x-icon-svg">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="#FFFFFF"/>
                     </svg>
+                </a>
+
+                <!-- Email -->
+                <a href="mailto:?subject={{ $mailSubject }}&body={{ $mailBody }}"
+                   class="btn btn-sm rounded-circle p-2 social-share-btn"
+                   title="Share via Email"
+                   style="background: #EA4335; border: none;">
+                    <i class="las la-envelope fs-18 text-white"></i>
                 </a>
                 
                
