@@ -8,23 +8,34 @@
     .social-share-btn {
         transition: all 0.3s ease;
         padding: 0 !important;
-        color: #000 !important;
+        width: 35px !important;
+        height: 35px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     .social-share-btn i,
-    .social-share-btn span,
-    .social-share-btn svg {
+    .social-share-btn span {
         margin: 0;
-        color: #000 !important;
         font-size: 22px !important;
     }
     
     .social-share-btn svg {
         display: block;
+        margin: 0;
+    }
+    
+    .social-share-btn:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     
     .copy-url-btn:hover {
-        opacity: 0.8;
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 </style>
 
@@ -427,8 +438,8 @@
         </div>
 
         <!-- Social Share Buttons -->
-        <div class="mt-md-4 mt-3">
-            <div class="d-flex align-items-center flex-wrap gap-2">
+        <div class="mt-md-4 mt-3 col-md-12">
+            <div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
                 <span class="fs-14 fw-500 text-dark mr-2">{{ translate('Share') }}:</span>
                 @php
                     $productUrl = route('product', $detailedProduct->slug);
@@ -442,8 +453,8 @@
                    target="_blank" 
                    class="btn btn-sm rounded-circle p-2 social-share-btn" 
                    title="Share on WhatsApp"
-                   style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
-                    <i class="lab la-whatsapp fs-18 text-dark"></i>
+                   style="background: #25D366; border: none;">
+                    <i class="lab la-whatsapp fs-18 text-white"></i>
                 </a>
                 
                 <!-- Facebook -->
@@ -451,8 +462,8 @@
                    target="_blank" 
                    class="btn btn-sm rounded-circle p-2 social-share-btn" 
                    title="Share on Facebook"
-                   style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
-                    <i class="lab la-facebook-f fs-18 text-dark"></i>
+                   style="background: #1877F2; border: none;">
+                    <i class="lab la-facebook-f fs-18 text-white"></i>
                 </a>
                 
                 <!-- LinkedIn -->
@@ -460,8 +471,8 @@
                    target="_blank" 
                    class="btn btn-sm rounded-circle p-2 social-share-btn" 
                    title="Share on LinkedIn"
-                   style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
-                    <i class="lab la-linkedin-in fs-18 text-dark"></i>
+                   style="background: #0077B5; border: none;">
+                    <i class="lab la-linkedin-in fs-18 text-white"></i>
                 </a>
                 
                 <!-- X (Twitter) -->
@@ -469,9 +480,9 @@
                    target="_blank" 
                    class="btn btn-sm rounded-circle p-2 social-share-btn" 
                    title="Share on X"
-                   style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
+                   style="background: #000000; border: none;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="x-icon-svg">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="#000"/>
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="#FFFFFF"/>
                     </svg>
                 </a>
                 
@@ -482,8 +493,8 @@
                         class="btn btn-sm rounded-circle p-2 social-share-btn copy-url-btn" 
                         data-url="{{ $productUrl }}"
                         title="Copy URL"
-                        style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none;">
-                    <i class="las la-copy fs-18 text-dark"></i>
+                        style="background: #6c757d; border: none;">
+                    <i class="las la-copy fs-18 text-white"></i>
                 </button>
             </div>
         </div>
