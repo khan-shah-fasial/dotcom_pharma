@@ -438,7 +438,7 @@
         </div>
 
         <!-- Social Share Buttons -->
-        <div class="mt-md-4 mt-3 col-md-12">
+        <div class="mt-md-4 mt-3 col-md-12 pl-0">
             <div class="d-flex align-items-center flex-wrap" style="gap: 10px;">
                 <span class="fs-14 fw-500 text-dark mr-2">{{ translate('Share') }}:</span>
                 @php
