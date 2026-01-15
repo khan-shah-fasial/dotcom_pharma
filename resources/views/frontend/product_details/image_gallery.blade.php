@@ -199,11 +199,15 @@
                 });
             }
 
+            function getTouchPoint(e) {
+                if (!e || !e.originalEvent) return null;
+                var oe = e.originalEvent;
+                return (oe.touches && oe.touches[0]) || (oe.changedTouches && oe.changedTouches[0]) || null;
+            }
+
             function bindZoom($slide) {
                 var $img = $slide.find('.product-zoom-image').first();
                 if (!$img.length) return;
-
-                var toggleState = false;
 
                 var updatePreview = function (event, fixedPosition) {
                     var source = getSource($img);
@@ -228,7 +232,6 @@
                 };
 
                 var resetPreview = function () {
-                    toggleState = false;
                     hidePreview();
                 };
 
@@ -239,13 +242,18 @@
                         resetPreview();
                     });
                 } else {
-                    $slide.on('click.productZoom', function () {
-                        toggleState = !toggleState;
-                        if (toggleState) {
-                            updatePreview(null, true);
-                        } else {
-                            resetPreview();
-                        }
+                    $slide.on('touchstart.productZoom', function (e) {
+                        var touch = getTouchPoint(e);
+                        if (!touch) return;
+                        e.preventDefault();
+                        updatePreview(touch, false);
+                    }).on('touchmove.productZoom', function (e) {
+                        var touch = getTouchPoint(e);
+                        if (!touch) return;
+                        e.preventDefault();
+                        updatePreview(touch, false);
+                    }).on('touchend.productZoom touchcancel.productZoom', function () {
+                        resetPreview();
                     });
                 }
 
