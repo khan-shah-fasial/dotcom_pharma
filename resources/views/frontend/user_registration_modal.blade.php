@@ -792,6 +792,16 @@
                                 <label class="form-label" for="ifsc_code_business">IFSC Code *</label>
                                 <input type="text" id="ifsc_code_business" name="ifsc_code_business"
                                     class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_business'] ?? '' }}"  placeholder="Enter IFSC Code Ex: AAAA0000000" required/>
+                                <button type="button"
+                                    class="btn btn-outline-primary btn-sm mt-2 js-ifsc-lookup"
+                                    data-ifsc="#ifsc_code_business"
+                                    data-bank="#bank_name_business"
+                                    data-branch="#branch_name_business"
+                                    data-address="#branch_address_business"
+                                    data-code="#branch_code_business"
+                                    data-micr="#micr_code_business">
+                                    {{ translate('Fetch bank details') }}
+                                </button>
                             </div>
 
                         </div>
@@ -1301,6 +1311,16 @@
                                 <label class="form-label" for="ifsc_code_personal">IFSC Code *</label>
                                 <input type="text" id="ifsc_code_personal" name="ifsc_code_personal"
                                     class="form-control form-control-lg" value="{{ $session_data_user['ifsc_code_personal'] ?? '' }}"  placeholder="Enter IFSC Code Ex: ICIC0000269" required/>
+                                <button type="button"
+                                    class="btn btn-outline-primary btn-sm mt-2 js-ifsc-lookup"
+                                    data-ifsc="#ifsc_code_personal"
+                                    data-bank="#bank_name_personal"
+                                    data-branch="#branch_name_personal"
+                                    data-address="#branch_address_personal"
+                                    data-code="#branch_code_personal"
+                                    data-micr="#micr_code_personal">
+                                    {{ translate('Fetch bank details') }}
+                                </button>
                             </div>
 
                         </div>

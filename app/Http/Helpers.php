@@ -107,6 +107,76 @@ if (!function_exists('get_location_by_postalcode')) {
     }
 }
 
+if (!function_exists('fetch_bank_details_by_ifsc')) {
+    /**
+     * Fetch bank metadata from Razorpay IFSC API.
+     *
+     * @param  string|null $ifsc
+     * @return array{success:bool,message:string,data:?array}
+     */
+    function fetch_bank_details_by_ifsc(?string $ifsc): array
+    {
+        $code = strtoupper(trim((string) $ifsc));
+        if ($code === '') {
+            return [
+                'success' => false,
+                'message' => 'IFSC code is required',
+                'data' => null,
+            ];
+        }
+
+        try {
+            $response = Http::timeout(8)->get('https://ifsc.razorpay.com/' . $code);
+
+            if ($response->successful()) {
+                $payload = $response->json();
+                if (is_array($payload)) {
+                    return [
+                        'success' => true,
+                        'message' => 'Bank details found',
+                        'data' => [
+                            'ifsc'      => $payload['IFSC'] ?? $code,
+                            'bank'      => $payload['BANK'] ?? null,
+                            'bank_code' => $payload['BANKCODE'] ?? null,
+                            'branch'    => $payload['BRANCH'] ?? null,
+                            'address'   => $payload['ADDRESS'] ?? null,
+                            'city'      => $payload['CITY'] ?? null,
+                            'district'  => $payload['DISTRICT'] ?? null,
+                            'state'     => $payload['STATE'] ?? null,
+                            'contact'   => $payload['CONTACT'] ?? null,
+                            'micr'      => $payload['MICR'] ?? null,
+                            'upi'       => $payload['UPI'] ?? null,
+                            'rtgs'      => $payload['RTGS'] ?? null,
+                            'imps'      => $payload['IMPS'] ?? null,
+                            'neft'      => $payload['NEFT'] ?? null,
+                            'iso3166'   => $payload['ISO3166'] ?? null,
+                            'centre'    => $payload['CENTRE'] ?? null,
+                            'swift'     => $payload['SWIFT'] ?? null,
+                        ],
+                    ];
+                }
+            }
+
+            $message = $response->status() === 404
+                ? 'No bank details found for this IFSC'
+                : 'Unable to fetch bank details';
+
+            return [
+                'success' => false,
+                'message' => $message,
+                'data' => null,
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('IFSC lookup failed', ['ifsc' => $code, 'err' => $e->getMessage()]);
+            return [
+                'success' => false,
+                'message' => 'Lookup failed, please try again later',
+                'data' => null,
+            ];
+        }
+    }
+}
+
 //sensSMS function for OTP
 if (!function_exists('sendSMS')) {
     function sendSMS($to, $from, $text, $template_id)

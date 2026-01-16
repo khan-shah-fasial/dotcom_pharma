@@ -92,6 +92,15 @@ Route::get('/csrf-token', function () {
     return response()->json(['token' => csrf_token()]);
 });
 
+Route::get('/utilities/ifsc-lookup', function (Request $request) {
+    $result = fetch_bank_details_by_ifsc($request->query('ifsc', ''));
+    $status = $result['success']
+        ? 200
+        : ($result['message'] === 'No bank details found for this IFSC' ? 404 : 422);
+
+    return response()->json($result, $status);
+})->name('utilities.ifsc.lookup');
+
 
 Route::get('/test-otp', function () {
     $sessionData = Session()->all();

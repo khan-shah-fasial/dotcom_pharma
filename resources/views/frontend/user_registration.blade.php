@@ -1562,6 +1562,61 @@
                 // $('#pincode').on('input', pincode_info); // Use input event for real-time typing
             // });
 
+            const IFSC_LOOKUP_URL = "{{ route('utilities.ifsc.lookup') }}";
+
+            function setIfscTarget(selector, value) {
+                if (!selector || !value) return;
+                const el = document.querySelector(selector);
+                if (el) {
+                    el.value = value;
+                }
+            }
+
+            function handleIfscButton(btn) {
+                const input = btn.dataset.ifsc ? document.querySelector(btn.dataset.ifsc) : null;
+                const code = (input?.value || '').trim();
+
+                if (!code) {
+                    AIZ.plugins.notify('warning', 'Enter IFSC code first');
+                    return;
+                }
+
+                const originalText = btn.innerText;
+                btn.disabled = true;
+                btn.innerText = 'Fetching...';
+
+                fetch(`${IFSC_LOOKUP_URL}?ifsc=${encodeURIComponent(code)}`)
+                    .then(resp => resp.json().then(body => ({ ok: resp.ok, body })))
+                    .then(({ ok, body }) => {
+                        if (!ok || !body?.success) {
+                            AIZ.plugins.notify('danger', body?.message || 'Unable to fetch bank details');
+                            return;
+                        }
+
+                        const info = body.data || {};
+                        setIfscTarget(btn.dataset.bank, info.bank || '');
+                        setIfscTarget(btn.dataset.branch, info.branch || '');
+                        setIfscTarget(btn.dataset.address, info.address || '');
+                        setIfscTarget(btn.dataset.code, info.bank_code || info.ifsc || '');
+                        setIfscTarget(btn.dataset.micr, info.micr || '');
+
+                        AIZ.plugins.notify('success', 'Bank details applied');
+                    })
+                    .catch(() => {
+                        AIZ.plugins.notify('danger', 'Unable to fetch bank details');
+                    })
+                    .finally(() => {
+                        btn.disabled = false;
+                        btn.innerText = originalText;
+                    });
+            }
+
+            document.addEventListener('click', function (event) {
+                const btn = event.target.closest('.js-ifsc-lookup');
+                if (!btn) return;
+                handleIfscButton(btn);
+            });
+
             document.addEventListener("change", function (event) {
                 const targetNames = ["country_id"];
 

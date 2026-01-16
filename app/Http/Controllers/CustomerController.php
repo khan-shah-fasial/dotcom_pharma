@@ -563,6 +563,8 @@ class CustomerController extends Controller
             'name_personal' => ['required', 'string', 'min:1', 'max:150'],
             'father_name' => ['required', 'string', 'min:1', 'max:150'],
             'dob' => ['required'],
+            'religion' => ['nullable', 'string', 'max:150'],
+            'anniversary' => ['nullable', 'date'],
             'street_add_first_personal' => ['required', 'string', 'min:1', 'max:150'],
             'street_add_sec_personal' => ['nullable', 'string', 'min:1', 'max:150'],
             'locality_land_mark_personal' => ['required', 'string', 'min:1', 'max:150'],
@@ -628,6 +630,8 @@ class CustomerController extends Controller
         // $validator->after(function ($v) use ($request, $details, $typeOption, $domesticChoice, $internationalChoice) { ... });
         $validator = \Validator::make($request->all(), [
             'prim_email_personal'  => ['required', 'email'],
+            'religion'             => ['nullable', 'string', 'max:150'],
+            'anniversary'          => ['nullable', 'date'],
             // 'prim_email_business'  => ['nullable', 'email'],
             'phone_personal'       => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
             // 'phone_business'       => ['nullable'],
@@ -820,6 +824,8 @@ class CustomerController extends Controller
             'name' => $validated['name_personal'],
             'father_name' => $validated['father_name'],
             'dob' => $validated['dob'],
+            'religion' => $validated['religion'] ?? $details->religion,
+            'anniversary' => $validated['anniversary'] ?? $details->anniversary,
             'street_add_first' => $validated['street_add_first_personal'],
             'street_add_sec' => $validated['street_add_sec_personal'] ?? null,
             'locality_land_mark' => $validated['locality_land_mark_personal'],

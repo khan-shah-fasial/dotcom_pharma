@@ -527,6 +527,15 @@
                         <input type="text" id="ifsc_code_business" name="ifsc_code_business" class="form-control" required
                                value="{{ old('ifsc_code_business', $details?->ifsc_code_business) }}">
                         @error('ifsc_code_business') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2 js-ifsc-lookup"
+                                data-ifsc="#ifsc_code_business"
+                                data-bank="#bank_name_business"
+                                data-branch="#branch_name_business"
+                                data-address="#branch_address_business"
+                                data-code="#branch_code_business"
+                                data-micr="#micr_code_business">
+                            {{ translate('Fetch bank details') }}
+                        </button>
                     </div>
                     <div class="col-md-4 mb-3 locality-international locality-block">
                         <label class="form-label" for="micr_code_business">{{ translate('MICR Code') }}</label>
@@ -571,6 +580,16 @@
                         <label class="form-label" for="dob">{{ translate('Date of Birth') }} *</label>
                         <input type="date" id="dob" name="dob" class="form-control" value="{{ old('dob', $details?->dob) }}" required>
                         @error('dob') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="religion">{{ translate('Religion') }}</label>
+                        <input type="text" id="religion" name="religion" class="form-control" value="{{ old('religion', $details?->religion) }}">
+                        @error('religion') <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="anniversary">{{ translate('Anniversary') }}</label>
+                        <input type="date" id="anniversary" name="anniversary" class="form-control" value="{{ old('anniversary', $details?->anniversary) }}">
+                        @error('anniversary') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                 </div>
 
@@ -776,6 +795,15 @@
                         <label class="form-label" for="ifsc_code_personal">{{ translate('IFSC Code') }} *</label>
                         <input type="text" id="ifsc_code_personal" name="ifsc_code_personal" class="form-control" value="{{ old('ifsc_code_personal', $details?->ifsc_code_personal) }}" required>
                         @error('ifsc_code_personal') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2 js-ifsc-lookup"
+                                data-ifsc="#ifsc_code_personal"
+                                data-bank="#bank_name_personal"
+                                data-branch="#branch_name_personal"
+                                data-address="#branch_address_personal"
+                                data-code="#branch_code_personal"
+                                data-micr="#micr_code_personal">
+                            {{ translate('Fetch bank details') }}
+                        </button>
                     </div>
                     <div class="col-md-4 mb-3 locality-international locality-block">
                         <label class="form-label" for="micr_code_personal">{{ translate('MICR Code') }}</label>
@@ -1279,6 +1307,69 @@
             }, 300);
         }
 
+        /* ----------------------------- IFSC lookup ----------------------- */
+        const ifscLookupUrl = '{{ route('utilities.ifsc.lookup') }}';
+
+        function setIfscField(selector, value) {
+            if (!selector || !value) return;
+            const el = document.querySelector(selector);
+            if (el) {
+                el.value = value;
+            }
+        }
+
+        function notifyIfsc(status, message) {
+            if (window.AIZ?.plugins?.notify) {
+                AIZ.plugins.notify(status, message);
+            } else {
+                alert(message);
+            }
+        }
+
+        function handleIfscLookup(btn) {
+            const ifscInput = btn.dataset.ifsc ? document.querySelector(btn.dataset.ifsc) : null;
+            const ifscVal = (ifscInput?.value || '').trim();
+            if (!ifscVal) {
+                notifyIfsc('warning', '{{ translate('Enter IFSC code first') }}');
+                return;
+            }
+
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '{{ translate('Fetching...') }}';
+
+            fetch(`${ifscLookupUrl}?ifsc=${encodeURIComponent(ifscVal)}`)
+                .then(resp => resp.json().then(body => ({ ok: resp.ok, body })))
+                .then(({ ok, body }) => {
+                    if (!ok || !body?.success) {
+                        notifyIfsc('danger', body?.message || '{{ translate('Unable to fetch bank details') }}');
+                        return;
+                    }
+
+                    const info = body.data || {};
+                    setIfscField(btn.dataset.bank, info.bank || '');
+                    setIfscField(btn.dataset.branch, info.branch || '');
+                    setIfscField(btn.dataset.address, info.address || '');
+                    setIfscField(btn.dataset.code, info.bank_code || info.ifsc || '');
+                    setIfscField(btn.dataset.micr, info.micr || '');
+
+                    notifyIfsc('success', '{{ translate('Bank details applied') }}');
+                })
+                .catch(() => {
+                    notifyIfsc('danger', '{{ translate('Unable to fetch bank details') }}');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
+        }
+
+        function initIfscButtons() {
+            document.querySelectorAll('.js-ifsc-lookup').forEach(btn => {
+                btn.addEventListener('click', () => handleIfscLookup(btn));
+            });
+        }
+
         // Cache original required flags so we can toggle business sections cleanly
         function cacheOriginalRequiredFlags() {
             document.querySelectorAll('input, select, textarea').forEach(el => {
@@ -1390,6 +1481,7 @@
         toggleIdentityBlocks();
         initEditLocationDropdowns();
         initIntlInputsEdit();
+        initIfscButtons();
         AIZ.plugins.bootstrapSelect('refresh');
         initValidate('#edit-customer-form');
         autofillPanFromGst();
