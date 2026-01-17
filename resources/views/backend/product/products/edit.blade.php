@@ -146,7 +146,7 @@
                                 <div class="col-xxl-12 col-xl-12">
                                         <div class="card @if($errors->has('group_ids') || $errors->has('group_id')) border border-danger @endif">
                                             <div class="card-header">
-                                                <h5 class="mb-0 h6">{{ translate('Product Group') }}</h5>
+                                                <h5 class="mb-0 h6">{{ translate('Medical Group') }}</h5>
                                                 <h6 class="float-right fs-13 mb-0">
                                                     {{ translate('Select Main') }}
                                                 </h6>
@@ -1721,11 +1721,11 @@ $(document).ready(function () {
             return false;
         }
 
-        // 5. Product group selection validation
+        // 5. Medical group selection validation
         const groupIds = $('[name="group_ids[]"]:checked');
         if (groupIds.length === 0) {
             e.preventDefault();
-            AIZ.plugins.notify("danger", "Please select at least one Product Group.");
+            AIZ.plugins.notify("danger", "Please select at least one Medical Group.");
             return false;
         }
 

@@ -643,7 +643,7 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0 h6">{{ translate('Product Group') }}</h5>
+                    <h5 class="mb-0 h6">{{ translate('Medical Group') }}</h5>
                     <h6 class="float-right fs-13 mb-0">
                         {{ translate('Select Main') }}
                     </h6>

@@ -65,7 +65,7 @@ class ProductRequest extends FormRequest
             'category_ids.required'     => translate('Product category is required'),
             'category_id.required'      => translate('Main Category is required'),
             'category_id.in'            => translate('Main Category must be within selected categories'),
-            'group_ids.required'        => translate('Product group is required'),
+            'group_ids.required'        => translate('Medical group is required'),
             'group_id.required'         => translate('Main Group is required'),
             'group_id.in'               => translate('Main Group must be within selected groups'),
             'unit.required'             => translate('Product unit is required'),
