@@ -11,3 +11,4 @@
     </div>
 </section>
 @endsection
+@yield('style')

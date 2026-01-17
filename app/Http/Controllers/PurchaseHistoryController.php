@@ -86,8 +86,10 @@ class PurchaseHistoryController extends Controller
         $totalSale = (float) ($totals->total_sale ?? 0);
         $totalMrp = (float) ($totals->total_mrp ?? 0);
         $totalSaved = max($totalMrp - $totalSale, 0);
+        $orderCount = Order::where('user_id', $userId)->count();
+        $avgSavePerOrder = $orderCount > 0 ? $totalSaved / $orderCount : 0;
 
-        return view('frontend.user.total_spend_save', compact('groupedOrders', 'totalSale', 'totalMrp', 'totalSaved'));
+        return view('frontend.user.total_spend_save', compact('groupedOrders', 'totalSale', 'totalMrp', 'totalSaved', 'orderCount', 'avgSavePerOrder'));
     }
 
     public function digital_index()
