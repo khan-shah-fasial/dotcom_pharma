@@ -160,7 +160,10 @@ class CartController extends Controller
         $price = CartUtility::get_price($product, $product_stock, $request->quantity);
         $tax = CartUtility::tax_calculation($product, $price);
 
-        CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity);
+        $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
+        $salePrice = $price;
+
+        CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice);
         $cart->notify_date = Carbon::now()->addHour(); // First reminder in 1 hours
         $cart->save();
 
@@ -251,6 +254,8 @@ class CartController extends Controller
                 }
 
                 $cartItem['price'] = $price;
+                $cartItem->mrp_price = $product_stock->mrp_price ?? $product->mrp_price;
+                $cartItem->sale_price = $price;
                 $cartItem->save();
             }
         }

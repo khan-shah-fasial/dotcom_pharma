@@ -8,6 +8,7 @@ use Auth;
 use App\Models\Order;
 use App\Models\Upload;
 use App\Models\Product;
+use App\Models\OrderDetail;
 use App\Utility\CartUtility;
 use App\Utility\EmailUtility;
 use Cookie;
@@ -24,6 +25,69 @@ class PurchaseHistoryController extends Controller
     {
         $orders = Order::with(['orderDetails', 'shipment'])->where('user_id', Auth::user()->id)->orderBy('code', 'desc')->paginate(10);
         return view('frontend.user.purchase_history', compact('orders'));
+    }
+
+    protected function groupedOrderDetailsQuery(int $userId)
+    {
+        return OrderDetail::query()
+            ->select(
+                'order_details.product_id',
+                'order_details.variation',
+                DB::raw('COALESCE(products.name, "N/A") as product_name'),
+                DB::raw('products.slug as product_slug'),
+                DB::raw('products.thumbnail_img as product_thumbnail'),
+                DB::raw('SUM(order_details.quantity) as total_qty'),
+                DB::raw('SUM(order_details.price) as total_price'),
+                DB::raw('SUM(order_details.tax) as total_tax'),
+                DB::raw('SUM(order_details.shipping_cost) as total_shipping'),
+                DB::raw('SUM(COALESCE(order_details.sale_price, order_details.price / NULLIF(order_details.quantity,0), 0) * order_details.quantity) as total_sale'),
+                DB::raw('SUM(COALESCE(order_details.mrp_price, products.mrp_price, 0) * order_details.quantity) as total_mrp'),
+                DB::raw('MAX(order_details.created_at) as last_purchase_at')
+            )
+            ->join('orders', 'orders.id', '=', 'order_details.order_id')
+            ->leftJoin('products', 'products.id', '=', 'order_details.product_id')
+            ->where('orders.user_id', $userId)
+            ->groupBy(
+                'order_details.product_id',
+                'order_details.variation',
+                'products.name',
+                'products.slug',
+                'products.thumbnail_img',
+                'products.mrp_price'
+            )
+            ->orderByDesc(DB::raw('MAX(order_details.created_at)'));
+    }
+
+    public function pastOrders()
+    {
+        $userId = Auth::id();
+
+        $groupedOrders = $this->groupedOrderDetailsQuery($userId)
+            ->paginate(10);
+
+        return view('frontend.user.past_orders', compact('groupedOrders'));
+    }
+
+    public function spendAndSave()
+    {
+        $userId = Auth::id();
+
+        $groupedOrders = $this->groupedOrderDetailsQuery($userId)
+            ->paginate(10);
+
+        $totals = OrderDetail::query()
+            ->join('orders', 'orders.id', '=', 'order_details.order_id')
+            ->leftJoin('products', 'products.id', '=', 'order_details.product_id')
+            ->where('orders.user_id', $userId)
+            ->selectRaw('SUM(COALESCE(order_details.sale_price, order_details.price / NULLIF(order_details.quantity,0), 0) * order_details.quantity) as total_sale')
+            ->selectRaw('SUM(COALESCE(order_details.mrp_price, products.mrp_price, 0) * order_details.quantity) as total_mrp')
+            ->first();
+
+        $totalSale = (float) ($totals->total_sale ?? 0);
+        $totalMrp = (float) ($totals->total_mrp ?? 0);
+        $totalSaved = max($totalMrp - $totalSale, 0);
+
+        return view('frontend.user.total_spend_save', compact('groupedOrders', 'totalSale', 'totalMrp', 'totalSaved'));
     }
 
     public function digital_index()
@@ -169,7 +233,10 @@ class PurchaseHistoryController extends Controller
                     $price = CartUtility::get_price($product, $product_stock, $quantity);
                     $tax = CartUtility::tax_calculation($product, $price);
 
-                    CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity);
+                    $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
+                    $salePrice = $price;
+
+                    CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice);
                     array_push($success_msgs, $product->getTranslation('name') . ' ' . translate('added to cart.'));
                 } else {
                     array_push($failed_msgs, $product->getTranslation('name') . ' ' . translate('is stock out.'));

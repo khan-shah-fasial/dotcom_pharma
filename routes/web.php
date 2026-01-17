@@ -462,6 +462,8 @@ Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function ()
         Route::get('/purchase_history/destroy/{id}', 'order_cancel')->name('purchase_history.destroy');
         Route::get('digital-purchase-history', 'digital_index')->name('digital_purchase_history.index');
         Route::get('/digital-products/download/{id}', 'download')->name('digital-products.download');
+        Route::get('/past-orders', 'pastOrders')->name('purchase_history.past_orders');
+        Route::get('/total-spend-save', 'spendAndSave')->name('purchase_history.spend_save');
 
         Route::get('/re-order/{id}', 're_order')->name('re_order');
     });

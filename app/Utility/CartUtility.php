@@ -85,12 +85,14 @@ class CartUtility
         return $tax;
     }
 
-    public static function save_cart_data($cart, $product, $price, $tax, $quantity)
+    public static function save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice = null, $salePrice = null)
     {
         $cart->quantity = $quantity;
         $cart->product_id = $product->id;
         $cart->owner_id = $product->user_id;
         $cart->price = $price;
+        $cart->mrp_price = $mrpPrice;
+        $cart->sale_price = $salePrice ?? $price;
         $cart->tax = $tax;
         $cart->product_referral_code = null;
 
