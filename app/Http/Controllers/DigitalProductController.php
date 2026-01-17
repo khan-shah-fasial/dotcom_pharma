@@ -6,6 +6,7 @@ use App\Http\Requests\ProductRequest;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Group;
 use App\Models\ProductTax;
 use App\Models\ProductTranslation;
 use App\Models\Upload;
@@ -13,6 +14,7 @@ use App\Services\ProductService;
 use App\Services\ProductTaxService;
 use App\Services\ProductStockService;
 use App\Services\FrequentlyBoughtProductService;
+use App\Models\ProductGroup;
 use Artisan;
 
 class DigitalProductController extends Controller
@@ -57,7 +59,12 @@ class DigitalProductController extends Controller
             ->where('digital', 1)
             ->with('childrenCategories')
             ->get();
-        return view('backend.product.digital_products.create', compact('categories'));
+        $groups = Group::where('parent_id', 0)
+            ->where('digital', 1)
+            ->with('childrenGroups')
+            ->orderBy('name', 'asc')
+            ->get();
+        return view('backend.product.digital_products.create', compact('categories', 'groups'));
     }
 
     /**
@@ -77,6 +84,8 @@ class DigitalProductController extends Controller
 
         //Product categories
         $product->categories()->attach($request->category_ids);
+        //Product groups
+        $product->groups()->attach($request->group_ids);
 
         //Product Stock
         (new ProductStockService)->store($request->only([
@@ -133,7 +142,12 @@ class DigitalProductController extends Controller
             ->where('digital', 1)
             ->with('childrenCategories')
             ->get();
-        return view('backend.product.digital_products.edit', compact('product', 'lang', 'categories'));
+        $groups = Group::where('parent_id', 0)
+            ->where('digital', 1)
+            ->with('childrenGroups')
+            ->orderBy('name', 'asc')
+            ->get();
+        return view('backend.product.digital_products.edit', compact('product', 'lang', 'categories', 'groups'));
     }
 
     /**
@@ -161,6 +175,8 @@ class DigitalProductController extends Controller
 
         //Product categories
         $product->categories()->sync($request->category_ids);
+        //Product groups
+        $product->groups()->sync($request->group_ids);
 
         (new ProductStockService)->store($request->only([
             'unit_price', 'current_stock', 'product_id'

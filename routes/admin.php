@@ -28,6 +28,7 @@ use App\Http\Controllers\DynamicPopupController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\FinancialArchiveController;
 use App\Http\Controllers\FlashDealController;
+use App\Http\Controllers\GroupController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\MeasurementPointsController;
@@ -92,6 +93,15 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
         // category-wise discount set
         Route::get('/categories-wise-product-discount', 'categoriesWiseProductDiscount')->name('categories_wise_product_discount');
+    });
+
+    // group
+    Route::resource('groups', GroupController::class);
+    Route::controller(GroupController::class)->group(function () {
+        Route::get('/groups/edit/{id}', 'edit')->name('groups.edit');
+        Route::get('/groups/destroy/{id}', 'destroy')->name('groups.destroy');
+        Route::post('/groups/featured', 'updateFeatured')->name('groups.featured');
+        Route::post('/groups/groupsByType', 'groupsByType')->name('groups.groups-by-type');
     });
 
     // Brand

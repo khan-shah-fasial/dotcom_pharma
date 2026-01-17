@@ -10,9 +10,11 @@ use App\Models\Cart;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductGroup;
 use App\Models\ProductTranslation;
 use App\Models\Wishlist;
 use App\Models\User;
+use App\Models\Group;
 use App\Notifications\ShopProductNotification;
 use Artisan;
 use Auth;
@@ -72,7 +74,12 @@ class ProductController extends Controller
             ->where('digital', 0)
             ->with('childrenCategories')
             ->get();
-        return view('seller.product.products.create', compact('categories'));
+        $groups = Group::where('parent_id', 0)
+            ->where('digital', 0)
+            ->with('childrenGroups')
+            ->orderBy('name', 'asc')
+            ->get();
+        return view('seller.product.products.create', compact('categories', 'groups'));
     }
 
     public function store(ProductRequest $request)
@@ -91,6 +98,8 @@ class ProductController extends Controller
 
         ///Product categories
         $product->categories()->attach($request->category_ids);
+        ///Product groups
+        $product->groups()->attach($request->group_ids);
 
         //VAT & Tax
         if ($request->tax_id) {
@@ -150,7 +159,12 @@ class ProductController extends Controller
             ->where('digital', 0)
             ->with('childrenCategories')
             ->get();
-        return view('seller.product.products.edit', compact('product', 'categories', 'tags', 'lang'));
+        $groups = Group::where('parent_id', 0)
+            ->where('digital', 0)
+            ->with('childrenGroups')
+            ->orderBy('name', 'asc')
+            ->get();
+        return view('seller.product.products.edit', compact('product', 'categories', 'groups', 'tags', 'lang'));
     }
 
     public function update(ProductRequest $request, Product $product)
@@ -164,6 +178,8 @@ class ProductController extends Controller
 
         //Product categories
         $product->categories()->sync($request->category_ids);
+        //Product groups
+        $product->groups()->sync($request->group_ids);
 
         //Product Stock
         $product->stocks()->delete();

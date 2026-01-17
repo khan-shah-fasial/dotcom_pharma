@@ -646,7 +646,8 @@ class HomeController extends Controller
                 $q->where('is_hidden', 0);
             },
             'user',
-            'user.shop'
+            'user.shop',
+            'groups'
         ])->where('auction_product', 0)->where('slug', $slug)->where('approved', 1)->first();
 
         if ($detailedProduct != null && $detailedProduct->published) {
@@ -730,7 +731,13 @@ class HomeController extends Controller
             }
 
 
-            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name','subCategoryNames'));
+            $groupNames = $detailedProduct->groups
+                ->map(fn ($g) => $g->getTranslation('name'))
+                ->filter()
+                ->values()
+                ->toArray();
+
+            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name','subCategoryNames','groupNames'));
         }
         abort(404);
     }

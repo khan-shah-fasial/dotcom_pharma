@@ -88,15 +88,28 @@
                         if (key == 'category_ids[]') {
                             for (let i = 0; i < obj[key].length; i++) {
                                 const element = obj[key][i];
-                                $('#treeview input:checkbox#'+element).prop('checked',true);
-                                $('#treeview input:checkbox#'+element).parents( "ul" ).css( "display", "block" );
-                                $('#treeview input:checkbox#'+element).parents( "li" ).children('.las').removeClass( "la-plus" ).addClass('la-minus');
+                                $('#treeview-category input:checkbox#'+element).prop('checked',true);
+                                $('#treeview-category input:checkbox#'+element).parents( "ul" ).css( "display", "block" );
+                                $('#treeview-category input:checkbox#'+element).parents( "li" ).children('.las').removeClass( "la-plus" ).addClass('la-minus');
+                            }
+                        }else if (key == 'group_ids[]') {
+                            for (let i = 0; i < obj[key].length; i++) {
+                                const element = obj[key][i];
+                                $('#treeview2-group input:checkbox#'+element).prop('checked',true);
+                                $('#treeview2-group input:checkbox#'+element).parents( "ul" ).css( "display", "block" );
+                                $('#treeview2-group input:checkbox#'+element).parents( "li" ).children('.las').removeClass( "la-plus" ).addClass('la-minus');
                             }
                         }else{
                             $('[name="'+key+'"').prop('checked', obj[key]);
                         }			
                     }else if($('[name="'+key+'"').attr('type') == 'radio'){
-                        $('#treeview input:radio[value='+obj[key]+']').prop('checked',true);	
+                        if (key == 'category_id') {
+                            $('#treeview-category input:radio[value='+obj[key]+']').prop('checked',true);
+                        } else if (key == 'group_id') {
+                            $('#treeview2-group input:radio[value='+obj[key]+']').prop('checked',true);
+                        } else {
+                            $('[name="'+key+'"').prop('checked', obj[key]);
+                        }
                     }else{
                         $('[name="'+key+'"').val(obj[key]).change()
                     }

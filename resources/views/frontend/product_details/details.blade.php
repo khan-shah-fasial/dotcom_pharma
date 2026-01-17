@@ -865,7 +865,12 @@
                                             </div>
                                             <div class="">
                                                 <p class="detail-font-14px detail-gray-color mb-0">Group:</p>
-                                                <p class="fw-500 fs-14 mb-0 pl21">VI</p>
+                                                @php
+                                                    $groupDisplay = isset($groupNames) && is_array($groupNames) && count($groupNames) > 0
+                                                        ? implode(', ', $groupNames)
+                                                        : translate('N/A');
+                                                @endphp
+                                                <p class="fw-500 fs-14 mb-0 pl21">{{ $groupDisplay }}</p>
                                             </div>
                                         </div>
                                     </div>

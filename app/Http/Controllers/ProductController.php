@@ -8,10 +8,12 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\ProductTranslation;
 use App\Models\Category;
+use App\Models\Group;
 use App\Models\Attribute;
 use App\Models\AttributeValue;
 use App\Models\Cart;
 use App\Models\ProductCategory;
+use App\Models\ProductGroup;
 use App\Models\Review;
 use App\Models\Wishlist;
 use App\Models\User;
@@ -254,7 +256,13 @@ class ProductController extends Controller
             ->orderByRaw("FIELD(id, 83, 84) DESC")
             ->get();
 
-        return view('backend.product.products.create', compact('categories'));
+        $groups = Group::where('parent_id', 0)
+            ->where('digital', 0)
+            ->with('childrenGroups')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return view('backend.product.products.create', compact('categories', 'groups'));
     }
 
     public function add_more_choice_option(Request $request)
@@ -306,6 +314,8 @@ class ProductController extends Controller
 
         //Product categories
         $product->categories()->attach($request->category_ids);
+        //Product groups
+        $product->groups()->attach($request->group_ids);
 
         //VAT & Tax
         if ($request->tax_id) {
@@ -413,7 +423,12 @@ class ProductController extends Controller
             ->with('childrenCategories')
             ->orderByRaw("FIELD(id, 83, 84) DESC")
             ->get();
-        return view('backend.product.products.edit', compact('product', 'categories', 'tags', 'lang'));
+        $groups = Group::where('parent_id', 0)
+            ->where('digital', 0)
+            ->with('childrenGroups')
+            ->orderBy('name', 'asc')
+            ->get();
+        return view('backend.product.products.edit', compact('product', 'categories', 'groups', 'tags', 'lang'));
     }
 
     /**
@@ -435,8 +450,13 @@ class ProductController extends Controller
             ->where('digital', 0)
             ->with('childrenCategories')
             ->get();
+        $groups = Group::where('parent_id', 0)
+            ->where('digital', 0)
+            ->with('childrenGroups')
+            ->orderBy('name', 'asc')
+            ->get();
 
-        return view('backend.product.products.edit', compact('product', 'categories', 'tags', 'lang'));
+        return view('backend.product.products.edit', compact('product', 'categories', 'groups', 'tags', 'lang'));
     }
 
     /**
@@ -478,6 +498,8 @@ class ProductController extends Controller
 
         //Product categories
         $product->categories()->sync($request->category_ids);
+        //Product groups
+        $product->groups()->sync($request->group_ids);
 
 
 
@@ -609,6 +631,7 @@ class ProductController extends Controller
 
         $product->product_translations()->delete();
         $product->categories()->detach();
+        $product->groups()->detach();
         $product->stocks()->delete();
         $product->taxes()->delete();
         $product->frequently_bought_products()->delete();
@@ -666,6 +689,12 @@ class ProductController extends Controller
             ProductCategory::insert([
                 'product_id' => $product_new->id,
                 'category_id' => $product_category->category_id,
+            ]);
+        }
+        foreach ($product->product_groups as $product_group) {
+            ProductGroup::insert([
+                'product_id' => $product_new->id,
+                'group_id' => $product_group->group_id,
             ]);
         }
 

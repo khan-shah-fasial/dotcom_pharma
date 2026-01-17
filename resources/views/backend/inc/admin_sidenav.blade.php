@@ -166,6 +166,13 @@
                                     </a>
                                 </li>
                             @endcan
+                            @can('view_product_categories')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{route('groups.index')}}" class="aiz-side-nav-link {{ areActiveRoutes(['groups.index', 'groups.create', 'groups.edit'])}}">
+                                        <span class="aiz-side-nav-text">{{translate('Medical Group')}}</span>
+                                    </a>
+                                </li>
+                            @endcan
                             @can('set_category_wise_discount')
                                 <li class="aiz-side-nav-item">
                                     <a href="{{route('categories_wise_product_discount')}}" class="aiz-side-nav-link">

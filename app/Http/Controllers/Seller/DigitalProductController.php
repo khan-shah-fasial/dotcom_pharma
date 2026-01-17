@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Requests\ProductRequest;
 use App\Models\Category;
+use App\Models\Group;
 use App\Models\Product;
 use App\Models\ProductTax;
 use App\Models\ProductTranslation;
@@ -14,6 +15,7 @@ use App\Services\ProductService;
 use App\Services\ProductStockService;
 use App\Services\ProductTaxService;
 use App\Services\FrequentlyBoughtProductService;
+use App\Models\ProductGroup;
 use Artisan;
 use Auth;
 use Illuminate\Http\Request;
@@ -49,7 +51,12 @@ class DigitalProductController  extends Controller
             ->where('digital', 1)
             ->with('childrenCategories')
             ->get();
-        return view('seller.product.digitalproducts.create', compact('categories'));
+        $groups = Group::where('parent_id', 0)
+            ->where('digital', 1)
+            ->with('childrenGroups')
+            ->orderBy('name', 'asc')
+            ->get();
+        return view('seller.product.digitalproducts.create', compact('categories', 'groups'));
     }
 
     /**
@@ -76,6 +83,8 @@ class DigitalProductController  extends Controller
 
         //Product categories
         $product->categories()->attach($request->category_ids);
+        //Product groups
+        $product->groups()->attach($request->group_ids);
 
         //Product Stock
         (new ProductStockService)->store($request->only([
@@ -126,9 +135,14 @@ class DigitalProductController  extends Controller
     public function edit(Request $request, $id)
     {
         $categories = Category::where('digital', 1)->get();
+        $groups = Group::where('digital', 1)
+            ->where('parent_id', 0)
+            ->with('childrenGroups')
+            ->orderBy('name', 'asc')
+            ->get();
         $lang = $request->lang;
         $product = Product::find($id);
-        return view('seller.product.digitalproducts.edit', compact('categories', 'product', 'lang'));
+        return view('seller.product.digitalproducts.edit', compact('categories', 'groups', 'product', 'lang'));
     }
 
     /**
@@ -155,6 +169,8 @@ class DigitalProductController  extends Controller
 
         //Product categories
         $product->categories()->sync($request->category_ids);
+        //Product groups
+        $product->groups()->sync($request->group_ids);
 
         (new ProductStockService)->store($request->only([
             'unit_price', 'current_stock', 'product_id'
