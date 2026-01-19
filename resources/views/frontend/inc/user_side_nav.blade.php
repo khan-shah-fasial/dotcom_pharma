@@ -54,6 +54,21 @@
                     </a>
                 </li>
 
+                <!-- Spend & Save -->
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('purchase_history.spend_save') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['purchase_history.spend_save']) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                            <g fill="none" fill-rule="evenodd">
+                                <path fill="#b5b5bf" d="M2.5 2H13a1 1 0 0 1 1 1v1.5a.5.5 0 0 1-1 0V3H2.5a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5H13v-1.5a.5.5 0 0 1 1 0V13a1 1 0 0 1-1 1H2.5A1.5 1.5 0 0 1 1 12.5v-9A1.5 1.5 0 0 1 2.5 2Z"/>
+                                <path fill="#b5b5bf" d="M12 6.5a.5.5 0 0 1 .5-.5H15a.5.5 0 0 1 .354.854L13.207 9l2.147 2.146A.5.5 0 0 1 15 12h-2.5a.5.5 0 0 1 0-1h1.793l-1.146-1.146a.5.5 0 0 1 0-.708L14.293 8H12.5a.5.5 0 0 1-.5-.5Z"/>
+                                <path fill="#b5b5bf" d="M6 5.5a.5.5 0 0 1 .5.5v1.5h1A1.5 1.5 0 0 1 9 9v1a1.5 1.5 0 0 1-1.5 1.5h-1a.5.5 0 0 1 0-1H7.5A.5.5 0 0 0 8 10V9a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5Z"/>
+                            </g>
+                        </svg>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Total Spend & Save') }}</span>
+                    </a>
+                </li>
+                
                 @php
                     $delivery_viewed = get_count_by_delivery_viewed();
                     $payment_status_viewed = get_count_by_payment_status_viewed();
@@ -93,21 +108,6 @@
                             </g>
                         </svg>
                         <span class="aiz-side-nav-text ml-3">{{ translate('Past Orders') }}</span>
-                    </a>
-                </li>
-
-                <!-- Spend & Save -->
-                <li class="aiz-side-nav-item">
-                    <a href="{{ route('purchase_history.spend_save') }}"
-                        class="aiz-side-nav-link {{ areActiveRoutes(['purchase_history.spend_save']) }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                            <g fill="none" fill-rule="evenodd">
-                                <path fill="#b5b5bf" d="M2.5 2H13a1 1 0 0 1 1 1v1.5a.5.5 0 0 1-1 0V3H2.5a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5H13v-1.5a.5.5 0 0 1 1 0V13a1 1 0 0 1-1 1H2.5A1.5 1.5 0 0 1 1 12.5v-9A1.5 1.5 0 0 1 2.5 2Z"/>
-                                <path fill="#b5b5bf" d="M12 6.5a.5.5 0 0 1 .5-.5H15a.5.5 0 0 1 .354.854L13.207 9l2.147 2.146A.5.5 0 0 1 15 12h-2.5a.5.5 0 0 1 0-1h1.793l-1.146-1.146a.5.5 0 0 1 0-.708L14.293 8H12.5a.5.5 0 0 1-.5-.5Z"/>
-                                <path fill="#b5b5bf" d="M6 5.5a.5.5 0 0 1 .5.5v1.5h1A1.5 1.5 0 0 1 9 9v1a1.5 1.5 0 0 1-1.5 1.5h-1a.5.5 0 0 1 0-1H7.5A.5.5 0 0 0 8 10V9a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5Z"/>
-                            </g>
-                        </svg>
-                        <span class="aiz-side-nav-text ml-3">{{ translate('Total Spend & Save') }}</span>
                     </a>
                 </li>
 

@@ -1,12 +1,13 @@
 @php
   $selectedId   = $selected_group_id ?? null;
   $preChildren  = $preloadedGroupChildren ?? [];
-  $roots        = $groupsTree ?? collect();
+  $roots        = collect($groupsTree ?? []);
   $accordionId  = 'filters_accordion_group';
   $collapseId   = 'collapse_groups';
   $shouldShow   = 'show';
 @endphp
 
+@if($roots->isNotEmpty())
 <style>
   #group-root {
     max-height: 250px;
@@ -55,3 +56,4 @@
     </div>
   </div>
 </div>
+@endif
