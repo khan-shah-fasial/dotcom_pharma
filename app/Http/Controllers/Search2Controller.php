@@ -86,7 +86,7 @@ class Search2Controller extends Controller
         $pageSize    = (int)($request->input('page_size', 24) ?: 24);
 
         $category   = null;
-        $products   = Product::query();
+        $products   = Product::query()->whereNotNull('slug')->where('slug', '!=', '');
 
         // -------- BRAND --------
         if ($brand_id) {
@@ -161,7 +161,7 @@ class Search2Controller extends Controller
         //    -> same brand, same keyword
         //    -> BUT **NO** category filter
         // ============================================================
-        $countsBase = Product::query();
+        $countsBase = Product::query()->whereNotNull('slug')->where('slug', '!=', '');
 
         // apply brand to counts also
         if ($brand_id) {
@@ -372,6 +372,8 @@ class Search2Controller extends Controller
             'oldest'     => $products->orderBy('created_at', 'asc'),
             'price-asc'  => $products->orderBy('unit_price', 'asc'),
             'price-desc' => $products->orderBy('unit_price', 'desc'),
+            'discount-desc' => $products->orderByRaw("CASE WHEN discount_start_date IS NOT NULL AND discount_end_date IS NOT NULL AND discount_start_date <= " . time() . " AND discount_end_date >= " . time() . " THEN CASE WHEN discount_type = 'percent' THEN discount ELSE (discount / unit_price * 100) END ELSE 0 END DESC")->orderBy('id', 'desc'),
+            // 'discount-desc' => $this->applyDiscountSort($products),
             default      => $products->orderBy('id', 'desc'),
         };
 
@@ -466,6 +468,53 @@ class Search2Controller extends Controller
 
         return [$products, $viewData];
     }
+
+    /**
+     * Apply "Discount % (High to Low)" sorting using the same price logic
+     * as variant_price (base MRP vs role-aware price with active discount).
+     */
+    /*private function applyDiscountSort($products)
+    {
+        $roleKey = preg_replace('/[^A-Za-z0-9_\\-]/', '', getCurrentUserRole() ?? '') ?: 'customer';
+        $rolePath = '$.\"'.$roleKey.'\"';
+        $customerPath = '$.\"customer\"';
+
+        // Selling price for the current role (fallback to customer -> unit_price)
+        $rolePriceExpr = "COALESCE(
+            NULLIF(JSON_UNQUOTE(JSON_EXTRACT(role_price, '{$rolePath}')), ''),
+            NULLIF(JSON_UNQUOTE(JSON_EXTRACT(role_price, '{$customerPath}')), ''),
+            unit_price
+        )";
+
+        // Base MRP (fallback to role price / unit price)
+        $basePriceExpr = "COALESCE(mrp_price, {$rolePriceExpr}, unit_price)";
+
+        $nowTs = time();
+        $discountActiveExpr = "(discount_start_date IS NULL OR (discount_start_date <= {$nowTs} AND discount_end_date >= {$nowTs}))";
+
+        $discountedPriceExpr = "CASE
+            WHEN {$discountActiveExpr} THEN
+                CASE
+                    WHEN discount_type = 'percent' THEN {$rolePriceExpr} - (({$rolePriceExpr} * discount) / 100)
+                    WHEN discount_type = 'amount' THEN {$rolePriceExpr} - discount
+                    ELSE {$rolePriceExpr}
+                END
+            ELSE {$rolePriceExpr}
+        END";
+
+        $discountPercentExpr = "GREATEST(0, CASE
+            WHEN {$basePriceExpr} > 0 THEN (({$basePriceExpr} - {$discountedPriceExpr}) * 100 / {$basePriceExpr})
+            ELSE 0 END)";
+
+        return $products
+            ->addSelect([
+                'products.*',      // 👈 THIS is the fix
+                DB::raw("{$discountPercentExpr} as sort_discount_percentage"),
+            ])
+            ->orderByDesc('sort_discount_percentage')
+            ->orderBy('id', 'desc');
+
+    }*/
 
     /**
      * AJAX: returns HTML grid + next page url (for infinite scroll)

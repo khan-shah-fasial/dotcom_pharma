@@ -247,6 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <option value="oldest"     @selected(($sort_by??'')==='oldest')>{{ translate('Oldest') }}</option>
                 <option value="price-asc"  @selected(($sort_by??'')==='price-asc')>{{ translate('Price low to high') }}</option>
                 <option value="price-desc" @selected(($sort_by??'')==='price-desc')>{{ translate('Price high to low') }}</option>
+                <option value="discount-desc" @selected(($sort_by??'')==='discount-desc')>{{ translate('Discount % (High to Low)') }}</option>
               </select>
             </div>
 
