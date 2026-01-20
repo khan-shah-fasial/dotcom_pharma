@@ -36,7 +36,7 @@
                 <span>{{ $product->unit_price }}</span>
             </td>
             <td>
-                <input type="number" lang="en" name="discount_{{ $id }}" value="{{ $product->discount }}" min="0" step="1" class="form-control" required>
+                <input type="number" lang="en" name="discount_{{ $id }}" value="{{ $product->discount }}" min="0" step="0.01" class="form-control" required>
             </td>
             <td>
                 <select class="form-control aiz-selectpicker" name="discount_type_{{ $id }}">

@@ -396,6 +396,7 @@ class ProductService
         $product = Product::findOrFail($id);
         $product->product_translations()->delete();
         $product->categories()->detach();
+        $product->groups()->detach();
         $product->stocks()->delete();
         $product->taxes()->delete();
         $product->wishlists()->delete();

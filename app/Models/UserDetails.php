@@ -76,6 +76,8 @@ class UserDetails extends Model
         'name',
         'father_name',
         'dob',
+        'religion',
+        'anniversary',
         'street_add_first',
         'street_add_sec',
         'locality_land_mark',

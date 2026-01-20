@@ -31,9 +31,19 @@ class Product extends Model
         return $this->belongsTo(Category::class, 'category_id');
     }
     
+    public function main_group()
+    {
+        return $this->belongsTo(Group::class, 'group_id');
+    }
+    
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'product_categories');
+    }
+
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'product_groups');
     }
 
     public function frequently_bought_products()
@@ -44,6 +54,11 @@ class Product extends Model
     public function product_categories()
     {
         return $this->hasMany(ProductCategory::class);
+    }
+
+    public function product_groups()
+    {
+        return $this->hasMany(ProductGroup::class);
     }
 
     public function brand()

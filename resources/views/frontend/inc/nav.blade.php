@@ -1088,6 +1088,31 @@ body .translater_menu .select2-container {
                                                 class="user-top-menu-name has-transition ml-3">{{ translate('My Orders') }}</span>
                                         </a>
                                     </li>
+                                    <li class="user-top-nav-element border border-top-0" data-id="1">
+                                        <a href="{{ route('purchase_history.past_orders') }}"
+                                            class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                <g transform="translate(-2 -2)" fill="#b5b5bf">
+                                                    <path d="M10,2a8,8,0,1,0,8,8A8.009,8.009,0,0,0,10,2Zm0,15A7,7,0,1,1,17,10,7.008,7.008,0,0,1,10,17Z" transform="translate(0)"/>
+                                                    <path d="M13.5,8a.5.5,0,0,0-.5.5v4.086l-2.8,1.682a.5.5,0,0,0,.5.864l3-1.8A.5.5,0,0,0,14,12.9V8.5A.5.5,0,0,0,13.5,8Z" transform="translate(-1 -1)"/>
+                                                </g>
+                                            </svg>
+                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Past Orders') }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="user-top-nav-element border border-top-0" data-id="1">
+                                        <a href="{{ route('purchase_history.spend_save') }}"
+                                            class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                <g fill="none" fill-rule="evenodd">
+                                                    <path fill="#b5b5bf" d="M2.5 2H13a1 1 0 0 1 1 1v1.5a.5.5 0 0 1-1 0V3H2.5a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5H13v-1.5a.5.5 0 0 1 1 0V13a1 1 0 0 1-1 1H2.5A1.5 1.5 0 0 1 1 12.5v-9A1.5 1.5 0 0 1 2.5 2Z"/>
+                                                    <path fill="#b5b5bf" d="M12 6.5a.5.5 0 0 1 .5-.5H15a.5.5 0 0 1 .354.854L13.207 9l2.147 2.146A.5.5 0 0 1 15 12h-2.5a.5.5 0 0 1 0-1h1.793l-1.146-1.146a.5.5 0 0 1 0-.708L14.293 8H12.5a.5.5 0 0 1-.5-.5Z"/>
+                                                    <path fill="#b5b5bf" d="M6 5.5a.5.5 0 0 1 .5.5v1.5h1A1.5 1.5 0 0 1 9 9v1a1.5 1.5 0 0 1-1.5 1.5h-1a.5.5 0 0 1 0-1H7.5A.5.5 0 0 0 8 10V9a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5Z"/>
+                                                </g>
+                                            </svg>
+                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Total Spend & Save') }}</span>
+                                        </a>
+                                    </li>
 
                                     @if(!empty($user->user_subtype) && $user->user_subtype != '')
                                         <li class="user-top-nav-element border border-top-0" data-id="1">

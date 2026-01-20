@@ -130,7 +130,7 @@
                                                     @php
                                                         $old_categories = $product->categories()->pluck('category_id')->toArray();
                                                     @endphp
-                                                    <ul class="hummingbird-treeview-converter list-unstyled" data-checkbox-name="category_ids[]" data-radio-name="category_id">
+                                                    <ul class="hummingbird-treeview-converter list-unstyled" data-checkbox-name="category_ids[]" data-radio-name="category_id" data-id="-category">
                                                         @foreach ($categories as $category)
                                                         <li id="{{ $category->id }}">{{ $category->getTranslation('name') }}</li>
                                                             @foreach ($category->childrenCategories as $childCategory)
@@ -142,6 +142,34 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                @if($groups->isNotEmpty())
+                                    <div class="col-xxl-12 col-xl-12">
+                                            <div class="card @if($errors->has('group_ids') || $errors->has('group_id')) border border-danger @endif">
+                                                <div class="card-header">
+                                                    <h5 class="mb-0 h6">{{ translate('Medical Group') }}</h5>
+                                                    <h6 class="float-right fs-13 mb-0">
+                                                        {{ translate('Select Main') }}
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="h-300px overflow-auto c-scrollbar-light">
+                                                        @php
+                                                            $old_groups = $product->groups()->pluck('group_id')->toArray();
+                                                        @endphp
+                                                        <ul class="hummingbird-treeview-converter list-unstyled" data-checkbox-name="group_ids[]" data-radio-name="group_id" data-id="-group">
+                                                            @foreach ($groups as $group)
+                                                            <li id="{{ $group->id }}">{{ $group->getTranslation('name') }}</li>
+                                                                @foreach ($group->childrenGroups as $childGroup)
+                                                                    @include('backend.product.products.child_group', ['child_group' => $childGroup])
+                                                                @endforeach
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                @endif
 
 
                                     <div class="col-xxl-12 col-xl-12">
@@ -1249,19 +1277,35 @@
     $(document).ready(function (){
         show_hide_shipping_div();
 
-        $("#treeview").hummingbird();
-        var main_id = '{{ $product->category_id != null ? $product->category_id : 0 }}';
-        var selected_ids = '{{ implode(",",$old_categories) }}';
-        if (selected_ids != '') {
-            const myArray = selected_ids.split(",");
-            for (let i = 0; i < myArray.length; i++) {
-                const element = myArray[i];
-                $('#treeview input:checkbox#'+element).prop('checked',true);
-                $('#treeview input:checkbox#'+element).parents( "ul" ).css( "display", "block" );
-                $('#treeview input:checkbox#'+element).parents( "li" ).children('.las').removeClass( "la-plus" ).addClass('la-minus');
+        function initTreeSelections(treeSelector, selectedMain, selectedIdsCsv) {
+            const $tree = $(treeSelector);
+            if (!$tree.length) {
+                return;
             }
+            $tree.hummingbird();
+
+            const selectedIds = (selectedIdsCsv || '').length ? selectedIdsCsv.split(',') : [];
+            selectedIds.forEach(function (element) {
+                $tree.find('input:checkbox#' + element).prop('checked', true);
+                $tree.find('input:checkbox#' + element).parents("ul").css("display", "block");
+                $tree.find('input:checkbox#' + element).parents("li").children('.las').removeClass("la-plus").addClass('la-minus');
+            });
+
+            if (selectedMain) {
+                $tree.find('input:radio[value=' + selectedMain + ']').prop('checked', true);
+            }
+
+            $tree.find('input:checkbox').on("click", function () {
+                let $this = $(this);
+                if ($this.prop('checked') && ($tree.find('input:radio:checked').length === 0)) {
+                    let val = $this.val();
+                    $tree.find('input:radio[value=' + val + ']').prop('checked', true);
+                }
+            });
         }
-        $('#treeview input:radio[value='+main_id+']').prop('checked',true);
+
+        initTreeSelections('#treeview-category', '{{ $product->category_id != null ? $product->category_id : 0 }}', '{{ implode(",",$old_categories) }}');
+        initTreeSelections('#treeview2-group', '{{ $product->group_id != null ? $product->group_id : 0 }}', '{{ isset($old_groups) ? implode(",",$old_groups) : "" }}');
 
         fq_bought_product_selection_type();
 

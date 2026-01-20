@@ -92,6 +92,15 @@ Route::get('/csrf-token', function () {
     return response()->json(['token' => csrf_token()]);
 });
 
+Route::get('/utilities/ifsc-lookup', function (Request $request) {
+    $result = fetch_bank_details_by_ifsc($request->query('ifsc', ''));
+    $status = $result['success']
+        ? 200
+        : ($result['message'] === 'No bank details found for this IFSC' ? 404 : 422);
+
+    return response()->json($result, $status);
+})->name('utilities.ifsc.lookup');
+
 
 Route::get('/test-otp', function () {
     $sessionData = Session()->all();
@@ -453,6 +462,8 @@ Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function ()
         Route::get('/purchase_history/destroy/{id}', 'order_cancel')->name('purchase_history.destroy');
         Route::get('digital-purchase-history', 'digital_index')->name('digital_purchase_history.index');
         Route::get('/digital-products/download/{id}', 'download')->name('digital-products.download');
+        Route::get('/past-orders', 'pastOrders')->name('purchase_history.past_orders');
+        Route::get('/total-spend-save', 'spendAndSave')->name('purchase_history.spend_save');
 
         Route::get('/re-order/{id}', 're_order')->name('re_order');
     });

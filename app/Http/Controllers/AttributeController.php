@@ -7,6 +7,9 @@ use App\Models\Attribute;
 use App\Models\Color;
 use App\Models\AttributeTranslation;
 use App\Models\AttributeValue;
+use App\Models\Product;
+use App\Models\Cart;
+use Illuminate\Support\Facades\Log;
 use CoreComponentRepository;
 use Str;
 
@@ -175,29 +178,159 @@ class AttributeController extends Controller
 
     public function update_attribute_value(Request $request, $id)
     {
+        Log::info('Update attribute value request received', [
+            'attribute_value_id' => $id,
+            'payload' => $request->all(),
+        ]);
 
         $validator = Validator::make($request->all(), [
             'value' => [
                 'required',
-                'regex:/^[a-zA-Z0-9.–&_]+$/u', // Updated regex to allow en dash, dot, ampersand
+                'regex:/^[a-zA-Z0-9.–&_]+$/u',
             ],
         ]);
 
         if ($validator->fails()) {
+            Log::warning('Attribute value validation failed', [
+                'errors' => $validator->errors()->toArray(),
+            ]);
+
             flash(translate('Only letters, numbers, en dash (–), underscore (_), and ampersand (&) are allowed. No spaces or hyphens (-).'))->error();
             return back();
         }
 
         $attribute_value = AttributeValue::findOrFail($id);
-        
+        $oldValue = $attribute_value->value;
+
+        Log::info('Attribute value found', [
+            'attribute_id' => $attribute_value->attribute_id,
+            'old_value' => $oldValue,
+        ]);
+
         $attribute_value->attribute_id = $request->attribute_id;
         $attribute_value->value = ucfirst($request->value);
-        
         $attribute_value->save();
+
+        Log::info('Attribute value updated', [
+            'new_value' => $attribute_value->value,
+        ]);
+
+        if ($oldValue !== $attribute_value->value) {
+            Log::info('Attribute value changed, syncing usages', [
+                'old_value' => $oldValue,
+                'new_value' => $attribute_value->value,
+            ]);
+
+            $this->renameAttributeValueUsage($attribute_value, $oldValue);
+        }
 
         flash(translate('Attribute value has been updated successfully'))->success();
         return back();
     }
+
+
+    private function renameAttributeValueUsage(AttributeValue $attributeValue, string $oldValue): void
+    {
+        $newValue = $attributeValue->value;
+
+        Log::info('Starting attribute value rename propagation', [
+            'attribute_id' => $attributeValue->attribute_id,
+            'old_value' => $oldValue,
+            'new_value' => $newValue,
+        ]);
+
+        Product::whereNotNull('choice_options')
+            ->where('choice_options', 'like', '%' . $oldValue . '%')
+            ->chunkById(100, function ($products) use ($attributeValue, $oldValue, $newValue) {
+
+                Log::debug('Processing product chunk', [
+                    'count' => $products->count(),
+                ]);
+
+                foreach ($products as $product) {
+                    Log::debug('Checking product', [
+                        'product_id' => $product->id,
+                    ]);
+
+                    $choiceOptions = json_decode($product->choice_options, true);
+
+                    if (!is_array($choiceOptions)) {
+                        Log::warning('Invalid choice_options JSON', [
+                            'product_id' => $product->id,
+                        ]);
+                        continue;
+                    }
+
+                    $updated = false;
+
+                    foreach ($choiceOptions as &$option) {
+                        $attributeId = $option['attribute_id'] ?? ($option['attribute_at'] ?? null);
+
+                        if ($attributeId !== $attributeValue->attribute_id) {
+                            continue;
+                        }
+
+                        if (!empty($option['values']) && is_array($option['values'])) {
+                            foreach ($option['values'] as &$value) {
+                                if ($value === $oldValue) {
+                                    $value   = $newValue;
+                                    $updated = true;
+
+                                    Log::debug('Choice option value replaced', [
+                                        'product_id' => $product->id,
+                                        'old_value' => $oldValue,
+                                        'new_value' => $newValue,
+                                    ]);
+                                }
+                            }
+                            unset($value);
+                        }
+                    }
+                    unset($option);
+
+                    if ($updated) {
+                        $product->choice_options = json_encode($choiceOptions, JSON_UNESCAPED_UNICODE);
+                        $product->save();
+
+                        Log::info('Product choice_options updated', [
+                            'product_id' => $product->id,
+                        ]);
+
+                        $product->stocks()
+                            ->where('variant', 'like', '%' . $oldValue . '%')
+                            ->get()
+                            ->each(function ($stock) use ($oldValue, $newValue) {
+                                Log::debug('Updating stock variant', [
+                                    'stock_id' => $stock->id,
+                                    'old_variant' => $stock->variant,
+                                ]);
+
+                                $stock->variant = str_replace($oldValue, $newValue, $stock->variant);
+                                $stock->save();
+                            });
+
+                        Cart::where('product_id', $product->id)
+                            ->whereNotNull('variation')
+                            ->where('variation', 'like', '%' . $oldValue . '%')
+                            ->chunkById(100, function ($carts) use ($oldValue, $newValue) {
+
+                                Log::debug('Updating cart variations', [
+                                    'count' => $carts->count(),
+                                ]);
+
+                                foreach ($carts as $cart) {
+                                    $cart->variation = str_replace($oldValue, $newValue, $cart->variation);
+                                    $cart->save();
+                                }
+                            });
+                    }
+                }
+            });
+
+        Log::info('Finished attribute value rename propagation');
+    }
+
+
 
     public function destroy_attribute_value($id)
     {

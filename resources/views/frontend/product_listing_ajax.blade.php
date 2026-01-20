@@ -106,6 +106,15 @@ body {
             'categoryCounts'    => $categoryCounts ?? [],
           ])
 
+          {{-- GROUP FILTER COMPONENT --}}
+          @include('frontend.'.get_setting('homepage_select').'.partials.filters.group_filter', [
+            'groupsTree'             => $groupsTree ?? collect(),
+            'selected_group_id'      => $selected_group_id ?? null,
+            'preloadedGroupChildren' => $preloadedGroupChildren ?? [],
+            'groupExpandedIds'       => $groupExpandedIds ?? [],
+            'groupCounts'            => $groupCounts ?? [],
+          ])
+
           {{-- ADDITIONAL FILTERS (AJAX-replaceable) --}}
           <div id="extra-filters-desktop">
             @include('frontend.'.get_setting('homepage_select').'.partials.filters.additional_filters', [
@@ -217,6 +226,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const chain = buildCategoryChainFromRadio(preChecked);
     setListTitle(chain);
   }
+
+  // capture initial group selection label
+  gatherGroupSelection();
 });
 </script>
 
@@ -235,6 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <option value="oldest"     @selected(($sort_by??'')==='oldest')>{{ translate('Oldest') }}</option>
                 <option value="price-asc"  @selected(($sort_by??'')==='price-asc')>{{ translate('Price low to high') }}</option>
                 <option value="price-desc" @selected(($sort_by??'')==='price-desc')>{{ translate('Price high to low') }}</option>
+                <option value="discount-desc" @selected(($sort_by??'')==='discount-desc')>{{ translate('Discount % (High to Low)') }}</option>
               </select>
             </div>
 
@@ -284,6 +297,15 @@ document.addEventListener('DOMContentLoaded', function () {
       'selected_category_ids' => $selected_category_id ?? null,
       'preloadedChildren'     => $preloadedChildren ?? [],
       'expandedIds'           => $expandedIds ?? [],
+    ])
+
+    {{-- GROUP FILTER COMPONENT --}}
+    @include('frontend.'.get_setting('homepage_select').'.partials.filters.group_filter', [
+      'groupsTree'             => $groupsTree ?? collect(),
+      'selected_group_id'      => $selected_group_id ?? null,
+      'preloadedGroupChildren' => $preloadedGroupChildren ?? [],
+      'groupExpandedIds'       => $groupExpandedIds ?? [],
+      'groupCounts'            => $groupCounts ?? [],
     ])
 
     {{-- ADDITIONAL FILTERS (AJAX-replaceable) --}}
@@ -350,6 +372,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // SINGLE category id
     category_id:            @json($selected_category_id ?? ($category_id ?: null)),
     selected_category_name: @json($selected_category_name ?? null),
+    // SINGLE group id
+    group_id:               @json($selected_group_id ?? null),
+    selected_group_name:    @json($selected_group_name ?? null),
 
     page_size: 24,
     next_page_url: @json($ajaxNextPageUrl),
@@ -383,6 +408,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (title) title.textContent = label || "{{ translate('All Products') }}";
   }
 
+  function gatherGroupSelection() {
+    const checked = qs('.js-grp-radio:checked');
+    state.group_id = checked ? Number(checked.value) : null;
+    state.selected_group_name = checked?.dataset?.label || null;
+  }
+
   function gatherAttributeSelections() {
     state.selected_attribute_values = qsa('.js-attr-checkbox:checked').map(i => i.value);
   }
@@ -406,6 +437,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Single category
     if (state.category_id != null) p.set('category_id', state.category_id);
+    if (state.group_id != null)    p.set('group_id', state.group_id);
     if (state.color) p.set('color', state.color);
     state.selected_attribute_values.forEach(v => p.append('selected_attribute_values[]', v));
     return u.toString();
@@ -545,6 +577,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ======== Pills (single category) ========
   function hasActiveFilters() {
     return (state.category_id != null)
+        || (state.group_id != null)
         || (state.selected_attribute_values.length > 0)
         || (state.min_price != null && state.max_price != null)
         || (state.color != null)
@@ -574,6 +607,12 @@ document.addEventListener('DOMContentLoaded', function () {
       const input = qs(`.js-cat-radio[value="${CSS.escape(String(state.category_id))}"]`);
       const label = input?.dataset?.label || '{{ translate("Category") }}';
       addPill({ type:'category', value:String(state.category_id), text: label });
+    }
+
+    if (state.group_id != null) {
+      const input = qs(`.js-grp-radio[value="${CSS.escape(String(state.group_id))}"]`);
+      const label = input?.dataset?.label || state.selected_group_name || '{{ translate("Group") }}';
+      addPill({ type:'group', value:String(state.group_id), text: label });
     }
 
     if (state.drug_name) {
@@ -625,6 +664,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (checked) checked.checked = false;
       state.category_id = null;
       gatherCategorySelection();
+    } else if (type === 'group') {
+      const checked = qs('.js-grp-radio:checked');
+      if (checked) checked.checked = false;
+      state.group_id = null;
+      state.selected_group_name = null;
     } else if (type === 'attribute') {
       const input = qs(`.js-attr-checkbox[value="${cssValue(value)}"]`);
       if (input) input.checked = false;
@@ -694,6 +738,14 @@ document.addEventListener('DOMContentLoaded', function () {
     fetchProducts(ajaxUrl, false);
   });
 
+  // Group (radio)
+  document.addEventListener('change', (e) => {
+    if (!e.target.matches('.js-grp-radio')) return;
+    gatherGroupSelection();
+    state.append = false;
+    fetchProducts(ajaxUrl, false);
+  });
+
   // Attributes
   document.addEventListener('change', (e) => {
     if (!e.target.matches('.js-attr-checkbox')) return;
@@ -714,10 +766,14 @@ document.addEventListener('DOMContentLoaded', function () {
   clearBtn.addEventListener('click', () => {
     const checked = qs('.js-cat-radio:checked');
     if (checked) checked.checked = false;
+    const grpChecked = qs('.js-grp-radio:checked');
+    if (grpChecked) grpChecked.checked = false;
 
     qsa('.js-attr-checkbox:checked').forEach(i => i.checked = false);
 
     state.category_id = null;
+    state.group_id = null;
+    state.selected_group_name = null;
     state.selected_attribute_values = [];
     state.min_price = null;
     state.max_price = null;
@@ -905,6 +961,22 @@ document.addEventListener('click', function(e) {
   }
 }, { capture: true });
 
+// --- Group dropdown toggle (sidebar + mobile)
+document.addEventListener('click', function(e) {
+  const head = e.target.closest('[data-grp-toggle]');
+  if (!head) return;
+
+  const id = head.getAttribute('data-grp-toggle');
+  const panel = document.getElementById('group-children-of-' + id);
+  const arrow = document.querySelector('[data-grp-arrow="'+id+'"]');
+
+  if (panel) {
+    const isHidden = panel.classList.contains('d-none');
+    panel.classList.toggle('d-none', !isHidden);
+    if (arrow) arrow.classList.toggle('rotated', isHidden);
+  }
+}, { capture: true });
+
 
 // --- Ensure the selected radio (if any) is visible (auto-expand its hidden ancestors)
 (function revealSelectedCategory() {
@@ -921,6 +993,24 @@ document.addEventListener('click', function(e) {
       if (btn) { btn.dataset.state = 'expanded'; btn.textContent = btn.dataset.lessText || 'View Less'; }
     }
     wrap = wrap.parentElement?.closest('.cat-node-wrap');
+  }
+})();
+
+// --- Ensure the selected group radio is visible (auto-expand ancestors)
+(function revealSelectedGroup() {
+  const checked = document.querySelector('.js-grp-radio:checked');
+  if (!checked) return;
+
+  let panel = checked.closest('.grp-children-panel');
+  while (panel) {
+    panel.classList.remove('d-none');
+    const head = panel.previousElementSibling;
+    const id = head?.getAttribute('data-grp-toggle');
+    if (id) {
+      const arrow = document.querySelector(`[data-grp-arrow="${id}"]`);
+      if (arrow) arrow.classList.add('rotated');
+    }
+    panel = panel.closest('.grp-children-panel')?.previousElementSibling?.closest('.grp-children-panel');
   }
 })();
 

@@ -33,6 +33,12 @@ class ProductRequest extends FormRequest
         $rules['gem_portal_link'] = 'sometimes|nullable|url';
         $rules['category_ids']  = 'required';
         $rules['category_id']   = ['required', Rule::in($this->category_ids)];
+        $groupIds = $this->group_ids ?? [];
+        $rules['group_ids']     = 'sometimes|array';
+        $rules['group_id']      = ['nullable'];
+        if (!empty($groupIds)) {
+            $rules['group_id'][] = Rule::in($groupIds);
+        }
         $rules['unit']         = 'sometimes|required';
         $rules['min_qty']      = 'sometimes|required|numeric';
         // $rules['unit_price']    = 'sometimes|required|numeric|gt:0';
@@ -63,6 +69,7 @@ class ProductRequest extends FormRequest
             'category_ids.required'     => translate('Product category is required'),
             'category_id.required'      => translate('Main Category is required'),
             'category_id.in'            => translate('Main Category must be within selected categories'),
+            'group_id.in'               => translate('Main Group must be within selected groups'),
             'unit.required'             => translate('Product unit is required'),
             'min_qty.required'          => translate('Minimum purchase quantity is required'),
             'min_qty.numeric'           => translate('Minimum purchase must be numeric'),

@@ -573,6 +573,23 @@
                                 </div>
 
                             </div>
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Religion</label>
+                                    <p>{{ $user->religion ?? '-' }}</p>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-4 mb-4">
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Anniversary</label>
+                                    <p>{{ format_dd_mm_yy($user->anniversary) ?? '-' }}</p>
+                                </div>
+
+                            </div>
 
                             <div class="col-md-12 mb-4">
                                 <h5> Address </h5>

@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Color;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Group;
 use App\Models\Attribute;
 use Illuminate\Http\Request;
 use App\Utility\CategoryUtility;
@@ -54,6 +55,8 @@ class Search2Controller extends Controller
 
         // Single selected category id (from radio OR from array OR from route)
         $selected_category_id = null;
+        // Single selected group id (from radio OR array)
+        $selected_group_id = null;
 
         if ($request->filled('category_id')) {
             $selected_category_id = (int)$request->input('category_id');
@@ -70,10 +73,20 @@ class Search2Controller extends Controller
             $selected_category_id = (int)$category_id;
         }
 
+        if ($request->filled('group_id')) {
+            $selected_group_id = (int)$request->input('group_id');
+        }
+        if ($selected_group_id === null) {
+            $groupIdsRaw = (array)$request->input('group_ids', []);
+            if (!empty($groupIdsRaw)) {
+                $selected_group_id = (int)array_values($groupIdsRaw)[0];
+            }
+        }
+
         $pageSize    = (int)($request->input('page_size', 24) ?: 24);
 
         $category   = null;
-        $products   = Product::query();
+        $products   = Product::query()->whereNotNull('slug')->where('slug', '!=', '');
 
         // -------- BRAND --------
         if ($brand_id) {
@@ -97,6 +110,11 @@ class Search2Controller extends Controller
         } elseif ($selected_category_id) {
             // $products->where('category_id', $selected_category_id);
             $this->applyCategoryScope($products, [$selected_category_id]);
+        }
+
+        // -------- GROUP SCOPE --------
+        if ($selected_group_id) {
+            $this->applyGroupScope($products, [$selected_group_id]);
         }
 
         // -------- KEYWORD --------
@@ -143,7 +161,7 @@ class Search2Controller extends Controller
         //    -> same brand, same keyword
         //    -> BUT **NO** category filter
         // ============================================================
-        $countsBase = Product::query();
+        $countsBase = Product::query()->whereNotNull('slug')->where('slug', '!=', '');
 
         // apply brand to counts also
         if ($brand_id) {
@@ -197,6 +215,29 @@ class Search2Controller extends Controller
             ->toArray();
 
         $categoryCounts = array_replace($directCategoryCounts, $categoryCounts);
+
+        // ====== GROUP COUNTS (for tree) ======
+        $groupCountsPivot = DB::table('product_groups as pg')
+            ->joinSub(
+                $countsSource->select('id'),
+                'src',
+                'src.id',
+                '=',
+                'pg.product_id'
+            )
+            ->select('pg.group_id', DB::raw('COUNT(DISTINCT pg.product_id) as aggregate'))
+            ->groupBy('pg.group_id')
+            ->pluck('aggregate', 'pg.group_id')
+            ->toArray();
+
+        $directGroupCounts = (clone $countsSource)
+            ->whereNotNull('group_id')
+            ->selectRaw('group_id, COUNT(*) as aggregate')
+            ->groupBy('group_id')
+            ->pluck('aggregate', 'group_id')
+            ->toArray();
+
+        $groupCounts = array_replace($directGroupCounts, $groupCountsPivot);
 
         // // ====== CATEGORY COUNTS (for tree) ======
         // $categoryCounts = (clone $countsSource)
@@ -331,6 +372,8 @@ class Search2Controller extends Controller
             'oldest'     => $products->orderBy('created_at', 'asc'),
             'price-asc'  => $products->orderBy('unit_price', 'asc'),
             'price-desc' => $products->orderBy('unit_price', 'desc'),
+            'discount-desc' => $products->orderByRaw("CASE WHEN discount_start_date IS NOT NULL AND discount_end_date IS NOT NULL AND discount_start_date <= " . time() . " AND discount_end_date >= " . time() . " THEN CASE WHEN discount_type = 'percent' THEN discount ELSE (discount / unit_price * 100) END ELSE 0 END DESC")->orderBy('id', 'desc'),
+            // 'discount-desc' => $this->applyDiscountSort($products),
             default      => $products->orderBy('id', 'desc'),
         };
 
@@ -346,6 +389,24 @@ class Search2Controller extends Controller
         $preloadedChildren = $allCats->groupBy('parent_id');
         $roots = $preloadedChildren->get(0, collect())->merge($preloadedChildren->get(null, collect()));
         $categories = $roots;
+
+        // -------- Build FULL group tree (for sidebar) --------
+        $allGroups = Group::select('id','parent_id','name','level','order_level')
+            ->orderBy('order_level','desc')->get();
+        $preloadedGroupChildren = $allGroups->groupBy('parent_id');
+        $groupRoots = $preloadedGroupChildren->get(0, collect())->merge($preloadedGroupChildren->get(null, collect()));
+        $groupsTree = $groupRoots;
+
+        // -------- Figure parent chain to auto-open (groups) --------
+        $groupExpandedIds = [];
+        if ($selected_group_id) {
+            $byId = $allGroups->keyBy('id');
+            $curr = $selected_group_id;
+            while ($curr && isset($byId[$curr])) {
+                $groupExpandedIds[] = $curr;
+                $curr = $byId[$curr]->parent_id;
+            }
+        }
 
         // -------- Figure parent chain to auto-open --------
         $expandedIds = [];
@@ -366,6 +427,12 @@ class Search2Controller extends Controller
             $selected_category_name = optional(Category::find($category_id))->getTranslation('name');
         }
 
+        // For group breadcrumb/title (optional)
+        $selected_group_name = null;
+        if ($selected_group_id) {
+            $selected_group_name = optional(Group::find($selected_group_id))->getTranslation('name');
+        }
+
         // Bounds for slider
         $globalMin = (int) get_product_min_unit_price();
         $globalMax = (int) get_product_max_unit_price();
@@ -377,7 +444,8 @@ class Search2Controller extends Controller
             'globalMin','globalMax','scopedMin','scopedMax',
             'selected_category_id','selected_category_name',
             'preloadedChildren','color',
-            'categoryCounts','attributeValueCounts','colorCounts','expandedIds'
+            'categoryCounts','attributeValueCounts','colorCounts','expandedIds',
+            'groupsTree','preloadedGroupChildren','selected_group_id','groupCounts','selected_group_name','groupExpandedIds'
         );
 
         $viewData = array_merge($viewData, [
@@ -400,6 +468,53 @@ class Search2Controller extends Controller
 
         return [$products, $viewData];
     }
+
+    /**
+     * Apply "Discount % (High to Low)" sorting using the same price logic
+     * as variant_price (base MRP vs role-aware price with active discount).
+     */
+    /*private function applyDiscountSort($products)
+    {
+        $roleKey = preg_replace('/[^A-Za-z0-9_\\-]/', '', getCurrentUserRole() ?? '') ?: 'customer';
+        $rolePath = '$.\"'.$roleKey.'\"';
+        $customerPath = '$.\"customer\"';
+
+        // Selling price for the current role (fallback to customer -> unit_price)
+        $rolePriceExpr = "COALESCE(
+            NULLIF(JSON_UNQUOTE(JSON_EXTRACT(role_price, '{$rolePath}')), ''),
+            NULLIF(JSON_UNQUOTE(JSON_EXTRACT(role_price, '{$customerPath}')), ''),
+            unit_price
+        )";
+
+        // Base MRP (fallback to role price / unit price)
+        $basePriceExpr = "COALESCE(mrp_price, {$rolePriceExpr}, unit_price)";
+
+        $nowTs = time();
+        $discountActiveExpr = "(discount_start_date IS NULL OR (discount_start_date <= {$nowTs} AND discount_end_date >= {$nowTs}))";
+
+        $discountedPriceExpr = "CASE
+            WHEN {$discountActiveExpr} THEN
+                CASE
+                    WHEN discount_type = 'percent' THEN {$rolePriceExpr} - (({$rolePriceExpr} * discount) / 100)
+                    WHEN discount_type = 'amount' THEN {$rolePriceExpr} - discount
+                    ELSE {$rolePriceExpr}
+                END
+            ELSE {$rolePriceExpr}
+        END";
+
+        $discountPercentExpr = "GREATEST(0, CASE
+            WHEN {$basePriceExpr} > 0 THEN (({$basePriceExpr} - {$discountedPriceExpr}) * 100 / {$basePriceExpr})
+            ELSE 0 END)";
+
+        return $products
+            ->addSelect([
+                'products.*',      // 👈 THIS is the fix
+                DB::raw("{$discountPercentExpr} as sort_discount_percentage"),
+            ])
+            ->orderByDesc('sort_discount_percentage')
+            ->orderBy('id', 'desc');
+
+    }*/
 
     /**
      * AJAX: returns HTML grid + next page url (for infinite scroll)
@@ -677,6 +792,23 @@ class Search2Controller extends Controller
             })
             // plus legacy column
             ->orWhereIn('category_id', $categoryIds);
+        });
+    }
+
+    /**
+     * Apply group filter using BOTH:
+     * - product_groups pivot
+     * - products.group_id (fallback)
+     */
+    private function applyGroupScope($builder, array $groupIds): void
+    {
+        $builder->where(function ($q) use ($groupIds) {
+            $q->whereIn('id', function ($sub) use ($groupIds) {
+                $sub->from('product_groups')
+                    ->selectRaw('DISTINCT product_id')
+                    ->whereIn('group_id', $groupIds);
+            })
+            ->orWhereIn('group_id', $groupIds);
         });
     }
 
