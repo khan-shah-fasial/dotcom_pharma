@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </button>
 
             <div class="w-lg-300px short-by-width">
-              <select class="w-lg-300px form-control form-control-sm aiz-selectpicker rounded-0" id="sort_by">
+              <select class="form-control form-control-sm aiz-selectpicker rounded-0" id="sort_by">
                 <option value="">{{ translate('Sort by') }}</option>
                 <option value="newest"     @selected(($sort_by??'')==='newest')>{{ translate('Newest') }}</option>
                 <option value="oldest"     @selected(($sort_by??'')==='oldest')>{{ translate('Oldest') }}</option>
