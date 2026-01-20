@@ -198,6 +198,156 @@ body .translater_menu .select2-container {
     }
 
 }
+
+/* Mobile drawer navigation */
+.mobile-drawer {
+    position: relative;
+    z-index: 1055;
+}
+
+.mobile-drawer__trigger,
+.mobile-drawer__submenu-toggle {
+    display: none;
+}
+
+.mobile-drawer__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+    z-index: 1045;
+}
+
+.mobile-drawer__panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 86%;
+    max-width: 420px;
+    height: 100vh;
+    background: #fff;
+    transform: translateX(-100%);
+    transition: transform 0.35s ease;
+    z-index: 1050;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.18);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.mobile-drawer__panel > .mobile-drawer__list,
+.mobile-drawer__submenu > .mobile-drawer__list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.mobile-drawer__trigger:checked ~ .mobile-drawer__overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-drawer__trigger:checked ~ .mobile-drawer__panel {
+    transform: translateX(0);
+}
+
+.mobile-drawer__header {
+    height: 54px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 0 14px;
+    flex-shrink: 0;
+}
+
+.mobile-drawer__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-left: 8px;
+}
+
+.mobile-drawer__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.mobile-drawer__toggle:hover {
+    background: #f4f4f4;
+}
+
+.mobile-drawer__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.mobile-drawer__list--nested {
+    background: #f8f9fb;
+    padding-left: 8px;
+}
+
+.mobile-drawer__list-item {
+    --mobile-drawer-level: 0;
+    position: relative;
+}
+
+.mobile-drawer__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f1f1;
+    padding-left: calc(12px + var(--mobile-drawer-level) * 8px);
+}
+
+.mobile-drawer__link {
+    flex: 1;
+    padding: 7px 0;
+    text-decoration: none;
+    color: #000;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+    .mobile-drawer__chevron {
+        width: 44px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-bottom: 0 !important;
+}
+
+.mobile-drawer__title-link {
+    color: #000;
+    text-decoration: none;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.mobile-drawer__submenu {
+    position: relative;
+    background: #f8f9fb;
+    transition: max-height 0.3s ease;
+    max-height: 0;
+    overflow: hidden;
+    padding-left: 0;
+}
+
+.mobile-drawer__submenu-toggle:checked + .mobile-drawer__submenu {
+    max-height: 1200px;
+}
+@media (min-width: 992px) {
+    .mobile-drawer {
+        display: none;
+    }
+}
 </style>
 <!-- Top Bar Banner -->
     @php
@@ -398,6 +548,32 @@ body .translater_menu .select2-container {
         </div>
     </div>
 
+    <!-- Mobile drawer menu -->
+    <div class="mobile-drawer d-lg-none">
+        <input type="checkbox" id="mobile-drawer-trigger" class="mobile-drawer__trigger">
+        <label class="mobile-drawer__overlay" for="mobile-drawer-trigger"></label>
+
+        <div class="mobile-drawer__panel">
+            <div class="mobile-drawer__header">
+                <label class="mobile-drawer__toggle" for="mobile-drawer-trigger" aria-label="{{ translate('Close menu') }}">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </label>
+                <span class="mobile-drawer__title">{{ translate('Menu') }}</span>
+            </div>
+
+            <ul class="mobile-drawer__list">
+                @php $category_top_menu = getCategoryTopMenu(); @endphp
+                @foreach ($category_top_menu as $cat)
+                    @include('frontend.inc.mobile_category_menu', ['category' => $cat, 'level' => 0])
+                @endforeach
+            </ul>
+        </div>
+    </div>
+
     <header class="@if (get_setting('header_stikcy') == 'on') sticky-top @endif z-1020 bg-white">
         <!-- Search Bar -->
         <div class="position-relative logo-bar-area border-bottom border-md-nonea z-1025">
@@ -406,9 +582,10 @@ body .translater_menu .select2-container {
                     <div class="row">
 
                         <div class="col-lg-3 col-md-4 col-2 d-lg-none d-block">
-                            <!-- top menu sidebar button -->
-                            <button type="button" class="btn d-lg-none mr-3 mr-sm-4 p-0 active mobile_icons_menus"
-                                data-toggle="class-toggle" data-target=".aiz-top-menu-sidebar">
+                            <!-- mobile menu toggle -->
+                            <label for="mobile-drawer-trigger"
+                                class="btn d-lg-none mr-3 mr-sm-4 p-0 active mobile_icons_menus"
+                                aria-label="{{ translate('Open menu') }}">
                                 <svg id="Component_43_1" data-name="Component 43 – 1"
                                     xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                     viewBox="0 0 20 20">
@@ -420,7 +597,7 @@ body .translater_menu .select2-container {
                                         height="2" transform="translate(0 14)" fill="#919199" />
                                 </svg>
 
-                            </button>
+                            </label>
                         </div>
                         <div class="col-lg-3 col-md-4 col-8">
                             <!-- Header Logo -->
@@ -1073,7 +1250,7 @@ body .translater_menu .select2-container {
 
                             @foreach ($category_top_menu as $cat)
                                 @php $hasChildren = $cat->childrenCategories->isNotEmpty(); @endphp
-                                <li class="list-inline-item mr-3 animate-underline-white @if($hasChildren) dropdown @endif">
+                                <li class="list-inline-item mr-2 animate-underline-white @if($hasChildren) dropdown @endif">
                                     <div class="d-inline-flex align-items-center">
                                         <a href="/category/{{ $cat->slug }}"
                                             class="fs-14 black_light_clr d-inline-block fw-500 header_menu_links pt-2 pb-2">
@@ -1081,7 +1258,7 @@ body .translater_menu .select2-container {
                                         </a>
 
                                         @if($hasChildren)
-                                            <button class="btn btn-link p-0 ml-1 dropdown-toggle dropdown-toggle-split fs-14 black_light_clr header_menu_links"
+                                            <button class="btn btn-link p-0 ml-0 dropdown-toggle dropdown-toggle-split fs-14 black_light_clr header_menu_links"
                                                 type="button"
                                                 id="injectionsDropdown_{{ $cat->id }}"
                                                 data-toggle="dropdown" aria-haspopup="true"
@@ -1518,3 +1695,19 @@ body .translater_menu .select2-container {
             });
         </script>
     @endpush
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('click', function(e) {
+                var link = e.target.closest('.mobile-drawer__link--has-children');
+                if (!link) return;
+                var targetId = link.getAttribute('data-submenu-target');
+                if (!targetId) return;
+                e.preventDefault();
+                var checkbox = document.getElementById(targetId);
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                }
+            });
+        });
+    </script>
