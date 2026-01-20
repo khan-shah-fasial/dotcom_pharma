@@ -85,7 +85,9 @@ class DigitalProductController extends Controller
         //Product categories
         $product->categories()->attach($request->category_ids);
         //Product groups
-        $product->groups()->attach($request->group_ids);
+        if ($request->filled('group_ids')) {
+            $product->groups()->attach($request->group_ids);
+        }
 
         //Product Stock
         (new ProductStockService)->store($request->only([
@@ -176,7 +178,7 @@ class DigitalProductController extends Controller
         //Product categories
         $product->categories()->sync($request->category_ids);
         //Product groups
-        $product->groups()->sync($request->group_ids);
+        $product->groups()->sync($request->group_ids ?? []);
 
         (new ProductStockService)->store($request->only([
             'unit_price', 'current_stock', 'product_id'

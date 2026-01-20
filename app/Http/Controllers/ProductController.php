@@ -315,7 +315,9 @@ class ProductController extends Controller
         //Product categories
         $product->categories()->attach($request->category_ids);
         //Product groups
-        $product->groups()->attach($request->group_ids);
+        if ($request->filled('group_ids')) {
+            $product->groups()->attach($request->group_ids);
+        }
 
         //VAT & Tax
         if ($request->tax_id) {
@@ -499,7 +501,7 @@ class ProductController extends Controller
         //Product categories
         $product->categories()->sync($request->category_ids);
         //Product groups
-        $product->groups()->sync($request->group_ids);
+        $product->groups()->sync($request->group_ids ?? []);
 
 
 

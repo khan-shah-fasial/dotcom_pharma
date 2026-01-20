@@ -142,29 +142,31 @@
                                         </div>
                                     </div>
 
-                                <!-- Medical Group -->
-                                <div class="col-xxl-12 col-xl-12">
-                                        <div class="card @if($errors->has('group_ids') || $errors->has('group_id')) border border-danger @endif">
-                                            <div class="card-header">
-                                                <h5 class="mb-0 h6">{{ translate('Medical Group') }} *</h5>
-                                                <h6 class="float-right fs-13 mb-0">
-                                                    {{ translate('Select Main') }}
-                                                </h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="h-300px overflow-auto c-scrollbar-light">
-                                                    <ul class="hummingbird-treeview-converter list-unstyled" data-checkbox-name="group_ids[]" data-radio-name="group_id" data-id="-group">
-                                                        @foreach ($groups as $group)
-                                                        <li id="{{ $group->id }}">{{ $group->getTranslation('name') }}</li>
-                                                            @foreach ($group->childrenGroups as $childGroup)
-                                                                @include('backend.product.products.child_group', ['child_group' => $childGroup])
+                                @if($groups->isNotEmpty())
+                                    <!-- Medical Group -->
+                                    <div class="col-xxl-12 col-xl-12">
+                                            <div class="card @if($errors->has('group_ids') || $errors->has('group_id')) border border-danger @endif">
+                                                <div class="card-header">
+                                                    <h5 class="mb-0 h6">{{ translate('Medical Group') }}</h5>
+                                                    <h6 class="float-right fs-13 mb-0">
+                                                        {{ translate('Select Main') }}
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="h-300px overflow-auto c-scrollbar-light">
+                                                        <ul class="hummingbird-treeview-converter list-unstyled" data-checkbox-name="group_ids[]" data-radio-name="group_id" data-id="-group">
+                                                            @foreach ($groups as $group)
+                                                            <li id="{{ $group->id }}">{{ $group->getTranslation('name') }}</li>
+                                                                @foreach ($group->childrenGroups as $childGroup)
+                                                                    @include('backend.product.products.child_group', ['child_group' => $childGroup])
+                                                                @endforeach
                                                             @endforeach
-                                                        @endforeach
-                                                    </ul>
+                                                        </ul>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                @endif
 
                                     
                                     <div class="col-xxl-12 col-xl-12">
@@ -1422,22 +1424,6 @@
             if (categoryIds.length === 0) {
                 e.preventDefault();
                 AIZ.plugins.notify('danger', 'Please select the Same Product Category.');
-                return;
-            }
-
-            // Check if group_id is selected
-            const groupId = $('[name="group_id"]:checked').val();
-            if (!groupId) {
-                e.preventDefault();
-                AIZ.plugins.notify('danger', 'Please select a Main group.');
-                return;
-            }
-
-            // Validate group_ids (checkbox group)
-            const groupIds = $('[name="group_ids[]"]:checked');
-            if (groupIds.length === 0) {
-                e.preventDefault();
-                AIZ.plugins.notify('danger', 'Please select at least one Medical Group.');
                 return;
             }
 

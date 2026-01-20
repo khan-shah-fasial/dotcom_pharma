@@ -143,31 +143,33 @@
                                         </div>
                                     </div>
 
-                                <div class="col-xxl-12 col-xl-12">
-                                        <div class="card @if($errors->has('group_ids') || $errors->has('group_id')) border border-danger @endif">
-                                            <div class="card-header">
-                                                <h5 class="mb-0 h6">{{ translate('Medical Group') }}</h5>
-                                                <h6 class="float-right fs-13 mb-0">
-                                                    {{ translate('Select Main') }}
-                                                </h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="h-300px overflow-auto c-scrollbar-light">
-                                                    @php
-                                                        $old_groups = $product->groups()->pluck('group_id')->toArray();
-                                                    @endphp
-                                                    <ul class="hummingbird-treeview-converter list-unstyled" data-checkbox-name="group_ids[]" data-radio-name="group_id" data-id="-group">
-                                                        @foreach ($groups as $group)
-                                                        <li id="{{ $group->id }}">{{ $group->getTranslation('name') }}</li>
-                                                            @foreach ($group->childrenGroups as $childGroup)
-                                                                @include('backend.product.products.child_group', ['child_group' => $childGroup])
+                                @if($groups->isNotEmpty())
+                                    <div class="col-xxl-12 col-xl-12">
+                                            <div class="card @if($errors->has('group_ids') || $errors->has('group_id')) border border-danger @endif">
+                                                <div class="card-header">
+                                                    <h5 class="mb-0 h6">{{ translate('Medical Group') }}</h5>
+                                                    <h6 class="float-right fs-13 mb-0">
+                                                        {{ translate('Select Main') }}
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="h-300px overflow-auto c-scrollbar-light">
+                                                        @php
+                                                            $old_groups = $product->groups()->pluck('group_id')->toArray();
+                                                        @endphp
+                                                        <ul class="hummingbird-treeview-converter list-unstyled" data-checkbox-name="group_ids[]" data-radio-name="group_id" data-id="-group">
+                                                            @foreach ($groups as $group)
+                                                            <li id="{{ $group->id }}">{{ $group->getTranslation('name') }}</li>
+                                                                @foreach ($group->childrenGroups as $childGroup)
+                                                                    @include('backend.product.products.child_group', ['child_group' => $childGroup])
+                                                                @endforeach
                                                             @endforeach
-                                                        @endforeach
-                                                    </ul>
+                                                        </ul>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                @endif
 
 
                                     <div class="col-xxl-12 col-xl-12">
@@ -1713,23 +1715,7 @@ $(document).ready(function () {
             return false;
         }
 
-        // 4. Main group validation
-        const groupId = $('[name="group_id"]:checked').val();
-        if (!groupId) {
-            e.preventDefault();
-            AIZ.plugins.notify("danger", "Please select a Main group.");
-            return false;
-        }
-
-        // 5. Medical group selection validation
-        const groupIds = $('[name="group_ids[]"]:checked');
-        if (groupIds.length === 0) {
-            e.preventDefault();
-            AIZ.plugins.notify("danger", "Please select at least one Medical Group.");
-            return false;
-        }
-
-        // 6. Colors validation
+        // 4. Colors validation
         const colorsActive = $('[name="colors_active"]').is(":checked");
         if (colorsActive) {
             const selectedColors = $("#colors").val() || [];
