@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
               <i class="las la-sliders-h me-1"></i> Filters
             </button>
 
-            <div class="w-lg-250px short-by-width">
+            <div class="w-lg-300px short-by-width">
               <select class="form-control form-control-sm aiz-selectpicker rounded-0" id="sort_by">
                 <option value="">{{ translate('Sort by') }}</option>
                 <option value="newest"     @selected(($sort_by??'')==='newest')>{{ translate('Newest') }}</option>
