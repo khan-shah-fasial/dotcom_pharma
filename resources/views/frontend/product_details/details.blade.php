@@ -595,7 +595,7 @@
             </h3>
             <div class="certificates-row">
                  <div class="certificate-item">
-                    <img src="{{ static_asset('assets/img/cirtificate8.jpg') }}" 
+                    <img src="{{ static_asset('assets/img/cirtificate82.jpg') }}" 
                          alt="{{ translate('Certificate') }}" 
                          class="img-fluid rounded"
                          onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
@@ -636,7 +636,7 @@
                          onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                 </div>
 
-                
+
                  <div class="certificate-item">
                     <img src="{{ static_asset('assets/img/cirtificate2.jpg') }}" 
                          alt="{{ translate('Certificate') }}" 
@@ -651,7 +651,7 @@
                          onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                 </div>
                  <div class="certificate-item">
-                    <img src="{{ static_asset('assets/img/cirtificate3.jpg') }}" 
+                    <img src="{{ static_asset('assets/img/cirtificate31.jpg') }}" 
                          alt="{{ translate('Certificate') }}" 
                          class="img-fluid rounded"
                          onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
