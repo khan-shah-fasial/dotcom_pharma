@@ -47,20 +47,21 @@
         display: flex;
         width: 100%;
         gap: 15px;
+    flex-wrap: wrap;
     }
     
     .certificate-item {
-        flex: 1;
-        transition: all 0.3s ease;
-        overflow: hidden;
-        border-radius: 8px;
-        border: 1px solid #e0e0e0;
-        background: #fff;
-        height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 5px;
+            transition: all 0.3s ease;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    width: 17.9% !important;
     }
     
     .certificate-item:hover {
@@ -593,36 +594,70 @@
                 <span class="mr-4">{{ translate('Certificates') }}:</span>
             </h3>
             <div class="certificates-row">
+                 <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate8.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate9.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                 <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate6.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                
                 <div class="certificate-item">
                     <img src="{{ static_asset('assets/img/cirtificate1.jpg') }}" 
                          alt="{{ translate('Certificate') }}" 
                          class="img-fluid rounded"
                          onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                 </div>
-                <div class="certificate-item">
-                    <img src="{{ static_asset('assets/img/cirtificate2.jpg') }}" 
-                         alt="{{ translate('Certificate') }}" 
-                         class="img-fluid rounded"
-                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                </div>
-                <div class="certificate-item">
-                    <img src="{{ static_asset('assets/img/cirtificate3.jpg') }}" 
-                         alt="{{ translate('Certificate') }}" 
-                         class="img-fluid rounded"
-                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                </div>
-                <div class="certificate-item">
-                    <img src="{{ static_asset('assets/img/cirtificate4.jpg') }}" 
-                         alt="{{ translate('Certificate') }}" 
-                         class="img-fluid rounded"
-                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                </div>
+               
+               
+               
                 <div class="certificate-item">
                     <img src="{{ static_asset('assets/img/cirtificate5.jpg') }}" 
                          alt="{{ translate('Certificate') }}" 
                          class="img-fluid rounded"
                          onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                 </div>
+
+                 <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate4.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+
+                
+                 <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate2.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                
+                 <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate7.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                 <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate3.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                
+                 
             </div>
         </div>
 
