@@ -1194,6 +1194,9 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
             if ($("#aiz-upload-files").length > 0) {
                 var uppy = Uppy.Core({
                     autoProceed: true,
+                    restrictions: {
+                        allowedFileTypes: ['image/*', 'video/*', 'audio/*', 'application/pdf', '.doc', '.docx', '.txt', '.csv', '.xml', '.ods', '.xlr', '.xls', '.xlsx', '.zip', '.rar', '.7z', '.webp']
+                    }
                 });
                 uppy.use(Uppy.Dashboard, {
                     target: "#aiz-upload-files",
