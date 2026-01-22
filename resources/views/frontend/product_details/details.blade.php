@@ -37,6 +37,75 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
+    
+    /* Certificate Section Styles */
+    .certificates-section {
+        margin-bottom: 2rem;
+    }
+    
+    .certificates-row {
+        display: flex;
+        width: 100%;
+        gap: 15px;
+    }
+    
+    .certificate-item {
+        flex: 1;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        background: #fff;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px;
+    }
+    
+    .certificate-item:hover {
+       
+        transform: translateY(-2px);
+    }
+    
+    .certificate-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        transition: transform 0.3s ease;
+    }
+    
+    .certificate-item:hover img {
+        transform: scale(1.05);
+    }
+    
+    @media (max-width: 768px) {
+        .certificates-row {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .certificate-item {
+            flex: 1 1 calc(50% - 5px);
+            min-width: calc(50% - 5px);
+            height: 200px;
+            padding: 10px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .certificates-row {
+            gap: 5px;
+        }
+        
+        .certificate-item {
+           flex: 0 0 calc(19.2% - 4px);
+        min-width: calc(19.2% - 4px);
+        height: 60px;
+        padding: 5px;
+        }
+    }
 </style>
 
 <div class="text-left product_disc_text">
@@ -489,13 +558,13 @@
                 </a>
 
                 <!-- YouTube (redirect) -->
-                <a href="https://www.youtube.com/redirect?q={{ urlencode($productUrl) }}"
+                {{-- <a href="https://www.youtube.com/redirect?q={{ urlencode($productUrl) }}"
                    target="_blank"
                    class="btn btn-sm rounded-circle p-2 social-share-btn"
                    title="Share on YouTube"
                    style="background: #FF0000; border: none;">
                     <i class="lab la-youtube fs-18 text-white"></i>
-                </a>
+                </a> --}}
 
                 <!-- Email -->
                 <a href="mailto:?subject={{ $mailSubject }}&body={{ $mailBody }}"
@@ -515,6 +584,45 @@
                         style="background: #6c757d; border: none;">
                     <i class="las la-copy fs-18 text-white"></i>
                 </button>
+            </div>
+        </div>
+
+        <!-- Certificates Section -->
+        <div class="certificates-section mt-md-4 mt-3 col-md-12 pl-0">
+            <h3 class="fs-14 fw-500 text-dark mr-2">
+                <span class="mr-4">{{ translate('Certificates') }}:</span>
+            </h3>
+            <div class="certificates-row">
+                <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate1.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate2.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate3.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate4.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
+                <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate5.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
             </div>
         </div>
 

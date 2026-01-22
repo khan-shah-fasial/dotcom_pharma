@@ -192,8 +192,8 @@
                     </div>
 
 
-
                         
+
                         <!-- Frequently Bought products -->
                         @if(count(get_frequently_bought_products($detailedProduct)) > 0)
                             @include('frontend.product_details.frequently_bought_products')
