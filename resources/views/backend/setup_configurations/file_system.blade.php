@@ -142,7 +142,7 @@
                 </div>
                 <div class="card-body">
                     <label class="aiz-switch mb-0">
-                        <input type="radio" name="FILESYSTEM_DRIVER" onchange="updateSettings(this, 'FILESYSTEM_DRIVER', 'aws')" <?php if(env('FILESYSTEM_DRIVER') == 'aws') echo "checked";?>>
+                        <input type="radio" name="FILESYSTEM_DRIVER" onchange="updateSettings(this, 'FILESYSTEM_DRIVER', 's3')" <?php if(env('FILESYSTEM_DRIVER') == 's3') echo "checked";?>>
                         <span></span>
                     </label>
                 </div>
