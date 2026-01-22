@@ -62,17 +62,6 @@ return [
             'visibility' => 'public',
         ],       
 
-        'aws' => [
-            'driver'    => 's3',
-            'key'       => env('AWS_ACCESS_KEY_ID'),
-            'secret'    => env('AWS_SECRET_ACCESS_KEY'),
-            'region'    => env('AWS_DEFAULT_REGION', 'ap-south-1'),
-            'bucket'    => env('AWS_BUCKET'),
-            'url'       => env('AWS_URL'),
-            'root'      => env('AWS_ROOT', ''),
-            // 'scheme'    => 'http',
-        ],
-
         's3' => [
             'driver'    => 's3',
             'key'       => env('AWS_ACCESS_KEY_ID'),

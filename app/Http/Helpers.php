@@ -1817,18 +1817,39 @@ if (!function_exists('my_asset')) {
      * @param bool|null $secure
      * @return string
      */
-    function my_asset($path, $secure = null)
+    function my_asset($value, $secure = null)
     {
-        
-        if(app()->environment('local')){
-            return app('url')->asset('/' . $path, $secure);
+        // Pass through full URLs untouched
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
         }
 
-        if (config('filesystems.default') != 'local') {
-            return Storage::disk(config('filesystems.default'))->url($path);
+        $defaultDisk = config('filesystems.default');
+        $disk = $defaultDisk;
+        $path = $value;
+
+        // Accept an upload ID or a raw path
+        $upload = is_numeric($value)
+            ? Upload::find($value)
+            : Upload::where('file_name', $value)->select('disk', 'external_link', 'file_name')->first();
+
+        if ($upload) {
+            if ($upload->external_link) {
+                return $upload->external_link;
+            }
+            $path = $upload->file_name;
+            $disk = $upload->disk ?? $defaultDisk;
+        } elseif (is_numeric($value)) {
+            return static_asset('assets/img/placeholder.jpg');
         }
 
-        return app('url')->asset('public/' . $path, $secure);
+        if ($disk === 'local') {
+            return app()->environment('local')
+                ? app('url')->asset('/' . $path, $secure)
+                : app('url')->asset('public/' . $path, $secure);
+        }
+
+        return Storage::disk($disk)->url($path);
     }
 }
 

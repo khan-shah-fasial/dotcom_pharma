@@ -114,6 +114,7 @@ class AizUploadController extends Controller
 
         if ($request->hasFile('aiz_file')) {
             $upload = new Upload;
+            $upload->disk = config('filesystems.default');
             $extension = strtolower($request->file('aiz_file')->getClientOriginalExtension());
 
             if (
@@ -267,8 +268,8 @@ class AizUploadController extends Controller
                         $file_mime = finfo_file($finfo, base_path('public/') . $path);
                         finfo_close($finfo);
 
-                        // Use 'aws' disk name as defined in config/filesystems.php
-                        $diskName = env('FILESYSTEM_DRIVER') == 'aws' ? 'aws' : env('FILESYSTEM_DRIVER');
+                        // Use 's3' disk name as defined in config/filesystems.php
+                        $diskName = env('FILESYSTEM_DRIVER') == 's3' ? 's3' : env('FILESYSTEM_DRIVER');
                         
                         // Ensure the file exists before uploading
                         $filePath = base_path('public/') . $path;
@@ -426,7 +427,7 @@ class AizUploadController extends Controller
         }
         try {
             if (env('FILESYSTEM_DRIVER') != 'local') {
-                $diskName = env('FILESYSTEM_DRIVER') == 'aws' ? 'aws' : env('FILESYSTEM_DRIVER');
+                $diskName = env('FILESYSTEM_DRIVER') == 's3' ? 's3' : env('FILESYSTEM_DRIVER');
                 Storage::disk($diskName)->delete($upload->file_name);
                 if (file_exists(public_path() . '/' . $upload->file_name)) {
                     unlink(public_path() . '/' . $upload->file_name);
@@ -478,7 +479,7 @@ class AizUploadController extends Controller
         foreach ($uploads as $upload) {
             try {
                 if (env('FILESYSTEM_DRIVER') != 'local') {
-                    $diskName = env('FILESYSTEM_DRIVER') == 'aws' ? 'aws' : env('FILESYSTEM_DRIVER');
+                    $diskName = env('FILESYSTEM_DRIVER') == 's3' ? 's3' : env('FILESYSTEM_DRIVER');
                     Storage::disk($diskName)->delete($upload->file_name);
                     if (file_exists(public_path() . '/' . $upload->file_name)) {
                         unlink(public_path() . '/' . $upload->file_name);
