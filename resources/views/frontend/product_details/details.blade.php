@@ -595,7 +595,7 @@
         
         <!-- Certificates Section -->
         <div class="certificates-section mt-md-4 mt-3 col-md-12 pl-0">
-            <h3 class="fs-14 fw-500 text-dark mr-2">
+            <h3 class="fs-14 fw-500 text-dark mb-3">
                 <span class="mr-4">{{ translate('Certificates') }}:</span>
             </h3>
             <div class="certificates-row">

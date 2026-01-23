@@ -212,7 +212,7 @@ li.list-inline-item.human_btn {
 
 .product_img_bg {
     position: relative;
-    margin: 0px 10px 0px 10px;
+    margin: 0px 10px 0px 0px;
 }
 
 .product_box_mains {
@@ -1128,6 +1128,15 @@ ul.dropdown-menu {
     /* background: #609A380D; */
     background: white !important;
     border-radius: 10px;
+}
+
+.related_product_boxex .product_listing_box {
+    background: #609A380D !important;
+}
+
+.related_product_boxex img {
+    height: 130px !important;
+    /* width: 100% !important; */
 }
 
 .product_box_mains {
