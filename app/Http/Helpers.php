@@ -1811,57 +1811,44 @@ if (!function_exists('check_asset_type')) {
 
 if (!function_exists('my_asset')) {
     /**
-     * Generate an asset path for the application.
-     *
-     * @param string $path
-     * @param bool|null $secure
-     * @return string
+     * Resolve an upload to its URL based on stored disk and environment.
+     * Rules:
+     *  - disk = s3  => AWS_URL + path (fallback: Storage URL)
+     *  - disk = local & APP_ENV=local => domain + path
+     *  - disk = local & APP_ENV=production => domain + /public + path
      */
-    function my_asset($value, $secure = null)
+    function my_asset($value)
     {
-        // Pass through full URLs untouched
+        // Absolute URLs stay as-is
         if (filter_var($value, FILTER_VALIDATE_URL)) {
             return $value;
         }
 
-        $defaultDisk = config('filesystems.default');
-        $disk = $defaultDisk;
-        $path = $value;
-
-        // Accept an upload ID or a raw path
         $upload = is_numeric($value)
             ? Upload::find($value)
-            : Upload::where('file_name', $value)->select('disk', 'external_link', 'file_name')->first();
+            : Upload::where('file_name', $value)->first();
 
-        if ($upload) {
-            if ($upload->external_link) {
-                return $upload->external_link;
-            }
-            $path = $upload->file_name;
-            $disk = $upload->disk;
-        } elseif (is_numeric($value)) {
+        if (!$upload) {
             return static_asset('assets/img/placeholder.jpg');
         }
 
-        // Heuristics for legacy/local files when default disk is s3
-        if (empty($disk) && $defaultDisk !== 'local') {
-            if (str_starts_with($path, 'uploads/')) {
-                $disk = 'local';
-            } elseif (file_exists(public_path($path))) {
-                $disk = 'local';
-            } else {
-                $disk = $defaultDisk;
-            }
+        if (!empty($upload->external_link)) {
+            return $upload->external_link;
         }
 
-        if (empty($disk)) {
-            $disk = $defaultDisk;
-        }
+        $disk = $upload->disk ?: config('filesystems.default');
+        $path = ltrim($upload->file_name, '/');
 
         if ($disk === 'local') {
             return app()->environment('local')
-                ? app('url')->asset('/' . $path, $secure)
-                : app('url')->asset('public/' . $path, $secure);
+                ? asset($path)
+                : asset('public/' . $path);
+        }
+
+        // Non-local (e.g., s3)
+        $bucketUrl = env(Str::upper($disk) . '_URL') ?? env('AWS_URL');
+        if (!empty($bucketUrl)) {
+            return rtrim($bucketUrl, '/') . '/' . $path;
         }
 
         return Storage::disk($disk)->url($path);
