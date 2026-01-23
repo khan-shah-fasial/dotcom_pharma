@@ -1838,15 +1838,24 @@ if (!function_exists('my_asset')) {
                 return $upload->external_link;
             }
             $path = $upload->file_name;
-            $disk = $upload->disk ?? $defaultDisk;
+            $disk = $upload->disk;
         } elseif (is_numeric($value)) {
             return static_asset('assets/img/placeholder.jpg');
-        } else {
-            // Fallback: if no DB record found but the path looks like a local upload,
-            // prefer local disk so "/public/uploads/..." works even when default disk is s3.
-            if ($defaultDisk !== 'local' && str_starts_with($path, 'uploads/')) {
+        }
+
+        // Heuristics for legacy/local files when default disk is s3
+        if (empty($disk) && $defaultDisk !== 'local') {
+            if (str_starts_with($path, 'uploads/')) {
                 $disk = 'local';
+            } elseif (file_exists(public_path($path))) {
+                $disk = 'local';
+            } else {
+                $disk = $defaultDisk;
             }
+        }
+
+        if (empty($disk)) {
+            $disk = $defaultDisk;
         }
 
         if ($disk === 'local') {
@@ -2008,15 +2017,25 @@ if (!function_exists('getBaseURL')) {
 if (!function_exists('getFileBaseURL')) {
     function getFileBaseURL()
     {
-        if(app()->environment('local')){
-            return getBaseURL() . '/';  //for local machine
-        }
-        
-        if (env('FILESYSTEM_DRIVER') != 'local') {
-            return env(Str::upper(env('FILESYSTEM_DRIVER')) . '_URL') . '/';
+        // Local: keep existing behaviour
+        if (app()->environment('local')) {
+            return getBaseURL() . '/';
         }
 
-        return getBaseURL() . '/public/';
+        // Non-local drivers (e.g., s3/backblaze)
+        if (env('FILESYSTEM_DRIVER') != 'local') {
+            $diskUrl = env(Str::upper(env('FILESYSTEM_DRIVER')) . '_URL');
+
+            // Fallback to app URL if the disk URL is missing
+            if (empty($diskUrl)) {
+                return rtrim(getBaseURL(), '/') . '/public/';
+            }
+
+            return rtrim($diskUrl, '/') . '/';
+        }
+
+        // Default local (production with local driver)
+        return rtrim(getBaseURL(), '/') . '/public/';
     }
 }
 
