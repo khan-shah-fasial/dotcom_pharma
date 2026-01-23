@@ -1,7 +1,7 @@
-<div class="col-12 my-md-5 my-3 p-0">
+<div class="col-12 p-0">
     <div class="">
-        <h3 class="fs-20 fs-md-24 fw-500 text-dark text-capitalize pl-md-3">
-            <span class="mr-4">
+        <h3 class="fs-20 fs-md-24 fw-500 text-dark text-capitalize pl-md-0">
+            <span class="">
                 {{ translate('More From') }} {{ optional($detailedProduct->brand)->getTranslation('name') }}
             </span>
         </h3>
@@ -11,7 +11,7 @@
             data-lg-items="6" data-md-items="6" data-sm-items="4" data-xs-items="2"
             data-arrows='true' data-infinite='true'>
             @foreach (get_brand_related_products($detailedProduct) as $key => $brand_product)
-                <div class="carousel-box product_listing_box product_img_bg">
+                <div class="carousel-box product_listing_box product_img_bg related_bottom_section ">
                     <div class="aiz-card-box hov-shadow-md my-2 has-transition hov-scale-img h-100 product_listing_box product_img_bg">
                         <div class="">
                             <a href="{{ route('product', $brand_product->slug) }}" class="d-block">

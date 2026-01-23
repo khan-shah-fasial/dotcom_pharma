@@ -127,7 +127,7 @@
 
     <section class="new-bg-color mb-md-4 pt-0">
         <div class="container new-bg-color">
-            <div class="new-bg-color py-3">
+            <div class="new-bg-color pt-3">
                 <div class="row ml-0 mr-0">
                     <!-- Product Image Gallery -->
                     <div class="col-xl-6 col-lg-6 p-md-4 p-0 mb-4">

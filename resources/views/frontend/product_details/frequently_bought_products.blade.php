@@ -9,7 +9,7 @@
             data-lg-items="4" data-md-items="4" data-sm-items="2" data-xs-items="2"
             data-arrows='true' data-infinite='true'>
             @foreach (get_frequently_bought_products($detailedProduct) as $key => $related_product)
-                <div class="carousel-box product_listing_box product_img_bg">
+                <div class="carousel-box product_listing_box  product_img_bg">
                     <div class="aiz-card-box hov-shadow-md my-2 has-transition hov-scale-img h-100 product_listing_box product_img_bg">
                         <div class="">
                             <a href="{{ route('product', $related_product->slug) }}" class="d-block">
