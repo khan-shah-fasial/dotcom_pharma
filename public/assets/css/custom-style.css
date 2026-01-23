@@ -215,6 +215,10 @@ li.list-inline-item.human_btn {
     margin: 0px 10px 0px 0px;
 }
 
+.related_product_boxex {
+    margin-bottom: 0px !important
+}
+
 .product_box_mains {
     position: relative;
     padding: 0px 15px;
@@ -1865,7 +1869,7 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     }
 
     .product_img_bg {
-        margin: 0px 10px 10px 10px;
+        margin: 0px 10px 10px 0px;
     }
 
 }
@@ -1893,6 +1897,10 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
     opacity: 1 !important;
     top: -13px;
     right: -12px !important;
+}
+
+.related_bottom_section .product_listing_box.product_img_bg {
+    background: #609A380D !important;
 }
 
 .product_disc_text .col-12 {
