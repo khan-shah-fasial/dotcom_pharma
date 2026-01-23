@@ -5,10 +5,10 @@
         </h3>
     </div>
     <div class="col-12 p-0">
-        <div class="aiz-carousel" data-items="4" data-xl-items="4"
+        <div class="aiz-carousel similar-products-carousel" data-items="4" data-xl-items="4"
             data-lg-items="4" data-md-items="4" data-sm-items="2" data-xs-items="2"
-            data-arrows='false' data-infinite='false'>
-            @foreach (get_similar_products($detailedProduct, 6) as $key => $similar_product)
+            data-arrows='false' data-infinite='true'>
+            @foreach (get_similar_products($detailedProduct, 12) as $key => $similar_product)
                 <div class="carousel-box product_listing_box related_product_boxex product_img_bg">
                     <div class="aiz-card-box hov-shadow-md my-2 has-transition hov-scale-img h-100 product_listing_box product_img_bg">
                         <div class="">
