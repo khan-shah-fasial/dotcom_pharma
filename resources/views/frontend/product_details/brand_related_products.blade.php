@@ -1,4 +1,4 @@
-<div class="col-12 my-md-5 my-3 p-0">
+<div class="col-12 p-0">
     <div class="">
         <h3 class="fs-20 fs-md-24 fw-500 text-dark text-capitalize pl-md-0">
             <span class="">
