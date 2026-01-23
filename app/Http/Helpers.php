@@ -1841,6 +1841,12 @@ if (!function_exists('my_asset')) {
             $disk = $upload->disk ?? $defaultDisk;
         } elseif (is_numeric($value)) {
             return static_asset('assets/img/placeholder.jpg');
+        } else {
+            // Fallback: if no DB record found but the path looks like a local upload,
+            // prefer local disk so "/public/uploads/..." works even when default disk is s3.
+            if ($defaultDisk !== 'local' && str_starts_with($path, 'uploads/')) {
+                $disk = 'local';
+            }
         }
 
         if ($disk === 'local') {
