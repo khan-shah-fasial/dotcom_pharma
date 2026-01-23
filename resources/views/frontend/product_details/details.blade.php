@@ -588,6 +588,11 @@
             </div>
         </div>
 
+        <!-- Similar products from same category -->
+        @if(count(get_similar_products($detailedProduct)) > 0)
+            @include('frontend.product_details.similar_products')
+        @endif
+        
         <!-- Certificates Section -->
         <div class="certificates-section mt-md-4 mt-3 col-md-12 pl-0">
             <h3 class="fs-14 fw-500 text-dark mr-2">
@@ -2369,7 +2374,6 @@
     <script>
         // Using jQuery
         $(document).ready(function() {
-
 
             // initValidate(`#product_enquiry_store`);
 

@@ -195,8 +195,13 @@
                         
 
                         <!-- Frequently Bought products -->
-                        @if(count(get_frequently_bought_products($detailedProduct)) > 0)
+                        {{-- @if(count(get_related_products($detailedProduct)) > 0)
                             @include('frontend.product_details.frequently_bought_products')
+                        @endif --}}
+
+                        <!-- Related products by brand -->
+                        @if(count(get_brand_related_products($detailedProduct)) > 0)
+                            @include('frontend.product_details.brand_related_products')
                         @endif
                         
                         <!-- Product Query -->

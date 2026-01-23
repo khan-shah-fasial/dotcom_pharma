@@ -1873,6 +1873,111 @@ if (!function_exists('static_asset')) {
 }
 
 
+// Get admin-curated related products (falls back to category peers)
+if (!function_exists('get_related_products')) {
+    function get_related_products($product, $limit = 10)
+    {
+        $selectionType = $product->frequently_bought_selection_type ?? null;
+        $products = collect();
+
+        if ($selectionType === 'product') {
+            $relatedIds = $product->frequently_bought_products()
+                ->whereNull('category_id')
+                ->pluck('frequently_bought_product_id')
+                ->toArray();
+
+            if (!empty($relatedIds)) {
+                $products = filter_products(Product::whereIn('id', $relatedIds))->limit($limit)->get();
+            }
+        } elseif ($selectionType === 'category') {
+            $categoryId = optional($product->frequently_bought_products()->whereNotNull('category_id')->first())->category_id;
+
+            if ($categoryId) {
+                $category = Category::find($categoryId);
+                if ($category) {
+                    $query = $category->products()->where('id', '!=', $product->id);
+                    $query = $product->added_by == 'admin' ? $query->where('added_by', 'admin') : $query->where('user_id', $product->user_id);
+
+                    $products = filter_products($query)->inRandomOrder()->limit($limit)->get();
+                }
+            }
+        }
+
+        if ($products->isNotEmpty()) {
+            return $products;
+        }
+
+        $categoryIds = collect([$product->category_id])
+            ->merge($product->categories()->pluck('categories.id'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($categoryIds->isEmpty()) {
+            return collect([]);
+        }
+
+        $query = Product::where('id', '!=', $product->id)
+            ->where(function ($q) use ($categoryIds) {
+                $q->whereIn('category_id', $categoryIds)
+                    ->orWhereIn('id', function ($sub) use ($categoryIds) {
+                        $sub->from('product_categories')
+                            ->select('product_id')
+                            ->whereIn('category_id', $categoryIds);
+                    });
+            });
+
+        return filter_products($query)->inRandomOrder()->limit($limit)->get();
+    }
+}
+
+
+// Get similar products from same categories excluding related list
+if (!function_exists('get_similar_products')) {
+    function get_similar_products($product, $limit = 6)
+    {
+        $categoryIds = collect([$product->category_id])
+            ->merge($product->categories()->pluck('categories.id'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($categoryIds->isEmpty()) {
+            return collect([]);
+        }
+
+        $relatedIds = get_related_products($product, $limit * 2)->pluck('id')->toArray();
+        $excludeIds = array_unique(array_merge([$product->id], $relatedIds));
+
+        $query = Product::where(function ($q) use ($categoryIds) {
+            $q->whereIn('category_id', $categoryIds)
+                ->orWhereIn('id', function ($sub) use ($categoryIds) {
+                    $sub->from('product_categories')
+                        ->select('product_id')
+                        ->whereIn('category_id', $categoryIds);
+                });
+        })->whereNotIn('id', $excludeIds);
+
+        return filter_products($query)->inRandomOrder()->limit($limit)->get();
+    }
+}
+
+// Get products from the same brand
+if (!function_exists('get_brand_related_products')) {
+    function get_brand_related_products($product, $limit = 12)
+    {
+        if (!$product->brand_id) {
+            return collect([]);
+        }
+
+        $query = Product::where('brand_id', $product->brand_id)
+            ->where('id', '!=', $product->id);
+
+        return filter_products($query)->inRandomOrder()->limit($limit)->get();
+    }
+}
+
+
 // if (!function_exists('isHttps')) {
 //     function isHttps()
 //     {
