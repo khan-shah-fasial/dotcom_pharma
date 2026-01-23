@@ -114,7 +114,7 @@ class AizUploadController extends Controller
 
         if ($request->hasFile('aiz_file')) {
             $upload = new Upload;
-            $upload->disk = config('filesystems.default');
+            // $upload->disk = config('filesystems.default');
             $extension = strtolower($request->file('aiz_file')->getClientOriginalExtension());
 
             if (
@@ -260,6 +260,7 @@ class AizUploadController extends Controller
                     $path = $request->file('aiz_file')->store('uploads/all/' . date('Y/m'), 'local');
                 }
 
+                $diskUploadFailed = false;
                 if (env('FILESYSTEM_DRIVER') != 'local') {
                     try {
                         // Return MIME type ala mimetype extension
@@ -290,6 +291,7 @@ class AizUploadController extends Controller
 
                         // If Storage::put() returns false, try direct AWS SDK for better error messages
                         if ($result === false) {
+                            $diskUploadFailed = true;
                             // Get AWS config
                             $awsConfig = config('filesystems.disks.' . $diskName);
                             
@@ -345,6 +347,7 @@ class AizUploadController extends Controller
                             unlink($filePath);
                         }
                     } catch (AwsException $e) {
+                        $diskUploadFailed = true;
                         // AWS-specific exception with detailed error information
                         $awsError = [
                             'message' => $e->getAwsErrorMessage(),
@@ -364,6 +367,7 @@ class AizUploadController extends Controller
                         ]);
                         // If upload fails, keep local file so it's not lost
                     } catch (\Exception $e) {
+                        $diskUploadFailed = true;
                         // Log error with full details for debugging
                         Log::error('S3 Upload Error: ' . $e->getMessage(), [
                             'path' => $path,
@@ -383,6 +387,8 @@ class AizUploadController extends Controller
                 $upload->user_id = Auth::user()->id;
                 $upload->type = $type[$upload->extension];
                 $upload->file_size = $size;
+                // If cloud upload failed, mark as local so URL generation stays correct
+                $upload->disk = $diskUploadFailed ? 'local' : config('filesystems.default');
                 $upload->save();
             }
             return '{}';
