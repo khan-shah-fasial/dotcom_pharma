@@ -13,7 +13,11 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
     AIZ.data = {
         csrf: $('meta[name="csrf-token"]').attr("content"),
         appUrl: $('meta[name="app-url"]').attr("content"),
+        awsUrl: $('meta[name="aws-url"]').attr("content"),
         fileBaseUrl: $('meta[name="file-base-url"]').attr("content"),
+        setfileBaseUrlFor: function (disk) {
+            return disk === "s3" ? AIZ.data.awsUrl : AIZ.data.fileBaseUrl;
+        },
     };
     AIZ.uploader = {
         data: {
@@ -403,10 +407,11 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     for (var i = 0; i < data.length; i++) {
                         var thumb = "";
                         var hidden = "";
+                        var baseURL = AIZ.data.setfileBaseUrlFor(data[i].disk);
                         if (data[i].type === "image") {
                             thumb =
-                                '<img src="' +
-                                AIZ.data.fileBaseUrl +
+                                '<img data-disk="' + data[i].disk + '" src="' +
+                                baseURL +
                                 data[i].file_name +
                                 '" class="img-fit">';
                         } else {
@@ -622,8 +627,8 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     var thumb = "";
                     if (AIZ.uploader.data.allFiles[index].type === "image") {
                         thumb =
-                            '<img src="' +
-                            AIZ.data.fileBaseUrl +
+                            '<img data-disk="' + AIZ.uploader.data.allFiles[index].disk + '" src="' +
+                            AIZ.data.setfileBaseUrlFor(AIZ.uploader.data.allFiles[index].disk) +
                             AIZ.uploader.data.allFiles[index].file_name +
                             '">';
                         elem[0].insertHTML(thumb);
@@ -1194,9 +1199,6 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
             if ($("#aiz-upload-files").length > 0) {
                 var uppy = Uppy.Core({
                     autoProceed: true,
-                    restrictions: {
-                        allowedFileTypes: ['image/*', 'video/*', 'audio/*', 'application/pdf', '.doc', '.docx', '.txt', '.csv', '.xml', '.ods', '.xlr', '.xls', '.xlsx', '.zip', '.rar', '.7z', '.webp']
-                    }
                 });
                 uppy.use(Uppy.Dashboard, {
                     target: "#aiz-upload-files",
