@@ -111,17 +111,45 @@ class FinancialArchiveController extends Controller
         $upload->file_size = $file->getSize();
         $upload->user_id = auth()->id();
         $upload->type = $typeMap[$extension] ?? 'document';
-        // $upload->file_name = $file->store('uploads/all', 'local');
         $path = 'uploads/all/' . date('Y/m');
 
-        // ADD: ensure directory exists on SAME disk
         Storage::disk('local')->makeDirectory($path);
 
-        // ADD: force permission
-        @chmod(storage_path('app/' . $path), 0777);
+        $storedPath = $file->store($path, 'local');
 
-        // UNCHANGED (still local disk)
-        $upload->file_name = $file->store($path, 'local');
+        $diskUploadFailed = false;
+        if (env('FILESYSTEM_DRIVER') != 'local') {
+            try {
+                $diskName = env('FILESYSTEM_DRIVER') == 's3' ? 's3' : env('FILESYSTEM_DRIVER');
+                $filePath = public_path($storedPath);
+                if (!file_exists($filePath)) {
+                    throw new \Exception("File not found: " . $filePath);
+                }
+
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $file_mime = finfo_file($finfo, $filePath);
+                finfo_close($finfo);
+
+                $result = Storage::disk($diskName)->put(
+                    $storedPath,
+                    file_get_contents($filePath),
+                    [
+                        'ContentType' => $extension == 'svg' ? 'image/svg+xml' : $file_mime
+                    ]
+                );
+
+                if ($result === false) {
+                    $diskUploadFailed = true;
+                } else {
+                    unlink($filePath);
+                }
+            } catch (\Exception $e) {
+                $diskUploadFailed = true;
+            }
+        }
+
+        $upload->file_name = $storedPath;
+        $upload->disk = $diskUploadFailed ? 'local' : config('filesystems.default');
         
         // $upload->file_name = $file->store('uploads/all/' . date('Y/m'), 'local');
         $upload->save();
