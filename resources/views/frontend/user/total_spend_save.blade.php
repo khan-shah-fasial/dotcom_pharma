@@ -18,28 +18,28 @@
                 </div>
             </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-md-4 p-3">
             <div class="row text-center gy-3 spend-metrics">
-                <div class="col-6 col-md-6 col-lg-3">
-                    <div class="p-3 bg-soft-primary rounded h-100 metric-card">
+                <div class="col-6 col-md-6 col-lg-3 mb-md-0 mb-3">
+                    <div class="p-md-3 p-2 bg-soft-primary rounded h-100 metric-card ">
                         <div class="spend-label-12 text-muted">{{ translate('Total Spends') }}</div>
                         <div class="spend-value fw-800 text-dark">{{ single_price($totalSale) }}</div>
                     </div>
                 </div>
-                <div class="col-6 col-md-6 col-lg-3">
-                    <div class="p-3 bg-soft-success rounded h-100 metric-card">
+                <div class="col-6 col-md-6 col-lg-3 mb-md-0 mb-3">
+                    <div class="p-md-3 p-2 bg-soft-success rounded h-100 metric-card">
                         <div class="spend-label-12 text-muted">{{ translate('Actual MRP Value') }}</div>
                         <div class="spend-value fw-800 text-dark">{{ single_price($totalMrp) }}</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-6 col-lg-3">
-                    <div class="p-3 bg-soft-info rounded h-100 metric-card">
+                    <div class="p-md-3 p-2 bg-soft-info rounded h-100 metric-card">
                         <div class="spend-label-12 text-muted">{{ translate('Total Order Count') }}</div>
                         <div class="spend-value fw-800 text-dark">{{ $orderCount }}</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-6 col-lg-3">
-                    <div class="p-3 bg-soft-warning rounded h-100 metric-card">
+                    <div class="p-md-3 p-2 bg-soft-warning rounded h-100 metric-card ">
                         <div class="spend-label-12 text-muted">{{ translate('Avg Savings per order') }}</div>
                         <div class="spend-value fw-800 text-dark">{{ single_price($avgSavePerOrder) }}</div>
                     </div>

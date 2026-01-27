@@ -4,7 +4,7 @@
 
     <section class="py-5">
         <div class="container">
-            <div class="d-flex align-items-start">
+            <div class="d-md-flex align-items-start">
                 @include('frontend.inc.user_side_nav')
                 <div class="aiz-user-panel">
                     <div class="card rounded-0 shadow-none border">
