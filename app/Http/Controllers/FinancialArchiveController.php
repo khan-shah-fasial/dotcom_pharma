@@ -20,6 +20,7 @@ class FinancialArchiveController extends Controller
         'lr_gr_doc' => 'LR/GR/Doc',
         'credit_debit_note' => 'Credit / Debit Note',
         'account_statement' => 'Account Statement',
+        'purchased_history' => 'Purchased History',
         // 'product_purchased' => 'Product Purchased',
         // 'ledger_statement' => 'Ledger Statement',
         // 'lr_copy' => 'LR Copy',
