@@ -1934,10 +1934,19 @@ if (!function_exists('get_related_products')) {
 }
 
 
-// Get similar products from same categories excluding related list
+// Get similar products: prioritize sub-category peers; if product is in a main category, show main-category peers
 if (!function_exists('get_similar_products')) {
-    function get_similar_products($product, $limit = 6)
+    function get_similar_products($product, $limit = 12)
     {
+        $excludeIds = array_unique([$product->id]);
+
+        $category = $product->category_id ? Category::find($product->category_id) : null;
+        if (!$category) {
+            return collect([]);
+        }
+
+        // if product is in a main category (no parent), show peers from that main category
+        // otherwise show peers from its specific sub-category (and any additional pivot categories)
         $categoryIds = collect([$product->category_id])
             ->merge($product->categories()->pluck('categories.id'))
             ->filter()
@@ -1947,9 +1956,6 @@ if (!function_exists('get_similar_products')) {
         if ($categoryIds->isEmpty()) {
             return collect([]);
         }
-
-        $relatedIds = get_related_products($product, $limit * 2)->pluck('id')->toArray();
-        $excludeIds = array_unique(array_merge([$product->id], $relatedIds));
 
         $query = Product::where(function ($q) use ($categoryIds) {
             $q->whereIn('category_id', $categoryIds)
@@ -1964,16 +1970,29 @@ if (!function_exists('get_similar_products')) {
     }
 }
 
-// Get products from the same brand
+// Get products from the same category set (used for "More From" carousel)
 if (!function_exists('get_brand_related_products')) {
     function get_brand_related_products($product, $limit = 12)
     {
-        if (!$product->brand_id) {
+        $categoryIds = collect([$product->category_id])
+            ->merge($product->categories()->pluck('categories.id'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($categoryIds->isEmpty()) {
             return collect([]);
         }
 
-        $query = Product::where('brand_id', $product->brand_id)
-            ->where('id', '!=', $product->id);
+        $query = Product::where('id', '!=', $product->id)
+            ->where(function ($q) use ($categoryIds) {
+                $q->whereIn('category_id', $categoryIds)
+                    ->orWhereIn('id', function ($sub) use ($categoryIds) {
+                        $sub->from('product_categories')
+                            ->select('product_id')
+                            ->whereIn('category_id', $categoryIds);
+                    });
+            });
 
         return filter_products($query)->inRandomOrder()->limit($limit)->get();
     }

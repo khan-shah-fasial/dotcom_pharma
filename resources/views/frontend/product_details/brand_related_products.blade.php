@@ -2,15 +2,16 @@
     <div class="">
         <h3 class="fs-20 fs-md-24 fw-500 text-dark text-capitalize pl-md-0">
             <span class="">
-                {{ translate('More From') }} {{ optional($detailedProduct->brand)->getTranslation('name') }}
+                {{ translate('More From') }} {{ optional($detailedProduct->main_category)->getTranslation('name') }}
             </span>
         </h3>
     </div>
     <div class="">
+        @php $brandCategoryProducts = $brandCategoryProducts ?? get_brand_related_products($detailedProduct); @endphp
         <div class="aiz-carousel gutters-5 half-outside-arrow" data-items="6" data-xl-items="6"
             data-lg-items="6" data-md-items="6" data-sm-items="4" data-xs-items="2"
             data-arrows='true' data-infinite='true'>
-            @foreach (get_brand_related_products($detailedProduct) as $key => $brand_product)
+            @foreach ($brandCategoryProducts as $key => $brand_product)
                 <div class="carousel-box product_listing_box product_img_bg related_bottom_section ">
                     <div class="aiz-card-box hov-shadow-md my-2 has-transition hov-scale-img h-100 product_listing_box product_img_bg">
                         <div class="">

@@ -194,14 +194,25 @@
 
                         
 
-                        <!-- Frequently Bought products -->
-                        {{-- @if(count(get_related_products($detailedProduct)) > 0)
-                            @include('frontend.product_details.frequently_bought_products')
+                        @php
+                            // $relatedProducts = get_related_products($detailedProduct);
+                            $brandCategoryProducts = get_brand_related_products($detailedProduct);
+                            $similarProducts = get_similar_products($detailedProduct, 10);
+                        @endphp
+
+                        <!-- Related products (curated/fallback) -->
+                        {{-- @if($relatedProducts && $relatedProducts->count() > 0)
+                            @include('frontend.product_details.frequently_bought_products', ['relatedProducts' => $relatedProducts])
                         @endif --}}
 
-                        <!-- Related products by brand -->
-                        @if(count(get_brand_related_products($detailedProduct)) > 0)
-                            @include('frontend.product_details.brand_related_products')
+                        <!-- Similar products based on drug role -->
+                        @if($similarProducts && $similarProducts->count() > 0)
+                            @include('frontend.product_details.similar_products', ['similarProducts' => $similarProducts])
+                        @endif
+                        
+                        <!-- Category peers (More From ...) -->
+                        @if($brandCategoryProducts && $brandCategoryProducts->count() > 0)
+                            @include('frontend.product_details.brand_related_products', ['brandCategoryProducts' => $brandCategoryProducts])
                         @endif
                         
                         <!-- Product Query -->

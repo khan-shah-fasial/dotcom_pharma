@@ -1,14 +1,15 @@
 <div class="col-12 pl-0 ps-0 pe-0 mt-md-4 mt-3 p-">
     <div class="col-12 p-0">
-        <h3 class="fs-14 fw-500 text-dark mt-3">
+        <h3 class="fs-20 fs-md-24 fw-500 text-dark text-capitalize pl-md-0">
             <span class="">{{ translate('Similar Products') }}:</span>
         </h3>
     </div>
     <div class="col-12 p-0">
-        <div class="aiz-carousel similar-products-carousel" data-items="4" data-xl-items="4"
-            data-lg-items="4" data-md-items="4" data-sm-items="2" data-xs-items="2"
+        @php $similarProducts = $similarProducts ?? get_similar_products($detailedProduct, 10); @endphp
+        <div class="aiz-carousel similar-products-carousel" data-items="6" data-xl-items="6"
+            data-lg-items="6" data-md-items="6" data-sm-items="4" data-xs-items="2"
             data-arrows='false' data-infinite='true'>
-            @foreach (get_similar_products($detailedProduct, 12) as $key => $similar_product)
+            @foreach ($similarProducts as $key => $similar_product)
                 <div class="carousel-box product_listing_box related_product_boxex product_img_bg">
                     <div class="aiz-card-box hov-shadow-md my-2 has-transition hov-scale-img h-100 product_listing_box product_img_bg">
                         <div class="">

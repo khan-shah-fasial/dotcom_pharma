@@ -587,11 +587,6 @@
                 </button>
             </div>
         </div>
-
-        <!-- Similar products from same category -->
-        @if(count(get_similar_products($detailedProduct)) > 0)
-            @include('frontend.product_details.similar_products')
-        @endif
         
         <!-- Certificates Section -->
         <div class="certificates-section mt-md-4 mt-3 col-md-12 pl-0">
