@@ -117,7 +117,7 @@
 									<div class="col-6 mb-3">
 										<label class="form-label mb-1">{{ translate('Qty per Piece') }}</label>
 										<input type="number" lang="en" name="qty_per_piece_{{ $str }}" class="form-control"
-											placeholder="{{ translate('Enter qty per piece') }}" step="0.01" min="0">
+											placeholder="{{ translate('Enter qty per piece') }}" step="1" min="0">
 									</div>
 									<div class="col-6 mb-3">
 										<label class="form-label mb-1">{{ translate('Weight Of Each Piece') }}</label>

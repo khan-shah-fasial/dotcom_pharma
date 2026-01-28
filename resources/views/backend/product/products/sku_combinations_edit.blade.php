@@ -141,7 +141,7 @@
                                                 <input type="number" name="qty_per_piece_{{ $str }}"
                                                     value="{{ $stock->qty_per_piece ?? '' }}" class="form-control"
                                                     placeholder="{{ translate('Enter qty per piece (usually 1)') }}"
-                                                    step="0.01" min="0">
+                                                    step="1" min="0">
                                             </div>
                                             <div class="col-6 mb-3">
                                                 <label
