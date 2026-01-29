@@ -70,8 +70,8 @@
 								</div>
 								<div class="col-md-2 col-4">
 									<div class="btn-group btn-group-sm" role="group">
-										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-grid"><i class="las la-th-large"></i></button>
-										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-list"><i class="las la-list"></i></button>
+										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-grid"><i class="las la-th-large"></i>Grid</button>
+										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-list"><i class="las la-list"></i>List</button>
 									</div>
 								</div>
 								<div class="col-md-3 col-5">
