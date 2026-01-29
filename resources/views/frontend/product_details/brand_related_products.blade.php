@@ -40,7 +40,7 @@
                                 </div>
                             @endif
 
-                            <div class="fs-16">
+                            <div class="fs-14">
                                 <span class="fw-700 text-primary">{{ home_discounted_base_price($brand_product) }}</span>
                                 @if (home_base_price($brand_product) != home_discounted_base_price($brand_product))
                                     <del class="fw-400 text-secondary mr-1 fs-14 d-none">{{ home_base_price($brand_product) }}</del>
