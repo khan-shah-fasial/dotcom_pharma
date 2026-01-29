@@ -33,6 +33,47 @@
 										<!-- End Input -->
 									</div>
 								</div>
+								<div class="col-xl-2 col-md-3 col-5">
+									<select id="type_filter" class="form-control form-control-xs aiz-selectpicker" name="aiz-uploader-type" data-live-search="true">
+										<option value="">{{ translate('All types') }}</option>
+										@php
+											$typeOptions = [
+												'image' => translate('Images'),
+												'video' => translate('Videos'),
+												'audio' => translate('Audio'),
+												'pdf' => translate('PDF'),
+												'doc' => translate('Word / Doc'),
+												'docx' => translate('Word / Docx'),
+												'excel' => translate('Excel'),
+												'xls' => translate('Excel (XLS)'),
+												'xlsx' => translate('Excel (XLSX)'),
+												'csv' => translate('CSV'),
+												'archive' => translate('Archive'),
+												'document' => translate('Documents'),
+											];
+										@endphp
+										@foreach($typeOptions as $value => $label)
+											<option value="{{ $value }}" @selected(($typeFilter ?? null) === $value)>{{ $label }}</option>
+										@endforeach
+									</select>
+
+									{{-- <select class="form-control form-control-xs aiz-selectpicker" name="aiz-uploader-type" data-live-search="true">
+										<option value="">{{ translate('All types') }}</option>
+										<option value="image">{{ translate('Images') }}</option>
+										<option value="video">{{ translate('Videos') }}</option>
+										<option value="audio">{{ translate('Audio') }}</option>
+										<option value="pdf">{{ translate('PDF') }}</option>
+										<option value="doc">{{ translate('Doc/Docx') }}</option>
+										<option value="excel">{{ translate('Excel/CSV') }}</option>
+										<option value="archive">{{ translate('Archives') }}</option>
+									</select> --}}
+								</div>
+								<div class="col-md-2 col-4">
+									<div class="btn-group btn-group-sm" role="group">
+										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-grid"><i class="las la-th-large"></i></button>
+										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-list"><i class="las la-list"></i></button>
+									</div>
+								</div>
 								<div class="col-md-3 col-5">
 									<div class="custom-control custom-radio">
 										<input type="checkbox" class="custom-control-input" name="aiz-show-selected" id="aiz-show-selected" name="stylishRadio">
