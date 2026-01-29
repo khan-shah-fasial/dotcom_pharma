@@ -656,6 +656,13 @@
                          class="img-fluid rounded"
                          onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                 </div>
+
+                 <div class="certificate-item">
+                    <img src="{{ static_asset('assets/img/cirtificate112.jpg') }}" 
+                         alt="{{ translate('Certificate') }}" 
+                         class="img-fluid rounded"
+                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                </div>
                 
                  
             </div>

@@ -1,13 +1,13 @@
-<div class="col-12 pl-0 ps-0 pe-0 mt-md-4 mt-3 p-">
+<div class="col-12 pl-0 ps-0 pe-0 mt-md-4 mt-3 pb-md-4 pb-4">
     <div class="col-12 p-0">
-        <h3 class="fs-20 fs-md-24 fw-500 text-dark text-capitalize pl-md-0">
+        <h3 class="fs-18 fs-md-18 fw-500 text-dark text-capitalize pl-md-0">
             <span class="">{{ translate('Similar Products') }}:</span>
         </h3>
     </div>
     <div class="col-12 p-0">
         @php $similarProducts = $similarProducts ?? get_similar_products($detailedProduct, 10); @endphp
-        <div class="aiz-carousel similar-products-carousel" data-items="6" data-xl-items="6"
-            data-lg-items="6" data-md-items="6" data-sm-items="4" data-xs-items="2"
+        <div class="aiz-carousel similar-products-carousel" data-items="10" data-xl-items="10"
+            data-lg-items="10" data-md-items="10" data-sm-items="6" data-xs-items="2"
             data-arrows='false' data-infinite='true'>
             @foreach ($similarProducts as $key => $similar_product)
                 <div class="carousel-box product_listing_box related_product_boxex product_img_bg">
@@ -22,7 +22,7 @@
                             </a>
                         </div>
                         <div class="px-3 pt-2 pb-3 start">
-                            <h3 class="fw-500 fs-14 text-truncate-1 lh-1-4 mb-1">
+                            <h3 class="fw-400 fs-13 text-truncate-1 lh-1-4 mb-1">
                                 <a href="{{ route('product', $similar_product->slug) }}"
                                     class="d-block text-reset hov-text-primary">{{ $similar_product->getTranslation('name') }}</a>
                             </h3>

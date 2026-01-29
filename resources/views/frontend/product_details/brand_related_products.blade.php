@@ -1,6 +1,6 @@
 <div class="col-12 p-0">
     <div class="">
-        <h3 class="fs-20 fs-md-24 fw-500 text-dark text-capitalize pl-md-0">
+        <h3 class="fs-18 fs-md-18 fw-500 text-dark text-capitalize pl-md-0">
             <span class="">
                 {{ translate('More From') }} {{ optional($detailedProduct->main_category)->getTranslation('name') }}
             </span>
@@ -8,8 +8,8 @@
     </div>
     <div class="">
         @php $brandCategoryProducts = $brandCategoryProducts ?? get_brand_related_products($detailedProduct); @endphp
-        <div class="aiz-carousel gutters-5 half-outside-arrow" data-items="6" data-xl-items="6"
-            data-lg-items="6" data-md-items="6" data-sm-items="4" data-xs-items="2"
+        <div class="aiz-carousel gutters-5 half-outside-arrow" data-items="10" data-xl-items="10"
+            data-lg-items="10" data-md-items="10" data-sm-items="6" data-xs-items="2"
             data-arrows='true' data-infinite='true'>
             @foreach ($brandCategoryProducts as $key => $brand_product)
                 <div class="carousel-box product_listing_box product_img_bg related_bottom_section ">
@@ -24,7 +24,7 @@
                             </a>
                         </div>
                         <div class="px-3 pt-2 pb-3 start">
-                            <h3 class="fw-500 fs-16 text-truncate-1 lh-1-4 mb-1">
+                            <h3 class="fw-400 fs-13 text-truncate-1 lh-1-4 mb-1">
                                 <a href="{{ route('product', $brand_product->slug) }}"
                                     class="d-block text-reset hov-text-primary">{{ $brand_product->getTranslation('name') }}</a>
                             </h3>
