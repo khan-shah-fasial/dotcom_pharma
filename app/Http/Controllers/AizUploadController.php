@@ -12,6 +12,7 @@ use enshrined\svgSanitize\Sanitizer;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
 
@@ -508,6 +509,15 @@ class AizUploadController extends Controller
     {
         $upload = Upload::findOrFail($id);
 
+        if ($this->uploadInUse($upload->id)) {
+            $message = translate('File is in use and cannot be deleted.');
+            if (request()->ajax()) {
+                return response()->json(['status' => false, 'message' => $message], 409);
+            }
+            flash($message)->error();
+            return back();
+        }
+
         if (auth()->user()->user_type == 'seller' && $upload->user_id != auth()->user()->id) {
             flash(translate("You don't have permission for deleting this!"))->error();
             return back();
@@ -531,11 +541,95 @@ class AizUploadController extends Controller
         return back();
     }
 
+    /**
+     * Check if an upload ID is referenced elsewhere (basic guard to prevent deletion).
+     * Scans all tables that store upload IDs or CSV lists.
+     */
+    protected function uploadInUse($uploadId): bool
+    {
+        // Products: photos (CSV), thumbnail_img (single), meta_img (single), pdf (single)
+        $inProducts = DB::table('products')
+            ->where('photos', 'like', '%'.$uploadId.'%')
+            ->orWhere('thumbnail_img', $uploadId)
+            ->orWhere('meta_img', $uploadId)
+            ->orWhere('pdf', $uploadId)
+            ->exists();
+
+        if ($inProducts) {
+            return true;
+        }
+
+        // Banners: photo (single)
+        $inBanners = DB::table('banners')
+            ->where('photo', $uploadId)
+            ->exists();
+
+        if ($inBanners) {
+            return true;
+        }
+
+        // Brands: logo (single)
+        $inBrands = DB::table('brands')
+            ->where('logo', $uploadId)
+            ->exists();
+
+        if ($inBrands) {
+            return true;
+        }
+
+        // Categories: banner (single), icon (single)
+        $inCategories = DB::table('categories')
+            ->where('banner', $uploadId)
+            ->orWhere('icon', $uploadId)
+            ->exists();
+
+        if ($inCategories) {
+            return true;
+        }
+
+        // Flash Deals: banner (single)
+        $inFlashDeals = DB::table('flash_deals')
+            ->where('banner', $uploadId)
+            ->exists();
+
+        if ($inFlashDeals) {
+            return true;
+        }
+
+        // Financial Archives: upload_id (single)
+        $inFinancialArchives = DB::table('financial_archives')
+            ->where('upload_id', $uploadId)
+            ->exists();
+
+        if ($inFinancialArchives) {
+            return true;
+        }
+
+        // Users: avatar_original (single), avatar (single)
+        $inUsers = DB::table('users')
+            ->where('avatar_original', $uploadId)
+            ->orWhere('avatar', $uploadId)
+            ->exists();
+
+        if ($inUsers) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function bulk_uploaded_files_delete(Request $request)
     {
         if ($request->id) {
+            $blocked = null;
             foreach ($request->id as $file_id) {
-                $this->destroy($file_id);
+                $resp = $this->destroy($file_id);
+                if ($resp instanceof \Illuminate\Http\JsonResponse && $resp->getStatusCode() === 409) {
+                    $blocked = $resp->getData()->message ?? translate('Some files are in use and could not be deleted.');
+                }
+            }
+            if ($blocked) {
+                return response()->json(['status' => false, 'message' => $blocked], 409);
             }
             return 1;
         } else {
