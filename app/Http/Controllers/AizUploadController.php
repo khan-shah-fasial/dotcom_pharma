@@ -6,10 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\Upload;
 use Response;
 use Auth;
-use Storage;
+use Illuminate\Support\Facades\Storage;
 use Image;
 use enshrined\svgSanitize\Sanitizer;
-use Str;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Aws\S3\S3Client;
@@ -20,40 +20,89 @@ class AizUploadController extends Controller
     public function index(Request $request)
     {
 
-        $all_uploads = (auth()->user()->user_type == 'seller') ? Upload::where('user_id', auth()->user()->id) : Upload::query();
-        $search = null;
-        $sort_by = null;
+        $all_uploads = (auth()->user()->user_type == 'seller')
+            ? Upload::where('user_id', auth()->user()->id)
+            : Upload::query();
 
-        if ($request->search != null) {
-            $search = $request->search;
-            $all_uploads->where('file_original_name', 'like', '%' . $request->search . '%');
+        $search        = $request->search;
+        $typeFilter    = $request->get('type');
+        $sortByInput   = $request->get('sort_by');
+        $sortOrder     = $request->get('sort_order', 'desc');
+        $legacySort    = $request->get('sort'); // keep support for existing select
+        $perPage       = (int) $request->get('per_page', 60);
+        $viewMode      = $request->get('view', $request->session()->get('uploads_view', 'grid'));
+
+        $request->session()->put('uploads_view', $viewMode);
+
+        if ($search) {
+            $all_uploads->where(function ($q) use ($search) {
+                $q->where('file_original_name', 'like', '%' . $search . '%')
+                    ->orWhere('extension', 'like', '%' . $search . '%');
+            });
         }
 
-        $sort_by = $request->sort;
-        switch ($request->sort) {
-            case 'newest':
-                $all_uploads->orderBy('created_at', 'desc');
+        if ($typeFilter) {
+            $all_uploads->where(function ($q) use ($typeFilter) {
+                $normalized = strtolower($typeFilter);
+                $typeBuckets = ['image', 'video', 'audio', 'archive', 'document'];
+                $extensionGroups = [
+                    'pdf'   => ['pdf'],
+                    'doc'   => ['doc', 'docx'],
+                    'docx'  => ['doc', 'docx'],
+                    'excel' => ['xls', 'xlsx', 'ods', 'csv'],
+                    'csv'   => ['csv'],
+                ];
+                if (in_array($normalized, $typeBuckets, true)) {
+                    $q->where('type', $normalized);
+                } elseif (isset($extensionGroups[$normalized])) {
+                    $q->whereIn('extension', $extensionGroups[$normalized]);
+                } else {
+                    $q->where('extension', $normalized);
+                }
+            });
+        }
+
+        // Normalize sorting
+        $sortBy = $sortByInput;
+        if (!$sortBy && $legacySort) {
+            $sortBy = in_array($legacySort, ['smallest', 'largest']) ? 'size' : 'created_at';
+            $sortOrder = in_array($legacySort, ['oldest', 'smallest']) ? 'asc' : 'desc';
+        }
+
+        $sortBy = in_array($sortBy, ['name', 'type', 'size', 'created_at']) ? $sortBy : 'created_at';
+        $sortOrder = $sortOrder === 'asc' ? 'asc' : 'desc';
+
+        switch ($sortBy) {
+            case 'name':
+                $all_uploads->orderBy('file_original_name', $sortOrder);
                 break;
-            case 'oldest':
-                $all_uploads->orderBy('created_at', 'asc');
+            case 'type':
+                $all_uploads->orderBy('type', $sortOrder);
                 break;
-            case 'smallest':
-                $all_uploads->orderBy('file_size', 'asc');
+            case 'size':
+                $all_uploads->orderBy('file_size', $sortOrder);
                 break;
-            case 'largest':
-                $all_uploads->orderBy('file_size', 'desc');
-                break;
+            case 'created_at':
             default:
-                $all_uploads->orderBy('created_at', 'desc');
+                $all_uploads->orderBy('created_at', $sortOrder);
                 break;
         }
 
-        $all_uploads = $all_uploads->paginate(60)->appends(request()->query());
+        $all_uploads = $all_uploads->paginate($perPage)->appends(request()->query());
 
+        $viewData = [
+            'all_uploads' => $all_uploads,
+            'search'      => $search,
+            'sortBy'      => $sortBy,
+            'sortOrder'   => $sortOrder,
+            'sort_by'     => $sortBy, // backward compatibility with existing blade
+            'typeFilter'  => $typeFilter,
+            'viewMode'    => $viewMode,
+        ];
 
         return (auth()->user()->user_type == 'seller')
-            ? view('seller.uploads.index', compact('all_uploads', 'search', 'sort_by'))
-            : view('backend.uploaded_files.index', compact('all_uploads', 'search', 'sort_by'));
+            ? view('seller.uploads.index', $viewData)
+            : view('backend.uploaded_files.index', $viewData);
     }
 
     public function create()
@@ -399,27 +448,59 @@ class AizUploadController extends Controller
     {
         $uploads = Upload::where('user_id', Auth::user()->id);
         if ($request->search != null) {
-            $uploads->where('file_original_name', 'like', '%' . $request->search . '%');
+            $uploads->where(function ($q) use ($request) {
+                $q->where('file_original_name', 'like', '%' . $request->search . '%')
+                    ->orWhere('extension', 'like', '%' . $request->search . '%');
+            });
         }
-        if ($request->sort != null) {
-            switch ($request->sort) {
-                case 'newest':
-                    $uploads->orderBy('created_at', 'desc');
-                    break;
-                case 'oldest':
-                    $uploads->orderBy('created_at', 'asc');
-                    break;
-                case 'smallest':
-                    $uploads->orderBy('file_size', 'asc');
-                    break;
-                case 'largest':
-                    $uploads->orderBy('file_size', 'desc');
-                    break;
-                default:
-                    $uploads->orderBy('created_at', 'desc');
-                    break;
+
+        if ($request->filled('type')) {
+            $typeFilter = strtolower($request->type);
+            $typeBuckets = ['image', 'video', 'audio', 'archive', 'document'];
+            $extensionGroups = [
+                'pdf'   => ['pdf'],
+                'doc'   => ['doc', 'docx'],
+                'docx'  => ['doc', 'docx'],
+                'excel' => ['xls', 'xlsx', 'ods', 'csv'],
+                'csv'   => ['csv'],
+            ];
+            if (in_array($typeFilter, $typeBuckets, true)) {
+                $uploads->where('type', $typeFilter);
+            } elseif (isset($extensionGroups[$typeFilter])) {
+                $uploads->whereIn('extension', $extensionGroups[$typeFilter]);
+            } else {
+                $uploads->where('extension', $typeFilter);
             }
         }
+
+        $sortBy    = $request->get('sort_by');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $legacy    = $request->get('sort');
+
+        if (!$sortBy && $legacy) {
+            $sortBy = in_array($legacy, ['smallest', 'largest']) ? 'size' : 'created_at';
+            $sortOrder = in_array($legacy, ['oldest', 'smallest']) ? 'asc' : 'desc';
+        }
+
+        $sortBy = in_array($sortBy, ['name', 'type', 'size', 'created_at']) ? $sortBy : 'created_at';
+        $sortOrder = $sortOrder === 'asc' ? 'asc' : 'desc';
+
+        switch ($sortBy) {
+            case 'name':
+                $uploads->orderBy('file_original_name', $sortOrder);
+                break;
+            case 'type':
+                $uploads->orderBy('type', $sortOrder);
+                break;
+            case 'size':
+                $uploads->orderBy('file_size', $sortOrder);
+                break;
+            case 'created_at':
+            default:
+                $uploads->orderBy('created_at', $sortOrder);
+                break;
+        }
+
         return $uploads->paginate(60)->appends(request()->query());
     }
 
@@ -526,5 +607,70 @@ class AizUploadController extends Controller
         return (auth()->user()->user_type == 'seller')
             ? view('seller.uploads.info', compact('file'))
             : view('backend.uploaded_files.info', compact('file'));
+    }
+
+    /**
+     * Rename an uploaded file both on disk and in the database.
+     */
+    public function rename(Request $request, Upload $upload)
+    {
+        if (auth()->user()->user_type === 'seller' && $upload->user_id !== auth()->user()->id) {
+            abort(403, translate("You don't have permission for renaming this file."));
+        }
+
+        $request->validate([
+            'new_name' => 'required|string|max:190',
+        ]);
+
+        $baseName = trim(pathinfo($request->input('new_name'), PATHINFO_FILENAME));
+        if ($baseName === '') {
+            return response()->json(['message' => translate('A valid file name is required.')], 422);
+        }
+
+        $disk = $upload->disk ?? config('filesystems.default');
+        $storage = Storage::disk($disk);
+
+        $directory = trim(pathinfo($upload->file_name, PATHINFO_DIRNAME), '.');
+        $directory = $directory === '' ? '' : $directory . '/';
+
+        $cleanBase = Str::slug($baseName, '_');
+        $extension = $upload->extension;
+
+        $targetPath = $directory . $cleanBase . '.' . $extension;
+        $counter = 1;
+        while ($storage->exists($targetPath)) {
+            $targetPath = $directory . $cleanBase . '_' . $counter . '.' . $extension;
+            $counter++;
+        }
+
+        // Ensure the directory exists for local disk
+        if ($disk === 'local' && $directory !== '') {
+            $storage->makeDirectory($directory);
+        }
+
+        if ($storage->exists($upload->file_name)) {
+            // move is not reliable for S3, so use copy + delete there
+            if (method_exists($storage, 'move') && $disk === 'local') {
+                $storage->move($upload->file_name, $targetPath);
+            } else {
+                $storage->copy($upload->file_name, $targetPath);
+                $storage->delete($upload->file_name);
+            }
+        }
+
+        $upload->file_name = $targetPath;
+        $upload->file_original_name = $baseName;
+        $upload->save();
+
+        return response()->json([
+            'message' => translate('File renamed successfully'),
+            'file' => [
+                'id' => $upload->id,
+                'file_name' => $upload->file_name,
+                'file_original_name' => $upload->file_original_name,
+                'extension' => $upload->extension,
+                'full_path' => my_asset($upload->file_name),
+            ],
+        ]);
     }
 }
