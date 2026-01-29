@@ -8,7 +8,7 @@
     </div>
     <div class="">
         @php $brandCategoryProducts = $brandCategoryProducts ?? get_brand_related_products($detailedProduct); @endphp
-        <div class="aiz-carousel gutters-5 half-outside-arrow" data-items="10" data-xl-items="10"
+        <div class="aiz-carousel brand-related-products-carousel gutters-5 half-outside-arrow" data-items="10" data-xl-items="10"
             data-lg-items="10" data-md-items="10" data-sm-items="6" data-xs-items="2"
             data-arrows='true' data-infinite='true'>
             @foreach ($brandCategoryProducts as $key => $brand_product)

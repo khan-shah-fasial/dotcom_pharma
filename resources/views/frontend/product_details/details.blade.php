@@ -107,6 +107,14 @@
         padding: 5px;
         }
     }
+    
+    /* Show arrows for Similar Products and Brand Related Products carousels */
+    .similar-products-carousel button.slick-prev.slick-arrow,
+    .similar-products-carousel button.slick-next.slick-arrow,
+    .brand-related-products-carousel button.slick-prev.slick-arrow,
+    .brand-related-products-carousel button.slick-next.slick-arrow {
+        display: block !important;
+    }
 </style>
 
 <div class="text-left product_disc_text">
