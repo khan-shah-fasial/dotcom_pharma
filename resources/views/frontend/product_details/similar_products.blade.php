@@ -6,9 +6,9 @@
     </div>
     <div class="col-12 p-0">
         @php $similarProducts = $similarProducts ?? get_similar_products($detailedProduct, 10); @endphp
-        <div class="aiz-carousel similar-products-carousel" data-items="10" data-xl-items="10"
+        <div class="aiz-carousel similar-products-carousel gutters-5 half-outside-arrow" data-items="10" data-xl-items="10"
             data-lg-items="10" data-md-items="10" data-sm-items="6" data-xs-items="2"
-            data-arrows='false' data-infinite='true'>
+            data-arrows='true' data-infinite='true'>
             @foreach ($similarProducts as $key => $similar_product)
                 <div class="carousel-box product_listing_box related_product_boxex product_img_bg">
                     <div class="aiz-card-box hov-shadow-md my-2 has-transition hov-scale-img h-100 product_listing_box product_img_bg">
