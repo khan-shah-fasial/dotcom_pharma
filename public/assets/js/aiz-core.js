@@ -30,6 +30,8 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
             next_page_url: null,
             prev_page_url: null,
             suppressSortChange: false,
+            renameTarget: null,
+            deleteTarget: null,
         },
         removeInputValue: function (id, array, elem) {
             var selected = array.filter(function (item) {
@@ -525,6 +527,14 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     $('[name="aiz-uploader-sort"]').val("smallest");
                 } else if (column === "size" && order === "desc") {
                     $('[name="aiz-uploader-sort"]').val("largest");
+                } else if (column === "type" && order === "asc") {
+                    $('[name="aiz-uploader-sort"]').val("type_asc");
+                } else if (column === "type" && order === "desc") {
+                    $('[name="aiz-uploader-sort"]').val("type_desc");
+                } else if (column === "name" && order === "asc") {
+                    $('[name="aiz-uploader-sort"]').val("name_asc");
+                } else if (column === "name" && order === "desc") {
+                    $('[name="aiz-uploader-sort"]').val("name_desc");
                 } else {
                     $('[name="aiz-uploader-sort"]').val("");
                 }
@@ -536,6 +546,105 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     null, // avoid legacy override, rely on sortBy/sortOrder
                     $('[name="aiz-uploader-type"]').val()
                 );
+            });
+        },
+        bindCopyLink: function () {
+            $(document).on("click", ".aiz-uploader-copy", function () {
+                var url = $(this).data("url");
+                var $temp = $("<input>");
+                $("body").append($temp);
+                $temp.val(url).select();
+                try {
+                    document.execCommand("copy");
+                    AIZ.plugins.notify("success", (AIZ.local && AIZ.local.copied) ? AIZ.local.copied : "Copied");
+                } catch (err) {
+                    AIZ.plugins.notify("danger", (AIZ.local && AIZ.local.copy_failed) ? AIZ.local.copy_failed : "Unable to copy");
+                }
+                $temp.remove();
+            });
+        },
+        bindRenameDelete: function () {
+            $(document).on("click", ".aiz-uploader-rename", function () {
+                AIZ.uploader.ensureRenameModal();
+                AIZ.uploader.data.renameTarget = {
+                    route: $(this).data("route") || (AIZ.data.appUrl + "/admin/uploaded-files/" + $(this).data("id") + "/rename"),
+                    name: $(this).data("name") || "",
+                    ext: $(this).data("ext") || "",
+                };
+                $("#aizRenameInput").val(AIZ.uploader.data.renameTarget.name);
+                $("#aizRenameModal").modal("show");
+            });
+
+            $(document).on("click", ".aiz-uploader-delete", function () {
+                AIZ.uploader.ensureDeleteModal();
+                AIZ.uploader.data.deleteTarget = $(this).data("href") || (AIZ.data.appUrl + "/admin/uploaded-files/destroy/" + $(this).data("id"));
+                $("#aizDeleteModal").modal("show");
+            });
+
+            $(document).on("click", ".aiz-uploader-info", function () {
+                var id = $(this).data("id");
+                var infoUrl = (AIZ.uploader.infoUrl || (AIZ.data.appUrl + "/admin/uploaded-files/file-info"));
+                $("#aizUploaderInfoBody").html('<div class="d-flex justify-content-center py-4"><i class="las la-spinner la-spin la-2x"></i></div>');
+                $("#aizUploaderInfoModal").modal("show");
+                $.post(infoUrl, {_token: AIZ.data.csrf, id: id}, function (resp) {
+                    $("#aizUploaderInfoBody").html(resp);
+                }).fail(function () {
+                    $("#aizUploaderInfoBody").html("<p class='text-center text-danger'>{{ translate('Failed to load info') }}</p>");
+                });
+            });
+
+            $(document).on("click", "#aizRenameSave", function () {
+                if (!AIZ.uploader.data.renameTarget) return;
+                var newName = $("#aizRenameInput").val();
+                if (!newName || newName.trim() === "") {
+                    AIZ.plugins.notify("danger", (AIZ.local && AIZ.local.rename_invalid) ? AIZ.local.rename_invalid : "Enter a valid name");
+                    return;
+                }
+                $.post(AIZ.uploader.data.renameTarget.route, {
+                    _token: AIZ.data.csrf,
+                    new_name: newName
+                }).done(function () {
+                    $("#aizRenameModal").modal("hide");
+                    AIZ.uploader.getAllUploads(
+                        AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",
+                        $('[name="aiz-uploader-search"]').val(),
+                        $('[name="aiz-uploader-sort"]').val(),
+                        $('[name="aiz-uploader-type"]').val()
+                    );
+                    AIZ.plugins.notify("success", (AIZ.local && AIZ.local.renamed) ? AIZ.local.renamed : "Renamed");
+                }).fail(function (xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Rename failed";
+                    AIZ.plugins.notify("danger", msg);
+                });
+            });
+
+            $(document).on("keydown", "#aizRenameInput", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    $("#aizRenameSave").trigger("click");
+                }
+            });
+
+            $(document).on("click", "#aizDeleteConfirm", function () {
+                if (!AIZ.uploader.data.deleteTarget) return;
+                $.ajax({
+                    url: AIZ.uploader.data.deleteTarget,
+                    type: "GET",
+                    success: function () {
+                        $("#aizDeleteModal").modal("hide");
+                        AIZ.uploader.getAllUploads(
+                            AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",
+                            $('[name="aiz-uploader-search"]').val(),
+                            $('[name="aiz-uploader-sort"]').val(),
+                            $('[name="aiz-uploader-type"]').val()
+                        );
+                        AIZ.plugins.notify("success", (AIZ.local && AIZ.local.deleted) ? AIZ.local.deleted : "Deleted");
+                    },
+                    error: function (xhr) {
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Delete failed";
+                        AIZ.plugins.notify("danger", msg);
+                    }
+                });
             });
         },
         updateUploaderFiles: function () {
@@ -606,6 +715,21 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                                 '" data-selected="' +
                                 data[i].selected +
                                 '">' +
+                                '<div class="dropdown-file pr-2">' +
+                                '<a class="dropdown-link" data-toggle="dropdown"><i class="la la-ellipsis-v"></i></a>' +
+                                '<div class="dropdown-menu dropdown-menu-right">' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-info" data-id="' + data[i].id + '">' +
+                                '<i class="las la-info-circle mr-2"></i>' + (AIZ.local.details_info || "Details Info") + '</a>' +
+                                '<a href="' + baseURL + data[i].file_name + '" target="_blank" download="' + data[i].file_original_name + '.' + data[i].extension + '" class="dropdown-item">' +
+                                '<i class="la la-download mr-2"></i>' + (AIZ.local.download || "Download") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-copy" data-url="' + baseURL + data[i].file_name + '">' +
+                                '<i class="las la-clipboard mr-2"></i>' + (AIZ.local.copy_link || "Copy Link") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-rename" data-id="' + data[i].id + '" data-name="' + data[i].file_original_name + '" data-ext="' + data[i].extension + '" data-route="' + (AIZ.uploader.renameUrl || (AIZ.data.appUrl + "/admin/uploaded-files/" + data[i].id + "/rename")) + '">' +
+                                '<i class="las la-i-cursor mr-2"></i>' + (AIZ.local.rename || "Rename") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-delete" data-id="' + data[i].id + '" data-href="' + (AIZ.uploader.deleteUrl || (AIZ.data.appUrl + "/admin/uploaded-files/destroy/" + data[i].id)) + '">' +
+                                '<i class="las la-trash mr-2"></i>' + (AIZ.local.delete || "Delete") + '</a>' +
+                                "</div>" +
+                                "</div>" +
                                 '<div class="aiz-file-checkbox pr-3">' +
                                 '<input type="checkbox" class="aiz-select-single" data-value="' + data[i].id + '" ' + (data[i].selected ? "checked" : "") + ' />' +
                                 "</div>" +
@@ -634,6 +758,21 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                                 data[i].selected +
                                 '">' +
                                 '<div class="aiz-file-box">' +
+                                '<div class="dropdown-file">' +
+                                '<a class="dropdown-link" data-toggle="dropdown"><i class="la la-ellipsis-v"></i></a>' +
+                                '<div class="dropdown-menu dropdown-menu-right">' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-info" data-id="' + data[i].id + '">' +
+                                '<i class="las la-info-circle mr-2"></i>' + (AIZ.local.details_info || "Details Info") + '</a>' +
+                                '<a href="' + baseURL + data[i].file_name + '" target="_blank" download="' + data[i].file_original_name + '.' + data[i].extension + '" class="dropdown-item">' +
+                                '<i class="la la-download mr-2"></i>' + (AIZ.local.download || "Download") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-copy" data-url="' + baseURL + data[i].file_name + '">' +
+                                '<i class="las la-clipboard mr-2"></i>' + (AIZ.local.copy_link || "Copy Link") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-rename" data-id="' + data[i].id + '" data-name="' + data[i].file_original_name + '" data-ext="' + data[i].extension + '" data-route="' + (AIZ.uploader.renameUrl || (AIZ.data.appUrl + "/admin/uploaded-files/" + data[i].id + "/rename")) + '">' +
+                                '<i class="las la-i-cursor mr-2"></i>' + (AIZ.local.rename || "Rename") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-delete" data-id="' + data[i].id + '" data-href="' + (AIZ.uploader.deleteUrl || (AIZ.data.appUrl + "/admin/uploaded-files/destroy/" + data[i].id)) + '">' +
+                                '<i class="las la-trash mr-2"></i>' + (AIZ.local.delete || "Delete") + '</a>' +
+                                "</div>" +
+                                "</div>" +
                                 '<div class="card card-file aiz-uploader-select" title="' +
                                 data[i].file_original_name +
                                 "." +
@@ -852,6 +991,71 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                 $("#aizUploaderModal").remove();
             });
         },
+        ensureRenameModal: function () {
+            if ($("#aizRenameModal").length) return;
+            var modal =
+                '<div class="modal fade" id="aizRenameModal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog" role="document">' +
+                '<div class="modal-content">' +
+                '<div class="modal-header">' +
+                '<h5 class="modal-title">' + ((AIZ.local && AIZ.local.rename) ? AIZ.local.rename : "Rename File") + '</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+                "</div>" +
+                '<div class="modal-body">' +
+                '<div class="form-group mb-0">' +
+                '<label class="form-label">' + ((AIZ.local && AIZ.local.new_name) ? AIZ.local.new_name : "New name") + "</label>" +
+                '<input type="text" class="form-control" id="aizRenameInput" autocomplete="off" />' +
+                "</div>" +
+                "</div>" +
+                '<div class="modal-footer">' +
+                '<button type="button" class="btn btn-link" data-dismiss="modal">' + ((AIZ.local && AIZ.local.cancel) ? AIZ.local.cancel : "Cancel") + "</button>" +
+                '<button type="button" class="btn btn-primary" id="aizRenameSave">' + ((AIZ.local && AIZ.local.save) ? AIZ.local.save : "Save") + "</button>" +
+                "</div>" +
+                "</div>" +
+                "</div>" +
+                "</div>";
+            $("body").append(modal);
+        },
+        ensureDeleteModal: function () {
+            if ($("#aizDeleteModal").length) return;
+            var modal =
+                '<div class="modal fade" id="aizDeleteModal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog" role="document">' +
+                '<div class="modal-content">' +
+                '<div class="modal-header">' +
+                '<h5 class="modal-title">' + ((AIZ.local && AIZ.local.delete) ? AIZ.local.delete : "Delete File") + '</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+                "</div>" +
+                '<div class="modal-body">' +
+                '<p class="mb-0">' + ((AIZ.local && AIZ.local.delete_confirm) ? AIZ.local.delete_confirm : "Are you sure you want to delete this file?") + "</p>" +
+                "</div>" +
+                '<div class="modal-footer">' +
+                '<button type="button" class="btn btn-link" data-dismiss="modal">' + ((AIZ.local && AIZ.local.cancel) ? AIZ.local.cancel : "Cancel") + "</button>" +
+                '<button type="button" class="btn btn-primary" id="aizDeleteConfirm">' + ((AIZ.local && AIZ.local.delete) ? AIZ.local.delete : "Delete") + "</button>" +
+                "</div>" +
+                "</div>" +
+                "</div>" +
+                "</div>";
+            $("body").append(modal);
+        },
+        ensureInfoModal: function () {
+            if ($("#aizUploaderInfoModal").length) return;
+            var modal =
+                '<div class="modal fade" id="aizUploaderInfoModal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog modal-dialog-right" role="document">' +
+                '<div class="modal-content">' +
+                '<div class="modal-header">' +
+                '<h5 class="modal-title">' + ((AIZ.local && AIZ.local.file_info) ? AIZ.local.file_info : "File Info") + '</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>' +
+                "</div>" +
+                '<div class="modal-body c-scrollbar-light position-relative" id="aizUploaderInfoBody">' +
+                '<div class="d-flex justify-content-center py-4"><i class="las la-spinner la-spin la-2x"></i></div>' +
+                "</div>" +
+                "</div>" +
+                "</div>" +
+                "</div>";
+            $("body").append(modal);
+        },
         trigger: function (
             elem = null,
             from = "",
@@ -892,6 +1096,9 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     $("#aizUploaderModal").modal("show");
                     AIZ.plugins.aizUppy();
                     AIZ.uploader.applyViewToggle();
+                    AIZ.uploader.bindCopyLink();
+                    AIZ.uploader.bindRenameDelete();
+                    AIZ.uploader.ensureInfoModal();
                     AIZ.uploader.bindHeaderSort();
                     AIZ.uploader.getAllUploads(
                         AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",

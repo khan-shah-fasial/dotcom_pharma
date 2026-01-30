@@ -21,14 +21,24 @@
 					<div class="tab-pane active h-100" id="aiz-select-file">
 						<div class="aiz-uploader-filter pt-1 pb-3 border-bottom mb-4">
 							<div class="row align-items-center gutters-5 gutters-md-10 position-relative">
+								<div class="col-md-2 col-4">
+									<div class="btn-group btn-group-sm" role="group">
+										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-grid"><i class="las la-th-large"></i>Grid</button>
+										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-list"><i class="las la-list"></i>List</button>
+									</div>
+								</div>
 								<div class="col-xl-2 col-md-3 col-5">
 									<div class="">
 										<!-- Input -->
 										<select class="form-control form-control-xs aiz-selectpicker" name="aiz-uploader-sort">
 											<option value="newest" selected>{{ translate('Sort by newest') }}</option>
 											<option value="oldest">{{ translate('Sort by oldest') }}</option>
-											<option value="smallest">{{ translate('Sort by smallest') }}</option>
-											<option value="largest">{{ translate('Sort by largest') }}</option>
+											<option value="smallest">{{ translate('Sort by Size small-large') }}</option>
+											<option value="largest">{{ translate('Sort by Size large-small') }}</option>
+											<option value="name_asc">{{ translate('Name A-Z') }}</option>
+											<option value="name_desc">{{ translate('Name Z-A') }}</option>
+											<option value="type_asc">{{ translate('Type A-Z') }}</option>
+											<option value="type_desc">{{ translate('Type Z-A') }}</option>
 										</select>
 										<!-- End Input -->
 									</div>
@@ -56,23 +66,6 @@
 											<option value="{{ $value }}" @selected(($typeFilter ?? null) === $value)>{{ $label }}</option>
 										@endforeach
 									</select>
-
-									{{-- <select class="form-control form-control-xs aiz-selectpicker" name="aiz-uploader-type" data-live-search="true">
-										<option value="">{{ translate('All types') }}</option>
-										<option value="image">{{ translate('Images') }}</option>
-										<option value="video">{{ translate('Videos') }}</option>
-										<option value="audio">{{ translate('Audio') }}</option>
-										<option value="pdf">{{ translate('PDF') }}</option>
-										<option value="doc">{{ translate('Doc/Docx') }}</option>
-										<option value="excel">{{ translate('Excel/CSV') }}</option>
-										<option value="archive">{{ translate('Archives') }}</option>
-									</select> --}}
-								</div>
-								<div class="col-md-2 col-4">
-									<div class="btn-group btn-group-sm" role="group">
-										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-grid"><i class="las la-th-large"></i>Grid</button>
-										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-list"><i class="las la-list"></i>List</button>
-									</div>
 								</div>
 								<div class="col-md-3 col-5">
 									<div class="custom-control custom-radio">
