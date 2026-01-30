@@ -588,7 +588,7 @@ class AizUploadController extends Controller
         }
 
         // Financial Archives: upload_id (single)
-        $inFinancialArchives = DB::table('financial_archives')
+        $inFinancialArchives = DB::table('financial_archive')
             ->where('upload_id', $uploadId)
             ->exists();
 
