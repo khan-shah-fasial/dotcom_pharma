@@ -230,9 +230,9 @@
                 var iconClass = getIconClass(file);
                 var thumb = '';
                 if (file.type === 'image') {
-                    thumb = '<img src="' + escapeHtml(file.full_path) + '" class="img-fit">';
+                    thumb = '<img data-src="' + escapeHtml(file.full_path) + '" class="img-fit upload-media">';
                 } else if (file.type === 'video') {
-                    thumb = '<video src="' + escapeHtml(file.full_path) + '" class="img-fit" preload="metadata" muted playsinline></video>';
+                    thumb = '<video data-src="' + escapeHtml(file.full_path) + '" class="img-fit upload-media" preload="metadata" muted playsinline></video>';
                 } else {
                     thumb = '<i class="' + iconClass + ' fs-32"></i>';
                 }
@@ -258,9 +258,9 @@
                 var iconClass = getIconClass(file);
                 var thumb = '';
                 if (file.type === 'image') {
-                    thumb = '<img src="' + escapeHtml(file.full_path) + '" class="size-48px img-fit rounded mr-3">';
+                    thumb = '<img data-src="' + escapeHtml(file.full_path) + '" class="size-48px img-fit rounded mr-3 upload-media">';
                 } else if (file.type === 'video') {
-                    thumb = '<video src="' + escapeHtml(file.full_path) + '" class="size-48px rounded mr-3" preload="metadata" muted playsinline></video>';
+                    thumb = '<video data-src="' + escapeHtml(file.full_path) + '" class="size-48px rounded mr-3 upload-media" preload="metadata" muted playsinline></video>';
                 } else {
                     thumb = '<span class="avatar avatar-sm flex-shrink-0 mr-3 bg-soft-primary d-flex align-items-center justify-content-center"><i class="' + iconClass + '"></i></span>';
                 }
@@ -330,6 +330,23 @@
                 return html;
             }
 
+            function loadVisibleMedia() {
+                var listVisible = !$('#uploads-list-wrap').hasClass('d-none');
+                if (listVisible) {
+                    $('#uploads-list-wrap').find('img.upload-media[data-src], video.upload-media[data-src]').each(function () {
+                        var $el = $(this);
+                        var url = $el.attr('data-src');
+                        if (url) { $el.attr('src', url); $el.removeAttr('data-src'); }
+                    });
+                } else {
+                    $('#uploads-grid').find('img.upload-media[data-src], video.upload-media[data-src]').each(function () {
+                        var $el = $(this);
+                        var url = $el.attr('data-src');
+                        if (url) { $el.attr('src', url); $el.removeAttr('data-src'); }
+                    });
+                }
+            }
+
             function applyView(mode) {
                 var normalized = mode === 'list' ? 'list' : 'grid';
                 $('#view_mode_input').val(normalized);
@@ -338,6 +355,7 @@
                 $('#uploads-list-wrap').toggleClass('d-none', normalized !== 'list');
                 $('.view-toggle').removeClass('btn-primary').addClass('btn-outline-secondary');
                 $('.view-toggle[data-view="' + normalized + '"]').addClass('btn-primary').removeClass('btn-outline-secondary');
+                loadVisibleMedia();
             }
 
             function getParams(page) {
@@ -439,6 +457,12 @@
                 $('.check-one:checkbox').prop('checked', this.checked);
             });
 
+            $(document).on("change", ".check-one", function () {
+                var value = $(this).val();
+                var checked = $(this).prop('checked');
+                $('.check-one[value="' + value + '"]').prop('checked', checked);
+            });
+
             $(document).on('click', '.copy-link-btn', function () {
                 var url = $(this).data('url');
                 var $temp = $("<input>");
@@ -490,7 +514,12 @@
             });
 
             window.bulk_delete = function () {
-                var data = new FormData($('#sort_uploads')[0]);
+                var ids = [];
+                $('.check-one:checked').each(function () { ids.push($(this).val()); });
+                var uniqueIds = ids.filter(function (v, i, a) { return a.indexOf(v) === i; });
+                var data = new FormData();
+                data.append('_token', $('meta[name="csrf-token"]').attr('content'));
+                $.each(uniqueIds, function (i, id) { data.append('id[]', id); });
                 $.ajax({
                     headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                     url: state.routes.bulkDelete,
