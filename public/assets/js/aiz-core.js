@@ -29,6 +29,9 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
             type: "all",
             next_page_url: null,
             prev_page_url: null,
+            suppressSortChange: false,
+            renameTarget: null,
+            deleteTarget: null,
         },
         removeInputValue: function (id, array, elem) {
             var selected = array.filter(function (item) {
@@ -214,27 +217,59 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                 "selected",
                 true
             );
+            $('[name="aiz-uploader-type"]').val("");
+            $('[name="aiz-uploader-type"]').selectpicker("refresh");
         },
-        getAllUploads: function (url, search_key = null, sort_key = null) {
+        getAllUploads: function (url, search_key = null, sort_key = null, type_key = null) {
             $(".aiz-uploader-all").html(
                 '<div class="align-items-center d-flex h-100 justify-content-center w-100"><div class="spinner-border" role="status"></div></div>'
             );
             var params = {};
-            if (search_key != null && search_key.length > 0) {
-                params["search"] = search_key;
-            }
+            params["search"] = search_key != null ? search_key : "";
+            // map sort selection to sort_by/sort_order
+            var sortBy = AIZ.uploader.data.sortBy || "created_at";
+            var sortOrder = AIZ.uploader.data.sortOrder || "desc";
             if (sort_key != null && sort_key.length > 0) {
-                params["sort"] = sort_key;
-            } else {
-                params["sort"] = "newest";
+                params["sort"] = sort_key; // keep legacy
+                if (sort_key === "newest") {
+                    sortBy = "created_at";
+                    sortOrder = "desc";
+                } else if (sort_key === "oldest") {
+                    sortBy = "created_at";
+                    sortOrder = "asc";
+                } else if (sort_key === "smallest") {
+                    sortBy = "size";
+                    sortOrder = "asc";
+                } else if (sort_key === "largest") {
+                    sortBy = "size";
+                    sortOrder = "desc";
+                } else if (sort_key === "name_asc") {
+                    sortBy = "name";
+                    sortOrder = "asc";
+                } else if (sort_key === "name_desc") {
+                    sortBy = "name";
+                    sortOrder = "desc";
+                } else if (sort_key === "type_asc") {
+                    sortBy = "type";
+                    sortOrder = "asc";
+                } else if (sort_key === "type_desc") {
+                    sortBy = "type";
+                    sortOrder = "desc";
+                }
             }
+            params["sort_by"] = sortBy;
+            params["sort_order"] = sortOrder;
+            AIZ.uploader.data.sortBy = sortBy;
+            AIZ.uploader.data.sortOrder = sortOrder;
+            params["type"] = type_key != null ? type_key : "";
+            params["view"] = localStorage.getItem("aiz_uploader_view") || "grid";
             $.get(url, params, function (data, status) {
                 //console.log(data);
                 if (typeof data == "string") {
                     data = JSON.parse(data);
                 }
-                AIZ.uploader.data.allFiles = data.data;
-                AIZ.uploader.allowedFileType();
+                var rows = Array.isArray(data && data.data) ? data.data : (Array.isArray(data) ? data : []);
+                AIZ.uploader.data.allFiles = rows;
                 AIZ.uploader.addSelectedValue();
                 AIZ.uploader.addHiddenValue();
                 //AIZ.uploader.resetFilter();
@@ -246,7 +281,7 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     $("#uploader_next_btn").attr("disabled", true);
                 }
                 if (data.prev_page_url != null) {
-                    AIZ.uploader.data.prev_page_url = data.prev_page_url;
+                        AIZ.uploader.data.prev_page_url = data.prev_page_url;
                     $("#uploader_prev_btn").removeAttr("disabled");
                 } else {
                     $("#uploader_prev_btn").attr("disabled", true);
@@ -296,7 +331,8 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                 AIZ.uploader.getAllUploads(
                     AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",
                     value,
-                    $('[name="aiz-uploader-sort"]').val()
+                    $('[name="aiz-uploader-sort"]').val(),
+                    $('[name="aiz-uploader-type"]').val()
                 );
                 // if (AIZ.uploader.data.allFiles.length > 0) {
                 //     for (
@@ -326,11 +362,16 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
         },
         sortUploaderFiles: function () {
             $('[name="aiz-uploader-sort"]').on("change", function () {
+                if (AIZ.uploader.data.suppressSortChange) {
+                    AIZ.uploader.data.suppressSortChange = false;
+                    return;
+                }
                 var value = $(this).val();
                 AIZ.uploader.getAllUploads(
                     AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",
                     $('[name="aiz-uploader-search"]').val(),
-                    value
+                    value,
+                    $('[name="aiz-uploader-type"]').val()
                 );
 
                 // if (value === "oldest") {
@@ -365,6 +406,45 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                 //AIZ.uploader.updateUploaderFiles();
             });
         },
+        filterUploaderType: function () {
+            $('[name="aiz-uploader-type"]').on("change", function () {
+                AIZ.uploader.getAllUploads(
+                    AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",
+                    $('[name="aiz-uploader-search"]').val(),
+                    $('[name="aiz-uploader-sort"]').val(),
+                    $(this).val()
+                );
+            });
+        },
+        bindRowSelect: function () {
+            $(document).on("change", ".aiz-select-single", function () {
+                var val = Number($(this).data("value"));
+                if ($(this).is(":checked")) {
+                    if (!AIZ.uploader.data.selectedFiles.includes(val)) {
+                        if (!AIZ.uploader.data.multiple) {
+                            AIZ.uploader.data.selectedFiles = [];
+                            AIZ.uploader.data.selectedFilesObject = [];
+                            $(".aiz-select-single").not(this).prop("checked", false);
+                        }
+                        AIZ.uploader.data.selectedFiles.push(val);
+                        var obj = AIZ.uploader.data.allFiles.find((x) => x.id === val);
+                        if (obj) AIZ.uploader.data.selectedFilesObject.push(obj);
+                    }
+                } else {
+                    AIZ.uploader.data.selectedFiles = AIZ.uploader.data.selectedFiles.filter(
+                        function (item) {
+                            return item !== val;
+                        }
+                    );
+                    AIZ.uploader.data.selectedFilesObject =
+                        AIZ.uploader.data.selectedFilesObject.filter(function (item) {
+                            return item.id !== val;
+                        });
+                }
+                AIZ.uploader.addSelectedValue();
+                AIZ.uploader.updateUploaderSelected();
+            });
+        },
         addSelectedValue: function () {
             for (var i = 0; i < AIZ.uploader.data.allFiles.length; i++) {
                 if (
@@ -393,81 +473,333 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                 );
             }
         },
+        applyViewToggle: function () {
+            var stored = localStorage.getItem("aiz_uploader_view") || "grid";
+            AIZ.uploader.setView(stored);
+            $("#aiz-popup-view-grid").on("click", function () {
+                AIZ.uploader.setView("grid");
+                AIZ.uploader.updateUploaderFiles();
+            });
+            $("#aiz-popup-view-list").on("click", function () {
+                AIZ.uploader.setView("list");
+                AIZ.uploader.updateUploaderFiles();
+            });
+        },
+        setView: function (mode) {
+            var normalized = mode === "list" ? "list" : "grid";
+            localStorage.setItem("aiz_uploader_view", normalized);
+            $("#aiz-popup-view-grid,#aiz-popup-view-list").removeClass(
+                "btn-primary"
+            ).addClass("btn-outline-secondary");
+            if (normalized === "grid") {
+                $("#aiz-popup-view-grid").addClass("btn-primary");
+            } else {
+                $("#aiz-popup-view-list").addClass("btn-primary");
+            }
+        },
+        sortIcon: function (column, active, order) {
+            if (column === active) {
+                return order === "asc"
+                    ? "la-sort-amount-up"
+                    : "la-sort-amount-down";
+            }
+            return "la-sort";
+        },
+        bindHeaderSort: function () {
+            $(document).on("click", ".aiz-uploader-sortable", function () {
+                var column = $(this).data("sort");
+                var current = AIZ.uploader.data.sortBy || "created_at";
+                var order =
+                    AIZ.uploader.data.sortOrder && AIZ.uploader.data.sortOrder === "asc"
+                        ? "desc"
+                        : "asc";
+                if (current !== column) {
+                    order = "asc";
+                }
+                AIZ.uploader.data.sortBy = column;
+                AIZ.uploader.data.sortOrder = order;
+                // Sync select dropdown to closest match
+                if (column === "created_at" && order === "desc") {
+                    $('[name="aiz-uploader-sort"]').val("newest");
+                } else if (column === "created_at" && order === "asc") {
+                    $('[name="aiz-uploader-sort"]').val("oldest");
+                } else if (column === "size" && order === "asc") {
+                    $('[name="aiz-uploader-sort"]').val("smallest");
+                } else if (column === "size" && order === "desc") {
+                    $('[name="aiz-uploader-sort"]').val("largest");
+                } else if (column === "type" && order === "asc") {
+                    $('[name="aiz-uploader-sort"]').val("type_asc");
+                } else if (column === "type" && order === "desc") {
+                    $('[name="aiz-uploader-sort"]').val("type_desc");
+                } else if (column === "name" && order === "asc") {
+                    $('[name="aiz-uploader-sort"]').val("name_asc");
+                } else if (column === "name" && order === "desc") {
+                    $('[name="aiz-uploader-sort"]').val("name_desc");
+                } else {
+                    $('[name="aiz-uploader-sort"]').val("");
+                }
+                AIZ.uploader.data.suppressSortChange = true;
+                $('[name="aiz-uploader-sort"]').selectpicker("refresh");
+                AIZ.uploader.getAllUploads(
+                    AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",
+                    $('[name="aiz-uploader-search"]').val(),
+                    null, // avoid legacy override, rely on sortBy/sortOrder
+                    $('[name="aiz-uploader-type"]').val()
+                );
+            });
+        },
+        bindCopyLink: function () {
+            $(document).on("click", ".aiz-uploader-copy", function () {
+                var url = $(this).data("url");
+                var $temp = $("<input>");
+                $("body").append($temp);
+                $temp.val(url).select();
+                try {
+                    document.execCommand("copy");
+                    AIZ.plugins.notify("success", (AIZ.local && AIZ.local.copied) ? AIZ.local.copied : "Copied");
+                } catch (err) {
+                    AIZ.plugins.notify("danger", (AIZ.local && AIZ.local.copy_failed) ? AIZ.local.copy_failed : "Unable to copy");
+                }
+                $temp.remove();
+            });
+        },
+        bindRenameDelete: function () {
+            $(document).on("click", ".aiz-uploader-rename", function () {
+                AIZ.uploader.ensureRenameModal();
+                AIZ.uploader.data.renameTarget = {
+                    route: $(this).data("route") || (AIZ.data.appUrl + "/admin/uploaded-files/" + $(this).data("id") + "/rename"),
+                    name: $(this).data("name") || "",
+                    ext: $(this).data("ext") || "",
+                };
+                $("#aizRenameInput").val(AIZ.uploader.data.renameTarget.name);
+                $("#aizRenameModal").modal("show");
+            });
+
+            $(document).on("click", ".aiz-uploader-delete", function () {
+                AIZ.uploader.ensureDeleteModal();
+                AIZ.uploader.data.deleteTarget = $(this).data("href") || (AIZ.data.appUrl + "/admin/uploaded-files/destroy/" + $(this).data("id"));
+                $("#aizDeleteModal").modal("show");
+            });
+
+            $(document).on("click", ".aiz-uploader-info", function () {
+                var id = $(this).data("id");
+                var infoUrl = (AIZ.uploader.infoUrl || (AIZ.data.appUrl + "/admin/uploaded-files/file-info"));
+                $("#aizUploaderInfoBody").html('<div class="d-flex justify-content-center py-4"><i class="las la-spinner la-spin la-2x"></i></div>');
+                $("#aizUploaderInfoModal").modal("show");
+                $.post(infoUrl, {_token: AIZ.data.csrf, id: id}, function (resp) {
+                    $("#aizUploaderInfoBody").html(resp);
+                }).fail(function () {
+                    $("#aizUploaderInfoBody").html("<p class='text-center text-danger'>{{ translate('Failed to load info') }}</p>");
+                });
+            });
+
+            $(document).on("click", "#aizRenameSave", function () {
+                if (!AIZ.uploader.data.renameTarget) return;
+                var newName = $("#aizRenameInput").val();
+                if (!newName || newName.trim() === "") {
+                    AIZ.plugins.notify("danger", (AIZ.local && AIZ.local.rename_invalid) ? AIZ.local.rename_invalid : "Enter a valid name");
+                    return;
+                }
+                $.post(AIZ.uploader.data.renameTarget.route, {
+                    _token: AIZ.data.csrf,
+                    new_name: newName
+                }).done(function () {
+                    $("#aizRenameModal").modal("hide");
+                    AIZ.uploader.getAllUploads(
+                        AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",
+                        $('[name="aiz-uploader-search"]').val(),
+                        $('[name="aiz-uploader-sort"]').val(),
+                        $('[name="aiz-uploader-type"]').val()
+                    );
+                    AIZ.plugins.notify("success", (AIZ.local && AIZ.local.renamed) ? AIZ.local.renamed : "Renamed");
+                }).fail(function (xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Rename failed";
+                    AIZ.plugins.notify("danger", msg);
+                });
+            });
+
+            $(document).on("keydown", "#aizRenameInput", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    $("#aizRenameSave").trigger("click");
+                }
+            });
+
+            $(document).on("click", "#aizDeleteConfirm", function () {
+                if (!AIZ.uploader.data.deleteTarget) return;
+                $.ajax({
+                    url: AIZ.uploader.data.deleteTarget,
+                    type: "GET",
+                    success: function () {
+                        $("#aizDeleteModal").modal("hide");
+                        AIZ.uploader.getAllUploads(
+                            AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",
+                            $('[name="aiz-uploader-search"]').val(),
+                            $('[name="aiz-uploader-sort"]').val(),
+                            $('[name="aiz-uploader-type"]').val()
+                        );
+                        AIZ.plugins.notify("success", (AIZ.local && AIZ.local.deleted) ? AIZ.local.deleted : "Deleted");
+                    },
+                    error: function (xhr) {
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Delete failed";
+                        AIZ.plugins.notify("danger", msg);
+                    }
+                });
+            });
+        },
         updateUploaderFiles: function () {
             $(".aiz-uploader-all").html(
                 '<div class="align-items-center d-flex h-100 justify-content-center w-100"><div class="spinner-border" role="status"></div></div>'
             );
 
             var data = AIZ.uploader.data.allFiles;
+            var viewMode = localStorage.getItem("aiz_uploader_view") || "grid";
+            var sortBy = AIZ.uploader.data.sortBy || "created_at";
+            var sortOrder = AIZ.uploader.data.sortOrder || "desc";
 
             setTimeout(function () {
                 $(".aiz-uploader-all").html(null);
 
                 if (data.length > 0) {
+                    if (viewMode === "list") {
+                        var tName = (AIZ.local && AIZ.local.name) ? AIZ.local.name : "Name";
+                        var tType = (AIZ.local && AIZ.local.type) ? AIZ.local.type : "Type";
+                        var tSize = (AIZ.local && AIZ.local.size) ? AIZ.local.size : "Size";
+                        var tCreated = (AIZ.local && AIZ.local.created_at) ? AIZ.local.created_at : "Created At";
+                        var header =
+                            '<div class="aiz-file-header d-flex py-2 border-bottom font-weight-600 small text-uppercase">' +
+                            '<div class="pr-3" style="width:30px;"></div>' +
+                            '<div class="flex-grow-1 aiz-uploader-sortable c-pointer" data-sort="name">' +
+                            tName +
+                            ' <i class="las ' + AIZ.uploader.sortIcon("name", sortBy, sortOrder) + '"></i></div>' +
+                            '<div class="px-3 aiz-uploader-sortable c-pointer" data-sort="type" style="width:120px;">' + tType + ' <i class="las ' + AIZ.uploader.sortIcon("type", sortBy, sortOrder) + '"></i></div>' +
+                            '<div class="px-3 text-right aiz-uploader-sortable c-pointer" data-sort="size" style="width:120px;">' + tSize + ' <i class="las ' + AIZ.uploader.sortIcon("size", sortBy, sortOrder) + '"></i></div>' +
+                            '<div class="pl-3 aiz-uploader-sortable c-pointer" data-sort="created_at" style="width:180px;">' + tCreated + ' <i class="las ' + AIZ.uploader.sortIcon("created_at", sortBy, sortOrder) + '"></i></div>' +
+                            "</div>";
+                        $(".aiz-uploader-all").append(header);
+                    }
                     for (var i = 0; i < data.length; i++) {
                         var thumb = "";
                         var hidden = "";
                         var baseURL = AIZ.data.setfileBaseUrlFor(data[i].disk);
-                        if (data[i].type === "image") {
+                        var icon = '<i class="la la-file-text"></i>';
+                        var ext = (data[i].extension || "").toString().toLowerCase();
+                        if (data[i].type === "video") icon = '<i class="las la-file-video"></i>';
+                        else if (data[i].type === "audio") icon = '<i class="las la-file-audio"></i>';
+                        else if (data[i].type === "archive") icon = '<i class="las la-file-archive"></i>';
+                        else if (ext === "pdf") icon = '<i class="las la-file-pdf"></i>';
+                        else if (["doc","docx"].includes(ext)) icon = '<i class="las la-file-word"></i>';
+                        else if (["xls","xlsx","ods","csv"].includes(ext)) icon = '<i class="las la-file-excel"></i>';
+                        if (data[i].type === "image" || ext === "svg") {
                             thumb =
                                 '<img data-disk="' + data[i].disk + '" src="' +
                                 baseURL +
                                 data[i].file_name +
                                 '" class="img-fit">';
+                        } else if (data[i].type === "video") {
+                            thumb =
+                                '<video data-disk="' + data[i].disk + '" src="' +
+                                baseURL +
+                                data[i].file_name +
+                                '" class="img-fit" preload="metadata" muted playsinline></video>';
                         } else {
-                            thumb = '<i class="la la-file-text"></i>';
+                            thumb = icon;
                         }
-                        var html =
-                            '<div class="aiz-file-box-wrap" aria-hidden="' +
-                            data[i].aria_hidden +
-                            '" data-selected="' +
-                            data[i].selected +
-                            '">' +
-                            '<div class="aiz-file-box">' +
-                            // '<div class="dropdown-file">' +
-                            // '<a class="dropdown-link" data-toggle="dropdown">' +
-                            // '<i class="la la-ellipsis-v"></i>' +
-                            // "</a>" +
-                            // '<div class="dropdown-menu dropdown-menu-right">' +
-                            // '<a href="' +
-                            // AIZ.data.fileBaseUrl +
-                            // data[i].file_name +
-                            // '" target="_blank" download="' +
-                            // data[i].file_original_name +
-                            // "." +
-                            // data[i].extension +
-                            // '" class="dropdown-item"><i class="la la-download mr-2"></i>Download</a>' +
-                            // '<a href="#" class="dropdown-item aiz-uploader-delete" data-id="' +
-                            // data[i].id +
-                            // '"><i class="la la-trash mr-2"></i>Delete</a>' +
-                            // "</div>" +
-                            // "</div>" +
-                            '<div class="card card-file aiz-uploader-select" title="' +
-                            data[i].file_original_name +
-                            "." +
-                            data[i].extension +
-                            '" data-value="' +
-                            data[i].id +
-                            '">' +
-                            '<div class="card-file-thumb">' +
-                            thumb +
-                            "</div>" +
-                            '<div class="card-body">' +
-                            '<h6 class="d-flex">' +
-                            '<span class="text-truncate title">' +
-                            data[i].file_original_name +
-                            "</span>" +
-                            '<span class="ext flex-shrink-0">.' +
-                            data[i].extension +
-                            "</span>" +
-                            "</h6>" +
-                            "<p>" +
-                            AIZ.extra.bytesToSize(data[i].file_size) +
-                            "</p>" +
-                            "</div>" +
-                            "</div>" +
-                            "</div>" +
-                            "</div>";
+                        var html = "";
+                        if (viewMode === "list") {
+                            var typeLabel = (data[i].type || "").toUpperCase();
+                            var createdLabel = data[i].created_at ? data[i].created_at : "";
+                            html =
+                                '<div class="aiz-file-row border-bottom py-2 d-flex align-items-center" aria-hidden="' +
+                                data[i].aria_hidden +
+                                '" data-selected="' +
+                                data[i].selected +
+                                '">' +
+                                '<div class="dropdown-file pr-2">' +
+                                '<a class="dropdown-link" data-toggle="dropdown"><i class="la la-ellipsis-v"></i></a>' +
+                                '<div class="dropdown-menu dropdown-menu-right">' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-info" data-id="' + data[i].id + '">' +
+                                '<i class="las la-info-circle mr-2"></i>' + (AIZ.local.details_info || "Details Info") + '</a>' +
+                                '<a href="' + baseURL + data[i].file_name + '" target="_blank" download="' + data[i].file_original_name + '.' + data[i].extension + '" class="dropdown-item">' +
+                                '<i class="la la-download mr-2"></i>' + (AIZ.local.download || "Download") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-copy" data-url="' + baseURL + data[i].file_name + '">' +
+                                '<i class="las la-clipboard mr-2"></i>' + (AIZ.local.copy_link || "Copy Link") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-rename" data-id="' + data[i].id + '" data-name="' + data[i].file_original_name + '" data-ext="' + data[i].extension + '" data-route="' + (AIZ.uploader.renameUrl || (AIZ.data.appUrl + "/admin/uploaded-files/" + data[i].id + "/rename")) + '">' +
+                                '<i class="las la-i-cursor mr-2"></i>' + (AIZ.local.rename || "Rename") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-delete" data-id="' + data[i].id + '" data-href="' + (AIZ.uploader.deleteUrl || (AIZ.data.appUrl + "/admin/uploaded-files/destroy/" + data[i].id)) + '">' +
+                                '<i class="las la-trash mr-2"></i>' + (AIZ.local.delete || "Delete") + '</a>' +
+                                "</div>" +
+                                "</div>" +
+                                '<div class="aiz-file-checkbox pr-3">' +
+                                '<input type="checkbox" class="aiz-select-single" data-value="' + data[i].id + '" ' + (data[i].selected ? "checked" : "") + ' />' +
+                                "</div>" +
+                                '<div class="aiz-file-thumb mr-3" style="width:48px;">' +
+                                thumb +
+                                "</div>" +
+                                '<div class="flex-grow-1">' +
+                                '<div class="d-flex align-items-center">' +
+                                '<span class="text-truncate mr-2">' +
+                                data[i].file_original_name +
+                                "</span>" +
+                                '<span class="text-muted small">.' +
+                                data[i].extension +
+                                "</span>" +
+                                "</div>" +
+                                "</div>" +
+                                '<div class="px-3" style="width:120px;">' + typeLabel + "</div>" +
+                                '<div class="px-3 text-right" style="width:120px;">' + AIZ.extra.bytesToSize(data[i].file_size) + "</div>" +
+                                '<div class="pl-3" style="width:180px;">' + createdLabel + "</div>" +
+                                "</div>";
+                        } else {
+                            html =
+                                '<div class="aiz-file-box-wrap" aria-hidden="' +
+                                data[i].aria_hidden +
+                                '" data-selected="' +
+                                data[i].selected +
+                                '">' +
+                                '<div class="aiz-file-box">' +
+                                '<div class="dropdown-file">' +
+                                '<a class="dropdown-link" data-toggle="dropdown"><i class="la la-ellipsis-v"></i></a>' +
+                                '<div class="dropdown-menu dropdown-menu-right">' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-info" data-id="' + data[i].id + '">' +
+                                '<i class="las la-info-circle mr-2"></i>' + (AIZ.local.details_info || "Details Info") + '</a>' +
+                                '<a href="' + baseURL + data[i].file_name + '" target="_blank" download="' + data[i].file_original_name + '.' + data[i].extension + '" class="dropdown-item">' +
+                                '<i class="la la-download mr-2"></i>' + (AIZ.local.download || "Download") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-copy" data-url="' + baseURL + data[i].file_name + '">' +
+                                '<i class="las la-clipboard mr-2"></i>' + (AIZ.local.copy_link || "Copy Link") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-rename" data-id="' + data[i].id + '" data-name="' + data[i].file_original_name + '" data-ext="' + data[i].extension + '" data-route="' + (AIZ.uploader.renameUrl || (AIZ.data.appUrl + "/admin/uploaded-files/" + data[i].id + "/rename")) + '">' +
+                                '<i class="las la-i-cursor mr-2"></i>' + (AIZ.local.rename || "Rename") + '</a>' +
+                                '<a href="javascript:void(0)" class="dropdown-item aiz-uploader-delete" data-id="' + data[i].id + '" data-href="' + (AIZ.uploader.deleteUrl || (AIZ.data.appUrl + "/admin/uploaded-files/destroy/" + data[i].id)) + '">' +
+                                '<i class="las la-trash mr-2"></i>' + (AIZ.local.delete || "Delete") + '</a>' +
+                                "</div>" +
+                                "</div>" +
+                                '<div class="card card-file aiz-uploader-select" title="' +
+                                data[i].file_original_name +
+                                "." +
+                                data[i].extension +
+                                '" data-value="' +
+                                data[i].id +
+                                '">' +
+                                '<div class="card-file-thumb">' +
+                                thumb +
+                                "</div>" +
+                                '<div class="card-body">' +
+                                '<h6 class="d-flex">' +
+                                '<span class="text-truncate title">' +
+                                data[i].file_original_name +
+                                "</span>" +
+                                '<span class="ext flex-shrink-0">.' +
+                                data[i].extension +
+                                "</span>" +
+                                "</h6>" +
+                                "<p>" +
+                                AIZ.extra.bytesToSize(data[i].file_size) +
+                                "</p>" +
+                                "</div>" +
+                                "</div>" +
+                                "</div>" +
+                                "</div>";
+                        }
 
                         $(".aiz-uploader-all").append(html);
                     }
@@ -500,13 +832,29 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                             );
                             for (var i = 0; i < data.length; i++) {
                                 var thumb = "";
-                                if (data[i].type === "image") {
+                                var ext = (data[i].extension || "").toString().toLowerCase();
+                                if (data[i].type === "image" || ext === "svg") {
                                     thumb =
                                         '<img src="' +
                                         data[i].file_name +
                                         '" class="img-fit">';
+                                } else if (data[i].type === "video") {
+                                    thumb =
+                                        '<video src="' +
+                                        data[i].file_name +
+                                        '" class="img-fit" preload="metadata" muted playsinline></video>';
+                                } else if (ext === "pdf") {
+                                    thumb = '<i class="las la-file-pdf la-2x"></i>';
+                                } else if (["doc","docx"].includes(ext)) {
+                                    thumb = '<i class="las la-file-word la-2x"></i>';
+                                } else if (["xls","xlsx","ods","csv"].includes(ext)) {
+                                    thumb = '<i class="las la-file-excel la-2x"></i>';
+                                } else if (data[i].type === "audio") {
+                                    thumb = '<i class="las la-file-audio la-2x"></i>';
+                                } else if (data[i].type === "archive") {
+                                    thumb = '<i class="las la-file-archive la-2x"></i>';
                                 } else {
-                                    thumb = '<i class="la la-file-text"></i>';
+                                    thumb = '<i class="la la-file-text la-2x"></i>';
                                 }
                                 var html =
                                     '<div class="d-flex justify-content-between align-items-center mt-2 file-preview-item" data-id="' +
@@ -643,6 +991,71 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                 $("#aizUploaderModal").remove();
             });
         },
+        ensureRenameModal: function () {
+            if ($("#aizRenameModal").length) return;
+            var modal =
+                '<div class="modal fade" id="aizRenameModal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog" role="document">' +
+                '<div class="modal-content">' +
+                '<div class="modal-header">' +
+                '<h5 class="modal-title">' + ((AIZ.local && AIZ.local.rename) ? AIZ.local.rename : "Rename File") + '</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+                "</div>" +
+                '<div class="modal-body">' +
+                '<div class="form-group mb-0">' +
+                '<label class="form-label">' + ((AIZ.local && AIZ.local.new_name) ? AIZ.local.new_name : "New name") + "</label>" +
+                '<input type="text" class="form-control" id="aizRenameInput" autocomplete="off" />' +
+                "</div>" +
+                "</div>" +
+                '<div class="modal-footer">' +
+                '<button type="button" class="btn btn-link" data-dismiss="modal">' + ((AIZ.local && AIZ.local.cancel) ? AIZ.local.cancel : "Cancel") + "</button>" +
+                '<button type="button" class="btn btn-primary" id="aizRenameSave">' + ((AIZ.local && AIZ.local.save) ? AIZ.local.save : "Save") + "</button>" +
+                "</div>" +
+                "</div>" +
+                "</div>" +
+                "</div>";
+            $("body").append(modal);
+        },
+        ensureDeleteModal: function () {
+            if ($("#aizDeleteModal").length) return;
+            var modal =
+                '<div class="modal fade" id="aizDeleteModal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog" role="document">' +
+                '<div class="modal-content">' +
+                '<div class="modal-header">' +
+                '<h5 class="modal-title">' + ((AIZ.local && AIZ.local.delete) ? AIZ.local.delete : "Delete File") + '</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>' +
+                "</div>" +
+                '<div class="modal-body">' +
+                '<p class="mb-0">' + ((AIZ.local && AIZ.local.delete_confirm) ? AIZ.local.delete_confirm : "Are you sure you want to delete this file?") + "</p>" +
+                "</div>" +
+                '<div class="modal-footer">' +
+                '<button type="button" class="btn btn-link" data-dismiss="modal">' + ((AIZ.local && AIZ.local.cancel) ? AIZ.local.cancel : "Cancel") + "</button>" +
+                '<button type="button" class="btn btn-primary" id="aizDeleteConfirm">' + ((AIZ.local && AIZ.local.delete) ? AIZ.local.delete : "Delete") + "</button>" +
+                "</div>" +
+                "</div>" +
+                "</div>" +
+                "</div>";
+            $("body").append(modal);
+        },
+        ensureInfoModal: function () {
+            if ($("#aizUploaderInfoModal").length) return;
+            var modal =
+                '<div class="modal fade" id="aizUploaderInfoModal" tabindex="-1" role="dialog" aria-hidden="true">' +
+                '<div class="modal-dialog modal-dialog-right" role="document">' +
+                '<div class="modal-content">' +
+                '<div class="modal-header">' +
+                '<h5 class="modal-title">' + ((AIZ.local && AIZ.local.file_info) ? AIZ.local.file_info : "File Info") + '</h5>' +
+                '<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"></span></button>' +
+                "</div>" +
+                '<div class="modal-body c-scrollbar-light position-relative" id="aizUploaderInfoBody">' +
+                '<div class="d-flex justify-content-center py-4"><i class="las la-spinner la-spin la-2x"></i></div>' +
+                "</div>" +
+                "</div>" +
+                "</div>" +
+                "</div>";
+            $("body").append(modal);
+        },
         trigger: function (
             elem = null,
             from = "",
@@ -682,15 +1095,22 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     $("body").append(data);
                     $("#aizUploaderModal").modal("show");
                     AIZ.plugins.aizUppy();
+                    AIZ.uploader.applyViewToggle();
+                    AIZ.uploader.bindCopyLink();
+                    AIZ.uploader.bindRenameDelete();
+                    AIZ.uploader.ensureInfoModal();
+                    AIZ.uploader.bindHeaderSort();
                     AIZ.uploader.getAllUploads(
                         AIZ.data.appUrl + "/aiz-uploader/get-uploaded-files",
                         null,
-                        $('[name="aiz-uploader-sort"]').val()
+                        $('[name="aiz-uploader-sort"]').val(),
+                        $('[name="aiz-uploader-type"]').val()
                     );
                     AIZ.uploader.updateUploaderSelected();
                     AIZ.uploader.clearUploaderSelected();
                     AIZ.uploader.sortUploaderFiles();
                     AIZ.uploader.searchUploaderFiles();
+                    AIZ.uploader.filterUploaderType();
                     AIZ.uploader.showSelectedFiles();
                     AIZ.uploader.dismissUploader();
 
@@ -701,7 +1121,10 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                                 false
                             );
                             AIZ.uploader.getAllUploads(
-                                AIZ.uploader.data.next_page_url
+                                AIZ.uploader.data.next_page_url,
+                                $('[name="aiz-uploader-search"]').val(),
+                                $('[name="aiz-uploader-sort"]').val(),
+                                $('[name="aiz-uploader-type"]').val()
                             );
                         }
                     });
@@ -713,7 +1136,10 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                                 false
                             );
                             AIZ.uploader.getAllUploads(
-                                AIZ.uploader.data.prev_page_url
+                                AIZ.uploader.data.prev_page_url,
+                                $('[name="aiz-uploader-search"]').val(),
+                                $('[name="aiz-uploader-sort"]').val(),
+                                $('[name="aiz-uploader-type"]').val()
                             );
                         }
                     });
@@ -721,6 +1147,8 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     $(".aiz-uploader-search i").on("click", function () {
                         $(this).parent().toggleClass("open");
                     });
+
+                    AIZ.uploader.applyViewToggle();
 
                     $('[data-toggle="aizUploaderAddSelected"]').on(
                         "click",
@@ -766,6 +1194,7 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                     }
                 }
             );
+            AIZ.uploader.bindRowSelect();
         },
         previewGenerate: function () {
             $('[data-toggle="aizuploader"]').each(function () {
@@ -795,17 +1224,43 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                                 $this
                                     .find(".file-amount")
                                     .html(AIZ.uploader.updateFileHtml(data));
-                                for (var i = 0; i < data.length; i++) {
+                                for (var i = 0; i < data.length; i++) {                                    
                                     var thumb = "";
+                                    var ext = (data[i].extension || "").toString().toLowerCase();
                                     if (data[i].type === "image") {
                                         thumb =
                                             '<img src="' +
                                             data[i].file_name +
                                             '" class="img-fit">';
-                                    } else {
+                                    } else if (data[i].type === "video") {
                                         thumb =
-                                            '<i class="la la-file-text"></i>';
+                                            '<video src="' +
+                                            data[i].file_name +
+                                            '" class="img-fit" preload="metadata" muted playsinline></video>';
+                                    } else if (ext === "pdf") {
+                                        thumb = '<i class="las la-file-pdf la-2x"></i>';
+                                    } else if (["doc","docx"].includes(ext)) {
+                                        thumb = '<i class="las la-file-word la-2x"></i>';
+                                    } else if (["xls","xlsx","ods","csv"].includes(ext)) {
+                                        thumb = '<i class="las la-file-excel la-2x"></i>';
+                                    } else if (data[i].type === "audio") {
+                                        thumb = '<i class="las la-file-audio la-2x"></i>';
+                                    } else if (data[i].type === "archive") {
+                                        thumb = '<i class="las la-file-archive la-2x"></i>';
+                                    } else {
+                                        thumb = '<i class="la la-file-text la-2x"></i>';
                                     }
+
+                                    // var thumb = "";
+                                    // if (data[i].type === "image") {
+                                    //     thumb =
+                                    //         '<img src="' +
+                                    //         data[i].file_name +
+                                    //         '" class="img-fit">';
+                                    // } else {
+                                    //     thumb =
+                                    //         '<i class="la la-file-text"></i>';
+                                    // }
                                     var html =
                                         '<div class="d-flex justify-content-between align-items-center mt-2 file-preview-item" data-id="' +
                                         data[i].id +
