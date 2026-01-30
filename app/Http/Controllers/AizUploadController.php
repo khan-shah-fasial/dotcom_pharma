@@ -20,7 +20,6 @@ class AizUploadController extends Controller
 {
     public function index(Request $request)
     {
-
         $all_uploads = (auth()->user()->user_type == 'seller')
             ? Upload::where('user_id', auth()->user()->id)
             : Upload::query();
@@ -90,6 +89,35 @@ class AizUploadController extends Controller
         }
 
         $all_uploads = $all_uploads->paginate($perPage)->appends(request()->query());
+
+        if ($request->wantsJson()) {
+            $collection = $all_uploads->getCollection()->map(function ($file) {
+                $fullPath = $file->external_link ?: my_asset($file->file_name);
+                return [
+                    'id'                    => $file->id,
+                    'file_original_name'    => $file->file_original_name ?? translate('Unknown'),
+                    'extension'             => $file->extension,
+                    'type'                  => $file->type,
+                    'file_size'             => $file->file_size,
+                    'file_size_formatted'   => formatBytes($file->file_size),
+                    'file_name'             => $file->file_name,
+                    'full_path'             => $fullPath,
+                    'created_at_formatted'   => $file->created_at ? $file->created_at->format('d M Y, h:i A') : '',
+                    'rename_url'            => route('uploaded-files.rename', $file),
+                    'destroy_url'           => route('uploaded-files.destroy', $file->id),
+                ];
+            });
+            return response()->json([
+                'data'  => $collection,
+                'meta'  => [
+                    'current_page' => $all_uploads->currentPage(),
+                    'last_page'    => $all_uploads->lastPage(),
+                    'per_page'     => $all_uploads->perPage(),
+                    'total'        => $all_uploads->total(),
+                ],
+                'links' => $all_uploads->linkCollection()->toArray(),
+            ]);
+        }
 
         $viewData = [
             'all_uploads' => $all_uploads,
@@ -212,7 +240,7 @@ class AizUploadController extends Controller
                         $extension = get_setting('uploaded_image_format');
                     }
                     try {
-                        
+
                         $dir = public_path('uploads/all/' . date('Y/m'));
 
                         if (!File::exists($dir)) {
@@ -321,7 +349,7 @@ class AizUploadController extends Controller
 
                         // Use 's3' disk name as defined in config/filesystems.php
                         $diskName = env('FILESYSTEM_DRIVER') == 's3' ? 's3' : env('FILESYSTEM_DRIVER');
-                        
+
                         // Ensure the file exists before uploading
                         $filePath = base_path('public/') . $path;
                         if (!file_exists($filePath)) {
@@ -344,17 +372,17 @@ class AizUploadController extends Controller
                             $diskUploadFailed = true;
                             // Get AWS config
                             $awsConfig = config('filesystems.disks.' . $diskName);
-                            
+
                             // Validate AWS configuration
                             if (empty($awsConfig['key']) || empty($awsConfig['secret']) || empty($awsConfig['bucket'])) {
                                 throw new \Exception("AWS configuration incomplete. Check AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_BUCKET");
                             }
-                            
+
                             // Check if AWS SDK classes are available
                             if (!class_exists('Aws\S3\S3Client')) {
                                 throw new \Exception("AWS SDK not available. Please install aws/aws-sdk-php package.");
                             }
-                            
+
                             // Create S3 client directly to get detailed error messages
                             $s3Client = new S3Client([
                                 'version' => 'latest',
@@ -370,7 +398,7 @@ class AizUploadController extends Controller
                             if ($fileContent === false) {
                                 throw new \Exception("Failed to read file content from: " . $filePath);
                             }
-                            
+
                             // Note: ACL is removed because bucket has ACLs disabled (Object Ownership: Bucket owner enforced)
                             // Public access should be controlled via bucket policy instead
                             $s3Result = $s3Client->putObject([
@@ -404,7 +432,7 @@ class AizUploadController extends Controller
                             'code' => $e->getAwsErrorCode(),
                             'request_id' => $e->getAwsRequestId(),
                         ];
-                        
+
                         Log::error('S3 Upload AWS Error: ' . $e->getAwsErrorMessage(), [
                             'path' => $path,
                             'disk' => $diskName ?? env('FILESYSTEM_DRIVER'),
@@ -538,6 +566,9 @@ class AizUploadController extends Controller
             $upload->delete();
             flash(translate('File deleted successfully'))->success();
         }
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['success' => true, 'message' => translate('File deleted successfully')]);
+        }
         return back();
     }
 
@@ -556,15 +587,6 @@ class AizUploadController extends Controller
             ->exists();
 
         if ($inProducts) {
-            return true;
-        }
-
-        // Banners: photo (single)
-        $inBanners = DB::table('banners')
-            ->where('photo', $uploadId)
-            ->exists();
-
-        if ($inBanners) {
             return true;
         }
 
@@ -597,11 +619,11 @@ class AizUploadController extends Controller
         }
 
         // Financial Archives: upload_id (single)
-        $inFinancialArchives = DB::table('financial_archives')
+        $inFinancialArchive = DB::table('financial_archive')
             ->where('upload_id', $uploadId)
             ->exists();
 
-        if ($inFinancialArchives) {
+        if ($inFinancialArchive) {
             return true;
         }
 

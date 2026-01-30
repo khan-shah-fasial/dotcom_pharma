@@ -1,4 +1,4 @@
-﻿@extends('backend.layouts.app')
+@extends('backend.layouts.app')
 
 @section('content')
 <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -81,10 +81,10 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <input type="text" class="form-control form-control-xs" name="search" placeholder="{{ translate('Search by name or extension') }}" value="{{ $search }}">
+                <input type="text" class="form-control form-control-xs" name="search" id="search_input" placeholder="{{ translate('Search by name or extension') }}" value="{{ $search ?? '' }}">
             </div>
             <div class="col-auto d-flex align-items-center">
-                <button type="submit" class="btn btn-primary mr-2">{{ translate('Apply') }}</button>
+                <button type="button" class="btn btn-primary mr-2" id="apply-filters">{{ translate('Apply') }}</button>
                 <button type="button" class="btn btn-secondary" id="reset-filters">{{ translate('Reset') }}</button>
             </div>
         </div>
@@ -100,215 +100,43 @@
                 </div>
             </div>
 
-            <div class="row gutters-5 view-grid {{ ($viewMode ?? 'grid') === 'list' ? 'd-none' : '' }}">
-                @foreach($all_uploads as $key => $file)
-                    @php
-                        $file_name = $file->file_original_name ?? translate('Unknown');
-                        $file_path = $file->external_link ? $file->external_link : my_asset($file->file_name);
-                        $icon_class = 'las la-file';
-                        if ($file->type === 'video') {
-                            $icon_class = 'las la-file-video';
-                        } elseif ($file->type === 'audio') {
-                            $icon_class = 'las la-file-audio';
-                        } elseif ($file->type === 'archive') {
-                            $icon_class = 'las la-file-archive';
-                        } elseif (in_array(strtolower($file->extension), ['pdf'])) {
-                            $icon_class = 'las la-file-pdf';
-                        } elseif (in_array(strtolower($file->extension), ['doc', 'docx'])) {
-                            $icon_class = 'las la-file-word';
-                        } elseif (in_array(strtolower($file->extension), ['xls', 'xlsx', 'ods'])) {
-                            $icon_class = 'las la-file-excel';
-                        } elseif (in_array(strtolower($file->extension), ['csv'])) {
-                            $icon_class = 'las la-file-csv';
-                        }
-                    @endphp
-                    <div class="col-auto w-140px w-lg-220px" data-file-row="{{ $file->id }}">
-                        <div class="aiz-file-box">
-                            <div class="dropdown-file">
-                                <a class="dropdown-link" data-toggle="dropdown">
-                                    <i class="la la-ellipsis-v"></i>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-right">
-                                    <a href="javascript:void(0)" class="dropdown-item" onclick="detailsInfo(this)" data-id="{{ $file->id }}">
-                                        <i class="las la-info-circle mr-2"></i>
-                                        <span>{{ translate('Details Info') }}</span>
-                                    </a>
-                                    <a href="{{ $file_path }}" target="_blank" download="{{ $file_name }}.{{ $file->extension }}" class="dropdown-item file-download-link">
-                                        <i class="la la-download mr-2"></i>
-                                        <span>{{ translate('Download') }}</span>
-                                    </a>
-                                    <a href="javascript:void(0)" class="dropdown-item copy-link-btn" data-url="{{ $file_path }}">
-                                        <i class="las la-clipboard mr-2"></i>
-                                        <span>{{ translate('Copy Link') }}</span>
-                                    </a>
-                                    <a href="javascript:void(0)" class="dropdown-item rename-file-action"
-                                       data-id="{{ $file->id }}"
-                                       data-route="{{ route('uploaded-files.rename', $file) }}"
-                                       data-name="{{ $file_name }}"
-                                       data-ext="{{ $file->extension }}">
-                                        <i class="las la-i-cursor mr-2"></i>
-                                        <span>{{ translate('Rename') }}</span>
-                                    </a>
-                                    <a href="javascript:void(0)" class="dropdown-item confirm-delete" data-href="{{ route('uploaded-files.destroy', $file->id ) }}" data-target="#delete-modal">
-                                        <i class="las la-trash mr-2"></i>
-                                        <span>{{ translate('Delete') }}</span>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="select-box">
-                                <div class="aiz-checkbox-inline">
-                                    <label class="aiz-checkbox">
-                                        <input type="checkbox" class="check-one" name="id[]" value="{{$file->id}}">
-                                        <span class="aiz-square-check"></span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="card card-file aiz-uploader-select c-default" title="{{ $file_name }}.{{ $file->extension }}">
-                                <div class="card-file-thumb">
-                                    @if($file->type == 'image')
-                                        <img src="{{ $file_path }}" class="img-fit">
-                                    @elseif($file->type == 'video')
-                                        <video src="{{ $file_path }}" class="img-fit" preload="metadata" muted playsinline></video>
-                                    @else
-                                        <i class="{{ $icon_class }} fs-32"></i>
-                                    @endif
-                                </div>
-                                <div class="card-body">
-                                    <h6 class="d-flex">
-                                        <span class="text-truncate title file-title-text">{{ $file_name }}</span>
-                                        <span class="ext">.{{ $file->extension }}</span>
-                                    </h6>
-                                    <p>{{ formatBytes($file->file_size) }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
+            <div id="uploads-loading" class="text-center py-5 d-none">
+                <i class="las la-spinner la-spin la-3x opacity-70"></i>
+                <p class="mt-2">{{ translate('Loading...') }}</p>
             </div>
 
-            @php
-                $sortIcon = function ($column) use ($sortBy, $sortOrder) {
-                    if ($sortBy === $column) {
-                        return $sortOrder === 'asc' ? 'las la-sort-amount-up' : 'las la-sort-amount-down';
-                    }
-                    return 'las la-sort';
-                };
-            @endphp
+            <div id="uploads-content" class="d-none">
+                <div class="row gutters-5 view-grid" id="uploads-grid"></div>
 
-            <div class="table-responsive view-list {{ ($viewMode ?? 'grid') === 'list' ? '' : 'd-none' }}">
-                <table class="table aiz-table mb-0">
-                    <thead>
-                        <tr>
-                            <th width="55">
-                                <div class="aiz-checkbox-inline mb-0">
-                                    <label class="aiz-checkbox mb-0">
-                                        <input type="checkbox" class="check-all">
-                                        <span class="aiz-square-check"></span>
-                                    </label>
-                                </div>
-                            </th>
-                            <th class="table-sort-trigger c-pointer" data-sort="name">
-                                {{ translate('Name') }} <i class="{{ $sortIcon('name') }}"></i>
-                            </th>
-                            <th class="table-sort-trigger c-pointer" data-sort="type">
-                                {{ translate('Type') }} <i class="{{ $sortIcon('type') }}"></i>
-                            </th>
-                            <th class="table-sort-trigger c-pointer text-right" data-sort="size">
-                                {{ translate('Size') }} <i class="{{ $sortIcon('size') }}"></i>
-                            </th>
-                            <th class="table-sort-trigger c-pointer" data-sort="created_at">
-                                {{ translate('Created At') }} <i class="{{ $sortIcon('created_at') }}"></i>
-                            </th>
-                            <th class="text-right">{{ translate('Actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($all_uploads as $file)
-                            @php
-                                $file_name = $file->file_original_name ?? translate('Unknown');
-                                $file_path = $file->external_link ? $file->external_link : my_asset($file->file_name);
-                                $icon_class = 'las la-file';
-                                if ($file->type === 'video') {
-                                    $icon_class = 'las la-file-video';
-                                } elseif ($file->type === 'audio') {
-                                    $icon_class = 'las la-file-audio';
-                                } elseif ($file->type === 'archive') {
-                                    $icon_class = 'las la-file-archive';
-                                } elseif (in_array(strtolower($file->extension), ['pdf'])) {
-                                    $icon_class = 'las la-file-pdf';
-                                } elseif (in_array(strtolower($file->extension), ['doc', 'docx'])) {
-                                    $icon_class = 'las la-file-word';
-                                } elseif (in_array(strtolower($file->extension), ['xls', 'xlsx', 'ods'])) {
-                                    $icon_class = 'las la-file-excel';
-                                } elseif (in_array(strtolower($file->extension), ['csv'])) {
-                                    $icon_class = 'las la-file-csv';
-                                }
-                            @endphp
-                            <tr data-file-row="{{ $file->id }}">
-                                <td>
-                                    <div class="aiz-checkbox-inline mb-0">
+                <div class="table-responsive view-list d-none" id="uploads-list-wrap">
+                    <table class="table table-bordered mb-0" id="uploads-list-table">
+                        <thead>
+                            <tr>
+                                <th width="55">
+                                    {{-- <div class="aiz-checkbox-inline mb-0">
                                         <label class="aiz-checkbox mb-0">
-                                            <input type="checkbox" class="check-one" name="id[]" value="{{$file->id}}">
+                                            <input type="checkbox" class="check-all">
                                             <span class="aiz-square-check"></span>
                                         </label>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        @if($file->type == 'image')
-                                            <img src="{{ $file_path }}" class="size-48px img-fit rounded mr-3">
-                                        @elseif($file->type == 'video')
-                                            <video src="{{ $file_path }}" class="size-48px rounded mr-3" preload="metadata" muted playsinline></video>
-                                        @else
-                                            <span class="avatar avatar-sm flex-shrink-0 mr-3 bg-soft-primary d-flex align-items-center justify-content-center">
-                                                <i class="{{ $icon_class }}"></i>
-                                            </span>
-                                        @endif
-                                        <div>
-                                            <div class="font-weight-medium file-title-text">{{ $file_name }}</div>
-                                            <div class="text-muted small">.{{ $file->extension }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{{ strtoupper($file->extension) ?? strtoupper($file->type) }}</td>
-                                <td class="text-right">{{ formatBytes($file->file_size) }}</td>
-                                <td>{{ $file->created_at->format('d M Y, h:i A') }}</td>
-                                <td class="text-right">
-                                    <div class="dropdown">
-                                        <a class="btn btn-sm btn-outline-primary dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            {{ translate('Actions') }}
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right">
-                                            <a href="javascript:void(0)" class="dropdown-item" onclick="detailsInfo(this)" data-id="{{ $file->id }}">
-                                                <i class="las la-info-circle mr-2"></i>{{ translate('Details Info') }}
-                                            </a>
-                                            <a href="{{ $file_path }}" target="_blank" download="{{ $file_name }}.{{ $file->extension }}" class="dropdown-item file-download-link">
-                                                <i class="la la-download mr-2"></i>{{ translate('Download') }}
-                                            </a>
-                                            <a href="javascript:void(0)" class="dropdown-item copy-link-btn" data-url="{{ $file_path }}">
-                                                <i class="las la-clipboard mr-2"></i>{{ translate('Copy Link') }}
-                                            </a>
-                                            <a href="javascript:void(0)" class="dropdown-item rename-file-action"
-                                               data-id="{{ $file->id }}"
-                                               data-route="{{ route('uploaded-files.rename', $file) }}"
-                                               data-name="{{ $file_name }}"
-                                               data-ext="{{ $file->extension }}">
-                                                <i class="las la-i-cursor mr-2"></i>{{ translate('Rename') }}
-                                            </a>
-                                            <a href="javascript:void(0)" class="dropdown-item confirm-delete" data-href="{{ route('uploaded-files.destroy', $file->id ) }}" data-target="#delete-modal">
-                                                <i class="las la-trash mr-2"></i>{{ translate('Delete') }}
-                                            </a>
-                                        </div>
-                                    </div>
-                                </td>
+                                    </div> --}}
+                                </th>
+                                <th class="table-sort-trigger c-pointer" data-sort="name">{{ translate('Name') }} <i class="las la-sort"></i></th>
+                                <th class="table-sort-trigger c-pointer" data-sort="type">{{ translate('Type') }} <i class="las la-sort"></i></th>
+                                <th class="table-sort-trigger c-pointer text-right" data-sort="size">{{ translate('Size') }} <i class="las la-sort"></i></th>
+                                <th class="table-sort-trigger c-pointer" data-sort="created_at">{{ translate('Created At') }} <i class="las la-sort"></i></th>
+                                <th class="text-right">{{ translate('Actions') }}</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody id="uploads-list"></tbody>
+                    </table>
+                </div>
+
+                <div class="aiz-pagination mt-3" id="uploads-pagination"></div>
             </div>
 
-            <div class="aiz-pagination mt-3">
-                {{ $all_uploads->appends(request()->input())->links() }}
+            <div id="uploads-empty" class="text-center py-5 d-none">
+                <i class="las la-folder-open la-3x text-muted"></i>
+                <p class="mt-2 text-muted">{{ translate('No files found') }}</p>
             </div>
         </div>
     </form>
@@ -364,16 +192,198 @@
         (function () {
             var state = {
                 renameTarget: null,
+                currentPage: 1,
+                routes: {
+                    index: "{{ route('uploaded-files.index') }}",
+                    info: "{{ route('uploaded-files.info') }}",
+                    bulkDelete: "{{ route('bulk-uploaded-files-delete') }}"
+                },
+                strings: {
+                    detailsInfo: "{{ translate('Details Info') }}",
+                    download: "{{ translate('Download') }}",
+                    copyLink: "{{ translate('Copy Link') }}",
+                    rename: "{{ translate('Rename') }}",
+                    delete: "{{ translate('Delete') }}",
+                    linkCopied: "{{ translate('Link copied to clipboard') }}",
+                    copyFailed: "{{ translate('Oops, unable to copy') }}",
+                    renameSuccess: "{{ translate('File renamed successfully') }}",
+                    renameFailed: "{{ translate('Unable to rename file') }}",
+                    deleteSuccess: "{{ translate('File deleted successfully') }}",
+                    bulkDeleteFailed: "{{ translate('Something Went Wrong.') }}",
+                    noFiles: "{{ translate('No files found') }}"
+                }
             };
+
+            function getIconClass(file) {
+                var ext = (file.extension || '').toLowerCase();
+                if (file.type === 'video') return 'las la-file-video';
+                if (file.type === 'audio') return 'las la-file-audio';
+                if (file.type === 'archive') return 'las la-file-archive';
+                if (ext === 'pdf') return 'las la-file-pdf';
+                if (['doc', 'docx'].indexOf(ext) >= 0) return 'las la-file-word';
+                if (['xls', 'xlsx', 'ods'].indexOf(ext) >= 0) return 'las la-file-excel';
+                if (ext === 'csv') return 'las la-file-csv';
+                return 'las la-file';
+            }
+
+            function renderGridItem(file) {
+                var iconClass = getIconClass(file);
+                var thumb = '';
+                if (file.type === 'image') {
+                    thumb = '<img src="' + escapeHtml(file.full_path) + '" class="img-fit">';
+                } else if (file.type === 'video') {
+                    thumb = '<video src="' + escapeHtml(file.full_path) + '" class="img-fit" preload="metadata" muted playsinline></video>';
+                } else {
+                    thumb = '<i class="' + iconClass + ' fs-32"></i>';
+                }
+                return '<div class="col-auto w-140px w-lg-220px" data-file-row="' + file.id + '">' +
+                    '<div class="aiz-file-box">' +
+                    '<div class="dropdown-file">' +
+                    '<a class="dropdown-link" data-toggle="dropdown"><i class="la la-ellipsis-v"></i></a>' +
+                    '<div class="dropdown-menu dropdown-menu-right">' +
+                    '<a href="javascript:void(0)" class="dropdown-item details-info-btn" data-id="' + file.id + '"><i class="las la-info-circle mr-2"></i><span>' + state.strings.detailsInfo + '</span></a>' +
+                    '<a href="' + escapeHtml(file.full_path) + '" target="_blank" download="' + escapeHtml(file.file_original_name) + '.' + escapeHtml(file.extension) + '" class="dropdown-item file-download-link"><i class="la la-download mr-2"></i><span>' + state.strings.download + '</span></a>' +
+                    '<a href="javascript:void(0)" class="dropdown-item copy-link-btn" data-url="' + escapeHtml(file.full_path) + '"><i class="las la-clipboard mr-2"></i><span>' + state.strings.copyLink + '</span></a>' +
+                    '<a href="javascript:void(0)" class="dropdown-item rename-file-action" data-id="' + file.id + '" data-route="' + escapeHtml(file.rename_url) + '" data-name="' + escapeHtml(file.file_original_name) + '" data-ext="' + escapeHtml(file.extension) + '"><i class="las la-i-cursor mr-2"></i><span>' + state.strings.rename + '</span></a>' +
+                    '<a href="javascript:void(0)" class="dropdown-item confirm-delete" data-href="' + escapeHtml(file.destroy_url) + '" data-target="#delete-modal"><i class="las la-trash mr-2"></i><span>' + state.strings.delete + '</span></a>' +
+                    '</div></div>' +
+                    '<div class="select-box"><div class="aiz-checkbox-inline"><label class="aiz-checkbox"><input type="checkbox" class="check-one" name="id[]" value="' + file.id + '"><span class="aiz-square-check"></span></label></div></div>' +
+                    '<div class="card card-file aiz-uploader-select c-default" title="' + escapeHtml(file.file_original_name) + '.' + escapeHtml(file.extension) + '">' +
+                    '<div class="card-file-thumb">' + thumb + '</div>' +
+                    '<div class="card-body"><h6 class="d-flex"><span class="text-truncate title file-title-text">' + escapeHtml(file.file_original_name) + '</span><span class="ext">.' + escapeHtml(file.extension) + '</span></h6>' +
+                    '<p>' + escapeHtml(file.file_size_formatted) + '</p></div></div></div></div>';
+            }
+
+            function renderListRow(file) {
+                var iconClass = getIconClass(file);
+                var thumb = '';
+                if (file.type === 'image') {
+                    thumb = '<img src="' + escapeHtml(file.full_path) + '" class="size-48px img-fit rounded mr-3">';
+                } else if (file.type === 'video') {
+                    thumb = '<video src="' + escapeHtml(file.full_path) + '" class="size-48px rounded mr-3" preload="metadata" muted playsinline></video>';
+                } else {
+                    thumb = '<span class="avatar avatar-sm flex-shrink-0 mr-3 bg-soft-primary d-flex align-items-center justify-content-center"><i class="' + iconClass + '"></i></span>';
+                }
+                return '<tr data-file-row="' + file.id + '">' +
+                    '<td><div class="aiz-checkbox-inline mb-0"><label class="aiz-checkbox mb-0"><input type="checkbox" class="check-one" name="id[]" value="' + file.id + '"><span class="aiz-square-check"></span></label></div></td>' +
+                    '<td><div class="d-flex align-items-center">' + thumb + '<div><div class="font-weight-medium file-title-text">' + escapeHtml(file.file_original_name) + '</div><div class="text-muted small">.' + escapeHtml(file.extension) + '</div></div></div></td>' +
+                    '<td>' + escapeHtml((file.extension || file.type || '').toUpperCase()) + '</td>' +
+                    '<td class="text-right">' + escapeHtml(file.file_size_formatted) + '</td>' +
+                    '<td>' + escapeHtml(file.created_at_formatted) + '</td>' +
+                    '<td class="text-right"><div class="dropdown">' +
+                    '<a class="btn btn-sm btn-outline-primary dropdown-toggle" href="#" role="button" data-toggle="dropdown">{{ translate("Actions") }}</a>' +
+                    '<div class="dropdown-menu dropdown-menu-right">' +
+                    '<a href="javascript:void(0)" class="dropdown-item details-info-btn" data-id="' + file.id + '"><i class="las la-info-circle mr-2"></i>' + state.strings.detailsInfo + '</a>' +
+                    '<a href="' + escapeHtml(file.full_path) + '" target="_blank" download="' + escapeHtml(file.file_original_name) + '.' + escapeHtml(file.extension) + '" class="dropdown-item file-download-link"><i class="la la-download mr-2"></i>' + state.strings.download + '</a>' +
+                    '<a href="javascript:void(0)" class="dropdown-item copy-link-btn" data-url="' + escapeHtml(file.full_path) + '"><i class="las la-clipboard mr-2"></i>' + state.strings.copyLink + '</a>' +
+                    '<a href="javascript:void(0)" class="dropdown-item rename-file-action" data-id="' + file.id + '" data-route="' + escapeHtml(file.rename_url) + '" data-name="' + escapeHtml(file.file_original_name) + '" data-ext="' + escapeHtml(file.extension) + '"><i class="las la-i-cursor mr-2"></i>' + state.strings.rename + '</a>' +
+                    '<a href="javascript:void(0)" class="dropdown-item confirm-delete" data-href="' + escapeHtml(file.destroy_url) + '" data-target="#delete-modal"><i class="las la-trash mr-2"></i>' + state.strings.delete + '</a>' +
+                    '</div></div></td></tr>';
+            }
+
+            function escapeHtml(s) {
+                if (s == null) return '';
+                var div = document.createElement('div');
+                div.textContent = s;
+                return div.innerHTML;
+            }
+
+            function buildPaginationHtml(meta, links) {
+                if (meta.last_page <= 1) return '';
+                var current = meta.current_page;
+                var last = meta.last_page;
+                var delta = 2;
+                var left = current - delta;
+                var right = current + delta;
+                var range = [];
+                var rangeWithDots = [];
+                var l = null;
+                for (var i = 1; i <= last; i++) {
+                    if (i === 1 || i === last || (i >= left && i <= right)) {
+                        range.push(i);
+                    }
+                }
+                for (var j = 0; j < range.length; j++) {
+                    if (l !== null && range[j] - l !== 1) {
+                        rangeWithDots.push('...');
+                    }
+                    rangeWithDots.push(range[j]);
+                    l = range[j];
+                }
+                var html = '<ul class="pagination justify-content-end flex-wrap">';
+                if (current > 1) {
+                    html += '<li class="page-item"><a class="page-link page-link-ajax" href="javascript:void(0)" data-page="' + (current - 1) + '"><i class="las la-arrow-left"></i></a></li>';
+                }
+                for (var k = 0; k < rangeWithDots.length; k++) {
+                    if (rangeWithDots[k] === '...') {
+                        html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                    } else if (rangeWithDots[k] === current) {
+                        html += '<li class="page-item active"><span class="page-link">' + current + '</span></li>';
+                    } else {
+                        html += '<li class="page-item"><a class="page-link page-link-ajax" href="javascript:void(0)" data-page="' + rangeWithDots[k] + '">' + rangeWithDots[k] + '</a></li>';
+                    }
+                }
+                if (current < last) {
+                    html += '<li class="page-item"><a class="page-link page-link-ajax" href="javascript:void(0)" data-page="' + (current + 1) + '"><i class="las la-arrow-right"></i></a></li>';
+                }
+                html += '</ul>';
+                return html;
+            }
 
             function applyView(mode) {
                 var normalized = mode === 'list' ? 'list' : 'grid';
                 $('#view_mode_input').val(normalized);
                 localStorage.setItem('aiz_upload_view', normalized);
-                $('.view-grid').toggleClass('d-none', normalized === 'list');
-                $('.view-list').toggleClass('d-none', normalized !== 'list');
+                $('#uploads-grid').closest('.view-grid').toggleClass('d-none', normalized === 'list');
+                $('#uploads-list-wrap').toggleClass('d-none', normalized !== 'list');
                 $('.view-toggle').removeClass('btn-primary').addClass('btn-outline-secondary');
                 $('.view-toggle[data-view="' + normalized + '"]').addClass('btn-primary').removeClass('btn-outline-secondary');
+            }
+
+            function getParams(page) {
+                var p = {
+                    page: page || state.currentPage,
+                    sort_by: $('#sort_by').val(),
+                    sort_order: $('#sort_order').val(),
+                    view: $('#view_mode_input').val(),
+                    search: $('#search_input').val(),
+                    type: $('#type_filter').val()
+                };
+                return p;
+            }
+
+            function loadFiles(page) {
+                state.currentPage = page || 1;
+                var params = getParams(state.currentPage);
+                $('#uploads-loading').removeClass('d-none');
+                $('#uploads-content').addClass('d-none');
+                $('#uploads-empty').addClass('d-none');
+
+                $.ajax({
+                    url: state.routes.index,
+                    data: params,
+                    dataType: 'json',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                }).done(function (resp) {
+                    $('#uploads-loading').addClass('d-none');
+                    var data = resp.data || [];
+                    var meta = resp.meta || {};
+                    if (data.length === 0) {
+                        $('#uploads-empty').removeClass('d-none');
+                        $('#uploads-pagination').empty();
+                        return;
+                    }
+                    $('#uploads-content').removeClass('d-none');
+                    var gridHtml = data.map(renderGridItem).join('');
+                    $('#uploads-grid').html(gridHtml);
+                    var listHtml = data.map(renderListRow).join('');
+                    $('#uploads-list').html(listHtml);
+                    $('#uploads-pagination').html(buildPaginationHtml(meta, resp.links));
+                    applyView($('#view_mode_input').val() || 'grid');
+                }).fail(function () {
+                    $('#uploads-loading').addClass('d-none');
+                    $('#uploads-empty').removeClass('d-none').find('p').text('{{ translate("Failed to load files.") }}');
+                });
             }
 
             var storedView = localStorage.getItem('aiz_upload_view');
@@ -383,89 +393,129 @@
                 applyView($(this).data('view'));
             });
 
+            $('#sort_uploads').on('submit', function (e) { e.preventDefault(); loadFiles(1); });
+            $('#apply-filters').on('click', function () { loadFiles(1); });
             $('#sort_select').on('change', function () {
                 var parts = $(this).val().split('|');
                 $('#sort_by').val(parts[0]);
                 $('#sort_order').val(parts[1]);
-                $('#sort_uploads').submit();
+                loadFiles(1);
             });
+            $('#type_filter').on('change', function () { loadFiles(1); });
 
-            $('.table-sort-trigger').on('click', function (e) {
+            $(document).on('click', '.table-sort-trigger', function (e) {
                 e.preventDefault();
                 var column = $(this).data('sort');
                 var current = $('#sort_by').val();
                 var order = $('#sort_order').val() === 'asc' ? 'desc' : 'asc';
-                if (current !== column) {
-                    order = 'asc';
-                }
+                if (current !== column) order = 'asc';
                 $('#sort_by').val(column);
                 $('#sort_order').val(order);
-                $('#sort_uploads').submit();
+                loadFiles(1);
             });
 
             $('#reset-filters').on('click', function () {
-                $('input[name="search"]').val('');
-                $('#type_filter').val('').change();
+                $('#search_input').val('');
+                $('#type_filter').val('').trigger('change');
                 $('#sort_by').val('created_at');
                 $('#sort_order').val('desc');
-                $('#sort_select').val('created_at|desc').change();
+                $('#sort_select').val('created_at|desc').trigger('change');
+                if (typeof $('.aiz-selectpicker').selectpicker === 'function') {
+                    $('#type_filter').selectpicker('refresh');
+                    $('#sort_select').selectpicker('refresh');
+                }
                 applyView('grid');
                 localStorage.removeItem('aiz_upload_view');
-                $('#sort_uploads').submit();
+                loadFiles(1);
             });
 
-            $(document).on("change", ".check-all", function() {
+            $(document).on('click', '.page-link-ajax', function (e) {
+                e.preventDefault();
+                var page = $(this).data('page');
+                if (page) loadFiles(page);
+            });
+
+            $(document).on("change", ".check-all", function () {
                 $('.check-one:checkbox').prop('checked', this.checked);
             });
 
-            function copyUrl(e) {
-                var url = $(e).data('url');
+            $(document).on('click', '.copy-link-btn', function () {
+                var url = $(this).data('url');
                 var $temp = $("<input>");
                 $("body").append($temp);
                 $temp.val(url).select();
                 try {
                     document.execCommand("copy");
-                    AIZ.plugins.notify('success', "{{ translate('Link copied to clipboard') }}");
+                    AIZ.plugins.notify('success', state.strings.linkCopied);
                 } catch (err) {
-                    AIZ.plugins.notify('danger', "{{ translate('Oops, unable to copy') }}");
+                    AIZ.plugins.notify('danger', state.strings.copyFailed);
                 }
                 $temp.remove();
-            }
-
-            $(document).on('click', '.copy-link-btn', function () {
-                copyUrl(this);
             });
 
-            window.detailsInfo = function (e) {
+            $(document).on('click', '.details-info-btn', function () {
+                var id = $(this).data('id');
                 $('#info-modal-content').html('<div class="c-preloader text-center absolute-center"><i class="las la-spinner la-spin la-3x opacity-70"></i></div>');
-                var id = $(e).data('id');
                 $('#info-modal').modal('show');
-                $.post('{{ route('uploaded-files.info') }}', {_token: AIZ.data.csrf, id:id}, function(data){
+                $.post(state.routes.info, { _token: AIZ.data.csrf, id: id }, function (data) {
                     $('#info-modal-content').html(data);
                 });
-            }
+            });
+
+            $(document).on('click', '.confirm-delete', function (e) {
+                e.preventDefault();
+                var url = $(this).data('href');
+                $('#delete-modal').modal('show');
+                $('#delete-link').off('click.uploadedFiles').on('click.uploadedFiles', function (e) {
+                    e.preventDefault();
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        data: { _token: AIZ.data.csrf },
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                        success: function (resp) {
+                        $('#delete-modal').modal('hide');
+                        if (resp && resp.success) {
+                            AIZ.plugins.notify('success', resp.message || state.strings.deleteSuccess);
+                            loadFiles(state.currentPage);
+                        }
+                    },
+                        error: function () {
+                            $('#delete-modal').modal('hide');
+                            loadFiles(state.currentPage);
+                        }
+                    });
+                });
+                $('#delete-link').attr('href', url);
+            });
 
             window.bulk_delete = function () {
                 var data = new FormData($('#sort_uploads')[0]);
                 $.ajax({
                     headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                    url: "{{route('bulk-uploaded-files-delete')}}",
+                    url: state.routes.bulkDelete,
                     type: 'POST',
                     data: data,
                     cache: false,
                     contentType: false,
                     processData: false,
                     success: function (response) {
-                        if(response == 1) {
-                            location.reload();
+                        $('#bulk-delete-modal').modal('hide');
+                        if (response == 1) {
+                            AIZ.plugins.notify('success', '{{ translate("Deleted successfully") }}');
+                            loadFiles(state.currentPage);
                         } else {
-                            AIZ.plugins.notify('danger', "{{ translate('Something Went Wrong.') }}");
+                            AIZ.plugins.notify('danger', state.strings.bulkDeleteFailed);
                         }
+                    },
+                    error: function (xhr) {
+                        $('#bulk-delete-modal').modal('hide');
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : state.strings.bulkDeleteFailed;
+                        AIZ.plugins.notify('danger', msg);
                     }
                 });
-            }
+            };
 
-            // Rename
             $(document).on('click', '.rename-file-action', function () {
                 state.renameTarget = {
                     id: $(this).data('id'),
@@ -480,15 +530,12 @@
             $('#rename-save-btn').on('click', function () {
                 if (!state.renameTarget) return;
                 var newName = $('#rename-new-name').val();
-                $.post(state.renameTarget.route, {
-                    _token: AIZ.data.csrf,
-                    new_name: newName
-                }).done(function (resp) {
+                $.post(state.renameTarget.route, { _token: AIZ.data.csrf, new_name: newName }).done(function (resp) {
                     $('#rename-modal').modal('hide');
-                    updateFileRow(resp.file);
-                    AIZ.plugins.notify('success', resp.message || "{{ translate('File renamed successfully') }}");
+                    if (resp.file) updateFileRow(resp.file);
+                    AIZ.plugins.notify('success', resp.message || state.strings.renameSuccess);
                 }).fail(function (xhr) {
-                    var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "{{ translate('Unable to rename file') }}";
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : state.strings.renameFailed;
                     AIZ.plugins.notify('danger', msg);
                 });
             });
@@ -497,15 +544,12 @@
                 var selector = '[data-file-row="' + file.id + '"]';
                 $(selector).find('.file-title-text').text(file.file_original_name);
                 $(selector).find('.ext').text('.' + file.extension);
-                $(selector).find('.file-download-link')
-                    .attr('href', file.full_path)
-                    .attr('download', file.file_original_name + '.' + file.extension);
+                $(selector).find('.file-download-link').attr('href', file.full_path).attr('download', file.file_original_name + '.' + file.extension);
                 $(selector).find('.copy-link-btn').data('url', file.full_path);
-                $(selector).find('.rename-file-action')
-                    .data('name', file.file_original_name)
-                    .data('ext', file.extension);
+                $(selector).find('.rename-file-action').data('name', file.file_original_name).data('ext', file.extension);
             }
 
+            loadFiles(1);
         })();
     </script>
 @endsection
