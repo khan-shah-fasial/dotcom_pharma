@@ -266,6 +266,24 @@ li.list-inline-item.human_btn {
     text-align: center;
 }
 
+.similar-products-carousel .slick-arrow {
+    position: absolute;
+    top: 45%;
+    z-index: 2;
+    transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+    width: 25px;
+    height: 25px;
+    background: #fff;
+    border-radius: 50em;
+    border: 0;
+    box-shadow: 0 0 1px 1px rgba(20, 23, 28, 0.1), 0 3px 1px 0 rgba(20, 23, 28, 0.1);
+    font-size: 18px;
+    line-height: 25px;
+    padding: 0;
+    text-align: center;
+}
+
 /* .product_img_bg::before {
     content: '';
     position: absolute;
