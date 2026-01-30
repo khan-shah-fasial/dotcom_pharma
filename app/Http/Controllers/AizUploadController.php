@@ -559,15 +559,6 @@ class AizUploadController extends Controller
             return true;
         }
 
-        // Banners: photo (single)
-        $inBanners = DB::table('banners')
-            ->where('photo', $uploadId)
-            ->exists();
-
-        if ($inBanners) {
-            return true;
-        }
-
         // Brands: logo (single)
         $inBrands = DB::table('brands')
             ->where('logo', $uploadId)
