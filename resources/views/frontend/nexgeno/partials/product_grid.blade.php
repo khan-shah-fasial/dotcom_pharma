@@ -1,9 +1,9 @@
 <div class="px-md-3">
     @php
-        $rowClasses = 'row row-cols-xxl-4 row-cols-xl-4 row-cols-lg-3 row-cols-md-3 row-cols-2';
+        $rowClasses = 'row row-cols-xxl-6 row-cols-xl-6 row-cols-lg-5 row-cols-md-5 row-cols-2';
 
         if($products->isEmpty()){
-            $rowClasses .= 'row row-cols-xxl-4 row-cols-xl-4 row-cols-lg-3 row-cols-md-3 row-cols-2 d-flex justify-content-center';
+            $rowClasses .= 'row row-cols-xxl-6 row-cols-xl-6 row-cols-lg-5 row-cols-md-5 row-cols-2 d-flex justify-content-center';
         }
     @endphp
 

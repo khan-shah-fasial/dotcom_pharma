@@ -1,10 +1,9 @@
-<div class="col-12 pl-0 ps-md-0 pe-md-0 mt-md-4 mt-3 pb-md-4 pb-4">
-    <div class="col-12 p-0">
+<div class="col-12 p-0 mt-md-4 mt-3 ">
         <h3 class="fs-18 fs-md-18 fw-500 text-dark text-capitalize pl-md-0">
-            <span class="">{{ translate('Similar Products') }}:</span>
+            <span class="">{{ translate('Similar Products') }}</span>
         </h3>
     </div>
-    <div class="col-12 p-0">
+    <div class="col-12 p-0 pb-md-4 pb-4">
         @php $similarProducts = $similarProducts ?? get_similar_products($detailedProduct, 10); @endphp
         <div class="aiz-carousel similar-products-carousel gutters-5 half-outside-arrow" data-items="8" data-xl-items="8"
             data-lg-items="8" data-md-items="8" data-sm-items="6" data-xs-items="2"
@@ -50,4 +49,3 @@
             @endforeach
         </div>
     </div>
-</div>
