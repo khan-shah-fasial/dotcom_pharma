@@ -1,4 +1,4 @@
-<div class="col-12 pl-0 ps-0 pe-0 mt-md-4 mt-3 pb-md-4 pb-4">
+<div class="col-12 pl-0 ps-md-0 pe-md-0 mt-md-4 mt-3 pb-md-4 pb-4">
     <div class="col-12 p-0">
         <h3 class="fs-18 fs-md-18 fw-500 text-dark text-capitalize pl-md-0">
             <span class="">{{ translate('Similar Products') }}:</span>
