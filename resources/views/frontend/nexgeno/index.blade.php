@@ -70,6 +70,7 @@
         <div class="container">
             @include('frontend.partials.search_product', [
                 'categories' => $categories,
+                'searchCategories' => $searchCategories ?? null,
                 'Brands' => $Brands,
             ])
         </div>

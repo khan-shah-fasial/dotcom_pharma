@@ -40,6 +40,18 @@ use App\Models\ProductCategory;
 
 class HomeController extends Controller
 {
+    protected function homeSectionCacheKey(string $section): string
+    {
+        $theme = get_setting('homepage_select') ?: 'default';
+        $webType = session('web_type_name', 'default');
+        $lang = get_system_language() ? get_system_language()->code : 'default';
+        $currency = session('currency_code', 'default');
+        $role = getCurrentUserRole() ?? 'guest';
+        $subtype = get_user_subtype() ?? 'na';
+
+        return 'home_section_' . $section . '_' . $theme . '_' . $webType . '_' . $lang . '_' . $currency . '_' . $role . '_' . $subtype;
+    }
+
     /**
      * Show the application frontend home.
      *
@@ -47,7 +59,6 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $lang = get_system_language() ? get_system_language()->code : null;
         $topCatVeterinary = json_decode(get_setting('top_categories_veterinary'), true);
 
         if (!is_array($topCatVeterinary)) {
@@ -64,24 +75,39 @@ class HomeController extends Controller
             }
         }
 
+        $homeData = Cache::remember('home_index_veterinary_data', now()->addHour(), function () use ($topCatVeterinary) {
+            $lang = get_system_language() ? get_system_language()->code : null;
 
-        $featured_categories = Cache::rememberForever('featured_categories_veterinary', function () use ($topCatVeterinary) {
-            return Category::select('id', 'parent_id', 'name', 'slug', 'icon')
-                ->whereIn('id', $topCatVeterinary)
-                ->where('featured', 1)
+            $featured_categories = Cache::remember('featured_categories_veterinary', now()->addHour(), function () use ($topCatVeterinary) {
+                return Category::select('id', 'parent_id', 'name', 'slug', 'icon')
+                    ->whereIn('id', $topCatVeterinary)
+                    ->where('featured', 1)
+                    ->get();
+            });
+
+            $categories = Category::where('parent_id', 0)
+                ->where('digital', 0)
+                ->with('childrenCategories')
+                ->get();
+
+            $Brands = Brand::select(['id', 'name'])->get();
+
+            return compact('featured_categories', 'lang', 'categories', 'Brands');
+        });
+
+        $searchCategories = Cache::remember('search_categories_tree_veterinary', now()->addHours(6), function () {
+            return Category::where('parent_id', 0)
+                ->where('digital', 0)
+                ->with('childrenCategories.childrenCategories')
                 ->get();
         });
 
-        // $featured_categories = null;
+        $featured_categories = $homeData['featured_categories'];
+        $lang = $homeData['lang'];
+        $categories = $homeData['categories'];
+        $Brands = $homeData['Brands'];
 
-        $categories = Category::where('parent_id', 0)
-        ->where('digital', 0)
-        ->with('childrenCategories')
-        ->get();
-
-        $Brands = Brand::select(['id', 'name'])->get();
-
-        return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories', 'lang', 'categories','Brands'));
+        return view('frontend.' . get_setting('homepage_select') . '.index', compact('featured_categories', 'lang', 'categories', 'Brands', 'searchCategories'));
     }
 
     public function humanPage()
@@ -92,46 +118,77 @@ class HomeController extends Controller
             $topCatHuman = [];
         }
 
-        $featured_categories = Cache::rememberForever('featured_categories_human', function () use ($topCatHuman) {
-            return Category::select('id', 'parent_id', 'name', 'slug', 'icon')
-                ->whereIn('id', $topCatHuman)
-                ->where('featured', 1)
+        $homeData = Cache::remember('home_index_human_data', now()->addHour(), function () use ($topCatHuman) {
+            $featured_categories = Cache::remember('featured_categories_human', now()->addHour(), function () use ($topCatHuman) {
+                return Category::select('id', 'parent_id', 'name', 'slug', 'icon')
+                    ->whereIn('id', $topCatHuman)
+                    ->where('featured', 1)
+                    ->get();
+            });
+
+            $categories = Category::where('parent_id', 0)
+                ->where('digital', 0)
+                ->with('childrenCategories')
+                ->get();
+
+            $Brands = Brand::select(['id', 'name'])->get();
+
+            return compact('featured_categories', 'categories', 'Brands');
+        });
+
+        $searchCategories = Cache::remember('search_categories_tree_human', now()->addHours(6), function () {
+            return Category::where('parent_id', 0)
+                ->where('digital', 0)
+                ->with('childrenCategories.childrenCategories')
                 ->get();
         });
 
-        $categories = Category::where('parent_id', 0)
-        ->where('digital', 0)
-        ->with('childrenCategories')
-        ->get();
+        $featured_categories = $homeData['featured_categories'];
+        $categories = $homeData['categories'];
+        $Brands = $homeData['Brands'];
 
-        $Brands = Brand::select(['id', 'name'])->get();
-
-        return view('frontend.metro.human', compact('featured_categories', 'categories', 'Brands'));
+        return view('frontend.metro.human', compact('featured_categories', 'categories', 'Brands', 'searchCategories'));
     }
 
     public function load_todays_deal_section()
     {
-        $todays_deal_products = filter_products(Product::where('todays_deal', '1'))->orderBy('id', 'desc')->get();
-        return view('frontend.' . get_setting('homepage_select') . '.partials.todays_deal', compact('todays_deal_products'));
+        $cacheKey = $this->homeSectionCacheKey('todays_deal');
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () {
+            $todays_deal_products = filter_products(Product::where('todays_deal', '1'))->orderBy('id', 'desc')->get();
+            return view('frontend.' . get_setting('homepage_select') . '.partials.todays_deal', compact('todays_deal_products'))->render();
+        });
     }
 
     public function load_newest_product_section()
     {
-        $newest_products = Cache::remember('newest_products', 3600, function () {
+        $newest_products = Cache::remember('newest_products', now()->addHours(6), function () {
             return filter_products(Product::latest())->limit(12)->get();
         });
 
-        return view('frontend.' . get_setting('homepage_select') . '.partials.newest_products_section', compact('newest_products'));
+        $cacheKey = $this->homeSectionCacheKey('newest_products');
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($newest_products) {
+            return view('frontend.' . get_setting('homepage_select') . '.partials.newest_products_section', compact('newest_products'))->render();
+        });
     }
 
     public function load_featured_section()
     {
-        return view('frontend.' . get_setting('homepage_select') . '.partials.featured_products_section');
+        $cacheKey = $this->homeSectionCacheKey('featured');
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () {
+            return view('frontend.' . get_setting('homepage_select') . '.partials.featured_products_section')->render();
+        });
     }
 
     public function load_best_selling_section()
     {
-        return view('frontend.' . get_setting('homepage_select') . '.partials.best_selling_section');
+        $cacheKey = $this->homeSectionCacheKey('best_selling');
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () {
+            return view('frontend.' . get_setting('homepage_select') . '.partials.best_selling_section')->render();
+        });
     }
 
     public function load_auction_products_section()
@@ -139,13 +196,21 @@ class HomeController extends Controller
         if (!addon_is_activated('auction')) {
             return;
         }
-        $lang = get_system_language() ? get_system_language()->code : null;
-        return view('auction.frontend.' . get_setting('homepage_select') . '.auction_products_section', compact('lang'));
+        $cacheKey = $this->homeSectionCacheKey('auction_products');
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () {
+            $lang = get_system_language() ? get_system_language()->code : null;
+            return view('auction.frontend.' . get_setting('homepage_select') . '.auction_products_section', compact('lang'))->render();
+        });
     }
 
     public function load_home_categories_section()
     {
-        return view('frontend.' . get_setting('homepage_select') . '.partials.home_categories_section');
+        $cacheKey = $this->homeSectionCacheKey('home_categories');
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () {
+            return view('frontend.' . get_setting('homepage_select') . '.partials.home_categories_section')->render();
+        });
     }
 
     public function load_best_sellers_section()

@@ -5,9 +5,12 @@
             
             <div class="col-md-3">
                 <div class="form-group">
+                    @php
+                        $searchCategoryList = $searchCategories ?? $categories ?? collect();
+                    @endphp
                     <select name="category" class="form-control form-select">
                         <option value="" selected>All Category</option>
-                        @foreach ($categories as $category)
+                        @foreach ($searchCategoryList as $category)
                             <option value="{{ $category->id }}">{{ $category->getTranslation('name') }}</option>
                             @foreach ($category->childrenCategories as $childCategory)
                                 @include('frontend.metro.partials.child_category', ['child_category' => $childCategory])

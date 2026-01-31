@@ -53,7 +53,11 @@
 
    <section>
        <div class="container">
-        @include('frontend.partials.search_product', ['categories' => $categories, 'Brands' => $Brands])
+        @include('frontend.partials.search_product', [
+            'categories' => $categories,
+            'searchCategories' => $searchCategories ?? null,
+            'Brands' => $Brands,
+        ])
 
        </div>
    </section>

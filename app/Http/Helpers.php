@@ -1780,32 +1780,50 @@ if (!function_exists('app_timezone')) {
 if (!function_exists('uploaded_asset')) {
     function uploaded_asset($id)
     {
-        if (($asset = Upload::find($id)) != null) {
-            return $asset->external_link == null ? my_asset($asset->file_name) : $asset->external_link;
+        if (empty($id)) {
+            return static_asset('assets/img/placeholder.jpg');
         }
-        return static_asset('assets/img/placeholder.jpg');
+
+        $cacheKey = 'uploaded_asset_url_' . $id;
+
+        return Cache::rememberForever($cacheKey, function () use ($id) {
+            $asset = Upload::find($id);
+            if (!$asset) {
+                return static_asset('assets/img/placeholder.jpg');
+            }
+
+            return $asset->external_link == null ? my_asset($asset->file_name) : $asset->external_link;
+        });
     }
 }
 
 if (!function_exists('check_asset_type')) {
     function check_asset_type($id)
     {
-        $asset = Upload::find($id);
-
-        if ($asset) {
-            $file_type = $asset->file_name;
-            $ext = strtolower(pathinfo($file_type, PATHINFO_EXTENSION));
-
-            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'])) {
-                return 'image';
-            } elseif (in_array($ext, ['mp4', 'webm', 'ogg'])) {
-                return 'video';
-            } else {
-                return 'file';
-            }
+        if (empty($id)) {
+            return 'image';
         }
 
-        return 'image'; // default fallback
+        $cacheKey = 'asset_type_' . $id;
+
+        return Cache::rememberForever($cacheKey, function () use ($id) {
+            $asset = Upload::find($id);
+
+            if ($asset) {
+                $file_type = $asset->file_name;
+                $ext = strtolower(pathinfo($file_type, PATHINFO_EXTENSION));
+
+                if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'])) {
+                    return 'image';
+                } elseif (in_array($ext, ['mp4', 'webm', 'ogg'])) {
+                    return 'video';
+                } else {
+                    return 'file';
+                }
+            }
+
+            return 'image'; // default fallback
+        });
     }
 }
 
@@ -1824,34 +1842,44 @@ if (!function_exists('my_asset')) {
             return $value;
         }
 
-        $upload = is_numeric($value)
-            ? Upload::find($value)
-            : Upload::where('file_name', $value)->first();
-
-        if (!$upload) {
+        if (empty($value)) {
             return static_asset('assets/img/placeholder.jpg');
         }
 
-        if (!empty($upload->external_link)) {
-            return $upload->external_link;
-        }
+        $cacheKey = is_numeric($value)
+            ? 'my_asset_url_id_' . $value
+            : 'my_asset_url_name_' . md5((string) $value);
 
-        $disk = $upload->disk ?: config('filesystems.default');
-        $path = ltrim($upload->file_name, '/');
+        return Cache::rememberForever($cacheKey, function () use ($value) {
+            $upload = is_numeric($value)
+                ? Upload::find($value)
+                : Upload::where('file_name', $value)->first();
 
-        if ($disk === 'local') {
-            return app()->environment('local')
-                ? asset($path)
-                : asset('public/' . $path);
-        }
+            if (!$upload) {
+                return static_asset('assets/img/placeholder.jpg');
+            }
 
-        // Non-local (e.g., s3)
-        $bucketUrl = env(Str::upper($disk) . '_URL') ?? env('AWS_URL');
-        if (!empty($bucketUrl)) {
-            return rtrim($bucketUrl, '/') . '/' . $path;
-        }
+            if (!empty($upload->external_link)) {
+                return $upload->external_link;
+            }
 
-        return Storage::disk($disk)->url($path);
+            $disk = $upload->disk ?: config('filesystems.default');
+            $path = ltrim($upload->file_name, '/');
+
+            if ($disk === 'local') {
+                return app()->environment('local')
+                    ? asset($path)
+                    : asset('public/' . $path);
+            }
+
+            // Non-local (e.g., s3)
+            $bucketUrl = env(Str::upper($disk) . '_URL') ?? env('AWS_URL');
+            if (!empty($bucketUrl)) {
+                return rtrim($bucketUrl, '/') . '/' . $path;
+            }
+
+            return Storage::disk($disk)->url($path);
+        });
     }
 }
 
@@ -2476,14 +2504,21 @@ if (!function_exists('get_session_language')) {
 if (!function_exists('get_system_currency')) {
     function get_system_currency()
     {
-        $currency_query = Currency::query();
-        if (Session::has('currency_code')) {
-            $currency_query->where('code', Session::get('currency_code'));
-        } else {
-            $currency_query = $currency_query->where('id', get_setting('system_default_currency'));
-        }
+        $currencyCode = Session::get('currency_code');
+        $cacheKey = $currencyCode
+            ? 'system_currency_code_' . $currencyCode
+            : 'system_currency_default';
 
-        return $currency_query->first();
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($currencyCode) {
+            $currency_query = Currency::query();
+            if ($currencyCode) {
+                $currency_query->where('code', $currencyCode);
+            } else {
+                $currency_query->where('id', get_setting('system_default_currency'));
+            }
+
+            return $currency_query->first();
+        });
     }
 }
 
@@ -2563,11 +2598,15 @@ if (!function_exists('get_featured_products')) {
 if (!function_exists('get_best_selling_products')) {
     function get_best_selling_products($limit, $user_id = null)
     {
-        $product_query = Product::query();
-        if ($user_id) {
-            $product_query = $product_query->where('user_id', $user_id);
-        }
-        return filter_products($product_query->orderBy('num_of_sale', 'desc'))->limit($limit)->get();
+        $cacheKey = 'best_selling_products_' . ($user_id ?: 'all') . '_' . $limit;
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($limit, $user_id) {
+            $product_query = Product::query();
+            if ($user_id) {
+                $product_query = $product_query->where('user_id', $user_id);
+            }
+            return filter_products($product_query->orderBy('num_of_sale', 'desc'))->limit($limit)->get();
+        });
     }
 }
 
@@ -2575,8 +2614,12 @@ if (!function_exists('get_best_selling_products')) {
 if (!function_exists('get_seller_products')) {
     function get_seller_products($user_id)
     {
-        $product_query = Product::query();
-        return $product_query->where('user_id', $user_id)->isApprovedPublished()->orderBy('created_at', 'desc')->limit(15)->get();
+        $cacheKey = 'seller_products_' . $user_id;
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($user_id) {
+            $product_query = Product::query();
+            return $product_query->where('user_id', $user_id)->isApprovedPublished()->orderBy('created_at', 'desc')->limit(15)->get();
+        });
     }
 }
 
@@ -2584,8 +2627,13 @@ if (!function_exists('get_seller_products')) {
 if (!function_exists('get_shop_best_selling_products')) {
     function get_shop_best_selling_products($user_id)
     {
-        $product_query = Product::query();
-        return $product_query->where('user_id', $user_id)->isApprovedPublished()->orderBy('num_of_sale', 'desc')->paginate(24);
+        $page = request()->get('page', 1);
+        $cacheKey = 'shop_best_selling_products_' . $user_id . '_p' . $page;
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($user_id) {
+            $product_query = Product::query();
+            return $product_query->where('user_id', $user_id)->isApprovedPublished()->orderBy('num_of_sale', 'desc')->paginate(24);
+        });
     }
 }
 
@@ -3577,25 +3625,47 @@ if (!function_exists('is_user_loggedin')) {
 if (!function_exists('home_usertype_base_price')) {
     function home_usertype_base_price($product)
     {
+        $userSubtype = get_user_subtype();
+        $roleKey = getCurrentUserRole() ?? 'guest';
+
+        if (!empty($product->id)) {
+            $cacheKey = 'home_usertype_base_price_' . $product->id . '_' . ($userSubtype ?: 'na') . '_' . $roleKey;
+
+            return Cache::remember($cacheKey, now()->addHours(6), function () use ($product, $userSubtype) {
+                //$lowest_price = $product->unit_price;
+                $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
+                if ($product->variant_product) {
+                    $lowest_price = $product->stocks() // Assuming 'stocks' is a defined relationship in the Product model
+                        ->select('price') // Fetch only the price column
+                        ->where('variant', 'like', "%$userSubtype%") // Filter by user subtype
+                        ->orderBy('price', 'asc')
+                        ->value('price'); // Return only the price       
+
+                    if (empty($lowest_price)) {
+                        //$lowest_price = $product->unit_price;
+                        $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
+                    }
+                }
+
+                return format_price(convert_price($lowest_price));
+            });
+        }
+
         //$lowest_price = $product->unit_price;
         $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
-        if($product->variant_product){
-            $userSubtype = get_user_subtype();
+        if ($product->variant_product) {
             $lowest_price = $product->stocks() // Assuming 'stocks' is a defined relationship in the Product model
                 ->select('price') // Fetch only the price column
                 ->where('variant', 'like', "%$userSubtype%") // Filter by user subtype
                 ->orderBy('price', 'asc')
                 ->value('price'); // Return only the price       
-            
-            
-            if(empty($lowest_price)){
+
+            if (empty($lowest_price)) {
                 //$lowest_price = $product->unit_price;
                 $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
             }
-
-                
         }
-            
+
         return format_price(convert_price($lowest_price));
     }
 }

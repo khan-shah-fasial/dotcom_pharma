@@ -5,8 +5,4 @@
     }
 @endphp
 <option value="{{ $childCategory->id }}">{{ $value }}{{ $childCategory->getTranslation('name') }}</option>
-@if ($child_category->childrenCategories)
-    @foreach ($child_category->childrenCategories as $childCategory)
-        @include('frontend.metro.partials.child_category', ['child_category' => $childCategory])
-    @endforeach
-@endif
+
