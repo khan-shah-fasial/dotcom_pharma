@@ -2428,12 +2428,21 @@ if (!function_exists('get_admin')) {
 if (!function_exists('get_slider_images')) {
     function get_slider_images($ids)
     {
-        $slider_query = Upload::query();
-        $sliders = $slider_query->whereIn('id', $ids);
-        foreach ($ids as $id) {
-            $sliders->orderByRaw("id!=?", [$id]);
+        $ids = array_values(array_filter((array) $ids));
+        if (empty($ids)) {
+            return collect();
         }
-        return $sliders->get();
+
+        $cacheKey = 'slider_images_' . md5(implode('_', $ids));
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($ids) {
+            $slider_query = Upload::query();
+            $sliders = $slider_query->whereIn('id', $ids);
+            foreach ($ids as $id) {
+                $sliders->orderByRaw("id!=?", [$id]);
+            }
+            return $sliders->get();
+        });
     }
 }
 
