@@ -566,10 +566,7 @@ body .translater_menu .select2-container {
             </div>
 
             <ul class="mobile-drawer__list">
-                @php $category_top_menu = getCategoryTopMenu(); @endphp
-                @foreach ($category_top_menu as $cat)
-                    @include('frontend.inc.mobile_category_menu', ['category' => $cat, 'level' => 0])
-                @endforeach
+                {!! get_cached_mobile_category_menu_html() !!}
             </ul>
         </div>
     </div>

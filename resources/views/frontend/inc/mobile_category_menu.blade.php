@@ -1,5 +1,7 @@
 @php
-    $children = $category->childrenCategories ?? collect();
+    $children = ($category && method_exists($category, 'relationLoaded') && $category->relationLoaded('childrenCategories'))
+        ? $category->childrenCategories
+        : collect();
     $hasChildren = $children->isNotEmpty();
     $toggleId = 'mobile-drawer-' . $category->id . '-' . $level;
 @endphp

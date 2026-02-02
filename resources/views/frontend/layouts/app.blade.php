@@ -322,7 +322,13 @@
     @php
         $alert_location = get_setting('custom_alert_location');
         $order = in_array($alert_location, ['top-left', 'top-right']) ? 'asc' : 'desc';
-        $custom_alerts = App\Models\CustomAlert::where('status', 1)->orderBy('id', $order)->get();
+        $custom_alerts = Cache::remember(
+            'custom_alerts_' . $order,
+            now()->addHours(6),
+            function () use ($order) {
+                return App\Models\CustomAlert::where('status', 1)->orderBy('id', $order)->get();
+            }
+        );
     @endphp
 
     <div class="aiz-custom-alert {{ get_setting('custom_alert_location') }}">
@@ -360,7 +366,13 @@
 
     <!-- website popup -->
     @php
-        $dynamic_popups = App\Models\DynamicPopup::where('status', 1)->orderBy('id', 'asc')->get();
+        $dynamic_popups = Cache::remember(
+            'dynamic_popups_active',
+            now()->addHours(6),
+            function () {
+                return App\Models\DynamicPopup::where('status', 1)->orderBy('id', 'asc')->get();
+            }
+        );
     @endphp
     @foreach ($dynamic_popups as $key => $dynamic_popup)
         @if($dynamic_popup->id == 1)

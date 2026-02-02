@@ -65,7 +65,9 @@ class HomeController extends Controller
             $topCatVeterinary = [];
         }
 
-        $category = Category::whereRaw('LOWER(name) = ?', [strtolower('veterinary')])->first();
+        $category = Cache::remember('category_veterinary', now()->addHours(6), function () {
+            return Category::whereRaw('LOWER(name) = ?', [strtolower('veterinary')])->first();
+        });
 
         if (!Session::has('web_type') || Session::get('web_type_name') != strtolower($category->name)) {
             if ($category) {

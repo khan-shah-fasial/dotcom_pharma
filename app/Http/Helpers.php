@@ -49,8 +49,6 @@ use App\Models\SellerPackagePayment;
 use App\Models\ShippingMethod;
 use App\Utility\NotificationUtility;
 use App\Http\Resources\V2\CarrierCollection;
-use App\Http\Controllers\AffiliateController;
-use App\Http\Controllers\ClubPointController;
 use App\Http\Controllers\CommissionController;
 use AizPackages\ColorCodeConverter\Services\ColorCodeConverter;
 use App\Models\CustomerPackagePayment;
@@ -63,6 +61,7 @@ use App\Models\NotificationType;
 use App\Utility\EmailUtility;
 use App\Models\Address;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -259,8 +258,10 @@ if (!function_exists('parse_phone_number')) {
 if (!function_exists('get_active_countries')) {
     function get_active_countries()
     {
-        $country_query = Country::query();
-        return $country_query->isEnabled()->get();
+        return Cache::remember('active_countries', now()->addHours(6), function () {
+            $country_query = Country::query();
+            return $country_query->isEnabled()->get();
+        });
     }
 }
 
@@ -490,7 +491,8 @@ if (!function_exists('getUserDetailsLocationTree')) {
 
         $cacheKey = 'user_details_location_tree_' . $context;
 
-        return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($countryCol, $stateCol, $cityCol, $districtCol) {
+        /** @var array $result */
+        $result = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($countryCol, $stateCol, $cityCol, $districtCol) {
             $rows = UserDetails::query()
                 ->select([
                     $countryCol . ' as country_id',
@@ -579,6 +581,8 @@ if (!function_exists('getUserDetailsLocationTree')) {
                 ->values()
                 ->all();
         });
+
+        return $result;
     }
 }
 
@@ -1264,7 +1268,8 @@ if (!function_exists('home_base_price_by_stock_id')) {
     {
         $product_stock = ProductStock::findOrFail($id);
         //$price = $product_stock->price;
-        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+        $product_role_price = $product_stock->role_price ?? ($product_stock->product->role_price ?? null);
+        $price = getPriceByRole($product_role_price, $product_stock->price); //price by role
         $tax = 0;
 
         foreach ($product_stock->product->taxes as $product_tax) {
@@ -2341,12 +2346,22 @@ if (!function_exists('calculateCommissionAffilationClubPoint')) {
         (new CommissionController)->calculateCommission($order);
 
         if (addon_is_activated('affiliate_system')) {
-            (new AffiliateController)->processAffiliatePoints($order);
+            if (class_exists('App\\Http\\Controllers\\AffiliateController')) {
+                $affiliateController = app()->make('App\\Http\\Controllers\\AffiliateController');
+                if (method_exists($affiliateController, 'processAffiliatePoints')) {
+                    $affiliateController->processAffiliatePoints($order);
+                }
+            }
         }
 
         if (addon_is_activated('club_point')) {
             if ($order->user != null) {
-                (new ClubPointController)->processClubPoints($order);
+                if (class_exists('App\\Http\\Controllers\\ClubPointController')) {
+                    $clubPointController = app()->make('App\\Http\\Controllers\\ClubPointController');
+                    if (method_exists($clubPointController, 'processClubPoints')) {
+                        $clubPointController->processClubPoints($order);
+                    }
+                }
             }
         }
 
@@ -2425,13 +2440,13 @@ if (!function_exists('get_slider_images')) {
 if (!function_exists('get_featured_flash_deal')) {
     function get_featured_flash_deal()
     {
-        $flash_deal_query = FlashDeal::query();
-        $featured_flash_deal = $flash_deal_query->isActiveAndFeatured()
-            ->where('start_date', '<=', strtotime(date('Y-m-d H:i:s')))
-            ->where('end_date', '>=', strtotime(date('Y-m-d H:i:s')))
-            ->first();
-
-        return $featured_flash_deal;
+        return Cache::remember('featured_flash_deal_active', now()->addHours(6), function () {
+            $flash_deal_query = FlashDeal::query();
+            return $flash_deal_query->isActiveAndFeatured()
+                ->where('start_date', '<=', strtotime(date('Y-m-d H:i:s')))
+                ->where('end_date', '>=', strtotime(date('Y-m-d H:i:s')))
+                ->first();
+        });
     }
 }
 
@@ -2469,16 +2484,17 @@ if (!function_exists('get_active_taxes')) {
 if (!function_exists('get_system_language')) {
     function get_system_language()
     {
-        $language_query = Language::query();
-
         $locale = 'en';
         if (Session::has('locale')) {
             $locale = Session::get('locale', Config::get('app.locale'));
         }
 
-        $language_query->where('code',  $locale);
+        $cacheKey = 'system_language_' . $locale;
 
-        return $language_query->first();
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($locale) {
+            $language_query = Language::query();
+            return $language_query->where('code', $locale)->first();
+        });
     }
 }
 
@@ -2496,8 +2512,13 @@ if (!function_exists('get_all_active_language')) {
 if (!function_exists('get_session_language')) {
     function get_session_language()
     {
-        $language_query = Language::query();
-        return $language_query->where('code', Session::get('locale', Config::get('app.locale')))->first();
+        $locale = Session::get('locale', Config::get('app.locale'));
+        $cacheKey = 'session_language_' . $locale;
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($locale) {
+            $language_query = Language::query();
+            return $language_query->where('code', $locale)->first();
+        });
     }
 }
 
@@ -2525,10 +2546,11 @@ if (!function_exists('get_system_currency')) {
 if (!function_exists('get_all_active_currency')) {
     function get_all_active_currency()
     {
-        $currency_query = Currency::query();
-        $currency_query->where('status', 1);
-
-        return $currency_query->get();
+        return Cache::remember('all_active_currency', now()->addHours(6), function () {
+            $currency_query = Currency::query();
+            $currency_query->where('status', 1);
+            return $currency_query->get();
+        });
     }
 }
 
@@ -2840,8 +2862,10 @@ if (!function_exists('get_single_category')) {
 if (!function_exists('get_level_zero_categories')) {
     function get_level_zero_categories()
     {
-        $categories_query = Category::query()->with(['coverImage', 'catIcon']);
-        return $categories_query->where('level', 0)->orderBy('order_level', 'desc')->get();
+        return Cache::remember('level_zero_categories', now()->addHours(6), function () {
+            $categories_query = Category::query()->with(['coverImage', 'catIcon']);
+            return $categories_query->where('level', 0)->orderBy('order_level', 'desc')->get();
+        });
     }
 }
 
@@ -3378,11 +3402,12 @@ if (! function_exists('flash_message')) {
         $notifications = session('flash_notification', collect());
 
         // Check if the message already exists
-        if (!$notifications->contains('message', $message)) {
-            session()->flash('flash_notification', $notifications->push([
+        if ($notifications instanceof \Illuminate\Support\Collection && !$notifications->contains('message', $message)) {
+            $notifications = $notifications->push([
                 'message' => $message,
                 'level' => $level,
-            ]));
+            ]);
+            session()->flash('flash_notification', $notifications);
         }
     }
 }
@@ -4276,6 +4301,32 @@ if (! function_exists('getCategoryTopMenu')) {
                 return collect();
             }
         });
+    }
+}
+
+if (! function_exists('get_cached_mobile_category_menu_html')) {
+    function get_cached_mobile_category_menu_html(): string
+    {
+        $webTypeName = session('web_type_name') ?? 'default';
+        $lang = get_system_language() ? get_system_language()->code : 'default';
+        $cacheKey = 'mobile_category_menu_html_' . $webTypeName . '_' . $lang;
+
+        /** @var string $html */
+        $html = Cache::remember($cacheKey, now()->addHours(6), function () {
+            $category_top_menu = getCategoryTopMenu();
+            $html = '';
+
+            foreach ($category_top_menu as $cat) {
+                $html .= view('frontend.inc.mobile_category_menu', [
+                    'category' => $cat,
+                    'level' => 0,
+                ])->render();
+            }
+
+            return $html;
+        });
+
+        return $html;
     }
 }
 
