@@ -1792,7 +1792,7 @@ if (!function_exists('uploaded_asset')) {
         $cacheKey = 'uploaded_asset_url_' . $id;
 
         return Cache::rememberForever($cacheKey, function () use ($id) {
-            $asset = Upload::find($id);
+            $asset = Upload::withoutGlobalScopes(['not_hidden'])->find($id);
             if (!$asset) {
                 return static_asset('assets/img/placeholder.jpg');
             }
@@ -1857,8 +1857,8 @@ if (!function_exists('my_asset')) {
 
         return Cache::rememberForever($cacheKey, function () use ($value) {
             $upload = is_numeric($value)
-                ? Upload::find($value)
-                : Upload::where('file_name', $value)->first();
+                ? Upload::withoutGlobalScopes(['not_hidden'])->find($value)
+                : Upload::withoutGlobalScopes(['not_hidden'])->where('file_name', $value)->first();
 
             if (!$upload) {
                 return static_asset('assets/img/placeholder.jpg');

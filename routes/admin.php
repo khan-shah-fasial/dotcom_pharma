@@ -30,6 +30,7 @@ use App\Http\Controllers\FinancialArchiveController;
 use App\Http\Controllers\FlashDealController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\FormEnquiryController;
 use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\MeasurementPointsController;
 use App\Http\Controllers\NewsletterController;
@@ -301,6 +302,12 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/contact/query_modal', 'query_modal')->name('contact.query_modal');
         Route::post('/contact/reply_modal', 'reply_modal')->name('contact.reply_modal');
         Route::post('/contact/reply', 'reply')->name('contact.reply');
+    });
+
+    // Form Enquiry / Suggestion (frontend page submissions)
+    Route::controller(FormEnquiryController::class)->group(function () {
+        Route::get('/form-enquiries', 'adminIndex')->name('form_enquiries.index');
+        Route::get('/form-enquiries/{formEnquiry}', 'adminShow')->name('form_enquiries.show');
     });
 
     Route::resource('profile', ProfileController::class);

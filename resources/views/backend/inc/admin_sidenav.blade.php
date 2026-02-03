@@ -1106,6 +1106,12 @@
                                         <span class="aiz-side-nav-text">{{ translate('Prescription Enquiries') }}</span>
                                     </a>
                                 </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('form_enquiries.index') }}"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['form_enquiries.index','form_enquiries.show']) }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Product Enquiry / Suggestion Form') }}</span>
+                                    </a>
+                                </li>
                             @endcan
                         </ul>
                     </li>

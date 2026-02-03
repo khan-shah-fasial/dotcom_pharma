@@ -1306,17 +1306,22 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                 }
 
 
-                $this.next(".file-preview").sortable({
-                    update: function (event, ui) {
-                        var sortedIds = [];
-                        $this.next(".file-preview").find(".file-preview-item").each(function () {
-                            sortedIds.push($(this).data("id"));
-                        });
-                
-                        // Update the selected-files input with the sorted IDs
-                        $this.find(".selected-files").val(sortedIds.join(","));
-                    }
-                });  
+                // Enable drag reordering when jQuery UI sortable is available.
+                if ($.fn.sortable) {
+                    $this.next(".file-preview").sortable({
+                        update: function () {
+                            var sortedIds = [];
+                            $this
+                                .next(".file-preview")
+                                .find(".file-preview-item")
+                                .each(function () {
+                                    sortedIds.push($(this).data("id"));
+                                });
+
+                            $this.find(".selected-files").val(sortedIds.join(","));
+                        },
+                    });
+                }
 
 
             });

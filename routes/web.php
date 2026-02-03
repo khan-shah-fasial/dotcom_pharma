@@ -47,6 +47,7 @@ use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Search2Controller;
+use App\Http\Controllers\FormEnquiryController;
 use App\Http\Controllers\Shipment\ShipmentController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SubscriberController;
@@ -653,6 +654,14 @@ Route::any('/tap/callback', [TapController::class, 'callback'])->name('tap.callb
 Route::controller(BlogController::class)->group(function () {
     Route::get('/blog', 'all_blog')->name('blog');
     Route::get('/blog/{slug}', 'blog_details')->name('blog.details');
+});
+
+// Enquiry / Suggestion mega form
+Route::controller(FormEnquiryController::class)->group(function () {
+    Route::get('/product-enquiry-suggestion', 'create')->name('form_enquiry.create');
+    Route::post('/product-enquiry-suggestion', 'store')->name('form_enquiry.store');
+    Route::get('/form-enquiry/products', 'products')->name('form_enquiry.products');
+    Route::get('/form-enquiry/product/{product}', 'productDetails')->name('form_enquiry.product');
 });
 
 Route::controller(PageController::class)->group(function () {
