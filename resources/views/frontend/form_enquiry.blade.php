@@ -2,21 +2,247 @@
 
 @section('content')
     <style>
-        .enq-shell {max-width: 1100px; margin: 0 auto;}
-        .enq-card {border:1px solid #e7e9ef; border-radius:12px; box-shadow:0 8px 28px rgba(0,0,0,0.05);}
-        .enq-head {background:#f8fbff; border-bottom:1px solid #e7e9ef; padding:18px 20px;}
-        .enq-section {border:1px solid #ececec; border-radius:10px; margin-bottom:18px; background:#fff;}
-        .enq-section .section-title {background:#fff7c2; border-bottom:1px solid #ececec; border-radius:10px 10px 0 0; padding:10px 14px; font-weight:700; display:flex; align-items:center; gap:8px;}
-        .enq-body {padding:14px;}
-        .helper {font-size:12px; color:#6c757d;}
-        .label-strong {font-weight:700; color:#2f3542;}
-        .upload-col {min-height:100%;}
-        .form-control, .input-group-text {border-radius:6px !important;}
-        .aiz-megabox {padding:6px 10px; border:1px solid #e3e3e3; border-radius:8px;}
-        .aiz-megabox input {display:none;}
-        .aiz-megabox .aiz-rounded-check {width:16px; height:16px; border:1px solid #ced4da; border-radius:50%; display:inline-block;}
-        .aiz-megabox input:checked + span .aiz-rounded-check {background:#007bff; border-color:#007bff;}
-        @media (max-width: 767px){ .enq-body .row > [class*=col-]{margin-bottom:12px;} }
+        .enq-shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 30px 15px;
+        }
+        
+        .enq-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: #ffffff;
+            overflow: hidden;
+        }
+        
+        .enq-head {
+            background: linear-gradient(135deg, #2b56a1 0%, #1e3f7a 100%);
+            border-bottom: 2px solid #1e3f7a;
+            padding: 24px 30px;
+            color: #ffffff;
+        }
+        
+        .enq-head h1 {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .enq-head p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+        
+        .enq-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            background: #ffffff;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .enq-section:hover {
+            box-shadow: 0 2px 8px rgba(43, 86, 161, 0.1);
+        }
+        
+        .enq-section .section-title {
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            border-bottom: 2px solid #2b56a1;
+            border-radius: 10px 10px 0 0;
+            padding: 14px 20px;
+            font-weight: 700;
+            font-size: 16px;
+            color: #2b56a1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .enq-body {
+            padding: 24px;
+        }
+        
+        .helper {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+        
+        .label-strong {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .upload-col {
+            min-height: 100%;
+        }
+        
+        .form-control,
+        .input-group-text,
+        select.form-control {
+            border-radius: 8px !important;
+            border: 1px solid #d1d5db;
+            padding: 10px 14px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus,
+        select.form-control:focus {
+            border-color: #2b56a1;
+            box-shadow: 0 0 0 3px rgba(43, 86, 161, 0.1);
+            outline: none;
+        }
+        
+        textarea.form-control {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .aiz-megabox {
+            padding: 10px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom:0px;
+        }
+        
+        .aiz-megabox:hover {
+            border-color: #2b56a1;
+            background: #f8f9fa;
+        }
+        
+        .aiz-megabox input {
+            display: none;
+        }
+        
+        .aiz-megabox .aiz-rounded-check {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #d1d5db;
+            border-radius: 50%;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin-right: 8px;
+        }
+        
+        .aiz-megabox input:checked + span .aiz-rounded-check {
+            background: #2b56a1;
+            border-color: #2b56a1;
+            box-shadow: 0 0 0 3px rgba(43, 86, 161, 0.2);
+        }
+        
+        .aiz-megabox input:checked + span {
+            color: #2b56a1;
+            font-weight: 600;
+        }
+        
+        .form-group-spacing {
+            margin-bottom: 20px;
+        }
+        
+        .row.g-3 {
+            margin-bottom: 0;
+        }
+        
+        .row.g-3 > [class*="col-"] {
+            margin-bottom: 20px;
+        }
+        
+        .row.g-3 > [class*="col-"]:last-child {
+            margin-bottom: 0;
+        }
+        
+        .input-group .btn {
+            border-radius: 0 8px 8px 0;
+            border-left: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 16px;
+        }
+        
+        .input-group .form-control:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2b56a1 0%, #1e3f7a 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(43, 86, 161, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(43, 86, 161, 0.4);
+        }
+        
+        .btn-outline-secondary {
+            border-color: #d1d5db;
+            color: #6b7280;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: #2b56a1;
+            border-color: #2b56a1;
+            color: #ffffff;
+        }
+        
+        .text-right {
+            margin-top: 30px;
+            padding-top: 24px;
+            border-top: 2px solid #e5e7eb;
+        }
+        .gap-3
+        {
+            gap:10px;
+        }
+        @media (max-width: 767px) {
+            .enq-shell {
+                padding: 15px;
+            }
+            
+            .enq-head {
+                padding: 20px;
+            }
+            
+            .enq-head h1 {
+                font-size: 20px;
+            }
+            
+            .enq-body {
+                padding: 16px;
+            }
+            
+            .enq-body .row > [class*="col-"] {
+                margin-bottom: 16px;
+            }
+            
+            .text-right {
+                text-align: center !important;
+            }
+            
+            .btn-primary {
+                width: 100%;
+            }
+        }
+        
     </style>
 
     <section class="py-4 bg-light">
@@ -24,13 +250,13 @@
             <div class="enq-card">
                 <div class="enq-head text-center">
                     <h1 class="h5 fw-700 mb-1">{{ translate('Product Enquiry / Suggestion Form') }}</h1>
-                    <p class="text-muted mb-0">{{ translate('Fill the fields carefully. Uploads stay visible only to admin for review.') }}</p>
+                    <p class="text-white mb-0">{{ translate('Fill the fields carefully. Uploads stay visible only to admin for review.') }}</p>
                 </div>
                 <div class="p-4">
                     <form id="form-enquiry" class="form-default" action="{{ route('form_enquiry.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                        <div class="row g-3">
+                            <div class="col-md-4 form-group-spacing">
                                 <label class="label-strong">{{ translate('Type') }}</label>
                                 <div class="d-flex flex-wrap gap-3">
                                     <label class="aiz-megabox">
@@ -49,21 +275,21 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4 form-group-spacing">
                                 <label class="label-strong">{{ translate('Form No (Auto)') }}</label>
                                 <input type="text" class="form-control" name="form_code_display" id="form_code_display" value="{{ $nextCodes['enquiry'] ?? '' }}" readonly>
                                 <input type="hidden" name="form_code_visual" id="form_code_visual" value="{{ $nextCodes['enquiry'] ?? '' }}">
                                 <input type="hidden" id="next_enquiry_code" value="{{ $nextCodes['enquiry'] ?? '' }}">
                                 <input type="hidden" id="next_suggestion_code" value="{{ $nextCodes['suggestion'] ?? '' }}">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4 form-group-spacing">
                                 <label class="label-strong">{{ translate('Date') }}</label>
                                 <input type="date" class="form-control" value="{{ $today }}" readonly>
                             </div>
                         </div>
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
+                        <div class="row g-3">
+                            <div class="col-md-4 form-group-spacing">
                                 <label class="label-strong">{{ translate('Category') }}</label>
                                 <div class="d-flex flex-wrap gap-3">
                                     <label class="aiz-megabox">
@@ -82,7 +308,7 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-8 form-group-spacing">
                                 <label class="label-strong">{{ translate('For Domestic') }}</label>
                                 <div class="d-flex flex-wrap gap-3">
                                     <label class="aiz-megabox">
@@ -105,7 +331,7 @@
                             </div>
                         </div>
 
-                        <div class="enq-section">
+                        <div class="enq-section mt-4">
                             <div class="section-title">{{ translate('Product Details') }}</div>
                             <div class="enq-body">
                                 <div class="row g-3">
@@ -424,8 +650,8 @@
                             </div>
                         </div>
 
-                        <div class="text-right">
-                            <button type="submit" class="btn btn-primary px-5 rounded-0 fw-700">{{ translate('Submit') }}</button>
+                        <div class="text-right" style="margin-bottom: 0; padding-bottom: 0;">
+                            <button type="submit" class="btn btn-primary px-5 fw-700">{{ translate('Submit') }}</button>
                         </div>
                     </form>
                 </div>
