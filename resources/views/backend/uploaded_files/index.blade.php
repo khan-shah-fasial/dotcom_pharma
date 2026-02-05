@@ -14,6 +14,13 @@
     </div>
 </div>
 
+<style>
+.w-20-percentage {
+    width: 14.28%;
+}
+
+</style>
+
 <div class="card">
     <form id="sort_uploads" action="" method="GET">
         <input type="hidden" name="sort_by" id="sort_by" value="{{ $sortBy ?? 'created_at' }}">
@@ -21,11 +28,11 @@
         <input type="hidden" name="view" id="view_mode_input" value="{{ $viewMode ?? 'grid' }}">
 
         <div class="card-header row gutters-5 align-items-center">
-            <div class="col">
-                <h5 class="mb-0 h6">{{ translate('All files') }}</h5>
-            </div>
+            {{-- <div class="col">
+                <h5 class="mb-0 h6" style="font-size: 18px; font-weight: 600; color: #2b56a1;">{{ translate('All files') }}</h5>
+            </div> --}}
             <div class="dropdown mb-2 mb-md-0">
-                <button class="btn border dropdown-toggle" type="button" data-toggle="dropdown">
+                <button class="btn border dropdown-toggle" type="button" data-toggle="dropdown" style="font-size: 14px; font-weight: 500;">
                     {{ translate('Bulk Action') }}
                 </button>
                 <div class="dropdown-menu dropdown-menu-right">
@@ -34,18 +41,8 @@
                     </a>
                 </div>
             </div>
-            <div class="col-auto">
-                <div class="btn-group btn-group-sm" role="group" aria-label="View Mode">
-                    <button type="button" class="btn btn-outline-secondary view-toggle" data-view="grid">
-                        <i class="las la-th-large"></i> {{ translate('Grid') }}
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary view-toggle" data-view="list">
-                        <i class="las la-list"></i> {{ translate('List') }}
-                    </button>
-                </div>
-            </div>
             <div class="col-md-2">
-                <select id="type_filter" class="form-control form-control-xs aiz-selectpicker" name="type" data-live-search="true">
+                <select id="type_filter" class="form-control form-control-xs aiz-selectpicker" name="type" data-live-search="true" style="font-size: 14px;">
                     <option value="">{{ translate('All types') }}</option>
                     @php
                         $typeOptions = [
@@ -69,7 +66,7 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <select id="sort_select" class="form-control form-control-xs aiz-selectpicker">
+                <select id="sort_select" class="form-control form-control-xs aiz-selectpicker" style="font-size: 14px;">
                     <option value="created_at|desc" @selected(($sortBy ?? 'created_at') === 'created_at' && ($sortOrder ?? 'desc') === 'desc')>{{ translate('Newest first') }}</option>
                     <option value="created_at|asc" @selected(($sortBy ?? 'created_at') === 'created_at' && ($sortOrder ?? 'desc') === 'asc')>{{ translate('Oldest first') }}</option>
                     <option value="name|asc" @selected(($sortBy ?? '') === 'name' && ($sortOrder ?? '') === 'asc')>{{ translate('Name A-Z') }}</option>
@@ -81,11 +78,21 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <input type="text" class="form-control form-control-xs" name="search" placeholder="{{ translate('Search by name or extension') }}" value="{{ $search }}">
+                <input type="text" class="form-control form-control-xs" name="search" placeholder="{{ translate('Search by name or extension') }}" value="{{ $search }}" style="font-size: 14px;">
             </div>
             <div class="col-auto d-flex align-items-center">
-                <button type="submit" class="btn btn-primary mr-2">{{ translate('Apply') }}</button>
-                <button type="button" class="btn btn-secondary" id="reset-filters">{{ translate('Reset') }}</button>
+                <button type="submit" class="btn btn-primary mr-2" style="font-size: 14px; font-weight: 500;">{{ translate('Apply') }}</button>
+                <button type="button" class="btn btn-secondary" id="reset-filters" style="font-size: 14px; font-weight: 500;">{{ translate('Reset') }}</button>
+            </div>
+            <div class="col-auto ml-auto">
+                <div class="btn-group btn-group-sm" role="group" aria-label="View Mode">
+                    <button type="button" class="btn btn-outline-secondary view-toggle" data-view="grid" style="font-size: 14px; font-weight: 500; padding: 8px 16px;">
+                        <i class="las la-th-large"></i> {{ translate('Grid') }}
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary view-toggle" data-view="list" style="font-size: 14px; font-weight: 500; padding: 8px 16px;">
+                        <i class="las la-list"></i> {{ translate('List') }}
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -122,7 +129,7 @@
                             $icon_class = 'las la-file-csv';
                         }
                     @endphp
-                    <div class="col-auto w-140px w-lg-220px" data-file-row="{{ $file->id }}">
+                    <div class="col-auto w-20-percentage" data-file-row="{{ $file->id }}">
                         <div class="aiz-file-box">
                             <div class="dropdown-file">
                                 <a class="dropdown-link" data-toggle="dropdown">
@@ -163,22 +170,22 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="card card-file aiz-uploader-select c-default" title="{{ $file_name }}.{{ $file->extension }}">
+                            <div class="card card-file aiz-uploader-select c-default uploaded-file-card" title="{{ $file_name }}.{{ $file->extension }}">
                                 <div class="card-file-thumb">
                                     @if($file->type == 'image')
-                                        <img src="{{ $file_path }}" class="img-fit">
+                                        <img src="{{ $file_path }}" class="img-fit uploaded-file-image">
                                     @elseif($file->type == 'video')
-                                        <video src="{{ $file_path }}" class="img-fit" preload="metadata" muted playsinline></video>
+                                        <video src="{{ $file_path }}" class="img-fit uploaded-file-video" preload="metadata" muted playsinline></video>
                                     @else
-                                        <i class="{{ $icon_class }} fs-32"></i>
+                                        <i class="{{ $icon_class }} uploaded-file-icon"></i>
                                     @endif
                                 </div>
                                 <div class="card-body">
-                                    <h6 class="d-flex">
+                                    <h6 class="d-flex uploaded-file-title">
                                         <span class="text-truncate title file-title-text">{{ $file_name }}</span>
                                         <span class="ext">.{{ $file->extension }}</span>
                                     </h6>
-                                    <p>{{ formatBytes($file->file_size) }}</p>
+                                    <p class="uploaded-file-size">{{ formatBytes($file->file_size) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -256,17 +263,17 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         @if($file->type == 'image')
-                                            <img src="{{ $file_path }}" class="size-48px img-fit rounded mr-3">
+                                            <img src="{{ $file_path }}" class="uploaded-list-image img-fit rounded mr-3">
                                         @elseif($file->type == 'video')
-                                            <video src="{{ $file_path }}" class="size-48px rounded mr-3" preload="metadata" muted playsinline></video>
+                                            <video src="{{ $file_path }}" class="uploaded-list-video rounded mr-3" preload="metadata" muted playsinline></video>
                                         @else
-                                            <span class="avatar avatar-sm flex-shrink-0 mr-3 bg-soft-primary d-flex align-items-center justify-content-center">
-                                                <i class="{{ $icon_class }}"></i>
+                                            <span class="uploaded-list-icon-wrapper avatar avatar-sm flex-shrink-0 mr-3 bg-soft-primary d-flex align-items-center justify-content-center">
+                                                <i class="{{ $icon_class }} uploaded-list-icon"></i>
                                             </span>
                                         @endif
                                         <div>
-                                            <div class="font-weight-medium file-title-text">{{ $file_name }}</div>
-                                            <div class="text-muted small">.{{ $file->extension }}</div>
+                                            <div class="font-weight-medium file-title-text uploaded-list-title">{{ $file_name }}</div>
+                                            <div class="text-muted small uploaded-list-extension">.{{ $file->extension }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -359,6 +366,207 @@
 <!-- Bulk Delete modal -->
 @include('modals.bulk_delete_modal')
 @endsection
+@section('style')
+<style>
+    /* Uploaded Files Page Improvements */
+    .uploaded-file-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+    }
+    
+    .uploaded-file-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        border-color: #2b56a1;
+    }
+    
+    .uploaded-file-card .card-file-thumb {
+        height: 160px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+    }
+    
+    .uploaded-file-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .uploaded-file-card:hover .uploaded-file-image {
+        transform: scale(1.05);
+    }
+    
+    .uploaded-file-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .uploaded-file-icon {
+        font-size: 56px !important;
+        color: #2b56a1;
+        transition: transform 0.3s ease;
+    }
+    
+    .uploaded-file-card:hover .uploaded-file-icon {
+        transform: scale(1.1);
+    }
+    
+    .uploaded-file-card .card-body {
+        padding: 12px;
+        background: #ffffff;
+    }
+    
+    .uploaded-file-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 4px;
+        line-height: 1.4;
+    }
+    
+    .uploaded-file-title .text-truncate {
+        max-width: 140px;
+        font-weight: 600;
+    }
+    
+    .uploaded-file-title .ext {
+        color: #6b7280;
+        font-weight: 500;
+        margin-left: 4px;
+    }
+    
+    .uploaded-file-size {
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 500;
+        margin: 0;
+    }
+    
+    /* List View Improvements */
+    .uploaded-list-image,
+    .uploaded-list-video {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border: 2px solid #e5e7eb;
+    }
+    
+    .uploaded-list-icon-wrapper {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+        border: 2px solid #e5e7eb;
+    }
+    
+    .uploaded-list-icon {
+        font-size: 28px;
+        color: #2b56a1;
+    }
+    
+    .uploaded-list-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .uploaded-list-extension {
+        font-size: 13px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+    
+    /* Grid/List Button Styling */
+    .view-toggle.btn-primary {
+        background-color: #2b56a1;
+        border-color: #2b56a1;
+        color: #ffffff;
+    }
+    
+    .view-toggle.btn-outline-secondary {
+        border-color: #d1d5db;
+        color: #6b7280;
+    }
+    
+    .view-toggle.btn-outline-secondary:hover {
+        background-color: #f3f4f6;
+        border-color: #2b56a1;
+        color: #2b56a1;
+    }
+    
+    /* Table Improvements */
+    .view-list table {
+        font-size: 14px;
+    }
+    
+    .view-list thead th {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 14px;
+        border-bottom: 2px solid #e5e7eb;
+        padding: 12px;
+    }
+    
+    .view-list tbody td {
+        padding: 14px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .view-list tbody tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    /* Grid View Improvements */
+    .view-grid .w-140px {
+        width: 180px;
+        margin-bottom: 20px;
+    }
+    
+    .view-grid .w-lg-220px {
+        width: 220px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .view-grid .w-140px,
+        .view-grid .w-lg-220px {
+            width: 100%;
+            max-width: 200px;
+        }
+        
+        .uploaded-file-card .card-file-thumb {
+            height: 140px;
+        }
+    }
+    
+    /* Card Header Improvements */
+    .card-header {
+        background: #f9fafb;
+        border-bottom: 2px solid #e5e7eb;
+        padding: 16px 20px;
+    }
+    
+    /* Form Controls */
+    .form-control-xs {
+        font-size: 14px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+    }
+    
+    .form-control-xs:focus {
+        border-color: #2b56a1;
+        box-shadow: 0 0 0 3px rgba(43, 86, 161, 0.1);
+    }
+</style>
+@endsection
+
 @section('script')
     <script type="text/javascript">
         (function () {

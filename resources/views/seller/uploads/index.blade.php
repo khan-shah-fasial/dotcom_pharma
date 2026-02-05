@@ -64,7 +64,7 @@
 							$file_name = $file->file_original_name;
 						}
 					@endphp
-					<div class="col-auto w-140px w-lg-220px">
+					<div class="col-auto w-120px w-lg-150px">
 						<div class="aiz-file-box">
 							<div class="dropdown-file" >
 								<a class="dropdown-link" data-toggle="dropdown">
