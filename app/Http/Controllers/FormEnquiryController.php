@@ -282,7 +282,6 @@ class FormEnquiryController extends Controller
             return null;
         }
 
-        $disk = config('filesystems.default', 'local');
         $dir  = 'uploads/enquiry/' . now()->format('Y/m');
         $ids  = [];
 
@@ -290,20 +289,23 @@ class FormEnquiryController extends Controller
             if (!$file->isValid()) {
                 continue;
             }
+            $uploadRequest = Request::create('/aiz-uploader/upload', 'POST', [
+                'is_hidden'        => true,
+                'upload_dir'       => $dir,
+                'return_upload_id' => true,
+            ]);
+            $uploadRequest->files->set('aiz_file', $file);
 
-            $path = $file->store($dir, $disk);
+            $response = app(\App\Http\Controllers\AizUploadController::class)->upload($uploadRequest);
+            $uploadId = null;
+            if ($response instanceof JsonResponse) {
+                $payload = $response->getData(true);
+                $uploadId = $payload['upload_id'] ?? null;
+            }
 
-            $upload = new Upload();
-            $upload->file_original_name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $upload->file_name          = $path;
-            $upload->user_id            = auth()->id();
-            $upload->is_hidden          = true; // hide from admin uploaded-files listing
-            $upload->extension          = $file->getClientOriginalExtension();
-            $upload->type               = $file->getClientMimeType();
-            $upload->file_size          = $file->getSize();
-            $upload->save();
-
-            $ids[] = $upload->id;
+            if ($uploadId) {
+                $ids[] = $uploadId;
+            }
         }
 
         return $ids ? implode(',', $ids) : null;
