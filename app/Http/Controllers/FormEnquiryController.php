@@ -8,7 +8,6 @@ use App\Models\FormEnquiry;
 use App\Models\Product;
 use App\Models\State;
 use App\Models\Upload;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +42,7 @@ class FormEnquiryController extends Controller
         $validated = $request->validate([
             'type'           => 'required|in:enquiry,suggestion',
             'category'       => 'required|in:human,veterinary',
-            'domestic_type'  => 'required|in:govt_supply,exports,third_party,loan_licence',
+            'domestic_type'  => 'required|in:domestic,govt_supply,exports,third_party,loan_licence',
             'product_name'   => 'required|string|max:255',
             'product_id'     => 'nullable|exists:products,id',
             'contact_person' => 'required|string|max:255',
@@ -103,6 +102,7 @@ class FormEnquiryController extends Controller
                 'product_group'      => $data['product_group'] ?? null,
                 'brand_name'         => $data['brand_name'] ?? null,
                 'composition_text'   => $data['composition_text'] ?? null,
+                'description_text'   => $data['description_text'] ?? null,
                 'composition_files'  => $data['composition_files'] ?? null,
                 'pack_size'          => $data['pack_size'] ?? null,
                 'quantity'           => $data['quantity'] ?? null,
@@ -186,22 +186,30 @@ class FormEnquiryController extends Controller
 
         $products = filter_products(Product::query())
             ->whereIn('id', $productIds)
-            ->select('id', 'name', 'role_label', 'brand_id', 'group_id')
+            ->select('id', 'name', 'drug_name', 'description', 'role_label', 'brand_id', 'group_id', 'thumbnail_img', 'contents')
             ->with(['brand:id,name', 'main_group:id,name', 'categories:id,name,parent_id'])
             ->latest();
 
         if ($search !== '') {
-            $products->where('name', 'like', '%' . $search . '%');
+            $products->where(function ($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('drug_name', 'like', '%' . $search . '%');
+            });
         }
 
         $items = $products->get()->map(function ($product) {
+            $sections = $this->extractContentSections($product->contents);
             return [
                 'id'        => $product->id,
                 'name'      => $product->name,
+                'drug_name' => $product->drug_name,
                 'role'      => $product->role_label,
                 'group'     => $product->main_group?->name,
                 'brand'     => $product->brand?->name,
                 'categories'=> $product->categories->pluck('name')->filter()->values(),
+                'composition' => $sections['composition'],
+                'description' => $this->htmlToPlainText((string) ($product->description ?? '')),
+                'image'     => $product->thumbnail_img ? uploaded_asset($product->thumbnail_img) : null,
             ];
         });
 
@@ -211,15 +219,83 @@ class FormEnquiryController extends Controller
     public function productDetails(Product $product): JsonResponse
     {
         $product->load(['brand:id,name', 'main_group:id,name', 'categories:id,name']);
+        $sections = $this->extractContentSections($product->contents);
 
         return response()->json([
             'id'         => $product->id,
             'name'       => $product->name,
+            'drug_name'  => $product->drug_name,
             'role'       => $product->role_label,
             'group'      => $product->main_group?->name,
             'brand'      => $product->brand?->name,
             'categories' => $product->categories->pluck('name')->filter()->values(),
+            'composition' => $sections['composition'],
+            'description' => $this->htmlToPlainText((string) ($product->description ?? '')),
+            'image'      => $product->thumbnail_img ? uploaded_asset($product->thumbnail_img) : null,
         ]);
+    }
+
+    protected function extractContentSections($rawContents): array
+    {
+        $rows = $this->decodeContentsRows($rawContents);
+        $compositionParts = [];
+        foreach ($rows as $row) {
+            $title = strtolower(trim((string) ($row['title'] ?? '')));
+            $content = $this->htmlToPlainText((string) ($row['content'] ?? ''));
+            if ($content === '') {
+                continue;
+            }
+
+            if (str_contains($title, 'composition')) {
+                $compositionParts[] = $content;
+                continue;
+            }
+        }
+
+        return [
+            'composition' => $compositionParts ? implode("\n\n", $compositionParts) : null,
+            'description' => null,
+        ];
+    }
+
+    protected function decodeContentsRows($rawContents): array
+    {
+        if (!is_string($rawContents) || trim($rawContents) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($rawContents, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+            $normalized = preg_replace('/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:/', '$1"$2":', $rawContents);
+            $normalized = preg_replace('/,(\s*[}\]])/', '$1', (string) $normalized);
+            $decoded = json_decode((string) $normalized, true);
+        }
+
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        if (array_key_exists('title', $decoded) || array_key_exists('content', $decoded)) {
+            return [$decoded];
+        }
+
+        return array_values(array_filter($decoded, fn ($row) => is_array($row)));
+    }
+
+    protected function htmlToPlainText(string $html): string
+    {
+        if ($html === '') {
+            return '';
+        }
+
+        $text = str_ireplace(['<br>', '<br/>', '<br />', '</p>'], "\n", $html);
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = str_replace("\xc2\xa0", ' ', $text);
+        $text = preg_replace("/\r\n|\r/", "\n", $text);
+        $text = preg_replace("/\n{3,}/", "\n\n", (string) $text);
+
+        return trim((string) $text);
     }
 
     protected function normalizeTagify(?string $value): ?string
@@ -247,15 +323,38 @@ class FormEnquiryController extends Controller
     protected function previewFormCode(string $type): string
     {
         $prefix = $type === 'suggestion' ? 'S-' : 'E-';
-        $lastId = (int) FormEnquiry::where('type', $type)->max('id');
-        $serial = str_pad($lastId + 1, 5, '0', STR_PAD_LEFT);
+        $serial = str_pad($this->nextSerialForType($type), 5, '0', STR_PAD_LEFT);
         return $prefix . $serial;
     }
 
     protected function nextFormCode(string $type): string
     {
-        // adds timestamp suffix to avoid collisions
-        return $this->previewFormCode($type) . '-' . Carbon::now()->format('His');
+        return $this->previewFormCode($type);
+    }
+
+    protected function nextSerialForType(string $type): int
+    {
+        $prefix = $type === 'suggestion' ? 'S-' : 'E-';
+        $maxSerial = 0;
+
+        FormEnquiry::where('type', $type)
+            ->whereNotNull('form_code')
+            ->pluck('form_code')
+            ->each(function ($code) use ($prefix, &$maxSerial) {
+                $value = trim((string) $code);
+                if ($value === '' || stripos($value, $prefix) !== 0) {
+                    return;
+                }
+
+                if (preg_match('/^' . preg_quote($prefix, '/') . '(\d+)/i', $value, $match)) {
+                    $serial = (int) $match[1];
+                    if ($serial > $maxSerial) {
+                        $maxSerial = $serial;
+                    }
+                }
+            });
+
+        return $maxSerial + 1;
     }
 
     protected function rootCategoryFor(string $category): ?Category
