@@ -426,7 +426,7 @@
                             </div>
                         </div>
                         <div class="enq-section domestic-section" data-section="govt_supply">
-                            <div class="section-title">{{ translate('For Government Supply') }}</div>
+                            <div class="section-title">{{ translate('Government Supply') }}</div>
                             <div class="enq-body">
                                 <div class="row g-3">
                                     <div class="col-md-4">
@@ -471,7 +471,7 @@
                         </div>
 
                         <div class="enq-section domestic-section d-none" data-section="exports">
-                            <div class="section-title">{{ translate('For Exports') }}</div>
+                            <div class="section-title">{{ translate('Exports') }}</div>
                             <div class="enq-body">
                                 <div class="row g-3">
                                     <div class="col-md-4">
@@ -504,7 +504,7 @@
                         </div>
 
                         <div class="enq-section domestic-section d-none" data-section="third_party">
-                            <div class="section-title">{{ translate('For Third Party Manufacturing') }}</div>
+                            <div class="section-title">{{ translate('Third Party Manufacturing') }}</div>
                             <div class="enq-body">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -536,7 +536,7 @@
                             </div>
                         </div>
                         <div class="enq-section domestic-section d-none" data-section="loan_licence">
-                            <div class="section-title">{{ translate('For Loan Licence Manufacturing') }}</div>
+                            <div class="section-title">{{ translate('Loan Licence Manufacturing') }}</div>
                             <div class="enq-body">
                                 <div class="row g-3">
                                     <div class="col-md-6">
