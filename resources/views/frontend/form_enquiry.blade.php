@@ -204,6 +204,27 @@
             color: #ffffff;
         }
         
+        /* Tagify auto-expand height */
+        .aiz-tag-input.tagify {
+            min-height: 42px;
+            max-height: none;
+            height: auto;
+            padding: 4px;
+        }
+        
+        .aiz-tag-input.tagify .tagify__tags {
+            min-height: auto;
+            height: auto;
+        }
+        
+        .aiz-tag-input.tagify .tagify__tag {
+            margin: 2px;
+        }
+        
+        .aiz-tag-input.tagify .tagify__input {
+            margin: 2px;
+        }
+        
         .text-right {
             margin-top: 30px;
             padding-top: 24px;
@@ -357,7 +378,7 @@
                                                 <div class="input-group">
                                                     <input type="text" class="form-control" name="drug_role" id="drug_role" readonly placeholder="{{ translate('Auto / manual') }}">
                                                     <div class="input-group-append">
-                                                        <button class="btn btn-outline-secondary" type="button" onclick="toggleReadonly('drug_role')">{{ translate('Edit') }}</button>
+                                                        <button class="btn btn-outline-secondary" type="button" onclick="toggleReadonly('drug_role')" title="{{ translate('Edit') }}"><i class="fas fa-edit"></i></button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -366,7 +387,7 @@
                                                 <div class="input-group">
                                                     <input type="text" class="form-control" name="product_group" id="product_group" readonly placeholder="{{ translate('Auto / manual') }}">
                                                     <div class="input-group-append">
-                                                        <button class="btn btn-outline-secondary" type="button" onclick="toggleReadonly('product_group')">{{ translate('Edit') }}</button>
+                                                        <button class="btn btn-outline-secondary" type="button" onclick="toggleReadonly('product_group')" title="{{ translate('Edit') }}"><i class="fas fa-edit"></i></button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -382,7 +403,7 @@
                                         <div class="input-group">
                                             <input type="text" class="form-control" name="brand_name" id="brand_name" readonly placeholder="{{ translate('Auto / manual') }}">
                                             <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="button" onclick="toggleReadonly('brand_name')">{{ translate('Edit') }}</button>
+                                                <button class="btn btn-outline-secondary" type="button" onclick="toggleReadonly('brand_name')" title="{{ translate('Edit') }}"><i class="fas fa-edit"></i></button>
                                             </div>
                                         </div>
                                     </div>
