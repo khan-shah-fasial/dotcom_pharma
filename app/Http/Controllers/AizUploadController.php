@@ -125,6 +125,7 @@ class AizUploadController extends Controller
     }
     public function upload(Request $request)
     {
+        $uploadId = null;
         $type = array(
             "jpg" => "image",
             "jpeg" => "image",
@@ -166,6 +167,10 @@ class AizUploadController extends Controller
             $upload = new Upload;
             // $upload->disk = config('filesystems.default');
             $extension = strtolower($request->file('aiz_file')->getClientOriginalExtension());
+            $targetDir = trim((string) $request->input('upload_dir', 'uploads/all/' . date('Y/m')), '/');
+            if ($targetDir === '') {
+                $targetDir = 'uploads/all/' . date('Y/m');
+            }
 
             if (
                 env('DEMO_MODE') == 'On' &&
@@ -213,13 +218,13 @@ class AizUploadController extends Controller
                     }
                     try {
                         
-                        $dir = public_path('uploads/all/' . date('Y/m'));
+                        $dir = public_path($targetDir);
 
                         if (!File::exists($dir)) {
                             File::makeDirectory($dir, 0777, true);
                         }
 
-                        $path = 'uploads/all/' . date('Y/m') . '/' . Str::random(40) . '.' . $extension;
+                        $path = $targetDir . '/' . Str::random(40) . '.' . $extension;
                         $img = Image::make($request->file('aiz_file')->getRealPath())->encode($extension, 75);
                         $height = $img->height();
                         $width = $img->width();
@@ -307,7 +312,7 @@ class AizUploadController extends Controller
                     }
                 }else{
                     // $path = $request->file('aiz_file')->store('uploads/all', 'local');
-                    $path = $request->file('aiz_file')->store('uploads/all/' . date('Y/m'), 'local');
+                    $path = $request->file('aiz_file')->store($targetDir, 'local');
                 }
 
                 $diskUploadFailed = false;
@@ -437,9 +442,14 @@ class AizUploadController extends Controller
                 $upload->user_id = Auth::user()->id;
                 $upload->type = $type[$upload->extension];
                 $upload->file_size = $size;
+                $upload->is_hidden = $request->boolean('is_hidden', false);
                 // If cloud upload failed, mark as local so URL generation stays correct
                 $upload->disk = $diskUploadFailed ? 'local' : config('filesystems.default');
                 $upload->save();
+                $uploadId = $upload->id;
+            }
+            if ($request->boolean('return_upload_id', false)) {
+                return response()->json(['upload_id' => $uploadId]);
             }
             return '{}';
         }
