@@ -8,6 +8,83 @@
     background: #616161;
     border-bottom: 1px solid #e0e6ed;
 }
+.batch-table {
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+.batch-table thead {
+    background: #f8f9fa;
+}
+.batch-table thead th {
+    font-weight: 600;
+    font-size: 13px;
+    color: #495057;
+    padding: 12px 8px;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
+    text-align: left;
+    vertical-align: middle;
+}
+.batch-table thead th.text-center {
+    text-align: center;
+}
+.batch-table tbody td {
+    padding: 12px 8px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f0f0;
+}
+.batch-table tbody td.text-center {
+    text-align: center;
+}
+.batch-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.batch-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+.batch-table .form-control-sm {
+    font-size: 13px;
+    padding: 6px 10px;
+    height: auto;
+    line-height: 1.5;
+}
+.batch-table .form-control-sm:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.coa-uploader-cell {
+    min-width: 200px;
+    max-width: 250px;
+}
+.coa-uploader-wrapper {
+    position: relative;
+}
+.coa-uploader-wrapper .input-group {
+    margin-bottom: 0;
+}
+.coa-uploader-wrapper .input-group-text {
+    font-size: 11px;
+    padding: 4px 8px;
+    white-space: nowrap;
+}
+.coa-uploader-wrapper .form-control.file-amount {
+    font-size: 11px;
+    padding: 4px 8px;
+    min-height: 28px;
+}
+.coa-uploader-wrapper .file-preview {
+    margin-top: 5px;
+    max-height: 60px;
+    overflow-y: auto;
+    font-size: 11px;
+}
+.batch-table .btn-xs {
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.2;
+}
 </style>
 @if(count($combinations) > 0)
 <div class="accordion" id="skuAccordion">
@@ -37,6 +114,7 @@
 				}
 			}
 			$isOpen = 'show';
+			$variantKey = strtolower(str_replace(['.', ' ', '-'], '_', $str));
 		@endphp
 		@if(strlen($str) > 0)
 		<div class="card mb-3">
@@ -75,32 +153,99 @@
 						<div class="col-md-8">
 							<div class="border rounded p-3 h-100">
 								<h6 class="text-muted mb-3">{{ translate('Pricing & Inventory') }}</h6>
-								<div class="form-row">
-									<div class="col-sm-6 col-lg-3 mb-3">
-										<label class="form-label mb-1">{{ translate('MRP Price') }}</label>
-										<input type="number" lang="en" name="mrp_price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required>
-									</div>
-									<div class="col-sm-6 col-lg-3 mb-3 d-none">
+
+								<div class="form-row mb-3">
+									<div class="col-sm-6 col-lg-4 mb-3 d-none">
 										<label class="form-label mb-1">{{ translate('Selling Price') }}</label>
-										<input type="number" lang="en" name="price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" required readonly>
+										<input type="number" lang="en" name="price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" readonly>
 									</div>
-									<div class="col-sm-6 col-lg-3 mb-3">
+									<div class="col-sm-6 col-lg-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Min Order Qty') }}</label>
 										<input type="number" lang="en" name="min_qty_{{ $str }}" class="form-control" placeholder="{{ translate('Min Qty') }}" step="1" min="1" value="1" required>
 									</div>
-									<div class="col-sm-6 col-lg-3 mb-3">
-										<label class="form-label mb-1">{{ translate('Stock Quantity') }}</label>
-										<input type="number" lang="en" name="qty_{{ $str }}" value="10" min="0" step="1" class="form-control" required>
-									</div>
-									<div class="col-6 mb-2">
-										<label class="form-label mb-1">{{ translate('Product Expiry Date') }}</label>
-										<input type="date" name="product_exp_date_{{ $str }}" class="form-control" placeholder="{{ translate('Expiry Date') }}">
-									</div>
-									<div class="col-6 mb-3">
+									<div class="col-sm-6 col-lg-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Package Count') }}</label>
 										<input type="number" lang="en" name="count_{{ $str }}" class="form-control"
 											placeholder="{{ translate('Package Count') }}" step="0.01" min="0" required>
 									</div>
+								</div>
+
+								<div class="d-flex justify-content-between align-items-center mb-3">
+									<h6 class="text-muted mb-0">{{ translate('Batches') }}</h6>
+									<button type="button"
+										class="btn btn-sm btn-soft-primary"
+										onclick="addBatcheRow('{{ $variantKey }}')">
+										<i class="las la-plus"></i> {{ translate('Add Batche') }}
+									</button>
+								</div>
+								<div class="table-responsive">
+									<table class="table batch-table mb-0">
+										<thead>
+											<tr>
+												<th style="width: 15%;">{{ translate('Batche Code') }}</th>
+												<th style="width: 12%;">{{ translate('MRP Price') }}</th>
+												<th style="width: 12%;">{{ translate('Stock Qty') }}</th>
+												<th style="width: 15%;">{{ translate('Expiry Date') }}</th>
+												<th style="width: 20%;">{{ translate('COA Document') }}</th>
+												<th style="width: 8%;" class="text-center">{{ translate('Action') }}</th>
+											</tr>
+										</thead>
+										<tbody id="batch-rows-{{ $variantKey }}">
+											<tr class="batch-row">
+												<td>
+													<input type="text"
+														name="batches[{{ $variantKey }}][0][batch]"
+														class="form-control form-control-sm"
+														placeholder="{{ translate('Batche code') }}"
+														required>
+												</td>
+												<td>
+													<input type="number" lang="en"
+														name="batches[{{ $variantKey }}][0][mrp_price]"
+														value="{{ $unit_price }}"
+														min="0" step="0.01"
+														class="form-control form-control-sm"
+														required>
+												</td>
+												<td>
+													<input type="number" lang="en"
+														name="batches[{{ $variantKey }}][0][qty]"
+														value="10" min="0" step="1"
+														class="form-control form-control-sm"
+														required>
+												</td>
+												<td>
+													<input type="date"
+														name="batches[{{ $variantKey }}][0][product_exp_date]"
+														class="form-control form-control-sm">
+												</td>
+												<td class="coa-uploader-cell">
+													<div class="coa-uploader-wrapper" id="coa-wrapper-{{ $variantKey }}-0">
+														<div class="input-group" data-toggle="aizuploader" data-type="document">
+															<div class="input-group-prepend">
+																<div class="input-group-text bg-soft-secondary font-weight-medium">
+																	{{ translate('Browse') }}
+																</div>
+															</div>
+															<div class="form-control file-amount text-truncate">
+																{{ translate('Choose PDF') }}
+															</div>
+															<input type="hidden" name="batches[{{ $variantKey }}][0][coa]" class="selected-files">
+														</div>
+														<div class="file-preview box sm"></div>
+													</div>
+												</td>
+												<td class="text-center">
+													<button type="button"
+														class="btn btn-xs btn-soft-danger"
+														onclick="removeBatcheRow(this)"
+														title="{{ translate('Remove') }}">
+														<i class="las la-trash"></i>
+													</button>
+												</td>
+											</tr>
+										</tbody>
+									</table>
 								</div>
 							</div>
 						</div>
@@ -207,23 +352,7 @@
 					</div>
 
 					<div class="row gutters-10">
-						<div class="col-md-6 mt-3">
-							<h6 class="text-muted mb-2">{{ translate('COA') }}</h6>
-							<div class="input-group" data-toggle="aizuploader" data-type="document">
-								<div class="input-group-prepend">
-									<div class="input-group-text bg-soft-secondary font-weight-medium">
-										{{ translate('Browse') }}
-									</div>
-								</div>
-								<div class="form-control file-amount text-truncate">
-									{{ translate('Choose PDF File') }}
-								</div>
-								<input type="hidden" name="coa_{{ $str }}" class="selected-files">
-							</div>
-							<div class="file-preview box sm"></div>
-						</div>
-
-						<div class="col-md-6 mt-3">
+						<div class="col-md-12 mt-3">
 							<h6 class="text-muted mb-2">{{ translate('Photo') }}</h6>
 							<div class=" input-group " data-toggle="aizuploader" data-type="image">
 								<div class="input-group-prepend">
@@ -242,3 +371,113 @@
 	@endforeach
 </div>
 @endif
+
+<script type="text/javascript">
+	function addBatcheRow(variantKey) {
+		var $tbody = $('#batch-rows-' + variantKey);
+		if ($tbody.length === 0) {
+			return;
+		}
+
+		var index = $tbody.find('tr.batch-row').length;
+		var wrapperId = 'coa-wrapper-' + variantKey + '-' + index;
+		var rowHtml = `
+			<tr class="batch-row">
+				<td>
+					<input type="text"
+						name="batches[` + variantKey + `][` + index + `][batch]"
+						class="form-control form-control-sm"
+						placeholder="{{ translate('Batche code') }}"
+						required>
+				</td>
+				<td>
+					<input type="number" lang="en"
+						name="batches[` + variantKey + `][` + index + `][mrp_price]"
+						min="0" step="0.01"
+						class="form-control form-control-sm"
+						required>
+				</td>
+				<td>
+					<input type="number" lang="en"
+						name="batches[` + variantKey + `][` + index + `][qty]"
+						min="0" step="1"
+						class="form-control form-control-sm"
+						required>
+				</td>
+				<td>
+					<input type="date"
+						name="batches[` + variantKey + `][` + index + `][product_exp_date]"
+						class="form-control form-control-sm">
+				</td>
+				<td class="coa-uploader-cell">
+					<div class="coa-uploader-wrapper" id="` + wrapperId + `">
+						<div class="input-group" data-toggle="aizuploader" data-type="document">
+							<div class="input-group-prepend">
+								<div class="input-group-text bg-soft-secondary font-weight-medium">
+									{{ translate('Browse') }}
+								</div>
+							</div>
+							<div class="form-control file-amount text-truncate">
+								{{ translate('Choose PDF') }}
+							</div>
+							<input type="hidden" name="batches[` + variantKey + `][` + index + `][coa]" class="selected-files">
+						</div>
+						<div class="file-preview box sm"></div>
+					</div>
+				</td>
+				<td class="text-center">
+					<button type="button"
+						class="btn btn-xs btn-soft-danger"
+						onclick="removeBatcheRow(this)"
+						title="{{ translate('Remove') }}">
+						<i class="las la-trash"></i>
+					</button>
+				</td>
+			</tr>
+		`;
+
+		$tbody.append(rowHtml);
+		
+		// Initialize aizuploader for the new row
+		if (typeof AIZ !== 'undefined' && AIZ.uploader) {
+			setTimeout(function() {
+				AIZ.uploader.previewGenerate();
+			}, 100);
+		}
+	}
+
+	function removeBatcheRow(el) {
+		var $row = $(el).closest('tr.batch-row');
+		var $tbody = $row.parent();
+		
+		// Check if this is the last row
+		if ($tbody.find('tr.batch-row').length <= 1) {
+			alert('{{ translate("At least one batch is required") }}');
+			return;
+		}
+		
+		// Extract variantKey from tbody ID
+		var tbodyId = $tbody.attr('id');
+		var variantKey = tbodyId.replace('batch-rows-', '');
+		
+		$row.remove();
+
+		// Reindex remaining rows to keep names compact
+		$tbody.find('tr.batch-row').each(function (i, tr) {
+			var $tr = $(tr);
+			$tr.find('input, select').each(function () {
+				var name = $(this).attr('name');
+				if (!name) return;
+				name = name.replace(/\[\d+\]/, '[' + i + ']');
+				$(this).attr('name', name);
+			});
+			
+			// Update wrapper ID
+			var $wrapper = $tr.find('.coa-uploader-wrapper');
+			if ($wrapper.length) {
+				var newWrapperId = 'coa-wrapper-' + variantKey + '-' + i;
+				$wrapper.attr('id', newWrapperId);
+			}
+		});
+	}
+</script>
