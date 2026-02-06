@@ -651,8 +651,8 @@
                                     <div class="col-md-4">
                                         <label class="label-strong">{{ translate('Mobile No *') }}</label>
                                         <div class="input-group">
-                                            <input type="text" class="form-control" style="max-width:90px;" name="mobile_country_code" value="+91">
-                                            <input type="tel" class="form-control" name="mobile_number" required placeholder="{{ translate('Enter number') }}">
+                                            <input type="text" class="form-control" style="     max-width: 70px !important;    border-radius: 5px 0px 0px 5px !important;" name="mobile_country_code" value="+91">
+                                            <input type="tel" class="form-control" name="mobile_number" required placeholder="{{ translate('Enter number') }}" style="border-radius: 0px 5px 5px 0px !important;">
                                         </div>
                                     </div>
                                     <div class="col-md-4">
