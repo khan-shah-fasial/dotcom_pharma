@@ -136,7 +136,7 @@
         }
         
         .aiz-megabox input:checked + span .aiz-rounded-check {
-            background: #2b56a1;
+            
             border-color: #2b56a1;
             box-shadow: 0 0 0 3px rgba(43, 86, 161, 0.2);
         }
@@ -306,9 +306,7 @@
                                 <label class="label-strong">{{ translate('Date') }}</label>
                                 <input type="date" class="form-control" value="{{ $today }}" readonly>
                             </div>
-                        </div>
 
-                        <div class="row g-3">
                             <div class="col-md-4 form-group-spacing">
                                 <label class="label-strong">{{ translate('Category') }}</label>
                                 <div class="d-flex flex-wrap gap-3">
@@ -350,6 +348,7 @@
                                 </div>
                             </div>
                         </div>
+
 
                         <div class="enq-section mt-4">
                             <div class="section-title">{{ translate('Product Details') }}</div>
