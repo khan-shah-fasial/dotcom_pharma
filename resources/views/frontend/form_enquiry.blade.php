@@ -223,12 +223,8 @@
         .aiz-tag-input.tagify .tagify__input {
             margin: 2px;
         }
-        
-        .text-right {
-            margin-top: 30px;
-            padding-top: 24px;
-            border-top: 2px solid #e5e7eb;
-        }
+        S
+       
         .gap-3
         {
             gap:10px;
@@ -262,6 +258,15 @@
                 width: 100%;
             }
         }
+
+        .form-header-section {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 28px;
+    border: 1px solid #e2e8f0;
+}
+
         
     </style>
 
@@ -275,6 +280,8 @@
                 <div class="p-4">
                     <form id="form-enquiry" class="form-default" action="{{ route('form_enquiry.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
+
+                        <div class="form-header-section">
                         <div class="row g-3">
                             <div class="col-md-4 form-group-spacing">
                                 <label class="label-strong">{{ translate('Type') }}</label>
@@ -297,8 +304,8 @@
                             </div>
                             <div class="col-md-4 form-group-spacing">
                                 <label class="label-strong">{{ translate('Form No (Auto)') }}</label>
-                                <input type="text" class="form-control" name="form_code_display" id="form_code_display" value="{{ $nextCodes['enquiry'] ?? '' }}" readonly>
-                                <input type="hidden" name="form_code_visual" id="form_code_visual" value="{{ $nextCodes['enquiry'] ?? '' }}">
+                                <input type="text" class="form-control bg-white" name="form_code_display" id="form_code_display" value="{{ $nextCodes['enquiry'] ?? '' }}" readonly>
+                                <input type="hidden" name="form_code_visual " id="form_code_visual" value="{{ $nextCodes['enquiry'] ?? '' }}">
                                 <input type="hidden" id="next_enquiry_code" value="{{ $nextCodes['enquiry'] ?? '' }}">
                                 <input type="hidden" id="next_suggestion_code" value="{{ $nextCodes['suggestion'] ?? '' }}">
                             </div>
@@ -307,26 +314,8 @@
                                 <input type="date" class="form-control" value="{{ $today }}" readonly>
                             </div>
 
-                            <div class="col-md-4 form-group-spacing">
-                                <label class="label-strong">{{ translate('Category') }}</label>
-                                <div class="d-flex flex-wrap gap-3">
-                                    <label class="aiz-megabox">
-                                        <input type="radio" name="category" value="veterinary" checked>
-                                        <span class="d-flex align-items-center">
-                                            <span class="aiz-rounded-check"></span>
-                                            <span class="ml-2">{{ translate('Veterinary') }}</span>
-                                        </span>
-                                    </label>
-                                    <label class="aiz-megabox">
-                                        <input type="radio" name="category" value="human">
-                                        <span class="d-flex align-items-center">
-                                            <span class="aiz-rounded-check"></span>
-                                            <span class="ml-2">{{ translate('Human') }}</span>
-                                        </span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-8 form-group-spacing">
+                            
+                            <div class="col-md-12 form-group-spacing">
                                 <label class="label-strong">{{ translate('For Domestic') }}</label>
                                 <div class="d-flex flex-wrap gap-3">
                                     <label class="aiz-megabox">
@@ -348,13 +337,34 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
 
 
                         <div class="enq-section mt-4">
                             <div class="section-title">{{ translate('Product Details') }}</div>
                             <div class="enq-body">
                                 <div class="row g-3">
-                                    <div class="col-md-7">
+                                    <div class="col-md-4 form-group-spacing">
+                                <label class="label-strong">{{ translate('Category') }}</label>
+                                <div class="d-flex flex-wrap gap-3">
+                                    <label class="aiz-megabox">
+                                        <input type="radio" name="category" value="veterinary" checked>
+                                        <span class="d-flex align-items-center">
+                                            <span class="aiz-rounded-check"></span>
+                                            <span class="ml-2">{{ translate('Veterinary') }}</span>
+                                        </span>
+                                    </label>
+                                    <label class="aiz-megabox">
+                                        <input type="radio" name="category" value="human">
+                                        <span class="d-flex align-items-center">
+                                            <span class="aiz-rounded-check"></span>
+                                            <span class="ml-2">{{ translate('Human') }}</span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-8">
                                         <label class="label-strong">{{ translate('Product Name') }}</label>
                                         <div class="row">
                                             <div class="col-md-6 mb-2 mb-md-0">
@@ -369,7 +379,7 @@
                                         </div>
                                         <div class="helper">{{ translate('If not in list, type manually. Selecting a product will auto-fill role, group, brand & categories.') }}</div>
                                     </div>
-                                    <div class="col-md-5">
+                                    <div class="col-md-6">
                                         <div class="row g-3">
                                             <div class="col-12 col-md-6">
                                                 <label class="label-strong">{{ translate('Drug Role') }}</label>
@@ -391,7 +401,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="label-strong">{{ translate('Product Category') }}</label>
                                         <input type="text" class="form-control aiz-tag-input" name="product_categories" id="product_categories" placeholder="{{ translate('Tag categories') }}">
                                         <div class="helper">{{ translate('Auto from product; add/remove tags as needed') }}</div>
@@ -413,14 +423,15 @@
                                         <label class="label-strong">{{ translate('Qty Required') }}</label>
                                         <input type="number" class="form-control" id="quantity" name="quantity" min="0" placeholder="{{ translate('Qty') }}">
                                     </div>
-                                    <div class="col-md-8">
-                                        <label class="label-strong">{{ translate('Full Composition / Descriptions') }}</label>
-                                        <textarea class="form-control" rows="3" id="composition_text" name="composition_text" placeholder="{{ translate('Describe composition') }}"></textarea>
-                                    </div>
-                                    <div class="col-md-4 upload-col">
+                                     <div class="col-md-4 upload-col">
                                         <label class="label-strong">{{ translate('Upload File') }}</label>
                                         <input type="file" class="form-control" name="composition_files[]" multiple>
                                     </div>
+                                    <div class="col-md-12">
+                                        <label class="label-strong">{{ translate('Full Composition / Descriptions') }}</label>
+                                        <textarea class="form-control" rows="3" id="composition_text" name="composition_text" placeholder="{{ translate('Describe composition') }}"></textarea>
+                                    </div>
+                                   
                                 </div>
                             </div>
                         </div>
@@ -603,23 +614,15 @@
                             <div class="section-title">{{ translate('Company Details') }}</div>
                             <div class="enq-body">
                                 <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="label-strong">{{ translate('Company Name') }}</label>
-                                        <input type="text" class="form-control" name="company_name">
+                                   
+                                   
+                                   
+                                    <div class="col-md-3">
+                                        <label class="label-strong">{{ translate('Pincode') }}</label>
+                                        <input type="text" class="form-control" name="company_pincode" id="company_pincode">
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="label-strong">{{ translate('Full Address') }}</label>
-                                        <textarea class="form-control" name="company_address" rows="2"></textarea>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="label-strong">{{ translate('Post') }}</label>
-                                        <input type="text" class="form-control" name="company_post">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="label-strong">{{ translate('District') }}</label>
-                                        <input type="text" class="form-control" name="company_district">
-                                    </div>
-                                    <div class="col-md-4">
+
+                                     <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Country') }}</label>
                                         <select class="form-control aiz-selectpicker" data-live-search="true" name="company_country_id" id="company_country">
                                             <option value="">{{ translate('Select Country') }}</option>
@@ -628,43 +631,61 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="label-strong">{{ translate('State') }}</label>
                                         <select class="form-control aiz-selectpicker" data-live-search="true" name="company_state_id" id="company_state">
                                             <option value="">{{ translate('Select State') }}</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label class="label-strong">{{ translate('Pincode') }}</label>
-                                        <input type="text" class="form-control" name="company_pincode" id="company_pincode">
+
+                                    
+
+                                     <div class="col-md-3">
+                                        <label class="label-strong">{{ translate('Post') }}</label>
+                                        <input type="text" class="form-control" name="company_post">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
+                                        <label class="label-strong">{{ translate('District') }}</label>
+                                        <input type="text" class="form-control" name="company_district">
+                                    </div>
+
+                                     <div class="col-md-3">
+                                        <label class="label-strong">{{ translate('Company Name') }}</label>
+                                        <input type="text" class="form-control" name="company_name">
+                                    </div>
+
+                                    <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Contact Person') }} *</label>
                                         <input type="text" class="form-control" name="contact_person" required>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Designation') }}</label>
                                         <input type="text" class="form-control" name="designation">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Mobile No *') }}</label>
                                         <div class="input-group">
                                             <input type="text" class="form-control" style="     max-width: 70px !important;    border-radius: 5px 0px 0px 5px !important;" name="mobile_country_code" value="+91">
                                             <input type="tel" class="form-control" name="mobile_number" required placeholder="{{ translate('Enter number') }}" style="border-radius: 0px 5px 5px 0px !important;">
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="label-strong">{{ translate('E-mail ID *') }}</label>
                                         <input type="email" class="form-control" name="email" required placeholder="name@example.com">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Website') }}</label>
                                         <input type="text" class="form-control" name="website" placeholder="https://">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Visiting Card') }}</label>
                                         <input type="file" class="form-control" name="visiting_card_files[]" multiple>
                                     </div>
+                                     <div class="col-md-12">
+                                        <label class="label-strong">{{ translate('Full Address') }}</label>
+                                        <textarea class="form-control" name="company_address" rows="2"></textarea>
+                                    </div>
+                                    
                                 </div>
                             </div>
                         </div>
