@@ -41,7 +41,6 @@
             border-radius: 10px;
             margin-bottom: 24px;
             background: #ffffff;
-            overflow: hidden;
             transition: box-shadow 0.3s ease;
         }
         
@@ -172,7 +171,7 @@
         }
         
         .input-group .form-control:first-child {
-            border-radius: 8px 0 0 8px;
+            border-radius: 8px 0 0 8px !important;
         }
         
         .btn-primary {

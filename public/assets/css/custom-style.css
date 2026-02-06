@@ -1090,7 +1090,7 @@ img.wishlist_img {
 .form-control {
     padding: 0.6rem 1rem;
     font-size: 0.875rem;
-    height: calc(1.3125rem + 1.2rem + 2px);
+    height: calc(1.3125rem + 1.2rem + 3px);
     color: #363636;
     border-radius: 10px;
 }
