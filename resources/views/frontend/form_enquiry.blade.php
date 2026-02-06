@@ -305,8 +305,7 @@
         .aiz-tag-input.tagify .tagify__input {
             margin: 2px;
         }
-        S
-       
+        
         .gap-3
         {
             gap:10px;

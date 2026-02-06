@@ -18,6 +18,9 @@
 .w-20-percentage {
     width: 14.28%;
 }
+.uploaded-list-image {
+    width: 70px !important;
+}
 
 </style>
 
