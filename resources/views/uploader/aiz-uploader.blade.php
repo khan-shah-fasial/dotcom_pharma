@@ -21,12 +21,6 @@
 					<div class="tab-pane active h-100" id="aiz-select-file">
 						<div class="aiz-uploader-filter pt-1 pb-3 border-bottom mb-4">
 							<div class="row align-items-center gutters-5 gutters-md-10 position-relative">
-								<div class="col-md-2 col-4">
-									<div class="btn-group btn-group-sm" role="group">
-										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-grid"><i class="las la-th-large"></i>Grid</button>
-										<button type="button" class="btn btn-outline-secondary" id="aiz-popup-view-list"><i class="las la-list"></i>List</button>
-									</div>
-								</div>
 								<div class="col-xl-2 col-md-3 col-5">
 									<div class="">
 										<!-- Input -->
@@ -75,10 +69,20 @@
 										</label>
 									</div>
 								</div>
-								<div class="col-md-4 col-xl-3 ml-auto mr-0 col-2 position-static">
+								<div class="col-md-4 col-xl-3 mr-0 col-2 position-static">
 									<div class="aiz-uploader-search text-right">
 										<input type="text" class="form-control form-control-xs" name="aiz-uploader-search" placeholder="{{ translate('Search your files') }}">
 										<i class="search-icon d-md-none"><span></span></i>
+									</div>
+								</div>
+								<div class="col-md-2 col-4 ml-auto">
+									<div class="btn-group btn-group-sm" role="group">
+										<button type="button" style="font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;" class="btn btn-outline-secondary" id="aiz-popup-view-grid"><i class="las la-th-large"></i>Grid</button>
+										<button type="button" style="font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;" class="btn btn-outline-secondary" id="aiz-popup-view-list"><i class="las la-list"></i>List</button>
 									</div>
 								</div>
 							</div>
