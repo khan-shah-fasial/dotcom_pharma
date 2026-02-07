@@ -42,6 +42,14 @@
                 return '<a class="d-block" target="_blank" href="'.uploaded_asset($file->id).'">'.e($name).'</a>';
             })->implode('');
         };
+
+        $forLabel = [
+            'domestic'     => translate('Domestic'),
+            'govt_supply'  => translate('Govt. Supply'),
+            'exports'      => translate('Exports'),
+            'third_party'  => translate('Third Party Manufacturing'),
+            'loan_licence' => translate('Loan Licence Manufacturing'),
+        ][$item->domestic_type] ?? str_replace('_', ' ', ucfirst((string) $item->domestic_type));
     @endphp
 
     <div class="card">
@@ -59,8 +67,8 @@
                     <h6 class="fw-700">{{ ucfirst($item->type) }}</h6>
                 </div>
                 <div class="col-md-3">
-                    <p class="mb-1 text-muted">{{ translate('Domestic') }}</p>
-                    <h6 class="fw-700">{{ str_replace('_',' ', ucfirst($item->domestic_type)) }}</h6>
+                    <p class="mb-1 text-muted">{{ translate('For') }}</p>
+                    <h6 class="fw-700">{{ $forLabel }}</h6>
                 </div>
                 <div class="col-md-3">
                     <p class="mb-1 text-muted">{{ translate('Category') }}</p>
@@ -105,14 +113,21 @@
                     <p class="mb-1 text-muted">{{ translate('Quantity') }}</p>
                     <div class="fw-600">{{ $item->quantity ?? '-' }}</div>
                 </div>
-                <div class="col-12 mt-3">
-                    <p class="mb-1 text-muted">{{ translate('Composition / Description') }}</p>
+                <div class="col-md-6 mt-3">
+                    <p class="mb-1 text-muted">{{ translate('Composition') }}</p>
                     <div class="fw-600">{!! nl2br(e($item->composition_text ?? '-')) !!}</div>
+                </div>
+                <div class="col-md-6 mt-3">
+                    <p class="mb-1 text-muted">{{ translate('Descriptions') }}</p>
+                    <div class="fw-600">{!! nl2br(e($item->description_text ?? '-')) !!}</div>
+                </div>
+                <div class="col-12 mt-3">
+                    <p class="mb-1 text-muted">{{ translate('Composition Files') }}</p>
                     <div class="mt-2">{!! $showFiles($files['composition_files']) !!}</div>
                 </div>
             </div>
 
-            <h6 class="border-bottom pb-2 my-4">{{ translate('Domestic / Export Details') }}</h6>
+            <h6 class="border-bottom pb-2 my-4">{{ translate('For Details') }}</h6>
             @if($item->domestic_type === 'govt_supply')
                 <div class="row">
                     <div class="col-md-4">
@@ -215,6 +230,14 @@
                     <div class="col-md-6 mt-3">
                         <p class="mb-1 text-muted">{{ translate('Design File') }}</p>
                         {!! $showFiles($files['loan_design_files']) !!}
+                    </div>
+                </div>
+            @elseif($item->domestic_type === 'domestic')
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-light mb-0">
+                            {{ translate('No additional fields for Domestic.') }}
+                        </div>
                     </div>
                 </div>
             @endif

@@ -173,6 +173,88 @@
         .input-group .form-control:first-child {
             border-radius: 8px 0 0 8px !important;
         }
+
+        .product-autocomplete {
+            position: relative;
+        }
+
+        .product-autocomplete .autocomplete-toggle {
+            border-radius: 0 8px 8px 0 !important;
+            border-left: 0;
+            background: #ffffff;
+            color: #4b5563;
+        }
+
+        .product-autocomplete .autocomplete-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            z-index: 1060;
+            max-height: 260px;
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+            display: none;
+        }
+
+        .product-autocomplete .autocomplete-option {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            line-height: 1.35;
+        }
+
+        .product-autocomplete .autocomplete-option:last-child {
+            border-bottom: 0;
+        }
+
+        .product-autocomplete .autocomplete-option:hover {
+            background: #eff6ff;
+        }
+
+        .product-autocomplete .autocomplete-option-title {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .product-autocomplete .autocomplete-option-sub {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .product-autocomplete .autocomplete-empty {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .selected-product-photo {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px;
+            background: #ffffff;
+            display: none;
+            max-width: 210px;
+        }
+
+        .selected-product-photo img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: zoom-in;
+            border: 1px solid #e5e7eb;
+        }
+
+        .selected-product-photo .photo-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
         
         .btn-primary {
             background: linear-gradient(135deg, #2b56a1 0%, #1e3f7a 100%);
@@ -315,10 +397,14 @@
 
                             
                             <div class="col-md-12 form-group-spacing">
-                                <label class="label-strong">{{ translate('For Domestic') }}</label>
+                                <label class="label-strong">{{ translate('For') }}</label>
                                 <div class="d-flex flex-wrap gap-3">
                                     <label class="aiz-megabox">
-                                        <input type="radio" name="domestic_type" value="govt_supply" checked>
+                                        <input type="radio" name="domestic_type" value="domestic" checked>
+                                        <span class="d-flex align-items-center"><span class="aiz-rounded-check"></span><span class="ml-2">{{ translate('Domestic') }}</span></span>
+                                    </label>
+                                    <label class="aiz-megabox">
+                                        <input type="radio" name="domestic_type" value="govt_supply">
                                         <span class="d-flex align-items-center"><span class="aiz-rounded-check"></span><span class="ml-2">{{ translate('Govt. Supply') }}</span></span>
                                     </label>
                                     <label class="aiz-megabox">
@@ -363,20 +449,32 @@
                                 </div>
                             </div>
                             
-                            <div class="col-md-8">
+                                <div class="col-md-8">
                                         <label class="label-strong">{{ translate('Product Name') }}</label>
                                         <div class="row">
-                                            <div class="col-md-6 mb-2 mb-md-0">
-                                                <select id="product_picker" class="form-control aiz-selectpicker" data-live-search="true">
-                                                    <option value="">{{ translate('Select from list') }}</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <input type="text" class="form-control" name="product_name" id="product_name" placeholder="{{ translate('Type product name') }}" required>
+                                            <div class="col-md-12">
+                                                <div class="product-autocomplete">
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" name="product_name" id="product_name" placeholder="{{ translate('Type product name or select from list') }}" autocomplete="off" required>
+                                                        <div class="input-group-append">
+                                                            <button type="button" class="btn btn-outline-secondary autocomplete-toggle" id="product_picker_toggle" aria-label="{{ translate('Show product list') }}">
+                                                                <i class="fas fa-chevron-down"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div id="product_picker_dropdown" class="autocomplete-dropdown"></div>
+                                                </div>
                                                 <input type="hidden" name="product_id" id="product_id">
                                             </div>
                                         </div>
                                         <div class="helper">{{ translate('If not in list, type manually. Selecting a product will auto-fill role, group, brand & categories.') }}</div>
+                                        <div class="mt-2">
+                                            <label class="label-strong mb-1">{{ translate('Selected Product Photo') }}</label>
+                                            <div id="selected_product_photo" class="selected-product-photo">
+                                                <img id="selected_product_photo_img" src="" alt="{{ translate('Selected product') }}">
+                                                <div class="photo-label">{{ translate('Click image to view large') }}</div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="row g-3">
@@ -422,13 +520,17 @@
                                         <label class="label-strong">{{ translate('Qty Required') }}</label>
                                         <input type="number" class="form-control" id="quantity" name="quantity" min="0" placeholder="{{ translate('Qty') }}">
                                     </div>
-                                     <div class="col-md-4 upload-col">
+                                    <div class="col-md-4 upload-col">
                                         <label class="label-strong">{{ translate('Upload File') }}</label>
                                         <input type="file" class="form-control" name="composition_files[]" multiple>
                                     </div>
-                                    <div class="col-md-12">
-                                        <label class="label-strong">{{ translate('Full Composition / Descriptions') }}</label>
+                                    <div class="col-md-6">
+                                        <label class="label-strong">{{ translate('Composition') }}</label>
                                         <textarea class="form-control" rows="3" id="composition_text" name="composition_text" placeholder="{{ translate('Describe composition') }}"></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="label-strong">{{ translate('Descriptions') }}</label>
+                                        <textarea class="form-control" rows="3" id="description_text" name="description_text" placeholder="{{ translate('Describe details') }}"></textarea>
                                     </div>
                                    
                                 </div>
@@ -578,7 +680,7 @@
                         </div>
 
                         <div class="enq-section">
-                            <div class="section-title">{{ translate('Common Field For All') }}</div>
+                            <div class="section-title">{{ translate('Other Details') }}</div>
                             <div class="enq-body">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -697,15 +799,30 @@
             </div>
         </div>
     </section>
+
+    <div class="modal fade" id="productPhotoModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body p-2">
+                    <img id="productPhotoModalImg" src="" alt="{{ translate('Product image') }}" style="width:100%;height:auto;display:block;border-radius:6px;">
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 @section('script')
 <script>
-    const productPicker = document.getElementById('product_picker');
     const productNameInput = document.getElementById('product_name');
+    const productPickerToggle = document.getElementById('product_picker_toggle');
+    const productPickerDropdown = document.getElementById('product_picker_dropdown');
+    const selectedProductPhotoWrap = document.getElementById('selected_product_photo');
+    const selectedProductPhotoImg = document.getElementById('selected_product_photo_img');
+    const productPhotoModalImg = document.getElementById('productPhotoModalImg');
     const productIdInput = document.getElementById('product_id');
     const categoryRadios = document.querySelectorAll('input[name="category"]');
     const domesticRadios = document.querySelectorAll('input[name="domestic_type"]');
     const domesticSections = document.querySelectorAll('.domestic-section');
+    let productItems = [];
 
     function toggleSections() {
         const selected = document.querySelector('input[name="domestic_type"]:checked').value;
@@ -739,116 +856,238 @@
         fetch('{{ route('form_enquiry.products') }}?' + params.toString())
             .then(res => res.json())
             .then(items => {
-                productPicker.innerHTML = '<option value="">{{ translate('Select from list') }}</option>';
-                items.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.id;
-                    option.textContent = item.name;
-                    option.dataset.role = item.role || '';
-                    option.dataset.group = item.group || '';
-                    option.dataset.brand = item.brand || '';
-                    option.dataset.categories = item.categories ? item.categories.join('|') : '';
-                    productPicker.appendChild(option);
-                });
-                $('.aiz-selectpicker').selectpicker('refresh');
+                productItems = items || [];
+                renderProductDropdown([]);
             });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        if (!productPicker) {
-            console.dir('productPicker element not found');
+    function getDisplayName(item) {
+        return (item.drug_name || item.name || '').trim();
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderProductDropdown(items) {
+        if (!productPickerDropdown) return;
+
+        if (!items.length) {
+            productPickerDropdown.innerHTML = '<div class="autocomplete-empty">{{ translate('No matching products') }}</div>';
             return;
         }
 
-        // Bind both Bootstrap-select and fallback change for robustness
-        const onProductChange = function () {
-            const rawVal = $(productPicker).val();
-            const selectedVal = Array.isArray(rawVal) ? rawVal[0] : rawVal;
-            const option = selectedVal ? productPicker.querySelector(`option[value="${selectedVal}"]`) : productPicker.querySelector('option:checked');
-            if (!option || !option.value) {
-                console.dir('product-select: no option found', { rawVal, selectedVal, option });
-                productIdInput.value = '';
-                return;
-        }
-        // Log selection for debugging
-        console.dir({
-            context: 'product-select',
-            id: option.value,
-            name: option.textContent
-        });
-        // AJAX load details and prefill
-        /*$.getJSON('{{ url('/form-enquiry/product') }}/' + option.value, function (data) {
-            console.dir({ context: 'product-select-success', data });
-            productIdInput.value = data.id || option.value;
-            productNameInput.value = data.name || option.textContent;
-            if (data.role)  $('#drug_role').val(data.role);
-            if (data.group) $('#product_group').val(data.group);
-            if (data.brand) $('#brand_name').val(data.brand);
+        productPickerDropdown.innerHTML = items.map((item) => {
+            const displayName = escapeHtml(getDisplayName(item));
+            const productName = escapeHtml(item.name || '');
+            return `
+                <div class="autocomplete-option" data-id="${item.id}">
+                    <div class="autocomplete-option-title">${displayName}</div>
+                    <div class="autocomplete-option-sub">${productName}</div>
+                </div>
+            `;
+        }).join('');
+    }
 
-            const cats = data.categories || [];
-            const $tagInput = $('#product_categories');
-            const tagInstance = $tagInput.data('tagify');
-            if (tagInstance) {
-                console.dir({ context: 'tagify-existing', cats });
-                tagInstance.removeAllTags();
-                tagInstance.addTags(cats);
-            } else if (window.Tagify) {
-                const inst = new Tagify($tagInput[0]);
-                console.dir({ context: 'tagify-new', cats });
-                inst.addTags(cats);
-                $tagInput.data('tagify', inst);
-            } else {
-                $tagInput.val(JSON.stringify(cats));
-            }
-        }).fail(function (jq, status, err) {*/
-            // console.error('product-select-fail', status, err);
-            // fallback to dataset
-            productIdInput.value = option.value;
-            productNameInput.value = option.textContent;
-            if (option.dataset.role)  $('#drug_role').val(option.dataset.role);
-            if (option.dataset.group) $('#product_group').val(option.dataset.group);
-            if (option.dataset.brand) $('#brand_name').val(option.dataset.brand);
-            const cats = option.dataset.categories ? option.dataset.categories.split('|').filter(Boolean) : [];
-            const $tagInput = $('#product_categories');
-            const tagInstance = $tagInput.data('tagify');
-            if (tagInstance) {
-                tagInstance.removeAllTags();
-                tagInstance.addTags(cats);
-            } else if (window.Tagify) {
-                const inst = new Tagify($tagInput[0]);
-                inst.addTags(cats);
-                $tagInput.data('tagify', inst);
-            } else {
-                $tagInput.val(JSON.stringify(cats));
-            }
-        // });
-        };
-
-        // Avoid double firing: prefer bootstrap-select event when plugin is present, fallback to native change otherwise.
-        if ($.fn.selectpicker && $(productPicker).hasClass('aiz-selectpicker')) {
-            $(productPicker).on('changed.bs.select', onProductChange);
-        } else {
-            $(productPicker).on('change', onProductChange);
+    function filterProducts(term) {
+        const keyword = (term || '').trim().toLowerCase();
+        if (!keyword) {
+            return productItems.slice(0, 50);
         }
 
-        console.log('productPicker bindings attached');
-    });
+        return productItems.filter(item => {
+            const displayName = getDisplayName(item).toLowerCase();
+            const productName = (item.name || '').toLowerCase();
+            return displayName.includes(keyword) || productName.includes(keyword);
+        }).slice(0, 50);
+    }
 
-    function clearProductDetails() {
-        productPicker.innerHTML = '<option value="">{{ translate('Select from list') }}</option>';
-        $('.aiz-selectpicker').selectpicker('refresh');
-        productIdInput.value = '';
-        productNameInput.value = '';
-        $('#drug_role').val('');
-        $('#product_group').val('');
-        $('#brand_name').val('');
+    function showDropdown() {
+        if (!productPickerDropdown) return;
+        productPickerDropdown.style.display = 'block';
+    }
+
+    function hideDropdown() {
+        if (!productPickerDropdown) return;
+        productPickerDropdown.style.display = 'none';
+    }
+
+    function setTagifyCategories(cats) {
         const $tagInput = $('#product_categories');
         const tagInstance = $tagInput.data('tagify');
         if (tagInstance) {
             tagInstance.removeAllTags();
+            tagInstance.addTags(cats);
+        } else if (window.Tagify) {
+            const inst = new Tagify($tagInput[0]);
+            inst.addTags(cats);
+            $tagInput.data('tagify', inst);
         } else {
-            $tagInput.val('');
+            $tagInput.val(cats.length ? JSON.stringify(cats) : '');
         }
+    }
+
+    function clearAutoProductFields() {
+        productIdInput.value = '';
+        productNameInput.dataset.selectedId = '';
+        $('#drug_role').val('');
+        $('#product_group').val('');
+        $('#brand_name').val('');
+        $('#composition_text').val('');
+        $('#description_text').val('');
+        if (selectedProductPhotoImg) {
+            selectedProductPhotoImg.src = '';
+        }
+        if (selectedProductPhotoWrap) {
+            selectedProductPhotoWrap.style.display = 'none';
+        }
+        setTagifyCategories([]);
+    }
+
+    function applyProductSelection(item) {
+        productIdInput.value = item.id || '';
+        productNameInput.dataset.selectedId = item.id || '';
+        productNameInput.value = getDisplayName(item);
+        if (item.role)  $('#drug_role').val(item.role); else $('#drug_role').val('');
+        if (item.group) $('#product_group').val(item.group); else $('#product_group').val('');
+        $('#brand_name').val(item.name || '');
+        $('#composition_text').val(item.composition || '');
+        $('#description_text').val(item.description || '');
+        if (selectedProductPhotoImg) {
+            selectedProductPhotoImg.src = item.image || '';
+        }
+        if (selectedProductPhotoWrap) {
+            selectedProductPhotoWrap.style.display = item.image ? 'block' : 'none';
+        }
+        const cats = Array.isArray(item.categories) ? item.categories.filter(Boolean) : [];
+        setTagifyCategories(cats);
+    }
+
+    function resolveProductFromInput() {
+        const value = (productNameInput.value || '').trim();
+        if (!value) {
+            clearAutoProductFields();
+            return;
+        }
+
+        const lowerValue = value.toLowerCase();
+        const selectedId = Number(productNameInput.dataset.selectedId || 0);
+        const selectedById = selectedId
+            ? productItems.find(item => Number(item.id) === selectedId)
+            : null;
+
+        if (selectedById && lowerValue === getDisplayName(selectedById).toLowerCase()) {
+            applyProductSelection(selectedById);
+            return;
+        }
+
+        const nameMatch = productItems.find(item => (item.name || '').trim().toLowerCase() === lowerValue);
+        if (nameMatch) {
+            applyProductSelection(nameMatch);
+            return;
+        }
+
+        const drugMatches = productItems.filter(item => getDisplayName(item).toLowerCase() === lowerValue);
+        if (drugMatches.length === 1) {
+            applyProductSelection(drugMatches[0]);
+            return;
+        }
+
+        if (drugMatches.length > 1 && selectedById) {
+            const sameItem = drugMatches.find(item => Number(item.id) === Number(selectedById.id));
+            if (sameItem) {
+                applyProductSelection(sameItem);
+                return;
+            }
+        }
+
+        clearAutoProductFields();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!productNameInput || !productPickerDropdown) {
+            return;
+        }
+
+        productNameInput.addEventListener('input', function () {
+            const selectedId = Number(productNameInput.dataset.selectedId || 0);
+            if (selectedId) {
+                const selectedItem = productItems.find(item => Number(item.id) === selectedId);
+                if (!selectedItem || (productNameInput.value || '').trim().toLowerCase() !== getDisplayName(selectedItem).toLowerCase()) {
+                    productNameInput.dataset.selectedId = '';
+                    productIdInput.value = '';
+                }
+            }
+            const matched = filterProducts(productNameInput.value);
+            renderProductDropdown(matched);
+            showDropdown();
+        });
+
+        productNameInput.addEventListener('focus', function () {
+            const matched = filterProducts(productNameInput.value);
+            renderProductDropdown(matched);
+            showDropdown();
+        });
+
+        productNameInput.addEventListener('change', resolveProductFromInput);
+        productNameInput.addEventListener('blur', function () {
+            setTimeout(() => {
+                resolveProductFromInput();
+                hideDropdown();
+            }, 120);
+        });
+
+        if (productPickerToggle) {
+            productPickerToggle.addEventListener('click', function () {
+                if (productPickerDropdown.style.display === 'block') {
+                    hideDropdown();
+                    return;
+                }
+                const matched = filterProducts(productNameInput.value);
+                renderProductDropdown(matched);
+                showDropdown();
+                productNameInput.focus();
+            });
+        }
+
+        productPickerDropdown.addEventListener('mousedown', function (event) {
+            const option = event.target.closest('.autocomplete-option');
+            if (!option) return;
+
+            const selectedId = Number(option.dataset.id);
+            const selectedItem = productItems.find(item => Number(item.id) === selectedId);
+            if (!selectedItem) return;
+
+            applyProductSelection(selectedItem);
+            hideDropdown();
+        });
+
+        document.addEventListener('click', function (event) {
+            const inside = event.target.closest('.product-autocomplete');
+            if (!inside) {
+                hideDropdown();
+            }
+        });
+
+        if (selectedProductPhotoImg && productPhotoModalImg) {
+            selectedProductPhotoImg.addEventListener('click', function () {
+                if (!selectedProductPhotoImg.src) return;
+                productPhotoModalImg.src = selectedProductPhotoImg.src;
+                $('#productPhotoModal').modal('show');
+            });
+        }
+    });
+
+    function clearProductDetails() {
+        renderProductDropdown([]);
+        hideDropdown();
+        productNameInput.value = '';
+        clearAutoProductFields();
         // $('#pack_size').val('');
         // $('#quantity').val('');
         // $('#composition_text').val('');
