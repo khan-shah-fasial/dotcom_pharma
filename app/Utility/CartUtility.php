@@ -49,6 +49,54 @@ class CartUtility
         return $price;
     }
 
+    public static function get_price_from_batch($product, $batch, $quantity)
+    {
+        if (!$batch) {
+            return 0;
+        }
+        
+        // Calculate price from batch MRP using role_price
+        $mrpPrice = $batch->mrp_price ?? 0;
+        $rolePrice = $batch->role_price ?? null;
+        
+        // Load stock relationship if not loaded
+        if (!$batch->relationLoaded('stock')) {
+            $batch->load('stock');
+        }
+        
+        $product_stock = $batch->stock;
+        
+        // Use role_price from batch if available, otherwise fallback to product stock role_price
+        if ($rolePrice) {
+            $rolePriceArray = is_string($rolePrice) ? json_decode($rolePrice, true) : $rolePrice;
+            if (is_array($rolePriceArray)) {
+                $price = getPriceByRole($rolePriceArray, $mrpPrice);
+            } else {
+                // Invalid role_price format, fallback
+                $price = $product_stock ? getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price ?? $mrpPrice) : $mrpPrice;
+            }
+        } else {
+            // Fallback to product stock price calculation
+            $price = $product_stock ? getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price ?? $mrpPrice) : $mrpPrice;
+        }
+        
+        if ($product->auction_product == 1) {
+            $price = $product->bids->max('amount');
+        }
+
+        if ($product->wholesale_product && $product_stock) {
+            $wholesalePrice = $product_stock->wholesalePrices->where('min_qty', '<=', $quantity)
+                ->where('max_qty', '>=', $quantity)
+                ->first();
+            if ($wholesalePrice) {
+                $price = $wholesalePrice->price;
+            }
+        }
+
+        $price = self::discount_calculation($product, $price);
+        return $price;
+    }
+
     public static function discount_calculation($product, $price)
     {
         $discount_applicable = false;
@@ -85,7 +133,7 @@ class CartUtility
         return $tax;
     }
 
-    public static function save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice = null, $salePrice = null)
+    public static function save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice = null, $salePrice = null, $batchId = null)
     {
         $cart->quantity = $quantity;
         $cart->product_id = $product->id;
@@ -94,6 +142,7 @@ class CartUtility
         $cart->mrp_price = $mrpPrice;
         $cart->sale_price = $salePrice ?? $price;
         $cart->tax = $tax;
+        $cart->batche_id = $batchId;
         $cart->product_referral_code = null;
 
         if (Cookie::has('referred_product_id') && Cookie::get('referred_product_id') == $product->id) {

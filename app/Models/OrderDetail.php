@@ -33,4 +33,9 @@ class OrderDetail extends Model
     {
         return $this->hasMany(AffiliateLog::class);
     }
+
+    public function batch()
+    {
+        return $this->belongsTo(ProductBatche::class, 'batche_id');
+    }
 }

@@ -830,23 +830,47 @@
         }
 
         $('#option-choice-form input').on('change', function(){
+            // Don't trigger if batche_id field changed (batch selection handled separately)
+            if ($(this).attr('name') === 'batche_id') {
+                return;
+            }
             getVariantPrice();
+        });
+        
+        // Handle quantity changes separately
+        $('#option-choice-form input[name="quantity"]').on('change input', function(){
+            if (!isUpdatingBatch) {
+                getVariantPrice();
+            }
         });
 
         let lastVariantKey = null; // remember last variant to decide when to reset qty
         let variantPriceTimer = null;
         const variantPriceDebounceMs = 250;
+        let isUpdatingBatch = false; // flag to prevent recursive batch updates
+        let ajaxInProgress = false; // flag to prevent multiple simultaneous AJAX calls
 
         function getVariantPrice(immediate = false){
             const invoke = function(){
+                // Prevent multiple simultaneous AJAX calls
+                if (ajaxInProgress) {
+                    console.log('AJAX already in progress, skipping...');
+                    return;
+                }
+                
                 const requestedQty = parseInt($('#product_quantity').val(), 10) || 0;
 
                 if($('#option-choice-form input[name=quantity]').val() > 0 && checkAddToCartValidity()){
+                    // Set flag to indicate AJAX is in progress
+                    ajaxInProgress = true;
+                    console.log('Starting variant price AJAX call...');
+                    
                     $.ajax({
                         type:"POST",
                         url: '{{ route('products.variant_price') }}',
                         data: $('#option-choice-form').serializeArray(),
                         success: function(data){
+                            console.log('Variant price AJAX success');
 
                         const $roleTableBody = $('#rolePriceTable tbody');
                         const $coaDiv = $('#coaDiv'); 
@@ -905,6 +929,13 @@
                                  .val(currentQty);
                         // Re-enable +/- before recalculating state
                         $qtyInput.siblings('[data-type="minus"], [data-type="plus"]').prop('disabled', false);
+                        
+                        // Reset batch selection when variant changes
+                        if (isNewVariant) {
+                            $('#selected_batch_id').val('');
+                            isUpdatingBatch = false; // Reset flag on variant change
+                        }
+                        
                         lastVariantKey = data?.variation;
                         $('#weight-volume-product-details').html(data?.weight_volume ?? '-');
 
@@ -993,6 +1024,93 @@
                             $coaDiv.empty(); // Hide if no COA
                         }
 
+                        // Handle batches display - only rebuild if not updating batch
+                        if (!isUpdatingBatch) {
+                            const batches = data?.batches || [];
+                            const $batchSection = $('#batch-selection-section');
+                            const $batchesContainer = $('#batches-container');
+                            
+                            if (batches.length > 0) {
+                                $batchSection.show();
+                                
+                                // Only rebuild HTML if batches container is empty or variant changed
+                                const currentVariant = $('#batches-container').data('variant');
+                                if (currentVariant !== data.variation || $batchesContainer.children().length === 0) {
+                                    $batchesContainer.empty();
+                                    
+                                    let batchesHtml = '<div class="row">';
+                                    batches.forEach(function(batch, index) {
+                                        const isSelected = (data.selected_batch_id && batch.id == data.selected_batch_id) || (index === 0 && !data.selected_batch_id);
+                                        const batchClass = isSelected ? 'batch-item selected' : 'batch-item';
+                                        
+                                        batchesHtml += `
+                                            <div class="col-md-6 col-12 mb-2">
+                                                <div class="batch-card ${batchClass}" data-batch-id="${batch.id}">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div class="flex-grow-1">
+                                                            <div class="fw-600 fs-14 mb-1">${(batch.batch && batch.batch.trim() !== '') ? batch.batch : ('Batch #' + batch.id)}</div>
+                                                            <div class="fs-12 text-secondary mb-1">
+                                                                <span class="mr-3">MRP: ${batch.mrp_price_formatted || '-'}</span>
+                                                                <span>Qty: ${batch.qty || 0}</span>
+                                                            </div>
+                                                            ${batch.expiry_date ? '<div class="fs-12 text-secondary">Expiry: ' + batch.expiry_date + '</div>' : ''}
+                                                        </div>
+                                                        ${batch.coa_url ? '<a href="' + batch.coa_url + '" target="_blank" class="btn btn-xs btn-outline-primary ml-2" onclick="event.stopPropagation()">COA</a>' : ''}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    });
+                                    batchesHtml += '</div>';
+                                    
+                                    $batchesContainer.html(batchesHtml).data('variant', data.variation);
+                                    
+                                    // Store batch data in a map for easy access
+                                    const batchesMap = {};
+                                    batches.forEach(function(batch) {
+                                        batchesMap[batch.id] = batch;
+                                    });
+                                    $batchesContainer.data('batches-map', batchesMap);
+                                    
+                                    // Attach click handlers using jQuery instead of inline onclick
+                                    $batchesContainer.find('.batch-card').off('click').on('click', function(e) {
+                                        if ($(e.target).closest('a').length > 0) return; // Don't trigger if clicking COA link
+                                        const batchId = $(this).data('batch-id');
+                                        const batchesMap = $batchesContainer.data('batches-map') || {};
+                                        const batchData = batchesMap[batchId];
+                                        if (batchData) {
+                                            selectBatch(batchId, batchData);
+                                        }
+                                    });
+                                } else {
+                                    // Just update selected state without rebuilding
+                                    $batchesContainer.find('.batch-card').removeClass('selected');
+                                    if (data.selected_batch_id) {
+                                        $batchesContainer.find(`.batch-card[data-batch-id="${data.selected_batch_id}"]`).addClass('selected');
+                                    } else if (batches.length > 0) {
+                                        $batchesContainer.find('.batch-card').first().addClass('selected');
+                                    }
+                                    
+                                    // Update batches map if needed
+                                    const batchesMap = {};
+                                    batches.forEach(function(batch) {
+                                        batchesMap[batch.id] = batch;
+                                    });
+                                    $batchesContainer.data('batches-map', batchesMap);
+                                }
+                                
+                                // Set first batch as selected if none selected
+                                if (!data.selected_batch_id && batches.length > 0) {
+                                    $('#selected_batch_id').val(batches[0].id);
+                                } else if (data.selected_batch_id) {
+                                    $('#selected_batch_id').val(data.selected_batch_id);
+                                }
+                            } else {
+                                $batchSection.hide();
+                                $batchesContainer.empty();
+                                $('#selected_batch_id').val('');
+                            }
+                        }
 
                         $('.input-number').prop('max', data.max_limit);
                         if(parseInt(data.in_stock) == 0 && data.digital  == 0){
@@ -1007,18 +1125,54 @@
                         }
 
                         AIZ.extra.plusMinus();
+                        
+                        // Reset flags after AJAX completes
+                        ajaxInProgress = false;
+                        
+                        // Reset batch update flag after AJAX completes (if it was set by batch selection)
+                        if (isUpdatingBatch) {
+                            setTimeout(function() {
+                                isUpdatingBatch = false;
+                                console.log('Batch update flag reset');
+                            }, 100);
+                        }
+                        
+                        // Reset timer
+                        variantPriceTimer = null;
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Variant price AJAX error:', error);
+                        // Reset flags on error
+                        ajaxInProgress = false;
+                        isUpdatingBatch = false;
+                        variantPriceTimer = null;
+                    },
+                    complete: function() {
+                        // Ensure flag is reset even if there's an error
+                        ajaxInProgress = false;
                     }
                 });
+            } else {
+                // Reset timer if validation fails
+                variantPriceTimer = null;
+                ajaxInProgress = false;
+            }
             };
 
             if (immediate) {
-                clearTimeout(variantPriceTimer);
+                // Clear any pending timer
+                if (variantPriceTimer && variantPriceTimer !== 'ajax_in_progress') {
+                    clearTimeout(variantPriceTimer);
+                }
+                variantPriceTimer = null;
                 invoke();
                 return;
             }
-            }
 
-            clearTimeout(variantPriceTimer);
+            // Clear any existing timer
+            if (variantPriceTimer && variantPriceTimer !== 'ajax_in_progress') {
+                clearTimeout(variantPriceTimer);
+            }
             variantPriceTimer = setTimeout(invoke, variantPriceDebounceMs);
         }
 
@@ -1037,6 +1191,75 @@
             }
 
             return false;
+        }
+
+        function selectBatch(batchId, batchData) {
+            // Prevent recursive calls
+            if (isUpdatingBatch) {
+                console.log('Batch update already in progress, skipping...');
+                return;
+            }
+            
+            // Check if already selected
+            const currentBatchId = $('#selected_batch_id').val();
+            if (currentBatchId == batchId) {
+                console.log('Batch already selected, skipping...');
+                return; // Already selected, no need to update
+            }
+            
+            console.log('Selecting batch:', batchId);
+            
+            // Set flag IMMEDIATELY to prevent any recursive calls
+            isUpdatingBatch = true;
+            
+            // Update selected batch ID first (use attr to avoid triggering change event)
+            $('#selected_batch_id').attr('value', batchId);
+            
+            // Update UI immediately
+            $('.batch-card').removeClass('selected');
+            $(`.batch-card[data-batch-id="${batchId}"]`).addClass('selected');
+            
+            // Update batch-specific UI elements only (MRP, expiry, COA)
+            if (batchData) {
+                // Update MRP immediately
+                $('#mrp-unit').html(batchData.mrp_price_formatted || '-');
+                
+                // Update expiry date immediately
+                $('#product-expiry-date').html(batchData.expiry_date || '-');
+                
+                // Update COA immediately
+                const $coaDiv = $('#coaDiv');
+                if (batchData.coa_url) {
+                    $('#coaParentDiv').show();
+                    $coaDiv.html(`
+                        <div class="mt-4 text-center">
+                            <a href="${batchData.coa_url}" target="_blank"
+                                class="inline-flex items-center px-4 py-2 bg-blue-600 text-black text-sm font-semibold rounded hover:bg-blue-700 transition">
+                                View COA
+                            </a>
+                        </div>
+                    `);
+                } else {
+                    $('#coaParentDiv').hide();
+                    $coaDiv.empty();
+                }
+                
+                // Recalculate price with selected batch - call immediately, no debounce
+                if (checkAddToCartValidity()) {
+                    // Clear any pending variant price calls
+                    clearTimeout(variantPriceTimer);
+                    variantPriceTimer = null;
+                    
+                    // Call getVariantPrice immediately with immediate flag
+                    // The flag isUpdatingBatch will prevent batch rebuild in the success handler
+                    getVariantPrice(true);
+                } else {
+                    // If form is not valid, reset flag
+                    isUpdatingBatch = false;
+                }
+            } else {
+                isUpdatingBatch = false;
+            }
         }
 
         function addToCart(){

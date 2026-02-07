@@ -115,6 +115,31 @@
     .brand-related-products-carousel button.slick-next.slick-arrow {
         display: block !important;
     }
+    
+    /* Batch Selection Styles */
+    .batch-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #fff;
+        margin-bottom: 10px;
+    }
+    
+    .batch-card:hover {
+        border-color: #123498;
+        box-shadow: 0 2px 8px rgba(18, 52, 152, 0.1);
+    }
+    
+    .batch-card.selected {
+        border-color: #123498;
+        background: #f0f4ff;
+    }
+    
+    .batches-list {
+        margin-top: 10px;
+    }
 </style>
 
 <div class="text-left product_disc_text">
@@ -415,7 +440,13 @@
                                                 $detailedProduct->stocks->where('is_hidden', 0)
                                                 as $key => $stock
                                             ) {
-                                                $qty += $stock->qty;
+                                                // Calculate quantity from batches if available, otherwise use stock qty
+                                                $batches = $stock->batches ?? collect();
+                                                if ($batches->isNotEmpty()) {
+                                                    $qty += $batches->sum('qty');
+                                                } else {
+                                                    $qty += $stock->qty;
+                                                }
                                             }
                                         @endphp
                                         <div class="avialable-amount opacity-60 d-none">
@@ -448,12 +479,19 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Batch Selection Section -->
+                        <div class="col-12 pl-0 pb-0 mt-md-3 mt-2" id="batch-selection-section" style="display: none;">
+                            <div class="fw-500 fs-14 text-dark mb-2">{{ translate('Select Batch') }}:</div>
+                            <div id="batches-container" class="batches-list"></div>
+                        </div>
                     @else
                         <!-- Quantity -->
                         <input type="hidden" name="quantity" value="1">
                     @endif
 
-
+                    <!-- Hidden input for selected batch -->
+                    <input type="hidden" name="batche_id" id="selected_batch_id" value="">
 
                 </form>
             </div>

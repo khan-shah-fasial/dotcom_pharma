@@ -16,7 +16,9 @@
                 $product = get_single_product($cartItem['product_id']);
                 $subtotal_for_min_order_amount += cart_product_price($cartItem, $cartItem->product, false, false) * $cartItem['quantity'];
                 $subtotal += cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
-                $tax += cart_product_tax($cartItem, $product, false) * $cartItem['quantity'];
+                // Use stored tax value from cart table, fallback to recalculation if not stored
+                $itemTax = ($cartItem->tax ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity'];
+                $tax += $itemTax;
                 $product_shipping_cost = $cartItem['shipping_cost'];
                 $shipping += $product_shipping_cost;
                 if ((get_setting('coupon_system') == 1) && ($cartItem->coupon_applied == 1)) {

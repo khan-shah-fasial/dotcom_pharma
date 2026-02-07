@@ -37,6 +37,7 @@ use Carbon\Carbon;
 use ZipArchive;
 use Illuminate\Support\Facades\Session;
 use App\Models\ProductCategory;
+use App\Models\ProductBatche;
 
 class HomeController extends Controller
 {
@@ -710,7 +711,7 @@ class HomeController extends Controller
             'reviews',
             'brand',
             'stocks' => function ($q) {
-                $q->where('is_hidden', 0);
+                $q->where('is_hidden', 0)->with('batches');
             },
             'user',
             'user.shop',
@@ -1000,33 +1001,57 @@ class HomeController extends Controller
                 'discount_price' => number_format(0, 2),
                 'coa_url' => null,
                 'expiry_date' => null,
+                'batches' => [],
             );
         }
 
-        //$price = $product_stock->price;
-        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
-        $base = $product_stock->mrp_price ?? $product->mrp_price; //price by role
-
-        // $role_base_price = $product_stock->role_price ?? $product->role_price;
-        // $role_base_price = json_decode($role_base_price, true); // decode JSON to array
+        // Load batches for this stock
+        $batches = $product_stock->batches()->orderBy('id')->get();
         
+        // Get selected batch ID from request (if provided)
+        $selectedBatchId = $request->input('batche_id', null);
+        $selectedBatch = null;
+        
+        if ($selectedBatchId && $batches->isNotEmpty()) {
+            $selectedBatch = $batches->where('id', $selectedBatchId)->first();
+        }
+        
+        // If no batch selected or batch not found, use first batch or fallback to stock data
+        if (!$selectedBatch && $batches->isNotEmpty()) {
+            $selectedBatch = $batches->first();
+        }
+
+        // Use batch data if available, otherwise fallback to stock data
+        if ($selectedBatch) {
+            $mrpPrice = $selectedBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
+            $rolePrice = $selectedBatch->role_price ?? $product_stock->role_price ?? $product->role_price;
+            $coa = $selectedBatch->coa ?? null;
+            $expiryDate = $selectedBatch->product_exp_date ?? null;
+            $batchQty = $selectedBatch->qty ?? 0;
+        } else {
+            // Fallback to stock data if no batches exist
+            $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
+            $rolePrice = $product_stock->role_price ?? $product->role_price;
+            $coa = $product_stock->coa ?? null;
+            $expiryDate = $product_stock->product_exp_date ?? null;
+            $batchQty = $product_stock->qty ?? 0;
+        }
+
+        // Calculate price from batch MRP or stock price
+        $price = getPriceByRole($rolePrice, $product_stock->price);
+        $base = $mrpPrice;
 
         $sku = $product_stock->sku;
-        // $per_piece_price = $product_stock->per_piece_price;
 
         $length = $product_stock->length ?? 0;
         $breadth = $product_stock->width ?? 0;
         $height = $product_stock->height ?? 0;
-
-        // $coa = $product_stock->coa ?? $product->coa;
-        $coa = $product_stock->coa ?? null;
 
         if (!empty($coa)) {
             $coa_url = uploaded_asset($coa);
         } else {
             $coa_url = null;
         }
-
 
         $dimension = 
             ($length ?? '-') . ' x ' . 
@@ -1036,7 +1061,6 @@ class HomeController extends Controller
         $weight = $product_stock->weight ?? $product->product_weight_vol;
         $count = $product_stock->count;
         $stock_min_qty = $product_stock->min_qty;
-        $expiryDate = $product_stock->product_exp_date ?? null;
         $formattedExpiry = $expiryDate ? Carbon::parse($expiryDate)->format('d M Y') : null;
         $qty_per_piece = $product_stock->qty_per_piece ?? null;
         $qty_per_buffer_box = $product_stock->qty_per_buffer_box ?? null;
@@ -1048,7 +1072,6 @@ class HomeController extends Controller
         $buffer_dimension = ($product_stock->buffer_length ?? '-') . ' x ' . ($product_stock->buffer_width ?? '-') . ' x ' . ($product_stock->buffer_height ?? '-');
         $case_dimension = ($product_stock->case_length ?? '-') . ' x ' . ($product_stock->case_width ?? '-') . ' x ' . ($product_stock->case_height ?? '-');
 
-
         if ($product->wholesale_product) {
             $wholesalePrice = $product_stock->wholesalePrices->where('min_qty', '<=', $request->quantity)->where('max_qty', '>=', $request->quantity)->first();
             if ($wholesalePrice) {
@@ -1056,8 +1079,9 @@ class HomeController extends Controller
             }
         }
 
-        $quantity = $product_stock->qty;
-        $max_limit = $product_stock->qty;
+        // Calculate total quantity from all batches
+        $quantity = $batches->isNotEmpty() ? $batches->sum('qty') : ($product_stock->qty ?? 0);
+        $max_limit = $quantity;
 
         if ($quantity >= 1 && $stock_min_qty <= $quantity) {
             $in_stock = 1;
@@ -1118,6 +1142,27 @@ class HomeController extends Controller
         $requestedQty = $requestedQty > 0 ? $requestedQty : 1;
         $appliedQty   = max($requestedQty, $stock_min_qty);
 
+        // Prepare batches data for frontend
+        $batchesData = [];
+        foreach ($batches as $batch) {
+            $batchCoaUrl = $batch->coa ? uploaded_asset($batch->coa) : null;
+            $batchExpiry = $batch->product_exp_date ? Carbon::parse($batch->product_exp_date)->format('d M Y') : null;
+            $batchRolePrice = $batch->role_price ?? [];
+            
+            $batchesData[] = [
+                'id' => $batch->id,
+                'batch' => $batch->batch,
+                'mrp_price' => $batch->mrp_price,
+                'mrp_price_formatted' => single_price($batch->mrp_price),
+                'qty' => $batch->qty,
+                'coa_url' => $batchCoaUrl,
+                'expiry_date' => $batchExpiry,
+                'expiry_date_raw' => $batch->product_exp_date,
+                'role_price' => $batchRolePrice,
+                'role_price_formatted' => $batchRolePrice ? json_encode($batchRolePrice) : null,
+            ];
+        }
+
         return array(
             'price' => single_price($price * $appliedQty),
             'quantity' => $quantity,
@@ -1131,7 +1176,6 @@ class HomeController extends Controller
             'per_piece_price' => single_price(round($price, 2)),
             'without_tax_price' => single_price(($price - $tax) * $appliedQty),
             'tax' => single_price($tax * $appliedQty),
-            // 'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),
             'original_price' => single_price($base),
             'dimension' => $dimension,
             'weight_volume' => $weight,
@@ -1145,9 +1189,10 @@ class HomeController extends Controller
             'case_dimension' => $case_dimension,
             'discount_percentage' => round($dis_percentage, 2),
             'discount_price' => number_format($discount_temp, 2),
-            // 'role_base_price' => $role_base_price,
             'coa_url' => $coa_url,
             'expiry_date' => $formattedExpiry,
+            'batches' => $batchesData,
+            'selected_batch_id' => $selectedBatch ? $selectedBatch->id : null,
         );
     }
 

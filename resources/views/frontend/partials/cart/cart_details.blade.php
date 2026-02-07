@@ -117,7 +117,7 @@
                                                 <span class="fs-12 text-secondary">{{ translate('Price')}}</span>
                                                 <span class="fw-700 fs-14 mb-2">{{ cart_product_price($cartItem, $product, true, false) }}</span>
                                                 <span>
-                                                    <span class="opacity-90 fs-12">{{ translate('Tax')}}: {{ cart_product_tax($cartItem, $product) }}</span>
+                                                    <span class="opacity-90 fs-12">{{ translate('Tax')}}: {{ single_price(($cartItem->tax ?? 0) * $cartItem->quantity) }}</span>
                                                 </span>
                                             </div>
                                             <!-- Quantity & Total -->
@@ -151,7 +151,7 @@
                                                 </div>
                                                 <!-- Total -->
                                                 <div class="mr-2 mt-2 mt-xl-0">
-                                                    <span class="fw-700 fs-14 text-primary">{{ single_price(cart_product_price($cartItem, $product, false) * $cartItem->quantity) }}</span>
+                                                    <span class="fw-700 fs-14 text-primary">{{ single_price((cart_product_price($cartItem, $product, false, false) + ($cartItem->tax ?? 0)) * $cartItem->quantity) }}</span>
                                                 </div>
                                             </div>
                                             <!-- Remove From Cart -->
@@ -227,7 +227,7 @@
                                                     <span class="fs-12 text-secondary">{{ translate('Price')}}</span>
                                                     <span class="fw-700 fs-14 mb-2">{{ cart_product_price($cartItem, $product, true, false) }}</span>
                                                     <span>
-                                                        <span class="opacity-90 fs-12">{{ translate('Tax')}}: {{ cart_product_tax($cartItem, $product) }}</span>
+                                                        <span class="opacity-90 fs-12">{{ translate('Tax')}}: {{ single_price(($cartItem->tax ?? 0) * $cartItem->quantity) }}</span>
                                                     </span>
                                                 </div>
                                                 <!-- Quantity & Total -->
@@ -261,7 +261,7 @@
                                                     </div>
                                                     <!-- Total -->
                                                     <div class="mr-2 mt-2 mt-xl-0">
-                                                        <span class="fw-700 fs-14 text-primary">{{ single_price(cart_product_price($cartItem, $product, false) * $cartItem->quantity) }}</span>
+                                                        <span class="fw-700 fs-14 text-primary">{{ single_price((cart_product_price($cartItem, $product, false, false) + ($cartItem->tax ?? 0)) * $cartItem->quantity) }}</span>
                                                     </div>
                                                 </div>
                                                 <!-- Remove From Cart -->

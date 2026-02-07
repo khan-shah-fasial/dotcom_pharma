@@ -874,7 +874,29 @@ if (!function_exists('cart_product_price')) {
             }
             $price = 0;
             $product_stock = $product->stocks->where('variant', $str)->first();
-            if ($product_stock) {
+            
+            // Use batch data if batche_id exists in cart
+            $batchId = $cart_product['batche_id'] ?? null;
+            if ($batchId && $product_stock) {
+                $batch = \App\Models\ProductBatche::find($batchId);
+                if ($batch && $batch->product_stock_id == $product_stock->id) {
+                    // Calculate price from batch MRP and role_price
+                    $mrpPrice = $batch->mrp_price ?? 0;
+                    $rolePrice = $batch->role_price ?? null;
+                    
+                    if ($rolePrice) {
+                        $rolePriceArray = is_string($rolePrice) ? json_decode($rolePrice, true) : $rolePrice;
+                        $price = getPriceByRole($rolePriceArray, $mrpPrice);
+                    } else {
+                        // Fallback to stock price
+                        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price);
+                    }
+                } else {
+                    // Batch not found or doesn't match stock, use stock price
+                    $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price);
+                }
+            } elseif ($product_stock) {
+                // No batch, use stock price
                 //$price = $product_stock->price;
                 $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
             }
@@ -938,8 +960,26 @@ if (!function_exists('cart_product_tax')) {
             $str = $cart_product['variation'];
         }
         $product_stock = $product->stocks->where('variant', $str)->first();
-        //$price = $product_stock->price;
-        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+        $price = 0;
+
+        // Use batch price when batche_id present (same logic as cart_product_price)
+        $batchId = $cart_product['batche_id'] ?? null;
+        if ($batchId && $product_stock) {
+            $batch = \App\Models\ProductBatche::find($batchId);
+            if ($batch && $batch->product_stock_id == $product_stock->id) {
+                $mrpPrice = $batch->mrp_price ?? 0;
+                $rolePrice = $batch->role_price ?? null;
+                if ($rolePrice) {
+                    $rolePriceArray = is_string($rolePrice) ? json_decode($rolePrice, true) : $rolePrice;
+                    $price = getPriceByRole($rolePriceArray, $mrpPrice);
+                } else {
+                    $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price);
+                }
+            }
+        }
+        if ($price == 0 && $product_stock) {
+            $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price);
+        }
 
         //discount calculation
         $discount_applicable = false;

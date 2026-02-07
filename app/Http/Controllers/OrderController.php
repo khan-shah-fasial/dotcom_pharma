@@ -14,6 +14,7 @@ use App\Models\Coupon;
 use App\Models\User;
 use App\Models\CombinedOrder;
 use App\Models\SmsTemplate;
+use App\Models\ProductBatche;
 use Auth;
 use Mail;
 use App\Mail\InvoiceEmailManager;
@@ -237,19 +238,55 @@ class OrderController extends Controller
                 $unitSalePrice = $cartItem['sale_price'] ?? cart_product_price($cartItem, $product, false, false);
 
                 $subtotal += $unitSalePrice * $cartItem['quantity'];
-                $tax +=  cart_product_tax($cartItem, $product, false) * $cartItem['quantity'];
+                // Use stored tax from cart (calculated from batch/stock price at add-to-cart)
+                $itemTax = ($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity'];
+                $tax += $itemTax;
                 $coupon_discount += $cartItem['discount'];
 
                 $product_variation = $cartItem['variation'];
 
                 $product_stock = $product->stocks->where('variant', $product_variation)->first();
-                if ($product->digital != 1 && $cartItem['quantity'] > $product_stock->qty) {
-                    flash(translate('The requested quantity is not available for ') . $product->getTranslation('name'))->warning();
-                    $order->delete();
-                    return redirect()->route('cart')->send();
-                } elseif ($product->digital != 1) {
-                    $product_stock->qty -= $cartItem['quantity'];
-                    $product_stock->save();
+                
+                // Get batche_id from cart if available
+                $batchId = $cartItem['batche_id'] ?? null;
+                $selectedBatch = null;
+                
+                // Stock validation and deduction
+                if ($product->digital != 1 && $product_stock) {
+                    if ($batchId) {
+                        // Validate batch belongs to this stock and deduct from batch
+                        $selectedBatch = $product_stock->batches()->where('id', $batchId)->first();
+                        if (!$selectedBatch) {
+                            flash(translate('Invalid batch selected for ') . $product->getTranslation('name'))->warning();
+                            $order->delete();
+                            return redirect()->route('cart')->send();
+                        }
+                        
+                        if ($cartItem['quantity'] > $selectedBatch->qty) {
+                            flash(translate('The requested quantity is not available for ') . $product->getTranslation('name'))->warning();
+                            $order->delete();
+                            return redirect()->route('cart')->send();
+                        }
+                        
+                        $selectedBatch->qty -= $cartItem['quantity'];
+                        $selectedBatch->save();
+                        
+                        // Update parent stock quantity (aggregate from batches)
+                        $product_stock->load('batches');
+                        $batches = $product_stock->batches;
+                        $totalBatchQty = $batches->sum('qty');
+                        $product_stock->qty = $totalBatchQty;
+                        $product_stock->save();
+                    } else {
+                        // Fallback to stock validation if no batch
+                        if ($cartItem['quantity'] > $product_stock->qty) {
+                            flash(translate('The requested quantity is not available for ') . $product->getTranslation('name'))->warning();
+                            $order->delete();
+                            return redirect()->route('cart')->send();
+                        }
+                        $product_stock->qty -= $cartItem['quantity'];
+                        $product_stock->save();
+                    }
                 }
 
                 $order_detail = new OrderDetail;
@@ -257,10 +294,12 @@ class OrderController extends Controller
                 $order_detail->seller_id = $product->user_id;
                 $order_detail->product_id = $product->id;
                 $order_detail->variation = $product_variation;
+                $order_detail->batche_id = $batchId;
                 $order_detail->price = $unitSalePrice * $cartItem['quantity'];
                 $order_detail->sale_price = $unitSalePrice;
-                $order_detail->mrp_price = $cartItem['mrp_price'] ?? optional($product_stock)->mrp_price ?? $product->mrp_price;
-                $order_detail->tax = cart_product_tax($cartItem, $product, false) * $cartItem['quantity'];
+                $order_detail->mrp_price = $cartItem['mrp_price'] ?? ($selectedBatch ? $selectedBatch->mrp_price : (optional($product_stock)->mrp_price ?? $product->mrp_price));
+                // Use stored tax from cart so order_detail matches cart (batch-aware)
+                $order_detail->tax = ($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity'];
                 $order_detail->shipping_type = $cartItem['shipping_type'];
                 $order_detail->product_referral_code = $cartItem['product_referral_code'];
                 $order_detail->shipping_cost = $cartItem['shipping_cost'];
