@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ProductBatche extends Model
+class ProductBatch extends Model
 {
     /**
      * The table associated with the model.
@@ -38,4 +38,3 @@ class ProductBatche extends Model
         return $this->belongsTo(ProductStock::class, 'product_stock_id');
     }
 }
-

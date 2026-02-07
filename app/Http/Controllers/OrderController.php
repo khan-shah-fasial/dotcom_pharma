@@ -14,7 +14,7 @@ use App\Models\Coupon;
 use App\Models\User;
 use App\Models\CombinedOrder;
 use App\Models\SmsTemplate;
-use App\Models\ProductBatche;
+use App\Models\ProductBatch;
 use Auth;
 use Mail;
 use App\Mail\InvoiceEmailManager;
@@ -247,8 +247,8 @@ class OrderController extends Controller
 
                 $product_stock = $product->stocks->where('variant', $product_variation)->first();
                 
-                // Get batche_id from cart if available
-                $batchId = $cartItem['batche_id'] ?? null;
+                // Get batch_id from cart if available
+                $batchId = $cartItem['batch_id'] ?? null;
                 $selectedBatch = null;
                 
                 // Stock validation and deduction
@@ -294,7 +294,7 @@ class OrderController extends Controller
                 $order_detail->seller_id = $product->user_id;
                 $order_detail->product_id = $product->id;
                 $order_detail->variation = $product_variation;
-                $order_detail->batche_id = $batchId;
+                $order_detail->batch_id = $batchId;
                 $order_detail->price = $unitSalePrice * $cartItem['quantity'];
                 $order_detail->sale_price = $unitSalePrice;
                 $order_detail->mrp_price = $cartItem['mrp_price'] ?? ($selectedBatch ? $selectedBatch->mrp_price : (optional($product_stock)->mrp_price ?? $product->mrp_price));

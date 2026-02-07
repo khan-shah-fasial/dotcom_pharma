@@ -189,15 +189,15 @@
                                             <h6 class="text-muted mb-0">{{ translate('Batches') }}</h6>
                                             <button type="button"
                                                 class="btn btn-sm btn-soft-primary"
-                                                onclick="addBatcheRow('{{ $variantKey }}')">
-                                                <i class="las la-plus"></i> {{ translate('Add Batche') }}
+                                                onclick="addBatchRow('{{ $variantKey }}')">
+                                                <i class="las la-plus"></i> {{ translate('Add Batch') }}
                                             </button>
                                         </div>
                                         <div class="table-responsive">
                                             <table class="table batch-table mb-0">
                                                 <thead>
                                                     <tr>
-                                                        <th style="width: 15%;">{{ translate('Batche Code') }}</th>
+                                                        <th style="width: 15%;">{{ translate('Batch Code') }}</th>
                                                         <th style="width: 12%;">{{ translate('MRP Price') }}</th>
                                                         <th style="width: 12%;">{{ translate('Stock Qty') }}</th>
                                                         <th style="width: 15%;">{{ translate('Expiry Date') }}</th>
@@ -217,7 +217,7 @@
                                                                         name="batches[{{ $variantKey }}][{{ $batchIndex }}][batch]"
                                                                         class="form-control form-control-sm"
                                                                         value="{{ $batch->batch }}"
-                                                                        placeholder="{{ translate('Batche code') }}"
+                                                                        placeholder="{{ translate('Batch code') }}"
                                                                         required>
                                                                 </td>
                                                                 <td>
@@ -261,7 +261,7 @@
                                                                 <td class="text-center">
                                                                     <button type="button"
                                                                         class="btn btn-xs btn-soft-danger"
-                                                                        onclick="removeBatcheRow(this)"
+                                                                        onclick="removeBatchRow(this)"
                                                                         title="{{ translate('Remove') }}">
                                                                         <i class="las la-trash"></i>
                                                                     </button>
@@ -274,7 +274,7 @@
                                                                 <input type="text"
                                                                     name="batches[{{ $variantKey }}][0][batch]"
                                                                     class="form-control form-control-sm"
-                                                                    placeholder="{{ translate('Batche code') }}"
+                                                                    placeholder="{{ translate('Batch code') }}"
                                                                     required>
                                                             </td>
                                                             <td>
@@ -318,7 +318,7 @@
                                                             <td class="text-center">
                                                                 <button type="button"
                                                                     class="btn btn-xs btn-soft-danger"
-                                                                    onclick="removeBatcheRow(this)"
+                                                                    onclick="removeBatchRow(this)"
                                                                     title="{{ translate('Remove') }}">
                                                                     <i class="las la-trash"></i>
                                                                 </button>
@@ -565,7 +565,7 @@
 @endif
 
 <script type="text/javascript">
-    function addBatcheRow(variantKey) {
+    function addBatchRow(variantKey) {
         var $tbody = $('#batch-rows-' + variantKey);
         if ($tbody.length === 0) {
             return;
@@ -579,7 +579,7 @@
                     <input type="text"
                         name="batches[` + variantKey + `][` + index + `][batch]"
                         class="form-control form-control-sm"
-                        placeholder="{{ translate('Batche code') }}"
+                        placeholder="{{ translate('Batch code') }}"
                         required>
                 </td>
                 <td>
@@ -620,7 +620,7 @@
                 <td class="text-center">
                     <button type="button"
                         class="btn btn-xs btn-soft-danger"
-                        onclick="removeBatcheRow(this)"
+                        onclick="removeBatchRow(this)"
                         title="{{ translate('Remove') }}">
                         <i class="las la-trash"></i>
                     </button>
@@ -638,7 +638,7 @@
         }
     }
 
-    function removeBatcheRow(el) {
+    function removeBatchRow(el) {
         var $row = $(el).closest('tr.batch-row');
         var $tbody = $row.parent();
         

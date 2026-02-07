@@ -36,6 +36,6 @@ class OrderDetail extends Model
 
     public function batch()
     {
-        return $this->belongsTo(ProductBatche::class, 'batche_id');
+        return $this->belongsTo(ProductBatch::class, 'batch_id');
     }
 }

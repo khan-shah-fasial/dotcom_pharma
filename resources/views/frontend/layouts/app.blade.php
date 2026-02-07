@@ -830,8 +830,8 @@
         }
 
         $('#option-choice-form input').on('change', function(){
-            // Don't trigger if batche_id field changed (batch selection handled separately)
-            if ($(this).attr('name') === 'batche_id') {
+            // Don't trigger if batch_id field changed (batch selection handled separately)
+            if ($(this).attr('name') === 'batch_id') {
                 return;
             }
             getVariantPrice();

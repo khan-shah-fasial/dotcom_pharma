@@ -10,7 +10,7 @@ class Cart extends Model
 {
 
     protected $guarded = [];
-    protected $fillable = ['address_id','price','mrp_price','sale_price','tax','shipping_cost','discount','product_referral_code','coupon_code','coupon_applied','quantity','user_id','temp_user_id','owner_id','product_id','variation','batche_id'];
+    protected $fillable = ['address_id','price','mrp_price','sale_price','tax','shipping_cost','discount','product_referral_code','coupon_code','coupon_applied','quantity','user_id','temp_user_id','owner_id','product_id','variation','batch_id'];
 
     public function user()
     {
@@ -29,7 +29,7 @@ class Cart extends Model
 
     public function batch()
     {
-        return $this->belongsTo(ProductBatche::class, 'batche_id');
+        return $this->belongsTo(ProductBatch::class, 'batch_id');
     }
 
     public function scopeActive($query)

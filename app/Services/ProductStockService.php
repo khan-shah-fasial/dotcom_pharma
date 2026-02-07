@@ -5,7 +5,7 @@ namespace App\Services;
 use AizPackages\CombinationGenerate\Services\CombinationService;
 use App\Models\ProductStock;
 use App\Utility\ProductUtility;
-use App\Models\ProductBatche;
+use App\Models\ProductBatch;
 use App\Models\Product;
 
 class ProductStockService
@@ -350,7 +350,7 @@ class ProductStockService
 
             $mrpPrice = $row['mrp_price'] ?? null;
 
-            $batch = new ProductBatche();
+            $batch = new ProductBatch();
             $batch->product_id       = $product->id;
             $batch->product_stock_id = $stock->id;
             $batch->batch            = $row['batch'] ?? null;

@@ -142,7 +142,7 @@ class CartUtility
         $cart->mrp_price = $mrpPrice;
         $cart->sale_price = $salePrice ?? $price;
         $cart->tax = $tax;
-        $cart->batche_id = $batchId;
+        $cart->batch_id = $batchId;
         $cart->product_referral_code = null;
 
         if (Cookie::has('referred_product_id') && Cookie::get('referred_product_id') == $product->id) {

@@ -14,8 +14,8 @@ class AddBatchIdToOrderDetails extends Migration
     public function up()
     {
         Schema::table('order_details', function (Blueprint $table) {
-            if (!Schema::hasColumn('order_details', 'batche_id')) {
-                $table->unsignedInteger('batche_id')->nullable()->after('variation');
+            if (!Schema::hasColumn('order_details', 'batch_id')) {
+                $table->unsignedInteger('batch_id')->nullable()->after('variation');
             }
         });
     }
@@ -28,8 +28,8 @@ class AddBatchIdToOrderDetails extends Migration
     public function down()
     {
         Schema::table('order_details', function (Blueprint $table) {
-            if (Schema::hasColumn('order_details', 'batche_id')) {
-                $table->dropColumn('batche_id');
+            if (Schema::hasColumn('order_details', 'batch_id')) {
+                $table->dropColumn('batch_id');
             }
         });
     }

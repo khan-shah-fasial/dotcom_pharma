@@ -10,7 +10,7 @@ use App\Models\Category;
 use Carbon\Carbon;
 use App\Models\Cart;
 use App\Models\Country;
-use App\Models\ProductBatche;
+use App\Models\ProductBatch;
 use Auth;
 use App\Utility\CartUtility;
 use Session;
@@ -104,7 +104,7 @@ class CartController extends Controller
         }
 
         // Get batch ID from request if provided
-        $batchId = $request->input('batche_id', null);
+        $batchId = $request->input('batch_id', null);
         $selectedBatch = null;
         
         // Load batches relationship if product_stock exists
@@ -277,8 +277,8 @@ class CartController extends Controller
                 $quantity = $product_stock->qty;
                 $minQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
                 
-                // Get batch if batche_id exists
-                $batchId = $cartItem['batche_id'] ?? null;
+                // Get batch if batch_id exists
+                $batchId = $cartItem['batch_id'] ?? null;
                 $selectedBatch = null;
                 $price = 0;
                 

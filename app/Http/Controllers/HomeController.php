@@ -37,7 +37,7 @@ use Carbon\Carbon;
 use ZipArchive;
 use Illuminate\Support\Facades\Session;
 use App\Models\ProductCategory;
-use App\Models\ProductBatche;
+use App\Models\ProductBatch;
 
 class HomeController extends Controller
 {
@@ -1009,7 +1009,7 @@ class HomeController extends Controller
         $batches = $product_stock->batches()->orderBy('id')->get();
         
         // Get selected batch ID from request (if provided)
-        $selectedBatchId = $request->input('batche_id', null);
+        $selectedBatchId = $request->input('batch_id', null);
         $selectedBatch = null;
         
         if ($selectedBatchId && $batches->isNotEmpty()) {

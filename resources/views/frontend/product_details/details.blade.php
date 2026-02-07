@@ -491,7 +491,7 @@
                     @endif
 
                     <!-- Hidden input for selected batch -->
-                    <input type="hidden" name="batche_id" id="selected_batch_id" value="">
+                    <input type="hidden" name="batch_id" id="selected_batch_id" value="">
 
                 </form>
             </div>

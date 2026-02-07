@@ -14,8 +14,8 @@ class AddBatchIdToCarts extends Migration
     public function up()
     {
         Schema::table('carts', function (Blueprint $table) {
-            if (!Schema::hasColumn('carts', 'batche_id')) {
-                $table->unsignedInteger('batche_id')->nullable()->after('variation');
+            if (!Schema::hasColumn('carts', 'batch_id')) {
+                $table->unsignedInteger('batch_id')->nullable()->after('variation');
             }
         });
     }
@@ -28,8 +28,8 @@ class AddBatchIdToCarts extends Migration
     public function down()
     {
         Schema::table('carts', function (Blueprint $table) {
-            if (Schema::hasColumn('carts', 'batche_id')) {
-                $table->dropColumn('batche_id');
+            if (Schema::hasColumn('carts', 'batch_id')) {
+                $table->dropColumn('batch_id');
             }
         });
     }

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\PreventDemoModeChanges;
-use App\Models\ProductBatche;
+use App\Models\ProductBatch;
 
 class ProductStock extends Model
 {
@@ -57,6 +57,6 @@ class ProductStock extends Model
 
     public function batches()
     {
-        return $this->hasMany(ProductBatche::class, 'product_stock_id');
+        return $this->hasMany(ProductBatch::class, 'product_stock_id');
     }
 }

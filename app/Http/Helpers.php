@@ -875,10 +875,10 @@ if (!function_exists('cart_product_price')) {
             $price = 0;
             $product_stock = $product->stocks->where('variant', $str)->first();
             
-            // Use batch data if batche_id exists in cart
-            $batchId = $cart_product['batche_id'] ?? null;
+            // Use batch data if batch_id exists in cart
+            $batchId = $cart_product['batch_id'] ?? null;
             if ($batchId && $product_stock) {
-                $batch = \App\Models\ProductBatche::find($batchId);
+                $batch = \App\Models\ProductBatch::find($batchId);
                 if ($batch && $batch->product_stock_id == $product_stock->id) {
                     // Calculate price from batch MRP and role_price
                     $mrpPrice = $batch->mrp_price ?? 0;
@@ -962,10 +962,10 @@ if (!function_exists('cart_product_tax')) {
         $product_stock = $product->stocks->where('variant', $str)->first();
         $price = 0;
 
-        // Use batch price when batche_id present (same logic as cart_product_price)
-        $batchId = $cart_product['batche_id'] ?? null;
+        // Use batch price when batch_id present (same logic as cart_product_price)
+        $batchId = $cart_product['batch_id'] ?? null;
         if ($batchId && $product_stock) {
-            $batch = \App\Models\ProductBatche::find($batchId);
+            $batch = \App\Models\ProductBatch::find($batchId);
             if ($batch && $batch->product_stock_id == $product_stock->id) {
                 $mrpPrice = $batch->mrp_price ?? 0;
                 $rolePrice = $batch->role_price ?? null;
