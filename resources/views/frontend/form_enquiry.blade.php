@@ -310,6 +310,27 @@
         {
             gap:10px;
         }
+
+        div#productPhotoModal img#productPhotoModalImg {
+    width: 78% !important;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+div#productPhotoModal .modal-body.p-2 {
+    padding: 20px 25px;
+    overflow-y: auto;
+    max-height: none !important;
+}
+
+div#productPhotoModal .modal-content {
+    background: transparent !important;
+}
+
         @media (max-width: 767px) {
             .enq-shell {
                 padding: 15px;
@@ -512,21 +533,22 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-4">
                                         <label class="label-strong">{{ translate('Pack Size') }}</label>
                                         <input type="number" class="form-control" id="pack_size" name="pack_size" min="0" placeholder="{{ translate('Pack size') }}">
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-4">
                                         <label class="label-strong">{{ translate('Qty Required') }}</label>
                                         <input type="number" class="form-control" id="quantity" name="quantity" min="0" placeholder="{{ translate('Qty') }}">
                                     </div>
-                                    <div class="col-md-4 upload-col">
-                                        <label class="label-strong">{{ translate('Upload File') }}</label>
-                                        <input type="file" class="form-control" name="composition_files[]" multiple>
-                                    </div>
+                                   
                                     <div class="col-md-6">
                                         <label class="label-strong">{{ translate('Composition') }}</label>
                                         <textarea class="form-control" rows="3" id="composition_text" name="composition_text" placeholder="{{ translate('Describe composition') }}"></textarea>
+                                    </div>
+                                     <div class="col-md-6 upload-col">
+                                        <label class="label-strong">{{ translate('Upload File') }} (Composition / Description)</label>
+                                        <input type="file" class="form-control" name="composition_files[]" multiple>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="label-strong">{{ translate('Descriptions') }}</label>
@@ -688,7 +710,7 @@
                                         <input type="file" class="form-control" name="common_product_photos[]" multiple accept="image/*">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="label-strong">{{ translate('List Of Products (If More Than One)') }}</label>
+                                        <label class="label-strong">{{ translate('List Of Products (If More Than One Product)') }}</label>
                                         <input type="file" class="form-control" name="common_product_list_files[]" multiple>
                                     </div>
                                     <div class="col-md-6">
@@ -718,37 +740,7 @@
                                    
                                    
                                    
-                                    <div class="col-md-3">
-                                        <label class="label-strong">{{ translate('Pincode') }}</label>
-                                        <input type="text" class="form-control" name="company_pincode" id="company_pincode">
-                                    </div>
-
-                                     <div class="col-md-3">
-                                        <label class="label-strong">{{ translate('Country') }}</label>
-                                        <select class="form-control aiz-selectpicker" data-live-search="true" name="company_country_id" id="company_country">
-                                            <option value="">{{ translate('Select Country') }}</option>
-                                            @foreach($countries as $country)
-                                                <option value="{{ $country->id }}">{{ $country->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="label-strong">{{ translate('State') }}</label>
-                                        <select class="form-control aiz-selectpicker" data-live-search="true" name="company_state_id" id="company_state">
-                                            <option value="">{{ translate('Select State') }}</option>
-                                        </select>
-                                    </div>
-
                                     
-
-                                     <div class="col-md-3">
-                                        <label class="label-strong">{{ translate('Post') }}</label>
-                                        <input type="text" class="form-control" name="company_post">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="label-strong">{{ translate('District') }}</label>
-                                        <input type="text" class="form-control" name="company_district">
-                                    </div>
 
                                      <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Company Name') }}</label>
@@ -782,6 +774,40 @@
                                         <label class="label-strong">{{ translate('Visiting Card') }}</label>
                                         <input type="file" class="form-control" name="visiting_card_files[]" multiple>
                                     </div>
+
+                                    <div class="col-md-3">
+                                        <label class="label-strong">{{ translate('Pincode') }}</label>
+                                        <input type="text" class="form-control" name="company_pincode" id="company_pincode">
+                                    </div>
+
+                                     <div class="col-md-3">
+                                        <label class="label-strong">{{ translate('Country') }}</label>
+                                        <select class="form-control aiz-selectpicker" data-live-search="true" name="company_country_id" id="company_country">
+                                            <option value="">{{ translate('Select Country') }}</option>
+                                            @foreach($countries as $country)
+                                                <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="label-strong">{{ translate('State') }}</label>
+                                        <select class="form-control aiz-selectpicker" data-live-search="true" name="company_state_id" id="company_state">
+                                            <option value="">{{ translate('Select State') }}</option>
+                                        </select>
+                                    </div>
+
+                                     <div class="col-md-3">
+                                        <label class="label-strong">{{ translate('District') }}</label>
+                                        <input type="text" class="form-control" name="company_district">
+                                    </div>
+
+                                     <div class="col-md-3">
+                                        <label class="label-strong">{{ translate('Post') }}</label>
+                                        <input type="text" class="form-control" name="company_post">
+                                    </div>
+                                   
+
+
                                      <div class="col-md-12">
                                         <label class="label-strong">{{ translate('Full Address') }}</label>
                                         <textarea class="form-control" name="company_address" rows="2"></textarea>
