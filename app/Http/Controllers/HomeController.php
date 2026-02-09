@@ -805,7 +805,17 @@ class HomeController extends Controller
                 ->values()
                 ->toArray();
 
-            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name','subCategoryNames','groupNames'));
+            // Find stock with lowest price (considering batches) for auto-selection
+            $lowestPriceStock = null;
+            $variantSelectionData = null;
+            if ($detailedProduct->variant_product && $detailedProduct->stocks->isNotEmpty()) {
+                $lowestPriceStock = getLowestPriceStock($detailedProduct);
+                if ($lowestPriceStock && $lowestPriceStock->variant) {
+                    $variantSelectionData = parseVariantForSelection($lowestPriceStock->variant, $detailedProduct);
+                }
+            }
+
+            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name','subCategoryNames','groupNames','lowestPriceStock','variantSelectionData'));
         }
         abort(404);
     }
@@ -1194,6 +1204,93 @@ class HomeController extends Controller
             'batches' => $batchesData,
             'selected_batch_id' => $selectedBatch ? $selectedBatch->id : null,
         );
+    }
+
+    public function getLowestPriceVariantBatch(Request $request)
+    {
+        $product = Product::find($request->id);
+        
+        if (!$product || !$product->variant_product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found or not a variant product'
+            ]);
+        }
+
+        // Load all stocks with batches
+        $product->load(['stocks' => function($q) {
+            $q->where('is_hidden', 0)->with('batches');
+        }]);
+
+        $lowestPrice = null;
+        $lowestPriceVariant = null;
+        $lowestPriceBatchId = null;
+        $lowestPriceVariantString = null;
+
+        foreach ($product->stocks as $stock) {
+            if ($stock->is_hidden) {
+                continue;
+            }
+
+            $batches = $stock->batches;
+            
+            if ($batches && $batches->count() > 0) {
+                // Check each batch for lowest price
+                foreach ($batches as $batch) {
+                    $mrpPrice = $batch->mrp_price ?? $stock->price ?? 0;
+                    $batchRolePrice = $batch->role_price ?? null;
+                    
+                    if ($batchRolePrice) {
+                        $rolePriceArray = is_string($batchRolePrice) ? json_decode($batchRolePrice, true) : $batchRolePrice;
+                        if (is_array($rolePriceArray)) {
+                            $batchPrice = getPriceByRole($rolePriceArray, $mrpPrice);
+                        } else {
+                            $fallbackRolePrice = $stock->role_price ?? ($product->role_price ?? null);
+                            $batchPrice = getPriceByRole($fallbackRolePrice, $mrpPrice);
+                        }
+                    } else {
+                        $fallbackRolePrice = $stock->role_price ?? ($product->role_price ?? null);
+                        $batchPrice = getPriceByRole($fallbackRolePrice, $mrpPrice);
+                    }
+
+                    if ($lowestPrice === null || $batchPrice < $lowestPrice) {
+                        $lowestPrice = $batchPrice;
+                        $lowestPriceVariant = $stock;
+                        $lowestPriceBatchId = $batch->id;
+                        $lowestPriceVariantString = $stock->variant;
+                    }
+                }
+            } else {
+                // No batches, use stock price
+                $stockRolePrice = $stock->role_price ?? ($product->role_price ?? null);
+                $stockPrice = getPriceByRole($stockRolePrice, $stock->price ?? 0);
+
+                if ($lowestPrice === null || $stockPrice < $lowestPrice) {
+                    $lowestPrice = $stockPrice;
+                    $lowestPriceVariant = $stock;
+                    $lowestPriceBatchId = null;
+                    $lowestPriceVariantString = $stock->variant;
+                }
+            }
+        }
+
+        if (!$lowestPriceVariant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No variants found'
+            ]);
+        }
+
+        // Parse variant string to get selection data
+        $variantSelectionData = parseVariantForSelection($lowestPriceVariantString, $product);
+
+        return response()->json([
+            'success' => true,
+            'variant' => $lowestPriceVariantString,
+            'batch_id' => $lowestPriceBatchId,
+            'price' => $lowestPrice,
+            'selection_data' => $variantSelectionData
+        ]);
     }
 
     public function sellerpolicy()

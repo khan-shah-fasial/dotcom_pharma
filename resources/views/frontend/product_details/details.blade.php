@@ -2435,6 +2435,136 @@
                 // Show the modal
                 $('#productEnquiryModal').modal('show');
             });
+
+            // Auto-select lowest price variant and batch on page load
+            @if($detailedProduct->variant_product)
+                var productId = {{ $detailedProduct->id }};
+                var autoSelectInProgress = false;
+                
+                // Wait for form and functions to be ready
+                setTimeout(function() {
+                    if (typeof checkAddToCartValidity !== 'function' || typeof getVariantPrice !== 'function') {
+                        console.log('Functions not ready, retrying...');
+                        setTimeout(arguments.callee, 200);
+                        return;
+                    }
+
+                    // Call endpoint to get lowest price variant+batch
+                    $.ajax({
+                        type: 'POST',
+                        url: '{{ route("products.lowest_price_variant_batch") }}',
+                        data: {
+                            _token: AIZ.data.csrf,
+                            id: productId
+                        },
+                        success: function(response) {
+                            if (response.success && response.selection_data) {
+                                autoSelectInProgress = true;
+                                var selectionData = response.selection_data;
+                                
+                                // Auto-select color if available
+                                if (selectionData.color) {
+                                    var colorValue = selectionData.color;
+                                    $('input[name="color"][value="' + colorValue + '"]').prop('checked', true).trigger('change');
+                                }
+                                
+                                // Auto-select attributes
+                                var allSelected = true;
+                                $.each(selectionData.attributes, function(attributeId, value) {
+                                    // Normalize value for matching (remove spaces, underscores, dashes, case insensitive)
+                                    var normalizedValue = value.toLowerCase().replace(/[\s_\-]/g, '');
+                                    var $radio = $('input[name="attribute_id_' + attributeId + '"]');
+                                    var found = false;
+                                    
+                                    $radio.each(function() {
+                                        var radioValue = $(this).val();
+                                        var normalizedRadioValue = radioValue.toLowerCase().replace(/[\s_\-]/g, '');
+                                        if (normalizedRadioValue === normalizedValue) {
+                                            $(this).prop('checked', true).trigger('change');
+                                            found = true;
+                                            return false; // break
+                                        }
+                                    });
+                                    
+                                    if (!found) {
+                                        allSelected = false;
+                                    }
+                                });
+                                
+                                // Wait a bit for DOM updates, then trigger price load
+                                setTimeout(function() {
+                                    if (allSelected && checkAddToCartValidity()) {
+                                        // Set batch_id in hidden input before calling getVariantPrice
+                                        if (response.batch_id) {
+                                            $('#selected_batch_id').val(response.batch_id);
+                                        }
+                                        
+                                        // Trigger getVariantPrice to load batches
+                                        getVariantPrice(true);
+                                        
+                                        // After batches are loaded, select the batch
+                                        var batchSelectAttempts = 0;
+                                        var maxBatchSelectAttempts = 20; // Try for up to 4 seconds (20 * 200ms)
+                                        
+                                        function trySelectBatch() {
+                                            batchSelectAttempts++;
+                                            
+                                            if (response.batch_id) {
+                                                var $batchCard = $('.batch-card[data-batch-id="' + response.batch_id + '"]');
+                                                var $batchesContainer = $('#batches-container');
+                                                
+                                                if ($batchCard.length > 0 && $batchesContainer.length > 0) {
+                                                    // Batches are rendered, select the batch
+                                                    var batchesMap = $batchesContainer.data('batches-map') || {};
+                                                    var batchData = batchesMap[response.batch_id];
+                                                    
+                                                    if (batchData && typeof selectBatch === 'function') {
+                                                        selectBatch(response.batch_id, batchData);
+                                                    } else {
+                                                        // Fallback: manually select the batch card
+                                                        $batchCard.addClass('selected');
+                                                        $('#selected_batch_id').val(response.batch_id);
+                                                        // Trigger price update with selected batch
+                                                        getVariantPrice(true);
+                                                    }
+                                                    autoSelectInProgress = false;
+                                                } else if (batchSelectAttempts < maxBatchSelectAttempts) {
+                                                    // Batches not rendered yet, wait and retry
+                                                    setTimeout(trySelectBatch, 200);
+                                                } else {
+                                                    // Timeout: batches might not be available for this variant
+                                                    console.log('Batch selection timeout');
+                                                    autoSelectInProgress = false;
+                                                }
+                                            } else {
+                                                // No batch_id, just finish
+                                                autoSelectInProgress = false;
+                                            }
+                                        }
+                                        
+                                        // Start trying to select batch after a delay
+                                        setTimeout(trySelectBatch, 800);
+                                    } else {
+                                        autoSelectInProgress = false;
+                                    }
+                                }, 500);
+                            } else {
+                                // Fallback: trigger getVariantPrice with default selection
+                                if (checkAddToCartValidity()) {
+                                    getVariantPrice(true);
+                                }
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching lowest price variant:', error);
+                            // Fallback: trigger getVariantPrice with default selection
+                            if (typeof checkAddToCartValidity === 'function' && checkAddToCartValidity()) {
+                                getVariantPrice(true);
+                            }
+                        }
+                    });
+                }, 1000); // Wait for page to be fully loaded
+            @endif
         });
     </script>
 @endsection
