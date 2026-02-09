@@ -397,6 +397,18 @@ body .translater_menu .select2-container {
                             </a>
                         </li>
 
+                        <li class="list-inline-item inquiry_btn">
+                            <a href="{{ route('form_enquiry.create') }}" class=" fs-12 py-2">
+                                <i class="las la-question-circle"></i> Inquiry
+                            </a>
+                        </li>
+
+                        <li class="list-inline-item suggestion_btn">
+                            <a href="{{ route('form_enquiry.create') }}" class=" fs-12 py-2">
+                                <i class="las la-lightbulb"></i> Suggestion
+                            </a>
+                        </li>
+
                         <li class="list-inline-item veterinary_btn">
                             <a href="javascript:void(0)"
                                 class=" fs-12 py-2 {{ session('web_type_name') == 'veterinary' ? 'active_btn' : '' }}">
