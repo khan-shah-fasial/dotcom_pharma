@@ -35,6 +35,7 @@ use App\Exports\ProductStocksExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 use App\Models\ProductStock;
+use App\Models\ProductBatch;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -923,22 +924,48 @@ class ProductController extends Controller
             // Skip header row
             if ($index == 0) continue;
 
-            $productId = $row[0] ?? null;
-            $stockId = $row[1] ?? null;
-            $sku = $row[2] ?? null;
-            $productName = $row[3] ?? null;
-            $variantDetails = $row[4] ?? null;
-            $sellingPrice = $row[5] ?? null;
-            $pts_percentage = $row[6] ?? null;
+            // Support both old (stock-only) and new (stock+batch) export formats
+            // Old format headers:
+            // Product ID | Stock ID | SKU | Product Name | Variant Details | Purchase Price | PTS Percentage
+            // New format headers:
+            // Product ID | Stock ID | Batch ID | SKU | Product Name | Variant Details | Batch Code | Purchase Price | PTS Percentage
+
+            $colCount = count($row);
+
+            if ($colCount >= 9) {
+                // New format with batch columns
+                $productId      = $row[0] ?? null;
+                $stockId        = $row[1] ?? null;
+                $batchId        = $row[2] ?? null;
+                $sku            = $row[3] ?? null;
+                $productName    = $row[4] ?? null;
+                $variantDetails = $row[5] ?? null;
+                $batchCode      = $row[6] ?? null;
+                $sellingPrice   = $row[7] ?? null;
+                $pts_percentage = $row[8] ?? null;
+            } else {
+                // Fallback to old format (no batch info)
+                $productId      = $row[0] ?? null;
+                $stockId        = $row[1] ?? null;
+                $batchId        = null;
+                $sku            = $row[2] ?? null;
+                $productName    = $row[3] ?? null;
+                $variantDetails = $row[4] ?? null;
+                $batchCode      = null;
+                $sellingPrice   = $row[5] ?? null;
+                $pts_percentage = $row[6] ?? null;
+            }
 
             if (empty($sellingPrice) || empty($pts_percentage)) continue; //commented by rashid
 
             $rowData = [
                 'product_id' => $productId,
                 'stock_id' => $stockId,
+                'batch_id' => $batchId ?? null,
                 'sku' => $sku,
                 'product_name' => $productName,
                 'variant_details' => $variantDetails,
+                'batch_code' => $batchCode ?? null,
                 'selling_price' => $sellingPrice,
                 'pts_percentage' => $pts_percentage
             ];
@@ -1007,16 +1034,32 @@ class ProductController extends Controller
             }
         }
 
-        // Step 2: Update stocks in chunks
+        // Step 2: Update stocks/batches in chunks
         foreach (array_chunk($updates, 100) as $chunk) {
             foreach ($chunk as $update) {
                 $stock = ProductStock::find($update['stock_id']);
-                if ($stock) {
-                    //$stock->mrp_price = $update['selling_price']; // commented by rashid
-                    // $stock->mrp_role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
-                    $stock->price = $update['selling_price'];
-                    $stock->role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
 
+                // Update batch-level pricing if batch is provided and valid
+                if (!empty($update['batch_id'])) {
+                    $batch = ProductBatch::where('id', $update['batch_id'])
+                        ->where('product_stock_id', $update['stock_id'])
+                        ->first();
+
+                    if ($batch) {
+                        // Treat selling_price as the batch's base price for role pricing
+
+                        // $batch->mrp_price  = $update['selling_price'];
+                        $batch->role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
+                        $batch->save();
+                    }
+                }
+
+                // Preserve existing behaviour: keep stock base price updated
+                if ($stock) {
+                    // Keep stock price in sync for legacy code paths
+                    $stock->price = $update['selling_price'];
+                    // Role prices have been moved to batches; avoid writing conflicting stock-level role_price
+                    // $stock->role_price = generateRoleBasedPrices_excel($update['selling_price'], $update['pts_percentage']);
                     $stock->save();
                 }
             }
@@ -1026,11 +1069,14 @@ class ProductController extends Controller
         foreach (array_chunk($productMinPrices, 100, true) as $chunk) {
             foreach ($chunk as $productId => $prices) {
                 $product = Product::find($productId);
+
                 // if ($product && $prices['selling_price'] < $product->unit_price) {
                     //$product->mrp_price = $prices['mrp_price']; // commented by rashid
                     // $product->mrp_role_price = generateRoleBasedPrices_excel($prices['mrp_price'], $prices['pts_percentage']);
-                    $product->unit_price = $prices['selling_price'];
-                    $product->role_price = generateRoleBasedPrices_excel($prices['selling_price'], $prices['pts_percentage']);
+
+
+                    // $product->unit_price = $prices['selling_price'];
+                    // $product->role_price = generateRoleBasedPrices_excel($prices['selling_price'], $prices['pts_percentage']);
 
                     if ($prices['selling_price'] != 0) {
                         $product->published = 1;

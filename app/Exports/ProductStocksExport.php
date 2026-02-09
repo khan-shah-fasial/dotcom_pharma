@@ -4,11 +4,13 @@ namespace App\Exports;
 
 use App\Models\ProductStock;
 use App\Models\Product;
+use App\Models\ProductBatch;
 use App\Models\Attribute;
 use App\Models\AttributeValue;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 
 class ProductStocksExport implements FromCollection, WithHeadings
@@ -27,13 +29,43 @@ class ProductStocksExport implements FromCollection, WithHeadings
 
     public function collection()
     {
+        // Build variant details helper function
+        $getVariantDetails = function($variant) {
+            if (!$variant) {
+                return '';
+            }
 
-        // If either search or type is provided, reverse the query
+            $parts = explode('-', $variant);
+            $details = [];
+
+            foreach ($parts as $part) {
+                $part = trim($part);
+
+                // Try to find attribute value
+                $attrValue = AttributeValue::where('value', $part)->first();
+
+                if ($attrValue) {
+                    $attribute = Attribute::find($attrValue->attribute_id);
+                    if ($attribute) {
+                        $details[] = '('.$attribute->name.') - ' . $attrValue->value;
+                    } else {
+                        // If attribute missing, just keep value
+                        $details[] = $attrValue->value;
+                    }
+                } else {
+                    // If no attribute found, keep raw value (like date)
+                    $details[] = $part;
+                }
+            }
+
+            // Join all parts with ' / ' separator
+            return implode(' / ', $details);
+        };
+
+        // If either search or type is provided, use filtered query (same as previous)
         if ($this->search !== null || $this->type !== null || $this->published_status !== null) {
 
-            // echo "Generating filtered export...\n";
-
-            // Base query on Product joined with product_stocks
+            // Base query on Product joined with product_stocks (same as previous)
             $stocks = Product::join('product_stocks', 'products.id', '=', 'product_stocks.product_id')
                 ->select(
                     'product_stocks.id as stock_id',
@@ -66,10 +98,7 @@ class ProductStocksExport implements FromCollection, WithHeadings
             $stocks = $stocks->get();
 
         } else {
-
-            // echo "default Generating filtered export...\n";
-
-            // Base query on ProductStock
+            // Base query on ProductStock (same as previous)
             $stocks = ProductStock::join('products', 'product_stocks.product_id', '=', 'products.id')
                 ->select(
                     'product_stocks.id as stock_id',
@@ -81,65 +110,61 @@ class ProductStocksExport implements FromCollection, WithHeadings
                 ->get();
         }
 
-        // $stocks = ProductStock::join('products', 'product_stocks.product_id', '=', 'products.id')
-        //     ->select(
-        //         'product_stocks.id as stock_id',
-        //         'product_stocks.product_id',
-        //         'products.name as product_name',
-        //         'product_stocks.sku',
-        //         'product_stocks.variant'
-        //     )
-        //     ->get();
-
-        $data = $stocks->map(function ($stock) {
-            $variantDetails = '';
-
-            if ($stock->variant) {
-                // Split variant by '-'
-                $parts = explode('-', $stock->variant);
-                $details = [];
-
-                foreach ($parts as $part) {
-                    $part = trim($part);
-
-                    // Try to find attribute value
-                    $attrValue = AttributeValue::where('value', $part)->first();
-
-                    if ($attrValue) {
-                        $attribute = Attribute::find($attrValue->attribute_id);
-                        if ($attribute) {
-                            $details[] = '('.$attribute->name.') - ' . $attrValue->value;
-                        } else {
-                            // If attribute missing, just keep value
-                            $details[] = $attrValue->value;
-                        }
-                    } else {
-                        // If no attribute found, keep raw value (like date)
-                        $details[] = $part;
-                    }
+        // Now expand each stock to show its batches
+        $data = new Collection();
+        
+        foreach ($stocks as $stock) {
+            $variantDetails = $getVariantDetails($stock->variant);
+            
+            // Load batches for this stock
+            $batches = ProductBatch::where('product_stock_id', $stock->stock_id)->get();
+            
+            if ($batches->count() > 0) {
+                // Create one row per batch
+                foreach ($batches as $batch) {
+                    $data->push([
+                        'product_id' => $stock->product_id,
+                        'stock_id' => $stock->stock_id,
+                        'batch_id' => $batch->id,
+                        'sku' => $stock->sku,
+                        'product_name' => $stock->product_name,
+                        'variant_details' => $variantDetails,
+                        'batch_code' => $batch->batch ?? '',
+                        'purchase_price' => '', // empty column for manual entry
+                        'pts_percentage' => '', // empty column for manual entry
+                    ]);
                 }
-
-                // Join all parts with ' / ' separator
-                $variantDetails = implode(' / ', $details);
+            } else {
+                // Stock has no batches - create one row with empty batch fields
+                $data->push([
+                    'product_id' => $stock->product_id,
+                    'stock_id' => $stock->stock_id,
+                    'batch_id' => '',
+                    'sku' => $stock->sku,
+                    'product_name' => $stock->product_name,
+                    'variant_details' => $variantDetails,
+                    'batch_code' => '',
+                    'purchase_price' => '', // empty column for manual entry
+                    'pts_percentage' => '', // empty column for manual entry
+                ]);
             }
-
-            return [
-                'product_id' => $stock->product_id,
-                'stock_id' => $stock->stock_id,
-                'sku' => $stock->sku,
-                'product_name' => $stock->product_name,
-                'variant_details' => $variantDetails,
-                // 'mrp_price' => '', // empty column
-                'selling_price' => '', // empty column
-                'pts_percentage' => '', // empty column
-            ];
-        });
+        }
 
         return $data;
     }
 
     public function headings(): array
     {
-        return ['Product ID', 'Stock ID', 'SKU', 'Product Name', 'Variant Details', 'Purchase Price', 'PTS Percentage'];
+        return [
+            'Product ID',
+            'Stock ID',
+            'Batch ID',
+            'SKU',
+            'Product Name',
+            'Variant Details',
+            'Batch Code',
+            'Purchase Price',
+            'PTS Percentage'
+        ];
     }
 }
