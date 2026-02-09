@@ -30,8 +30,9 @@ class ProductStockService
 
                 $product_stock->variant = $str;
                 $product_stock->is_hidden = (int) request()->get('is_hidden_' . str_replace('.', '_', $str), 0);
-                $product_stock->price = request()['price_' . str_replace('.', '_', $str)];
-                $product_stock->role_price = generateRoleBasedPrices(request()['price_' . str_replace('.', '_', $str)]); //price by role
+                
+                // $product_stock->price = request()['price_' . str_replace('.', '_', $str)];
+                // $product_stock->role_price = generateRoleBasedPrices(request()['price_' . str_replace('.', '_', $str)]); //price by role
 
                 // $product_stock->dimension = request()->get('dimension_' . str_replace('.', '_', $str), null);
                 $product_stock->length = request()->get('length_' . str_replace('.', '_', $str), null);
@@ -216,7 +217,7 @@ class ProductStockService
                 $productStock->sku = request()['sku_' . str_replace('.', '_', $str)];
                 $productStock->image = request()['img_' . str_replace('.', '_', $str)];
                 $productStock->save();
-                $this->syncBatchesFromRequest($productStock, $str, $product);
+                $this->syncBatchesUpdateFromRequest($productStock, $str, $product);
             }
         } else {
             // Single variant case
@@ -359,9 +360,9 @@ class ProductStockService
             $batch->product_exp_date = $row['product_exp_date'] ?? null;
             $batch->coa              = $row['coa'] ?? null;
 
-            // Role-based prices per batch, mirroring existing helper behaviour.
+            // Role-based prices per batch: use request value or generate from MRP
             if (!empty($mrpPrice) && function_exists('generateRoleBasedPrices')) {
-                $batch->role_price = generateRoleBasedPrices($mrpPrice);
+                $batch->role_price = generateRoleBasedPrices((float) 0);
             }
 
             $batch->save();
@@ -386,7 +387,96 @@ class ProductStockService
         $stock->save();
 
         // Existing behaviour: whenever detailed stock data changes, mark product unpublished
-        $product->published = 0;
+
+        //$product->published = 0;
+
+        $product->save();
+    }
+
+    /**
+     * Update batches from request without deleting all: update existing (by id), add new, remove only those not in request.
+     * Use this in product update flow so batch records are updated in place instead of recreated.
+     */
+    protected function syncBatchesUpdateFromRequest(ProductStock $stock, string $variantString, Product $product): void
+    {
+        $variantKey = strtolower(str_replace(['.', ' ', '-'], '_', $variantString));
+        $batchesInput = request()->input('batches.' . $variantKey, []);
+
+        if (!is_array($batchesInput) || count($batchesInput) === 0) {
+            return;
+        }
+
+        $submittedIds = [];
+        foreach ($batchesInput as $row) {
+            if (!empty($row['id'])) {
+                $submittedIds[] = (int) $row['id'];
+            }
+        }
+
+        // Remove batches that belong to this stock but were not in the request (user removed those rows)
+        if (count($submittedIds) > 0) {
+            $stock->batches()->whereNotIn('id', $submittedIds)->delete();
+        }
+
+        $totalQty = 0;
+        $firstBatch = null;
+
+        foreach ($batchesInput as $row) {
+            $hasContent = false;
+            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'coa'] as $field) {
+                if (isset($row[$field]) && (string) $row[$field] !== '') {
+                    $hasContent = true;
+                    break;
+                }
+            }
+            if (!$hasContent) {
+                continue;
+            }
+
+            $qty = (int) ($row['qty'] ?? 0);
+            $totalQty += $qty;
+            $mrpPrice = $row['mrp_price'] ?? null;
+
+            $batch = null;
+            if (!empty($row['id'])) {
+                $batch = $stock->batches()->where('id', (int) $row['id'])->first();
+            }
+            if (!$batch) {
+                $batch = new ProductBatch();
+                $batch->product_id = $product->id;
+                $batch->product_stock_id = $stock->id;
+            }
+
+            $batch->batch            = $row['batch'] ?? $batch->batch;
+            $batch->mrp_price        = $mrpPrice;
+            $batch->qty              = $qty;
+            $batch->product_exp_date = $row['product_exp_date'] ?? null;
+            $batch->coa              = $row['coa'] ?? null;
+
+            // if (!empty($row['role_price'])) {
+            //     $batch->role_price = is_string($row['role_price']) ? $row['role_price'] : json_encode($row['role_price']);
+            // } elseif (!empty($mrpPrice) && function_exists('generateRoleBasedPrices')) {
+            //     $batch->role_price = generateRoleBasedPrices((float) $mrpPrice);
+            // }
+
+            $batch->save();
+
+            if ($firstBatch === null) {
+                $firstBatch = $batch;
+            }
+        }
+
+        if ($totalQty > 0) {
+            $stock->qty = $totalQty;
+        }
+
+        if ($firstBatch !== null) {
+            $stock->mrp_price        = $firstBatch->mrp_price;
+            $stock->product_exp_date  = $firstBatch->product_exp_date;
+            $stock->coa               = $firstBatch->coa;
+        }
+
+        $stock->save();
         $product->save();
     }
 }

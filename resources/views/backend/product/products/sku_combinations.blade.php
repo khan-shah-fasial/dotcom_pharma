@@ -152,7 +152,7 @@
 
 						<div class="col-md-8">
 							<div class="border rounded p-3 h-100">
-								<h6 class="text-muted mb-3">{{ translate('Pricing & Inventory') }}</h6>
+								<h6 class="text-muted mb-3">{{ translate('Inventory') }}</h6>
 
 								<div class="form-row mb-3">
 									<div class="col-sm-6 col-lg-4 mb-3 d-none">
@@ -168,84 +168,6 @@
 										<input type="number" lang="en" name="count_{{ $str }}" class="form-control"
 											placeholder="{{ translate('Package Count') }}" step="0.01" min="0" required>
 									</div>
-								</div>
-
-								<div class="d-flex justify-content-between align-items-center mb-3">
-									<h6 class="text-muted mb-0">{{ translate('Batches') }}</h6>
-									<button type="button"
-										class="btn btn-sm btn-soft-primary"
-										onclick="addBatchRow('{{ $variantKey }}')">
-										<i class="las la-plus"></i> {{ translate('Add Batch') }}
-									</button>
-								</div>
-								<div class="table-responsive">
-									<table class="table batch-table mb-0">
-										<thead>
-											<tr>
-												<th style="width: 15%;">{{ translate('Batch Code') }}</th>
-												<th style="width: 12%;">{{ translate('MRP Price') }}</th>
-												<th style="width: 12%;">{{ translate('Stock Qty') }}</th>
-												<th style="width: 15%;">{{ translate('Expiry Date') }}</th>
-												<th style="width: 20%;">{{ translate('COA Document') }}</th>
-												<th style="width: 8%;" class="text-center">{{ translate('Action') }}</th>
-											</tr>
-										</thead>
-										<tbody id="batch-rows-{{ $variantKey }}">
-											<tr class="batch-row">
-												<td>
-													<input type="text"
-														name="batches[{{ $variantKey }}][0][batch]"
-														class="form-control form-control-sm"
-														placeholder="{{ translate('Batch code') }}"
-														required>
-												</td>
-												<td>
-													<input type="number" lang="en"
-														name="batches[{{ $variantKey }}][0][mrp_price]"
-														value="{{ $unit_price }}"
-														min="0" step="0.01"
-														class="form-control form-control-sm"
-														required>
-												</td>
-												<td>
-													<input type="number" lang="en"
-														name="batches[{{ $variantKey }}][0][qty]"
-														value="10" min="0" step="1"
-														class="form-control form-control-sm"
-														required>
-												</td>
-												<td>
-													<input type="date"
-														name="batches[{{ $variantKey }}][0][product_exp_date]"
-														class="form-control form-control-sm">
-												</td>
-												<td class="coa-uploader-cell">
-													<div class="coa-uploader-wrapper" id="coa-wrapper-{{ $variantKey }}-0">
-														<div class="input-group" data-toggle="aizuploader" data-type="document">
-															<div class="input-group-prepend">
-																<div class="input-group-text bg-soft-secondary font-weight-medium">
-																	{{ translate('Browse') }}
-																</div>
-															</div>
-															<div class="form-control file-amount text-truncate">
-																{{ translate('Choose PDF') }}
-															</div>
-															<input type="hidden" name="batches[{{ $variantKey }}][0][coa]" class="selected-files">
-														</div>
-														<div class="file-preview box sm"></div>
-													</div>
-												</td>
-												<td class="text-center">
-													<button type="button"
-														class="btn btn-xs btn-soft-danger"
-														onclick="removeBatchRow(this)"
-														title="{{ translate('Remove') }}">
-														<i class="las la-trash"></i>
-													</button>
-												</td>
-											</tr>
-										</tbody>
-									</table>
 								</div>
 							</div>
 						</div>
@@ -364,6 +286,74 @@
 							<div class="file-preview box sm"></div>
 						</div>
 					</div>
+
+					<!-- Batches section (bottom, with Role Base Price per batch) -->
+
+					{{-- <div class="row gutters-10 mt-4">
+						<div class="col-12">
+							<div class="border rounded p-3 bg-light">
+								<div class="d-flex justify-content-between align-items-center mb-3">
+									<h6 class="text-muted mb-0">{{ translate('Batches') }}</h6>
+									<button type="button" class="btn btn-sm btn-soft-primary" onclick="addBatchRow('{{ $variantKey }}')">
+										<i class="las la-plus"></i> {{ translate('Add Batch') }}
+									</button>
+								</div>
+								<div class="table-responsive">
+									<table class="table batch-table mb-0">
+										<thead>
+											<tr>
+												<th style="width: 14%;">{{ translate('Batch Code') }}</th>
+												<th style="width: 10%;">{{ translate('MRP Price') }}</th>
+												<th style="width: 10%;">{{ translate('Stock Qty') }}</th>
+												<th style="width: 12%;">{{ translate('Expiry Date') }}</th>
+												<th style="width: 12%;">{{ translate('Role Base Price') }}</th>
+												<th style="width: 18%;">{{ translate('COA Document') }}</th>
+												<th style="width: 8%;" class="text-center">{{ translate('Action') }}</th>
+											</tr>
+										</thead>
+										<tbody id="batch-rows-{{ $variantKey }}">
+											<tr class="batch-row">
+												<td>
+													<input type="text" name="batches[{{ $variantKey }}][0][batch]" class="form-control form-control-sm" placeholder="{{ translate('Batch code') }}" required>
+												</td>
+												<td>
+													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][mrp_price]" value="{{ $unit_price }}" min="0" step="0.01" class="form-control form-control-sm" required>
+												</td>
+												<td>
+													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][qty]" value="10" min="0" step="1" class="form-control form-control-sm" required>
+												</td>
+												<td>
+													<input type="date" name="batches[{{ $variantKey }}][0][product_exp_date]" class="form-control form-control-sm">
+												</td>
+												<td>
+													<input type="hidden" name="batches[{{ $variantKey }}][0][role_price]" class="batch-role-price-input" value="">
+													<small class="text-muted">{{ translate('Auto from MRP') }}</small>
+												</td>
+												<td class="coa-uploader-cell">
+													<div class="coa-uploader-wrapper" id="coa-wrapper-{{ $variantKey }}-0">
+														<div class="input-group" data-toggle="aizuploader" data-type="document">
+															<div class="input-group-prepend">
+																<div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
+															</div>
+															<div class="form-control file-amount text-truncate">{{ translate('Choose PDF') }}</div>
+															<input type="hidden" name="batches[{{ $variantKey }}][0][coa]" class="selected-files">
+														</div>
+														<div class="file-preview box sm"></div>
+													</div>
+												</td>
+												<td class="text-center">
+													<button type="button" class="btn btn-xs btn-soft-danger" onclick="removeBatchRow(this)" title="{{ translate('Remove') }}">
+														<i class="las la-trash"></i>
+													</button>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div> --}}
+					
 				</div>
 			</div>
 		</div>
@@ -384,52 +374,35 @@
 		var rowHtml = `
 			<tr class="batch-row">
 				<td>
-					<input type="text"
-						name="batches[` + variantKey + `][` + index + `][batch]"
-						class="form-control form-control-sm"
-						placeholder="{{ translate('Batch code') }}"
-						required>
+					<input type="text" name="batches[` + variantKey + `][` + index + `][batch]" class="form-control form-control-sm" placeholder="{{ translate('Batch code') }}" required>
 				</td>
 				<td>
-					<input type="number" lang="en"
-						name="batches[` + variantKey + `][` + index + `][mrp_price]"
-						min="0" step="0.01"
-						class="form-control form-control-sm"
-						required>
+					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][mrp_price]" min="0" step="0.01" class="form-control form-control-sm" required>
 				</td>
 				<td>
-					<input type="number" lang="en"
-						name="batches[` + variantKey + `][` + index + `][qty]"
-						min="0" step="1"
-						class="form-control form-control-sm"
-						required>
+					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][qty]" min="0" step="1" class="form-control form-control-sm" required>
 				</td>
 				<td>
-					<input type="date"
-						name="batches[` + variantKey + `][` + index + `][product_exp_date]"
-						class="form-control form-control-sm">
+					<input type="date" name="batches[` + variantKey + `][` + index + `][product_exp_date]" class="form-control form-control-sm">
+				</td>
+				<td>
+					<input type="hidden" name="batches[` + variantKey + `][` + index + `][role_price]" class="batch-role-price-input" value="">
+					<small class="text-muted">{{ translate('Auto from MRP') }}</small>
 				</td>
 				<td class="coa-uploader-cell">
 					<div class="coa-uploader-wrapper" id="` + wrapperId + `">
 						<div class="input-group" data-toggle="aizuploader" data-type="document">
 							<div class="input-group-prepend">
-								<div class="input-group-text bg-soft-secondary font-weight-medium">
-									{{ translate('Browse') }}
-								</div>
+								<div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
 							</div>
-							<div class="form-control file-amount text-truncate">
-								{{ translate('Choose PDF') }}
-							</div>
+							<div class="form-control file-amount text-truncate">{{ translate('Choose PDF') }}</div>
 							<input type="hidden" name="batches[` + variantKey + `][` + index + `][coa]" class="selected-files">
 						</div>
 						<div class="file-preview box sm"></div>
 					</div>
 				</td>
 				<td class="text-center">
-					<button type="button"
-						class="btn btn-xs btn-soft-danger"
-						onclick="removeBatchRow(this)"
-						title="{{ translate('Remove') }}">
+					<button type="button" class="btn btn-xs btn-soft-danger" onclick="removeBatchRow(this)" title="{{ translate('Remove') }}">
 						<i class="las la-trash"></i>
 					</button>
 				</td>

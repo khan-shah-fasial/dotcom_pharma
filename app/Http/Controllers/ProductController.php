@@ -507,8 +507,11 @@ class ProductController extends Controller
 
         if ($request->has('reset_variant_prices')) {
 
-            //Product Stock
+            // Delete product batches linked to stocks, then product stock
+            $stockIds = $product->stocks()->pluck('id');
+            \App\Models\ProductBatch::whereIn('product_stock_id', $stockIds)->delete();
             $product->stocks()->delete();
+            
             $this->productStockService->store($request->only([
                 'colors_active',
                 'colors',
@@ -634,6 +637,9 @@ class ProductController extends Controller
         $product->product_translations()->delete();
         $product->categories()->detach();
         $product->groups()->detach();
+        // Delete product batches linked to stocks first, then stocks
+        $stockIds = $product->stocks()->pluck('id');
+        \App\Models\ProductBatch::whereIn('product_stock_id', $stockIds)->delete();
         $product->stocks()->delete();
         $product->taxes()->delete();
         $product->frequently_bought_products()->delete();
