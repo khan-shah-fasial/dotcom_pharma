@@ -874,7 +874,20 @@ div#productPhotoModal .modal-content {
         document.getElementById('form_code_display').value = code;
         document.getElementById('form_code_visual').value = code;
     }
-    document.querySelectorAll('input[name="type"]').forEach(r => r.addEventListener('change', setFormCode));
+    
+    function updateUrlType(type) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('type', type);
+        window.history.pushState({ type: type }, '', url.toString());
+    }
+    
+    document.querySelectorAll('input[name="type"]').forEach(r => {
+        r.addEventListener('change', function() {
+            setFormCode();
+            updateUrlType(this.value);
+        });
+    });
+    
     // Set form code on page load based on default type
     document.addEventListener('DOMContentLoaded', function() {
         setFormCode();
