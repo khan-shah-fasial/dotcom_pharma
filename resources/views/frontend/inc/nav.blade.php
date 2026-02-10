@@ -382,7 +382,7 @@ body .translater_menu .select2-container {
         <div class="container">
             <div class="row d-flex">
 
-                <div class="col-xl-5 col-lg-6 col-md-4 col-8">
+                <div class="col-xl-7 col-lg-6 col-md-4 col-8">
                     <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                         <li class="list-inline-item d-lg-block d-none">
                             <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
@@ -398,13 +398,13 @@ body .translater_menu .select2-container {
                         </li>
 
                         <li class="list-inline-item inquiry_btn">
-                            <a href="{{ route('form_enquiry.create') }}" class=" fs-12 py-2">
+                            <a href="{{ route('form_enquiry.create', ['type' => 'enquiry']) }}" class=" fs-12 py-2">
                                 <i class="las la-question-circle"></i> Inquiry
                             </a>
                         </li>
 
                         <li class="list-inline-item suggestion_btn">
-                            <a href="{{ route('form_enquiry.create') }}" class=" fs-12 py-2">
+                            <a href="{{ route('form_enquiry.create', ['type' => 'suggestion']) }}" class=" fs-12 py-2">
                                 <i class="las la-lightbulb"></i> Suggestion
                             </a>
                         </li>
@@ -426,7 +426,7 @@ body .translater_menu .select2-container {
                 </div>
 
 
-                <div class="col-xl-7 col-lg-6 col-md-8 col-4 d-flex justify-content-end">
+                <div class="col-xl-5 col-lg-6 col-md-8 col-4 d-flex justify-content-end">
 
 
                     <ul class="list-inline d-flex justify-content-end mb-0">

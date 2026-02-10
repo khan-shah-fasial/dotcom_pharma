@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 
 class FormEnquiryController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
         $States    = State::orderBy('name')->where('country_id', 101)->get(['id', 'name']);
         $countries = get_active_countries();
@@ -27,6 +27,12 @@ class FormEnquiryController extends Controller
         ];
 
         $undertakingSample = get_setting('undertaking_form_sample'); // upload id expected
+        
+        // Get the type from query parameter (enquiry or suggestion)
+        $defaultType = $request->input('type', 'enquiry');
+        if (!in_array($defaultType, ['enquiry', 'suggestion'])) {
+            $defaultType = 'enquiry';
+        }
 
         return view('frontend.form_enquiry', [
             'gov_state'          => $States,
@@ -34,6 +40,7 @@ class FormEnquiryController extends Controller
             'today'              => now()->toDateString(),
             'nextCodes'          => $codes,
             'undertakingSample'  => $undertakingSample,
+            'defaultType'        => $defaultType,
         ]);
     }
 

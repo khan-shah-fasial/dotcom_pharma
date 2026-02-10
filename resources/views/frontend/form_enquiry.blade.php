@@ -389,14 +389,14 @@ div#productPhotoModal .modal-content {
                                 <label class="label-strong">{{ translate('Type') }}</label>
                                 <div class="d-flex flex-wrap gap-3">
                                     <label class="aiz-megabox">
-                                        <input type="radio" name="type" value="enquiry" checked>
+                                        <input type="radio" name="type" value="enquiry" {{ (isset($defaultType) && $defaultType == 'enquiry') || (!isset($defaultType)) ? 'checked' : '' }}>
                                         <span class="d-flex align-items-center">
                                             <span class="aiz-rounded-check"></span>
                                             <span class="ml-2">{{ translate('Enquiry') }}</span>
                                         </span>
                                     </label>
                                     <label class="aiz-megabox">
-                                        <input type="radio" name="type" value="suggestion">
+                                        <input type="radio" name="type" value="suggestion" {{ (isset($defaultType) && $defaultType == 'suggestion') ? 'checked' : '' }}>
                                         <span class="d-flex align-items-center">
                                             <span class="aiz-rounded-check"></span>
                                             <span class="ml-2">{{ translate('Suggestion') }}</span>
@@ -875,6 +875,10 @@ div#productPhotoModal .modal-content {
         document.getElementById('form_code_visual').value = code;
     }
     document.querySelectorAll('input[name="type"]').forEach(r => r.addEventListener('change', setFormCode));
+    // Set form code on page load based on default type
+    document.addEventListener('DOMContentLoaded', function() {
+        setFormCode();
+    });
 
     function fetchProducts(q = '') {
         const category = document.querySelector('input[name="category"]:checked').value;
