@@ -62,10 +62,22 @@ class PurchaseHistoryController extends Controller
     {
         $userId = Auth::id();
 
-        $groupedOrders = $this->groupedOrderDetailsQuery($userId)
-            ->paginate(10);
+        // Paginated, grouped order details (per product + variant)
+        $groupedOrders = $this->groupedOrderDetailsQuery($userId)->paginate(10);
 
-        return view('frontend.user.past_orders', compact('groupedOrders'));
+        // Eager-load product models for all products present in the grouped list
+        // so the view can leverage the shared product card partial without N+1 queries.
+        $productIds = $groupedOrders->pluck('product_id')->filter()->unique();
+
+        $productsById = Product::whereIn('id', $productIds)
+            ->with(['reviews']) // commonly used relations in product cards
+            ->get()
+            ->keyBy('id');
+
+        return view('frontend.user.past_orders', [
+            'groupedOrders' => $groupedOrders,
+            'productsById'  => $productsById,
+        ]);
     }
 
     public function spendAndSave()

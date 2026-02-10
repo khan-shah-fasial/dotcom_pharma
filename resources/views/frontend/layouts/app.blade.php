@@ -889,8 +889,15 @@
                         $('#sku-product-details').html(data?.sku ?? '-');
                         $('#available-quantity').html(data.quantity);
                         
-                        let qnt = data?.quantity ?? 0;
-                        $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
+                        // Pre-compute batches so we can decide how to show quantity
+                        const batches = data?.batches || [];
+
+                        // If there are no batches, show overall quantity here.
+                        // When batches exist, batch-specific qty is handled in the batches block / selectBatch.
+                        if (!batches.length) {
+                            let qnt = data?.quantity ?? 0;
+                            $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
+                        }
 
                         // $('#per-piece-price-product-details').html('Rs. ' + (data?.per_piece_price ?? '-'));
                         let price = data?.per_piece_price ?? '-';
@@ -1026,7 +1033,7 @@
 
                         // Handle batches display - only rebuild if not updating batch
                         if (!isUpdatingBatch) {
-                            const batches = data?.batches || [];
+                            // batches already computed above; reuse here
                             const $batchSection = $('#batch-selection-section');
                             const $batchesContainer = $('#batches-container');
                             
@@ -1041,22 +1048,42 @@
                                     let batchesHtml = '<div class="row">';
                                     batches.forEach(function(batch, index) {
                                         const isSelected = (data.selected_batch_id && batch.id == data.selected_batch_id) || (index === 0 && !data.selected_batch_id);
-                                        const batchClass = isSelected ? 'batch-item selected' : 'batch-item';
+                                        const batchClass = isSelected ? 'batch-item selected active' : 'batch-item';
                                         
+                                        {{-- // batchesHtml += `
+                                        //     <div class="col-md-6 col-12 mb-2">
+                                        //         <div class="batch-card ${batchClass}" data-batch-id="${batch.id}">
+                                        //             <div class="d-flex justify-content-between align-items-start">
+                                        //                 <div class="flex-grow-1">
+                                        //                     <div class="fw-600 fs-14 mb-1">${(batch.batch && batch.batch.trim() !== '') ? batch.batch : ('Batch #' + batch.id)}</div>
+                                        //                     <div class="fs-12 text-secondary mb-1">
+                                        //                         <span class="mr-3">MRP: ${batch.mrp_price_formatted || '-'}</span>
+                                        //                         <span>Qty: ${batch.qty || 0}</span>
+                                        //                     </div>
+                                        //                     ${batch.expiry_date ? '<div class="fs-12 text-secondary">Expiry: ' + batch.expiry_date + '</div>' : ''}
+                                        //                 </div>
+                                        //                 ${batch.coa_url ? '<a href="' + batch.coa_url + '" target="_blank" class="btn btn-xs btn-outline-primary ml-2" onclick="event.stopPropagation()">COA</a>' : ''}
+                                        //             </div>
+                                        //         </div>
+                                        //     </div>
+                                        // `; --}}
+
                                         batchesHtml += `
-                                            <div class="col-md-6 col-12 mb-2">
-                                                <div class="batch-card ${batchClass}" data-batch-id="${batch.id}">
-                                                    <div class="d-flex justify-content-between align-items-start">
-                                                        <div class="flex-grow-1">
-                                                            <div class="fw-600 fs-14 mb-1">${(batch.batch && batch.batch.trim() !== '') ? batch.batch : ('Batch #' + batch.id)}</div>
-                                                            <div class="fs-12 text-secondary mb-1">
-                                                                <span class="mr-3">MRP: ${batch.mrp_price_formatted || '-'}</span>
-                                                                <span>Qty: ${batch.qty || 0}</span>
-                                                            </div>
-                                                            ${batch.expiry_date ? '<div class="fs-12 text-secondary">Expiry: ' + batch.expiry_date + '</div>' : ''}
-                                                        </div>
-                                                        ${batch.coa_url ? '<a href="' + batch.coa_url + '" target="_blank" class="btn btn-xs btn-outline-primary ml-2" onclick="event.stopPropagation()">COA</a>' : ''}
-                                                    </div>
+                                            <div class="col-md-3 col-12 mb-2">
+                                                <div class="batch-pill ${batchClass}"
+                                                    data-batch-id="${batch.id}"
+                                                    title="Batch ${batch.batch || batch.id}">
+                                                    
+                                                    <span class="batch-name">
+                                                        ${batch.batch && batch.batch.trim() !== '' 
+                                                            ? batch.batch 
+                                                            : `Batch ${batch.id}`}
+                                                    </span>
+
+                                                    ${batch.expiry_date 
+                                                        ? `<span class="batch-separator">•</span>
+                                                        <span class="batch-expiry">Exp ${batch.expiry_date}</span>` 
+                                                        : ``}
                                                 </div>
                                             </div>
                                         `;
@@ -1073,7 +1100,7 @@
                                     $batchesContainer.data('batches-map', batchesMap);
                                     
                                     // Attach click handlers using jQuery instead of inline onclick
-                                    $batchesContainer.find('.batch-card').off('click').on('click', function(e) {
+                                    $batchesContainer.find('.batch-pill').off('click').on('click', function(e) {
                                         if ($(e.target).closest('a').length > 0) return; // Don't trigger if clicking COA link
                                         const batchId = $(this).data('batch-id');
                                         const batchesMap = $batchesContainer.data('batches-map') || {};
@@ -1084,11 +1111,11 @@
                                     });
                                 } else {
                                     // Just update selected state without rebuilding
-                                    $batchesContainer.find('.batch-card').removeClass('selected');
+                                    $batchesContainer.find('.batch-pill').removeClass('selected active');
                                     if (data.selected_batch_id) {
-                                        $batchesContainer.find(`.batch-card[data-batch-id="${data.selected_batch_id}"]`).addClass('selected');
+                                        $batchesContainer.find(`.batch-pill[data-batch-id="${data.selected_batch_id}"]`).addClass('selected active');
                                     } else if (batches.length > 0) {
-                                        $batchesContainer.find('.batch-card').first().addClass('selected');
+                                        $batchesContainer.find('.batch-pill').first().addClass('selected active');
                                     }
                                     
                                     // Update batches map if needed
@@ -1105,6 +1132,28 @@
                                 } else if (data.selected_batch_id) {
                                     $('#selected_batch_id').val(data.selected_batch_id);
                                 }
+
+                                // Update batch-specific summary (batch no. and qty) based on currently selected batch
+                                (function () {
+                                    const batchesMap = $batchesContainer.data('batches-map') || {};
+                                    const selectedId = $('#selected_batch_id').val();
+                                    const selectedBatch = selectedId ? batchesMap[selectedId] : null;
+
+                                    if (selectedBatch) {
+                                        const batchLabel = (selectedBatch.batch && selectedBatch.batch.trim() !== '')
+                                            ? selectedBatch.batch
+                                            : ('Batch #' + selectedBatch.id);
+                                        $('#batch-lot-product-details').html(batchLabel);
+
+                                        const qty = selectedBatch.qty || 0;
+                                        $('#qnt-product-details').html(qty > 0 ? qty : 'Not Available');
+                                    } else {
+                                        // Fallback to overall quantity if no specific batch is resolved
+                                        let qnt = data?.quantity ?? 0;
+                                        $('#batch-lot-product-details').html('');
+                                        $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
+                                    }
+                                })();
                             } else {
                                 $batchSection.hide();
                                 $batchesContainer.empty();
@@ -1216,16 +1265,26 @@
             $('#selected_batch_id').attr('value', batchId);
             
             // Update UI immediately
-            $('.batch-card').removeClass('selected');
-            $(`.batch-card[data-batch-id="${batchId}"]`).addClass('selected');
+            $('.batch-pill').removeClass('selected active');
+            $(`.batch-pill[data-batch-id="${batchId}"]`).addClass('selected active');
             
-            // Update batch-specific UI elements only (MRP, expiry, COA)
+            // Update batch-specific UI elements only (MRP, expiry, COA, batch lot/qty)
             if (batchData) {
                 // Update MRP immediately
                 $('#mrp-unit').html(batchData.mrp_price_formatted || '-');
                 
                 // Update expiry date immediately
                 $('#product-expiry-date').html(batchData.expiry_date || '-');
+
+                // Update batch / lot no.
+                const batchLabel = (batchData.batch && batchData.batch.trim() !== '')
+                    ? batchData.batch
+                    : ('Batch #' + batchData.id);
+                $('#batch-lot-product-details').html(batchLabel);
+
+                // Update batch-specific available quantity
+                const qty = batchData.qty || 0;
+                $('#qnt-product-details').html(qty > 0 ? qty : 'Not Available');
                 
                 // Update COA immediately
                 const $coaDiv = $('#coaDiv');

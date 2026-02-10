@@ -117,28 +117,48 @@
     }
     
     /* Batch Selection Styles */
-    .batch-card {
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 12px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: #fff;
-        margin-bottom: 10px;
-    }
-    
-    .batch-card:hover {
-        border-color: #123498;
-        box-shadow: 0 2px 8px rgba(18, 52, 152, 0.1);
-    }
-    
-    .batch-card.selected {
-        border-color: #123498;
-        background: #f0f4ff;
-    }
-    
     .batches-list {
         margin-top: 10px;
+    }
+
+
+    .batch-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #f4f6f8;
+        color: #212529;
+        font-size: 12.5px;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s ease;
+    }
+
+    .batch-pill:hover {
+        background: #e9ecef;
+    }
+
+    .batch-pill.active {
+        background: #0d6efd;
+        color: #fff;
+    }
+
+    .batch-name {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .batch-expiry {
+        font-size: 11.5px;
+        opacity: 0.75;
+    }
+
+    .batch-separator {
+        opacity: 0.4;
     }
 </style>
 
@@ -408,6 +428,13 @@
                         @endif
 
 
+                        <!-- Batch Selection Section -->
+                        <div class="col-12 pl-0 pb-0 mt-md-3 mt-2" id="batch-selection-section" style="display: none;">
+                            <div class="fw-500 fs-14 text-dark mb-2">{{ translate('Select Batch') }}:</div>
+                            <div id="batches-container" class="batches-list"></div>
+                        </div>
+
+
                         <!-- Quantity + Add to cart -->
                         <div class="row no-gutters">
                             <div class="col-md-3 col-12 pl-0 mt-md-3 mt-0 pb-0">
@@ -480,11 +507,7 @@
                             </div>
                         </div>
 
-                        <!-- Batch Selection Section -->
-                        <div class="col-12 pl-0 pb-0 mt-md-3 mt-2" id="batch-selection-section" style="display: none;">
-                            <div class="fw-500 fs-14 text-dark mb-2">{{ translate('Select Batch') }}:</div>
-                            <div id="batches-container" class="batches-list"></div>
-                        </div>
+
                     @else
                         <!-- Quantity -->
                         <input type="hidden" name="quantity" value="1">
@@ -829,8 +852,7 @@
                                             </div>
                                             <div class="">
                                                 <p class="detail-font-14px detail-gray-color mb-0">Batch / Lot. No:</p>
-                                                <p id="batch-lot-product-details" class="fw-500 fs-14 mb-0">
-                                                    AEJ-1301H@3</p>
+                                                <p id="batch-lot-product-details" class="fw-500 fs-14 mb-0"></p>
                                             </div>
                                         </div>
                                     </div>
@@ -2510,10 +2532,10 @@
                                             batchSelectAttempts++;
                                             
                                             if (response.batch_id) {
-                                                var $batchCard = $('.batch-card[data-batch-id="' + response.batch_id + '"]');
+                                                var $batchPill = $('.batch-pill[data-batch-id="' + response.batch_id + '"]');
                                                 var $batchesContainer = $('#batches-container');
                                                 
-                                                if ($batchCard.length > 0 && $batchesContainer.length > 0) {
+                                                if ($batchPill.length > 0 && $batchesContainer.length > 0) {
                                                     // Batches are rendered, select the batch
                                                     var batchesMap = $batchesContainer.data('batches-map') || {};
                                                     var batchData = batchesMap[response.batch_id];
@@ -2521,8 +2543,8 @@
                                                     if (batchData && typeof selectBatch === 'function') {
                                                         selectBatch(response.batch_id, batchData);
                                                     } else {
-                                                        // Fallback: manually select the batch card
-                                                        $batchCard.addClass('selected');
+                                                        // Fallback: manually select the batch pill
+                                                        $batchPill.addClass('selected active');
                                                         $('#selected_batch_id').val(response.batch_id);
                                                         // Trigger price update with selected batch
                                                         getVariantPrice(true);
