@@ -1511,13 +1511,46 @@ $(function() {
 });
 </script>
 
-<!-- jQuery Script for Hover Effect -->
+<!-- jQuery Script for Click Effect -->
 <script>
     $(document).ready(function() {
-        $('.dropdown').hover(function() {
-            $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeIn(200);
-        }, function() {
-            $(this).find('.dropdown-menu').stop(true, true).delay(200).fadeOut(200);
+        // Remove hover behavior and add click behavior
+        $('.dropdown').off('mouseenter mouseleave');
+        
+        // Click to toggle dropdown
+        $('.dropdown-toggle').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var $dropdown = $(this).closest('.dropdown');
+            var $menu = $dropdown.find('.dropdown-menu');
+            var isOpen = $menu.is(':visible');
+            
+            // Close all other dropdowns
+            $('.dropdown').not($dropdown).find('.dropdown-menu').stop(true, true).fadeOut(200);
+            $('.dropdown').not($dropdown).removeClass('show');
+            
+            // Toggle current dropdown
+            if (isOpen) {
+                $menu.stop(true, true).fadeOut(200);
+                $dropdown.removeClass('show');
+            } else {
+                $menu.stop(true, true).fadeIn(200);
+                $dropdown.addClass('show');
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.dropdown').length) {
+                $('.dropdown .dropdown-menu').stop(true, true).fadeOut(200);
+                $('.dropdown').removeClass('show');
+            }
+        });
+        
+        // Prevent dropdown from closing when clicking inside it
+        $('.dropdown-menu').on('click', function(e) {
+            e.stopPropagation();
         });
     });
 </script>
