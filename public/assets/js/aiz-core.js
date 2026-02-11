@@ -263,7 +263,19 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
             AIZ.uploader.data.sortOrder = sortOrder;
             params["type"] = type_key != null ? type_key : "";
             params["view"] = localStorage.getItem("aiz_uploader_view") || "grid";
-            $.get(url, params, function (data, status) {
+            var requestUrl = url;
+            var requestParams = params;
+            try {
+                // Prevent duplicated query params when next/prev URL already contains them.
+                var normalizedUrl = new URL(url, window.location.origin);
+                Object.keys(params).forEach(function (key) {
+                    normalizedUrl.searchParams.set(key, params[key]);
+                });
+                requestUrl = normalizedUrl.toString();
+                requestParams = {};
+            } catch (e) {}
+
+            $.get(requestUrl, requestParams, function (data, status) {
                 //console.log(data);
                 if (typeof data == "string") {
                     data = JSON.parse(data);
@@ -286,6 +298,19 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                 } else {
                     $("#uploader_prev_btn").attr("disabled", true);
                 }
+            }).fail(function (xhr) {
+                var msg = "Failed to load files";
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                if (AIZ.plugins && AIZ.plugins.notify) {
+                    AIZ.plugins.notify("danger", msg);
+                }
+                $(".aiz-uploader-all").html(
+                    '<div class="align-items-center d-flex h-100 justify-content-center w-100 nav-tabs"><div class="text-center"><h3>' +
+                    msg +
+                    "</h3></div></div>"
+                );
             });
         },
         showSelectedFiles: function () {
