@@ -137,12 +137,23 @@
 								<h6 class="text-muted mb-3">{{ translate('Identifiers') }}</h6>
 								<div class="form-group mb-3">
 									<label class="form-label mb-1">{{ translate('SKU') }}</label>
-									<input type="text" name="sku_{{ $str }}" value="" class="form-control" required>
+									<input
+										type="text"
+										name="sku_{{ $str }}"
+										value="{{ request('sku_'.$str, '') }}"
+										class="form-control"
+										required
+									>
 								</div>
 								<div class="form-group mb-0">
 									<label class="form-label mb-1">{{ translate('Hide this variant') }}</label>
 									<label class="aiz-switch aiz-switch-success mb-0 d-block">
-										<input type="checkbox" name="is_hidden_{{ $str }}" value="1">
+										<input
+											type="checkbox"
+											name="is_hidden_{{ $str }}"
+											value="1"
+											{{ request('is_hidden_'.$str) ? 'checked' : '' }}
+										>
 										<span></span>
 									</label>
 									<small class="text-muted">{{ translate('If enabled, this variant will be hidden on the product details page.') }}</small>
@@ -157,16 +168,44 @@
 								<div class="form-row mb-3">
 									<div class="col-sm-6 col-lg-4 mb-3 d-none">
 										<label class="form-label mb-1">{{ translate('Selling Price') }}</label>
-										<input type="number" lang="en" name="price_{{ $str }}" value="{{ $unit_price }}" min="0" step="0.01" class="form-control" readonly>
+										<input
+											type="number"
+											lang="en"
+											name="price_{{ $str }}"
+											value="{{ request('price_'.$str, $unit_price) }}"
+											min="0"
+											step="0.01"
+											class="form-control"
+											readonly
+										>
 									</div>
 									<div class="col-sm-6 col-lg-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Min Order Qty') }}</label>
-										<input type="number" lang="en" name="min_qty_{{ $str }}" class="form-control" placeholder="{{ translate('Min Qty') }}" step="1" min="1" value="1" required>
+										<input
+											type="number"
+											lang="en"
+											name="min_qty_{{ $str }}"
+											class="form-control"
+											placeholder="{{ translate('Min Qty') }}"
+											step="1"
+											min="1"
+											value="{{ request('min_qty_'.$str, 1) }}"
+											required
+										>
 									</div>
 									<div class="col-sm-6 col-lg-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Package Count') }}</label>
-										<input type="number" lang="en" name="count_{{ $str }}" class="form-control"
-											placeholder="{{ translate('Package Count') }}" step="0.01" min="0" required>
+										<input
+											type="number"
+											lang="en"
+											name="count_{{ $str }}"
+											class="form-control"
+											placeholder="{{ translate('Package Count') }}"
+											step="0.01"
+											min="0"
+											value="{{ request('count_'.$str) }}"
+											required
+										>
 									</div>
 								</div>
 							</div>
@@ -183,28 +222,72 @@
 								<div class="form-row">
 									<div class="col-6 mb-3">
 										<label class="form-label mb-1">{{ translate('Qty per Piece') }}</label>
-										<input type="number" lang="en" name="qty_per_piece_{{ $str }}" class="form-control"
-											placeholder="{{ translate('Enter qty per piece') }}" step="1" min="0">
+										<input
+											type="number"
+											lang="en"
+											name="qty_per_piece_{{ $str }}"
+											class="form-control"
+											placeholder="{{ translate('Enter qty per piece') }}"
+											step="1"
+											min="0"
+											value="{{ request('qty_per_piece_'.$str) }}"
+										>
 									</div>
 									<div class="col-6 mb-3">
 										<label class="form-label mb-1">{{ translate('Weight Of Each Piece') }}</label>
-										<input type="number" lang="en" name="weight_{{ $str }}" class="form-control"
-											placeholder="{{ translate('Weight / Volume') }}" step="0.001" min="0" required>
+										<input
+											type="number"
+											lang="en"
+											name="weight_{{ $str }}"
+											class="form-control"
+											placeholder="{{ translate('Weight / Volume') }}"
+											step="0.001"
+											min="0"
+											value="{{ request('weight_'.$str) }}"
+											required
+										>
 									</div>
 									<div class="col-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Piece Length (cm)') }}</label>
-										<input type="number" lang="en" name="length_{{ $str }}" class="form-control"
-											placeholder="{{ translate('Length (cm)') }}" step="0.01" min="0" required>
+										<input
+											type="number"
+											lang="en"
+											name="length_{{ $str }}"
+											class="form-control"
+											placeholder="{{ translate('Length (cm)') }}"
+											step="0.01"
+											min="0"
+											value="{{ request('length_'.$str) }}"
+											required
+										>
 									</div>
 									<div class="col-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Piece Width (cm)') }}</label>
-										<input type="number" lang="en" name="width_{{ $str }}" class="form-control"
-											placeholder="{{ translate('Width (cm)') }}" step="0.01" min="0" required>
+										<input
+											type="number"
+											lang="en"
+											name="width_{{ $str }}"
+											class="form-control"
+											placeholder="{{ translate('Width (cm)') }}"
+											step="0.01"
+											min="0"
+											value="{{ request('width_'.$str) }}"
+											required
+										>
 									</div>
 									<div class="col-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Piece Height (cm)') }}</label>
-										<input type="number" lang="en" name="height_{{ $str }}" class="form-control"
-											placeholder="{{ translate('Height (cm)') }}" step="0.01" min="0" required>
+										<input
+											type="number"
+											lang="en"
+											name="height_{{ $str }}"
+											class="form-control"
+											placeholder="{{ translate('Height (cm)') }}"
+											step="0.01"
+											min="0"
+											value="{{ request('height_'.$str) }}"
+											required
+										>
 									</div>
 								</div>
 							</div>
@@ -219,23 +302,63 @@
 								<div class="form-row">
 									<div class="col-6 mb-3">
 										<label class="form-label mb-1">{{ translate('Qty Per Inner Buffer Box / Shrink Pack') }}</label>
-										<input type="number" name="qty_per_buffer_box_{{ $str }}" class="form-control" step="1" min="0" placeholder="{{ translate('Units per buffer box') }}">
+										<input
+											type="number"
+											name="qty_per_buffer_box_{{ $str }}"
+											class="form-control"
+											step="1"
+											min="0"
+											placeholder="{{ translate('Units per buffer box') }}"
+											value="{{ request('qty_per_buffer_box_'.$str) }}"
+										>
 									</div>
 									<div class="col-6 mb-3">
 										<label class="form-label mb-1">{{ translate('Weight Of Inner Buffer Box / Shrink Pack') }}</label>
-										<input type="number" name="weight_buffer_box_{{ $str }}" class="form-control" step="0.001" min="0" placeholder="{{ translate('Weight per buffer box') }}">
+										<input
+											type="number"
+											name="weight_buffer_box_{{ $str }}"
+											class="form-control"
+											step="0.001"
+											min="0"
+											placeholder="{{ translate('Weight per buffer box') }}"
+											value="{{ request('weight_buffer_box_'.$str) }}"
+										>
 									</div>
 									<div class="col-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Buffer Length (cm)') }}</label>
-										<input type="number" name="buffer_length_{{ $str }}" class="form-control" step="0.01" min="0" placeholder="{{ translate('Length') }}">
+										<input
+											type="number"
+											name="buffer_length_{{ $str }}"
+											class="form-control"
+											step="0.01"
+											min="0"
+											placeholder="{{ translate('Length') }}"
+											value="{{ request('buffer_length_'.$str) }}"
+										>
 									</div>
 									<div class="col-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Buffer Width (cm)') }}</label>
-										<input type="number" name="buffer_width_{{ $str }}" class="form-control" step="0.01" min="0" placeholder="{{ translate('Width') }}">
+										<input
+											type="number"
+											name="buffer_width_{{ $str }}"
+											class="form-control"
+											step="0.01"
+											min="0"
+											placeholder="{{ translate('Width') }}"
+											value="{{ request('buffer_width_'.$str) }}"
+										>
 									</div>
 									<div class="col-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Buffer Height (cm)') }}</label>
-										<input type="number" name="buffer_height_{{ $str }}" class="form-control" step="0.01" min="0" placeholder="{{ translate('Height') }}">
+										<input
+											type="number"
+											name="buffer_height_{{ $str }}"
+											class="form-control"
+											step="0.01"
+											min="0"
+											placeholder="{{ translate('Height') }}"
+											value="{{ request('buffer_height_'.$str) }}"
+										>
 									</div>
 								</div>
 							</div>
@@ -250,23 +373,63 @@
 								<div class="form-row">
 									<div class="col-6 mb-3">
 										<label class="form-label mb-1">{{ translate('Total Qty of Outer Case/Shipper/Carton') }}</label>
-										<input type="number" name="total_qty_per_case_{{ $str }}" class="form-control" step="1" min="0" placeholder="{{ translate('Total units per case') }}">
+										<input
+											type="number"
+											name="total_qty_per_case_{{ $str }}"
+											class="form-control"
+											step="1"
+											min="0"
+											placeholder="{{ translate('Total units per case') }}"
+											value="{{ request('total_qty_per_case_'.$str) }}"
+										>
 									</div>
 									<div class="col-6 mb-3">
 										<label class="form-label mb-1">{{ translate('Total Weight Of Outer Case/Shipper/Carton') }}</label>
-										<input type="number" name="weight_case_{{ $str }}" class="form-control" step="0.001" min="0" placeholder="{{ translate('Weight per case') }}">
+										<input
+											type="number"
+											name="weight_case_{{ $str }}"
+											class="form-control"
+											step="0.001"
+											min="0"
+											placeholder="{{ translate('Weight per case') }}"
+											value="{{ request('weight_case_'.$str) }}"
+										>
 									</div>
 									<div class="col-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Case Length (cm)') }}</label>
-										<input type="number" name="case_length_{{ $str }}" class="form-control" step="0.01" min="0" placeholder="{{ translate('Length') }}">
+										<input
+											type="number"
+											name="case_length_{{ $str }}"
+											class="form-control"
+											step="0.01"
+											min="0"
+											placeholder="{{ translate('Length') }}"
+											value="{{ request('case_length_'.$str) }}"
+										>
 									</div>
 									<div class="col-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Case Width (cm)') }}</label>
-										<input type="number" name="case_width_{{ $str }}" class="form-control" step="0.01" min="0" placeholder="{{ translate('Width') }}">
+										<input
+											type="number"
+											name="case_width_{{ $str }}"
+											class="form-control"
+											step="0.01"
+											min="0"
+											placeholder="{{ translate('Width') }}"
+											value="{{ request('case_width_'.$str) }}"
+										>
 									</div>
 									<div class="col-4 mb-3">
 										<label class="form-label mb-1">{{ translate('Case Height (cm)') }}</label>
-										<input type="number" name="case_height_{{ $str }}" class="form-control" step="0.01" min="0" placeholder="{{ translate('Height') }}">
+										<input
+											type="number"
+											name="case_height_{{ $str }}"
+											class="form-control"
+											step="0.01"
+											min="0"
+											placeholder="{{ translate('Height') }}"
+											value="{{ request('case_height_'.$str) }}"
+										>
 									</div>
 								</div>
 							</div>
@@ -281,7 +444,12 @@
 									<div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
 								</div>
 								<div class="form-control file-amount text-truncate">{{ translate('Choose File') }}</div>
-								<input type="hidden" name="img_{{ $str }}" class="selected-files">
+								<input
+									type="hidden"
+									name="img_{{ $str }}"
+									class="selected-files"
+									value="{{ request('img_'.$str) }}"
+								>
 							</div>
 							<div class="file-preview box sm"></div>
 						</div>
