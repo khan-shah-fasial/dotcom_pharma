@@ -1287,17 +1287,30 @@ div#productPhotoModal .modal-content {
         body.append('_token', '{{ csrf_token() }}');
         const res = await fetch('{{ route('get-state') }}', {
             method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
             body
         });
-        let html = await res.text();
+
+        const raw = await res.text();
+        let html = raw;
+
         // Handle controllers that return JSON-encoded HTML (\"<option>...\") or raw HTML
         try {
-            if (typeof html === 'string' && html.trim().startsWith('"')) {
-                html = JSON.parse(html);
-            }
+            html = JSON.parse(raw);
         } catch (e) {}
         html = html.replace(/<\\\//g, '</').replace(/\\"/g, '"');
+
+        // If any script/debug markup sneaks in, keep only <option> tags.
+        if (!/<option[\s>]/i.test(html)) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const options = Array.from(doc.querySelectorAll('option')).map(o => o.outerHTML).join('');
+            html = options || '<option value="">{{ translate('Select State') }}</option>';
+        }
+
         stateSelect.innerHTML = html;
         if (selectedStateId) {
             stateSelect.value = selectedStateId;
