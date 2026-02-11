@@ -304,14 +304,14 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #2b56a1 0%, #1e3f7a 100%);
+            background: #23780E;
             border: none;
             border-radius: 8px;
             padding: 12px 40px;
             font-size: 16px;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(43, 86, 161, 0.3);
+            box-shadow: none;
         }
         
         .btn-primary:hover {
