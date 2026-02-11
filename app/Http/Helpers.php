@@ -889,17 +889,29 @@ if (!function_exists('cart_product_price')) {
                         $rolePriceArray = is_string($rolePrice) ? json_decode($rolePrice, true) : $rolePrice;
                         $price = getPriceByRole($rolePriceArray, $mrpPrice);
                     } else {
-                        // Fallback to stock price
-                        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price);
+                        // Batch has no role_price, fallback to product-level (NOT stock-level)
+                        $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0);
                     }
                 } else {
-                    // Batch not found or doesn't match stock, use stock price
-                    $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price);
+                    // Batch not found or doesn't match stock, try to get from other batches or product-level
+                    if ($product_stock) {
+                        // Try to get price from batches using helper function
+                        $price = getStockPriceByRole($product_stock, $product, false);
+                        if ($price === null || $price === 0) {
+                            $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0);
+                        }
+                    } else {
+                        $price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+                    }
                 }
             } elseif ($product_stock) {
-                // No batch, use stock price
+                // No batch selected, use batch-aware pricing helper (checks all batches)
                 //$price = $product_stock->price;
-                $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+                $price = getStockPriceByRole($product_stock, $product, false);
+                if ($price === null || $price === 0) {
+                    // Fallback to product-level role_price (NOT stock-level)
+                    $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
+                }
             }
 
             if ($product->wholesale_product) {
@@ -974,12 +986,18 @@ if (!function_exists('cart_product_tax')) {
                     $rolePriceArray = is_string($rolePrice) ? json_decode($rolePrice, true) : $rolePrice;
                     $price = getPriceByRole($rolePriceArray, $mrpPrice);
                 } else {
-                    $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price);
+                    // Batch has no role_price, fallback to product-level (NOT stock-level)
+                    $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0);
                 }
             }
         }
         if ($price == 0 && $product_stock) {
-            $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price);
+            // Try to get price from batches using helper function
+            $price = getStockPriceByRole($product_stock, $product, false);
+            if ($price === null || $price === 0) {
+                // Fallback to product-level role_price (NOT stock-level)
+                $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0);
+            }
         }
 
         //discount calculation
@@ -1029,7 +1047,17 @@ if (!function_exists('cart_product_discount')) {
         }
         $product_stock = $product->stocks->where('variant', $str)->first();
         //$price = $product_stock->price;
-        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+        // IMPORTANT: role_price comes ONLY from batches, NOT from stock
+        // Use batch-aware pricing helper which checks batches first, then falls back to product-level
+        if ($product_stock) {
+            $price = getStockPriceByRole($product_stock, $product, false);
+            if ($price === null || $price === 0) {
+                // Fallback to product-level role_price (NOT stock-level)
+                $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
+            }
+        } else {
+            $price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+        }
 
         //discount calculation
         $discount_applicable = false;
@@ -1073,7 +1101,17 @@ if (!function_exists('carts_product_discount')) {
             }
             $product_stock = $product->stocks->where('variant', $str)->first();
             //$price = $product_stock->price;
-            $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+            // IMPORTANT: role_price comes ONLY from batches, NOT from stock
+            // Use batch-aware pricing helper which checks batches first, then falls back to product-level
+            if ($product_stock) {
+                $price = getStockPriceByRole($product_stock, $product, false);
+                if ($price === null || $price === 0) {
+                    // Fallback to product-level role_price (NOT stock-level)
+                    $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
+                }
+            } else {
+                $price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+            }
 
             //discount calculation
             $discount_applicable = false;
@@ -1309,6 +1347,7 @@ if (!function_exists('getStockPriceByRole')) {
             
             if ($batches && $batches->count() > 0) {
                 // Stock has batches - use batch-level pricing (lowest price across all batches)
+                // IMPORTANT: role_price comes ONLY from batches, NOT from stock
                 $lowestPrice = null;
                 
                 foreach ($batches as $batch) {
@@ -1320,14 +1359,12 @@ if (!function_exists('getStockPriceByRole')) {
                         if (is_array($rolePriceArray)) {
                             $batchPrice = getPriceByRole($rolePriceArray, $mrpPrice);
                         } else {
-                            // Invalid format, fallback
-                            $fallbackRolePrice = $stock->role_price ?? ($product->role_price ?? null);
-                            $batchPrice = getPriceByRole($fallbackRolePrice, $mrpPrice);
+                            // Invalid format, fallback to product-level role_price (NOT stock-level)
+                            $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
                         }
                     } else {
-                        // Batch has no role_price, fallback to stock/product role_price
-                        $fallbackRolePrice = $stock->role_price ?? ($product->role_price ?? null);
-                        $batchPrice = getPriceByRole($fallbackRolePrice, $mrpPrice);
+                        // Batch has no role_price, fallback to product-level role_price (NOT stock-level)
+                        $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
                     }
                     
                     if ($lowestPrice === null || $batchPrice < $lowestPrice) {
@@ -1337,9 +1374,8 @@ if (!function_exists('getStockPriceByRole')) {
                 
                 return $lowestPrice ?? ($stock->price ?? 0);
             } else {
-                // No batches - use stock-level pricing (backward compatibility)
-                $stockRolePrice = $stock->role_price ?? ($product->role_price ?? null);
-                return getPriceByRole($stockRolePrice, $stock->price ?? 0);
+                // No batches - fallback to product-level role_price (NOT stock-level)
+                return getPriceByRole($product->role_price ?? null, $stock->price ?? 0);
             }
         };
 
@@ -4440,14 +4476,23 @@ if (!function_exists('getCurrentUserRole')) {
 }
 
 if (!function_exists('getPriceByRole')) {
-    function getPriceByRole(array|string $rolePrices, float $defaultPrice): ?float
+    function getPriceByRole(array|string|null $rolePrices, float $defaultPrice): ?float
     {
-        //return 0;
+        // Handle null case - return default price
+        if ($rolePrices === null) {
+            return $defaultPrice;
+        }
+
         $role = getCurrentUserRole();
 
         $prices = is_string($rolePrices) ? json_decode($rolePrices, true) : (array) $rolePrices;
 
-        if (!$role) return $prices['customer'];
+        // Ensure prices is an array after decoding
+        if (!is_array($prices)) {
+            return $defaultPrice;
+        }
+
+        if (!$role) return $prices['customer'] ?? $defaultPrice;
 
         return $prices[$role] ?? $prices['customer'] ?? $defaultPrice;
     }

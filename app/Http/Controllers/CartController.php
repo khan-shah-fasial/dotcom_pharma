@@ -292,7 +292,13 @@ class CartController extends Controller
                 
                 if (!$selectedBatch) {
                     //$price = $product_stock->price;
-                    $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+                    // IMPORTANT: role_price comes ONLY from batches, NOT from stock
+                    // Use batch-aware pricing helper which checks batches first, then falls back to product-level
+                    $price = getStockPriceByRole($product_stock, $product, false);
+                    if ($price === null || $price === 0) {
+                        // Fallback to product-level role_price (NOT stock-level)
+                        $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
+                    }
                 }
 
                 //discount calculation

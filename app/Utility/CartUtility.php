@@ -31,7 +31,13 @@ class CartUtility
     public static function get_price($product, $product_stock, $quantity)
     {
         //$price = $product_stock->price;
-        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+        // IMPORTANT: role_price comes ONLY from batches, NOT from stock
+        // Use batch-aware pricing helper which checks batches first, then falls back to product-level
+        $price = getStockPriceByRole($product_stock, $product, false);
+        if ($price === null || $price === 0) {
+            // Fallback to product-level role_price (NOT stock-level)
+            $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
+        }
         if ($product->auction_product == 1) {
             $price = $product->bids->max('amount');
         }
@@ -66,18 +72,18 @@ class CartUtility
         
         $product_stock = $batch->stock;
         
-        // Use role_price from batch if available, otherwise fallback to product stock role_price
+        // Use role_price from batch if available, otherwise fallback to product-level role_price (NOT stock-level)
         if ($rolePrice) {
             $rolePriceArray = is_string($rolePrice) ? json_decode($rolePrice, true) : $rolePrice;
             if (is_array($rolePriceArray)) {
                 $price = getPriceByRole($rolePriceArray, $mrpPrice);
             } else {
-                // Invalid role_price format, fallback
-                $price = $product_stock ? getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price ?? $mrpPrice) : $mrpPrice;
+                // Invalid role_price format, fallback to product-level (NOT stock-level)
+                $price = $product ? getPriceByRole($product->role_price ?? null, $product_stock->price ?? $mrpPrice) : $mrpPrice;
             }
         } else {
-            // Fallback to product stock price calculation
-            $price = $product_stock ? getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price ?? $mrpPrice) : $mrpPrice;
+            // Batch has no role_price, fallback to product-level (NOT stock-level)
+            $price = $product ? getPriceByRole($product->role_price ?? null, $product_stock->price ?? $mrpPrice) : $mrpPrice;
         }
         
         if ($product->auction_product == 1) {

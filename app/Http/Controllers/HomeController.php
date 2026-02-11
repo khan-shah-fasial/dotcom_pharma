@@ -1031,24 +1031,35 @@ class HomeController extends Controller
             $selectedBatch = $batches->first();
         }
 
-        // Use batch data if available, otherwise fallback to stock data
+        // Use batch data if available, otherwise fallback to product-level data (NOT stock-level)
         if ($selectedBatch) {
             $mrpPrice = $selectedBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
-            $rolePrice = $selectedBatch->role_price ?? $product_stock->role_price ?? $product->role_price;
+            // IMPORTANT: role_price comes ONLY from batch, NOT from stock
+            $rolePrice = $selectedBatch->role_price ?? $product->role_price;
             $coa = $selectedBatch->coa ?? null;
             $expiryDate = $selectedBatch->product_exp_date ?? null;
             $batchQty = $selectedBatch->qty ?? 0;
         } else {
-            // Fallback to stock data if no batches exist
-            $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
-            $rolePrice = $product_stock->role_price ?? $product->role_price;
-            $coa = $product_stock->coa ?? null;
-            $expiryDate = $product_stock->product_exp_date ?? null;
-            $batchQty = $product_stock->qty ?? 0;
+            // No batch selected - try to get from first available batch or fallback to product-level
+            if ($batches->isNotEmpty()) {
+                $firstBatch = $batches->first();
+                $mrpPrice = $firstBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
+                $rolePrice = $firstBatch->role_price ?? $product->role_price;
+                $coa = $firstBatch->coa ?? null;
+                $expiryDate = $firstBatch->product_exp_date ?? null;
+                $batchQty = $firstBatch->qty ?? 0;
+            } else {
+                // No batches exist - fallback to product-level (NOT stock-level)
+                $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
+                $rolePrice = $product->role_price; // Only product-level, NOT stock-level
+                $coa = $product_stock->coa ?? null;
+                $expiryDate = $product_stock->product_exp_date ?? null;
+                $batchQty = $product_stock->qty ?? 0;
+            }
         }
 
-        // Calculate price from batch MRP or stock price
-        $price = getPriceByRole($rolePrice, $product_stock->price);
+        // Calculate price from batch role_price or product-level role_price (NOT stock-level)
+        $price = getPriceByRole($rolePrice, $product_stock->price ?? 0);
         $base = $mrpPrice;
 
         $sku = $product_stock->sku;
@@ -1245,12 +1256,12 @@ class HomeController extends Controller
                         if (is_array($rolePriceArray)) {
                             $batchPrice = getPriceByRole($rolePriceArray, $mrpPrice);
                         } else {
-                            $fallbackRolePrice = $stock->role_price ?? ($product->role_price ?? null);
-                            $batchPrice = getPriceByRole($fallbackRolePrice, $mrpPrice);
+                            // Invalid format, fallback to product-level (NOT stock-level)
+                            $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
                         }
                     } else {
-                        $fallbackRolePrice = $stock->role_price ?? ($product->role_price ?? null);
-                        $batchPrice = getPriceByRole($fallbackRolePrice, $mrpPrice);
+                        // Batch has no role_price, fallback to product-level (NOT stock-level)
+                        $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
                     }
 
                     if ($lowestPrice === null || $batchPrice < $lowestPrice) {
@@ -1261,9 +1272,8 @@ class HomeController extends Controller
                     }
                 }
             } else {
-                // No batches, use stock price
-                $stockRolePrice = $stock->role_price ?? ($product->role_price ?? null);
-                $stockPrice = getPriceByRole($stockRolePrice, $stock->price ?? 0);
+                // No batches, fallback to product-level role_price (NOT stock-level)
+                $stockPrice = getPriceByRole($product->role_price ?? null, $stock->price ?? 0);
 
                 if ($lowestPrice === null || $stockPrice < $lowestPrice) {
                     $lowestPrice = $stockPrice;
