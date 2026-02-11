@@ -108,7 +108,7 @@
         
         .aiz-megabox {
             padding: 10px 16px;
-            border: 2px solid #e5e7eb;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
             background: #ffffff;
             transition: all 0.3s ease;
@@ -144,6 +144,53 @@
         .aiz-megabox input:checked + span {
             color: #2b56a1;
             font-weight: 600;
+        }
+
+        /* Type toggle - special pill style buttons for Enquiry / Suggestion only */
+        .type-toggle-group {
+            gap: 10px;
+        }
+
+        .type-toggle-option {
+            border-radius: 999px;
+            border-color: #285098;
+            background: #eef2ff;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .type-toggle-option > span {
+            padding: 8px 22px;
+            border-radius: 999px;
+            background: transparent;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .type-toggle-option .aiz-rounded-check {
+            display: none;
+        }
+
+        .type-toggle-option:hover {
+            background: #e0e7ff;
+            border-color: #285198;
+            transform: translateY(-1px);
+            box-shadow: none;
+        }
+
+        .type-toggle-option input:checked + span {
+            background: #285198;
+            color: #ffffff;
+            box-shadow: none;
+        }
+
+        .type-toggle-option input:checked + span::after {
+            content: '';
+            display: block;
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35) inset;
         }
         
         .form-group-spacing {
@@ -257,14 +304,14 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #2b56a1 0%, #1e3f7a 100%);
+            background: #23780E;
             border: none;
             border-radius: 8px;
             padding: 12px 40px;
             font-size: 16px;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(43, 86, 161, 0.3);
+            box-shadow: none;
         }
         
         .btn-primary:hover {
@@ -391,15 +438,15 @@ div#productPhotoModal .modal-content {
                         <div class="row g-3">
                             <div class="col-md-4 form-group-spacing">
                                 <label class="label-strong">{{ translate('Type') }}</label>
-                                <div class="d-flex flex-wrap gap-3">
-                                    <label class="aiz-megabox">
+                                <div class="d-flex flex-wrap type-toggle-group">
+                                    <label class="aiz-megabox type-toggle-option position-relative">
                                         <input type="radio" name="type" value="enquiry" {{ (isset($defaultType) && $defaultType == 'enquiry') || (!isset($defaultType)) ? 'checked' : '' }}>
                                         <span class="d-flex align-items-center">
                                             <span class="aiz-rounded-check"></span>
                                             <span class="ml-2">{{ translate('Enquiry') }}</span>
                                         </span>
                                     </label>
-                                    <label class="aiz-megabox">
+                                    <label class="aiz-megabox type-toggle-option position-relative">
                                         <input type="radio" name="type" value="suggestion" {{ (isset($defaultType) && $defaultType == 'suggestion') ? 'checked' : '' }}>
                                         <span class="d-flex align-items-center">
                                             <span class="aiz-rounded-check"></span>
@@ -428,14 +475,15 @@ div#productPhotoModal .modal-content {
                                         <input type="radio" name="domestic_type" value="domestic" checked>
                                         <span class="d-flex align-items-center"><span class="aiz-rounded-check"></span><span class="ml-2">{{ translate('Domestic') }}</span></span>
                                     </label>
+                                     <label class="aiz-megabox">
+                                        <input type="radio" name="domestic_type" value="exports">
+                                        <span class="d-flex align-items-center"><span class="aiz-rounded-check"></span><span class="ml-2">{{ translate('Exports') }}</span></span>
+                                    </label>
                                     <label class="aiz-megabox">
                                         <input type="radio" name="domestic_type" value="govt_supply">
                                         <span class="d-flex align-items-center"><span class="aiz-rounded-check"></span><span class="ml-2">{{ translate('Govt. Supply') }}</span></span>
                                     </label>
-                                    <label class="aiz-megabox">
-                                        <input type="radio" name="domestic_type" value="exports">
-                                        <span class="d-flex align-items-center"><span class="aiz-rounded-check"></span><span class="ml-2">{{ translate('Exports') }}</span></span>
-                                    </label>
+                                   
                                     <label class="aiz-megabox">
                                         <input type="radio" name="domestic_type" value="third_party">
                                         <span class="d-flex align-items-center"><span class="aiz-rounded-check"></span><span class="ml-2">{{ translate('Third Party Manufacturing') }}</span></span>
@@ -550,14 +598,17 @@ div#productPhotoModal .modal-content {
                                         <label class="label-strong">{{ translate('Composition') }}</label>
                                         <textarea class="form-control" rows="3" id="composition_text" name="composition_text" placeholder="{{ translate('Describe composition') }}"></textarea>
                                     </div>
-                                     <div class="col-md-6 upload-col">
-                                        <label class="label-strong">{{ translate('Upload File') }} (Composition / Description)</label>
-                                        <input type="file" class="form-control" name="composition_files[]" multiple>
-                                    </div>
-                                    <div class="col-md-6">
+
+                                     <div class="col-md-6">
                                         <label class="label-strong">{{ translate('Descriptions') }}</label>
                                         <textarea class="form-control" rows="3" id="description_text" name="description_text" placeholder="{{ translate('Describe details') }}"></textarea>
                                     </div>
+
+                                     <div class="col-md-12 upload-col">
+                                        <label class="label-strong">{{ translate('Upload File') }} (Composition / Description)</label>
+                                        <input type="file" class="form-control" name="composition_files[]" multiple>
+                                    </div>
+                                   
                                    
                                 </div>
                             </div>
