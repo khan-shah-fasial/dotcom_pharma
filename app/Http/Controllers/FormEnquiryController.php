@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Country;
 use App\Models\FormEnquiry;
 use App\Models\Product;
 use App\Models\State;
@@ -55,6 +54,8 @@ class FormEnquiryController extends Controller
             'contact_person' => 'required|string|max:255',
             'mobile_number'  => 'required|string|max:30',
             'email'          => 'nullable|email|max:255',
+            'common_gst_no'  => 'nullable|string|max:20',
+            'common_aadhar_no' => 'nullable|string|max:30',
         ]);
 
         $data = $request->all();
@@ -144,7 +145,9 @@ class FormEnquiryController extends Controller
                 'common_product_photos'   => $data['common_product_photos'] ?? null,
                 'common_product_list_files' => $data['common_product_list_files'] ?? null,
                 'common_drug_licence_files' => $data['common_drug_licence_files'] ?? null,
+                'common_gst_no'            => $data['common_gst_no'] ?? null,
                 'common_gst_files'         => $data['common_gst_files'] ?? null,
+                'common_aadhar_no'         => $data['common_aadhar_no'] ?? null,
                 'common_aadhar_files'      => $data['common_aadhar_files'] ?? null,
                 'special_instruction'      => $data['special_instruction'] ?? null,
                 // company
@@ -242,6 +245,88 @@ class FormEnquiryController extends Controller
         ]);
     }
 
+    public function gstDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'gst_no' => ['required', 'regex:/^[0-9A-Z]{15}$/i'],
+        ]);
+
+        $gstNo = strtoupper((string) $validated['gst_no']);
+        $response = function_exists('fetchGstinDetails') ? fetchGstinDetails($gstNo) : null;
+
+        if (!$response) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to fetch GST details at the moment.',
+            ], 422);
+        }
+
+        $decoded = json_decode((string) $response, true);
+        if (!is_array($decoded)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid GST response payload.',
+            ], 422);
+        }
+
+        $statusCode = (int) ($decoded['status_code'] ?? 200);
+        $payload = $decoded['data'] ?? $decoded;
+        if (is_array($payload) && isset($payload['data']) && is_array($payload['data'])) {
+            $payload = $payload['data'];
+        }
+
+        if ($statusCode !== 200 || !is_array($payload)) {
+            return response()->json([
+                'success' => false,
+                'message' => (string) ($decoded['message'] ?? 'GST details not found.'),
+            ], 422);
+        }
+
+        $principal = (array) data_get($payload, 'contact_details.principal', []);
+        $companyName = $this->firstNonEmpty($payload, ['business_name', 'legal_name']);
+
+        $addressLine = $this->buildAddressFromPayload($payload);
+        $parsedAddress = $this->parseIndianAddressParts($addressLine);
+
+        $contactPerson = null;
+        $promoters = data_get($payload, 'promoters', []);
+        if (is_array($promoters) && !empty($promoters[0]) && is_scalar($promoters[0])) {
+            $contactPerson = trim((string) $promoters[0]);
+        }
+
+        $designation = $this->firstNonEmpty($payload, ['constitution_of_business']);
+
+        $mobileNumber = $this->onlyDigits($this->firstNonEmpty($principal, ['mobile']));
+        if ($mobileNumber !== null && strlen($mobileNumber) > 10) {
+            $mobileNumber = substr($mobileNumber, -10);
+        }
+
+        $email = $this->firstNonEmpty($principal, ['email']);
+        $district = $parsedAddress['district'] ?? null;
+        $post = $parsedAddress['post'] ?? null;
+        $pincode = $parsedAddress['pincode'] ?? null;
+        $stateName = $parsedAddress['state'] ?? null;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'GST details fetched.',
+            'data' => [
+                'common_gst_no' => $gstNo,
+                'company_name' => $companyName,
+                'company_address' => $addressLine,
+                'company_district' => $district,
+                'company_post' => $post,
+                'company_pincode' => $pincode,
+                'company_state_name' => $stateName,
+                'contact_person' => $contactPerson,
+                'designation' => $designation,
+                'mobile_country_code' => $mobileNumber ? '+91' : null,
+                'mobile_number' => $mobileNumber,
+                'email' => $email,
+            ],
+        ]);
+    }
+
     protected function extractContentSections($rawContents): array
     {
         $rows = $this->decodeContentsRows($rawContents);
@@ -325,6 +410,79 @@ class FormEnquiryController extends Controller
         }
 
         return $value;
+    }
+
+    protected function firstNonEmpty(array $source, array $paths): ?string
+    {
+        foreach ($paths as $path) {
+            $value = data_get($source, $path);
+            if (is_scalar($value) && trim((string) $value) !== '') {
+                return trim((string) $value);
+            }
+        }
+
+        return null;
+    }
+
+    protected function buildAddressFromPayload(array $payload): ?string
+    {
+        $singleLineAddress = $this->firstNonEmpty($payload, [
+            'contact_details.principal.address',
+            'address',
+        ]);
+        if ($singleLineAddress) {
+            return $singleLineAddress;
+        }
+        return null;
+    }
+
+    protected function parseIndianAddressParts(?string $address): array
+    {
+        $address = trim((string) $address);
+        if ($address === '') {
+            return [];
+        }
+
+        $pincode = null;
+        if (preg_match('/\b(\d{6})\b/', $address, $match)) {
+            $pincode = $match[1];
+        }
+
+        $parts = array_values(array_filter(array_map('trim', explode(',', $address))));
+        if (count($parts) < 2) {
+            return ['pincode' => $pincode];
+        }
+
+        $state = null;
+        $district = null;
+        $post = null;
+
+        if (count($parts) >= 2) {
+            $state = $parts[count($parts) - 2] ?? null;
+        }
+        if (count($parts) >= 3) {
+            $district = $parts[count($parts) - 3] ?? null;
+        }
+        if (count($parts) >= 4) {
+            $post = $parts[count($parts) - 4] ?? null;
+        }
+
+        return [
+            'state' => $state ?: null,
+            'district' => $district ?: null,
+            'post' => $post ?: null,
+            'pincode' => $pincode,
+        ];
+    }
+
+    protected function onlyDigits(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $value);
+        return $digits !== '' ? $digits : null;
     }
 
     protected function previewFormCode(string $type): string

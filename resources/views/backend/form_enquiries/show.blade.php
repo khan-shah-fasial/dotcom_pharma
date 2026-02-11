@@ -257,8 +257,16 @@
                     {!! $showFiles($files['common_drug_licence_files']) !!}
                 </div>
                 <div class="col-md-6 mt-3">
+                    <p class="mb-1 text-muted">{{ translate('GST No.') }}</p>
+                    <div class="fw-600">{{ $item->common_gst_no ?? '-' }}</div>
+                </div>
+                <div class="col-md-6 mt-3">
                     <p class="mb-1 text-muted">{{ translate('Valid GST Certificate') }}</p>
                     {!! $showFiles($files['common_gst_files']) !!}
+                </div>
+                <div class="col-md-6 mt-3">
+                    <p class="mb-1 text-muted">{{ translate('Aadhar No.') }}</p>
+                    <div class="fw-600">{{ $item->common_aadhar_no ?? '-' }}</div>
                 </div>
                 <div class="col-md-6 mt-3">
                     <p class="mb-1 text-muted">{{ translate('Aadhar Card') }}</p>

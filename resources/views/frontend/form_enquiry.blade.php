@@ -376,8 +376,12 @@ div#productPhotoModal .modal-content {
         <div class="container enq-shell">
             <div class="enq-card">
                 <div class="enq-head text-center">
-                    <h1 class="h5 fw-700 mb-1">{{ translate('Product Enquiry / Suggestion Form') }}</h1>
-                    <p class="text-white mb-0">{{ translate('Fill the fields carefully. Uploads stay visible only to admin for review.') }}</p>
+                    <h1 id="form_main_title" class="h5 fw-700 mb-1">
+                        {{ translate((isset($defaultType) && $defaultType === 'suggestion') ? 'Suggest a product' : 'Enquiry') }}
+                    </h1>
+                    <p id="form_sub_title" class="text-white mb-0">
+                        {{ translate((isset($defaultType) && $defaultType === 'suggestion') ? 'Product Suggestion Form' : 'Product Enquiry Form') }}
+                    </p>
                 </div>
                 <div class="p-4">
                     <form id="form-enquiry" class="form-default" action="{{ route('form_enquiry.store') }}" method="POST" enctype="multipart/form-data">
@@ -718,8 +722,16 @@ div#productPhotoModal .modal-content {
                                         <input type="file" class="form-control" name="common_drug_licence_files[]" multiple>
                                     </div>
                                     <div class="col-md-6">
+                                        <label class="label-strong">{{ translate('GST No.') }}</label>
+                                        <input type="text" class="form-control" name="common_gst_no" id="common_gst_no" placeholder="22AAAAA0000A1Z5" maxlength="15">
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="label-strong">{{ translate('Valid GST Certificate') }}</label>
                                         <input type="file" class="form-control" name="common_gst_files[]" multiple>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="label-strong">{{ translate('Aadhar No.') }}</label>
+                                        <input type="text" class="form-control" name="common_aadhar_no" id="common_aadhar_no" placeholder="{{ translate('Enter Aadhar number') }}" maxlength="12">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="label-strong">{{ translate('Aadhar Card No') }}</label>
@@ -744,31 +756,31 @@ div#productPhotoModal .modal-content {
 
                                      <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Company Name') }}</label>
-                                        <input type="text" class="form-control" name="company_name">
+                                        <input type="text" class="form-control" name="company_name" id="company_name">
                                     </div>
 
                                     <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Contact Person') }} *</label>
-                                        <input type="text" class="form-control" name="contact_person" required>
+                                        <input type="text" class="form-control" name="contact_person" id="contact_person" required>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Designation') }}</label>
-                                        <input type="text" class="form-control" name="designation">
+                                        <input type="text" class="form-control" name="designation" id="designation">
                                     </div>
                                     <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Mobile No *') }}</label>
                                         <div class="input-group">
-                                            <input type="text" class="form-control" style="     max-width: 70px !important;    border-radius: 5px 0px 0px 5px !important;" name="mobile_country_code" value="+91">
-                                            <input type="tel" class="form-control" name="mobile_number" required placeholder="{{ translate('Enter number') }}" style="border-radius: 0px 5px 5px 0px !important;">
+                                            <input type="text" class="form-control" style="     max-width: 70px !important;    border-radius: 5px 0px 0px 5px !important;" name="mobile_country_code" id="mobile_country_code" value="+91">
+                                            <input type="tel" class="form-control" name="mobile_number" id="mobile_number" required placeholder="{{ translate('Enter number') }}" style="border-radius: 0px 5px 5px 0px !important;">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="label-strong">{{ translate('E-mail ID *') }}</label>
-                                        <input type="email" class="form-control" name="email" required placeholder="name@example.com">
+                                        <input type="email" class="form-control" name="email" id="company_email" required placeholder="name@example.com">
                                     </div>
                                     <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Website') }}</label>
-                                        <input type="text" class="form-control" name="website" placeholder="https://">
+                                        <input type="text" class="form-control" name="website" id="company_website" placeholder="https://">
                                     </div>
                                     <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Visiting Card') }}</label>
@@ -798,19 +810,19 @@ div#productPhotoModal .modal-content {
 
                                      <div class="col-md-3">
                                         <label class="label-strong">{{ translate('District') }}</label>
-                                        <input type="text" class="form-control" name="company_district">
+                                        <input type="text" class="form-control" name="company_district" id="company_district">
                                     </div>
 
                                      <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Post') }}</label>
-                                        <input type="text" class="form-control" name="company_post">
+                                        <input type="text" class="form-control" name="company_post" id="company_post">
                                     </div>
                                    
 
 
                                      <div class="col-md-12">
                                         <label class="label-strong">{{ translate('Full Address') }}</label>
-                                        <textarea class="form-control" name="company_address" rows="2"></textarea>
+                                        <textarea class="form-control" name="company_address" id="company_address" rows="2"></textarea>
                                     </div>
                                     
                                 </div>
@@ -845,6 +857,9 @@ div#productPhotoModal .modal-content {
     const selectedProductPhotoImg = document.getElementById('selected_product_photo_img');
     const productPhotoModalImg = document.getElementById('productPhotoModalImg');
     const productIdInput = document.getElementById('product_id');
+    const formMainTitle = document.getElementById('form_main_title');
+    const formSubTitle = document.getElementById('form_sub_title');
+    const typeRadios = document.querySelectorAll('input[name="type"]');
     const categoryRadios = document.querySelectorAll('input[name="category"]');
     const domesticRadios = document.querySelectorAll('input[name="domestic_type"]');
     const domesticSections = document.querySelectorAll('.domestic-section');
@@ -874,6 +889,18 @@ div#productPhotoModal .modal-content {
         document.getElementById('form_code_display').value = code;
         document.getElementById('form_code_visual').value = code;
     }
+
+    function setFormTexts(type) {
+        if (!formMainTitle || !formSubTitle) return;
+        if (type === 'suggestion') {
+            formMainTitle.textContent = "{{ translate('Suggest a product') }}";
+            formSubTitle.textContent = "{{ translate('Product Suggestion Form') }}";
+            return;
+        }
+
+        formMainTitle.textContent = "{{ translate('Enquiry') }}";
+        formSubTitle.textContent = "{{ translate('Product Enquiry Form') }}";
+    }
     
     function updateUrlType(type) {
         const url = new URL(window.location.href);
@@ -881,9 +908,10 @@ div#productPhotoModal .modal-content {
         window.history.pushState({ type: type }, '', url.toString());
     }
     
-    document.querySelectorAll('input[name="type"]').forEach(r => {
+    typeRadios.forEach(r => {
         r.addEventListener('change', function() {
             setFormCode();
+            setFormTexts(this.value);
             updateUrlType(this.value);
         });
     });
@@ -891,6 +919,7 @@ div#productPhotoModal .modal-content {
     // Set form code on page load based on default type
     document.addEventListener('DOMContentLoaded', function() {
         setFormCode();
+        setFormTexts(document.querySelector('input[name="type"]:checked')?.value || 'enquiry');
     });
 
     function fetchProducts(q = '') {
@@ -905,7 +934,37 @@ div#productPhotoModal .modal-content {
     }
 
     function getDisplayName(item) {
-        return (item.drug_name || item.name || '').trim();
+        const labels = getProductOptionLabels(item || {});
+        return labels.title || '';
+    }
+
+    function isUsefulName(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        return normalized !== '' && normalized !== 'na' && normalized !== 'n/a' && normalized !== 'null' && normalized !== 'undefined' && normalized !== '-';
+    }
+
+    function getProductOptionLabels(item) {
+        const drugName = (item.drug_name || '').trim();
+        const productName = (item.name || '').trim();
+
+        if (isUsefulName(drugName)) {
+            return {
+                title: drugName,
+                sub: isUsefulName(productName) ? productName : '',
+            };
+        }
+
+        if (isUsefulName(productName)) {
+            return {
+                title: productName,
+                sub: '',
+            };
+        }
+
+        return {
+            title: '',
+            sub: '',
+        };
     }
 
     function escapeHtml(value) {
@@ -926,12 +985,13 @@ div#productPhotoModal .modal-content {
         }
 
         productPickerDropdown.innerHTML = items.map((item) => {
-            const displayName = escapeHtml(getDisplayName(item));
-            const productName = escapeHtml(item.name || '');
+            const labels = getProductOptionLabels(item);
+            const displayName = escapeHtml(labels.title);
+            const productName = escapeHtml(labels.sub);
             return `
                 <div class="autocomplete-option" data-id="${item.id}">
-                    <div class="autocomplete-option-title">${displayName}</div>
-                    <div class="autocomplete-option-sub">${productName}</div>
+                    <div class="autocomplete-option-title">${displayName || '-'}</div>
+                    ${productName ? `<div class="autocomplete-option-sub">${productName}</div>` : ''}
                 </div>
             `;
         }).join('');
@@ -1159,6 +1219,16 @@ div#productPhotoModal .modal-content {
     const companyCountry = document.getElementById('company_country');
     const companyState   = document.getElementById('company_state');
     const companyPincode = document.getElementById('company_pincode');
+    const gstNoInput = document.getElementById('common_gst_no');
+    const companyNameInput = document.getElementById('company_name');
+    const companyDistrictInput = document.getElementById('company_district');
+    const companyPostInput = document.getElementById('company_post');
+    const companyAddressInput = document.getElementById('company_address');
+    const contactPersonInput = document.getElementById('contact_person');
+    const designationInput = document.getElementById('designation');
+    const mobileCountryCodeInput = document.getElementById('mobile_country_code');
+    const mobileNumberInput = document.getElementById('mobile_number');
+    const companyEmailInput = document.getElementById('company_email');
 
     async function loadStates(countryId, stateSelect, selectedStateId = null) {
         if (!stateSelect) return;
@@ -1213,6 +1283,66 @@ div#productPhotoModal .modal-content {
     }
 
     companyPincode?.addEventListener('blur', resolveByPincode);
+
+    async function fillCompanyDetailsByGst() {
+        if (!gstNoInput) return;
+
+        const gstNo = (gstNoInput.value || '').trim().toUpperCase();
+        gstNoInput.value = gstNo;
+        if (!/^[0-9A-Z]{15}$/.test(gstNo)) {
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams({ gst_no: gstNo });
+            const res = await fetch('{{ route('form_enquiry.gst_details') }}?' + params.toString(), {
+                headers: { 'Accept': 'application/json' }
+            });
+            const payload = await res.json();
+            if (!res.ok || !payload?.success || !payload?.data) {
+                return;
+            }
+
+            const data = payload.data;
+
+            if (companyNameInput && data.company_name) {
+                companyNameInput.value = data.company_name;
+            }
+            if (companyAddressInput && data.company_address) {
+                companyAddressInput.value = data.company_address;
+            }
+            if (companyDistrictInput && data.company_district) {
+                companyDistrictInput.value = data.company_district;
+            }
+            if (companyPostInput && data.company_post) {
+                companyPostInput.value = data.company_post;
+            }
+            if (companyPincode && data.company_pincode) {
+                companyPincode.value = data.company_pincode;
+            }
+            if (contactPersonInput && data.contact_person) {
+                contactPersonInput.value = data.contact_person;
+            }
+            if (designationInput && data.designation) {
+                designationInput.value = data.designation;
+            }
+            if (mobileCountryCodeInput && data.mobile_country_code) {
+                mobileCountryCodeInput.value = data.mobile_country_code;
+            }
+            if (mobileNumberInput && data.mobile_number) {
+                mobileNumberInput.value = data.mobile_number;
+            }
+            if (companyEmailInput && data.email) {
+                companyEmailInput.value = data.email;
+            }
+
+        } catch (error) {
+            // Keep form usable even if GST API fails.
+        }
+    }
+
+    gstNoInput?.addEventListener('blur', fillCompanyDetailsByGst);
+
     // initial load if country preselected
     if (companyCountry && companyCountry.value) {
         loadStates(companyCountry.value, companyState, '{{ old('company_state_id') }}');

@@ -662,6 +662,7 @@ Route::controller(FormEnquiryController::class)->group(function () {
     Route::post('/product-enquiry-suggestion', 'store')->name('form_enquiry.store');
     Route::get('/form-enquiry/products', 'products')->name('form_enquiry.products');
     Route::get('/form-enquiry/product/{product}', 'productDetails')->name('form_enquiry.product');
+    Route::get('/form-enquiry/gst-details', 'gstDetails')->name('form_enquiry.gst_details');
 });
 
 Route::controller(PageController::class)->group(function () {
