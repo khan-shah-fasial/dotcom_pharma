@@ -388,7 +388,7 @@ class ProductStockService
 
         // Existing behaviour: whenever detailed stock data changes, mark product unpublished
 
-        //$product->published = 0;
+        $product->published = 0;
 
         $product->save();
     }
