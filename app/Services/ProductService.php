@@ -35,6 +35,22 @@ class ProductService
             }
         }
         $collection['tags'] = implode(',', $tags);
+        if (isset($collection['meta_hashtag'])) {
+            $metaHashtags = [];
+            if (is_array($collection['meta_hashtag']) && isset($collection['meta_hashtag'][0]) && $collection['meta_hashtag'][0] != null) {
+                $decodedMetaHashtags = json_decode($collection['meta_hashtag'][0]);
+                if (is_array($decodedMetaHashtags)) {
+                    foreach ($decodedMetaHashtags as $metaHashtag) {
+                        if (isset($metaHashtag->value)) {
+                            $metaHashtags[] = $metaHashtag->value;
+                        }
+                    }
+                } else {
+                    $metaHashtags = array_filter(array_map('trim', explode(',', $collection['meta_hashtag'][0])));
+                }
+            }
+            $collection['meta_hashtag'] = implode(',', $metaHashtags);
+        }
         $discount_start_date = null;
         $discount_end_date   = null;
         if ($collection['date_range'] != null) {
@@ -236,6 +252,22 @@ class ProductService
             }
         }
         $collection['tags'] = implode(',', $tags);
+        if (isset($collection['meta_hashtag'])) {
+            $metaHashtags = [];
+            if (is_array($collection['meta_hashtag']) && isset($collection['meta_hashtag'][0]) && $collection['meta_hashtag'][0] != null) {
+                $decodedMetaHashtags = json_decode($collection['meta_hashtag'][0]);
+                if (is_array($decodedMetaHashtags)) {
+                    foreach ($decodedMetaHashtags as $metaHashtag) {
+                        if (isset($metaHashtag->value)) {
+                            $metaHashtags[] = $metaHashtag->value;
+                        }
+                    }
+                } else {
+                    $metaHashtags = array_filter(array_map('trim', explode(',', $collection['meta_hashtag'][0])));
+                }
+            }
+            $collection['meta_hashtag'] = implode(',', $metaHashtags);
+        }
         $discount_start_date = null;
         $discount_end_date   = null;
         if ($collection['date_range'] != null) {

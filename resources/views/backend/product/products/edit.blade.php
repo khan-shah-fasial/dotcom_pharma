@@ -948,6 +948,27 @@
                                         <textarea name="meta_description" rows="8" class="form-control">{{ $product->meta_description }}</textarea>
                                     </div>
                                 </div>
+                                <!-- Meta Keyword -->
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{translate('Meta Keyword')}}</label>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="meta_keyword" value="{{ $product->meta_keyword }}" placeholder="{{translate('Meta Keyword')}}">
+                                    </div>
+                                </div>
+                                <!-- Meta Hashtag -->
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{translate('Meta Hashtag')}}</label>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control aiz-tag-input" name="meta_hashtag[]" value="{{ $product->meta_hashtag }}" placeholder="{{ translate('Type to add a hashtag') }}" data-role="tagsinput">
+                                    </div>
+                                </div>
+                                <!-- Meta Caption -->
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{translate('Meta Caption')}}</label>
+                                    <div class="col-md-9">
+                                        <textarea name="meta_caption" rows="4" class="form-control">{{ $product->meta_caption }}</textarea>
+                                    </div>
+                                </div>
                                 <!-- Meta Image -->
                                 <div class="form-group row">
                                     <label class="col-md-3 col-form-label" for="signinSrEmail">{{ translate('Meta Image') }}</label>
