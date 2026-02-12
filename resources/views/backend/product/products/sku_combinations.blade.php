@@ -473,7 +473,8 @@
 												<th style="width: 14%;">{{ translate('Batch Code') }}</th>
 												<th style="width: 10%;">{{ translate('MRP Price') }}</th>
 												<th style="width: 10%;">{{ translate('Stock Qty') }}</th>
-												<th style="width: 12%;">{{ translate('Expiry Date') }}</th>
+												<th style="width: 12%;">{{ translate('Expiry Month') }}</th>
+												<th style="width: 12%;">{{ translate('Mfg Month') }}</th>
 												<th style="width: 12%;">{{ translate('Role Base Price') }}</th>
 												<th style="width: 18%;">{{ translate('COA Document') }}</th>
 												<th style="width: 8%;" class="text-center">{{ translate('Action') }}</th>
@@ -491,7 +492,10 @@
 													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][qty]" value="10" min="0" step="1" class="form-control form-control-sm" required>
 												</td>
 												<td>
-													<input type="date" name="batches[{{ $variantKey }}][0][product_exp_date]" class="form-control form-control-sm">
+													<input type="month" name="batches[{{ $variantKey }}][0][product_exp_date]" class="form-control form-control-sm">
+												</td>
+												<td>
+													<input type="month" name="batches[{{ $variantKey }}][0][manufacturing_date]" class="form-control form-control-sm">
 												</td>
 												<td>
 													<input type="hidden" name="batches[{{ $variantKey }}][0][role_price]" class="batch-role-price-input" value="">
@@ -551,7 +555,10 @@
 					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][qty]" min="0" step="1" class="form-control form-control-sm" required>
 				</td>
 				<td>
-					<input type="date" name="batches[` + variantKey + `][` + index + `][product_exp_date]" class="form-control form-control-sm">
+					<input type="month" name="batches[` + variantKey + `][` + index + `][product_exp_date]" class="form-control form-control-sm">
+				</td>
+				<td>
+					<input type="month" name="batches[` + variantKey + `][` + index + `][manufacturing_date]" class="form-control form-control-sm">
 				</td>
 				<td>
 					<input type="hidden" name="batches[` + variantKey + `][` + index + `][role_price]" class="batch-role-price-input" value="">

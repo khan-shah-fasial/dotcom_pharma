@@ -22,6 +22,7 @@ class ProductBatch extends Model
         'qty',
         'coa',
         'product_exp_date',
+        'manufacturing_date',
     ];
 
     // protected $casts = [

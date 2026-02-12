@@ -1011,6 +1011,7 @@ class HomeController extends Controller
                 'discount_price' => number_format(0, 2),
                 'coa_url' => null,
                 'expiry_date' => null,
+                'manufacturing_date' => null,
                 'batches' => [],
             );
         }
@@ -1038,6 +1039,7 @@ class HomeController extends Controller
             $rolePrice = $selectedBatch->role_price ?? $product->role_price;
             $coa = $selectedBatch->coa ?? null;
             $expiryDate = $selectedBatch->product_exp_date ?? null;
+            $manufacturingDate = $selectedBatch->manufacturing_date ?? null;
             $batchQty = $selectedBatch->qty ?? 0;
         } else {
             // No batch selected - try to get from first available batch or fallback to product-level
@@ -1047,6 +1049,7 @@ class HomeController extends Controller
                 $rolePrice = $firstBatch->role_price ?? $product->role_price;
                 $coa = $firstBatch->coa ?? null;
                 $expiryDate = $firstBatch->product_exp_date ?? null;
+                $manufacturingDate = $firstBatch->manufacturing_date ?? null;
                 $batchQty = $firstBatch->qty ?? 0;
             } else {
                 // No batches exist - fallback to product-level (NOT stock-level)
@@ -1054,6 +1057,7 @@ class HomeController extends Controller
                 $rolePrice = $product->role_price; // Only product-level, NOT stock-level
                 $coa = $product_stock->coa ?? null;
                 $expiryDate = $product_stock->product_exp_date ?? null;
+                $manufacturingDate = null;
                 $batchQty = $product_stock->qty ?? 0;
             }
         }
@@ -1082,7 +1086,8 @@ class HomeController extends Controller
         $weight = $product_stock->weight ?? $product->product_weight_vol;
         $count = $product_stock->count;
         $stock_min_qty = $product_stock->min_qty;
-        $formattedExpiry = $expiryDate ? Carbon::parse($expiryDate)->format('d M Y') : null;
+        $formattedExpiry = $expiryDate ? Carbon::parse($expiryDate)->format('M Y') : null;
+        $formattedManufacturing = $manufacturingDate ? Carbon::parse($manufacturingDate)->format('M Y') : null;
         $qty_per_piece = $product_stock->qty_per_piece ?? null;
         $qty_per_buffer_box = $product_stock->qty_per_buffer_box ?? null;
         $buffer_box_per_case = $product_stock->buffer_box_per_case ?? null;
@@ -1167,7 +1172,8 @@ class HomeController extends Controller
         $batchesData = [];
         foreach ($batches as $batch) {
             $batchCoaUrl = $batch->coa ? uploaded_asset($batch->coa) : null;
-            $batchExpiry = $batch->product_exp_date ? Carbon::parse($batch->product_exp_date)->format('d M Y') : null;
+            $batchExpiry = $batch->product_exp_date ? Carbon::parse($batch->product_exp_date)->format('M Y') : null;
+            $batchManufacturing = $batch->manufacturing_date ? Carbon::parse($batch->manufacturing_date)->format('M Y') : null;
             $batchRolePrice = $batch->role_price ?? [];
             
             $batchesData[] = [
@@ -1179,6 +1185,8 @@ class HomeController extends Controller
                 'coa_url' => $batchCoaUrl,
                 'expiry_date' => $batchExpiry,
                 'expiry_date_raw' => $batch->product_exp_date,
+                'manufacturing_date' => $batchManufacturing,
+                'manufacturing_date_raw' => $batch->manufacturing_date,
                 'role_price' => $batchRolePrice,
                 'role_price_formatted' => $batchRolePrice ? json_encode($batchRolePrice) : null,
             ];
@@ -1212,6 +1220,7 @@ class HomeController extends Controller
             'discount_price' => number_format($discount_temp, 2),
             'coa_url' => $coa_url,
             'expiry_date' => $formattedExpiry,
+            'manufacturing_date' => $formattedManufacturing,
             'batches' => $batchesData,
             'selected_batch_id' => $selectedBatch ? $selectedBatch->id : null,
         );

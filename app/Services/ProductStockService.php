@@ -10,6 +10,28 @@ use App\Models\Product;
 
 class ProductStockService
 {
+    protected function normalizeBatchMonthYearDate($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('/^\d{4}-\d{2}$/', $value)) {
+            return $value . '-01';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return $value;
+        }
+
+        return null;
+    }
+
     public function store(array $data, $product)
     {
         $collection = collect($data);
@@ -336,7 +358,7 @@ class ProductStockService
         foreach ($batchesInput as $row) {
             // Skip completely empty rows (e.g. template clones not filled)
             $hasContent = false;
-            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'coa'] as $field) {
+            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
                 if (!empty($row[$field])) {
                     $hasContent = true;
                     break;
@@ -357,11 +379,14 @@ class ProductStockService
             $batch->batch            = $row['batch'] ?? null;
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
-            $batch->product_exp_date = $row['product_exp_date'] ?? null;
+            $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null);
+            $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
 
-            // Role-based prices per batch: use request value or generate from MRP
-            if (!empty($mrpPrice) && function_exists('generateRoleBasedPrices')) {
+            // Role-based prices per batch: preserve submitted value when available.
+            if (!empty($row['role_price'])) {
+                $batch->role_price = is_string($row['role_price']) ? $row['role_price'] : json_encode($row['role_price']);
+            } elseif (!empty($mrpPrice) && function_exists('generateRoleBasedPrices')) {
                 $batch->role_price = generateRoleBasedPrices((float) 0);
             }
 
@@ -423,7 +448,7 @@ class ProductStockService
 
         foreach ($batchesInput as $row) {
             $hasContent = false;
-            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'coa'] as $field) {
+            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
                 if (isset($row[$field]) && (string) $row[$field] !== '') {
                     $hasContent = true;
                     break;
@@ -450,14 +475,15 @@ class ProductStockService
             $batch->batch            = $row['batch'] ?? $batch->batch;
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
-            $batch->product_exp_date = $row['product_exp_date'] ?? null;
+            $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null);
+            $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
 
-            // if (!empty($row['role_price'])) {
-            //     $batch->role_price = is_string($row['role_price']) ? $row['role_price'] : json_encode($row['role_price']);
-            // } elseif (!empty($mrpPrice) && function_exists('generateRoleBasedPrices')) {
-            //     $batch->role_price = generateRoleBasedPrices((float) $mrpPrice);
-            // }
+            if (!empty($row['role_price'])) {
+                $batch->role_price = is_string($row['role_price']) ? $row['role_price'] : json_encode($row['role_price']);
+            } elseif (!$batch->role_price && !empty($mrpPrice) && function_exists('generateRoleBasedPrices')) {
+                $batch->role_price = generateRoleBasedPrices((float) 0);
+            }
 
             $batch->save();
 

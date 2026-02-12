@@ -784,7 +784,9 @@
 
         @php
             $initialExpiry = optional($detailedProduct->stocks->first())->product_exp_date;
-            $initialExpiryFormatted = $initialExpiry ? \Carbon\Carbon::parse($initialExpiry)->format('d M Y') : '-';
+            $initialExpiryFormatted = $initialExpiry ? \Carbon\Carbon::parse($initialExpiry)->format('M Y') : '-';
+            $initialManufacturing = optional(optional($detailedProduct->stocks->first())->batches->first())->manufacturing_date;
+            $initialManufacturingFormatted = $initialManufacturing ? \Carbon\Carbon::parse($initialManufacturing)->format('M Y') : '-';
         @endphp
 
 
@@ -903,6 +905,31 @@
                                                     {{ translate('Expiry Date') }}:</p>
                                                 <p id="product-expiry-date" class="fw-500 fs-14 mb-0">
                                                     {{ $initialExpiryFormatted }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-calendar-check-2 w-5 h-5">
+                                                    <path d="M8 2v4"></path>
+                                                    <path d="M16 2v4"></path>
+                                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                                    <path d="M3 10h18"></path>
+                                                    <path d="m9 16 2 2 4-4"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Manufacturing Date') }}:</p>
+                                                <p id="product-manufacturing-date" class="fw-500 fs-14 mb-0">
+                                                    {{ $initialManufacturingFormatted }}</p>
                                             </div>
                                         </div>
                                     </div>

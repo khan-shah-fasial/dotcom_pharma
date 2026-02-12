@@ -953,6 +953,7 @@
 
                         $('#tax-product-details').html('Rs. ' + (data?.tax ?? '-'));
                         $('#product-expiry-date').html(data?.expiry_date ?? '-');
+                        $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
 
                         let withoutTaxPrice = data?.without_tax_price ?? '-';
                         // remove decimal part if it's a number/string with decimals
@@ -1152,12 +1153,14 @@
                                         let qnt = data?.quantity ?? 0;
                                         $('#batch-lot-product-details').html('');
                                         $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
+                                        $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
                                     }
                                 })();
                             } else {
                                 $batchSection.hide();
                                 $batchesContainer.empty();
                                 $('#selected_batch_id').val('');
+                                $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
                             }
                         }
 
@@ -1275,6 +1278,7 @@
                 
                 // Update expiry date immediately
                 $('#product-expiry-date').html(batchData.expiry_date || '-');
+                $('#product-manufacturing-date').html(batchData.manufacturing_date || '-');
 
                 // Update batch / lot no.
                 const batchLabel = (batchData.batch && batchData.batch.trim() !== '')

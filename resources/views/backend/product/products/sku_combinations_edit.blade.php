@@ -491,7 +491,8 @@
                                                         <th style="width: 12%;">{{ translate('Batch Code') }}</th>
                                                         <th style="width: 10%;">{{ translate('MRP Price') }}</th>
                                                         <th style="width: 9%;">{{ translate('Stock Qty') }}</th>
-                                                        <th style="width: 11%;">{{ translate('Expiry Date') }}</th>
+                                                        <th style="width: 11%;">{{ translate('Expiry Month') }}</th>
+                                                        <th style="width: 11%;">{{ translate('Mfg Month') }}</th>
                                                         <th style="width: 18%;">{{ translate('Role Base Price') }}</th>
                                                         <th style="width: 18%;">{{ translate('COA Document') }}</th>
                                                         <th style="width: 8%;" class="text-center">{{ translate('Action') }}</th>
@@ -506,19 +507,37 @@
                                                             <tr class="batch-row">
                                                                 <td>
                                                                     <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][id]" value="{{ $batch->id }}">
-                                                                    <input type="text" name="batches[{{ $variantKey }}][{{ $batchIndex }}][batch]" class="form-control form-control-sm" value="{{ $batch->batch }}" placeholder="{{ translate('Batch code') }}" required>
+                                                                    <input type="text" name="batches[{{ $variantKey }}][{{ $batchIndex }}][batch]" class="form-control form-control-sm" value="{{ data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.batch', $batch->batch) }}" placeholder="{{ translate('Batch code') }}" required>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="number" lang="en" name="batches[{{ $variantKey }}][{{ $batchIndex }}][mrp_price]" value="{{ $batch->mrp_price }}" min="0" step="0.01" class="form-control form-control-sm" required>
+                                                                    <input type="number" lang="en" name="batches[{{ $variantKey }}][{{ $batchIndex }}][mrp_price]" value="{{ data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.mrp_price', $batch->mrp_price) }}" min="0" step="0.01" class="form-control form-control-sm" required>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="number" lang="en" name="batches[{{ $variantKey }}][{{ $batchIndex }}][qty]" value="{{ $batch->qty }}" min="0" step="1" class="form-control form-control-sm" required>
+                                                                    <input type="number" lang="en" name="batches[{{ $variantKey }}][{{ $batchIndex }}][qty]" value="{{ data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.qty', $batch->qty) }}" min="0" step="1" class="form-control form-control-sm" required>
                                                                 </td>
                                                                 <td>
-                                                                    <input type="date" name="batches[{{ $variantKey }}][{{ $batchIndex }}][product_exp_date]" value="{{ $batch->product_exp_date }}" class="form-control form-control-sm">
+                                                                    @php
+                                                                        $reqExpiry = data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.product_exp_date');
+                                                                        $batchExpiryValue = $reqExpiry !== null
+                                                                            ? $reqExpiry
+                                                                            : ($batch->product_exp_date ? \Carbon\Carbon::parse($batch->product_exp_date)->format('Y-m') : '');
+                                                                    @endphp
+                                                                    <input type="month" name="batches[{{ $variantKey }}][{{ $batchIndex }}][product_exp_date]" value="{{ $batchExpiryValue }}" class="form-control form-control-sm">
                                                                 </td>
                                                                 <td>
-                                                                    <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][role_price]" class="batch-role-price-input" value="{{ $batch->role_price ?? '' }}">
+                                                                    @php
+                                                                        $reqMfg = data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.manufacturing_date');
+                                                                        $batchMfgValue = $reqMfg !== null
+                                                                            ? $reqMfg
+                                                                            : ($batch->manufacturing_date ? \Carbon\Carbon::parse($batch->manufacturing_date)->format('Y-m') : '');
+                                                                    @endphp
+                                                                    <input type="month" name="batches[{{ $variantKey }}][{{ $batchIndex }}][manufacturing_date]" value="{{ $batchMfgValue }}" class="form-control form-control-sm">
+                                                                </td>
+                                                                <td>
+                                                                    @php
+                                                                        $batchRolePriceRequest = data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.role_price');
+                                                                    @endphp
+                                                                    <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][role_price]" class="batch-role-price-input" value="{{ $batchRolePriceRequest ?? ($batch->role_price ?? '') }}">
                                                                     @if (!empty($batchRolePrice) && count($batchRolePrice) > 0)
                                                                         <div class="small">
                                                                             @foreach ($batchRolePrice as $role => $price)
@@ -536,7 +555,7 @@
                                                                                 <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
                                                                             </div>
                                                                             <div class="form-control file-amount text-truncate">{{ $batch->coa ? translate('File Selected') : translate('Choose PDF') }}</div>
-                                                                            <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][coa]" class="selected-files" value="{{ $batch->coa ?? '' }}">
+                                                                            <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][coa]" class="selected-files" value="{{ data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.coa', $batch->coa ?? '') }}">
                                                                         </div>
                                                                         <div class="file-preview box sm"></div>
                                                                     </div>
@@ -551,19 +570,22 @@
                                                     @else
                                                         <tr class="batch-row">
                                                             <td>
-                                                                <input type="text" name="batches[{{ $variantKey }}][0][batch]" class="form-control form-control-sm" placeholder="{{ translate('Batch code') }}" required>
+                                                                <input type="text" name="batches[{{ $variantKey }}][0][batch]" class="form-control form-control-sm" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.batch', '') }}" placeholder="{{ translate('Batch code') }}" required>
                                                             </td>
                                                             <td>
-                                                                <input type="number" lang="en" name="batches[{{ $variantKey }}][0][mrp_price]" value="{{ $stock && $stock->mrp_price !== null ? $stock->mrp_price : $unit_price }}" min="0" step="0.01" class="form-control form-control-sm" required>
+                                                                <input type="number" lang="en" name="batches[{{ $variantKey }}][0][mrp_price]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.mrp_price', $stock && $stock->mrp_price !== null ? $stock->mrp_price : $unit_price) }}" min="0" step="0.01" class="form-control form-control-sm" required>
                                                             </td>
                                                             <td>
-                                                                <input type="number" lang="en" name="batches[{{ $variantKey }}][0][qty]" value="{{ $stock && $stock->qty !== null ? $stock->qty : 10 }}" min="0" step="1" class="form-control form-control-sm" required>
+                                                                <input type="number" lang="en" name="batches[{{ $variantKey }}][0][qty]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.qty', $stock && $stock->qty !== null ? $stock->qty : 10) }}" min="0" step="1" class="form-control form-control-sm" required>
                                                             </td>
                                                             <td>
-                                                                <input type="date" name="batches[{{ $variantKey }}][0][product_exp_date]" value="{{ $stock->product_exp_date ?? null }}" class="form-control form-control-sm">
+                                                                <input type="month" name="batches[{{ $variantKey }}][0][product_exp_date]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.product_exp_date', $stock && $stock->product_exp_date ? \Carbon\Carbon::parse($stock->product_exp_date)->format('Y-m') : '') }}" class="form-control form-control-sm">
                                                             </td>
                                                             <td>
-                                                                <input type="hidden" name="batches[{{ $variantKey }}][0][role_price]" class="batch-role-price-input" value="">
+                                                                <input type="month" name="batches[{{ $variantKey }}][0][manufacturing_date]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.manufacturing_date', '') }}" class="form-control form-control-sm">
+                                                            </td>
+                                                            <td>
+                                                                <input type="hidden" name="batches[{{ $variantKey }}][0][role_price]" class="batch-role-price-input" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.role_price', '') }}">
                                                                 <small class="text-muted">{{ translate('Auto from MRP') }}</small>
                                                             </td>
                                                             <td class="coa-uploader-cell">
@@ -682,8 +704,13 @@
                         required>
                 </td>
                 <td>
-                    <input type="date"
+                    <input type="month"
                         name="batches[` + variantKey + `][` + index + `][product_exp_date]"
+                        class="form-control form-control-sm">
+                </td>
+                <td>
+                    <input type="month"
+                        name="batches[` + variantKey + `][` + index + `][manufacturing_date]"
                         class="form-control form-control-sm">
                 </td>
                 <td>
