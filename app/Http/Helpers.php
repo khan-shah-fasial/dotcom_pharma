@@ -2302,13 +2302,7 @@ if (!function_exists('get_similar_products')) {
     {
         $excludeIds = array_unique([$product->id]);
 
-        $category = $product->category_id ? Category::find($product->category_id) : null;
-        if (!$category) {
-            return collect([]);
-        }
-
-        // if product is in a main category (no parent), show peers from that main category
-        // otherwise show peers from its specific sub-category (and any additional pivot categories)
+        // Collect all categories attached to the product (main + pivot)
         $categoryIds = collect([$product->category_id])
             ->merge($product->categories()->pluck('categories.id'))
             ->filter()
@@ -2319,14 +2313,30 @@ if (!function_exists('get_similar_products')) {
             return collect([]);
         }
 
-        $query = Product::where(function ($q) use ($categoryIds) {
-            $q->whereIn('category_id', $categoryIds)
-                ->orWhereIn('id', function ($sub) use ($categoryIds) {
-                    $sub->from('product_categories')
-                        ->select('product_id')
-                        ->whereIn('category_id', $categoryIds);
-                });
-        })->whereNotIn('id', $excludeIds);
+        // Find which of the attached categories are leaves (last level)
+        $childCounts = Category::whereIn('parent_id', $categoryIds)
+            ->selectRaw('parent_id, COUNT(*) as children_count')
+            ->groupBy('parent_id')
+            ->pluck('children_count', 'parent_id');
+
+        $leafCategoryIds = $categoryIds->filter(function ($id) use ($childCounts) {
+            return (int) ($childCounts[$id] ?? 0) === 0;
+        })->values();
+
+        // If the product is not mapped to any last-level category, hide Similar Products
+        if ($leafCategoryIds->isEmpty()) {
+            return collect([]);
+        }
+
+        $query = Product::whereNotIn('id', $excludeIds)
+            ->where(function ($q) use ($leafCategoryIds) {
+                $q->whereIn('category_id', $leafCategoryIds)
+                    ->orWhereIn('id', function ($sub) use ($leafCategoryIds) {
+                        $sub->from('product_categories')
+                            ->select('product_id')
+                            ->whereIn('category_id', $leafCategoryIds);
+                    });
+            });
 
         return filter_products($query)->inRandomOrder()->limit($limit)->get();
     }
@@ -2336,27 +2346,90 @@ if (!function_exists('get_similar_products')) {
 if (!function_exists('get_brand_related_products')) {
     function get_brand_related_products($product, $limit = 12)
     {
+        // Collect all categories attached to the product (main + pivot)
         $categoryIds = collect([$product->category_id])
             ->merge($product->categories()->pluck('categories.id'))
             ->filter()
             ->unique()
             ->values();
 
-        if ($categoryIds->isEmpty()) {
+        // Exclude the main category_id from candidate pools (per requirement)
+        $nonMainCategoryIds = $categoryIds->reject(function ($id) use ($product) {
+            return (int) $id === (int) $product->category_id;
+        })->values();
+
+        if ($nonMainCategoryIds->isEmpty()) {
             return collect([]);
         }
 
+        // Preload category records once
+        $attachedCategories = Category::whereIn('id', $nonMainCategoryIds)->get()->keyBy('id');
+
+        // Require at least one selected second-level (level = 1) category; otherwise hide section
+        $selectedSecondLevelIds = $attachedCategories->filter(function ($cat) {
+            return (int) $cat->level === 1;
+        })->keys();
+        if ($selectedSecondLevelIds->isEmpty()) {
+            $GLOBALS['brand_related_label_'.$product->id] = null;
+            $GLOBALS['brand_related_label_name_'.$product->id] = null;
+            return collect([]);
+        }
+
+        // Determine last-level categories and then their parents (second last level)
+        $childCounts = Category::whereIn('parent_id', $nonMainCategoryIds)
+            ->selectRaw('parent_id, COUNT(*) as children_count')
+            ->groupBy('parent_id')
+            ->pluck('children_count', 'parent_id');
+
+        $leafCategoryIds = $nonMainCategoryIds->filter(function ($id) use ($childCounts) {
+            return (int) ($childCounts[$id] ?? 0) === 0;
+        })->values();
+
+        // Parents of leaf nodes give us the second-last level categories
+        $parentCategoryIds = Category::whereIn('id', $leafCategoryIds)
+            ->pluck('parent_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        // Fallback: if no leafs or parents resolved, pick the deepest-level attached non-main categories
+        if ($parentCategoryIds->isEmpty()) {
+            $deepestLevel = Category::whereIn('id', $nonMainCategoryIds)->max('level');
+            $parentCategoryIds = Category::whereIn('id', $nonMainCategoryIds)
+                ->where('level', $deepestLevel)
+                ->pluck('id')
+                ->values();
+        }
+
+        // choose heading label (highest id for determinism) and store globally for reuse
+        $labelCategoryId = $parentCategoryIds->sortDesc()->first();
+        $GLOBALS['brand_related_label_'.$product->id] = $labelCategoryId;
+        $labelCategory = $labelCategoryId ? Category::find($labelCategoryId) : null;
+        $GLOBALS['brand_related_label_name_'.$product->id] = $labelCategory
+            ? $labelCategory->getTranslation('name')
+            : null;
+
         $query = Product::where('id', '!=', $product->id)
-            ->where(function ($q) use ($categoryIds) {
-                $q->whereIn('category_id', $categoryIds)
-                    ->orWhereIn('id', function ($sub) use ($categoryIds) {
+            ->where(function ($q) use ($parentCategoryIds) {
+                $q->whereIn('category_id', $parentCategoryIds)
+                    ->orWhereIn('id', function ($sub) use ($parentCategoryIds) {
                         $sub->from('product_categories')
                             ->select('product_id')
-                            ->whereIn('category_id', $categoryIds);
+                            ->whereIn('category_id', $parentCategoryIds);
                     });
             });
 
         return filter_products($query)->inRandomOrder()->limit($limit)->get();
+    }
+}
+
+// Resolve the display name for the "More From" carousel (second-last level category)
+if (!function_exists('get_brand_related_category_name')) {
+    function get_brand_related_category_name($product)
+    {
+        // just return the cached name; no queries here
+        return $GLOBALS['brand_related_label_name_'.$product->id]
+            ?? optional($product->main_category)->getTranslation('name');
     }
 }
 
