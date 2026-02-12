@@ -160,6 +160,23 @@
     .batch-separator {
         opacity: 0.4;
     }
+
+    /* Compact Select2 for batch dropdown */
+    #batch-selection-section .select2-container .select2-selection--single {
+        height: 34px !important;
+        min-height: 34px !important;
+        border-radius: 4px !important;
+        border: 1px solid #d6d6d6 !important;
+    }
+    #batch-selection-section .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 32px !important;
+        font-size: 12px !important;
+        padding-left: 10px !important;
+        padding-right: 28px !important;
+    }
+    #batch-selection-section .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 32px !important;
+    }
 </style>
 
 <div class="text-left product_disc_text">
@@ -429,9 +446,11 @@
 
 
                         <!-- Batch Selection Section -->
-                        <div class="col-12 pl-0 pb-0 mt-md-3 mt-2" id="batch-selection-section" style="display: none;">
-                            <div class="fw-500 fs-14 text-dark mb-2">{{ translate('Select Batch') }}:</div>
-                            <div id="batches-container" class="batches-list"></div>
+                        <div class="col-4 pl-0 pb-0 mt-md-3 mt-2" id="batch-selection-section" style="display: none;">
+                            <div class="fw-500 fs-14 text-dark mb-2">{{ translate('Choose Batch') }}:</div>
+                            <select id="batch-dropdown" class="form-control form-control-sm" data-placeholder="{{ translate('Search batch code') }}">
+                                <option value="">{{ translate('Choose Batch') }}</option>
+                            </select>
                         </div>
 
 
@@ -2559,21 +2578,19 @@
                                             batchSelectAttempts++;
                                             
                                             if (response.batch_id) {
-                                                var $batchPill = $('.batch-pill[data-batch-id="' + response.batch_id + '"]');
-                                                var $batchesContainer = $('#batches-container');
+                                                var $batchDropdown = $('#batch-dropdown');
                                                 
-                                                if ($batchPill.length > 0 && $batchesContainer.length > 0) {
+                                                if ($batchDropdown.length > 0) {
                                                     // Batches are rendered, select the batch
-                                                    var batchesMap = $batchesContainer.data('batches-map') || {};
+                                                    var batchesMap = $batchDropdown.data('batches-map') || {};
                                                     var batchData = batchesMap[response.batch_id];
                                                     
                                                     if (batchData && typeof selectBatch === 'function') {
                                                         selectBatch(response.batch_id, batchData);
                                                     } else {
-                                                        // Fallback: manually select the batch pill
-                                                        $batchPill.addClass('selected active');
+                                                        // Fallback: set dropdown value and refresh price
+                                                        $batchDropdown.val(String(response.batch_id));
                                                         $('#selected_batch_id').val(response.batch_id);
-                                                        // Trigger price update with selected batch
                                                         getVariantPrice(true);
                                                     }
                                                     autoSelectInProgress = false;

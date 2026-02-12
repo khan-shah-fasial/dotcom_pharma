@@ -149,6 +149,26 @@
                                                 required
                                             >
                                         </div>
+
+                                        <div class="col-sm-12 mb-2">
+                                            <div class="d-flex align-items-start">
+                                                <label class="aiz-switch aiz-switch-success mb-0 mr-2 mt-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="is_hidden_{{ $str }}"
+                                                        value="1"
+                                                        @if (request()->has('is_hidden_'.$str) ? true : (($stock->is_hidden ?? false) == true)) checked @endif
+                                                    >
+                                                    <span></span>
+                                                </label>
+                                                <div>
+                                                    <label class="form-label mb-0 d-block">{{ translate('Hide Variant from Product Details') }}</label>
+                                                    <small class="text-muted">{{ translate('Enable this to keep this variant unavailable on the product page.') }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+
                                     </div>
                                 </div>
 
@@ -194,23 +214,26 @@
                                                     required
                                                 >
                                             </div>
-                                            <div class="col-sm-12 col-lg-4 mb-2">
-                                                <div class="d-flex align-items-start">
-                                                    <label class="aiz-switch aiz-switch-success mb-0 mr-2 mt-1">
-                                                        <input
-                                                            type="checkbox"
-                                                            name="is_hidden_{{ $str }}"
-                                                            value="1"
-                                                            @if (request()->has('is_hidden_'.$str) ? true : (($stock->is_hidden ?? false) == true)) checked @endif
-                                                        >
-                                                        <span></span>
-                                                    </label>
-                                                    <div>
-                                                        <label class="form-label mb-0 d-block">{{ translate('Hide Variant from Product Details') }}</label>
-                                                        <small class="text-muted">{{ translate('Enable this to keep this variant unavailable on the product page.') }}</small>
+
+                                            <div class="col-md-6 col-lg-4">
+                                                <label class="form-label mb-1">{{ translate('Photo') }}</label>
+                                                <div class="input-group" data-toggle="aizuploader" data-type="image">
+                                                    <div class="input-group-prepend">
+                                                        <div class="input-group-text bg-soft-secondary font-weight-medium">
+                                                            {{ translate('Browse') }}</div>
                                                     </div>
+                                                    <div class="form-control file-amount text-truncate">
+                                                        {{ translate('Choose File') }}</div>
+                                                    <input
+                                                        type="hidden"
+                                                        name="img_{{ $str }}"
+                                                        class="selected-files"
+                                                        value="{{ request('img_'.$str, $stock->image ?? null) }}"
+                                                    >
                                                 </div>
+                                                <div class="file-preview box sm"></div>
                                             </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -452,24 +475,6 @@
                                 </div>
                             </div>
                             <div class="row gutters-10">
-                                <div class="col-md-12 mt-3">
-                                    <h6 class="text-muted mb-2">{{ translate('Photo') }}</h6>
-                                    <div class="input-group" data-toggle="aizuploader" data-type="image">
-                                        <div class="input-group-prepend">
-                                            <div class="input-group-text bg-soft-secondary font-weight-medium">
-                                                {{ translate('Browse') }}</div>
-                                        </div>
-                                        <div class="form-control file-amount text-truncate">
-                                            {{ translate('Choose File') }}</div>
-                                        <input
-                                            type="hidden"
-                                            name="img_{{ $str }}"
-                                            class="selected-files"
-                                            value="{{ request('img_'.$str, $stock->image ?? null) }}"
-                                        >
-                                    </div>
-                                    <div class="file-preview box sm"></div>
-                                </div>
 
                                 @php
                                     $variantKey = strtolower(str_replace(['.', ' ', '-'], '_', $str));

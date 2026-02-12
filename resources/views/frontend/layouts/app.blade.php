@@ -1036,96 +1036,52 @@
                         if (!isUpdatingBatch) {
                             // batches already computed above; reuse here
                             const $batchSection = $('#batch-selection-section');
-                            const $batchesContainer = $('#batches-container');
+                            const $batchDropdown = $('#batch-dropdown');
                             
                             if (batches.length > 0) {
                                 $batchSection.show();
                                 
-                                // Only rebuild HTML if batches container is empty or variant changed
-                                const currentVariant = $('#batches-container').data('variant');
-                                if (currentVariant !== data.variation || $batchesContainer.children().length === 0) {
-                                    $batchesContainer.empty();
-                                    
-                                    let batchesHtml = '<div class="row">';
-                                    batches.forEach(function(batch, index) {
-                                        const isSelected = (data.selected_batch_id && batch.id == data.selected_batch_id) || (index === 0 && !data.selected_batch_id);
-                                        const batchClass = isSelected ? 'batch-item selected active' : 'batch-item';
-                                        
-                                        {{-- // batchesHtml += `
-                                        //     <div class="col-md-6 col-12 mb-2">
-                                        //         <div class="batch-card ${batchClass}" data-batch-id="${batch.id}">
-                                        //             <div class="d-flex justify-content-between align-items-start">
-                                        //                 <div class="flex-grow-1">
-                                        //                     <div class="fw-600 fs-14 mb-1">${(batch.batch && batch.batch.trim() !== '') ? batch.batch : ('Batch #' + batch.id)}</div>
-                                        //                     <div class="fs-12 text-secondary mb-1">
-                                        //                         <span class="mr-3">MRP: ${batch.mrp_price_formatted || '-'}</span>
-                                        //                         <span>Qty: ${batch.qty || 0}</span>
-                                        //                     </div>
-                                        //                     ${batch.expiry_date ? '<div class="fs-12 text-secondary">Expiry: ' + batch.expiry_date + '</div>' : ''}
-                                        //                 </div>
-                                        //                 ${batch.coa_url ? '<a href="' + batch.coa_url + '" target="_blank" class="btn btn-xs btn-outline-primary ml-2" onclick="event.stopPropagation()">COA</a>' : ''}
-                                        //             </div>
-                                        //         </div>
-                                        //     </div>
-                                        // `; --}}
+                                // Build compact dropdown with batch code only
+                                $batchDropdown.empty();
+                                batches.forEach(function(batch) {
+                                    const batchLabel = (batch.batch && batch.batch.trim() !== '')
+                                        ? batch.batch
+                                        : ('Batch ' + batch.id);
+                                    $batchDropdown.append(
+                                        $('<option>', { value: batch.id, text: batchLabel })
+                                    );
+                                });
 
-                                        batchesHtml += `
-                                            <div class="col-md-3 col-12 mb-2">
-                                                <div class="batch-pill ${batchClass}"
-                                                    data-batch-id="${batch.id}"
-                                                    title="Batch ${batch.batch || batch.id}">
-                                                    
-                                                    <span class="batch-name">
-                                                        ${batch.batch && batch.batch.trim() !== '' 
-                                                            ? batch.batch 
-                                                            : `Batch ${batch.id}`}
-                                                    </span>
+                                // Store batch data in a map for easy access
+                                const batchesMap = {};
+                                batches.forEach(function(batch) {
+                                    batchesMap[batch.id] = batch;
+                                });
+                                $batchDropdown.data('batches-map', batchesMap).data('variant', data.variation);
 
-                                                    ${batch.expiry_date 
-                                                        ? `<span class="batch-separator">•</span>
-                                                        <span class="batch-expiry">Exp ${batch.expiry_date}</span>` 
-                                                        : ``}
-                                                </div>
-                                            </div>
-                                        `;
-                                    });
-                                    batchesHtml += '</div>';
-                                    
-                                    $batchesContainer.html(batchesHtml).data('variant', data.variation);
-                                    
-                                    // Store batch data in a map for easy access
-                                    const batchesMap = {};
-                                    batches.forEach(function(batch) {
-                                        batchesMap[batch.id] = batch;
-                                    });
-                                    $batchesContainer.data('batches-map', batchesMap);
-                                    
-                                    // Attach click handlers using jQuery instead of inline onclick
-                                    $batchesContainer.find('.batch-pill').off('click').on('click', function(e) {
-                                        if ($(e.target).closest('a').length > 0) return; // Don't trigger if clicking COA link
-                                        const batchId = $(this).data('batch-id');
-                                        const batchesMap = $batchesContainer.data('batches-map') || {};
-                                        const batchData = batchesMap[batchId];
-                                        if (batchData) {
-                                            selectBatch(batchId, batchData);
-                                        }
-                                    });
-                                } else {
-                                    // Just update selected state without rebuilding
-                                    $batchesContainer.find('.batch-pill').removeClass('selected active');
-                                    if (data.selected_batch_id) {
-                                        $batchesContainer.find(`.batch-pill[data-batch-id="${data.selected_batch_id}"]`).addClass('selected active');
-                                    } else if (batches.length > 0) {
-                                        $batchesContainer.find('.batch-pill').first().addClass('selected active');
+                                // Set selected option
+                                const selectedBatchId = data.selected_batch_id ? String(data.selected_batch_id) : String(batches[0].id);
+                                $batchDropdown.val(selectedBatchId);
+
+                                // Attach change handler
+                                $batchDropdown.off('change').on('change', function() {
+                                    const batchId = $(this).val();
+                                    const map = $batchDropdown.data('batches-map') || {};
+                                    const batchData = map[batchId];
+                                    if (batchData) {
+                                        selectBatch(batchId, batchData);
                                     }
-                                    
-                                    // Update batches map if needed
-                                    const batchesMap = {};
-                                    batches.forEach(function(batch) {
-                                        batchesMap[batch.id] = batch;
-                                    });
-                                    $batchesContainer.data('batches-map', batchesMap);
+                                });
+
+                                // Initialize compact searchable select2
+                                if ($batchDropdown.hasClass('select2-hidden-accessible')) {
+                                    $batchDropdown.select2('destroy');
                                 }
+                                $batchDropdown.select2({
+                                    width: '100%',
+                                    minimumResultsForSearch: 0,
+                                    placeholder: $batchDropdown.data('placeholder') || 'Search batch code'
+                                });
                                 
                                 // Set first batch as selected if none selected
                                 if (!data.selected_batch_id && batches.length > 0) {
@@ -1136,7 +1092,7 @@
 
                                 // Update batch-specific summary (batch no. and qty) based on currently selected batch
                                 (function () {
-                                    const batchesMap = $batchesContainer.data('batches-map') || {};
+                                    const batchesMap = $batchDropdown.data('batches-map') || {};
                                     const selectedId = $('#selected_batch_id').val();
                                     const selectedBatch = selectedId ? batchesMap[selectedId] : null;
 
@@ -1158,7 +1114,10 @@
                                 })();
                             } else {
                                 $batchSection.hide();
-                                $batchesContainer.empty();
+                                if ($batchDropdown.hasClass('select2-hidden-accessible')) {
+                                    $batchDropdown.select2('destroy');
+                                }
+                                $batchDropdown.empty();
                                 $('#selected_batch_id').val('');
                                 $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
                             }
@@ -1268,8 +1227,8 @@
             $('#selected_batch_id').attr('value', batchId);
             
             // Update UI immediately
-            $('.batch-pill').removeClass('selected active');
-            $(`.batch-pill[data-batch-id="${batchId}"]`).addClass('selected active');
+            // Sync dropdown selected value
+            $('#batch-dropdown').val(String(batchId));
             
             // Update batch-specific UI elements only (MRP, expiry, COA, batch lot/qty)
             if (batchData) {
