@@ -37,6 +37,7 @@ use Carbon\Carbon;
 use ZipArchive;
 use Illuminate\Support\Facades\Session;
 use App\Models\ProductCategory;
+use App\Models\ProductBatch;
 
 class HomeController extends Controller
 {
@@ -710,7 +711,7 @@ class HomeController extends Controller
             'reviews',
             'brand',
             'stocks' => function ($q) {
-                $q->where('is_hidden', 0);
+                $q->where('is_hidden', 0)->with('batches');
             },
             'user',
             'user.shop',
@@ -804,7 +805,17 @@ class HomeController extends Controller
                 ->values()
                 ->toArray();
 
-            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name','subCategoryNames','groupNames'));
+            // Find stock with lowest price (considering batches) for auto-selection
+            $lowestPriceStock = null;
+            $variantSelectionData = null;
+            if ($detailedProduct->variant_product && $detailedProduct->stocks->isNotEmpty()) {
+                $lowestPriceStock = getLowestPriceStock($detailedProduct);
+                if ($lowestPriceStock && $lowestPriceStock->variant) {
+                    $variantSelectionData = parseVariantForSelection($lowestPriceStock->variant, $detailedProduct);
+                }
+            }
+
+            return view('frontend.product_details', compact('detailedProduct', 'product_queries', 'total_query', 'reviews', 'review_status', 'category_name','subCategoryNames','groupNames','lowestPriceStock','variantSelectionData'));
         }
         abort(404);
     }
@@ -1000,33 +1011,72 @@ class HomeController extends Controller
                 'discount_price' => number_format(0, 2),
                 'coa_url' => null,
                 'expiry_date' => null,
+                'manufacturing_date' => null,
+                'batches' => [],
             );
         }
 
-        //$price = $product_stock->price;
-        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
-        $base = $product_stock->mrp_price ?? $product->mrp_price; //price by role
-
-        // $role_base_price = $product_stock->role_price ?? $product->role_price;
-        // $role_base_price = json_decode($role_base_price, true); // decode JSON to array
+        // Load batches for this stock
+        $batches = $product_stock->batches()->orderBy('id')->get();
         
+        // Get selected batch ID from request (if provided)
+        $selectedBatchId = $request->input('batch_id', null);
+        $selectedBatch = null;
+        
+        if ($selectedBatchId && $batches->isNotEmpty()) {
+            $selectedBatch = $batches->where('id', $selectedBatchId)->first();
+        }
+        
+        // If no batch selected or batch not found, use first batch or fallback to stock data
+        if (!$selectedBatch && $batches->isNotEmpty()) {
+            $selectedBatch = $batches->first();
+        }
+
+        // Use batch data if available, otherwise fallback to product-level data (NOT stock-level)
+        if ($selectedBatch) {
+            $mrpPrice = $selectedBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
+            // IMPORTANT: role_price comes ONLY from batch, NOT from stock
+            $rolePrice = $selectedBatch->role_price ?? $product->role_price;
+            $coa = $selectedBatch->coa ?? null;
+            $expiryDate = $selectedBatch->product_exp_date ?? null;
+            $manufacturingDate = $selectedBatch->manufacturing_date ?? null;
+            $batchQty = $selectedBatch->qty ?? 0;
+        } else {
+            // No batch selected - try to get from first available batch or fallback to product-level
+            if ($batches->isNotEmpty()) {
+                $firstBatch = $batches->first();
+                $mrpPrice = $firstBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
+                $rolePrice = $firstBatch->role_price ?? $product->role_price;
+                $coa = $firstBatch->coa ?? null;
+                $expiryDate = $firstBatch->product_exp_date ?? null;
+                $manufacturingDate = $firstBatch->manufacturing_date ?? null;
+                $batchQty = $firstBatch->qty ?? 0;
+            } else {
+                // No batches exist - fallback to product-level (NOT stock-level)
+                $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
+                $rolePrice = $product->role_price; // Only product-level, NOT stock-level
+                $coa = $product_stock->coa ?? null;
+                $expiryDate = $product_stock->product_exp_date ?? null;
+                $manufacturingDate = null;
+                $batchQty = $product_stock->qty ?? 0;
+            }
+        }
+
+        // Calculate price from batch role_price or product-level role_price (NOT stock-level)
+        $price = getPriceByRole($rolePrice, $product_stock->price ?? 0);
+        $base = $mrpPrice;
 
         $sku = $product_stock->sku;
-        // $per_piece_price = $product_stock->per_piece_price;
 
         $length = $product_stock->length ?? 0;
         $breadth = $product_stock->width ?? 0;
         $height = $product_stock->height ?? 0;
-
-        // $coa = $product_stock->coa ?? $product->coa;
-        $coa = $product_stock->coa ?? null;
 
         if (!empty($coa)) {
             $coa_url = uploaded_asset($coa);
         } else {
             $coa_url = null;
         }
-
 
         $dimension = 
             ($length ?? '-') . ' x ' . 
@@ -1036,8 +1086,8 @@ class HomeController extends Controller
         $weight = $product_stock->weight ?? $product->product_weight_vol;
         $count = $product_stock->count;
         $stock_min_qty = $product_stock->min_qty;
-        $expiryDate = $product_stock->product_exp_date ?? null;
-        $formattedExpiry = $expiryDate ? Carbon::parse($expiryDate)->format('d M Y') : null;
+        $formattedExpiry = $expiryDate ? Carbon::parse($expiryDate)->format('M Y') : null;
+        $formattedManufacturing = $manufacturingDate ? Carbon::parse($manufacturingDate)->format('M Y') : null;
         $qty_per_piece = $product_stock->qty_per_piece ?? null;
         $qty_per_buffer_box = $product_stock->qty_per_buffer_box ?? null;
         $buffer_box_per_case = $product_stock->buffer_box_per_case ?? null;
@@ -1048,7 +1098,6 @@ class HomeController extends Controller
         $buffer_dimension = ($product_stock->buffer_length ?? '-') . ' x ' . ($product_stock->buffer_width ?? '-') . ' x ' . ($product_stock->buffer_height ?? '-');
         $case_dimension = ($product_stock->case_length ?? '-') . ' x ' . ($product_stock->case_width ?? '-') . ' x ' . ($product_stock->case_height ?? '-');
 
-
         if ($product->wholesale_product) {
             $wholesalePrice = $product_stock->wholesalePrices->where('min_qty', '<=', $request->quantity)->where('max_qty', '>=', $request->quantity)->first();
             if ($wholesalePrice) {
@@ -1056,8 +1105,9 @@ class HomeController extends Controller
             }
         }
 
-        $quantity = $product_stock->qty;
-        $max_limit = $product_stock->qty;
+        // Calculate total quantity from all batches
+        $quantity = $batches->isNotEmpty() ? $batches->sum('qty') : ($product_stock->qty ?? 0);
+        $max_limit = $quantity;
 
         if ($quantity >= 1 && $stock_min_qty <= $quantity) {
             $in_stock = 1;
@@ -1118,6 +1168,30 @@ class HomeController extends Controller
         $requestedQty = $requestedQty > 0 ? $requestedQty : 1;
         $appliedQty   = max($requestedQty, $stock_min_qty);
 
+        // Prepare batches data for frontend
+        $batchesData = [];
+        foreach ($batches as $batch) {
+            $batchCoaUrl = $batch->coa ? uploaded_asset($batch->coa) : null;
+            $batchExpiry = $batch->product_exp_date ? Carbon::parse($batch->product_exp_date)->format('M Y') : null;
+            $batchManufacturing = $batch->manufacturing_date ? Carbon::parse($batch->manufacturing_date)->format('M Y') : null;
+            $batchRolePrice = $batch->role_price ?? [];
+            
+            $batchesData[] = [
+                'id' => $batch->id,
+                'batch' => $batch->batch,
+                'mrp_price' => $batch->mrp_price,
+                'mrp_price_formatted' => single_price($batch->mrp_price),
+                'qty' => $batch->qty,
+                'coa_url' => $batchCoaUrl,
+                'expiry_date' => $batchExpiry,
+                'expiry_date_raw' => $batch->product_exp_date,
+                'manufacturing_date' => $batchManufacturing,
+                'manufacturing_date_raw' => $batch->manufacturing_date,
+                'role_price' => $batchRolePrice,
+                'role_price_formatted' => $batchRolePrice ? json_encode($batchRolePrice) : null,
+            ];
+        }
+
         return array(
             'price' => single_price($price * $appliedQty),
             'quantity' => $quantity,
@@ -1131,7 +1205,6 @@ class HomeController extends Controller
             'per_piece_price' => single_price(round($price, 2)),
             'without_tax_price' => single_price(($price - $tax) * $appliedQty),
             'tax' => single_price($tax * $appliedQty),
-            // 'original_price' => getPriceByRole($product_stock->mrp_role_price ?? $product->mrp_role_price, $product_stock->mrp_price),
             'original_price' => single_price($base),
             'dimension' => $dimension,
             'weight_volume' => $weight,
@@ -1145,10 +1218,98 @@ class HomeController extends Controller
             'case_dimension' => $case_dimension,
             'discount_percentage' => round($dis_percentage, 2),
             'discount_price' => number_format($discount_temp, 2),
-            // 'role_base_price' => $role_base_price,
             'coa_url' => $coa_url,
             'expiry_date' => $formattedExpiry,
+            'manufacturing_date' => $formattedManufacturing,
+            'batches' => $batchesData,
+            'selected_batch_id' => $selectedBatch ? $selectedBatch->id : null,
         );
+    }
+
+    public function getLowestPriceVariantBatch(Request $request)
+    {
+        $product = Product::find($request->id);
+        
+        if (!$product || !$product->variant_product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found or not a variant product'
+            ]);
+        }
+
+        // Load all stocks with batches
+        $product->load(['stocks' => function($q) {
+            $q->where('is_hidden', 0)->with('batches');
+        }]);
+
+        $lowestPrice = null;
+        $lowestPriceVariant = null;
+        $lowestPriceBatchId = null;
+        $lowestPriceVariantString = null;
+
+        foreach ($product->stocks as $stock) {
+            if ($stock->is_hidden) {
+                continue;
+            }
+
+            $batches = $stock->batches;
+            
+            if ($batches && $batches->count() > 0) {
+                // Check each batch for lowest price
+                foreach ($batches as $batch) {
+                    $mrpPrice = $batch->mrp_price ?? $stock->price ?? 0;
+                    $batchRolePrice = $batch->role_price ?? null;
+                    
+                    if ($batchRolePrice) {
+                        $rolePriceArray = is_string($batchRolePrice) ? json_decode($batchRolePrice, true) : $batchRolePrice;
+                        if (is_array($rolePriceArray)) {
+                            $batchPrice = getPriceByRole($rolePriceArray, $mrpPrice);
+                        } else {
+                            // Invalid format, fallback to product-level (NOT stock-level)
+                            $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
+                        }
+                    } else {
+                        // Batch has no role_price, fallback to product-level (NOT stock-level)
+                        $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
+                    }
+
+                    if ($lowestPrice === null || $batchPrice < $lowestPrice) {
+                        $lowestPrice = $batchPrice;
+                        $lowestPriceVariant = $stock;
+                        $lowestPriceBatchId = $batch->id;
+                        $lowestPriceVariantString = $stock->variant;
+                    }
+                }
+            } else {
+                // No batches, fallback to product-level role_price (NOT stock-level)
+                $stockPrice = getPriceByRole($product->role_price ?? null, $stock->price ?? 0);
+
+                if ($lowestPrice === null || $stockPrice < $lowestPrice) {
+                    $lowestPrice = $stockPrice;
+                    $lowestPriceVariant = $stock;
+                    $lowestPriceBatchId = null;
+                    $lowestPriceVariantString = $stock->variant;
+                }
+            }
+        }
+
+        if (!$lowestPriceVariant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No variants found'
+            ]);
+        }
+
+        // Parse variant string to get selection data
+        $variantSelectionData = parseVariantForSelection($lowestPriceVariantString, $product);
+
+        return response()->json([
+            'success' => true,
+            'variant' => $lowestPriceVariantString,
+            'batch_id' => $lowestPriceBatchId,
+            'price' => $lowestPrice,
+            'selection_data' => $variantSelectionData
+        ]);
     }
 
     public function sellerpolicy()

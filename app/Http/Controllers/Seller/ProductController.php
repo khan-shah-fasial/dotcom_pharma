@@ -183,11 +183,22 @@ class ProductController extends Controller
         //Product groups
         $product->groups()->sync($request->group_ids ?? []);
 
-        //Product Stock
-        $product->stocks()->delete();
-        $this->productStockService->store($request->only([
-            'colors_active', 'colors', 'choice_no', 'unit_price', 'sku', 'current_stock', 'product_id'
-        ]), $product);
+        $stockData = $request->only([
+            'colors_active', 'colors', 'choice_no', 'unit_price', 'mrp_price', 'sku', 'current_stock',
+            'length', 'width', 'height', 'weight', 'count', 'min_qty', 'product_exp_date',
+            'qty_per_piece', 'qty_per_buffer_box', 'total_qty_per_case', 'weight_buffer_box', 'weight_case',
+            'buffer_length', 'buffer_width', 'buffer_height', 'case_length', 'case_width', 'case_height',
+            'product_id'
+        ]);
+
+        if ($request->has('reset_variant_prices')) {
+            $stockIds = $product->stocks()->pluck('id');
+            \App\Models\ProductBatch::whereIn('product_stock_id', $stockIds)->delete();
+            $product->stocks()->delete();
+            $this->productStockService->store($stockData, $product);
+        } else {
+            $this->productStockService->update($stockData, $product);
+        }
 
         //VAT & Tax
         if ($request->tax_id) {

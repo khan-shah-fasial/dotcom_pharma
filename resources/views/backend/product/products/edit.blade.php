@@ -858,16 +858,14 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group row d-none">
-                                    <label
-                                        class="col-md-3 col-from-label">{{ translate('Change Product variant') }}</label>
+                                <div class="form-group row d-none" id="reset_variant_prices_row">
+                                    <label class="col-md-3 col-from-label">{{ translate('Reset variant prices') }}</label>
                                     <div class="col-md-9">
                                         <label class="aiz-switch aiz-switch-success mb-0 d-block">
-                                            <input type="checkbox" name="reset_variant_prices" value="1">
+                                            <input type="checkbox" name="reset_variant_prices" id="reset_variant_prices" value="1">
                                             <span></span>
                                         </label>
-                                        <small
-                                            class="text-muted">{{ translate('If you enable this, the prices of all variants of this product will be reset using an Excel or CSV file.') }}</small>
+                                        <small class="text-muted">{{ translate('If enabled, all variant stocks and batches will be recreated from the form; variant prices below will use the unit price. If disabled, existing variants are updated in place.') }}</small>
                                     </div>
                                 </div>
 
@@ -1849,81 +1847,92 @@ $(document).ready(function () {
 </script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkbox = document.querySelector('input[name="reset_variant_prices"]');
-        let originalValues = {};
+    (function() {
+        var checkbox = document.getElementById('reset_variant_prices');
+        if (!checkbox) return;
+        var skuCombination = document.getElementById('sku_combination');
+        if (!skuCombination) return;
+        var originalValues = {};
+        var initialAttributeState = null;
 
-        function applyChanges() {
-            const skuCombination = document.getElementById('sku_combination');
-            if (!skuCombination) return;
+        function getAttributeChoiceState() {
+            var parts = [];
+            $('#choice_form input[name="choice_no[]"]').each(function() {
+                var no = $(this).val();
+                var sel = $('#choice_form select[name="choice_options_' + no + '[]"]');
+                var v = sel.val();
+                parts.push(no + ':' + (Array.isArray(v) ? v.slice().sort().join(',') : (v || '')));
+            });
+            var colorsVal = $('#colors').val();
+            parts.push('colors:' + (Array.isArray(colorsVal) ? colorsVal.slice().sort().join(',') : (colorsVal || '')));
+            parts.push('colors_active:' + ($('#choice_form input[name="colors_active"]').is(':checked') ? '1' : '0'));
+            return parts.join('|');
+        }
 
-            const priceInputs = skuCombination.querySelectorAll(
-                'input[name^="price_"], input[name^="mrp_price_"]');
+        function syncResetCheckbox() {
+            if (initialAttributeState === null) return;
+            var current = getAttributeChoiceState();
+            checkbox.checked = (current !== initialAttributeState);
+            applyPriceInputs();
+        }
 
-            // Store original values only once
-            if (Object.keys(originalValues).length === 0) {
-                priceInputs.forEach(input => {
-                    originalValues[input.name] = input.value;
-                });
-            }
+        function getPriceInputs() {
+            return skuCombination.querySelectorAll('input[name^="price_"], input[name^="mrp_price_"]');
+        }
 
-            if (checkbox.checked) {
-                // skuCombination.style.opacity = '1';
-                // skuCombination.style.pointerEvents = 'auto';
+        function getUnitPrice() {
+            var el = document.querySelector('input[name="unit_price"]');
+            return (el && el.value !== '') ? parseFloat(el.value) || 0 : 0;
+        }
 
-                priceInputs.forEach(input => {
-                    input.value = '0';
-                });
-            } else {
-                // skuCombination.style.opacity = '0.5';
-                // skuCombination.style.pointerEvents = 'none';
-
-                priceInputs.forEach(input => {
-                    if (originalValues.hasOwnProperty(input.name)) {
-                        input.value = originalValues[input.name];
-                    }
-                });
+        function capturePriceDefaults() {
+            if (checkbox.checked) return;
+            originalValues = {};
+            var inputs = getPriceInputs();
+            for (var i = 0; i < inputs.length; i++) {
+                originalValues[inputs[i].name] = inputs[i].value;
             }
         }
 
-        // Observe for dynamic addition of sku_combination
-        const observer = new MutationObserver(function(mutationsList, observer) {
-            for (let mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                    const skuCombination = document.getElementById('sku_combination');
-                    if (skuCombination) {
-                        applyChanges();
-                        observer.disconnect();
-                        break;
+        function applyPriceInputs() {
+            var inputs = getPriceInputs();
+            if (!inputs.length) return;
+            if (checkbox.checked) {
+                var unitPrice = getUnitPrice();
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].value = unitPrice;
+                }
+            } else {
+                for (var i = 0; i < inputs.length; i++) {
+                    if (originalValues.hasOwnProperty(inputs[i].name)) {
+                        inputs[i].value = originalValues[inputs[i].name];
                     }
                 }
             }
-        });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-
-        // Run on page load if already there
-        applyChanges();
-
-        // Apply changes when checkbox is toggled
-        checkbox.addEventListener('change', applyChanges);
-
-        // Watch for any changes inside customer_choice_options
-        const customerChoices = document.getElementById('customer_choice_options');
-        if (customerChoices) {
-            customerChoices.addEventListener('change', function() {
-                setTimeout(function() {
-                    if (!checkbox.checked) {
-                        checkbox.checked = true;
-                        applyChanges();
-                    }
-                }, 3000); // 3000 milliseconds = 3 seconds
-            });
         }
-    });
+
+        $(document).ready(function() {
+            initialAttributeState = getAttributeChoiceState();
+        });
+
+        $(document).on('change', '#choice_form #choice_attributes, #choice_form .attribute_choice, #choice_form #colors, #choice_form input[name="colors_active"]', function() {
+            setTimeout(function() {
+                syncResetCheckbox();
+            }, 350);
+        });
+
+        var observer = new MutationObserver(function() {
+            if (!skuCombination.children.length) return;
+            capturePriceDefaults();
+            applyPriceInputs();
+        });
+        observer.observe(skuCombination, { childList: true, subtree: true });
+
+        if (skuCombination.children.length) {
+            capturePriceDefaults();
+            applyPriceInputs();
+        }
+    })();
 
     // Sync publish toggle to hidden input
     // document.addEventListener('change', function(e) {

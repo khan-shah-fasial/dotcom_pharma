@@ -34,6 +34,7 @@ use App\Models\BlogCategory;
 use App\Models\Conversation;
 use App\Models\FollowSeller;
 use App\Models\ProductStock;
+use App\Models\ProductBatch;
 use App\Models\State;
 use App\Models\CombinedOrder;
 use App\Models\SellerPackage;
@@ -874,9 +875,43 @@ if (!function_exists('cart_product_price')) {
             }
             $price = 0;
             $product_stock = $product->stocks->where('variant', $str)->first();
-            if ($product_stock) {
+            
+            // Use batch data if batch_id exists in cart
+            $batchId = $cart_product['batch_id'] ?? null;
+            if ($batchId && $product_stock) {
+                $batch = \App\Models\ProductBatch::find($batchId);
+                if ($batch && $batch->product_stock_id == $product_stock->id) {
+                    // Calculate price from batch MRP and role_price
+                    $mrpPrice = $batch->mrp_price ?? 0;
+                    $rolePrice = $batch->role_price ?? null;
+                    
+                    if ($rolePrice) {
+                        $rolePriceArray = is_string($rolePrice) ? json_decode($rolePrice, true) : $rolePrice;
+                        $price = getPriceByRole($rolePriceArray, $mrpPrice);
+                    } else {
+                        // Batch has no role_price, fallback to product-level (NOT stock-level)
+                        $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0);
+                    }
+                } else {
+                    // Batch not found or doesn't match stock, try to get from other batches or product-level
+                    if ($product_stock) {
+                        // Try to get price from batches using helper function
+                        $price = getStockPriceByRole($product_stock, $product, false);
+                        if ($price === null || $price === 0) {
+                            $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0);
+                        }
+                    } else {
+                        $price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+                    }
+                }
+            } elseif ($product_stock) {
+                // No batch selected, use batch-aware pricing helper (checks all batches)
                 //$price = $product_stock->price;
-                $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+                $price = getStockPriceByRole($product_stock, $product, false);
+                if ($price === null || $price === 0) {
+                    // Fallback to product-level role_price (NOT stock-level)
+                    $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
+                }
             }
 
             if ($product->wholesale_product) {
@@ -938,8 +973,32 @@ if (!function_exists('cart_product_tax')) {
             $str = $cart_product['variation'];
         }
         $product_stock = $product->stocks->where('variant', $str)->first();
-        //$price = $product_stock->price;
-        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+        $price = 0;
+
+        // Use batch price when batch_id present (same logic as cart_product_price)
+        $batchId = $cart_product['batch_id'] ?? null;
+        if ($batchId && $product_stock) {
+            $batch = \App\Models\ProductBatch::find($batchId);
+            if ($batch && $batch->product_stock_id == $product_stock->id) {
+                $mrpPrice = $batch->mrp_price ?? 0;
+                $rolePrice = $batch->role_price ?? null;
+                if ($rolePrice) {
+                    $rolePriceArray = is_string($rolePrice) ? json_decode($rolePrice, true) : $rolePrice;
+                    $price = getPriceByRole($rolePriceArray, $mrpPrice);
+                } else {
+                    // Batch has no role_price, fallback to product-level (NOT stock-level)
+                    $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0);
+                }
+            }
+        }
+        if ($price == 0 && $product_stock) {
+            // Try to get price from batches using helper function
+            $price = getStockPriceByRole($product_stock, $product, false);
+            if ($price === null || $price === 0) {
+                // Fallback to product-level role_price (NOT stock-level)
+                $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0);
+            }
+        }
 
         //discount calculation
         $discount_applicable = false;
@@ -988,7 +1047,17 @@ if (!function_exists('cart_product_discount')) {
         }
         $product_stock = $product->stocks->where('variant', $str)->first();
         //$price = $product_stock->price;
-        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+        // IMPORTANT: role_price comes ONLY from batches, NOT from stock
+        // Use batch-aware pricing helper which checks batches first, then falls back to product-level
+        if ($product_stock) {
+            $price = getStockPriceByRole($product_stock, $product, false);
+            if ($price === null || $price === 0) {
+                // Fallback to product-level role_price (NOT stock-level)
+                $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
+            }
+        } else {
+            $price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+        }
 
         //discount calculation
         $discount_applicable = false;
@@ -1032,7 +1101,17 @@ if (!function_exists('carts_product_discount')) {
             }
             $product_stock = $product->stocks->where('variant', $str)->first();
             //$price = $product_stock->price;
-            $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+            // IMPORTANT: role_price comes ONLY from batches, NOT from stock
+            // Use batch-aware pricing helper which checks batches first, then falls back to product-level
+            if ($product_stock) {
+                $price = getStockPriceByRole($product_stock, $product, false);
+                if ($price === null || $price === 0) {
+                    // Fallback to product-level role_price (NOT stock-level)
+                    $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
+                }
+            } else {
+                $price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+            }
 
             //discount calculation
             $discount_applicable = false;
@@ -1141,53 +1220,231 @@ if (!function_exists('carts_coupon_discount')) {
 }
 
 
+/**
+ * Parse variant string to extract color and attribute values for auto-selection
+ * Returns array with 'color' and 'attributes' (attribute_id => value)
+ * 
+ * @param string $variant Variant string like "ColorName-AttrValue1-AttrValue2" (spaces removed)
+ * @param Product $product Product to match against choice_options
+ * @return array ['color' => string|null, 'attributes' => [attribute_id => value]]
+ */
+if (!function_exists('parseVariantForSelection')) {
+    function parseVariantForSelection($variant, $product)
+    {
+        if (!$variant || !$product) {
+            return ['color' => null, 'attributes' => []];
+        }
+
+        $parts = explode('-', $variant);
+        $color = null;
+        $attributes = [];
+        
+        // Check if product has colors
+        $hasColors = $product->colors && count(json_decode($product->colors ?? '[]')) > 0;
+        $choiceOptions = json_decode($product->choice_options ?? '[]', true);
+        
+        $partIndex = 0;
+        
+        // First part might be color if colors are active
+        if ($hasColors && count($parts) > 0) {
+            $firstPart = trim($parts[0]);
+            // Check if this matches a color name (variant stores color name, not code)
+            $colorObj = \App\Models\Color::where('name', $firstPart)->first();
+            if ($colorObj) {
+                $color = $colorObj->name;
+                $partIndex = 1; // Skip color part
+            }
+        }
+        
+        // Remaining parts are attribute values (spaces already removed in variant string)
+        foreach ($choiceOptions as $choice) {
+            if ($partIndex < count($parts)) {
+                $attrValue = trim($parts[$partIndex]);
+                // Store the value as-is (spaces already removed in variant)
+                $attributes[$choice['attribute_id']] = $attrValue;
+                $partIndex++;
+            }
+        }
+        
+        return ['color' => $color, 'attributes' => $attributes];
+    }
+}
+
+/**
+ * Find the stock with the lowest price (considering batches) for a product
+ * Returns the stock object with lowest price, or null if no stocks
+ * 
+ * @param Product $product
+ * @return ProductStock|null Stock with lowest price
+ */
+if (!function_exists('getLowestPriceStock')) {
+    function getLowestPriceStock($product)
+    {
+        if (!$product || !$product->variant_product) {
+            return null;
+        }
+
+        $cacheKey = 'lowest_price_stock_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest');
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($product) {
+            if (!$product->relationLoaded('stocks')) {
+                $product->load(['stocks.batches']);
+            }
+            
+            $lowestPriceStock = null;
+            $lowestPrice = null;
+            
+            foreach ($product->stocks as $stock) {
+                if ($stock->is_hidden) {
+                    continue;
+                }
+                
+                $stockPrice = getStockPriceByRole($stock, $product, false);
+                
+                if ($lowestPrice === null || $stockPrice < $lowestPrice) {
+                    $lowestPrice = $stockPrice;
+                    $lowestPriceStock = $stock;
+                }
+            }
+            
+            return $lowestPriceStock;
+        });
+    }
+}
+
+/**
+ * Get price from stock considering batches (batch-level role prices take precedence)
+ * Returns the lowest price if multiple batches exist, or stock price if no batches
+ * 
+ * @param ProductStock $stock
+ * @param Product|null $product Fallback product for role_price
+ * @param bool $useCache Whether to use cache (set to false when already inside cached function)
+ * @return float Price based on current user role
+ */
+if (!function_exists('getStockPriceByRole')) {
+    function getStockPriceByRole($stock, $product = null, $useCache = false)
+    {
+        if (!$stock) {
+            return $product ? getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0) : 0;
+        }
+
+        // Load product if not provided
+        if (!$product) {
+            if ($stock->relationLoaded('product')) {
+                $product = $stock->product;
+            } else {
+                $product = $stock->product;
+            }
+        }
+
+        $computePrice = function () use ($stock, $product) {
+            // Check if stock has batches
+            if (!$stock->relationLoaded('batches')) {
+                $stock->load('batches');
+            }
+            
+            $batches = $stock->batches;
+            
+            if ($batches && $batches->count() > 0) {
+                // Stock has batches - use batch-level pricing (lowest price across all batches)
+                // IMPORTANT: role_price comes ONLY from batches, NOT from stock
+                $lowestPrice = null;
+                
+                foreach ($batches as $batch) {
+                    $mrpPrice = $batch->mrp_price ?? $stock->price ?? 0;
+                    $batchRolePrice = $batch->role_price ?? null;
+                    
+                    if ($batchRolePrice) {
+                        $rolePriceArray = is_string($batchRolePrice) ? json_decode($batchRolePrice, true) : $batchRolePrice;
+                        if (is_array($rolePriceArray)) {
+                            $batchPrice = getPriceByRole($rolePriceArray, $mrpPrice);
+                        } else {
+                            // Invalid format, fallback to product-level role_price (NOT stock-level)
+                            $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
+                        }
+                    } else {
+                        // Batch has no role_price, fallback to product-level role_price (NOT stock-level)
+                        $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
+                    }
+                    
+                    if ($lowestPrice === null || $batchPrice < $lowestPrice) {
+                        $lowestPrice = $batchPrice;
+                    }
+                }
+                
+                return $lowestPrice ?? ($stock->price ?? 0);
+            } else {
+                // No batches - fallback to product-level role_price (NOT stock-level)
+                return getPriceByRole($product->role_price ?? null, $stock->price ?? 0);
+            }
+        };
+
+        if ($useCache) {
+            $cacheKey = 'stock_price_role_' . $stock->id . '_' . (getCurrentUserRole() ?? 'guest');
+            return Cache::remember($cacheKey, now()->addHour(), $computePrice);
+        }
+        
+        return $computePrice();
+    }
+}
+
 //Shows Price on page based on low to high
 if (!function_exists('home_price')) {
     function home_price($product, $formatted = true)
     {
-        // $lowest_price = $product->unit_price;
-        // $highest_price = $product->unit_price;
-        $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
-        $highest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
+        $cacheKey = 'home_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($product, $formatted) {
+            // Start with product-level price
+            $lowest_price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+            $highest_price = $lowest_price;
 
-        if ($product->variant_product) {
-            foreach ($product->stocks as $key => $stock) {
-                // if ($lowest_price > $stock->price) {
-                //     $lowest_price = $stock->price;
-                // }
-                // if ($highest_price < $stock->price) {
-                //     $highest_price = $stock->price;
-                // }
-
-                //price by role
-                if ($lowest_price > getPriceByRole($stock->role_price ?? $product->role_price, $stock->price)) {
-                    $lowest_price = getPriceByRole($stock->role_price ?? $product->role_price, $stock->price);
+            if ($product->variant_product) {
+                // Load stocks with batches for efficient querying
+                if (!$product->relationLoaded('stocks')) {
+                    $product->load(['stocks.batches']);
                 }
-                if ($highest_price < getPriceByRole($stock->role_price ?? $product->role_price, $stock->price)) {
-                    $highest_price = getPriceByRole($stock->role_price ?? $product->role_price, $stock->price);
+                
+                foreach ($product->stocks as $stock) {
+                    // Use batch-aware pricing helper (no cache here, already cached at function level)
+                    $stockPrice = getStockPriceByRole($stock, $product, false);
+                    
+                    if ($lowest_price > $stockPrice) {
+                        $lowest_price = $stockPrice;
+                    }
+                    if ($highest_price < $stockPrice) {
+                        $highest_price = $stockPrice;
+                    }
                 }
             }
-        }
 
-        foreach ($product->taxes as $product_tax) {
-            if ($product_tax->tax_type == 'percent') {
-                $lowest_price += ($lowest_price * $product_tax->tax) / 100;
-                $highest_price += ($highest_price * $product_tax->tax) / 100;
-            } elseif ($product_tax->tax_type == 'amount') {
-                $lowest_price += $product_tax->tax;
-                $highest_price += $product_tax->tax;
-            }
-        }
-
-        if ($formatted) {
-            if ($lowest_price == $highest_price) {
-                return format_price(convert_price($lowest_price));
+            // Apply taxes
+            if ($product->relationLoaded('taxes')) {
+                $taxes = $product->taxes;
             } else {
-                return format_price(convert_price($lowest_price)) . ' - ' . format_price(convert_price($highest_price));
+                $taxes = $product->taxes()->get();
             }
-        } else {
-            return $lowest_price . ' - ' . $highest_price;
-        }
+            
+            foreach ($taxes as $product_tax) {
+                if ($product_tax->tax_type == 'percent') {
+                    $lowest_price += ($lowest_price * $product_tax->tax) / 100;
+                    $highest_price += ($highest_price * $product_tax->tax) / 100;
+                } elseif ($product_tax->tax_type == 'amount') {
+                    $lowest_price += $product_tax->tax;
+                    $highest_price += $product_tax->tax;
+                }
+            }
+
+            if ($formatted) {
+                if ($lowest_price == $highest_price) {
+                    return format_price(convert_price($lowest_price));
+                } else {
+                    return format_price(convert_price($lowest_price)) . ' - ' . format_price(convert_price($highest_price));
+                }
+            } else {
+                return $lowest_price . ' - ' . $highest_price;
+            }
+        });
     }
 }
 
@@ -1195,70 +1452,80 @@ if (!function_exists('home_price')) {
 if (!function_exists('home_discounted_price')) {
     function home_discounted_price($product, $formatted = true)
     {
-        // $lowest_price = $product->unit_price;
-        // $highest_price = $product->unit_price;
-        $lowest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
-        $highest_price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role        
+        $cacheKey = 'home_discounted_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($product, $formatted) {
+            // Start with product-level price
+            $lowest_price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+            $highest_price = $lowest_price;
 
-        if ($product->variant_product) {
-            foreach ($product->stocks as $key => $stock) {
-                // if ($lowest_price > $stock->price) {
-                //     $lowest_price = $stock->price;
-                // }
-                // if ($highest_price < $stock->price) {
-                //     $highest_price = $stock->price;
-                // }
-
-                //price by role
-                if ($lowest_price > getPriceByRole($stock->role_price ?? $product->role_price, $stock->price)) { 
-                    $lowest_price = getPriceByRole($stock->role_price ?? $product->role_price, $stock->price);
+            if ($product->variant_product) {
+                // Load stocks with batches for efficient querying
+                if (!$product->relationLoaded('stocks')) {
+                    $product->load(['stocks.batches']);
                 }
-                if ($highest_price < getPriceByRole($stock->role_price ?? $product->role_price, $stock->price)) {
-                    $highest_price = getPriceByRole($stock->role_price ?? $product->role_price, $stock->price);
-                }                
+                
+                foreach ($product->stocks as $stock) {
+                    // Use batch-aware pricing helper (no cache here, already cached at function level)
+                    $stockPrice = getStockPriceByRole($stock, $product, false);
+                    
+                    if ($lowest_price > $stockPrice) {
+                        $lowest_price = $stockPrice;
+                    }
+                    if ($highest_price < $stockPrice) {
+                        $highest_price = $stockPrice;
+                    }
+                }
             }
-        }
 
-        $discount_applicable = false;
-
-        if ($product->discount_start_date == null) {
-            $discount_applicable = true;
-        } elseif (
-            strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
-            strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
-        ) {
-            $discount_applicable = true;
-        }
-
-        if ($discount_applicable) {
-            if ($product->discount_type == 'percent') {
-                $lowest_price -= ($lowest_price * $product->discount) / 100;
-                $highest_price -= ($highest_price * $product->discount) / 100;
-            } elseif ($product->discount_type == 'amount') {
-                $lowest_price -= $product->discount;
-                $highest_price -= $product->discount;
+            // Apply discount
+            $discount_applicable = false;
+            if ($product->discount_start_date == null) {
+                $discount_applicable = true;
+            } elseif (
+                strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
+                strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
+            ) {
+                $discount_applicable = true;
             }
-        }
 
-        foreach ($product->taxes as $product_tax) {
-            if ($product_tax->tax_type == 'percent') {
-                $lowest_price += ($lowest_price * $product_tax->tax) / 100;
-                $highest_price += ($highest_price * $product_tax->tax) / 100;
-            } elseif ($product_tax->tax_type == 'amount') {
-                $lowest_price += $product_tax->tax;
-                $highest_price += $product_tax->tax;
+            if ($discount_applicable) {
+                if ($product->discount_type == 'percent') {
+                    $lowest_price -= ($lowest_price * $product->discount) / 100;
+                    $highest_price -= ($highest_price * $product->discount) / 100;
+                } elseif ($product->discount_type == 'amount') {
+                    $lowest_price -= $product->discount;
+                    $highest_price -= $product->discount;
+                }
             }
-        }
 
-        if ($formatted) {
-            if ($lowest_price == $highest_price) {
-                return format_price(convert_price($lowest_price));
+            // Apply taxes
+            if ($product->relationLoaded('taxes')) {
+                $taxes = $product->taxes;
             } else {
-                return format_price(convert_price($lowest_price)) . ' - ' . format_price(convert_price($highest_price));
+                $taxes = $product->taxes()->get();
             }
-        } else {
-            return $lowest_price . ' - ' . $highest_price;
-        }
+            
+            foreach ($taxes as $product_tax) {
+                if ($product_tax->tax_type == 'percent') {
+                    $lowest_price += ($lowest_price * $product_tax->tax) / 100;
+                    $highest_price += ($highest_price * $product_tax->tax) / 100;
+                } elseif ($product_tax->tax_type == 'amount') {
+                    $lowest_price += $product_tax->tax;
+                    $highest_price += $product_tax->tax;
+                }
+            }
+
+            if ($formatted) {
+                if ($lowest_price == $highest_price) {
+                    return format_price(convert_price($lowest_price));
+                } else {
+                    return format_price(convert_price($lowest_price)) . ' - ' . format_price(convert_price($highest_price));
+                }
+            } else {
+                return $lowest_price . ' - ' . $highest_price;
+            }
+        });
     }
 }
 
@@ -1266,21 +1533,26 @@ if (!function_exists('home_discounted_price')) {
 if (!function_exists('home_base_price_by_stock_id')) {
     function home_base_price_by_stock_id($id)
     {
-        $product_stock = ProductStock::findOrFail($id);
-        //$price = $product_stock->price;
-        $product_role_price = $product_stock->role_price ?? ($product_stock->product->role_price ?? null);
-        $price = getPriceByRole($product_role_price, $product_stock->price); //price by role
-        $tax = 0;
+        $cacheKey = 'home_base_price_stock_' . $id . '_' . (getCurrentUserRole() ?? 'guest');
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($id) {
+            $product_stock = ProductStock::with(['batches', 'product.taxes'])->findOrFail($id);
+            
+            // Use batch-aware pricing helper (no cache here, already cached at function level)
+            $price = getStockPriceByRole($product_stock, $product_stock->product, false);
+            $tax = 0;
 
-        foreach ($product_stock->product->taxes as $product_tax) {
-            if ($product_tax->tax_type == 'percent') {
-                $tax += ($price * $product_tax->tax) / 100;
-            } elseif ($product_tax->tax_type == 'amount') {
-                $tax += $product_tax->tax;
+            $taxes = $product_stock->product->taxes;
+            foreach ($taxes as $product_tax) {
+                if ($product_tax->tax_type == 'percent') {
+                    $tax += ($price * $product_tax->tax) / 100;
+                } elseif ($product_tax->tax_type == 'amount') {
+                    $tax += $product_tax->tax;
+                }
             }
-        }
-        $price += $tax;
-        return format_price(convert_price($price));
+            $price += $tax;
+            return format_price(convert_price($price));
+        });
     }
 }
 
@@ -1288,19 +1560,46 @@ if (!function_exists('home_base_price_by_stock_id')) {
 if (!function_exists('home_base_price')) {
     function home_base_price($product, $formatted = true)
     {
-        //$price = $product->unit_price;
-        $price = getPriceByRole(($product->mrp_role_price ?? $product->role_price) ?? ($product->mrp_role_price ?? $product->role_price), ($product->mrp_price ?? $product->unit_price)); //price by role
-        $tax = 0;
-
-        foreach ($product->taxes as $product_tax) {
-            if ($product_tax->tax_type == 'percent') {
-                $tax += ($price * $product_tax->tax) / 100;
-            } elseif ($product_tax->tax_type == 'amount') {
-                $tax += $product_tax->tax;
+        $cacheKey = 'home_base_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($product, $formatted) {
+            // For non-variant products, use product-level pricing
+            // For variant products, find lowest price across all stocks/batches
+            if ($product->variant_product) {
+                if (!$product->relationLoaded('stocks')) {
+                    $product->load(['stocks.batches']);
+                }
+                
+                $lowestPrice = null;
+                foreach ($product->stocks as $stock) {
+                    $stockPrice = getStockPriceByRole($stock, $product, false);
+                    if ($lowestPrice === null || $stockPrice < $lowestPrice) {
+                        $lowestPrice = $stockPrice;
+                    }
+                }
+                $price = $lowestPrice ?? getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+            } else {
+                $price = getPriceByRole($product->role_price ?? null, $product->mrp_price ?? $product->unit_price ?? 0);
             }
-        }
-        $price += $tax;
-        return $formatted ? format_price(convert_price($price)) : convert_price($price);
+            
+            $tax = 0;
+
+            if ($product->relationLoaded('taxes')) {
+                $taxes = $product->taxes;
+            } else {
+                $taxes = $product->taxes()->get();
+            }
+            
+            foreach ($taxes as $product_tax) {
+                if ($product_tax->tax_type == 'percent') {
+                    $tax += ($price * $product_tax->tax) / 100;
+                } elseif ($product_tax->tax_type == 'amount') {
+                    $tax += $product_tax->tax;
+                }
+            }
+            $price += $tax;
+            return $formatted ? format_price(convert_price($price)) : convert_price($price);
+        });
     }
 }
 
@@ -1308,41 +1607,46 @@ if (!function_exists('home_base_price')) {
 if (!function_exists('home_discounted_base_price_by_stock_id')) {
     function home_discounted_base_price_by_stock_id($id)
     {
-        $product_stock = ProductStock::findOrFail($id);
-        $product = $product_stock->product;
-        //$price = $product_stock->price;
-        $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
-        $tax = 0;
+        $cacheKey = 'home_discounted_base_price_stock_' . $id . '_' . (getCurrentUserRole() ?? 'guest');
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($id) {
+            $product_stock = ProductStock::with(['batches', 'product.taxes'])->findOrFail($id);
+            $product = $product_stock->product;
+            
+            // Use batch-aware pricing helper
+            $price = getStockPriceByRole($product_stock, $product);
+            $tax = 0;
 
-        $discount_applicable = false;
-
-        if ($product->discount_start_date == null) {
-            $discount_applicable = true;
-        } elseif (
-            strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
-            strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
-        ) {
-            $discount_applicable = true;
-        }
-
-        if ($discount_applicable) {
-            if ($product->discount_type == 'percent') {
-                $price -= ($price * $product->discount) / 100;
-            } elseif ($product->discount_type == 'amount') {
-                $price -= $product->discount;
+            $discount_applicable = false;
+            if ($product->discount_start_date == null) {
+                $discount_applicable = true;
+            } elseif (
+                strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
+                strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
+            ) {
+                $discount_applicable = true;
             }
-        }
 
-        foreach ($product->taxes as $product_tax) {
-            if ($product_tax->tax_type == 'percent') {
-                $tax += ($price * $product_tax->tax) / 100;
-            } elseif ($product_tax->tax_type == 'amount') {
-                $tax += $product_tax->tax;
+            if ($discount_applicable) {
+                if ($product->discount_type == 'percent') {
+                    $price -= ($price * $product->discount) / 100;
+                } elseif ($product->discount_type == 'amount') {
+                    $price -= $product->discount;
+                }
             }
-        }
-        $price += $tax;
 
-        return format_price(convert_price($price));
+            $taxes = $product->taxes;
+            foreach ($taxes as $product_tax) {
+                if ($product_tax->tax_type == 'percent') {
+                    $tax += ($price * $product_tax->tax) / 100;
+                } elseif ($product_tax->tax_type == 'amount') {
+                    $tax += $product_tax->tax;
+                }
+            }
+            $price += $tax;
+
+            return format_price(convert_price($price));
+        });
     }
 }
 
@@ -1351,40 +1655,65 @@ if (!function_exists('home_discounted_base_price_by_stock_id')) {
 if (!function_exists('home_discounted_base_price')) {
     function home_discounted_base_price($product, $formatted = true)
     {
-        //$price = $product->unit_price;
-        $price = getPriceByRole($product->role_price ?? $product->role_price, $product->unit_price); //price by role
-        $tax = 0;
-
-        $discount_applicable = false;
-
-        if ($product->discount_start_date == null) {
-            $discount_applicable = true;
-        } elseif (
-            strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
-            strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
-        ) {
-            $discount_applicable = true;
-        }
-
-        if ($discount_applicable) {
-            if ($product->discount_type == 'percent') {
-                $price -= ($price * $product->discount) / 100;
-            } elseif ($product->discount_type == 'amount') {
-                $price -= $product->discount;
+        $cacheKey = 'home_discounted_base_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
+        
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($product, $formatted) {
+            // For non-variant products, use product-level pricing
+            // For variant products, find lowest price across all stocks/batches
+            if ($product->variant_product) {
+                if (!$product->relationLoaded('stocks')) {
+                    $product->load(['stocks.batches']);
+                }
+                
+                $lowestPrice = null;
+                foreach ($product->stocks as $stock) {
+                    $stockPrice = getStockPriceByRole($stock, $product, false);
+                    if ($lowestPrice === null || $stockPrice < $lowestPrice) {
+                        $lowestPrice = $stockPrice;
+                    }
+                }
+                $price = $lowestPrice ?? getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+            } else {
+                $price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
             }
-        }
+            
+            $tax = 0;
 
-        foreach ($product->taxes as $product_tax) {
-            if ($product_tax->tax_type == 'percent') {
-                $tax += ($price * $product_tax->tax) / 100;
-            } elseif ($product_tax->tax_type == 'amount') {
-                $tax += $product_tax->tax;
+            $discount_applicable = false;
+            if ($product->discount_start_date == null) {
+                $discount_applicable = true;
+            } elseif (
+                strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
+                strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
+            ) {
+                $discount_applicable = true;
             }
-        }
-        $price += $tax;
 
+            if ($discount_applicable) {
+                if ($product->discount_type == 'percent') {
+                    $price -= ($price * $product->discount) / 100;
+                } elseif ($product->discount_type == 'amount') {
+                    $price -= $product->discount;
+                }
+            }
 
-        return $formatted ? format_price(convert_price($price)) : convert_price($price);
+            if ($product->relationLoaded('taxes')) {
+                $taxes = $product->taxes;
+            } else {
+                $taxes = $product->taxes()->get();
+            }
+            
+            foreach ($taxes as $product_tax) {
+                if ($product_tax->tax_type == 'percent') {
+                    $tax += ($price * $product_tax->tax) / 100;
+                } elseif ($product_tax->tax_type == 'amount') {
+                    $tax += $product_tax->tax;
+                }
+            }
+            $price += $tax;
+
+            return $formatted ? format_price(convert_price($price)) : convert_price($price);
+        });
     }
 }
 
@@ -4147,14 +4476,23 @@ if (!function_exists('getCurrentUserRole')) {
 }
 
 if (!function_exists('getPriceByRole')) {
-    function getPriceByRole(array|string $rolePrices, float $defaultPrice): ?float
+    function getPriceByRole(array|string|null $rolePrices, float $defaultPrice): ?float
     {
-        //return 0;
+        // Handle null case - return default price
+        if ($rolePrices === null) {
+            return $defaultPrice;
+        }
+
         $role = getCurrentUserRole();
 
         $prices = is_string($rolePrices) ? json_decode($rolePrices, true) : (array) $rolePrices;
 
-        if (!$role) return $prices['customer'];
+        // Ensure prices is an array after decoding
+        if (!is_array($prices)) {
+            return $defaultPrice;
+        }
+
+        if (!$role) return $prices['customer'] ?? $defaultPrice;
 
         return $prices[$role] ?? $prices['customer'] ?? $defaultPrice;
     }

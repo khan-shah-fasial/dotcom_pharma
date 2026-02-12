@@ -10,6 +10,7 @@ use App\Models\Category;
 use Carbon\Carbon;
 use App\Models\Cart;
 use App\Models\Country;
+use App\Models\ProductBatch;
 use Auth;
 use App\Utility\CartUtility;
 use Session;
@@ -102,6 +103,44 @@ class CartController extends Controller
             );
         }
 
+        // Get batch ID from request if provided
+        $batchId = $request->input('batch_id', null);
+        $selectedBatch = null;
+        
+        // Load batches relationship if product_stock exists
+        if ($product_stock) {
+            try {
+                $product_stock->load('batches');
+                
+                if ($batchId) {
+                    // Validate batch belongs to this stock using relationship
+                    $selectedBatch = $product_stock->batches()->where('id', $batchId)->first();
+                    
+                    if ($selectedBatch) {
+                        // Use batch quantity for validation
+                        $availableQty = $selectedBatch->qty ?? 0;
+                    } else {
+                        // Batch not found or doesn't belong to this stock, use stock quantity
+                        $availableQty = $product_stock->qty ?? 0;
+                        $batchId = null; // Clear invalid batch_id
+                        $selectedBatch = null;
+                    }
+                } else {
+                    // No batch selected, use total from all batches or stock
+                    $batches = $product_stock->batches;
+                    $availableQty = $batches->isNotEmpty() ? $batches->sum('qty') : ($product_stock->qty ?? 0);
+                }
+            } catch (\Exception $e) {
+                // If there's an error loading batches, fallback to stock quantity
+                \Log::error('Error loading batches in CartController: ' . $e->getMessage());
+                $availableQty = $product_stock->qty ?? 0;
+                $batchId = null;
+                $selectedBatch = null;
+            }
+        } else {
+            $availableQty = 0;
+        }
+
         $minQty = optional($product_stock)->min_qty ?? $product->min_qty ?? 1;
         if ($quantity < $minQty) {
             return array(
@@ -137,7 +176,16 @@ class CartController extends Controller
                     'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
                 );
             }
-            if ($product_stock->qty < $cart->quantity + $request['quantity']) {
+            // Check available quantity from batches or stock
+            if ($product_stock) {
+                $product_stock->load('batches');
+                $batches = $product_stock->batches;
+                $totalAvailableQty = $batches->isNotEmpty() ? $batches->sum('qty') : ($product_stock->qty ?? 0);
+            } else {
+                $totalAvailableQty = 0;
+            }
+            
+            if ($totalAvailableQty < $cart->quantity + $request['quantity']) {
                 return array(
                     'status' => 0,
                     'cart_count' => count($carts),
@@ -157,13 +205,24 @@ class CartController extends Controller
             }
         }
 
-        $price = CartUtility::get_price($product, $product_stock, $request->quantity);
+        // Use batch data for pricing if batch is selected
+        // Note: $batchId is already set above from request
+        if ($selectedBatch) {
+            $price = CartUtility::get_price_from_batch($product, $selectedBatch, $request->quantity);
+            $mrpPrice = $selectedBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
+            // Ensure batchId is set
+            $batchId = $selectedBatch->id;
+        } else {
+            $price = CartUtility::get_price($product, $product_stock, $request->quantity);
+            $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
+            // Clear batchId if no batch selected
+            $batchId = null;
+        }
+        
         $tax = CartUtility::tax_calculation($product, $price);
-
-        $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
         $salePrice = $price;
 
-        CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice);
+        CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId);
         $cart->notify_date = Carbon::now()->addHour(); // First reminder in 1 hours
         $cart->save();
 
@@ -217,8 +276,30 @@ class CartController extends Controller
             if ($product_stock) {
                 $quantity = $product_stock->qty;
                 $minQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
-                //$price = $product_stock->price;
-                $price = getPriceByRole($product_stock->role_price ?? $product->role_price, $product_stock->price); //price by role
+                
+                // Get batch if batch_id exists
+                $batchId = $cartItem['batch_id'] ?? null;
+                $selectedBatch = null;
+                $price = 0;
+                
+                if ($batchId) {
+                    $product_stock->load('batches');
+                    $selectedBatch = $product_stock->batches()->where('id', $batchId)->first();
+                    if ($selectedBatch) {
+                        $price = CartUtility::get_price_from_batch($product, $selectedBatch, $request->quantity);
+                    }
+                }
+                
+                if (!$selectedBatch) {
+                    //$price = $product_stock->price;
+                    // IMPORTANT: role_price comes ONLY from batches, NOT from stock
+                    // Use batch-aware pricing helper which checks batches first, then falls back to product-level
+                    $price = getStockPriceByRole($product_stock, $product, false);
+                    if ($price === null || $price === 0) {
+                        // Fallback to product-level role_price (NOT stock-level)
+                        $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
+                    }
+                }
 
                 //discount calculation
                 $discount_applicable = false;
@@ -253,9 +334,13 @@ class CartController extends Controller
                     }
                 }
 
+                // Recalculate tax based on updated price
+                $tax = CartUtility::tax_calculation($product, $price);
+                
                 $cartItem['price'] = $price;
-                $cartItem->mrp_price = $product_stock->mrp_price ?? $product->mrp_price;
+                $cartItem->mrp_price = $selectedBatch ? ($selectedBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price) : ($product_stock->mrp_price ?? $product->mrp_price);
                 $cartItem->sale_price = $price;
+                $cartItem->tax = $tax; // Store recalculated tax
                 $cartItem->save();
             }
         }

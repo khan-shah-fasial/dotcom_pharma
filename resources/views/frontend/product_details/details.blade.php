@@ -115,6 +115,68 @@
     .brand-related-products-carousel button.slick-next.slick-arrow {
         display: block !important;
     }
+    
+    /* Batch Selection Styles */
+    .batches-list {
+        margin-top: 10px;
+    }
+
+
+    .batch-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #f4f6f8;
+        color: #212529;
+        font-size: 12.5px;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s ease;
+    }
+
+    .batch-pill:hover {
+        background: #e9ecef;
+    }
+
+    .batch-pill.active {
+        background: #0d6efd;
+        color: #fff;
+    }
+
+    .batch-name {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .batch-expiry {
+        font-size: 11.5px;
+        opacity: 0.75;
+    }
+
+    .batch-separator {
+        opacity: 0.4;
+    }
+
+    /* Compact Select2 for batch dropdown */
+    #batch-selection-section .select2-container .select2-selection--single {
+        height: 34px !important;
+        min-height: 34px !important;
+        border-radius: 4px !important;
+        border: 1px solid #d6d6d6 !important;
+    }
+    #batch-selection-section .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 32px !important;
+        font-size: 12px !important;
+        padding-left: 10px !important;
+        padding-right: 28px !important;
+    }
+    #batch-selection-section .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 32px !important;
+    }
 </style>
 
 <div class="text-left product_disc_text">
@@ -383,6 +445,15 @@
                         @endif
 
 
+                        <!-- Batch Selection Section -->
+                        <div class="col-4 pl-0 pb-0 mt-md-3 mt-2" id="batch-selection-section" style="display: none;">
+                            <div class="fw-500 fs-14 text-dark mb-2">{{ translate('Choose Batch') }}:</div>
+                            <select id="batch-dropdown" class="form-control form-control-sm" data-placeholder="{{ translate('Search batch code') }}">
+                                <option value="">{{ translate('Choose Batch') }}</option>
+                            </select>
+                        </div>
+
+
                         <!-- Quantity + Add to cart -->
                         <div class="row no-gutters">
                             <div class="col-md-3 col-12 pl-0 mt-md-3 mt-0 pb-0">
@@ -415,7 +486,13 @@
                                                 $detailedProduct->stocks->where('is_hidden', 0)
                                                 as $key => $stock
                                             ) {
-                                                $qty += $stock->qty;
+                                                // Calculate quantity from batches if available, otherwise use stock qty
+                                                $batches = $stock->batches ?? collect();
+                                                if ($batches->isNotEmpty()) {
+                                                    $qty += $batches->sum('qty');
+                                                } else {
+                                                    $qty += $stock->qty;
+                                                }
                                             }
                                         @endphp
                                         <div class="avialable-amount opacity-60 d-none">
@@ -448,12 +525,15 @@
                                 </div>
                             </div>
                         </div>
+
+
                     @else
                         <!-- Quantity -->
                         <input type="hidden" name="quantity" value="1">
                     @endif
 
-
+                    <!-- Hidden input for selected batch -->
+                    <input type="hidden" name="batch_id" id="selected_batch_id" value="">
 
                 </form>
             </div>
@@ -723,7 +803,9 @@
 
         @php
             $initialExpiry = optional($detailedProduct->stocks->first())->product_exp_date;
-            $initialExpiryFormatted = $initialExpiry ? \Carbon\Carbon::parse($initialExpiry)->format('d M Y') : '-';
+            $initialExpiryFormatted = $initialExpiry ? \Carbon\Carbon::parse($initialExpiry)->format('M Y') : '-';
+            $initialManufacturing = optional(optional($detailedProduct->stocks->first())->batches->first())->manufacturing_date;
+            $initialManufacturingFormatted = $initialManufacturing ? \Carbon\Carbon::parse($initialManufacturing)->format('M Y') : '-';
         @endphp
 
 
@@ -791,8 +873,7 @@
                                             </div>
                                             <div class="">
                                                 <p class="detail-font-14px detail-gray-color mb-0">Batch / Lot. No:</p>
-                                                <p id="batch-lot-product-details" class="fw-500 fs-14 mb-0">
-                                                    AEJ-1301H@3</p>
+                                                <p id="batch-lot-product-details" class="fw-500 fs-14 mb-0"></p>
                                             </div>
                                         </div>
                                     </div>
@@ -843,6 +924,31 @@
                                                     {{ translate('Expiry Date') }}:</p>
                                                 <p id="product-expiry-date" class="fw-500 fs-14 mb-0">
                                                     {{ $initialExpiryFormatted }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-calendar-check-2 w-5 h-5">
+                                                    <path d="M8 2v4"></path>
+                                                    <path d="M16 2v4"></path>
+                                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                                    <path d="M3 10h18"></path>
+                                                    <path d="m9 16 2 2 4-4"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Manufacturing Date') }}:</p>
+                                                <p id="product-manufacturing-date" class="fw-500 fs-14 mb-0">
+                                                    {{ $initialManufacturingFormatted }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2397,6 +2503,134 @@
                 // Show the modal
                 $('#productEnquiryModal').modal('show');
             });
+
+            // Auto-select lowest price variant and batch on page load
+            @if($detailedProduct->variant_product)
+                var productId = {{ $detailedProduct->id }};
+                var autoSelectInProgress = false;
+                
+                // Wait for form and functions to be ready
+                setTimeout(function() {
+                    if (typeof checkAddToCartValidity !== 'function' || typeof getVariantPrice !== 'function') {
+                        console.log('Functions not ready, retrying...');
+                        setTimeout(arguments.callee, 200);
+                        return;
+                    }
+
+                    // Call endpoint to get lowest price variant+batch
+                    $.ajax({
+                        type: 'POST',
+                        url: '{{ route("products.lowest_price_variant_batch") }}',
+                        data: {
+                            _token: AIZ.data.csrf,
+                            id: productId
+                        },
+                        success: function(response) {
+                            if (response.success && response.selection_data) {
+                                autoSelectInProgress = true;
+                                var selectionData = response.selection_data;
+                                
+                                // Auto-select color if available
+                                if (selectionData.color) {
+                                    var colorValue = selectionData.color;
+                                    $('input[name="color"][value="' + colorValue + '"]').prop('checked', true).trigger('change');
+                                }
+                                
+                                // Auto-select attributes
+                                var allSelected = true;
+                                $.each(selectionData.attributes, function(attributeId, value) {
+                                    // Normalize value for matching (remove spaces, underscores, dashes, case insensitive)
+                                    var normalizedValue = value.toLowerCase().replace(/[\s_\-]/g, '');
+                                    var $radio = $('input[name="attribute_id_' + attributeId + '"]');
+                                    var found = false;
+                                    
+                                    $radio.each(function() {
+                                        var radioValue = $(this).val();
+                                        var normalizedRadioValue = radioValue.toLowerCase().replace(/[\s_\-]/g, '');
+                                        if (normalizedRadioValue === normalizedValue) {
+                                            $(this).prop('checked', true).trigger('change');
+                                            found = true;
+                                            return false; // break
+                                        }
+                                    });
+                                    
+                                    if (!found) {
+                                        allSelected = false;
+                                    }
+                                });
+                                
+                                // Wait a bit for DOM updates, then trigger price load
+                                setTimeout(function() {
+                                    if (allSelected && checkAddToCartValidity()) {
+                                        // Set batch_id in hidden input before calling getVariantPrice
+                                        if (response.batch_id) {
+                                            $('#selected_batch_id').val(response.batch_id);
+                                        }
+                                        
+                                        // Trigger getVariantPrice to load batches
+                                        getVariantPrice(true);
+                                        
+                                        // After batches are loaded, select the batch
+                                        var batchSelectAttempts = 0;
+                                        var maxBatchSelectAttempts = 20; // Try for up to 4 seconds (20 * 200ms)
+                                        
+                                        function trySelectBatch() {
+                                            batchSelectAttempts++;
+                                            
+                                            if (response.batch_id) {
+                                                var $batchDropdown = $('#batch-dropdown');
+                                                
+                                                if ($batchDropdown.length > 0) {
+                                                    // Batches are rendered, select the batch
+                                                    var batchesMap = $batchDropdown.data('batches-map') || {};
+                                                    var batchData = batchesMap[response.batch_id];
+                                                    
+                                                    if (batchData && typeof selectBatch === 'function') {
+                                                        selectBatch(response.batch_id, batchData);
+                                                    } else {
+                                                        // Fallback: set dropdown value and refresh price
+                                                        $batchDropdown.val(String(response.batch_id));
+                                                        $('#selected_batch_id').val(response.batch_id);
+                                                        getVariantPrice(true);
+                                                    }
+                                                    autoSelectInProgress = false;
+                                                } else if (batchSelectAttempts < maxBatchSelectAttempts) {
+                                                    // Batches not rendered yet, wait and retry
+                                                    setTimeout(trySelectBatch, 200);
+                                                } else {
+                                                    // Timeout: batches might not be available for this variant
+                                                    console.log('Batch selection timeout');
+                                                    autoSelectInProgress = false;
+                                                }
+                                            } else {
+                                                // No batch_id, just finish
+                                                autoSelectInProgress = false;
+                                            }
+                                        }
+                                        
+                                        // Start trying to select batch after a delay
+                                        setTimeout(trySelectBatch, 800);
+                                    } else {
+                                        autoSelectInProgress = false;
+                                    }
+                                }, 500);
+                            } else {
+                                // Fallback: trigger getVariantPrice with default selection
+                                if (checkAddToCartValidity()) {
+                                    getVariantPrice(true);
+                                }
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching lowest price variant:', error);
+                            // Fallback: trigger getVariantPrice with default selection
+                            if (typeof checkAddToCartValidity === 'function' && checkAddToCartValidity()) {
+                                getVariantPrice(true);
+                            }
+                        }
+                    });
+                }, 1000); // Wait for page to be fully loaded
+            @endif
         });
     </script>
 @endsection
