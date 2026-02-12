@@ -2,7 +2,7 @@
     <div class="">
         <h3 class="fs-18 fs-md-18 fw-500 text-dark text-capitalize pl-md-0">
             <span class="">
-                {{ translate('More From') }} {{ optional($detailedProduct->main_category)->getTranslation('name') }}
+                {{ translate('More From') }} {{ get_brand_related_category_name($detailedProduct) }}
             </span>
         </h3>
     </div>
