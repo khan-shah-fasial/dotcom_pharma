@@ -133,7 +133,7 @@
 				<div class="card-body">
 					<div class="row gutters-10">
 						<div class="col-md-4">
-							<div class="border rounded p-3 h-100">
+							<div class="border rounded p-2 h-100">
 								<h6 class="text-muted mb-3">{{ translate('Identifiers') }}</h6>
 								<div class="form-group mb-3">
 									<label class="form-label mb-1">{{ translate('SKU') }}</label>
@@ -145,24 +145,11 @@
 										required
 									>
 								</div>
-								<div class="form-group mb-0">
-									<label class="form-label mb-1">{{ translate('Hide this variant') }}</label>
-									<label class="aiz-switch aiz-switch-success mb-0 d-block">
-										<input
-											type="checkbox"
-											name="is_hidden_{{ $str }}"
-											value="1"
-											{{ request('is_hidden_'.$str) ? 'checked' : '' }}
-										>
-										<span></span>
-									</label>
-									<small class="text-muted">{{ translate('If enabled, this variant will be hidden on the product details page.') }}</small>
-								</div>
 							</div>
 						</div>
 
 						<div class="col-md-8">
-							<div class="border rounded p-3 h-100">
+							<div class="border rounded p-2 h-100">
 								<h6 class="text-muted mb-3">{{ translate('Inventory') }}</h6>
 
 								<div class="form-row mb-3">
@@ -207,6 +194,23 @@
 											required
 										>
 									</div>
+									<div class="col-sm-12 col-lg-4 mb-2">
+										<div class="d-flex align-items-start">
+											<label class="aiz-switch aiz-switch-success mb-0 mr-2 mt-1">
+												<input
+													type="checkbox"
+													name="is_hidden_{{ $str }}"
+													value="1"
+													{{ request('is_hidden_'.$str) ? 'checked' : '' }}
+												>
+												<span></span>
+											</label>
+											<div>
+												<label class="form-label mb-0 d-block">{{ translate('Hide Variant from Product Details') }}</label>
+												<small class="text-muted">{{ translate('Enable this to keep this variant unavailable on the product page.') }}</small>
+											</div>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -214,10 +218,9 @@
 
 					<div class="row gutters-10 mt-3">
 						<div class="col-lg-4">
-							<div class="border rounded p-3 h-100">
+							<div class="border rounded p-2 h-100">
 								<div class="d-flex justify-content-between align-items-center mb-2">
 									<h6 class="text-muted mb-0">{{ translate('Each Piece (Base)') }}</h6>
-									<span class="badge badge-light">{{ translate('Each') }}</span>
 								</div>
 								<div class="form-row">
 									<div class="col-6 mb-3">
@@ -294,10 +297,9 @@
 						</div>
 
 						<div class="col-lg-4">
-							<div class="border rounded p-3 h-100">
+							<div class="border rounded p-2 h-100">
 								<div class="d-flex justify-content-between align-items-center mb-2">
 									<h6 class="text-muted mb-0">{{ translate('Inner Buffer Box / Shrink Pack') }}</h6>
-									<span class="badge badge-light">{{ translate('Inner Pack') }}</span>
 								</div>
 								<div class="form-row">
 									<div class="col-6 mb-3">
@@ -365,10 +367,9 @@
 						</div>
 
 						<div class="col-lg-4">
-							<div class="border rounded p-3 h-100">
+							<div class="border rounded p-2 h-100">
 								<div class="d-flex justify-content-between align-items-center mb-2">
 									<h6 class="text-muted mb-0">{{ translate('Outer Case/Shipper/Carton') }}</h6>
-									<span class="badge badge-light">{{ translate('Outer Pack') }}</span>
 								</div>
 								<div class="form-row">
 									<div class="col-6 mb-3">
@@ -471,12 +472,12 @@
 										<thead>
 											<tr>
 												<th style="width: 14%;">{{ translate('Batch Code') }}</th>
+												<th style="width: 12%;">{{ translate('Mfg Month') }}</th>
+												<th style="width: 12%;">{{ translate('Expiry Month') }}</th>
 												<th style="width: 10%;">{{ translate('MRP Price') }}</th>
 												<th style="width: 10%;">{{ translate('Stock Qty') }}</th>
-												<th style="width: 12%;">{{ translate('Expiry Month') }}</th>
-												<th style="width: 12%;">{{ translate('Mfg Month') }}</th>
-												<th style="width: 12%;">{{ translate('Role Base Price') }}</th>
 												<th style="width: 18%;">{{ translate('COA Document') }}</th>
+												<th style="width: 12%;">{{ translate('Role Base Price') }}</th>
 												<th style="width: 8%;" class="text-center">{{ translate('Action') }}</th>
 											</tr>
 										</thead>
@@ -486,20 +487,16 @@
 													<input type="text" name="batches[{{ $variantKey }}][0][batch]" class="form-control form-control-sm" placeholder="{{ translate('Batch code') }}" required>
 												</td>
 												<td>
-													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][mrp_price]" value="{{ $unit_price }}" min="0" step="0.01" class="form-control form-control-sm" required>
-												</td>
-												<td>
-													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][qty]" value="10" min="0" step="1" class="form-control form-control-sm" required>
+													<input type="month" name="batches[{{ $variantKey }}][0][manufacturing_date]" class="form-control form-control-sm">
 												</td>
 												<td>
 													<input type="month" name="batches[{{ $variantKey }}][0][product_exp_date]" class="form-control form-control-sm">
 												</td>
 												<td>
-													<input type="month" name="batches[{{ $variantKey }}][0][manufacturing_date]" class="form-control form-control-sm">
+													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][mrp_price]" value="{{ $unit_price }}" min="0" step="0.01" class="form-control form-control-sm" required>
 												</td>
 												<td>
-													<input type="hidden" name="batches[{{ $variantKey }}][0][role_price]" class="batch-role-price-input" value="">
-													<small class="text-muted">{{ translate('Auto from MRP') }}</small>
+													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][qty]" value="10" min="0" step="1" class="form-control form-control-sm" required>
 												</td>
 												<td class="coa-uploader-cell">
 													<div class="coa-uploader-wrapper" id="coa-wrapper-{{ $variantKey }}-0">
@@ -512,6 +509,10 @@
 														</div>
 														<div class="file-preview box sm"></div>
 													</div>
+												</td>
+												<td>
+													<input type="hidden" name="batches[{{ $variantKey }}][0][role_price]" class="batch-role-price-input" value="">
+													<small class="text-muted">{{ translate('Auto from MRP') }}</small>
 												</td>
 												<td class="text-center">
 													<button type="button" class="btn btn-xs btn-soft-danger" onclick="removeBatchRow(this)" title="{{ translate('Remove') }}">
@@ -549,20 +550,16 @@
 					<input type="text" name="batches[` + variantKey + `][` + index + `][batch]" class="form-control form-control-sm" placeholder="{{ translate('Batch code') }}" required>
 				</td>
 				<td>
-					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][mrp_price]" min="0" step="0.01" class="form-control form-control-sm" required>
-				</td>
-				<td>
-					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][qty]" min="0" step="1" class="form-control form-control-sm" required>
+					<input type="month" name="batches[` + variantKey + `][` + index + `][manufacturing_date]" class="form-control form-control-sm">
 				</td>
 				<td>
 					<input type="month" name="batches[` + variantKey + `][` + index + `][product_exp_date]" class="form-control form-control-sm">
 				</td>
 				<td>
-					<input type="month" name="batches[` + variantKey + `][` + index + `][manufacturing_date]" class="form-control form-control-sm">
+					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][mrp_price]" min="0" step="0.01" class="form-control form-control-sm" required>
 				</td>
 				<td>
-					<input type="hidden" name="batches[` + variantKey + `][` + index + `][role_price]" class="batch-role-price-input" value="">
-					<small class="text-muted">{{ translate('Auto from MRP') }}</small>
+					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][qty]" min="0" step="1" class="form-control form-control-sm" required>
 				</td>
 				<td class="coa-uploader-cell">
 					<div class="coa-uploader-wrapper" id="` + wrapperId + `">
@@ -575,6 +572,10 @@
 						</div>
 						<div class="file-preview box sm"></div>
 					</div>
+				</td>
+				<td>
+					<input type="hidden" name="batches[` + variantKey + `][` + index + `][role_price]" class="batch-role-price-input" value="">
+					<small class="text-muted">{{ translate('Auto from MRP') }}</small>
 				</td>
 				<td class="text-center">
 					<button type="button" class="btn btn-xs btn-soft-danger" onclick="removeBatchRow(this)" title="{{ translate('Remove') }}">
