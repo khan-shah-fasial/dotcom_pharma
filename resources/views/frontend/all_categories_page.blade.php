@@ -102,6 +102,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 15px;
+        align-items: start;
     }
     
     .subcategory-card {
@@ -113,6 +114,7 @@
         text-decoration: none;
         display: block;
         position: relative;
+        align-self: start;
     }
     
     .subcategory-card:hover {
@@ -155,6 +157,7 @@
         color: #6b7280;
         transition: transform 0.3s ease;
         margin-left: 10px;
+        flex-shrink: 0;
     }
     
     .subcategory-card.expanded .subcategory-expand-icon {
@@ -163,13 +166,31 @@
     
     .sub-subcategories-container {
         display: none;
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid #e5e7eb;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        margin-top: 5px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        z-index: 100;
+        padding: 10px;
+        min-width: 100%;
     }
     
     .subcategory-card.expanded .sub-subcategories-container {
         display: block;
+    }
+    
+    .subcategory-card.expanded {
+        z-index: 10;
+        border-color: #7c3aed;
+    }
+    
+    .subcategory-card.has-children {
+        position: relative;
     }
     
     .sub-subcategories-list {
