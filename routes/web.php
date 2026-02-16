@@ -224,6 +224,7 @@ Route::controller(HomeController::class)->group(function () {
 
     Route::get('/brands', 'all_brands')->name('brands.all');
     Route::get('/categories', 'all_categories')->name('categories.all');
+    Route::get('/all-categories', 'all_categories_page')->name('all.categories');
     Route::get('/sellers', 'all_seller')->name('sellers');
     Route::get('/coupons', 'all_coupons')->name('coupons.all');
     Route::get('/inhouse', 'inhouse_products')->name('inhouse.all');

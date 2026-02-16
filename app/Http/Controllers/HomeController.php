@@ -916,6 +916,49 @@ class HomeController extends Controller
         return view('frontend.all_category', compact('categories'));
     }
 
+    public function all_categories_page(Request $request)
+    {
+        // Get all main categories (level 0)
+        $mainCategories = Category::where('parent_id', 0)
+            ->with(['childrenCategories' => function($query) {
+                $query->orderBy('order_level', 'desc')
+                    ->with(['childrenCategories' => function($subQuery) {
+                        $subQuery->orderBy('order_level', 'desc');
+                    }]);
+            }])
+            ->orderBy('order_level', 'desc')
+            ->get();
+
+        // Process each main category and calculate counts
+        $categoriesData = [];
+        foreach ($mainCategories as $mainCategory) {
+            $subcategoryCount = 0;
+            $totalProducts = 0;
+            
+            // Process subcategories (level 2)
+            foreach ($mainCategory->childrenCategories as $subcategory) {
+                // Get product count for subcategory
+                $subcategory->product_count = category_published_product_count($subcategory->id);
+                $totalProducts += $subcategory->product_count;
+                $subcategoryCount++;
+                
+                // Process sub-subcategories (level 3)
+                foreach ($subcategory->childrenCategories as $subSubcategory) {
+                    // Get product count for sub-subcategory
+                    $subSubcategory->product_count = category_published_product_count($subSubcategory->id);
+                }
+            }
+            
+            $categoriesData[] = [
+                'category' => $mainCategory,
+                'subcategory_count' => $subcategoryCount,
+                'total_products' => $totalProducts
+            ];
+        }
+
+        return view('frontend.all_categories_page', compact('categoriesData'));
+    }
+
     public function all_brands(Request $request)
     {
         $brands = Brand::all();
