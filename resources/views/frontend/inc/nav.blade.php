@@ -431,6 +431,11 @@ body .translater_menu .select2-container {
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
 
+                         <li class="list-inline-item d-none d-md-inline mr-0">
+                            <a class="b2b_buttons d-grid align-items-center" href="/all-categories">
+                                <span><i class="las la-th-list"></i></span> <span>All Categories</span> 
+                            </a>
+                        </li>
 
                         <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
                             <a class="b2b_buttons d-grid align-items-center" href="{{ route('user.new_registration') }}">
