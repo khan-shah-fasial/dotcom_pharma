@@ -11,17 +11,11 @@
     .main-categories-grid {
         display: flex;
         flex-direction: column;
-        gap: 30px;
+        gap: 50px;
         margin-top: 30px;
     }
     
    
-    .main-category-card.accordion-style {
-        cursor: pointer;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    
    
     .main-category-card.accordion-style.active {
         
@@ -30,7 +24,7 @@
     
     .main-category-card.always-expanded {
     
-        background: #faf5ff;
+        background: #f8f9fa;
         width: 100%;
         max-width: 100%;
         margin: 0;
@@ -43,21 +37,7 @@
     .main-category-card.always-expanded .expand-icon {
         display: none;
     }
-    
-    .all-categories-page .container {
-        max-width: 100%;
-        padding-left: 20px;
-        padding-right: 20px;
-    }
-    
-    @media (min-width: 1200px) {
-        .all-categories-page .container {
-            max-width: 100%;
-            padding-left: 40px;
-            padding-right: 40px;
-        }
-    }
-    
+   
     .main-category-header {
         display: flex;
         align-items: center;
@@ -228,9 +208,20 @@
     }
     
     .breadcrumb-section {
-        background: #ffffff;
-        padding: 20px 0;
-        border-bottom: 1px solid #e5e7eb;
+        background: #f8f9fa;
+    }
+    
+    .breadcrumb-section .breadcrumb {
+        margin-bottom: 0;
+        font-size: 13px;
+    }
+    
+    .breadcrumb-section .breadcrumb-item {
+        font-size: 13px;
+    }
+    
+    .breadcrumb-section .breadcrumb-item a {
+        font-size: 13px;
     }
     
     .page-title {
