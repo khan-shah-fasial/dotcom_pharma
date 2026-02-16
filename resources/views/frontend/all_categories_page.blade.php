@@ -298,7 +298,7 @@
                                         <div class="subcategory-header">
                                             <div class="subcategory-info">
                                                 <h3 class="subcategory-title">{{ $subcategory->getTranslation('name') }}</h3>
-                                                <p class="subcategory-count">{{ $subcategory->product_count ?? 0 }} {{ translate('products') }}</p>
+                                                <p class="subcategory-count">{{ translate('Products') }} ({{ $subcategory->product_count ?? 0 }})</p>
                                             </div>
                                             <i class="las la-chevron-down subcategory-expand-icon"></i>
                                         </div>
@@ -308,7 +308,7 @@
                                                 @foreach($subcategory->childrenCategories as $subSubcategory)
                                                     <a href="{{ route('products.category', $subSubcategory->slug) }}" class="sub-subcategory-item">
                                                         <span class="sub-subcategory-name">{{ $subSubcategory->getTranslation('name') }}</span>
-                                                        <span class="sub-subcategory-count">{{ $subSubcategory->product_count ?? 0 }} {{ translate('products') }}</span>
+                                                        <span class="sub-subcategory-count">({{ $subSubcategory->product_count ?? 0 }})</span>
                                                     </a>
                                                 @endforeach
                                             </div>
@@ -319,7 +319,7 @@
                                         <div class="subcategory-header">
                                             <div class="subcategory-info">
                                                 <h3 class="subcategory-title">{{ $subcategory->getTranslation('name') }}</h3>
-                                                <p class="subcategory-count">{{ $subcategory->product_count ?? 0 }} {{ translate('products') }}</p>
+                                                <p class="subcategory-count">{{ translate('Products') }} ({{ $subcategory->product_count ?? 0 }})</p>
                                             </div>
                                         </div>
                                     </a>
