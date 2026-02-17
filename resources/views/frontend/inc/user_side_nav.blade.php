@@ -97,7 +97,7 @@
                     </a>
                 </li>
 
-                <!-- Past Orders -->
+                <!-- Ready List -->
                 <li class="aiz-side-nav-item">
                     <a href="{{ route('purchase_history.past_orders') }}"
                         class="aiz-side-nav-link {{ areActiveRoutes(['purchase_history.past_orders']) }}">
@@ -107,7 +107,7 @@
                                 <path d="M13.5,8a.5.5,0,0,0-.5.5v4.086l-2.8,1.682a.5.5,0,0,0,.5.864l3-1.8A.5.5,0,0,0,14,12.9V8.5A.5.5,0,0,0,13.5,8Z" transform="translate(-1 -1)"/>
                             </g>
                         </svg>
-                        <span class="aiz-side-nav-text ml-3">{{ translate('Past Orders') }}</span>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Ready List') }}</span>
                     </a>
                 </li>
 
@@ -155,7 +155,7 @@
                     </li>
                 @endif
 
-                <!-- Wishlist -->
+                <!-- My Saved List -->
                 <li class="aiz-side-nav-item">
                     <a href="{{ route('wishlists.index') }}"
                         class="aiz-side-nav-link {{ areActiveRoutes(['wishlists.index']) }}">
@@ -169,7 +169,7 @@
                                 <path id="Path_2981" data-name="Path 2981" d="M14.682,1.318a4.5,4.5,0,0,0-6.364,0L8,1.636l-.318-.318A4.5,4.5,0,0,0,1.318,7.682l6.046,6.054a.9.9,0,0,0,1.273,0l6.045-6.054a4.5,4.5,0,0,0,0-6.364m-.707,5.657L8,12.959,2.025,6.975a3.5,3.5,0,0,1,4.95-4.95l.389.389a.9.9,0,0,0,1.273,0l.388-.389a3.5,3.5,0,0,1,4.95,4.95" transform="translate(0 0)" fill="#b5b5bf"/>
                             </g>
                         </svg>
-                        <span class="aiz-side-nav-text ml-3">{{ translate('Wishlist') }}</span>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('My Saved List') }}</span>
                     </a>
                 </li>
 

@@ -326,7 +326,7 @@
                         </li>
                         <li class="mb-md-2 mb-0">
                             <a class="fs-13 text-soft-light animate-underline-white" href="{{ route('wishlists.index') }}">
-                                {{ translate('My Wishlist') }}
+                                {{ translate('My Saved List') }}
                             </a>
                         </li>
                         <li class="mb-md-2 mb-0">
@@ -488,7 +488,7 @@
                         </li>
                         <li class="mb-2 pb-2 {{ areActiveRoutes(['wishlists.index'],' active')}}">
                             <a class="fs-13 text-soft-light text-sm-secondary animate-underline-white" href="{{ route('wishlists.index') }}">
-                                {{ translate('My Wishlist') }}
+                                {{ translate('My Saved List') }}
                             </a>
                         </li>
                         <li class="mb-2 pb-2 {{ areActiveRoutes(['orders.track'],' active')}}">

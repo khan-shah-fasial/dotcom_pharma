@@ -1,4 +1,4 @@
-<a href="{{ route('wishlists.index') }}" class="d-flex align-items-center text-dark" data-toggle="tooltip" data-title="{{ translate('Wishlist') }}" data-placement="top">
+<a href="{{ route('wishlists.index') }}" class="d-flex align-items-center text-dark" data-toggle="tooltip" data-title="{{ translate('My Saved List') }}" data-placement="top">
     <span class="position-relative d-inline-block mt-md-1">
        
 

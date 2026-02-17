@@ -1111,7 +1111,7 @@ body .translater_menu .select2-container {
                                                     <path d="M13.5,8a.5.5,0,0,0-.5.5v4.086l-2.8,1.682a.5.5,0,0,0,.5.864l3-1.8A.5.5,0,0,0,14,12.9V8.5A.5.5,0,0,0,13.5,8Z" transform="translate(-1 -1)"/>
                                                 </g>
                                             </svg>
-                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Past Orders') }}</span>
+                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Ready List') }}</span>
                                         </a>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
@@ -1570,7 +1570,7 @@ body .translater_menu .select2-container {
                             <a href="{{ route('wishlists.index') }}"
                                 class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
                                 {{ areActiveRoutes(['wishlists.index'], ' active') }}">
-                                {{ translate('Wishlist') }}
+                                {{ translate('My Saved List') }}
                             </a>
                         </li>
                         <li class="mr-0">

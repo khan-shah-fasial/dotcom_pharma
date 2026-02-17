@@ -1743,7 +1743,7 @@
                 <a href="javascript:void(0)" onclick="addToWishList({{ $detailedProduct->id }})"
                     class="mr-3 fs-14 text-dark opacity-60 has-transitiuon hov-opacity-100">
                     <i class="la la-heart-o mr-1"></i>
-                    {{ translate('Add to Wishlist') }}
+                    {{ translate('Add to My Saved List') }}
                 </a>
                 <!-- Add to compare button -->
                 <a href="javascript:void(0)" onclick="addToCompare({{ $detailedProduct->id }})"

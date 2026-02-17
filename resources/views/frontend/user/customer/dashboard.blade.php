@@ -127,7 +127,7 @@
                     </div>
                 </div>
 
-                <!-- Wishlist summary -->
+                <!-- My Saved List summary -->
                 <div class="d-flex align-items-center py-4 border-bottom">
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
                         <g id="Group_25000" data-name="Group 25000" transform="translate(-1367 -499)">
@@ -142,7 +142,7 @@
                     </svg>
                     <div class="ml-3 d-flex flex-column justify-content-between">
                         <span class="fs-20 fw-700 mb-1">{{ count(Auth::user()->wishlists) > 0 ? sprintf("%02d", count(Auth::user()->wishlists)) : 0 }}</span>
-                        <span class="fs-14 fw-400 text-secondary">{{ translate('Products in Wishlist') }}</span>
+                        <span class="fs-14 fw-400 text-secondary">{{ translate('Products in My Saved List') }}</span>
                     </div>
                 </div>
 
@@ -223,7 +223,7 @@
 
     <div class="row align-items-center mb-2 mt-1">
         <div class="col-6">
-            <h3 class=" mb-0 fs-14 fs-md-16 fw-700 text-dark">{{ translate('My Wishlist')}}</h3>
+            <h3 class=" mb-0 fs-14 fs-md-16 fw-700 text-dark">{{ translate('My Saved List')}}</h3>
         </div>
         <div class="col-6 text-right">
             <a class="text-blue fs-10 fs-md-12 fw-700 hov-text-primary animate-underline-primary" href="{{ route('wishlists.index') }}">{{ translate('View All') }}</a>
@@ -245,7 +245,7 @@
                             </a>
                             <!-- Remove from wishlisht -->
                             <div class="absolute-top-right aiz-p-hov-icon">
-                                <a href="javascript:void(0)" onclick="removeFromWishlist({{ $wishlist->id }})" data-toggle="tooltip" data-title="{{ translate('Remove from wishlist') }}" data-placement="left">
+                                <a href="javascript:void(0)" onclick="removeFromWishlist({{ $wishlist->id }})" data-toggle="tooltip" data-title="{{ translate('Remove from saved list') }}" data-placement="left">
                                     <i class="la la-trash"></i>
                                 </a>
                             </div>

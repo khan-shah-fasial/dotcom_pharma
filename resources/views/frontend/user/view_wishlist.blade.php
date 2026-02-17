@@ -4,7 +4,7 @@
     <div class="aiz-titlebar mb-4">
         <div class="row align-items-center">
             <div class="col-md-6">
-                <b class="fs-20 fw-700 text-dark">{{ translate('Wishlist')}}</b>
+                <b class="fs-20 fw-700 text-dark">{{ translate('My Saved List')}}</b>
             </div>
         </div>
     </div>
@@ -21,7 +21,7 @@
                         </a>
                         <!-- Remove from wishlisht -->
                         <div class="absolute-top-right aiz-p-hov-icon">
-                            <a href="javascript:void(0)" onclick="removeFromWishlist({{ $wishlist->id }})" data-toggle="tooltip" data-title="{{ translate('Remove from wishlist') }}" data-placement="left">
+                            <a href="javascript:void(0)" onclick="removeFromWishlist({{ $wishlist->id }})" data-toggle="tooltip" data-title="{{ translate('Remove from saved list') }}" data-placement="left">
                                 <i class="la la-trash"></i>
                             </a>
                         </div>

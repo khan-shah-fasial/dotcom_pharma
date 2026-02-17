@@ -4,7 +4,7 @@
     <div class="card shadow-none rounded-0 border">
         <div class="card-header border-bottom-0 d-flex align-items-center justify-content-between flex-wrap">
             <div>
-                <h5 class="mb-0 fs-20 fw-700 text-dark">{{ translate('Past Orders') }}</h5>
+                <h5 class="mb-0 fs-20 fw-700 text-dark">{{ translate('Ready List') }}</h5>
                 <div class="text-muted fs-12">{{ translate('Grouped products you have purchased earlier') }}</div>
             </div>
         </div>
