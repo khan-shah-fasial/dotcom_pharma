@@ -18,8 +18,11 @@
                     <div class="col p-0">
                         <div class="h-100 d-flex flex-column border-right border-bottom p-2">
                             @if ($product)
-                                {{-- Only use the shared product card partial as requested --}}
-                                @include('frontend.nexgeno.partials.product_box_1', ['product' => $product])
+                                {{-- Use customized card with variation label for Ready List --}}
+                                @include('frontend.nexgeno.partials.product_box_ready_list', [
+                                    'product' => $product,
+                                    'variation' => $row->variation ?? null,
+                                ])
                             @endif
                         </div>
                     </div>
