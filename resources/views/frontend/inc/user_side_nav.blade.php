@@ -54,6 +54,19 @@
                     </a>
                 </li>
 
+                <!-- Manage Profile -->
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('profile') }}" class="aiz-side-nav-link {{ areActiveRoutes(['profile']) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                            <g id="Group_8094" data-name="Group 8094" transform="translate(3176 -602)">
+                              <path id="Path_2924" data-name="Path 2924" d="M331.144,0a4,4,0,1,0,4,4,4,4,0,0,0-4-4m0,7a3,3,0,1,1,3-3,3,3,0,0,1-3,3" transform="translate(-3499.144 602)" fill="#b5b5bf"/>
+                              <path id="Path_2925" data-name="Path 2925" d="M332.144,20h-10a3,3,0,0,0,0,6h10a3,3,0,0,0,0-6m0,5h-10a2,2,0,0,1,0-4h10a2,2,0,0,1,0,4" transform="translate(-3495.144 592)" fill="#b5b5bf"/>
+                            </g>
+                        </svg>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Manage Profile') }}</span>
+                    </a>
+                </li>
+                
                 <!-- Spend & Save -->
                 <li class="aiz-side-nav-item">
                     <a href="{{ route('purchase_history.spend_save') }}"
@@ -65,10 +78,23 @@
                                 <path fill="#b5b5bf" d="M6 5.5a.5.5 0 0 1 .5.5v1.5h1A1.5 1.5 0 0 1 9 9v1a1.5 1.5 0 0 1-1.5 1.5h-1a.5.5 0 0 1 0-1H7.5A.5.5 0 0 0 8 10V9a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5Z"/>
                             </g>
                         </svg>
-                        <span class="aiz-side-nav-text ml-3">{{ translate('Total Spend & Save') }}</span>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Total Savings') }}</span>
                     </a>
                 </li>
                 
+                <!-- Ready List -->
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('purchase_history.past_orders') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['purchase_history.past_orders']) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                            <g transform="translate(-2 -2)" fill="#b5b5bf">
+                                <path d="M10,2a8,8,0,1,0,8,8A8.009,8.009,0,0,0,10,2Zm0,15A7,7,0,1,1,17,10,7.008,7.008,0,0,1,10,17Z" transform="translate(0)"/>
+                                <path d="M13.5,8a.5.5,0,0,0-.5.5v4.086l-2.8,1.682a.5.5,0,0,0,.5.864l3-1.8A.5.5,0,0,0,14,12.9V8.5A.5.5,0,0,0,13.5,8Z" transform="translate(-1 -1)"/>
+                            </g>
+                        </svg>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Ready List') }}</span>
+                    </a>
+                </li>
                 @php
                     $delivery_viewed = get_count_by_delivery_viewed();
                     $payment_status_viewed = get_count_by_payment_status_viewed();
@@ -97,64 +123,6 @@
                     </a>
                 </li>
 
-                <!-- Ready List -->
-                <li class="aiz-side-nav-item">
-                    <a href="{{ route('purchase_history.past_orders') }}"
-                        class="aiz-side-nav-link {{ areActiveRoutes(['purchase_history.past_orders']) }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                            <g transform="translate(-2 -2)" fill="#b5b5bf">
-                                <path d="M10,2a8,8,0,1,0,8,8A8.009,8.009,0,0,0,10,2Zm0,15A7,7,0,1,1,17,10,7.008,7.008,0,0,1,10,17Z" transform="translate(0)"/>
-                                <path d="M13.5,8a.5.5,0,0,0-.5.5v4.086l-2.8,1.682a.5.5,0,0,0,.5.864l3-1.8A.5.5,0,0,0,14,12.9V8.5A.5.5,0,0,0,13.5,8Z" transform="translate(-1 -1)"/>
-                            </g>
-                        </svg>
-                        <span class="aiz-side-nav-text ml-3">{{ translate('Ready List') }}</span>
-                    </a>
-                </li>
-
-                <!-- Financial Archive -->
-                <li class="aiz-side-nav-item">
-                    <a href="{{ route('financial-archives.user') }}"
-                        class="aiz-side-nav-link {{ areActiveRoutes(['financial-archives.user']) }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                            <g fill="none" fill-rule="evenodd">
-                                <path fill="#b5b5bf" d="M3 2.5A1.5 1.5 0 0 1 4.5 1h3.793a1.5 1.5 0 0 1 1.06.44L10.5 2.5H12A1.5 1.5 0 0 1 13.5 4v8A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V2.5H3Zm8.5 2A.5.5 0 0 0 11 4h-1a1 1 0 0 1-1-1V2h-4a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V4.5h-.5Z"/>
-                                <path fill="#b5b5bf" d="M5.75 6.5a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5H8a.5.5 0 0 1 0 1H6.25a.5.5 0 0 1-.5-.5Z"/>
-                            </g>
-                        </svg>
-                        <span class="aiz-side-nav-text ml-3">{{ translate('Financial Archive') }}</span>
-                    </a>
-                </li>
-
-                <!-- Downloads -->
-                <li class="aiz-side-nav-item d-none">
-                    <a href="{{ route('digital_purchase_history.index') }}"
-                        class="aiz-side-nav-link {{ areActiveRoutes(['digital_purchase_history.index']) }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16.001" height="16" viewBox="0 0 16.001 16">
-                            <g id="Group_8110" data-name="Group 8110" transform="translate(-1388.154 -562.604)">
-                                <path id="Path_2963" data-name="Path 2963" d="M77.864,98.69V92.1a.5.5,0,1,0-1,0V98.69l-1.437-1.437a.5.5,0,0,0-.707.707l1.851,1.852a1,1,0,0,0,.707.293h.172a1,1,0,0,0,.707-.293l1.851-1.852a.5.5,0,0,0-.7-.713Z" transform="translate(1318.79 478.5)" fill="#b5b5bf"/>
-                                <path id="Path_2964" data-name="Path 2964" d="M67.155,88.6a3,3,0,0,1-.474-5.963q-.009-.089-.015-.179a5.5,5.5,0,0,1,10.977-.718,3.5,3.5,0,0,1-.989,6.859h-1.5a.5.5,0,0,1,0-1l1.5,0a2.5,2.5,0,0,0,.417-4.967.5.5,0,0,1-.417-.5,4.5,4.5,0,1,0-8.908.866.512.512,0,0,1,.009.121.5.5,0,0,1-.52.479,2,2,0,1,0-.162,4l.081,0h2a.5.5,0,0,1,0,1Z" transform="translate(1324 486)" fill="#b5b5bf"/>
-                            </g>
-                        </svg>
-                        <span class="aiz-side-nav-text ml-3">{{ translate('Downloads') }}</span>
-                    </a>
-                </li>
-
-                <!-- Refund Requests -->
-                @if (addon_is_activated('refund_request'))
-                    <li class="aiz-side-nav-item">
-                        <a href="{{ route('customer_refund_request') }}"
-                            class="aiz-side-nav-link {{ areActiveRoutes(['customer_refund_request']) }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                                <g id="Group_8107" data-name="Group 8107" transform="translate(-134.153 -539.823)">
-                                    <path id="Path_2951" data-name="Path 2951" d="M119.549,4.47h2.033a.5.5,0,0,0,0-1h-3.24a.5.5,0,0,0-.5.5v3.24a.5.5,0,0,0,1,0V5.189a7,7,0,1,1-4.155-1.366.5.5,0,0,0,0-1,8,8,0,1,0,4.862,1.647" transform="translate(27.466 537)" fill="#b5b5bf"/>
-                                    <path id="Path_2952" data-name="Path 2952" d="M120.688,9.323v-1a.5.5,0,0,0-1,0v1a2,2,0,0,0-2,2v.5a2,2,0,0,0,2,2h1a1,1,0,0,1,1,1v.5a1,1,0,0,1-1,1h-1a1,1,0,0,1-1-1,.5.5,0,1,0-1,0,2,2,0,0,0,2,2v1a.5.5,0,0,0,1,0v-1a2,2,0,0,0,2-2v-.5a2,2,0,0,0-2-2h-1a1,1,0,0,1-1-1v-.5a1,1,0,0,1,1-1h1a1,1,0,0,1,1,1,.5.5,0,0,0,1,0,2,2,0,0,0-2-2" transform="translate(21.965 534.5)" fill="#b5b5bf"/>
-                                </g>
-                            </svg>
-                            <span class="aiz-side-nav-text ml-3">{{ translate('Refund Requests') }}</span>
-                        </a>
-                    </li>
-                @endif
-
                 <!-- My Saved List -->
                 <li class="aiz-side-nav-item">
                     <a href="{{ route('wishlists.index') }}"
@@ -173,8 +141,53 @@
                     </a>
                 </li>
 
-                <!-- Compare -->
+                <!-- My Subscribe List -->
                 <li class="aiz-side-nav-item">
+                    <a href="{{ route('subscribe-list') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['subscribe-list']) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                            <g fill="#b5b5bf" fill-rule="evenodd">
+                                <path d="M8 15.5a2 2 0 0 1-1.995-1.85L6 13.5h1a1 1 0 0 0 2 0h1l-.005.15A2 2 0 0 1 8 15.5Z"/>
+                                <path d="M8 1a4 4 0 0 1 4 4v2.764l.832 2.494A.5.5 0 0 1 12.35 11H3.65a.5.5 0 0 1-.482-.642L4 7.764V5a4 4 0 0 1 4-4Zm0 1a3 3 0 0 0-3 3v2.915a.5.5 0 0 1-.027.162L4.013 10h7.974l-.96-1.923A.5.5 0 0 1 11 7.915V5a3 3 0 0 0-3-3Z"/>
+                            </g>
+                        </svg>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('My Subscribe List') }}</span>
+                    </a>
+                </li>
+
+
+                <!-- Downloads -->
+                <li class="aiz-side-nav-item d-none">
+                    <a href="{{ route('digital_purchase_history.index') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['digital_purchase_history.index']) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16.001" height="16" viewBox="0 0 16.001 16">
+                            <g id="Group_8110" data-name="Group 8110" transform="translate(-1388.154 -562.604)">
+                                <path id="Path_2963" data-name="Path 2963" d="M77.864,98.69V92.1a.5.5,0,1,0-1,0V98.69l-1.437-1.437a.5.5,0,0,0-.707.707l1.851,1.852a1,1,0,0,0,.707.293h.172a1,1,0,0,0,.707-.293l1.851-1.852a.5.5,0,0,0-.7-.713Z" transform="translate(1318.79 478.5)" fill="#b5b5bf"/>
+                                <path id="Path_2964" data-name="Path 2964" d="M67.155,88.6a3,3,0,0,1-.474-5.963q-.009-.089-.015-.179a5.5,5.5,0,0,1,10.977-.718,3.5,3.5,0,0,1-.989,6.859h-1.5a.5.5,0,0,1,0-1l1.5,0a2.5,2.5,0,0,0,.417-4.967.5.5,0,0,1-.417-.5,4.5,4.5,0,1,0-8.908.866.512.512,0,0,1,.009.121.5.5,0,0,1-.52.479,2,2,0,1,0-.162,4l.081,0h2a.5.5,0,0,1,0,1Z" transform="translate(1324 486)" fill="#b5b5bf"/>
+                            </g>
+                        </svg>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Downloads') }}</span>
+                    </a>
+                </li>
+
+                <!-- Refund Requests -->
+                @if (addon_is_activated('refund_request'))
+                    <li class="aiz-side-nav-item d-none">
+                        <a href="{{ route('customer_refund_request') }}"
+                            class="aiz-side-nav-link {{ areActiveRoutes(['customer_refund_request']) }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                <g id="Group_8107" data-name="Group 8107" transform="translate(-134.153 -539.823)">
+                                    <path id="Path_2951" data-name="Path 2951" d="M119.549,4.47h2.033a.5.5,0,0,0,0-1h-3.24a.5.5,0,0,0-.5.5v3.24a.5.5,0,0,0,1,0V5.189a7,7,0,1,1-4.155-1.366.5.5,0,0,0,0-1,8,8,0,1,0,4.862,1.647" transform="translate(27.466 537)" fill="#b5b5bf"/>
+                                    <path id="Path_2952" data-name="Path 2952" d="M120.688,9.323v-1a.5.5,0,0,0-1,0v1a2,2,0,0,0-2,2v.5a2,2,0,0,0,2,2h1a1,1,0,0,1,1,1v.5a1,1,0,0,1-1,1h-1a1,1,0,0,1-1-1,.5.5,0,1,0-1,0,2,2,0,0,0,2,2v1a.5.5,0,0,0,1,0v-1a2,2,0,0,0,2-2v-.5a2,2,0,0,0-2-2h-1a1,1,0,0,1-1-1v-.5a1,1,0,0,1,1-1h1a1,1,0,0,1,1,1,.5.5,0,0,0,1,0,2,2,0,0,0-2-2" transform="translate(21.965 534.5)" fill="#b5b5bf"/>
+                                </g>
+                            </svg>
+                            <span class="aiz-side-nav-text ml-3">{{ translate('Refund Requests') }}</span>
+                        </a>
+                    </li>
+                @endif
+
+                <!-- Compare -->
+                <li class="aiz-side-nav-item d-none">
                     <a href="{{ route('compare') }}" class="aiz-side-nav-link {{ areActiveRoutes(['compare']) }}">
                         <svg id="Group_22071" data-name="Group 22071" xmlns="http://www.w3.org/2000/svg" width="14.6" height="16" viewBox="0 0 14.6 16">
                             <g id="LWPOLYLINE" transform="translate(0.158)">
@@ -307,6 +320,20 @@
                     </li>
                 @endif
 
+                <!-- Financial Archive -->
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('financial-archives.user') }}"
+                        class="aiz-side-nav-link {{ areActiveRoutes(['financial-archives.user']) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                            <g fill="none" fill-rule="evenodd">
+                                <path fill="#b5b5bf" d="M3 2.5A1.5 1.5 0 0 1 4.5 1h3.793a1.5 1.5 0 0 1 1.06.44L10.5 2.5H12A1.5 1.5 0 0 1 13.5 4v8A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V2.5H3Zm8.5 2A.5.5 0 0 0 11 4h-1a1 1 0 0 1-1-1V2h-4a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V4.5h-.5Z"/>
+                                <path fill="#b5b5bf" d="M5.75 6.5a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5H8a.5.5 0 0 1 0 1H6.25a.5.5 0 0 1-.5-.5Z"/>
+                            </g>
+                        </svg>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Financial Archive') }}</span>
+                    </a>
+                </li>
+
                 <!-- Earning Points -->
                 @if (addon_is_activated('club_point'))
                     <li class="aiz-side-nav-item">
@@ -372,7 +399,7 @@
                 @endphp
 
                 <!-- Support Ticket -->
-                <li class="aiz-side-nav-item">
+                <li class="aiz-side-nav-item d-none">
                     <a href="{{ route('support_ticket.index') }}"
                         class="aiz-side-nav-link {{ areActiveRoutes(['support_ticket.index', 'support_ticket.show']) }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16.001" viewBox="0 0 16 16.001">
@@ -385,19 +412,6 @@
                         @if ($support_ticket > 0)
                             <span class="badge badge-inline badge-success">{{ $support_ticket }}</span>
                         @endif
-                    </a>
-                </li>
-
-                <!-- Manage Profile -->
-                <li class="aiz-side-nav-item">
-                    <a href="{{ route('profile') }}" class="aiz-side-nav-link {{ areActiveRoutes(['profile']) }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                            <g id="Group_8094" data-name="Group 8094" transform="translate(3176 -602)">
-                              <path id="Path_2924" data-name="Path 2924" d="M331.144,0a4,4,0,1,0,4,4,4,4,0,0,0-4-4m0,7a3,3,0,1,1,3-3,3,3,0,0,1-3,3" transform="translate(-3499.144 602)" fill="#b5b5bf"/>
-                              <path id="Path_2925" data-name="Path 2925" d="M332.144,20h-10a3,3,0,0,0,0,6h10a3,3,0,0,0,0-6m0,5h-10a2,2,0,0,1,0-4h10a2,2,0,0,1,0,4" transform="translate(-3495.144 592)" fill="#b5b5bf"/>
-                            </g>
-                        </svg>
-                        <span class="aiz-side-nav-text ml-3">{{ translate('Manage Profile') }}</span>
                     </a>
                 </li>
 
@@ -417,7 +431,7 @@
             </ul>
 
             <!-- logout -->
-            <a href="{{ route('logout') }}" class="btn btn-primary btn-block fs-14 fw-700 mb-5 mb-md-0" style="border-radius: 25px;">{{ translate('Sign Out') }}</a>
+            <a href="{{ route('logout') }}" class="btn btn-danger btn-block fs-14 fw-700 mb-5 mb-md-0" style="border-radius: 25px;">{{ translate('Sign Out') }}</a>
         </div>
 
     </div>

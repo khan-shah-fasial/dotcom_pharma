@@ -1065,68 +1065,109 @@ body .translater_menu .select2-container {
                                 @endif
 
                                 @if (isCustomer())
-                                    <li class="user-top-nav-element border border-top-0" data-id="1">
-                                        <a href="{{ route('purchase_history.index') }}"
-                                            class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                viewBox="0 0 16 16">
-                                                <g id="Group_25261" data-name="Group 25261"
-                                                    transform="translate(-27.466 -542.963)">
-                                                    <path id="Path_2953" data-name="Path 2953"
-                                                        d="M14.5,5.963h-4a1.5,1.5,0,0,0,0,3h4a1.5,1.5,0,0,0,0-3m0,2h-4a.5.5,0,0,1,0-1h4a.5.5,0,0,1,0,1"
-                                                        transform="translate(22.966 537)" fill="#b5b5bf" />
-                                                    <path id="Path_2954" data-name="Path 2954"
-                                                        d="M12.991,8.963a.5.5,0,0,1,0-1H13.5a2.5,2.5,0,0,1,2.5,2.5v10a2.5,2.5,0,0,1-2.5,2.5H2.5a2.5,2.5,0,0,1-2.5-2.5v-10a2.5,2.5,0,0,1,2.5-2.5h.509a.5.5,0,0,1,0,1H2.5a1.5,1.5,0,0,0-1.5,1.5v10a1.5,1.5,0,0,0,1.5,1.5h11a1.5,1.5,0,0,0,1.5-1.5v-10a1.5,1.5,0,0,0-1.5-1.5Z"
-                                                        transform="translate(27.466 536)" fill="#b5b5bf" />
-                                                    <path id="Path_2955" data-name="Path 2955"
-                                                        d="M7.5,15.963h1a.5.5,0,0,1,.5.5v1a.5.5,0,0,1-.5.5h-1a.5.5,0,0,1-.5-.5v-1a.5.5,0,0,1,.5-.5"
-                                                        transform="translate(23.966 532)" fill="#b5b5bf" />
-                                                    <path id="Path_2956" data-name="Path 2956"
-                                                        d="M7.5,21.963h1a.5.5,0,0,1,.5.5v1a.5.5,0,0,1-.5.5h-1a.5.5,0,0,1-.5-.5v-1a.5.5,0,0,1,.5-.5"
-                                                        transform="translate(23.966 529)" fill="#b5b5bf" />
-                                                    <path id="Path_2957" data-name="Path 2957"
-                                                        d="M7.5,27.963h1a.5.5,0,0,1,.5.5v1a.5.5,0,0,1-.5.5h-1a.5.5,0,0,1-.5-.5v-1a.5.5,0,0,1,.5-.5"
-                                                        transform="translate(23.966 526)" fill="#b5b5bf" />
-                                                    <path id="Path_2958" data-name="Path 2958"
-                                                        d="M13.5,16.963h5a.5.5,0,0,1,0,1h-5a.5.5,0,0,1,0-1"
-                                                        transform="translate(20.966 531.5)" fill="#b5b5bf" />
-                                                    <path id="Path_2959" data-name="Path 2959"
-                                                        d="M13.5,22.963h5a.5.5,0,0,1,0,1h-5a.5.5,0,0,1,0-1"
-                                                        transform="translate(20.966 528.5)" fill="#b5b5bf" />
-                                                    <path id="Path_2960" data-name="Path 2960"
-                                                        d="M13.5,28.963h5a.5.5,0,0,1,0,1h-5a.5.5,0,0,1,0-1"
-                                                        transform="translate(20.966 525.5)" fill="#b5b5bf" />
-                                                </g>
-                                            </svg>
-                                            <span
-                                                class="user-top-menu-name has-transition ml-3">{{ translate('My Orders') }}</span>
-                                        </a>
+                                
+                                <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <a href="{{ route('profile') }}"
+                                        class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                        <i class="las la-user-cog text-muted"></i>
+                                        <span class="user-top-menu-name has-transition ml-3">{{ translate('Manage Profile') }}</span>
+                                    </a>
+                                </li>
+
+                                <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <a href="{{ route('purchase_history.spend_save') }}"
+                                        class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                            <g fill="none" fill-rule="evenodd">
+                                                <path fill="#b5b5bf" d="M2.5 2H13a1 1 0 0 1 1 1v1.5a.5.5 0 0 1-1 0V3H2.5a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5H13v-1.5a.5.5 0 0 1 1 0V13a1 1 0 0 1-1 1H2.5A1.5 1.5 0 0 1 1 12.5v-9A1.5 1.5 0 0 1 2.5 2Z"/>
+                                                <path fill="#b5b5bf" d="M12 6.5a.5.5 0 0 1 .5-.5H15a.5.5 0 0 1 .354.854L13.207 9l2.147 2.146A.5.5 0 0 1 15 12h-2.5a.5.5 0 0 1 0-1h1.793l-1.146-1.146a.5.5 0 0 1 0-.708L14.293 8H12.5a.5.5 0 0 1-.5-.5Z"/>
+                                                <path fill="#b5b5bf" d="M6 5.5a.5.5 0 0 1 .5.5v1.5h1A1.5 1.5 0 0 1 9 9v1a1.5 1.5 0 0 1-1.5 1.5h-1a.5.5 0 0 1 0-1H7.5A.5.5 0 0 0 8 10V9a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5Z"/>
+                                            </g>
+                                        </svg>
+                                        <span class="user-top-menu-name has-transition ml-3">{{ translate('Total Savings') }}</span>
+                                    </a>
+                                </li>
+
+                                <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <a href="{{ route('purchase_history.past_orders') }}"
+                                        class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                            <g transform="translate(-2 -2)" fill="#b5b5bf">
+                                                <path d="M10,2a8,8,0,1,0,8,8A8.009,8.009,0,0,0,10,2Zm0,15A7,7,0,1,1,17,10,7.008,7.008,0,0,1,10,17Z" transform="translate(0)"/>
+                                                <path d="M13.5,8a.5.5,0,0,0-.5.5v4.086l-2.8,1.682a.5.5,0,0,0,.5.864l3-1.8A.5.5,0,0,0,14,12.9V8.5A.5.5,0,0,0,13.5,8Z" transform="translate(-1 -1)"/>
+                                            </g>
+                                        </svg>
+                                        <span class="user-top-menu-name has-transition ml-3">{{ translate('Ready List') }}</span>
+                                    </a>
+                                </li>
+
+                                <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <a href="{{ route('purchase_history.index') }}"
+                                        class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 16 16">
+                                            <g id="Group_25261" data-name="Group 25261"
+                                                transform="translate(-27.466 -542.963)">
+                                                <path id="Path_2953" data-name="Path 2953"
+                                                    d="M14.5,5.963h-4a1.5,1.5,0,0,0,0,3h4a1.5,1.5,0,0,0,0-3m0,2h-4a.5.5,0,0,1,0-1h4a.5.5,0,0,1,0,1"
+                                                    transform="translate(22.966 537)" fill="#b5b5bf" />
+                                                <path id="Path_2954" data-name="Path 2954"
+                                                    d="M12.991,8.963a.5.5,0,0,1,0-1H13.5a2.5,2.5,0,0,1,2.5,2.5v10a2.5,2.5,0,0,1-2.5,2.5H2.5a2.5,2.5,0,0,1-2.5-2.5v-10a2.5,2.5,0,0,1,2.5-2.5h.509a.5.5,0,0,1,0,1H2.5a1.5,1.5,0,0,0-1.5,1.5v10a1.5,1.5,0,0,0,1.5,1.5h11a1.5,1.5,0,0,0,1.5-1.5v-10a1.5,1.5,0,0,0-1.5-1.5Z"
+                                                    transform="translate(27.466 536)" fill="#b5b5bf" />
+                                                <path id="Path_2955" data-name="Path 2955"
+                                                    d="M7.5,15.963h1a.5.5,0,0,1,.5.5v1a.5.5,0,0,1-.5.5h-1a.5.5,0,0,1-.5-.5v-1a.5.5,0,0,1,.5-.5"
+                                                    transform="translate(23.966 532)" fill="#b5b5bf" />
+                                                <path id="Path_2956" data-name="Path 2956"
+                                                    d="M7.5,21.963h1a.5.5,0,0,1,.5.5v1a.5.5,0,0,1-.5.5h-1a.5.5,0,0,1-.5-.5v-1a.5.5,0,0,1,.5-.5"
+                                                    transform="translate(23.966 529)" fill="#b5b5bf" />
+                                                <path id="Path_2957" data-name="Path 2957"
+                                                    d="M7.5,27.963h1a.5.5,0,0,1,.5.5v1a.5.5,0,0,1-.5.5h-1a.5.5,0,0,1-.5-.5v-1a.5.5,0,0,1,.5-.5"
+                                                    transform="translate(23.966 526)" fill="#b5b5bf" />
+                                                <path id="Path_2958" data-name="Path 2958"
+                                                    d="M13.5,16.963h5a.5.5,0,0,1,0,1h-5a.5.5,0,0,1,0-1"
+                                                    transform="translate(20.966 531.5)" fill="#b5b5bf" />
+                                                <path id="Path_2959" data-name="Path 2959"
+                                                    d="M13.5,22.963h5a.5.5,0,0,1,0,1h-5a.5.5,0,0,1,0-1"
+                                                    transform="translate(20.966 528.5)" fill="#b5b5bf" />
+                                                <path id="Path_2960" data-name="Path 2960"
+                                                    d="M13.5,28.963h5a.5.5,0,0,1,0,1h-5a.5.5,0,0,1,0-1"
+                                                    transform="translate(20.966 525.5)" fill="#b5b5bf" />
+                                            </g>
+                                        </svg>
+                                        <span
+                                            class="user-top-menu-name has-transition ml-3">{{ translate('My Orders') }}</span>
+                                    </a>
+                                </li>
+
+                                <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <a href="{{ route('wishlists.index') }}"
+                                        class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                        <svg id="Group_8116" data-name="Group 8116" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="16" viewBox="0 0 16 16">
+                                            <defs>
+                                                <clipPath id="clip-path">
+                                                <rect id="Rectangle_1391" data-name="Rectangle 1391" width="16" height="16" fill="#b5b5bf"/>
+                                                </clipPath>
+                                            </defs>
+                                            <g id="Group_8115" data-name="Group 8115" clip-path="url(#clip-path)">
+                                                <path id="Path_2981" data-name="Path 2981" d="M14.682,1.318a4.5,4.5,0,0,0-6.364,0L8,1.636l-.318-.318A4.5,4.5,0,0,0,1.318,7.682l6.046,6.054a.9.9,0,0,0,1.273,0l6.045-6.054a4.5,4.5,0,0,0,0-6.364m-.707,5.657L8,12.959,2.025,6.975a3.5,3.5,0,0,1,4.95-4.95l.389.389a.9.9,0,0,0,1.273,0l.388-.389a3.5,3.5,0,0,1,4.95,4.95" transform="translate(0 0)" fill="#b5b5bf"/>
+                                            </g>
+                                        </svg>
+                                        <span class="user-top-menu-name has-transition ml-3">{{ translate('My Saved List') }}</span>
+                                    </a>
                                     </li>
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
-                                        <a href="{{ route('purchase_history.past_orders') }}"
+                                        <a href="{{ route('subscribe-list') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                                                <g transform="translate(-2 -2)" fill="#b5b5bf">
-                                                    <path d="M10,2a8,8,0,1,0,8,8A8.009,8.009,0,0,0,10,2Zm0,15A7,7,0,1,1,17,10,7.008,7.008,0,0,1,10,17Z" transform="translate(0)"/>
-                                                    <path d="M13.5,8a.5.5,0,0,0-.5.5v4.086l-2.8,1.682a.5.5,0,0,0,.5.864l3-1.8A.5.5,0,0,0,14,12.9V8.5A.5.5,0,0,0,13.5,8Z" transform="translate(-1 -1)"/>
+                                                <g fill="#b5b5bf" fill-rule="evenodd">
+                                                    <path d="M8 15.5a2 2 0 0 1-1.995-1.85L6 13.5h1a1 1 0 0 0 2 0h1l-.005.15A2 2 0 0 1 8 15.5Z"/>
+                                                    <path d="M8 1a4 4 0 0 1 4 4v2.764l.832 2.494A.5.5 0 0 1 12.35 11H3.65a.5.5 0 0 1-.482-.642L4 7.764V5a4 4 0 0 1 4-4Zm0 1a3 3 0 0 0-3 3v2.915a.5.5 0 0 1-.027.162L4.013 10h7.974l-.96-1.923A.5.5 0 0 1 11 7.915V5a3 3 0 0 0-3-3Z"/>
                                                 </g>
                                             </svg>
-                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Ready List') }}</span>
+                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('My Subscribe List') }}</span>
                                         </a>
                                     </li>
-                                    <li class="user-top-nav-element border border-top-0" data-id="1">
-                                        <a href="{{ route('purchase_history.spend_save') }}"
-                                            class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                                                <g fill="none" fill-rule="evenodd">
-                                                    <path fill="#b5b5bf" d="M2.5 2H13a1 1 0 0 1 1 1v1.5a.5.5 0 0 1-1 0V3H2.5a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5H13v-1.5a.5.5 0 0 1 1 0V13a1 1 0 0 1-1 1H2.5A1.5 1.5 0 0 1 1 12.5v-9A1.5 1.5 0 0 1 2.5 2Z"/>
-                                                    <path fill="#b5b5bf" d="M12 6.5a.5.5 0 0 1 .5-.5H15a.5.5 0 0 1 .354.854L13.207 9l2.147 2.146A.5.5 0 0 1 15 12h-2.5a.5.5 0 0 1 0-1h1.793l-1.146-1.146a.5.5 0 0 1 0-.708L14.293 8H12.5a.5.5 0 0 1-.5-.5Z"/>
-                                                    <path fill="#b5b5bf" d="M6 5.5a.5.5 0 0 1 .5.5v1.5h1A1.5 1.5 0 0 1 9 9v1a1.5 1.5 0 0 1-1.5 1.5h-1a.5.5 0 0 1 0-1H7.5A.5.5 0 0 0 8 10V9a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5Z"/>
-                                                </g>
-                                            </svg>
-                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Total Spend & Save') }}</span>
-                                        </a>
-                                    </li>
+
 
                                     @if(!empty($user->user_subtype) && $user->user_subtype != '')
                                         <li class="user-top-nav-element border border-top-0" data-id="1">
@@ -1139,25 +1180,6 @@ body .translater_menu .select2-container {
                                     @endif
 
 
-                                    <li class="user-top-nav-element border border-top-0" data-id="1">
-                                        <a href="{{ route('user.new_registration') }}"
-                                            class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
-                                            <i class="las la-business-time"></i>
-                                            <span
-                                                class="user-top-menu-name has-transition ml-3">{{ translate('B2B Registration') }}</span></a>
-                                    </li>
-                                    <li class="user-top-nav-element border border-top-0" data-id="1">
-                                        <a href="{{ route('financial-archives.user') }}"
-                                            class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-                                                <g fill="none" fill-rule="evenodd">
-                                                    <path fill="#b5b5bf" d="M3 2.5A1.5 1.5 0 0 1 4.5 1h3.793a1.5 1.5 0 0 1 1.06.44L10.5 2.5H12A1.5 1.5 0 0 1 13.5 4v8A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V2.5H3Zm8.5 2A.5.5 0 0 0 11 4h-1a1 1 0 0 1-1-1V2h-4a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V4.5h-.5Z"/>
-                                                    <path fill="#b5b5bf" d="M5.75 6.5a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5H8a.5.5 0 0 1 0 1H6.25a.5.5 0 0 1-.5-.5Z"/>
-                                                </g>
-                                            </svg>
-                                            <span
-                                                class="user-top-menu-name has-transition ml-3">{{ translate('Financial Archive') }}</span></a>
-                                    </li>                                    
                                     <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('digital_purchase_history.index') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
@@ -1231,6 +1253,16 @@ body .translater_menu .select2-container {
                                         </li>
                                     @endif
                                     <li class="user-top-nav-element border border-top-0" data-id="1">
+                                        <a href="{{ route('financial-archives.user') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                <g fill="none" fill-rule="evenodd">
+                                                    <path fill="#b5b5bf" d="M3 2.5A1.5 1.5 0 0 1 4.5 1h3.793a1.5 1.5 0 0 1 1.06.44L10.5 2.5H12A1.5 1.5 0 0 1 13.5 4v8A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V2.5H3Zm8.5 2A.5.5 0 0 0 11 4h-1a1 1 0 0 1-1-1V2h-4a.5.5 0 0 0-.5.5V12a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5V4.5h-.5Z"/>
+                                                    <path fill="#b5b5bf" d="M5.75 6.5a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5H8a.5.5 0 0 1 0 1H6.25a.5.5 0 0 1-.5-.5Z"/>
+                                                </g>
+                                            </svg>
+                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Financial Archive') }}</span></a>
+                                    </li>
+                                    <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('support_ticket.index') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16.001"
@@ -1245,8 +1277,7 @@ body .translater_menu .select2-container {
                                                         transform="translate(-16090.998 183.001)" fill="#b5b5bf" />
                                                 </g>
                                             </svg>
-                                            <span
-                                                class="user-top-menu-name has-transition ml-3">{{ translate('Support Ticket') }}</span>
+                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Support Ticket') }}</span>
                                         </a>
                                     </li>
                                 @endif

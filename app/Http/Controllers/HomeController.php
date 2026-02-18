@@ -1612,4 +1612,9 @@ class HomeController extends Controller
 
         return response()->json(['success' => false]);
     }
+
+    public function subscribeList()
+    {
+        return view('frontend.coming_soon');
+    }
 }
