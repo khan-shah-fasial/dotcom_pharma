@@ -9,7 +9,7 @@
             </div>
         </div>
         <div class="card-body">
-            <div class="row row-cols-xxl-3 row-cols-xl-3 row-cols-lg-3 row-cols-md-2 row-cols-sm-2 row-cols-1 gutters-16 border-top border-left mx-1 mx-md-0 product_listing_box">
+            <div class="row row-cols-xxl-6 row-cols-xl-6 row-cols-lg-6 row-cols-md-2 row-cols-sm-2 row-cols-1 gutters-16 border-top border-left mx-1 mx-md-0 product_listing_box">
                 @forelse ($groupedOrders as $row)
                     @php
                         /** @var \Illuminate\Support\Collection|\App\Models\Product[]|null $productsById */

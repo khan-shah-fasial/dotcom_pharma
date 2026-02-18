@@ -10,7 +10,7 @@
     </div>
 
     @if (count($wishlists) > 0)
-        <div class="row row-cols-xxl-3 row-cols-xl3 row-cols-lg-3 row-cols-md-3 row-cols-sm-2 row-cols-2 gutters-16 border-top border-left mx-1 mx-md-0 mb-4 product_listing_box">
+        <div class="row row-cols-xxl-6 row-cols-xl6 row-cols-lg-6 row-cols-md-6 row-cols-sm-2 row-cols-2 gutters-16 border-top border-left mx-1 mx-md-0 mb-4 product_listing_box">
             @foreach($wishlists as $key => $wishlist)
                 <div class="aiz-card-box col p-0 text-center has-transition z-1 product_img_bg" id="wishlist_{{ $wishlist->id }}">
                     <div class="position-relative img-fit overflow-hidden mb-3 ">

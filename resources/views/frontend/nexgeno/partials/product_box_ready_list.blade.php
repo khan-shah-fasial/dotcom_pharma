@@ -89,9 +89,9 @@
                 <a href="{{ $product_url }}" class="d-block text-reset hov-text-primary"
                     title="{{ $product->getTranslation('name') }}">{{ $product->getTranslation('name') }}</a>
             </h3>
-            @if ($variationText)
+            {{-- @if ($variationText)
                 <div class="fs-12 text-secondary mb-2">{{ $variationText }}</div>
-            @endif
+            @endif --}}
 
             @if ($product->auction_product != 1 && $product->rating > 0)
                 <div class="mb-3 d-flex align-items-center gap-2">
@@ -128,12 +128,13 @@
         </div>
 
         <div class="flex_boxex cart-btn-gome-page">
+            <a class=""  href="javascript:void(0)" onclick="showAddToCartModal({{ $product->id }})"> <span><i class="las la-shopping-bag la-2x"></i></span></a>
             {{--@if(is_user_loggedin())--}}
-            <a class="@if (in_array($product->id, $cart_added)) active @endif"
+            {{-- <a class="@if (in_array($product->id, $cart_added)) active @endif"
                 href="{{ $product_url }}"
                 onclick1="showAddToCartModal({{ $product->id }})">
                 <span><i class="las la-shopping-bag la-2x"></i></span>
-            </a>
+            </a> --}}
             {{--@endif--}}
         </div>
     </div>
