@@ -920,11 +920,17 @@ class HomeController extends Controller
     {
         // Get all main categories (level 0)
         $mainCategories = Category::where('parent_id', 0)
-            ->with(['childrenCategories' => function($query) {
-                $query->orderBy('order_level', 'desc')
-                    ->with(['childrenCategories' => function($subQuery) {
-                        $subQuery->orderBy('order_level', 'desc');
-                    }]);
+            ->with([
+                'catIcon',
+                'childrenCategories' => function($query) {
+                    $query->orderBy('order_level', 'desc')
+                        ->with([
+                            'catIcon',
+                            'childrenCategories' => function($subQuery) {
+                                $subQuery->orderBy('order_level', 'desc')
+                                    ->with('catIcon');
+                            }
+                        ]);
             }])
             ->orderBy('order_level', 'desc')
             ->get();

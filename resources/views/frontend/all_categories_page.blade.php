@@ -46,15 +46,21 @@
     }
     
     .main-category-icon {
-        width: 50px;
-        height: 50px;
+        width: 56px;
+        height: 56px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 28px;
-        color: #7c3aed;
-        background: #f3f4f6;
-        border-radius: 10px;
+        padding: 8px;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .main-category-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
     
     .main-category-info {
@@ -133,6 +139,34 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 12px;
+    }
+    
+    .subcategory-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .subcategory-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px;
+        flex-shrink: 0;
+    }
+    
+    .subcategory-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
     
     .subcategory-info {
@@ -209,6 +243,34 @@
         justify-content: space-between;
         align-items: center;
         transition: all 0.2s ease;
+        gap: 10px;
+    }
+    
+    .sub-subcategory-main {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        flex: 1;
+    }
+    
+    .sub-subcategory-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px;
+        flex-shrink: 0;
+    }
+    
+    .sub-subcategory-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
     
     .sub-subcategory-item:hover {
@@ -278,23 +340,22 @@
             @foreach($categoriesData as $categoryData)
                 @php
                     $mainCategory = $categoryData['category'];
-                    $categoryIcon = 'las la-folder';
                     $categoryName = strtolower($mainCategory->getTranslation('name'));
                     $isVeterinaryOrHuman = (stripos($categoryName, 'veterinary') !== false || stripos($categoryName, 'human') !== false);
-                    
-                    // Set icon based on category name
-                    if (stripos($categoryName, 'veterinary') !== false) {
-                        $categoryIcon = 'las la-paw';
-                    } elseif (stripos($categoryName, 'human') !== false) {
-                        $categoryIcon = 'las la-user';
-                    }
+                    $mainCategoryIcon = isset($mainCategory->catIcon->file_name)
+                        ? my_asset($mainCategory->catIcon->file_name)
+                        : static_asset('assets/img/placeholder.jpg');
                 @endphp
                 
                 <div class="main-category-card {{ $isVeterinaryOrHuman ? 'always-expanded' : 'accordion-style' }}" 
                      data-category-id="{{ $mainCategory->id }}">
                     <div class="main-category-header">
                         <div class="main-category-icon">
-                            <i class="{{ $categoryIcon }}"></i>
+                            <img src="{{ static_asset('assets/img/placeholder.jpg') }}"
+                                 data-src="{{ $mainCategoryIcon }}"
+                                 alt="{{ $mainCategory->getTranslation('name') }}"
+                                 class="lazyload"
+                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                         </div>
                         <div class="main-category-info">
                             <h2 class="main-category-title">{{ $mainCategory->getTranslation('name') }}</h2>
@@ -312,14 +373,26 @@
                             @foreach($mainCategory->childrenCategories as $subcategory)
                                 @php
                                     $hasSubSubcategories = $subcategory->childrenCategories->count() > 0;
+                                    $subcategoryIcon = isset($subcategory->catIcon->file_name)
+                                        ? my_asset($subcategory->catIcon->file_name)
+                                        : static_asset('assets/img/placeholder.jpg');
                                 @endphp
                                 
                                 @if($hasSubSubcategories)
                                     <div class="subcategory-card has-children" data-subcategory-id="{{ $subcategory->id }}">
                                         <div class="subcategory-header">
-                                            <div class="subcategory-info">
-                                                <h3 class="subcategory-title">{{ $subcategory->getTranslation('name') }}</h3>
-                                                <p class="subcategory-count">{{ translate('Products') }} ({{ $subcategory->product_count ?? 0 }})</p>
+                                            <div class="subcategory-main">
+                                                <div class="subcategory-icon">
+                                                    <img src="{{ static_asset('assets/img/placeholder.jpg') }}"
+                                                         data-src="{{ $subcategoryIcon }}"
+                                                         alt="{{ $subcategory->getTranslation('name') }}"
+                                                         class="lazyload"
+                                                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                                </div>
+                                                <div class="subcategory-info">
+                                                    <h3 class="subcategory-title">{{ $subcategory->getTranslation('name') }}</h3>
+                                                    <p class="subcategory-count">{{ translate('Products') }} ({{ $subcategory->product_count ?? 0 }})</p>
+                                                </div>
                                             </div>
                                             <i class="las la-chevron-down subcategory-expand-icon"></i>
                                         </div>
@@ -327,8 +400,22 @@
                                         <div class="sub-subcategories-container">
                                             <div class="sub-subcategories-list">
                                                 @foreach($subcategory->childrenCategories as $subSubcategory)
+                                                    @php
+                                                        $subSubcategoryIcon = isset($subSubcategory->catIcon->file_name)
+                                                            ? my_asset($subSubcategory->catIcon->file_name)
+                                                            : static_asset('assets/img/placeholder.jpg');
+                                                    @endphp
                                                     <a href="{{ route('products.category', $subSubcategory->slug) }}" class="sub-subcategory-item">
-                                                        <span class="sub-subcategory-name">{{ $subSubcategory->getTranslation('name') }}</span>
+                                                        <span class="sub-subcategory-main">
+                                                            <span class="sub-subcategory-icon">
+                                                                <img src="{{ static_asset('assets/img/placeholder.jpg') }}"
+                                                                     data-src="{{ $subSubcategoryIcon }}"
+                                                                     alt="{{ $subSubcategory->getTranslation('name') }}"
+                                                                     class="lazyload"
+                                                                     onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                                            </span>
+                                                            <span class="sub-subcategory-name">{{ $subSubcategory->getTranslation('name') }}</span>
+                                                        </span>
                                                         <span class="sub-subcategory-count">({{ $subSubcategory->product_count ?? 0 }})</span>
                                                     </a>
                                                 @endforeach
@@ -338,9 +425,18 @@
                                 @else
                                     <a href="{{ route('products.category', $subcategory->slug) }}" class="subcategory-card">
                                         <div class="subcategory-header">
-                                            <div class="subcategory-info">
-                                                <h3 class="subcategory-title">{{ $subcategory->getTranslation('name') }}</h3>
-                                                <p class="subcategory-count">{{ translate('Products') }} ({{ $subcategory->product_count ?? 0 }})</p>
+                                            <div class="subcategory-main">
+                                                <div class="subcategory-icon">
+                                                    <img src="{{ static_asset('assets/img/placeholder.jpg') }}"
+                                                         data-src="{{ $subcategoryIcon }}"
+                                                         alt="{{ $subcategory->getTranslation('name') }}"
+                                                         class="lazyload"
+                                                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                                </div>
+                                                <div class="subcategory-info">
+                                                    <h3 class="subcategory-title">{{ $subcategory->getTranslation('name') }}</h3>
+                                                    <p class="subcategory-count">{{ translate('Products') }} ({{ $subcategory->product_count ?? 0 }})</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </a>
