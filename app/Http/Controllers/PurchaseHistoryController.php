@@ -11,6 +11,8 @@ use App\Models\Product;
 use App\Models\OrderDetail;
 use App\Utility\CartUtility;
 use App\Utility\EmailUtility;
+use App\Models\ProductBatch;
+use Illuminate\Support\Facades\Log;
 use Cookie;
 use Illuminate\Http\Request;
 
@@ -188,6 +190,7 @@ class PurchaseHistoryController extends Controller
     public function re_order($id)
     {
         $user_id = Auth::user()->id;
+        Log::info('Reorder initiated', ['user_id' => $user_id, 'order_id' => $id]);
 
         // if Cart has auction product check
         $carts = Cart::where('user_id', $user_id)->get();
@@ -228,32 +231,130 @@ class PurchaseHistoryController extends Controller
                     'product_id' => $product->id
                 ]);
 
-                $product_stock = $product->stocks->where('variant', $orderDetail->variation)->first();
+                // Resolve stock by variant (same as product page) and ignore hidden stocks
+                $product_stock = $product->stocks()
+                    ->where('variant', $orderDetail->variation)
+                    ->where('is_hidden', 0)
+                    ->first();
+
+                // Fallback: if no variant matched (non-variant product), pick first visible stock
+                if (!$product_stock) {
+                    $product_stock = $product->stocks()->where('is_hidden', 0)->first();
+                }
+
                 if ($product_stock) {
-                    $quantity = 1;
-                    if ($product->digital != 1) {
-                        $quantity = $product_stock->qty;
-                        if ($quantity > 0) {
-                            if ($cart->exists) {
-                                $order_qty = $cart->quantity + $order_qty;
-                            }
-                            //If order qty is greater then the product stock, set order qty = current product stock qty
-                            $quantity = $quantity >= $order_qty ? $order_qty : $quantity;
-                        } else {
-                            array_push($failed_msgs, $product->getTranslation('name') . ' ' . translate(' is stock out.'));
+                    Log::info('Reorder stock resolved', [
+                        'product_id' => $product->id,
+                        'variant' => $orderDetail->variation,
+                        'stock_id' => $product_stock->id,
+                    ]);
+
+                    // Min qty requirement (stock min or product min, fallback 1)
+                    $minQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
+
+                    // Pick first batch (asc) that meets minQty; if none, fail
+                    $batch = ProductBatch::where('product_stock_id', $product_stock->id)
+                        ->orderBy('id', 'asc')
+                        ->get()
+                        ->first(function ($b) use ($minQty) {
+                            return ($b->qty ?? 0) >= $minQty;
+                        });
+
+                    // Determine available quantity (batch-aware, else stock) honoring minQty
+                    $availableQty = 0;
+                    if ($batch) {
+                        $availableQty = $batch->qty ?? 0;
+                        Log::info('Reorder batch selected', [
+                            'product_id' => $product->id,
+                            'batch_id' => $batch->id,
+                            'batch_qty' => $availableQty,
+                            'min_qty' => $minQty,
+                        ]);
+                    } else {
+                        // If batches exist but none satisfy min qty, fail
+                        $product_stock->loadMissing('batches');
+                        if ($product_stock->batches && $product_stock->batches->count() > 0) {
+                            $candidate = $product_stock->batches->first();
+                            $availableQty = $candidate->qty ?? 0;
+                            Log::warning('Reorder failed: no batch meets min qty', [
+                                'product_id' => $product->id,
+                                'variant' => $orderDetail->variation,
+                                'stock_id' => $product_stock->id,
+                                'min_qty' => $minQty,
+                            ]);
+                            array_push($failed_msgs, $product->getTranslation('name') . ' ' . translate('does not meet minimum batch quantity.'));
                             continue;
+                        } else {
+                            // No batches: use stock qty
+                            $availableQty = $product_stock->qty ?? 0;
                         }
                     }
-                    $price = CartUtility::get_price($product, $product_stock, $quantity);
-                    $tax = CartUtility::tax_calculation($product, $price);
 
-                    $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
+                    if ($product->digital != 1 && ($availableQty < $minQty || $availableQty <= 0)) {
+                        array_push($failed_msgs, $product->getTranslation('name') . ' ' . translate(' is stock out or below minimum quantity.'));
+                        Log::warning('Reorder failed: no available qty above min', [
+                            'product_id' => $product->id,
+                            'variant' => $orderDetail->variation,
+                            'stock_id' => $product_stock->id,
+                            'available' => $availableQty,
+                            'min_qty' => $minQty,
+                        ]);
+                        continue;
+                    }
+
+                    // Desired quantity respects min_qty; if desired below min, bump to min, but never exceed available
+                    $desiredQty = $order_qty;
+                    if ($cart->exists) {
+                        $desiredQty += $cart->quantity;
+                    }
+                    $desiredQty = max($desiredQty, $minQty);
+                    $quantity = min($availableQty, $desiredQty);
+
+                    // If after clamping the qty is still below min, fail
+                    if ($quantity < $minQty) {
+                        array_push($failed_msgs, $product->getTranslation('name') . ' ' . translate('does not meet minimum order quantity for available batch.'));
+                        Log::warning('Reorder failed after clamp: qty below min', [
+                            'product_id' => $product->id,
+                            'variant' => $orderDetail->variation,
+                            'stock_id' => $product_stock->id,
+                            'available' => $availableQty,
+                            'desired' => $desiredQty,
+                            'min_qty' => $minQty,
+                        ]);
+                        continue;
+                    }
+
+                    // Price calculation matches product detail page (batch-first, role-aware, discount-aware)
+                    if ($batch) {
+                        $price = CartUtility::get_price_from_batch($product, $batch, $quantity);
+                        $mrpPrice = $batch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
+                        $batchId = $batch->id;
+                    } else {
+                        $price = CartUtility::get_price($product, $product_stock, $quantity);
+                        $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
+                        $batchId = null;
+                    }
+
+                    $tax = CartUtility::tax_calculation($product, $price);
                     $salePrice = $price;
 
-                    CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice);
+                    CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId);
+                    Log::info('Reorder item added', [
+                        'product_id' => $product->id,
+                        'variant' => $orderDetail->variation,
+                        'stock_id' => $product_stock->id,
+                        'batch_id' => $batchId,
+                        'quantity' => $quantity,
+                        'price' => $price,
+                        'mrp' => $mrpPrice,
+                    ]);
                     array_push($success_msgs, $product->getTranslation('name') . ' ' . translate('added to cart.'));
                 } else {
                     array_push($failed_msgs, $product->getTranslation('name') . ' ' . translate('is stock out.'));
+                    Log::warning('Reorder failed: stock not found', [
+                        'product_id' => $product->id,
+                        'variant' => $orderDetail->variation,
+                    ]);
                 }
             } else {
                 array_push($failed_msgs, translate('You can not re order an auction product.'));
