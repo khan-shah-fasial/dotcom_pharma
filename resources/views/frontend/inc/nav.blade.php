@@ -1654,11 +1654,33 @@ body .translater_menu .select2-container {
             .logo_menu .dropdown .dropdown-menu {
                 margin-top: 0;
                 transition: opacity 0.2s ease, visibility 0.2s ease;
+                max-height: 400px;
+                overflow-y: auto;
+                overflow-x: hidden;
             }
             
             /* Prevent click toggle on desktop, keep hover only */
             .logo_menu .dropdown .dropdown-toggle {
                 pointer-events: none;
+            }
+            
+            /* Custom scrollbar for navigation dropdown */
+            .logo_menu .dropdown .dropdown-menu::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            .logo_menu .dropdown .dropdown-menu::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+            
+            .logo_menu .dropdown .dropdown-menu::-webkit-scrollbar-thumb {
+                background: #2b56a1;
+                border-radius: 10px;
+            }
+            
+            .logo_menu .dropdown .dropdown-menu::-webkit-scrollbar-thumb:hover {
+                background: #1e3f7a;
             }
         }
     </style>
