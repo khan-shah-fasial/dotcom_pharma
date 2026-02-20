@@ -1638,6 +1638,31 @@ body .translater_menu .select2-container {
         </div>
     </div>
 
+    <style>
+        /* Navigation dropdown hover effect */
+        @media (min-width: 992px) {
+            .logo_menu .dropdown {
+                position: relative;
+            }
+            
+            .logo_menu .dropdown:hover .dropdown-menu {
+                display: block !important;
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            .logo_menu .dropdown .dropdown-menu {
+                margin-top: 0;
+                transition: opacity 0.2s ease, visibility 0.2s ease;
+            }
+            
+            /* Prevent click toggle on desktop, keep hover only */
+            .logo_menu .dropdown .dropdown-toggle {
+                pointer-events: none;
+            }
+        }
+    </style>
+    
     @section('script')
         <script type="text/javascript">
             function show_order_details(order_id) {
@@ -1657,6 +1682,24 @@ body .translater_menu .select2-container {
                     AIZ.plugins.bootstrapSelect('refresh');
                 });
             }
+            
+            // Navigation dropdown hover on desktop
+            $(document).ready(function() {
+                if ($(window).width() >= 992) {
+                    // Prevent Bootstrap dropdown click behavior on desktop
+                    $('.logo_menu .dropdown .dropdown-toggle').on('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    });
+                    
+                    // Close dropdowns when mouse leaves
+                    $('.logo_menu .dropdown').on('mouseleave', function() {
+                        $(this).removeClass('show');
+                        $(this).find('.dropdown-menu').removeClass('show');
+                    });
+                }
+            });
         </script>
     @endsection
 
