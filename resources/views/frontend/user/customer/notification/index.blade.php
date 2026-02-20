@@ -73,6 +73,15 @@
                                                     $orderCode = "<a href='".$route."'>".$orderCode."</a>";
                                                 $notifyContent = str_replace('[[order_code]]', $orderCode, $notifyContent);
                                             @endphp
+                                        @elseif($notification->type == 'App\Notifications\ProductRestockNotification')
+                                            @php
+                                                $productName = "<a href='".route('product', $notification->data['product_slug'])."'>".$notification->data['product_name']."</a>";
+                                                $variantCount = $notification->data['variant_count'] ?? 1;
+                                                $variantNames = $notification->data['variant_names'] ?? [];
+                                                $notifyContent = str_replace('[[product_name]]', $productName, $notifyContent);
+                                                $notifyContent = str_replace('[[variant_count]]', $variantCount, $notifyContent);
+                                                $notifyContent = str_replace('[[variant_names]]', implode(', ', $variantNames), $notifyContent);
+                                            @endphp
                                         @elseif($notification->type == 'App\Notifications\CustomNotification')
                                             @php
                                                 $link = $notification->data['link'];
@@ -80,6 +89,8 @@
                                                     $notifyContent = "<a href='".$link."'>".$notifyContent."</a>";
                                                 }
                                             @endphp
+                                        @elseif($notification->type == 'App\Notifications\ProductRestockNotification')
+                                            {{-- already handled above; keep rendering --}}
                                         @endif
                                         {!! $notifyContent !!}
                                     </p>

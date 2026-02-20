@@ -544,7 +544,7 @@
         <!-- Add to cart & Buy now Buttons -->
         <div class="mt-md-4 mt-2">
 
-            @if ($detailedProduct->digital == 0)
+@if ($detailedProduct->digital == 0)
                 @if (
                     (get_setting('product_external_link_for_seller') == 1 &&
                         $detailedProduct->added_by == 'seller' &&
@@ -575,6 +575,17 @@
                 <button type="button"
                     class="btn btn-secondary out-of-stock fw-600 d-none border-radius-50 mb-md-0 mb-2 mt-2" disabled>
                     <i class="la la-cart-arrow-down"></i> {{ translate('Out of Stock') }}
+                </button>
+                @php
+                    $alreadySubscribed = auth()->check() ? \App\Models\ProductNotify::where('user_id', auth()->id())->where('product_id', $detailedProduct->id)->exists() : false;
+                @endphp
+                <button type="button"
+                    class="btn btn-outline-warning notify-restock fw-600 d-none border-radius-50 mb-md-0 mb-2 mt-2"
+                    data-product-id="{{ $detailedProduct->id }}"
+                    data-subscribed="{{ $alreadySubscribed ? '1' : '0' }}"
+                    @if(Auth::check()) onclick="toggleNotify({{ $detailedProduct->id }})" @else onclick="showLoginModal()" @endif>
+                    <i class="la la-bell"></i>
+                    <span class="notify-text">{{ $alreadySubscribed ? translate('Subscribed for restock') : translate('Notify me') }}</span>
                 </button>
             @elseif ($detailedProduct->digital == 1)
                 <button type="button"
@@ -2774,6 +2785,92 @@
             });
         });
     });
+</script>
+
+<script>
+    // Keep add-to-cart / buy-now visibility in sync with selected batch stock
+    function refreshAvailabilityFromBatch() {
+        var $dropdown = $('#batch-dropdown');
+        var map = $dropdown.data('batches-map') || {};
+        var batchId = $dropdown.val();
+        var batch = map[batchId];
+        if (!batch) return;
+
+        var qty = parseInt(batch.qty || 0);
+        if (qty > 0) {
+            $('.buy-now').removeClass('d-none');
+            $('.add-to-cart').removeClass('d-none');
+            $('.out-of-stock').addClass('d-none');
+            $('.notify-restock').addClass('d-none');
+        } else {
+            $('.buy-now').addClass('d-none');
+            $('.add-to-cart').addClass('d-none');
+            $('.out-of-stock').removeClass('d-none');
+            $('.notify-restock').removeClass('d-none');
+        }
+    }
+
+    $(document).on('change', '#batch-dropdown', function() {
+        refreshAvailabilityFromBatch();
+    });
+
+    // Run once on load (after dropdown is populated)
+    setTimeout(refreshAvailabilityFromBatch, 300);
+</script>
+
+<script>
+    function setNotifyButtonState(subscribed){
+        const btn = $('.notify-restock');
+        if(subscribed){
+            btn.removeClass('btn-outline-warning').addClass('btn-warning text-dark');
+            btn.attr('data-subscribed', '1').data('subscribed', 1);
+            btn.find('.notify-text').text('{{ translate('Subscribed for restock') }}');
+        }else{
+            btn.addClass('btn-outline-warning').removeClass('btn-warning text-dark');
+            btn.attr('data-subscribed', '0').data('subscribed', 0);
+            btn.find('.notify-text').text('{{ translate('Notify me') }}');
+        }
+    }
+
+    // Initialize button appearance on load
+    document.addEventListener('DOMContentLoaded', function(){
+        const initial = $('.notify-restock').data('subscribed') == 1;
+        setNotifyButtonState(initial);
+    });
+
+    function toggleNotify(product_id){
+        const isSubscribed = $('.notify-restock').data('subscribed') == 1;
+
+        if(isSubscribed){
+            $.post('{{ route('product-notify.remove') }}', {_token:'{{ csrf_token() }}', product_id: product_id}, function(response){
+                if(response.success){
+                    setNotifyButtonState(false);
+                    AIZ.plugins.notify('success', '{{ translate('Restock notification removed') }}');
+                } else {
+                    AIZ.plugins.notify('warning', '{{ translate('Nothing to remove') }}');
+                }
+            }).fail(function(xhr){
+                if(xhr.status === 401){
+                    showLoginModal();
+                }else{
+                    AIZ.plugins.notify('danger', '{{ translate('Unable to update subscription') }}');
+                }
+            });
+        } else {
+            $.post('{{ route('product-notify.store') }}', {_token:'{{ csrf_token() }}', product_id: product_id}, function(response){
+                if(response.success){
+                    setNotifyButtonState(true);
+                    AIZ.plugins.notify('success', '{{ translate('You will be notified when the product is back in stock.') }}');
+                }
+            }).fail(function(xhr){
+                if(xhr.status === 401){
+                    showLoginModal();
+                }else{
+                    AIZ.plugins.notify('danger', '{{ translate('Unable to subscribe right now') }}');
+                }
+            });
+        }
+    }
 </script>
 
 

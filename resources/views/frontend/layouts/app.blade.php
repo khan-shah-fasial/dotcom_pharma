@@ -849,6 +849,7 @@
         const variantPriceDebounceMs = 250;
         let isUpdatingBatch = false; // flag to prevent recursive batch updates
         let ajaxInProgress = false; // flag to prevent multiple simultaneous AJAX calls
+        let selectedBatchQty = null; // track selected batch quantity for UI availability
 
         function getVariantPrice(immediate = false){
             const invoke = function(){
@@ -940,6 +941,7 @@
                         // Reset batch selection when variant changes
                         if (isNewVariant) {
                             $('#selected_batch_id').val('');
+                            selectedBatchQty = null;
                             isUpdatingBatch = false; // Reset flag on variant change
                         }
                         
@@ -1103,6 +1105,7 @@
                                         $('#batch-lot-product-details').html(batchLabel);
 
                                         const qty = selectedBatch.qty || 0;
+                                        selectedBatchQty = qty;
                                         $('#qnt-product-details').html(qty > 0 ? qty : 'Not Available');
                                     } else {
                                         // Fallback to overall quantity if no specific batch is resolved
@@ -1110,6 +1113,7 @@
                                         $('#batch-lot-product-details').html('');
                                         $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
                                         $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
+                                        selectedBatchQty = null;
                                     }
                                 })();
                             } else {
@@ -1118,21 +1122,29 @@
                                     $batchDropdown.select2('destroy');
                                 }
                                 $batchDropdown.empty();
+                                selectedBatchQty = null;
                                 $('#selected_batch_id').val('');
                                 $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
                             }
                         }
 
                         $('.input-number').prop('max', data.max_limit);
-                        if(parseInt(data.in_stock) == 0 && data.digital  == 0){
+                        let effectiveInStock = parseInt(data.in_stock);
+                        if (selectedBatchQty !== null) {
+                            effectiveInStock = selectedBatchQty > 0 ? 1 : 0;
+                        }
+
+                        if(effectiveInStock == 0 && data.digital  == 0){
                            $('.buy-now').addClass('d-none');
                            $('.add-to-cart').addClass('d-none');
                            $('.out-of-stock').removeClass('d-none');
+                           $('.notify-restock').removeClass('d-none');
                         }
                         else{
                            $('.buy-now').removeClass('d-none');
                            $('.add-to-cart').removeClass('d-none');
                            $('.out-of-stock').addClass('d-none');
+                           $('.notify-restock').addClass('d-none');
                         }
 
                         AIZ.extra.plusMinus();
@@ -1245,9 +1257,21 @@
                     : ('Batch #' + batchData.id);
                 $('#batch-lot-product-details').html(batchLabel);
 
-                // Update batch-specific available quantity
+                // Update batch-specific available quantity and availability buttons
                 const qty = batchData.qty || 0;
+                selectedBatchQty = qty;
                 $('#qnt-product-details').html(qty > 0 ? qty : 'Not Available');
+                if (parseInt(qty) > 0) {
+                    $('.buy-now').removeClass('d-none');
+                    $('.add-to-cart').removeClass('d-none');
+                    $('.out-of-stock').addClass('d-none');
+                    $('.notify-restock').addClass('d-none');
+                } else {
+                    $('.buy-now').addClass('d-none');
+                    $('.add-to-cart').addClass('d-none');
+                    $('.out-of-stock').removeClass('d-none');
+                    $('.notify-restock').removeClass('d-none');
+                }
                 
                 // Update COA immediately
                 const $coaDiv = $('#coaDiv');
@@ -1280,6 +1304,7 @@
                     isUpdatingBatch = false;
                 }
             } else {
+                selectedBatchQty = null;
                 isUpdatingBatch = false;
             }
         }

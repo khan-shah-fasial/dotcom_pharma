@@ -1615,6 +1615,7 @@ class HomeController extends Controller
 
     public function subscribeList()
     {
-        return view('frontend.coming_soon');
+        $productNotifies = get_product_notifies()->paginate(15);
+        return view('frontend.user.subscribe_list', compact('productNotifies'));
     }
 }

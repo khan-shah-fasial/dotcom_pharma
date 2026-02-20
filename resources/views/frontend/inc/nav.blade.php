@@ -845,7 +845,7 @@ body .translater_menu .select2-container {
                                         </div>
                                     </div>
                                     <!-- Notifications -->
-                                    <ul class=" list-inline mb-0 h-100 d-none justify-content-end align-items-center ">
+                                    <ul class=" list-inline mb-0 h-100 justify-content-end align-items-center ">
                                         <li class="list-inline-item ml-3 mr-3 pr-3 pl-0 dropdown">
                                             <a class="dropdown-toggle no-arrow text-secondary fs-12"
                                                 data-toggle="dropdown" href="javascript:void(0);" role="button"
@@ -892,6 +892,14 @@ body .translater_menu .select2-container {
                                                                         $notification->data['link'] == null
                                                                     ) {
                                                                         $isLinkable = false;
+                                                                    }
+                                                                    if ($notification->type == 'App\Notifications\ProductRestockNotification') {
+                                                                        $productName = "<span class='text-blue'>" . ($notification->data['product_name'] ?? '') . "</span>";
+                                                                        $variantCount = $notification->data['variant_count'] ?? 1;
+                                                                        $variantNames = $notification->data['variant_names'] ?? [];
+                                                                        $notifyContent = str_replace('[[product_name]]', $productName, $notifyContent);
+                                                                        $notifyContent = str_replace('[[variant_count]]', $variantCount, $notifyContent);
+                                                                        $notifyContent = str_replace('[[variant_names]]', implode(', ', $variantNames), $notifyContent);
                                                                     }
                                                                 @endphp
                                                                 <li class="list-group-item">
@@ -952,6 +960,11 @@ body .translater_menu .select2-container {
                                                                             @endif
                                                                             <span
                                                                                 class="fs-12 text-dark text-truncate-2">{!! $notifyContent !!}</span>
+                                                                            @if (!empty($variantNames))
+                                                                                <small class="text-muted d-block text-truncate">
+                                                                                    {{ translate('Variants') }}: {{ implode(', ', $variantNames) }}
+                                                                                </small>
+                                                                            @endif
                                                                             @if ($isLinkable = true)
                                                                                 </a>
                                                                             @endif

@@ -67,6 +67,16 @@
                                 $notifyContent = str_replace('[[shop_name]]', $shopName, $notifyContent);
                                 $notifyContent = str_replace('[[amount]]', $amount, $notifyContent);
                             @endphp
+                        {{-- Product Restock Notifications --}}
+                        @elseif ($notification->type == 'App\Notifications\ProductRestockNotification')
+                            @php
+                                $productName = "<span class='text-blue'>".$notification->data['product_name']."</span>";
+                                $variantCount = $notification->data['variant_count'] ?? 1;
+                                $variantNames = $notification->data['variant_names'] ?? [];
+                                $notifyContent = str_replace('[[product_name]]', $productName, $notifyContent);
+                                $notifyContent = str_replace('[[variant_count]]', $variantCount, $notifyContent);
+                                $notifyContent = str_replace('[[variant_names]]', implode(', ', $variantNames), $notifyContent);
+                            @endphp
                         @endif
                         <a href="{{ ($user_type == 'admin' || $user_type == 'staff') ?
                                     route('admin.notification.read-and-redirect', encrypt($notification->id)) :
@@ -74,6 +84,11 @@
                             <p class="mb-1 text-dark text-truncate-2">
                                 {!! $notifyContent !!}
                             </p>
+                            @if(!empty($variantNames))
+                                <small class="text-muted d-block text-truncate">
+                                    {{ translate('Variants') }}: {{ implode(', ', $variantNames) }}
+                                </small>
+                            @endif
                             <small class="text-muted">
                                 {{ date('F j Y, g:i a', strtotime($notification->created_at)) }}
                             </small>

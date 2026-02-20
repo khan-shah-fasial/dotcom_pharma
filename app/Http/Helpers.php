@@ -3855,6 +3855,39 @@ if (!function_exists('get_wishlists')) {
     }
 }
 
+// Get product notify subscriptions
+if (!function_exists('get_product_notifies')) {
+    function get_product_notifies()
+    {
+        $verified_sellers = verified_sellers_id();
+        $notifies = \App\Models\ProductNotify::where('user_id', auth()->user()->id)
+            ->whereIn('product_id', function ($query) use ($verified_sellers) {
+                $query->select('id')
+                    ->from('products')
+                    ->where('approved', '1')
+                    ->where('published', 1)
+                    ->when(!addon_is_activated('wholesale'), function ($q1) {
+                        $q1->where('wholesale_product', 0);
+                    })
+                    ->when(!addon_is_activated('auction'), function ($q2) {
+                        $q2->where('auction_product', 0);
+                    })
+                    ->when(get_setting('vendor_system_activation') == 0, function ($q3) {
+                        $q3->where('added_by', 'admin');
+                    })
+                    ->when(get_setting('vendor_system_activation') == 1, function ($q4) use ($verified_sellers) {
+                        $q4->where(function ($p1) use ($verified_sellers) {
+                            $p1->where('added_by', 'admin')->orWhere(function ($p2) use ($verified_sellers) {
+                                $p2->whereIn('user_id', $verified_sellers);
+                            });
+                        });
+                    });
+            })
+            ->latest();
+        return $notifies;
+    }
+}
+
 // email template data
 if (!function_exists('get_email_template_data')) {
     function get_email_template_data($identifier, $colmn_name = null)

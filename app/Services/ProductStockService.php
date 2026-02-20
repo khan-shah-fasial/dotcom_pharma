@@ -7,6 +7,12 @@ use App\Models\ProductStock;
 use App\Utility\ProductUtility;
 use App\Models\ProductBatch;
 use App\Models\Product;
+use App\Models\ProductNotify;
+use App\Models\NotificationType;
+use App\Models\User;
+use App\Notifications\ProductRestockNotification;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Log;
 
 class ProductStockService
 {
@@ -190,6 +196,8 @@ class ProductStockService
         // Generates the combinations of customer choice options
         $combinations = (new CombinationService())->generate_combination($options);
 
+        $restockedVariants = [];
+
         $variant = '';
         if (count($combinations) > 0) {
             $product->variant_product = 1;
@@ -209,6 +217,10 @@ class ProductStockService
                     $productStock->product_id = $product->id;
                     $productStock->variant = $str;
                 }
+
+                $oldQty = $productStock->batches()->exists()
+                    ? (int) $productStock->batches()->sum('qty')
+                    : (int) ($productStock->qty ?? 0);
 
                 // Update the fields (non-batch level)
                 $productStock->is_hidden = (int) request()->get('is_hidden_' . str_replace('.', '_', $str), 0);
@@ -240,6 +252,22 @@ class ProductStockService
                 $productStock->image = request()['img_' . str_replace('.', '_', $str)];
                 $productStock->save();
                 $this->syncBatchesUpdateFromRequest($productStock, $str, $product);
+
+                // compute new qty after sync
+                $newQty = $productStock->batches()->exists()
+                    ? (int) $productStock->batches()->sum('qty')
+                    : (int) ($productStock->qty ?? 0);
+
+                Log::info('[RestockDetection] Variant update', [
+                    'product_id' => $product->id,
+                    'variant' => $str,
+                    'old_qty' => $oldQty,
+                    'new_qty' => $newQty,
+                ]);
+
+                if ($oldQty <= 0 && $newQty > 0) {
+                    $restockedVariants[] = $str !== '' ? $str : translate('Default');
+                }
             }
         } else {
             // Single variant case
@@ -292,6 +320,10 @@ class ProductStockService
                 $productStock->sku = $sku;
             }
 
+            $oldQty = $productStock->batches()->exists()
+                ? (int) $productStock->batches()->sum('qty')
+                : (int) ($productStock->qty ?? 0);
+
             // Update fields
             $productStock->qty = $qty;
             $productStock->price = $price;
@@ -316,6 +348,25 @@ class ProductStockService
             $productStock->case_height = $case_height;
 
             $productStock->save();
+
+            $newQty = $productStock->batches()->exists()
+                ? (int) $productStock->batches()->sum('qty')
+                : (int) ($productStock->qty ?? 0);
+
+            Log::info('[RestockDetection] Single variant update', [
+                'product_id' => $product->id,
+                'variant' => $variant,
+                'old_qty' => $oldQty,
+                'new_qty' => $newQty,
+            ]);
+
+            if ($oldQty <= 0 && $newQty > 0) {
+                $restockedVariants[] = translate('Default');
+            }
+        }
+
+        if (!empty($restockedVariants)) {
+            $this->dispatchRestockNotifications($product, $restockedVariants);
         }
     }
 
@@ -504,5 +555,45 @@ class ProductStockService
 
         $stock->save();
         $product->save();
+    }
+
+    protected function dispatchRestockNotifications(Product $product, array $restockedVariants): void
+    {
+        $variantNames = array_values(array_unique($restockedVariants));
+        $notificationType = NotificationType::where('type', 'product_restock')->first();
+        if (!$notificationType) {
+            Log::warning('[RestockNotification] notification_type_missing', ['product_id' => $product->id]);
+            return;
+        }
+
+        $subscriberIds = ProductNotify::where('product_id', $product->id)->pluck('user_id');
+        if ($subscriberIds->isEmpty()) {
+            Log::info('[RestockNotification] no_subscribers', ['product_id' => $product->id]);
+            return;
+        }
+
+        $users = User::whereIn('id', $subscriberIds)->get();
+        if ($users->isEmpty()) {
+            Log::info('[RestockNotification] users_not_found', ['product_id' => $product->id, 'user_ids' => $subscriberIds]);
+            return;
+        }
+
+        $data = [
+            'notification_type_id' => $notificationType->id,
+            'product_id'           => $product->id,
+            'product_slug'         => $product->slug,
+            'product_name'         => $product->name,
+            'variant_count'        => count($variantNames),
+            'variant_names'        => $variantNames,
+            'link'                 => route('product', $product->slug),
+        ];
+
+        Log::info('[RestockNotification] dispatch', [
+            'product_id'    => $product->id,
+            'variant_names' => $variantNames,
+            'subscriber_count' => $users->count(),
+        ]);
+
+        Notification::send($users, new ProductRestockNotification($data));
     }
 }

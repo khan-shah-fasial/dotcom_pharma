@@ -180,7 +180,15 @@ class NotificationController extends Controller
         elseif($notification->type == 'App\Notifications\CustomNotification'){
             return redirect()->to($notification->data['link']);
         }
-     
+
+        // Product restock notification redirect
+        elseif($notification->type == 'App\Notifications\ProductRestockNotification'){
+            $slug = $notification->data['product_slug'] ?? null;
+            if($slug){
+                return redirect()->route('product', $slug);
+            }
+        }
+
     }
 
     // non Linkable custom Notification mark as Read and return total unread count
