@@ -612,6 +612,53 @@ body .form-control:focus {
     padding-left: 0;
 }
 
+/* All Categories Button - Large Size */
+.all-categories-btn-large {
+    border: 1px solid #e5e7eb;
+    color: #555;
+    background: #f4f4f45e;
+    border-radius: 8px;
+    padding: 9px 10px !important;
+    font-weight: 500;
+    font-size: 13px !important;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.all-categories-btn-large i {
+    font-size: 20px;
+    margin-right: 8px;
+}
+
+.all-categories-btn-large:hover {
+    background: #23780E;
+    border: 1px solid #23780E;
+    color: #fff !important;
+}
+
+.logo-bar-area .search-input-box>input {
+    border-radius: 8px;
+    overflow: hidden;
+    height: 40px;
+    border: 1px solid #e5e7eb;
+    color: #555;
+    background: #f4f4f45e;
+}
+
+.front-header-search .search-input-box>svg {
+    position: absolute;
+    right: 7px;
+    top: 6px;
+    background: #23780e;
+    color: #fff;
+    padding: 6px;
+    border-radius: 5px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+}
+
 .black_buttons_top {
     position: absolute;
     z-index: 99;

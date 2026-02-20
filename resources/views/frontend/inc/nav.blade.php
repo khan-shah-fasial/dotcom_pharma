@@ -431,11 +431,7 @@ body .translater_menu .select2-container {
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
 
-                         <li class="list-inline-item d-none d-md-inline mr-0">
-                            <a class="b2b_buttons d-grid align-items-center" href="/all-categories">
-                                <span><i class="las la-th-list"></i></span> <span>All Categories</span> 
-                            </a>
-                        </li>
+                         
 
                         <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
                             <a class="b2b_buttons d-grid align-items-center" href="{{ route('user.new_registration') }}">
@@ -632,7 +628,15 @@ body .translater_menu .select2-container {
                         </div>
 
 
-                        <div class="col-md-6 d-lg-block d-none">
+                            <div class="col-md-2 d-lg-flex d-none align-items-center justify-content-end pr-0">
+                                <a class="all-categories-btn-large d-flex align-items-center" href="/all-categories">
+                                    <i class="las la-th-list mr-2"></i>
+                                    <span>All Categories</span>
+                                </a>
+                            </div>
+
+
+                        <div class="col-md-4 d-lg-block d-none">
 
                             <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
@@ -661,10 +665,10 @@ body .translater_menu .select2-container {
                                             width="20.001" height="20" viewBox="0 0 20.001 20">
                                             <path id="Path_3090" data-name="Path 3090"
                                                 d="M9.847,17.839a7.993,7.993,0,1,1,7.993-7.993A8,8,0,0,1,9.847,17.839Zm0-14.387a6.394,6.394,0,1,0,6.394,6.394A6.4,6.4,0,0,0,9.847,3.453Z"
-                                                transform="translate(-1.854 -1.854)" fill="#b5b5bf" />
+                                                transform="translate(-1.854 -1.854)" fill="#fff" />
                                             <path id="Path_3091" data-name="Path 3091"
                                                 d="M24.4,25.2a.8.8,0,0,1-.565-.234l-6.15-6.15a.8.8,0,0,1,1.13-1.13l6.15,6.15A.8.8,0,0,1,24.4,25.2Z"
-                                                transform="translate(-5.2 -5.2)" fill="#b5b5bf" />
+                                                transform="translate(-5.2 -5.2)" fill="#fff" />
                                         </svg>
                                     </div>
                                 </div>
