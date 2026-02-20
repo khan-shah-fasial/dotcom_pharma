@@ -212,6 +212,9 @@
         z-index: 100;
         padding: 10px;
         min-width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
     
     .subcategory-card.expanded .sub-subcategories-container {
@@ -231,6 +234,25 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
+    }
+    
+    /* Custom scrollbar for dropdown */
+    .sub-subcategories-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .sub-subcategories-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .sub-subcategories-container::-webkit-scrollbar-thumb {
+        background: #7c3aed;
+        border-radius: 10px;
+    }
+    
+    .sub-subcategories-container::-webkit-scrollbar-thumb:hover {
+        background: #6d28d9;
     }
     
     .sub-subcategory-item {
