@@ -616,7 +616,9 @@ body .form-control:focus {
     position: absolute;
     z-index: 99;
 }
-
+.b2b_buttons_green:hover, .b2b_buttons_green a:hover {
+    color: #fff !important;
+}
 .login_form_popup .modal-content {
     border: 0 !important;
     border-radius: 40px !important;
@@ -1650,6 +1652,30 @@ body #section_best_selling .product_listing_box .product_img_bg span.fw-700.text
 .b2b_buttons:hover {
     background: #2b56a1;
     color: #fff;
+}
+
+body .b2b_buttons_green {
+    border: 1px solid #23780E;
+    color: #23780E;
+    margin-left: 0;
+    text-align: center;
+    background: #d0d6ea;
+    border-radius: 8px;
+    padding: 3.5px 4px !important;
+    font-weight: 400;
+    font-size: 11px !important;
+    position: relative;
+    top: 3px;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    margin-right: 10px !important;
+    height: 26px;
+}
+
+body .b2b_buttons_green:hover {
+    background: #23780E;
+    color: #fff !important;
 }
 
 #prescription-btn {

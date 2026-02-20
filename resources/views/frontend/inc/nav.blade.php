@@ -397,13 +397,13 @@ body .translater_menu .select2-container {
                             </a>
                         </li>
 
-                        <li class="list-inline-item inquiry_btn">
+                        <li class="list-inline-item b2b_buttons_green">
                             <a href="{{ route('form_enquiry.create', ['type' => 'enquiry']) }}" class=" fs-12 py-2">
                                 <i class="las la-question-circle"></i> Inquiry
                             </a>
                         </li>
 
-                        <li class="list-inline-item suggestion_btn">
+                        <li class="list-inline-item b2b_buttons_green">
                             <a href="{{ route('form_enquiry.create', ['type' => 'suggestion']) }}" class=" fs-12 py-2">
                                 <i class="las la-lightbulb"></i> Suggestion
                             </a>
