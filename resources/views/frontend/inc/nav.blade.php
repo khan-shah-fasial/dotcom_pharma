@@ -847,137 +847,148 @@ body .translater_menu .select2-container {
                                     <!-- Notifications -->
                                     <ul class=" list-inline mb-0 h-100 justify-content-end align-items-center ">
                                         <li class="list-inline-item ml-3 mr-3 pr-3 pl-0 dropdown">
-                                            <a class="dropdown-toggle no-arrow text-secondary fs-12"
+                                            <a class="dropdown-toggle no-arrow fs-12"
                                                 data-toggle="dropdown" href="javascript:void(0);" role="button"
                                                 aria-haspopup="false" aria-expanded="false"
-                                                onclick="nonLinkableNotificationRead()">
+                                                onclick="nonLinkableNotificationRead()" style="color:#23780E;">
                                                 <span class="position-relative d-inline-block">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="14.668"
                                                         height="16" viewBox="0 0 14.668 16">
                                                         <path id="_26._Notification" data-name="26. Notification"
                                                             d="M8.333,16A3.34,3.34,0,0,0,11,14.667H5.666A3.34,3.34,0,0,0,8.333,16ZM15.06,9.78a2.457,2.457,0,0,1-.727-1.747V6a6,6,0,1,0-12,0V8.033A2.457,2.457,0,0,1,1.606,9.78,2.083,2.083,0,0,0,3.08,13.333H13.586A2.083,2.083,0,0,0,15.06,9.78Z"
-                                                            transform="translate(-0.999)" fill="#91919b" />
+                                                            transform="translate(-0.999)" fill="currentColor" />
                                                     </svg>
                                                     @if (Auth::check() && count($user->unreadNotifications) > 0)
                                                         <span
-                                                            class="badge badge-secondary  badge-inline badge-pill unread-notification-count">{{ count($user->unreadNotifications) }}</span>
+                                                            class="badge badge-success badge-inline badge-pill unread-notification-count">{{ count($user->unreadNotifications) }}</span>
                                                     @endif
                                                 </span>
                                             </a>
                                             @auth
+                                                @php
+                                                    $orderNotifications = $user->unreadNotifications->where('type', 'App\\Notifications\\OrderNotification');
+                                                    $restockNotifications = $user->unreadNotifications->where('type', 'App\\Notifications\\ProductRestockNotification');
+                                                    $otherNotifications = $user->unreadNotifications->filter(function ($notification) {
+                                                        return !in_array($notification->type, [
+                                                            'App\\Notifications\\OrderNotification',
+                                                            'App\\Notifications\\ProductRestockNotification',
+                                                        ]);
+                                                    });
+                                                    $allNotifications = $user->unreadNotifications;
+                                                @endphp
                                                 <div
-                                                    class="dropdown-menu dropdown-menu-right dropdown-menu-lg py-0 rounded-0">
+                                                    class="dropdown-menu dropdown-menu-right dropdown-menu-lg py-0 rounded-0 notification-dropdown">
                                                     <div class="p-3 bg-light border-bottom">
-                                                        <h6 class="mb-0">{{ translate('Notifications') }}</h6>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <h6 class="mb-0">{{ translate('Notifications') }}</h6>
+                                                            <span class="badge badge-success badge-pill">{{ $allNotifications->count() }}</span>
+                                                        </div>
+                                                        <div class="btn-group btn-group-sm w-100 mt-3" role="group" aria-label="Notification filters">
+                                                            <button type="button" class="btn btn-outline-success active notif-filter-btn" data-section="invoice">
+                                                                {{ translate('Invoices') }} ({{ $orderNotifications->count() }})
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-success notif-filter-btn" data-section="restock">
+                                                                {{ translate('Restock') }} ({{ $restockNotifications->count() }})
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                     <div class="c-scrollbar-light overflow-auto"
-                                                        style="max-height:300px;">
-                                                        <ul class="list-group list-group-flush">
-                                                            @forelse($user->unreadNotifications as $notification)
-                                                                @php
-                                                                    $isLinkable = true;
-                                                                    $notificationType = get_notification_type(
-                                                                        $notification->notification_type_id,
-                                                                        'id',
-                                                                    );
-                                                                    $notifyContent = $notificationType->getTranslation(
-                                                                        'default_text',
-                                                                    );
-                                                                    $notificationShowDesign = get_setting(
-                                                                        'notification_show_type',
-                                                                    );
-                                                                    if (
-                                                                        $notification->type ==
-                                                                            'App\Notifications\customNotification' &&
-                                                                        $notification->data['link'] == null
-                                                                    ) {
-                                                                        $isLinkable = false;
-                                                                    }
-                                                                    if ($notification->type == 'App\Notifications\ProductRestockNotification') {
-                                                                        $productName = "<span class='text-blue'>" . ($notification->data['product_name'] ?? '') . "</span>";
-                                                                        $variantCount = $notification->data['variant_count'] ?? 1;
-                                                                        $variantNames = $notification->data['variant_names'] ?? [];
-                                                                        $notifyContent = str_replace('[[product_name]]', $productName, $notifyContent);
-                                                                        $notifyContent = str_replace('[[variant_count]]', $variantCount, $notifyContent);
-                                                                        $notifyContent = str_replace('[[variant_names]]', implode(', ', $variantNames), $notifyContent);
-                                                                    }
-                                                                @endphp
-                                                                <li class="list-group-item">
-                                                                    <div class="d-flex">
-                                                                        @if ($notificationShowDesign != 'only_text')
-                                                                            <div class="size-35px mr-2">
-                                                                                @php
-                                                                                    $notifyImageDesign = '';
-                                                                                    if (
-                                                                                        $notificationShowDesign ==
-                                                                                        'design_2'
-                                                                                    ) {
-                                                                                        $notifyImageDesign =
-                                                                                            'rounded-1';
-                                                                                    } elseif (
-                                                                                        $notificationShowDesign ==
-                                                                                        'design_3'
-                                                                                    ) {
-                                                                                        $notifyImageDesign =
-                                                                                            'rounded-circle';
-                                                                                    }
-                                                                                @endphp
-                                                                                <img src="{{ uploaded_asset($notificationType->image) }}"
-                                                                                    onerror="this.onerror=null;this.src='{{ static_asset('assets/img/notification.png') }}';"
-                                                                                    class="img-fit h-100 {{ $notifyImageDesign }}">
-                                                                            </div>
-                                                                        @endif
-                                                                        <div>
-                                                                            @if ($notification->type == 'App\Notifications\OrderNotification')
-                                                                                @php
-                                                                                    $orderCode =
-                                                                                        $notification->data[
-                                                                                            'order_code'
-                                                                                        ];
-                                                                                    $route = route(
-                                                                                        'purchase_history.details',
-                                                                                        encrypt(
-                                                                                            $notification->data[
-                                                                                                'order_id'
-                                                                                            ],
-                                                                                        ),
-                                                                                    );
-                                                                                    $orderCode =
-                                                                                        "<span class='text-blue'>" .
-                                                                                        $orderCode .
-                                                                                        '</span>';
-                                                                                    $notifyContent = str_replace(
-                                                                                        '[[order_code]]',
-                                                                                        $orderCode,
-                                                                                        $notifyContent,
-                                                                                    );
-                                                                                @endphp
-                                                                            @endif
-
-                                                                            @if ($isLinkable = true)
-                                                                                <a
-                                                                                    href="{{ route('notification.read-and-redirect', encrypt($notification->id)) }}">
-                                                                            @endif
-                                                                            <span
-                                                                                class="fs-12 text-dark text-truncate-2">{!! $notifyContent !!}</span>
-                                                                            @if (!empty($variantNames))
-                                                                                <small class="text-muted d-block text-truncate">
-                                                                                    {{ translate('Variants') }}: {{ implode(', ', $variantNames) }}
-                                                                                </small>
-                                                                            @endif
-                                                                            @if ($isLinkable = true)
-                                                                                </a>
-                                                                            @endif
-                                                                        </div>
-                                                                    </div>
-                                                                </li>
-                                                            @empty
+                                                        style="max-height:320px;">
+                                                        <ul class="list-group list-group-flush mb-0" id="notificationList">
+                                                            @if ($allNotifications->isEmpty())
                                                                 <li class="list-group-item">
                                                                     <div class="py-4 text-center fs-16">
                                                                         {{ translate('No notification found') }}
                                                                     </div>
                                                                 </li>
-                                                            @endforelse
+                                                            @else
+                                                                @foreach ($allNotifications as $notification)
+                                                                    @php
+                                                                        $sectionKey = 'other';
+                                                                        if ($notification->type == 'App\\Notifications\\OrderNotification') {
+                                                                            $sectionKey = 'invoice';
+                                                                        } elseif ($notification->type == 'App\\Notifications\\ProductRestockNotification') {
+                                                                            $sectionKey = 'restock';
+                                                                        }
+                                                                        $isLinkable = true;
+                                                                        $notificationType = get_notification_type(
+                                                                            $notification->notification_type_id,
+                                                                            'id',
+                                                                        );
+                                                                        $notifyContent = $notificationType->getTranslation(
+                                                                            'default_text',
+                                                                        );
+                                                                        $notificationShowDesign = get_setting(
+                                                                            'notification_show_type',
+                                                                        );
+                                                                        $variantNames = [];
+                                                                        if (
+                                                                            $notification->type ==
+                                                                                'App\\Notifications\\customNotification' &&
+                                                                            ($notification->data['link'] ?? null) == null
+                                                                        ) {
+                                                                            $isLinkable = false;
+                                                                        }
+                                                                        if ($notification->type == 'App\\Notifications\\ProductRestockNotification') {
+                                                                            $productName = "<span class='text-blue'>" . ($notification->data['product_name'] ?? '') . "</span>";
+                                                                            $variantCount = $notification->data['variant_count'] ?? 1;
+                                                                            $variantNames = $notification->data['variant_names'] ?? [];
+                                                                            $notifyContent = str_replace('[[product_name]]', $productName, $notifyContent);
+                                                                            $notifyContent = str_replace('[[variant_count]]', $variantCount, $notifyContent);
+                                                                            $notifyContent = str_replace('[[variant_names]]', implode(', ', $variantNames), $notifyContent);
+                                                                        }
+                                                                        if ($notification->type == 'App\\Notifications\\OrderNotification') {
+                                                                            $orderCode = $notification->data['order_code'];
+                                                                            $orderCode = "<span class='text-blue'>" . $orderCode . '</span>';
+                                                                            $notifyContent = str_replace('[[order_code]]', $orderCode, $notifyContent);
+                                                                        }
+                                                                    @endphp
+                                                                    <li class="list-group-item notification-item" data-section="{{ $sectionKey }}">
+                                                                        <div class="d-flex">
+                                                                            @if ($notificationShowDesign != 'only_text')
+                                                                                <div class="size-35px mr-2">
+                                                                                    @php
+                                                                                        $notifyImageDesign = '';
+                                                                                        if (
+                                                                                            $notificationShowDesign ==
+                                                                                            'design_2'
+                                                                                        ) {
+                                                                                            $notifyImageDesign =
+                                                                                                'rounded-1';
+                                                                                        } elseif (
+                                                                                            $notificationShowDesign ==
+                                                                                            'design_3'
+                                                                                        ) {
+                                                                                            $notifyImageDesign =
+                                                                                                'rounded-circle';
+                                                                                        }
+                                                                                    @endphp
+                                                                                    <img src="{{ uploaded_asset($notificationType->image) }}"
+                                                                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/notification.png') }}';"
+                                                                                        class="img-fit h-100 {{ $notifyImageDesign }}">
+                                                                                </div>
+                                                                            @endif
+                                                                            <div class="flex-grow-1">
+                                                                                @if ($isLinkable)
+                                                                                    <a href="{{ route('notification.read-and-redirect', encrypt($notification->id)) }}">
+                                                                                @endif
+                                                                                    <span class="fs-12 text-dark text-truncate-2 d-block">{!! $notifyContent !!}</span>
+                                                                                @if (!empty($variantNames))
+                                                                                    <small class="text-muted d-block text-truncate">
+                                                                                        {{ translate('Variants') }}: {{ implode(', ', $variantNames) }}
+                                                                                    </small>
+                                                                                @endif
+                                                                                @if ($isLinkable)
+                                                                                    </a>
+                                                                                @endif
+                                                                            </div>
+                                                                        </div>
+                                                                    </li>
+                                                                @endforeach
+                                                            @endif
+                                                            <li class="list-group-item text-center text-muted d-none" id="notif-empty-state">
+                                                                {{ translate('No notifications in this filter') }}
+                                                            </li>
                                                         </ul>
                                                     </div>
                                                     <div class="text-center border-top">
@@ -991,7 +1002,40 @@ body .translater_menu .select2-container {
                                         </li>
                                     </ul>
                                 @endif
+                                @push('scripts')
+                                    <script>
+                                        (function () {
+                                            const buttons = document.querySelectorAll('.notif-filter-btn');
+                                            const items = document.querySelectorAll('.notification-item');
+                                            const emptyState = document.getElementById('notif-empty-state');
 
+                                            const applyFilter = (target) => {
+                                                let visibleCount = 0;
+                                                items.forEach(item => {
+                                                    const shouldShow = item.dataset.section === target;
+                                                    item.classList.toggle('d-none', !shouldShow);
+                                                    if (shouldShow) visibleCount++;
+                                                });
+                                                if (emptyState) {
+                                                    emptyState.classList.toggle('d-none', visibleCount !== 0);
+                                                }
+                                            };
+
+                                            buttons.forEach(btn => {
+                                                btn.addEventListener('click', function (e) {
+                                                    e.preventDefault();
+                                                    buttons.forEach(b => b.classList.remove('active'));
+                                                    this.classList.add('active');
+                                                    const target = this.dataset.section;
+                                                    applyFilter(target);
+                                                });
+                                            });
+
+                                            // default to Invoices view on load
+                                            applyFilter('invoice');
+                                        })();
+                                    </script>
+                                @endpush
                                 <div class="d-none d-lg-block d-xl-block">
                                     @auth
                                         <span
