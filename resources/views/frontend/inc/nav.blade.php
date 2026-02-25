@@ -628,7 +628,7 @@ body .translater_menu .select2-container {
                         </div>
 
 
-                            <div class="col-md-2 d-lg-flex d-none align-items-center justify-content-end pr-0">
+                            <div class="col-md-1 d-lg-flex d-none align-items-center justify-content-end">
                                 <a class="all-categories-btn-large d-flex align-items-center" href="/all-categories">
                                     <i class="las la-th-list mr-2"></i>
                                     <span>All Categories</span>
@@ -636,7 +636,7 @@ body .translater_menu .select2-container {
                             </div>
 
 
-                        <div class="col-md-4 d-lg-block d-none">
+                        <div class="col-md-5 d-lg-block d-none">
 
                             <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
@@ -846,7 +846,7 @@ body .translater_menu .select2-container {
                                     </div>
                                     <!-- Notifications -->
                                     <ul class=" list-inline mb-0 h-100 justify-content-end align-items-center ">
-                                        <li class="list-inline-item ml-3 mr-3 pr-3 pl-0 dropdown">
+                                        <li class="list-inline-item dropdown">
                                             <a class="dropdown-toggle no-arrow fs-12"
                                                 data-toggle="dropdown" href="javascript:void(0);" role="button"
                                                 aria-haspopup="false" aria-expanded="false"
