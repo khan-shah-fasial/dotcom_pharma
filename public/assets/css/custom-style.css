@@ -646,6 +646,26 @@ body .form-control:focus {
     background: #f4f4f45e;
 }
 
+.notificatin_style {
+    min-width: 45px;
+    position: relative;
+    top: 5px;
+}
+
+.notificatin_style i {
+    font-size: 28px;
+}
+
+.notificatin_style span.badge_icons.badge.badge-success.badge-inline.badge-pill.text-white.cart-count {
+    position: relative;
+    top: -1px;
+    right: 3px;
+}
+
+.mrgleft8 {
+    margin-left: 8%;
+}
+
 .front-header-search .search-input-box>svg {
     position: absolute;
     right: 7px;

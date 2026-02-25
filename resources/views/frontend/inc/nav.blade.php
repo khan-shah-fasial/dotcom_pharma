@@ -636,7 +636,7 @@ body .translater_menu .select2-container {
                             </div>
 
 
-                        <div class="col-md-5 d-lg-block d-none">
+                        <div class="col-md-4 d-lg-block d-none mrgleft8">
 
                             <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
@@ -845,22 +845,17 @@ body .translater_menu .select2-container {
                                         </div>
                                     </div>
                                     <!-- Notifications -->
-                                    <ul class=" list-inline mb-0 h-100 justify-content-end align-items-center ">
+                                    <ul class=" list-inline mb-0 h-100 justify-content-end align-items-center notificatin_style">
                                         <li class="list-inline-item dropdown">
                                             <a class="dropdown-toggle no-arrow fs-12"
                                                 data-toggle="dropdown" href="javascript:void(0);" role="button"
                                                 aria-haspopup="false" aria-expanded="false"
                                                 onclick="nonLinkableNotificationRead()" style="color:#23780E;">
                                                 <span class="position-relative d-inline-block">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14.668"
-                                                        height="16" viewBox="0 0 14.668 16">
-                                                        <path id="_26._Notification" data-name="26. Notification"
-                                                            d="M8.333,16A3.34,3.34,0,0,0,11,14.667H5.666A3.34,3.34,0,0,0,8.333,16ZM15.06,9.78a2.457,2.457,0,0,1-.727-1.747V6a6,6,0,1,0-12,0V8.033A2.457,2.457,0,0,1,1.606,9.78,2.083,2.083,0,0,0,3.08,13.333H13.586A2.083,2.083,0,0,0,15.06,9.78Z"
-                                                            transform="translate(-0.999)" fill="currentColor" />
-                                                    </svg>
+                                                    <i class="las la-bell la-2x" style="color:#23780E;"></i>
                                                     @if (Auth::check() && count($user->unreadNotifications) > 0)
                                                         <span
-                                                            class="badge badge-success badge-inline badge-pill unread-notification-count">{{ count($user->unreadNotifications) }}</span>
+                                                            class="badge_icons badge badge-success badge-inline badge-pill text-white cart-count">{{ count($user->unreadNotifications) }}</span>
                                                     @endif
                                                 </span>
                                             </a>
