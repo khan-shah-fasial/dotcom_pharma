@@ -873,26 +873,33 @@ body .translater_menu .select2-container {
                                                 @endphp
                                                 <div
                                                     class="dropdown-menu dropdown-menu-right dropdown-menu-lg py-0 rounded-0 notification-dropdown">
-                                                    <div class="p-3 bg-light border-bottom">
-                                                        <div class="d-flex justify-content-between align-items-center">
-                                                            <h6 class="mb-0">{{ translate('Notifications') }}</h6>
-                                                            <span class="badge badge-success badge-pill">{{ $allNotifications->count() }}</span>
+                                                    <div class="notif-head">
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="notif-icon">
+                                                                <i class="las la-bell"></i>
+                                                            </span>
+                                                            <div class="ml-2">
+                                                                <div class="fw-700 text-dark heding_noti">{{ translate('Notifications') }}</div>
+                                                                <small class="text-muted d-block">{{ translate('Latest updates') }}</small>
+                                                            </div>
                                                         </div>
-                                                        <div class="btn-group btn-group-sm w-100 mt-3" role="group" aria-label="Notification filters">
-                                                            <button type="button" class="btn btn-outline-success active notif-filter-btn" data-section="invoice">
-                                                                {{ translate('Invoices') }} ({{ $orderNotifications->count() }})
-                                                            </button>
-                                                            <button type="button" class="btn btn-outline-success notif-filter-btn" data-section="restock">
-                                                                {{ translate('Restock') }} ({{ $restockNotifications->count() }})
-                                                            </button>
-                                                        </div>
+                                                        <span class="notif-count badge badge-success badge-pill">{{ $allNotifications->count() }}</span>
                                                     </div>
-                                                    <div class="c-scrollbar-light overflow-auto"
-                                                        style="max-height:320px;">
+                                                    <div class="notif-tabs d-flex" role="group" aria-label="Notification filters">
+                                                        <button type="button" class="notif-pill active notif-filter-btn" data-section="invoice">
+                                                            {{ translate('Invoices') }}
+                                                            <span class="pill-count">({{ $orderNotifications->count() }})</span>
+                                                        </button>
+                                                        <button type="button" class="notif-pill notif-filter-btn" data-section="restock">
+                                                            {{ translate('Restock') }}
+                                                            <span class="pill-count">({{ $restockNotifications->count() }})</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="c-scrollbar-light overflow-auto notif-body">
                                                         <ul class="list-group list-group-flush mb-0" id="notificationList">
                                                             @if ($allNotifications->isEmpty())
-                                                                <li class="list-group-item">
-                                                                    <div class="py-4 text-center fs-16">
+                                                                <li class="list-group-item notif-list-item">
+                                                                    <div class="py-4 text-center fs-16 mb-0">
                                                                         {{ translate('No notification found') }}
                                                                     </div>
                                                                 </li>
@@ -938,55 +945,58 @@ body .translater_menu .select2-container {
                                                                             $notifyContent = str_replace('[[order_code]]', $orderCode, $notifyContent);
                                                                         }
                                                                     @endphp
-                                                                    <li class="list-group-item notification-item" data-section="{{ $sectionKey }}">
-                                                                        <div class="d-flex">
-                                                                            @if ($notificationShowDesign != 'only_text')
-                                                                                <div class="size-35px mr-2">
-                                                                                    @php
-                                                                                        $notifyImageDesign = '';
-                                                                                        if (
-                                                                                            $notificationShowDesign ==
-                                                                                            'design_2'
-                                                                                        ) {
-                                                                                            $notifyImageDesign =
-                                                                                                'rounded-1';
-                                                                                        } elseif (
-                                                                                            $notificationShowDesign ==
-                                                                                            'design_3'
-                                                                                        ) {
-                                                                                            $notifyImageDesign =
-                                                                                                'rounded-circle';
-                                                                                        }
-                                                                                    @endphp
-                                                                                    <img src="{{ uploaded_asset($notificationType->image) }}"
-                                                                                        onerror="this.onerror=null;this.src='{{ static_asset('assets/img/notification.png') }}';"
-                                                                                        class="img-fit h-100 {{ $notifyImageDesign }}">
+                                                                    <li class="list-group-item notification-item notif-list-item" data-section="{{ $sectionKey }}">
+                                                                        @if ($isLinkable)
+                                                                            <a class="d-block text-reset" href="{{ route('notification.read-and-redirect', encrypt($notification->id)) }}">
+                                                                        @endif
+                                                                            <div class="d-flex align-items-start">
+                                                                                @if ($notificationShowDesign != 'only_text')
+                                                                                    <div class="notif-img mr-3">
+                                                                                        @php
+                                                                                            $notifyImageDesign = '';
+                                                                                            if (
+                                                                                                $notificationShowDesign ==
+                                                                                                'design_2'
+                                                                                            ) {
+                                                                                                $notifyImageDesign =
+                                                                                                    'rounded-1';
+                                                                                            } elseif (
+                                                                                                $notificationShowDesign ==
+                                                                                                'design_3'
+                                                                                            ) {
+                                                                                                $notifyImageDesign =
+                                                                                                    'rounded-circle';
+                                                                                            }
+                                                                                        @endphp
+                                                                                        <img src="{{ uploaded_asset($notificationType->image) }}"
+                                                                                            onerror="this.onerror=null;this.src='{{ static_asset('assets/img/notification.png') }}';"
+                                                                                            class="img-fit h-100 w-100 {{ $notifyImageDesign }}">
+                                                                                    </div>
+                                                                                @endif
+                                                                                <div class="flex-grow-1">
+                                                                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                                                                        <span class="notif-title text-truncate-2">{!! $notifyContent !!}</span>
+                                                                                        <span class="notif-time ml-2">{{ optional($notification->created_at)->diffForHumans() }}</span>
+                                                                                    </div>
+                                                                                    @if (!empty($variantNames))
+                                                                                        <small class="text-muted d-block text-truncate">
+                                                                                            {{ translate('Variants') }}: {{ implode(', ', $variantNames) }}
+                                                                                        </small>
+                                                                                    @endif
                                                                                 </div>
-                                                                            @endif
-                                                                            <div class="flex-grow-1">
-                                                                                @if ($isLinkable)
-                                                                                    <a href="{{ route('notification.read-and-redirect', encrypt($notification->id)) }}">
-                                                                                @endif
-                                                                                    <span class="fs-12 text-dark text-truncate-2 d-block">{!! $notifyContent !!}</span>
-                                                                                @if (!empty($variantNames))
-                                                                                    <small class="text-muted d-block text-truncate">
-                                                                                        {{ translate('Variants') }}: {{ implode(', ', $variantNames) }}
-                                                                                    </small>
-                                                                                @endif
-                                                                                @if ($isLinkable)
-                                                                                    </a>
-                                                                                @endif
                                                                             </div>
-                                                                        </div>
+                                                                        @if ($isLinkable)
+                                                                            </a>
+                                                                        @endif
                                                                     </li>
                                                                 @endforeach
                                                             @endif
-                                                            <li class="list-group-item text-center text-muted d-none" id="notif-empty-state">
+                                                            <li class="list-group-item text-center text-muted d-none notif-list-item" id="notif-empty-state">
                                                                 {{ translate('No notifications in this filter') }}
                                                             </li>
                                                         </ul>
                                                     </div>
-                                                    <div class="text-center border-top">
+                                                    <div class="notif-footer text-center">
                                                         <a href="{{ route('customer.all-notifications') }}"
                                                             class="text-secondary fs-12 d-block py-2">
                                                             {{ translate('View All Notifications') }}
