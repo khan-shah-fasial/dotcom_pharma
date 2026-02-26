@@ -624,19 +624,17 @@ body .translater_menu .select2-container {
                                             alt="{{ env('APP_NAME') }}">
                                     @endif
                                 </a>
-                            </div>
-                        </div>
 
-
-                            <div class="col-md-1 d-lg-flex d-none align-items-center justify-content-end">
-                                <a class="all-categories-btn-large d-flex align-items-center" href="/all-categories">
+                                 <a class="all-categories-btn-large d-flex align-items-center ml-4" href="/all-categories">
                                     <i class="las la-th-list mr-2"></i>
                                     <span>All Categories</span>
                                 </a>
                             </div>
+                        </div>
 
 
-                        <div class="col-md-4 d-lg-block d-none mrgleft8">
+                        
+                        <div class="col-md-5 d-lg-block d-none mrgleft8">
 
                             <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">

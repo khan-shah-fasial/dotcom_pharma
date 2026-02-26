@@ -624,6 +624,7 @@ body .form-control:focus {
     text-decoration: none;
     transition: all 0.3s ease;
     white-space: nowrap;
+    margin-top: 16px;
 }
 
 .all-categories-btn-large i {
@@ -794,7 +795,8 @@ body .form-control:focus {
 }
 
 .mrgleft8 {
-    margin-left: 8%;
+    margin-left: 5%;
+    margin-right: 3%;
 }
 
 .front-header-search .search-input-box>svg {
@@ -1317,7 +1319,7 @@ ul.dropdown-menu {
 
 .logo_menu a {
     height: 100%;
-    /* padding-top: 23px; */
+    padding-top: 12px !important;
     padding-right: 4px;
 }
 
