@@ -624,7 +624,7 @@ body .form-control:focus {
     text-decoration: none;
     transition: all 0.3s ease;
     white-space: nowrap;
-    margin-top: 16px;
+    margin-top: 20px;
 }
 
 .all-categories-btn-large i {
@@ -795,8 +795,8 @@ body .form-control:focus {
 }
 
 .mrgleft8 {
-    margin-left: 5%;
-    margin-right: 3%;
+    margin-left: 4.2%;
+    margin-right: 3.8%;
 }
 
 .front-header-search .search-input-box>svg {
@@ -1256,7 +1256,7 @@ body .aiz-count-down-circle #time .circle svg circle {
 }
 
 img.logo_main {
-    width: 250px;
+    width: 220px;
     padding-top: 8px;
 }
 
