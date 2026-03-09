@@ -1,0 +1,270 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Models\PurchaseHistory;
+use App\Models\Product;
+use App\Models\UserDetails;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Validators\ValidationException;
+use App\Models\PurchaseHistoryImport;
+use App\Models\PurchaseHistoryExport;
+use Illuminate\Support\Facades\Log;
+
+class PurchaseHistoryReportController extends Controller
+{
+    /**
+     * Display a listing of the purchase history records.
+     */
+    public function index(Request $request)
+    {
+        $query = PurchaseHistory::query()
+            ->with([
+                'customerDetails',
+                'productStock.product.brand',
+            ]);
+
+        // Global search across key fields
+        if ($search = $request->get('search')) {
+            $like = '%' . trim($search) . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('serial_number', 'like', $like)
+                    ->orWhere('order_number', 'like', $like)
+                    ->orWhere('invoice_number', 'like', $like)
+                    ->orWhere('product_sku', 'like', $like)
+                    ->orWhere('sales_man_name', 'like', $like)
+                    ->orWhere('state', 'like', $like)
+                    ->orWhere('city', 'like', $like);
+            });
+        }
+
+        // Optional filters
+        if ($orderDateFrom = $request->get('order_date_from')) {
+            $query->where('order_date', '>=', $orderDateFrom);
+        }
+        if ($orderDateTo = $request->get('order_date_to')) {
+            $query->where('order_date', '<=', $orderDateTo);
+        }
+        if ($sku = $request->get('product_sku')) {
+            $query->where('product_sku', $sku);
+        }
+        if ($salesman = $request->get('sales_man_name')) {
+            $query->where('sales_man_name', 'like', '%' . trim($salesman) . '%');
+        }
+
+        // Sorting
+        $sortableColumns = [
+            'serial_number',
+            'order_date',
+            'order_number',
+            'invoice_number',
+            'product_sku',
+            'sales_man_name',
+            'state',
+            'city',
+            'final_amount',
+        ];
+        $sortBy = $request->get('sort_by', 'order_date');
+        $sortDir = $request->get('sort_dir', 'desc');
+        if (! in_array($sortBy, $sortableColumns, true)) {
+            $sortBy = 'order_date';
+        }
+        if (! in_array(strtolower($sortDir), ['asc', 'desc'], true)) {
+            $sortDir = 'desc';
+        }
+        $query->orderBy($sortBy, $sortDir);
+
+        $perPage = (int) $request->get('per_page', 25);
+        if ($perPage <= 0 || $perPage > 200) {
+            $perPage = 25;
+        }
+
+        $purchaseHistory = $query->paginate($perPage)->appends($request->query());
+
+        return view('backend.purchase_history.index', [
+            'purchaseHistory' => $purchaseHistory,
+            'search' => $search ?? null,
+            'sortBy' => $sortBy,
+            'sortDir' => $sortDir,
+        ]);
+    }
+
+    /**
+     * Show the detail view for a single record (for modal).
+     */
+    public function show($id)
+    {
+        $record = PurchaseHistory::with([
+            'customerDetails',
+            'productStock.product.brand',
+        ])->findOrFail($id);
+
+        return view('backend.purchase_history.partials.detail', [
+            'record' => $record,
+        ]);
+    }
+
+    /**
+     * Show the form for editing a record.
+     */
+    public function edit($id)
+    {
+        $record = PurchaseHistory::with([
+            'customerDetails',
+            'productStock.product.brand',
+        ])->findOrFail($id);
+
+        return view('backend.purchase_history.edit', [
+            'record' => $record,
+        ]);
+    }
+
+    /**
+     * Update the specified record in storage.
+     */
+    public function update(Request $request, $id)
+    {
+        $record = PurchaseHistory::findOrFail($id);
+
+        $validated = $request->validate([
+            'serial_number' => ['nullable', 'string', 'max:255'],
+            'order_date' => ['nullable', 'string', 'max:255'],
+            'order_number' => ['nullable', 'string', 'max:255'],
+            'invoice_date' => ['nullable', 'string', 'max:255'],
+            'invoice_number' => ['nullable', 'string', 'max:255'],
+            'ac_number' => ['nullable', 'string', 'max:255'],
+            'product_sku' => ['nullable', 'string', 'max:255'],
+            'batch_number' => ['nullable', 'string', 'max:255'],
+            'expiry_date' => ['nullable', 'string', 'max:255'],
+            'quantity' => ['nullable', 'regex:/^\d+(\.\d+)?$/'],
+            'free' => ['nullable', 'regex:/^\d+(\.\d+)?$/'],
+            'sale_rate' => ['nullable', 'regex:/^\d+(\.\d+)?$/'],
+            'mrp_rate' => ['nullable', 'regex:/^\d+(\.\d+)?$/'],
+            'discount' => ['nullable', 'regex:/^\d+(\.\d+)?$/'],
+            'taxable_amount' => ['nullable', 'regex:/^\d+(\.\d+)?$/'],
+            'tax_percentage' => ['nullable', 'regex:/^\d+(\.\d+)?$/'],
+            'tax_amount' => ['nullable', 'regex:/^\d+(\.\d+)?$/'],
+            'final_amount' => ['nullable', 'regex:/^\d+(\.\d+)?$/'],
+            'sales_man_name' => ['nullable', 'string', 'max:255'],
+            'sales_man_code' => ['nullable', 'string', 'max:255'],
+            'case_value' => ['nullable', 'string', 'max:255'],
+            'packing' => ['nullable', 'string', 'max:255'],
+            'transport' => ['nullable', 'string', 'max:255'],
+            'book_to' => ['nullable', 'string', 'max:255'],
+            'lr_number' => ['nullable', 'string', 'max:255'],
+            'lr_date' => ['nullable', 'string', 'max:255'],
+            'country' => ['nullable', 'string', 'max:255'],
+            'state' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'district' => ['nullable', 'string', 'max:255'],
+            'pincode' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $record->update($validated);
+
+        flash(translate('Purchase history record updated successfully'))->success();
+
+        return redirect()->route('admin.purchase_history.index');
+    }
+
+    /**
+     * Remove the specified record from storage.
+     */
+    public function destroy(Request $request, $id)
+    {
+        $record = PurchaseHistory::findOrFail($id);
+        $record->delete();
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true]);
+        }
+
+        flash(translate('Purchase history record deleted successfully'))->success();
+
+        return redirect()->route('admin.purchase_history.index');
+    }
+
+    /**
+     * Import purchase history from an uploaded CSV/Excel file.
+     */
+    public function import(Request $request)
+    {
+        Log::info('PurchaseHistoryReport import called', [
+            'user_id' => optional($request->user())->id,
+            'path'    => $request->path(),
+            'method'  => $request->method(),
+        ]);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
+        ]);
+
+        if (! $request->hasFile('file')) {
+            Log::warning('PurchaseHistoryReport import: no file present after validation');
+            flash(translate('No file was uploaded. Please choose a CSV or Excel file.'))->error();
+            return back();
+        }
+
+        try {
+            $import = new PurchaseHistoryImport();
+            Excel::import($import, $request->file('file'));
+
+            $rows = method_exists($import, 'getRowCount') ? $import->getRowCount() : null;
+
+            Log::info('PurchaseHistoryReport import completed', [
+                'rows_imported' => $rows,
+            ]);
+
+            if ($rows !== null && $rows > 0) {
+                flash(translate('Purchase history imported successfully. Rows imported: ') . $rows)->success();
+            } else {
+                flash(translate('File processed but no rows were imported. Please check header names and data.'))->warning();
+            }
+        } catch (ValidationException $e) {
+            $messages = [];
+            foreach ($e->failures() as $failure) {
+                $row = $failure->row(); // row number
+                $attr = $failure->attribute(); // column name
+                foreach ($failure->errors() as $error) {
+                    $messages[] = "Row {$row}, {$attr}: {$error}";
+                }
+            }
+
+            Log::warning('PurchaseHistoryReport validation failed', [
+                'errors' => $messages,
+            ]);
+
+            flash(translate('Failed to import purchase history. Please correct these issues:') . '<br>' . implode('<br>', $messages))
+                ->error();
+        } catch (\Throwable $e) {
+            Log::error('PurchaseHistoryReport import failed', [
+                'message' => $e->getMessage(),
+                'trace'   => substr($e->getTraceAsString(), 0, 1000),
+            ]);
+            report($e);
+            flash(translate('Failed to import purchase history. Please check the file format and data. Error: ') . $e->getMessage())->error();
+        }
+
+        return back();
+    }
+
+    /**
+     * Export purchase history data to Excel with current filters.
+     */
+    public function export(Request $request)
+    {
+        $export = new PurchaseHistoryExport(
+            $request->get('search'),
+            $request->get('order_date_from'),
+            $request->get('order_date_to'),
+            $request->get('product_sku'),
+            $request->get('sales_man_name')
+        );
+
+        return Excel::download($export, 'purchase_history.xlsx');
+    }
+}
+

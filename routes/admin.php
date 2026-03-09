@@ -61,6 +61,7 @@ use App\Http\Controllers\WarrantyController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\ZoneController;
 use App\Http\Controllers\RequestDocController;
+use App\Http\Controllers\PurchaseHistoryReportController;
 
 /*
   |--------------------------------------------------------------------------
@@ -83,6 +84,19 @@ Route::controller(UpdateController::class)->group(function () {
 
 Route::get('/admin', [AdminController::class, 'admin_dashboard'])->name('admin.dashboard')->middleware(['auth', 'admin', 'prevent-back-history']);
 Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-back-history']], function () {
+
+    // Purchase History Report (admin)
+    Route::controller(PurchaseHistoryReportController::class)->group(function () {
+
+        Route::post('/purchase-history-report/import', 'import')->name('admin.purchase_history.import');
+        Route::get('/purchase-history-report-export', 'export')->name('admin.purchase_history.export');
+
+        Route::get('/purchase-history-report', 'index')->name('admin.purchase_history.index');
+        Route::get('/purchase-history-report/{id}', 'show')->name('admin.purchase_history.show');
+        Route::get('/purchase-history-report/{id}/edit', 'edit')->name('admin.purchase_history.edit');
+        Route::post('/purchase-history-report/{id}', 'update')->name('admin.purchase_history.update');
+        Route::delete('/purchase-history-report/{id}', 'destroy')->name('admin.purchase_history.destroy');
+    });
 
     // category
     Route::resource('categories', CategoryController::class);

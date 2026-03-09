@@ -453,6 +453,13 @@
                                     </a>
                                 </li>
                             @endcan
+                            @can('view_all_orders')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('admin.purchase_history.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['admin.purchase_history.index','admin.purchase_history.edit'])}}">
+                                        <span class="aiz-side-nav-text">{{ translate('Purchase History') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
                             @can('view_pending_in_carts')
                                 {{-- list_user_and_cart --}}
                                 <li class="aiz-side-nav-item">
