@@ -48,6 +48,10 @@
                 <td>{{ $record->invoice_date }}</td>
             </tr>
             <tr>
+                <th>{{ translate('Invoice Series') }}</th>
+                <td>{{ $record->invoice_series }}</td>
+            </tr>
+            <tr>
                 <th>{{ translate('Invoice Number') }}</th>
                 <td>{{ $record->invoice_number }}</td>
             </tr>
@@ -127,12 +131,12 @@
                 <td>{{ $record->taxable_amount }}</td>
             </tr>
             <tr>
-                <th>{{ translate('Tax %') }}</th>
-                <td>{{ $record->tax_percentage }}</td>
+                <th>{{ translate('GST %') }}</th>
+                <td>{{ $record->gst_percentage }}</td>
             </tr>
             <tr>
-                <th>{{ translate('Tax Amount') }}</th>
-                <td>{{ $record->tax_amount }}</td>
+                <th>{{ translate('GST Amount') }}</th>
+                <td>{{ $record->gst_amount }}</td>
             </tr>
             <tr>
                 <th>{{ translate('Final Amount') }}</th>
@@ -169,6 +173,10 @@
             <tr>
                 <th>{{ translate('LR Date') }}</th>
                 <td>{{ $record->lr_date }}</td>
+            </tr>
+            <tr>
+                <th>{{ translate('Late By') }}</th>
+                <td>{{ $record->late_by }}</td>
             </tr>
             <tr>
                 <th>{{ translate('Country') }}</th>

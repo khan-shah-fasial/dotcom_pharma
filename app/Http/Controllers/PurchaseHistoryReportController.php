@@ -192,7 +192,7 @@ class PurchaseHistoryReportController extends Controller
      */
     public function import(Request $request)
     {
-        Log::info('PurchaseHistoryReport import called', [
+        Log::info('PurchaseHistoryReport import party wise sheets called', [
             'user_id' => optional($request->user())->id,
             'path'    => $request->path(),
             'method'  => $request->method(),
@@ -213,15 +213,27 @@ class PurchaseHistoryReportController extends Controller
             Excel::import($import, $request->file('file'));
 
             $rows = method_exists($import, 'getRowCount') ? $import->getRowCount() : null;
+            $errorCount = method_exists($import, 'getErrorCount') ? $import->getErrorCount() : null;
 
-            Log::info('PurchaseHistoryReport import completed', [
+            Log::info('PurchaseHistoryReport import party wise sheets completed', [
                 'rows_imported' => $rows,
+                'errors'        => $errorCount,
             ]);
 
+            // Expose error-log presence to the index view via session, instead of embedding HTML in flash
+            $errorFile = method_exists($import, 'getErrorFilePath') ? $import->getErrorFilePath() : null;
+            if ($errorFile) {
+                session()->flash('purchase_history_error_log_available', true);
+            }
+
             if ($rows !== null && $rows > 0) {
-                flash(translate('Purchase history imported successfully. Rows imported: ') . $rows)->success();
+                flash(
+                    translate('Party wise sheets imported successfully. Rows imported: ') . $rows
+                )->success();
             } else {
-                flash(translate('File processed but no rows were imported. Please check header names and data.'))->warning();
+                flash(
+                    translate('File processed but no rows were imported. Please check header names and data.')
+                )->warning();
             }
         } catch (ValidationException $e) {
             $messages = [];
@@ -237,7 +249,7 @@ class PurchaseHistoryReportController extends Controller
                 'errors' => $messages,
             ]);
 
-            flash(translate('Failed to import purchase history. Please correct these issues:') . '<br>' . implode('<br>', $messages))
+            flash(translate('Failed to import party wise sheets. Please correct these issues:') . '<br>' . implode('<br>', $messages))
                 ->error();
         } catch (\Throwable $e) {
             Log::error('PurchaseHistoryReport import failed', [
@@ -245,7 +257,7 @@ class PurchaseHistoryReportController extends Controller
                 'trace'   => substr($e->getTraceAsString(), 0, 1000),
             ]);
             report($e);
-            flash(translate('Failed to import purchase history. Please check the file format and data. Error: ') . $e->getMessage())->error();
+            flash(translate('Failed to import party wise sheets. Please check the file format and data. Error: ') . $e->getMessage())->error();
         }
 
         return back();

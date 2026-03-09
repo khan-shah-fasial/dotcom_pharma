@@ -62,6 +62,7 @@ use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\ZoneController;
 use App\Http\Controllers\RequestDocController;
 use App\Http\Controllers\PurchaseHistoryReportController;
+use Illuminate\Support\Facades\Storage;
 
 /*
   |--------------------------------------------------------------------------
@@ -88,8 +89,28 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     // Purchase History Report (admin)
     Route::controller(PurchaseHistoryReportController::class)->group(function () {
 
+        Route::get('/purchase-history-report/error-log', function () {
+            $relative = 'purchase_history_import/error.txt';
+
+            // Prefer the file created by the import in storage/app
+            if (Storage::disk('local')->exists($relative)) {
+                $path = Storage::disk('local')->path($relative);
+            } else {
+                // Fallback to public path if the file is present there
+                $publicPath = public_path($relative);
+                if (file_exists($publicPath)) {
+                    $path = $publicPath;
+                } else {
+                    abort(404);
+                }
+            }
+
+            return response()->file($path, ['Content-Type' => 'text/plain']);
+        })->name('admin.purchase_history.error_log');
+
         Route::post('/purchase-history-report/import', 'import')->name('admin.purchase_history.import');
         Route::get('/purchase-history-report-export', 'export')->name('admin.purchase_history.export');
+
 
         Route::get('/purchase-history-report', 'index')->name('admin.purchase_history.index');
         Route::get('/purchase-history-report/{id}', 'show')->name('admin.purchase_history.show');

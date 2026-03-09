@@ -7,6 +7,19 @@
         </div>
     </div>
 
+    @if(session('purchase_history_error_log_available'))
+        <div class="alert alert-warning mb-3 d-flex justify-content-between align-items-center">
+            <div>
+                {{ translate('Some rows failed during the last import.') }}
+            </div>
+            <a href="{{ route('admin.purchase_history.error_log') }}"
+               class="btn btn-sm btn-outline-primary"
+               target="_blank">
+                {{ translate('Open error report') }}
+            </a>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-header border-0 pb-0">
             <div class="w-100">
@@ -64,7 +77,7 @@
                                     class="btn btn-sm btn-outline-primary mr-2"
                                     data-toggle="modal"
                                     data-target="#purchase-history-import-modal">
-                                <i class="las la-file-import mr-1"></i>{{ translate('Import') }}
+                                <i class="las la-file-import mr-1"></i>{{ translate('Import party wise sheets') }}
                             </button>
                             <a href="{{ route('admin.purchase_history.export', request()->query()) }}"
                                class="btn btn-sm btn-outline-success">
@@ -164,7 +177,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="purchaseHistoryImportLabel">{{ translate('Import Purchase History') }}</h5>
+                    <h5 class="modal-title" id="purchaseHistoryImportLabel">{{ translate('Import party wise sheets') }}</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -173,7 +186,7 @@
                     @csrf
                     <div class="modal-body">
                         <p class="text-muted mb-3">
-                            {{ translate('Upload a CSV or Excel file with a header row matching the purchase history columns.') }}
+                            {{ translate('Upload a CSV or Excel file with a header row matching the party wise sheet columns.') }}
                         </p>
                         <div class="form-group">
                             <label class="mb-1">{{ translate('File (CSV, XLSX, XLS)') }}</label>
