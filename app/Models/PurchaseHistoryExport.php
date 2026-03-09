@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\PurchaseHistory;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -61,120 +62,138 @@ class PurchaseHistoryExport implements FromCollection, WithHeadings, WithMapping
 
     public function headings(): array
     {
+        // Match the party-wise sheet column layout used for import,
+        // so exported files can be edited and re-imported directly.
         return [
-            'Serial Number',
-            'Order Date',
-            'Order Number',
-            'Invoice Date',
-            'Invoice Series',
-            'Invoice Number',
-            'AC Number (Customer)',
+            'Sr.',
+            'Ac.No',
             'Party Name',
-            'Contact Person Name',
-            'Primary Mobile',
-            'Other Mobile',
-            'Company',
-            'Product SKU',
-            'Product Name',
+            'Area',
+            'Town',
+            'District',
+            'State',
+            'Pincode',
+            'Order Date',
+            'Order.No',
+            'Name',
+            'SalesMan',
+            'Date',
+            'Series',
+            'Bill',
+            'SKU',
+            'Product',
+            'Packing',
             'Mfd By',
-            'Batch Number',
-            'Expiry Date',
-            'Quantity',
+            'Batch',
+            'Exp',
+            'Qty',
             'Free',
             'Sale Rate',
-            'MRP Rate',
-            'Discount %',
-            'Taxable Amount',
+            'MRP',
+            'Disc%',
+            'Taxable',
             'Tax Code',
-            'GST %',
-            'GST Amount',
-            'Final Amount',
-            'Sales Man Name',
-            'Sales Man Code',
-            'Case',
-            'Packing',
+            'GST',
+            'GST Amt',
+            'Final',
             'Transport',
-            'Book To',
-            'LR Number',
+            'Booked To',
+            'Case',
+            'L.R.No',
             'LR Date',
-            'Country',
-            'State',
-            'City',
-            'District',
-            'Pincode',
+            'Late By',
         ];
     }
 
     public function map($record): array
     {
         $customer = $record->customerDetails;
-        $stock = $record->productStock;
-        $product = $stock ? $stock->product : null;
-        $brand = $product ? $product->brand : null;
+        $stock    = $record->productStock;
+        $product  = $stock ? $stock->product : null;
+        $brand    = $product ? $product->brand : null;
 
         $partyName = $customer ? ($customer->company_name ?? '') : '';
-        $contactPersonName = $customer ? ($customer->con_person_name ?? '') : '';
 
-        $primaryMobiles = [];
-        $otherMobiles = [];
-
-        if ($customer) {
-            $primaryMobiles = array_filter([
-                $customer->prim_mobile_no_business ?? null,
-                $customer->prim_whats_app_no_business ?? null,
-                $customer->prim_mobile_no ?? null,
-                $customer->prim_whats_app_no ?? null,
-            ]);
-
-            $otherMobiles = array_filter([
-                $customer->alt_mobile_no_business ?? null,
-                $customer->alternate_whats_app_no_business ?? null,
-                $customer->alt_mobile_no ?? null,
-                $customer->alt_whats_app_no ?? null,
-            ]);
-        }
+        // Map to party-wise sheet columns so that exported rows can be edited
+        // and re-imported using PurchaseHistoryImport.
+        $area     = $record->city;
+        $town     = $record->district ?: '';
 
         return [
+            // Sr.
             $record->serial_number,
-            $record->order_date,
-            $record->order_number,
-            $record->invoice_date,
-            $record->invoice_series,
-            $record->invoice_number,
+            // Ac.No
             $record->ac_number,
+            // Party Name
             $partyName,
-            $contactPersonName,
-            implode(', ', $primaryMobiles),
-            implode(', ', $otherMobiles),
-            $partyName,
-            $record->product_sku,
-            $product ? $product->name : '',
-            $brand ? $brand->name : '',
-            $record->batch_number,
-            $record->expiry_date,
-            $record->quantity,
-            $record->free,
-            $record->sale_rate,
-            $record->mrp_rate,
-            $record->discount,
-            $record->taxable_amount,
-            $record->tax_code,
-            $record->gst_percentage,
-            $record->gst_amount,
-            $record->final_amount,
-            $record->sales_man_name,
-            $record->sales_man_code,
-            $record->case_value,
-            $record->packing,
-            $record->transport,
-            $record->book_to,
-            $record->lr_number,
-            $record->lr_date,
-            $record->country,
-            $record->state,
-            $record->city,
+            // Area
+            $area,
+            // Town
+            $town,
+            // District
             $record->district,
+            // State
+            $record->state,
+            // Pincode
             $record->pincode,
+            // Order Date
+            $record->order_date,
+            // Order.No
+            $record->order_number,
+            // Name (Salesman Name)
+            $record->sales_man_name,
+            // SalesMan (Salesman Code)
+            $record->sales_man_code,
+            // Date (Invoice Date)
+            $record->invoice_date,
+            // Series (Invoice Series)
+            $record->invoice_series,
+            // Bill (Invoice Number)
+            $record->invoice_number,
+            // SKU
+            $record->product_sku,
+            // Product
+            $product ? $product->name : '',
+            // Packing
+            $record->packing,
+            // Mfd By (Brand)
+            $brand ? $brand->name : '',
+            // Batch
+            $record->batch_number,
+            // Exp
+            $record->expiry_date,
+            // Qty
+            $record->quantity,
+            // Free
+            $record->free,
+            // Sale Rate
+            $record->sale_rate,
+            // MRP
+            $record->mrp_rate,
+            // Disc%
+            $record->discount,
+            // Taxable
+            $record->taxable_amount,
+            // Tax Code
+            $record->tax_code,
+            // GST
+            $record->gst_percentage,
+            // GST Amt
+            $record->gst_amount,
+            // Final
+            $record->final_amount,
+            // Transport
+            $record->transport,
+            // Booked To
+            $record->book_to,
+            // Case
+            $record->case_value,
+            // L.R.No
+            $record->lr_number,
+            // LR Date
+            $record->lr_date,
+            // Late By
+            $record->late_by,
         ];
     }
 }

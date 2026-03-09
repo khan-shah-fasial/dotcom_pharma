@@ -96,11 +96,11 @@
                         <div class="form-row">
                             <div class="form-group col-md-4">
                                 <label>{{ translate('Tax %') }}</label>
-                                <input type="text" class="form-control" name="tax_percentage" value="{{ old('tax_percentage', $record->tax_percentage) }}">
+                                <input type="text" class="form-control" name="gst_percentage" value="{{ old('gst_percentage', $record->gst_percentage) }}">
                             </div>
                             <div class="form-group col-md-4">
                                 <label>{{ translate('Tax Amount') }}</label>
-                                <input type="text" class="form-control" name="tax_amount" value="{{ old('tax_amount', $record->tax_amount) }}">
+                                <input type="text" class="form-control" name="gst_amount" value="{{ old('gst_amount', $record->gst_amount) }}">
                             </div>
                             <div class="form-group col-md-4">
                                 <label>{{ translate('Final Amount') }}</label>
@@ -178,7 +178,7 @@
                     <button type="submit" class="btn btn-primary" onclick="return confirm_edit_purchase_history();">
                         {{ translate('Save Changes') }}
                     </button>
-                    <a href="{{ route('purchase_history.index') }}" class="btn btn-outline-secondary">
+                    <a href="{{ route('admin.purchase_history.index') }}" class="btn btn-outline-secondary">
                         {{ translate('Cancel') }}
                     </a>
                 </div>

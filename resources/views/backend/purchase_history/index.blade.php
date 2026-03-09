@@ -204,6 +204,42 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="purchase-history-delete-modal" tabindex="-1" role="dialog" aria-labelledby="purchaseHistoryDeleteLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="purchaseHistoryDeleteLabel">{{ translate('Delete Purchase History Record') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="purchase-history-delete-form" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <div class="modal-body">
+                        <p class="mb-3">
+                            {{ translate('Are you sure you want to delete this record? This action cannot be undone.') }}
+                        </p>
+                        <ul class="list-unstyled mb-0 small">
+                            <li><strong>{{ translate('Serial') }}:</strong> <span id="ph-delete-serial">-</span></li>
+                            <li><strong>{{ translate('Order') }}:</strong> <span id="ph-delete-order">-</span></li>
+                            <li><strong>{{ translate('Invoice') }}:</strong> <span id="ph-delete-invoice">-</span></li>
+                            <li><strong>{{ translate('SKU') }}:</strong> <span id="ph-delete-sku">-</span></li>
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+                            {{ translate('Cancel') }}
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            {{ translate('Delete') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('script')
@@ -219,28 +255,12 @@
         }
 
         function confirm_delete_purchase_history(url, serial, orderNo, invoiceNo, sku) {
-            var message = '{{ translate('Are you sure you want to delete this record?') }}' + '\n\n'
-                + 'Serial: ' + (serial || '-') + '\n'
-                + 'Order: ' + (orderNo || '-') + '\n'
-                + 'Invoice: ' + (invoiceNo || '-') + '\n'
-                + 'SKU: ' + (sku || '-');
-
-            if (window.confirm(message)) {
-                $.ajax({
-                    url: url,
-                    type: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        _method: 'DELETE'
-                    },
-                    success: function () {
-                        location.reload();
-                    },
-                    error: function () {
-                        AIZ.plugins.notify('danger', '{{ translate('Failed to delete record') }}');
-                    }
-                });
-            }
+            $('#purchase-history-delete-form').attr('action', url);
+            $('#ph-delete-serial').text(serial || '-');
+            $('#ph-delete-order').text(orderNo || '-');
+            $('#ph-delete-invoice').text(invoiceNo || '-');
+            $('#ph-delete-sku').text(sku || '-');
+            $('#purchase-history-delete-modal').modal('show');
         }
 
         $(document).on('change', '.aiz-date-range', function () {
