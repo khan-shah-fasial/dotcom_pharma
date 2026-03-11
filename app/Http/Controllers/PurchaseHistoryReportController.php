@@ -84,11 +84,20 @@ class PurchaseHistoryReportController extends Controller
 
         $purchaseHistory = $query->paginate($perPage)->appends($request->query());
 
+        // Distinct SKU list for filter dropdown
+        $skuOptions = PurchaseHistory::query()
+            ->select('product_sku')
+            ->whereNotNull('product_sku')
+            ->distinct()
+            ->orderBy('product_sku')
+            ->pluck('product_sku');
+
         return view('backend.purchase_history.index', [
             'purchaseHistory' => $purchaseHistory,
-            'search' => $search ?? null,
-            'sortBy' => $sortBy,
-            'sortDir' => $sortDir,
+            'search'          => $search ?? null,
+            'sortBy'          => $sortBy,
+            'sortDir'         => $sortDir,
+            'skuOptions'      => $skuOptions,
         ]);
     }
 
@@ -209,8 +218,9 @@ class PurchaseHistoryReportController extends Controller
         }
 
         try {
+            $file = $request->file('file');
             $import = new PurchaseHistoryImport();
-            Excel::import($import, $request->file('file'));
+            Excel::import($import, $file);
 
             $rows = method_exists($import, 'getRowCount') ? $import->getRowCount() : null;
             $errorCount = method_exists($import, 'getErrorCount') ? $import->getErrorCount() : null;
@@ -252,12 +262,30 @@ class PurchaseHistoryReportController extends Controller
             flash(translate('Failed to import party wise sheets. Please correct these issues:') . '<br>' . implode('<br>', $messages))
                 ->error();
         } catch (\Throwable $e) {
+            $message = $e->getMessage();
+
+            // Graceful handling for problematic legacy .xls encodings that PhpSpreadsheet cannot read
+            if ($file->getClientOriginalExtension() === 'xls'
+                && str_contains($message, 'PhpSpreadsheet\\Shared\\StringHelper::convertEncoding')
+            ) {
+                Log::warning('PurchaseHistoryReport import failed for legacy XLS encoding', [
+                    'message' => $message,
+                ]);
+
+                flash(
+                    translate('This XLS file uses an unsupported legacy text encoding. ') .
+                    translate('Please open it in Excel or LibreOffice, save it as XLSX or CSV, and then import that new file.')
+                )->error();
+
+                return back();
+            }
+
             Log::error('PurchaseHistoryReport import failed', [
-                'message' => $e->getMessage(),
+                'message' => $message,
                 'trace'   => substr($e->getTraceAsString(), 0, 1000),
             ]);
             report($e);
-            flash(translate('Failed to import party wise sheets. Please check the file format and data. Error: ') . $e->getMessage())->error();
+            flash(translate('Failed to import party wise sheets. Please check the file format and data. Error: ') . $message)->error();
         }
 
         return back();

@@ -32,8 +32,12 @@
                         </div>
                         <div class="col-md-2 mb-3">
                             <label class="mb-1 text-muted text-uppercase fs-10">{{ translate('Product SKU') }}</label>
-                            <input type="text" class="form-control" name="product_sku" value="{{ request('product_sku') }}"
-                                   placeholder="{{ translate('SKU') }}">
+                            <select class="form-control aiz-selectpicker" name="product_sku" data-live-search="true" data-placeholder="{{ translate('All SKUs') }}">
+                                <option value="">{{ translate('All SKUs') }}</option>
+                                @foreach($skuOptions as $sku)
+                                    <option value="{{ $sku }}" @if(request('product_sku') === $sku) selected @endif>{{ $sku }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-2 mb-3">
                             <label class="mb-1 text-muted text-uppercase fs-10">{{ translate('Salesman Name') }}</label>
