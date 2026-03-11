@@ -12,6 +12,7 @@ webtesti_dotcomdb.sql
 
 /public/storage
 /public/uploads/
+/public/purchase_history_import/
 /storage/*.key
 /storage/debugbar
 /vendor

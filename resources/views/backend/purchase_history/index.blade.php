@@ -130,18 +130,18 @@
                                     <i class="las la-eye"></i>
                                 </a>
 
-                                <a href="{{ route('admin.purchase_history.edit', $history->id) }}"
+                                {{-- <a href="{{ route('admin.purchase_history.edit', $history->id) }}"
                                    class="btn btn-soft-primary btn-icon btn-circle btn-sm"
                                    title="{{ translate('Edit') }}">
                                     <i class="las la-edit"></i>
-                                </a>
+                                </a> --}}
 
-                                <button type="button"
+                                {{-- <button type="button"
                                         class="btn btn-soft-danger btn-icon btn-circle btn-sm"
                                         onclick="confirm_delete_purchase_history('{{ route('admin.purchase_history.destroy', $history->id) }}', '{{ $history->serial_number }}', '{{ $history->order_number }}', '{{ $history->invoice_number }}', '{{ $history->product_sku }}')"
                                         title="{{ translate('Delete') }}">
                                     <i class="las la-trash"></i>
-                                </button>
+                                </button> --}}
                             </td>
                         </tr>
                     @empty
