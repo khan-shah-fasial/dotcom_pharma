@@ -1,3 +1,0 @@
-Row 2: Product SKU (SKU) is empty
-
-Row 3: Product SKU 'DPI-42' not found in product_stocks.sku
