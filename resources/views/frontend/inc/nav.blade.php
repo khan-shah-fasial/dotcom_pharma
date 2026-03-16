@@ -1324,8 +1324,25 @@ body .translater_menu .select2-container {
                                                     <path fill="#b5b5bf" d="M5.75 6.5a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h3.5a.5.5 0 1 1 0 1h-3.5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5H8a.5.5 0 0 1 0 1H6.25a.5.5 0 0 1-.5-.5Z"/>
                                                 </g>
                                             </svg>
-                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Financial Archive') }}</span></a>
+                                            <span class="user-top-menu-name has-transition ml-3">{{ translate('Financial Archive') }}</span>
+                                        </a>
                                     </li>
+
+                                    @php $authUser = auth()->user(); @endphp
+
+                                    @if ($authUser && $authUser->type_option !== null)
+                                        <li class="user-top-nav-element border border-top-0" data-id="1">
+                                            <a href="{{ route('user.support') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                                    <g fill="none" fill-rule="evenodd">
+                                                        <path fill="#b5b5bf" d="M8 1a5 5 0 0 1 5 5v1.5a.5.5 0 0 1-1 0V6a4 4 0 1 0-8 0v4a4 4 0 0 0 6.5 3.122.5.5 0 1 1 .624.781A5 5 0 0 1 3 10V6a5 5 0 0 1 5-5z"/>
+                                                        <path fill="#b5b5bf" d="M4.5 6A3.5 3.5 0 0 1 8 2.5.5.5 0 0 1 8 3 3 3 0 0 0 5 6v1.5a.5.5 0 0 1-1 0V6z"/>
+                                                    </g>
+                                                </svg>
+                                                <span class="user-top-menu-name has-transition ml-3">{{ translate('Support') }}</span>
+                                            </a>
+                                        </li>
+                                    @endif
                                     <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('support_ticket.index') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">

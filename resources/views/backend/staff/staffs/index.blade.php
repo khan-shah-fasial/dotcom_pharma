@@ -26,10 +26,13 @@
             <thead>
                 <tr>
                     <th data-breakpoints="lg" width="10%">#</th>
+                    <th data-breakpoints="lg">{{translate('Photo')}}</th>
                     <th>{{translate('Name')}}</th>
                     <th data-breakpoints="lg">{{translate('Email')}}</th>
                     <th data-breakpoints="lg">{{translate('Phone')}}</th>
                     <th data-breakpoints="lg">{{translate('Role')}}</th>
+                    <th data-breakpoints="lg">{{translate('Designation')}}</th>
+                    <th data-breakpoints="lg">{{translate('Area Assign')}}</th>
                     <th width="10%" class="text-right">{{translate('Options')}}</th>
                 </tr>
             </thead>
@@ -38,6 +41,17 @@
                     @if($staff->user != null)
                         <tr>
                             <td>{{ ($key+1) + ($staffs->currentPage() - 1)*$staffs->perPage() }}</td>
+                            <td>
+                                <span class="avatar avatar-sm">
+                                    <img class="rounded-circle"
+                                         @if($staff->user->avatar_original)
+                                             src="{{ uploaded_asset($staff->user->avatar_original) }}"
+                                         @else
+                                             src="{{ static_asset('assets/img/avatar-place.png') }}"
+                                         @endif
+                                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
+                                </span>
+                            </td>
                             <td>{{$staff->user->name}}</td>
                             <td>{{$staff->user->email}}</td>
                             <td>{{$staff->user->phone}}</td>
@@ -46,6 +60,42 @@
 									{{ $staff->role->getTranslation('name') }}
 								@endif
 							</td>
+                            <td>
+                                {{ $staff->designation ?? '-' }}
+                            </td>
+                            <td>
+                                @php
+                                    $areas = $staff->area_assignments ? json_decode($staff->area_assignments, true) : [];
+                                @endphp
+                                @if(!empty($areas))
+                                    @php
+                                        $areaLabels = [];
+                                        foreach($areas as $area){
+                                            $countryName = isset($area['country_id']) ? (getParticularData('countries', 'name', (int) $area['country_id']) ?? '') : '';
+                                            $stateName = isset($area['state_id']) && $area['state_id'] ? (getParticularData('states', 'name', (int) $area['state_id']) ?? '') : '';
+                                            $districtLabel = '';
+                                            if(isset($area['all_districts']) && $area['all_districts']){
+                                                $districtLabel = translate('All Districts');
+                                            } elseif(isset($area['district_id']) && $area['district_id']) {
+                                                $districtLabel = getParticularData('cities', 'name', (int) $area['district_id']) ?? '';
+                                            }
+
+                                            $labelParts = array_filter([$countryName, $stateName, $districtLabel]);
+                                            if(!empty($labelParts)){
+                                                $areaLabels[] = implode(' - ', $labelParts);
+                                            }
+                                        }
+                                    @endphp
+                                    @php
+                                        $areaSummary = implode(' | ', $areaLabels);
+                                    @endphp
+                                    <span title="{{ $areaSummary }}">
+                                        {{ \Illuminate\Support\Str::limit($areaSummary, 60) }}
+                                    </span>
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td class="text-right">
                                 @can('edit_staff')
                                     <a class="btn btn-soft-primary btn-icon btn-circle btn-sm" href="{{route('staffs.edit', encrypt($staff->id))}}" title="{{ translate('Edit') }}">

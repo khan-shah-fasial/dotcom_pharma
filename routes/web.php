@@ -473,6 +473,9 @@ Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function ()
 
     // Financial Archive (frontend view only)
     Route::get('/financial-archives', [\App\Http\Controllers\FinancialArchiveController::class, 'userArchives'])->name('financial-archives.user');
+
+    // Frontend: Support staff listing for user
+    Route::get('/support', [\App\Http\Controllers\UserSupportController::class, 'index'])->name('user.support');
     Route::get('/subscribe-list', [\App\Http\Controllers\HomeController::class, 'subscribeList'])->name('subscribe-list');
     Route::post('/product-notify', [\App\Http\Controllers\ProductNotifyController::class, 'store'])->name('product-notify.store');
     Route::post('/product-notify/remove', [\App\Http\Controllers\ProductNotifyController::class, 'remove'])->name('product-notify.remove');
