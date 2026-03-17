@@ -9,6 +9,11 @@ class Contact extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'data'   => 'array',
+        'review' => 'array',
+    ];
+
     public function product()
     {
         return $this->belongsTo(Product::class);

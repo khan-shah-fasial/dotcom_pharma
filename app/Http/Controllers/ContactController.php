@@ -23,6 +23,26 @@ class ContactController extends Controller
         $this->middleware(['permission:reply_to_contact'])->only('reply_modal');
     }
 
+    /**
+     * Determine if a support contact already has a review stored.
+     */
+    protected function supportHasReview(Contact $contact): bool
+    {
+        if ($contact->review === null) {
+            return false;
+        }
+
+        // Because of casts this will usually be an array, but be defensive.
+        $review = $contact->review;
+
+        if (is_array($review)) {
+            return !empty($review['rating']);
+        }
+
+        // Fallback for old scalar values.
+        return !empty($review);
+    }
+
     public function product_enquiry_index(Request $request)
     {
         $contacts = Contact::query();
@@ -265,8 +285,11 @@ class ContactController extends Controller
         $contact->save();
 
         // When closing a support enquiry for the first time, send review email
-        if ($request->status === 'closed' && $contact->review === null) {
-            $data = $contact->data ? json_decode($contact->data, true) : [];
+        if ($request->status === 'closed' && !$this->supportHasReview($contact)) {
+            $rawData = $contact->data;
+            $data = is_array($rawData)
+                ? $rawData
+                : ($rawData ? json_decode($rawData, true) : []);
             $customer = $data['customer'] ?? [];
             $staff    = $data['staff'] ?? [];
 
@@ -293,12 +316,13 @@ class ContactController extends Controller
             ]);
 
             $array = [
-                'name'    => $customer['name'] ?? $contact->name,
-                'email'   => $customer['email'] ?? $contact->email,
-                'phone'   => $customer['phone'] ?? $contact->phone,
-                'content' => view('emails.support_review_request', ['payload' => $payload])->render(),
-                'subject' => translate('Please review your support experience') . ' - ' . env('APP_NAME'),
-                'from'    => get_admin()->email ?? config('mail.from.address'),
+                'name'                => $customer['name'] ?? $contact->name,
+                'email'               => $customer['email'] ?? $contact->email,
+                'phone'               => $customer['phone'] ?? $contact->phone,
+                'content'             => view('emails.support_review_request', ['payload' => $payload])->render(),
+                'subject'             => translate('Please review your support experience') . ' - ' . env('APP_NAME'),
+                'from'                => get_admin()->email ?? config('mail.from.address'),
+                'hide_contact_details'=> true,
             ];
 
             try {
@@ -325,12 +349,28 @@ class ContactController extends Controller
             abort(403);
         }
 
-        $validator = Validator::make($request->all(), [
-            'staff_id'    => 'required|integer',
-            'channel'     => 'required|in:video,callback',
-            'scheduled_at'=> 'required|date',
-            'notes'       => 'nullable|string|max:1000',
-        ]);
+        $rules = [
+            'staff_id'     => 'required|integer',
+            'channel'      => 'required|in:video,callback',
+            'scheduled_at' => 'required|date',
+            'name'         => 'required|string|max:255',
+            'notes'        => 'nullable|string|max:1000',
+        ];
+
+        // Channel-specific contact validation
+        if ($request->channel === 'video') {
+            $rules['email'] = 'required|email|max:255';
+            $rules['phone'] = 'nullable|regex:/^[0-9\-\+\s\(\)]*$/';
+        } elseif ($request->channel === 'callback') {
+            $rules['phone'] = 'required|regex:/^[0-9\-\+\s\(\)]*$/';
+            $rules['email'] = 'nullable|email|max:255';
+        } else {
+            // Fallback: at least one contact method must be present.
+            $rules['email'] = 'nullable|email|max:255';
+            $rules['phone'] = 'nullable|regex:/^[0-9\-\+\s\(\)]*$/';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             foreach ($validator->errors()->all() as $error) {
@@ -350,15 +390,19 @@ class ContactController extends Controller
 
         $admin = get_admin();
 
+        $customerName  = $request->name ?? $user->name;
+        $customerEmail = $request->email ?? $user->email;
+        $customerPhone = $request->phone ?? $user->phone;
+
         $payload = [
             'channel'       => $request->channel,
             'scheduled_at'  => $request->scheduled_at,
             'notes'         => $request->notes,
             'customer'      => [
                 'id'    => $user->id,
-                'name'  => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
+                'name'  => $customerName,
+                'email' => $customerEmail,
+                'phone' => $customerPhone,
             ],
             'staff'         => [
                 'staff_id' => (int) $request->staff_id,
@@ -370,9 +414,9 @@ class ContactController extends Controller
         ];
 
         $array = [
-            'name'    => $user->name,
-            'email'   => $user->email,
-            'phone'   => $user->phone,
+            'name'    => $customerName,
+            'email'   => $customerEmail,
+            'phone'   => $customerPhone,
             'content' => view('emails.support_request_summary', ['payload' => $payload])->render(),
             'subject' => translate('Support Request') . ' - ' . env('APP_NAME'),
             'from'    => $user->email,
@@ -390,12 +434,13 @@ class ContactController extends Controller
         }
 
         Contact::create([
+            'user_id' => $user->id,
             'type'    => 'support',
-            'name'    => $user->name,
-            'email'   => $user->email,
-            'phone'   => $user->phone,
+            'name'    => $customerName,
+            'email'   => $customerEmail,
+            'phone'   => $customerPhone,
             'content' => $request->notes,
-            'data'    => json_encode($payload),
+            'data'    => $payload,
             'status'  => 'open',
         ]);
 
@@ -424,7 +469,10 @@ class ContactController extends Controller
             abort(404);
         }
 
-        $data = $contact->data ? json_decode($contact->data, true) : [];
+        $rawData = $contact->data;
+        $data = is_array($rawData)
+            ? $rawData
+            : ($rawData ? json_decode($rawData, true) : []);
 
         return view('frontend.support.review', [
             'contact' => $contact,
@@ -439,8 +487,9 @@ class ContactController extends Controller
     public function support_review_store(Request $request)
     {
         $request->validate([
-            'token'  => 'required|string',
-            'review' => 'required|integer|min:1|max:5',
+            'token'   => 'required|string',
+            'rating'  => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
         ]);
 
         try {
@@ -459,12 +508,15 @@ class ContactController extends Controller
             abort(404);
         }
 
-        // Link only works until review is null
-        if ($contact->review !== null) {
+        // Link only works until there is no stored review
+        if ($this->supportHasReview($contact)) {
             return redirect()->route('support.review', ['token' => $request->token]);
         }
 
-        $contact->review = (int) $request->review;
+        $contact->review = [
+            'rating'  => (int) $request->rating,
+            'comment' => $request->comment ?: null,
+        ];
         $contact->save();
 
         return redirect()->route('support.review', ['token' => $request->token])

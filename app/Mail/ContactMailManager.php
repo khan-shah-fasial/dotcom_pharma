@@ -28,14 +28,20 @@ class ContactMailManager extends Mailable
      */
     public function build()
     {
+        $viewData = [
+            'name'    => $this->array['name'],
+            'email'   => $this->array['email'],
+            'phone'   => $this->array['phone'],
+            'content' => $this->array['content'],
+        ];
+
+        if (array_key_exists('hide_contact_details', $this->array)) {
+            $viewData['hide_contact_details'] = (bool) $this->array['hide_contact_details'];
+        }
+
         return $this->view('emails.contact')
                     ->from($this->array['from'], env('MAIL_FROM_NAME'))
                     ->subject($this->array['subject'])
-                    ->with([
-                        'name' => $this->array['name'],
-                        'email' => $this->array['email'],
-                        'phone' => $this->array['phone'],
-                        'content' => $this->array['content']
-                    ]);
+                    ->with($viewData);
     }
 }

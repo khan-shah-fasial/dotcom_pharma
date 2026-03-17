@@ -91,7 +91,10 @@
                 <tbody>
                     @foreach ($contacts as $key => $contact)
                         @php
-                            $data = $contact->data ? json_decode($contact->data, true) : [];
+                            $rawData = $contact->data;
+                            $data = is_array($rawData)
+                                ? $rawData
+                                : ($rawData ? json_decode($rawData, true) : []);
                             $customer = $data['customer'] ?? [];
                             $staff = $data['staff'] ?? [];
                             $channel = $data['channel'] ?? $contact->content;
@@ -113,7 +116,14 @@
                                     <span class="badge badge-inline badge-soft-secondary">{{ $channel ?? '-' }}</span>
                                 @endif
                             </td>
-                            <td>{{ $data['scheduled_at'] ?? '-' }}</td>
+                            <td>
+                                @php $scheduledAt = $data['scheduled_at'] ?? null; @endphp
+                                @if ($scheduledAt)
+                                    {{ \Carbon\Carbon::parse($scheduledAt)->format('d-m-Y H:i') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td>
                                 @php $status = $contact->status ?? 'open'; @endphp
                                 @if ($status === 'closed')
@@ -133,13 +143,13 @@
                                         <i class="las la-check"></i>
                                     </button>
                                 @else
-                                    <button type="button"
+                                    {{-- <button type="button"
                                             class="btn btn-soft-warning btn-icon btn-circle btn-sm js-support-toggle-status"
                                             data-id="{{ $contact->id }}"
                                             data-status="open"
                                             title="{{ translate('Reopen') }}">
                                         <i class="las la-undo"></i>
-                                    </button>
+                                    </button> --}}
                                 @endif
                                 <a class="btn btn-soft-primary btn-icon btn-circle btn-sm"
                                    href="javascript:void(0)" onclick="showQuery({{ $contact->id }})"
@@ -183,27 +193,39 @@
             var id = $(this).data('id');
             var status = $(this).data('status');
 
-            var message = status === 'closed'
-                ? "{{ translate('Do you want to close this support enquiry and send a review email to the customer?') }}"
-                : "{{ translate('Do you want to reopen this support enquiry?') }}";
+            var title = status === 'closed'
+                ? "{{ translate('Close support enquiry?') }}"
+                : "{{ translate('Reopen support enquiry?') }}";
 
-            if (!confirm(message)) {
-                return;
-            }
+            var text = status === 'closed'
+                ? "{{ translate('This will close the support enquiry and send a review email to the customer (only once).') }}"
+                : "{{ translate('This will reopen the support enquiry so it can be handled again.') }}";
 
-            $.post("{{ route('contact.support_update_status') }}", {
-                _token: '{{ csrf_token() }}',
-                id: id,
-                status: status
-            }, function (resp) {
-                if (resp && resp.success) {
-                    location.reload();
-                } else {
+            // Use AIZ confirm wrapper if available, otherwise fallback to native confirm
+            var proceed = function () {
+                $.post("{{ route('contact.support_update_status') }}", {
+                    _token: '{{ csrf_token() }}',
+                    id: id,
+                    status: status
+                }, function (resp) {
+                    if (resp && resp.success) {
+                        AIZ.plugins.notify('success', '{{ translate('Support status updated successfully.') }}');
+                        location.reload();
+                    } else {
+                        AIZ.plugins.notify('danger', '{{ translate('Unable to update status') }}');
+                    }
+                }).fail(function () {
                     AIZ.plugins.notify('danger', '{{ translate('Unable to update status') }}');
+                });
+            };
+
+            if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.confirm === 'function') {
+                AIZ.plugins.confirm(title, text, proceed);
+            } else {
+                if (confirm(title + '\n\n' + text)) {
+                    proceed();
                 }
-            }).fail(function () {
-                AIZ.plugins.notify('danger', '{{ translate('Unable to update status') }}');
-            });
+            }
         });
     </script>
 @endsection

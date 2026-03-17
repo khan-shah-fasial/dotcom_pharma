@@ -1,5 +1,18 @@
 @extends('frontend.layouts.user_panel')
 
+<style>
+ .width100 {
+    width: 108px;
+}
+body .mt-15 {
+    margin-top: 15px !important;
+}
+    .support-staff-card .card-body {
+        padding: 20px !important;
+                height: 195px;
+    }
+</style>
+
 @section('panel_content')
     <div class="card shadow-none rounded-0 border-0">
         <div class="card-header border-0 px-0 pb-0">
@@ -63,82 +76,105 @@
 
                             $districtText = $districtLabel ?? translate('Not specified');
 
-                            $ratingValue  = 4.0;
-                            $ratingCount  = 34;
-                            $fullStars    = floor($ratingValue);
+                            // Compute dynamic support rating for this staff from contacts table
+                            $ratingQuery = \App\Models\Contact::query()
+                                ->where('type', 'support')
+                                ->where('status', 'closed')
+                                ->whereNotNull('review->rating')
+                                ->where('data->staff->staff_id', $staff->id);
+
+                            $ratingCount = (int) $ratingQuery->count();
+                            $ratingValue = $ratingCount > 0
+                                ? round((float) $ratingQuery->avg('review->rating'), 1)
+                                : 0;
+
+                            $fullStars    = (int) floor($ratingValue);
                             $hasHalfStar  = $ratingValue - $fullStars >= 0.5;
                             $emptyStars   = 5 - $fullStars - ($hasHalfStar ? 1 : 0);
                         @endphp
 
-                        <div class="col-md-6 col-xl-4 mb-4">
-                            <div class="card h-100 border-0 shadow-sm hover-shadow-lg has-transition rounded-3 overflow-hidden">
-                                <div class="card-body d-flex flex-column p-4">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <span class="avatar avatar-lg flex-shrink-0 mr-3 rounded-circle border">
+                        <div class="col-4 mb-3">
+                            <div class="atm_cards card h-100 border rounded-2 overflow-hidden support-staff-card">
+                                <div class="card-body d-flex flex-column px-3 py-2">
+                                    <div class="d-flex align-items-center mb-2 w-100">
+                                        <span class="avatar avatar-md flex-shrink-0 mr-2 rounded-circle border bg-white">
                                             <img src="{{ $avatarUrl }}"
                                                  alt="{{ $user->name ?? translate('Staff') }}"
                                                  class="img-fit rounded-circle"
                                                  onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
                                         </span>
                                         <div class="min-w-0">
-                                            <h6 class="mb-1 fs-15 fw-700 text-dark text-truncate">
+                                            <h6 class="mb-0 fs-14 fw-700 text-dark text-truncate">
                                                 {{ $user->name ?? translate('Staff') }}
                                             </h6>
-                                            <div class="fs-13 text-muted text-truncate">
+                                            <div class="fs-11 text-muted text-truncate">
                                                 {{ $staff->designation ?: translate('Support Executive') }}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="mb-3">
-                                        <div class="d-flex align-items-center mb-1">
-                                            <span class="fs-12 text-uppercase text-muted mr-2">{{ translate('Area') }}:</span>
-                                            <span class="fs-13 fw-600 text-dark">
+                                    <div class="d-flex justify-between">
+                                    <div class="mb-2 w-100">
+                                        <div class="d-flex align-items-center mb-1 w-100">
+                                            <span class="fs-10 text-uppercase text-muted mr-1">{{ translate('Area') }}:</span>
+                                            <span class="fs-12 fw-600 text-dark text-truncate">
                                                 {{ $locationLabel ?: translate('Not specified') }}
                                             </span>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <span class="fs-12 text-uppercase text-muted mr-2">{{ translate('District') }}:</span>
-                                            <span class="fs-13 fw-600 text-dark">
+                                        <div class="d-flex align-items-center w-100">
+                                            <span class="fs-10 text-uppercase text-muted mr-1">{{ translate('District') }}:</span>
+                                            <span class="fs-12 fw-600 text-dark text-truncate">
                                                 {{ $districtText }}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div class="mb-3 d-flex align-items-center">
-                                        <div class="d-flex align-items-center mr-2">
+                                    <div class="width100 mb-1 ">
+                                        <div class="d-flex align-items-center mb-0">
                                             @for ($i = 0; $i < $fullStars; $i++)
-                                                <i class="las la-star fs-16 text-warning"></i>
+                                                <i class="las la-star fs-14 text-warning"></i>
                                             @endfor
 
                                             @if ($hasHalfStar)
-                                                <i class="las la-star-half-alt fs-16 text-warning"></i>
+                                                <i class="las la-star-half-alt fs-14 text-warning"></i>
                                             @endif
 
                                             @for ($i = 0; $i < $emptyStars; $i++)
-                                                <i class="lar la-star fs-16 text-muted"></i>
+                                                <i class="lar la-star fs-14 text-muted"></i>
                                             @endfor
                                         </div>
-                                        <span class="fs-12 text-muted">
-                                            ({{ $ratingCount }} {{ translate('Reviews') }})
-                                        </span>
+                                        @if($ratingCount > 0)
+                                            <div class="mt-1">
+                                                <span class="fs-11 text-dark font-weight-semibold">
+                                                    {{ $ratingValue }}/5
+                                                </span>
+                                                <span class="fs-10 text-muted ml-1">
+                                                    • {{ $ratingCount }} {{ \Illuminate\Support\Str::plural(translate('Review'), $ratingCount) }}
+                                                </span>
+                                            </div>
+                                        @else
+                                            <div class="mt-1 fs-10 text-muted">
+                                                {{ translate('No reviews yet') }}
+                                            </div>
+                                        @endif
+                                    </div>
                                     </div>
 
-                                    <div class="mt-auto pt-2 d-flex flex-wrap gap-2">
+                                    <div class="mt-auto pt-2 d-flex flex-wrap mt-15 justify-content-center">
                                         <button type="button"
-                                                class="btn btn-outline-primary btn-sm rounded-pill px-3 mb-2 mr-2 js-open-support-modal"
+                                                class="btn btn-outline-primary btn-xs rounded-pill px-3 mb-2 mr-2 js-open-support-modal"
                                                 data-staff-id="{{ $staff->id }}"
                                                 data-staff-name="{{ $user->name ?? '' }}"
                                                 data-channel="video">
-                                            <i class="las la-video mr-1"></i>
+                                            <i class="las la-video mr-1 fs-12"></i>
                                             {{ translate('Video Meet') }}
                                         </button>
                                         <button type="button"
-                                                class="btn btn-outline-secondary btn-sm rounded-pill px-3 mb-2 mr-2 js-open-support-modal"
+                                                class="btn btn-outline-secondary btn-xs rounded-pill px-3 mb-2 js-open-support-modal"
                                                 data-staff-id="{{ $staff->id }}"
                                                 data-staff-name="{{ $user->name ?? '' }}"
                                                 data-channel="callback">
-                                            <i class="las la-phone-volume mr-1"></i>
+                                            <i class="las la-phone-volume mr-1 fs-12"></i>
                                             {{ translate('Call Back') }}
                                         </button>
                                     </div>
@@ -172,37 +208,46 @@
                     <input type="hidden" name="channel" id="support-channel">
 
                     <div class="modal-body pt-0">
-                        <div class="mb-3">
+                        {{-- <div class="mb-3">
                             <span class="badge badge-soft-primary text-uppercase fs-11 px-3 py-1 rounded-pill" id="support-channel-badge">
                                 {{ translate('Video Meet') }}
                             </span>
-                        </div>
+                        </div> --}}
 
                         <div class="form-group mb-3">
-                            <label class="fs-12 text-uppercase text-muted mb-1">{{ translate('Your Details') }}</label>
+                            <label class="fs-12 text-uppercase text-muted mb-1 d-flex justify-content-between">
+                                <span>{{ translate('Your Details') }}</span>
+                                <span class="fs-11 text-muted">
+                                    {{ translate('You can adjust your contact details for this support request.') }}
+                                </span>
+                            </label>
                             <div class="row gutters-5">
                                 <div class="col-md-4 mb-2 mb-md-0">
                                     <input type="text"
                                            class="form-control"
-                                           value="{{ $currentUser->name ?? '' }}"
+                                           name="name"
+                                           value="{{ old('name', $currentUser->name ?? '') }}"
                                            placeholder="{{ translate('Name') }}"
-                                           readonly>
+                                           required>
                                 </div>
                                 <div class="col-md-4 mb-2 mb-md-0">
                                     <input type="email"
                                            class="form-control"
-                                           value="{{ $currentUser->email ?? '' }}"
-                                           placeholder="{{ translate('Email') }}"
-                                           readonly>
+                                           name="email"
+                                           value="{{ old('email', $currentUser->email ?? '') }}"
+                                           placeholder="{{ translate('Email') }}">
                                 </div>
                                 <div class="col-md-4">
                                     <input type="text"
                                            class="form-control"
-                                           value="{{ $currentUser->phone ?? '' }}"
-                                           placeholder="{{ translate('Phone') }}"
-                                           readonly>
+                                           name="phone"
+                                           value="{{ old('phone', $currentUser->phone ?? '') }}"
+                                           placeholder="{{ translate('Phone') }}">
                                 </div>
                             </div>
+                            <small class="fs-11 text-muted d-block mt-1" id="support-contact-hint">
+                                {{ translate('For video meetings, email is required. For call back, phone is required.') }}
+                            </small>
                         </div>
 
                         <div class="form-group mb-3">
@@ -253,6 +298,19 @@
 @endsection
 
 @section('script')
+    <style>
+        .support-staff-card {
+            border-color: #e5e7eb;
+            border-radius: 10px;
+            min-height: 180px;
+        }
+
+        @media (min-width: 992px) {
+            .support-staff-card .card-body {
+                min-height: 190px;
+            }
+        }
+    </style>
     <script>
         (function () {
             'use strict';
@@ -275,14 +333,26 @@
                 $('#support-staff-channel-label').val(channelLabel);
 
                 var badge = $('#support-channel-badge');
+                var contactHint = $('#support-contact-hint');
+                var $emailInput = $('input[name="email"]');
+                var $phoneInput = $('input[name="phone"]');
+
                 if (channel === 'video') {
                     badge.text("{{ translate('Video Meet') }}")
                          .removeClass('badge-soft-secondary')
                          .addClass('badge-soft-primary');
+
+                    $emailInput.prop('required', true);
+                    $phoneInput.prop('required', false);
+                    contactHint.text("{{ translate('For video meetings, email is required and phone is optional.') }}");
                 } else {
                     badge.text("{{ translate('Call Back') }}")
                          .removeClass('badge-soft-primary')
                          .addClass('badge-soft-secondary');
+
+                    $emailInput.prop('required', false);
+                    $phoneInput.prop('required', true);
+                    contactHint.text("{{ translate('For call back, phone is required and email is optional.') }}");
                 }
 
                 var dtInput = $('#support-scheduled-at');

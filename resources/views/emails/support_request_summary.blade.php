@@ -32,7 +32,14 @@
             {{ $payload['channel'] ?? '-' }}
         @endif
     </li>
-    <li><strong>{{ translate('Preferred Date & Time') }}:</strong> {{ $payload['scheduled_at'] ?? '-' }}</li>
+    <li><strong>{{ translate('Preferred Date & Time') }}:</strong>
+        @php $scheduledAt = $payload['scheduled_at'] ?? null; @endphp
+        @if ($scheduledAt)
+            {{ \Carbon\Carbon::parse($scheduledAt)->format('d-m-Y H:i') }}
+        @else
+            -
+        @endif
+    </li>
 </ul>
 
 @if (!empty($payload['notes']))

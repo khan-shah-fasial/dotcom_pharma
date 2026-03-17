@@ -44,30 +44,59 @@
                                         </span>
                                         <span class="fs-13 text-muted">
                                             {{ translate('Preferred Date & Time') }}:
-                                            {{ $data['scheduled_at'] ?? '-' }}
+                                            @php
+                                                $scheduledAt = $data['scheduled_at'] ?? null;
+                                            @endphp
+                                            @if ($scheduledAt)
+                                                {{ \Carbon\Carbon::parse($scheduledAt)->format('d-m-Y H:i') }}
+                                            @else
+                                                -
+                                            @endif
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
-                            @if ($contact->review === null)
+                            @php
+                                $reviewData = is_array($contact->review)
+                                    ? $contact->review
+                                    : (is_string($contact->review) ? json_decode($contact->review, true) : null);
+                                $ratingValue = is_array($reviewData ?? null) ? ($reviewData['rating'] ?? null) : null;
+                                $commentText = is_array($reviewData ?? null) ? ($reviewData['comment'] ?? null) : null;
+                            @endphp
+
+                            @if ($ratingValue === null)
                                 <form method="POST" action="{{ route('support.review.store') }}">
                                     @csrf
                                     <input type="hidden" name="token" value="{{ $token }}">
 
                                     <div class="form-group mb-4">
-                                        <label class="fs-13 fw-600 text-dark mb-2">
+                                        <label class="fs-13 fw-600 text-dark mb-2 d-block">
                                             {{ translate('Overall rating') }}
                                         </label>
-                                        <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center" id="support-review-stars">
                                             @for ($i = 1; $i <= 5; $i++)
                                                 <label class="mb-0 mr-2" style="cursor:pointer;">
-                                                    <input type="radio" name="review" value="{{ $i }}" class="d-none">
-                                                    <i class="las la-star fs-24 text-muted star-icon"></i>
+                                                    <input type="radio" name="rating" value="{{ $i }}" class="d-none">
+                                                    <i class="las la-star fs-24 text-muted star-icon" data-value="{{ $i }}"></i>
                                                 </label>
                                             @endfor
                                         </div>
-                                        @error('review')
+                                        @error('rating')
+                                            <small class="text-danger d-block mt-1">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+
+                                    <div class="form-group mb-4">
+                                        <label class="fs-13 fw-600 text-dark mb-2" for="support-review-comment">
+                                            {{ translate('Tell us more (optional)') }}
+                                        </label>
+                                        <textarea id="support-review-comment"
+                                                  name="comment"
+                                                  class="form-control"
+                                                  rows="4"
+                                                  placeholder="{{ translate('Share any additional feedback about your support experience') }}">{{ old('comment') }}</textarea>
+                                        @error('comment')
                                             <small class="text-danger d-block mt-1">{{ $message }}</small>
                                         @enderror
                                     </div>
@@ -82,15 +111,21 @@
                                     <p class="fs-14 text-muted mb-3">
                                         {{ translate('You have already submitted a review for this support enquiry.') }}
                                     </p>
-                                    <div>
-                                        @for ($i = 0; $i < (int) $contact->review; $i++)
+                                    <div class="mb-2">
+                                        @php $displayRating = (int) $ratingValue; @endphp
+                                        @for ($i = 0; $i < $displayRating; $i++)
                                             <i class="las la-star fs-20 text-warning"></i>
                                         @endfor
-                                        @for ($i = (int) $contact->review; $i < 5; $i++)
+                                        @for ($i = $displayRating; $i < 5; $i++)
                                             <i class="lar la-star fs-20 text-muted"></i>
                                         @endfor
-                                        <span class="ml-2 fs-14 text-dark">({{ $contact->review }}/5)</span>
+                                        <span class="ml-2 fs-14 text-dark">({{ $displayRating }}/5)</span>
                                     </div>
+                                    @if ($commentText)
+                                        <p class="fs-14 text-muted mb-0">
+                                            "{{ $commentText }}"
+                                        </p>
+                                    @endif
                                 </div>
                             @endif
                         </div>
@@ -102,12 +137,41 @@
 @endsection
 
 @section('script')
-    @if ($contact->review === null)
+    @if ($ratingValue === null)
         <script>
             (function () {
                 'use strict';
 
-                var $stars = document.querySelectorAll('#support-review-form .star-icon');
+                var starsContainer = document.getElementById('support-review-stars');
+                if (!starsContainer) {
+                    return;
+                }
+
+                var stars = starsContainer.querySelectorAll('.star-icon');
+
+                function setRatingVisual(rating) {
+                    stars.forEach(function (star) {
+                        var value = parseInt(star.getAttribute('data-value'), 10);
+                        if (value <= rating) {
+                            star.classList.remove('text-muted');
+                            star.classList.add('text-warning');
+                        } else {
+                            star.classList.remove('text-warning');
+                            star.classList.add('text-muted');
+                        }
+                    });
+                }
+
+                stars.forEach(function (star) {
+                    star.addEventListener('click', function (e) {
+                        var value = parseInt(star.getAttribute('data-value'), 10);
+                        var input = star.previousElementSibling;
+                        if (input && input.type === 'radio') {
+                            input.checked = true;
+                        }
+                        setRatingVisual(value);
+                    });
+                });
             })();
         </script>
     @endif

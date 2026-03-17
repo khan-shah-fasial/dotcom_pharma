@@ -7,10 +7,16 @@
 <div class="modal-body">
     @php
         $isSupport = $contact->type === 'support';
-        $data = $isSupport && $contact->data ? json_decode($contact->data, true) : [];
+        $data = $isSupport && $contact->data ? (is_array($contact->data) ? $contact->data : json_decode($contact->data, true)) : [];
         $customer = $data['customer'] ?? [];
         $staff = $data['staff'] ?? [];
         $channel = $data['channel'] ?? null;
+
+        $reviewData = $isSupport && $contact->review
+            ? (is_array($contact->review) ? $contact->review : json_decode($contact->review, true))
+            : null;
+        $reviewRating = is_array($reviewData ?? null) ? ($reviewData['rating'] ?? null) : null;
+        $reviewComment = is_array($reviewData ?? null) ? ($reviewData['comment'] ?? null) : null;
     @endphp
 
     <table class="table table-striped table-bordered" >
@@ -47,7 +53,14 @@
                 </tr>
                 <tr>
                     <td>{{ translate('Preferred Date & Time') }}</td>
-                    <td>{{ $data['scheduled_at'] ?? '-' }}</td>
+                    <td>
+                        @php $scheduledAt = $data['scheduled_at'] ?? null; @endphp
+                        @if ($scheduledAt)
+                            {{ \Carbon\Carbon::parse($scheduledAt)->format('d-m-Y H:i') }}
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
             @endif
 
@@ -58,17 +71,22 @@
                 </tr>
             @endif
 
-            @if ($isSupport && !is_null($contact->review))
+            @if ($isSupport && !is_null($reviewRating))
                 <tr>
                     <td>{{ translate('Review') }}</td>
                     <td>
-                        @for ($i = 0; $i < (int) $contact->review; $i++)
+                        @for ($i = 0; $i < (int) $reviewRating; $i++)
                             <i class="las la-star text-warning"></i>
                         @endfor
-                        @for ($i = (int) $contact->review; $i < 5; $i++)
+                        @for ($i = (int) $reviewRating; $i < 5; $i++)
                             <i class="lar la-star text-muted"></i>
                         @endfor
-                        <span class="ml-2">({{ $contact->review }}/5)</span>
+                        <span class="ml-2">({{ (int) $reviewRating }}/5)</span>
+                        @if ($reviewComment)
+                            <div class="mt-2 text-muted">
+                                "{{ $reviewComment }}"
+                            </div>
+                        @endif
                     </td>
                 </tr>
             @endif
