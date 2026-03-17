@@ -126,19 +126,20 @@
 
                                     <div class="mt-auto pt-2 d-flex flex-wrap gap-2">
                                         <button type="button"
-                                                class="btn btn-outline-primary btn-sm rounded-pill px-3 mb-2 mr-2">
+                                                class="btn btn-outline-primary btn-sm rounded-pill px-3 mb-2 mr-2 js-open-support-modal"
+                                                data-staff-id="{{ $staff->id }}"
+                                                data-staff-name="{{ $user->name ?? '' }}"
+                                                data-channel="video">
                                             <i class="las la-video mr-1"></i>
                                             {{ translate('Video Meet') }}
                                         </button>
                                         <button type="button"
-                                                class="btn btn-outline-secondary btn-sm rounded-pill px-3 mb-2 mr-2">
+                                                class="btn btn-outline-secondary btn-sm rounded-pill px-3 mb-2 mr-2 js-open-support-modal"
+                                                data-staff-id="{{ $staff->id }}"
+                                                data-staff-name="{{ $user->name ?? '' }}"
+                                                data-channel="callback">
                                             <i class="las la-phone-volume mr-1"></i>
                                             {{ translate('Call Back') }}
-                                        </button>
-                                        <button type="button"
-                                                class="btn btn-primary btn-sm rounded-pill px-3 mb-2">
-                                            <i class="las la-user-circle mr-1"></i>
-                                            {{ translate('View Profile') }}
                                         </button>
                                     </div>
                                 </div>
@@ -151,3 +152,149 @@
     </div>
 @endsection
 
+@section('modal')
+    @php $currentUser = auth()->user(); @endphp
+
+    <div class="modal fade" id="supportRequestModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-2">
+                    <h5 class="modal-title fw-700 fs-16 text-dark">
+                        {{ translate('Schedule Support') }}
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="POST" action="{{ route('support_request.store') }}">
+                    @csrf
+                    <input type="hidden" name="staff_id" id="support-staff-id">
+                    <input type="hidden" name="channel" id="support-channel">
+
+                    <div class="modal-body pt-0">
+                        <div class="mb-3">
+                            <span class="badge badge-soft-primary text-uppercase fs-11 px-3 py-1 rounded-pill" id="support-channel-badge">
+                                {{ translate('Video Meet') }}
+                            </span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="fs-12 text-uppercase text-muted mb-1">{{ translate('Your Details') }}</label>
+                            <div class="row gutters-5">
+                                <div class="col-md-4 mb-2 mb-md-0">
+                                    <input type="text"
+                                           class="form-control"
+                                           value="{{ $currentUser->name ?? '' }}"
+                                           placeholder="{{ translate('Name') }}"
+                                           readonly>
+                                </div>
+                                <div class="col-md-4 mb-2 mb-md-0">
+                                    <input type="email"
+                                           class="form-control"
+                                           value="{{ $currentUser->email ?? '' }}"
+                                           placeholder="{{ translate('Email') }}"
+                                           readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text"
+                                           class="form-control"
+                                           value="{{ $currentUser->phone ?? '' }}"
+                                           placeholder="{{ translate('Phone') }}"
+                                           readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="fs-12 text-uppercase text-muted mb-1">{{ translate('Support Staff') }}</label>
+                            <div class="row gutters-5">
+                                <div class="col-md-6 mb-2 mb-md-0">
+                                    <input type="text"
+                                           class="form-control"
+                                           id="support-staff-name"
+                                           placeholder="{{ translate('Staff name') }}"
+                                           readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text"
+                                           class="form-control"
+                                           id="support-staff-channel-label"
+                                           placeholder="{{ translate('Channel') }}"
+                                           readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label for="support-scheduled-at" class="fs-12 text-uppercase text-muted mb-1">
+                                {{ translate('Preferred Date & Time') }}
+                            </label>
+                            <input type="datetime-local"
+                                   class="form-control"
+                                   id="support-scheduled-at"
+                                   name="scheduled_at"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light btn-sm rounded-pill px-3" data-dismiss="modal">
+                            {{ translate('Cancel') }}
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">
+                            <i class="las la-check-circle mr-1"></i>
+                            {{ translate('Confirm') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('script')
+    <script>
+        (function () {
+            'use strict';
+
+            $(document).on('click', '.js-open-support-modal', function () {
+                var staffId   = $(this).data('staff-id');
+                var staffName = $(this).data('staff-name') || '';
+                var channel   = $(this).data('channel');
+
+                $('#support-staff-id').val(staffId);
+                $('#support-staff-name').val(staffName);
+                $('#support-channel').val(channel);
+
+                var channelLabel = '';
+                if (channel === 'video') {
+                    channelLabel = "{{ translate('Video Meet') }}";
+                } else if (channel === 'callback') {
+                    channelLabel = "{{ translate('Call Back') }}";
+                }
+                $('#support-staff-channel-label').val(channelLabel);
+
+                var badge = $('#support-channel-badge');
+                if (channel === 'video') {
+                    badge.text("{{ translate('Video Meet') }}")
+                         .removeClass('badge-soft-secondary')
+                         .addClass('badge-soft-primary');
+                } else {
+                    badge.text("{{ translate('Call Back') }}")
+                         .removeClass('badge-soft-primary')
+                         .addClass('badge-soft-secondary');
+                }
+
+                var dtInput = $('#support-scheduled-at');
+                if (!dtInput.val()) {
+                    var now = new Date();
+                    now.setMinutes(now.getMinutes() + 30);
+                    var iso = now.toISOString().slice(0, 16);
+                    dtInput.val(iso);
+                }
+
+                $('#supportRequestModal').modal('show');
+            });
+        })();
+    </script>
+@endsection

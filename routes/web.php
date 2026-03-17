@@ -683,7 +683,10 @@ Route::controller(PageController::class)->group(function () {
 Route::controller(ContactController::class)->group(function () {
     Route::post('/contact', 'contact')->name('contact');
     Route::post('/product-enquiry-store', 'product_enquiry_store')->name('product_enquiry_store');
+    Route::post('/support-request', 'support_store')->name('support_request.store');
     Route::post('/prescription-upload', 'prescription_store')->name('prescription.store')->middleware('auth');
+    Route::get('/support-review/{token}', 'support_review_form')->name('support.review');
+    Route::post('/support-review', 'support_review_store')->name('support.review.store');
 });
 
 Route::middleware(['auth'])->group(function () {

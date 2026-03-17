@@ -6,6 +6,8 @@ use App\Mail\ContactMailManager;
 use App\Mail\ProductEnquiryMailManager;
 use App\Models\Contact;
 use App\Models\User;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
@@ -108,6 +110,23 @@ class ContactController extends Controller
         return view('backend.support.contact.prescription_enquiry', compact('contacts'));
     }
 
+    /**
+     * Dedicated index for support enquiries (admin).
+     * Ensures type=support and default status=open when not provided.
+     */
+    public function support_index(Request $request)
+    {
+        if (!$request->has('type')) {
+            $request->merge(['type' => 'support']);
+        }
+
+        if (!$request->has('status')) {
+            $request->merge(['status' => 'open']);
+        }
+
+        return $this->index($request);
+    }
+
     public function index(Request $request)
     {
         $contacts = Contact::query();
@@ -147,8 +166,17 @@ class ContactController extends Controller
             $contacts->whereDate('created_at', '<=', $request->date_to);
         }
             
+        // Filter by status (for support listing)
+        if ($request->filled('status')) {
+            $contacts->where('status', $request->status);
+        }
+
         // Default sorting by newest first
         $contacts = $contacts->orderBy('created_at', 'desc')->paginate(20);
+
+        if ($request->type === 'support') {
+            return view('backend.support.contact.support', compact('contacts'));
+        }
 
         return view('backend.support.contact.contacts', compact('contacts'));
     }
@@ -217,6 +245,231 @@ class ContactController extends Controller
         return back();
     }
 
+    /**
+     * Update status for support contacts (open/closed).
+     */
+    public function support_update_status(Request $request)
+    {
+        $request->validate([
+            'id'     => 'required|integer',
+            'status' => 'required|string|in:open,closed',
+        ]);
+
+        $contact = Contact::findOrFail($request->id);
+
+        if ($contact->type !== 'support') {
+            abort(403);
+        }
+
+        $contact->status = $request->status;
+        $contact->save();
+
+        // When closing a support enquiry for the first time, send review email
+        if ($request->status === 'closed' && $contact->review === null) {
+            $data = $contact->data ? json_decode($contact->data, true) : [];
+            $customer = $data['customer'] ?? [];
+            $staff    = $data['staff'] ?? [];
+
+            $tokenPayload = [
+                'contact_id'  => $contact->id,
+                'customer_id' => $customer['id'] ?? null,
+                'type'        => 'support',
+            ];
+
+            try {
+                $token = Crypt::encryptString(json_encode($tokenPayload));
+            } catch (\Exception $e) {
+                Log::error('Support review token generation failed', [
+                    'error' => $e->getMessage(),
+                    'contact_id' => $contact->id,
+                ]);
+                return response()->json(['success' => true]);
+            }
+
+            $reviewUrl = route('support.review', ['token' => $token]);
+
+            $payload = array_merge($data, [
+                'review_url' => $reviewUrl,
+            ]);
+
+            $array = [
+                'name'    => $customer['name'] ?? $contact->name,
+                'email'   => $customer['email'] ?? $contact->email,
+                'phone'   => $customer['phone'] ?? $contact->phone,
+                'content' => view('emails.support_review_request', ['payload' => $payload])->render(),
+                'subject' => translate('Please review your support experience') . ' - ' . env('APP_NAME'),
+                'from'    => get_admin()->email ?? config('mail.from.address'),
+            ];
+
+            try {
+                Mail::to($array['email'])->queue(new ContactMailManager($array));
+            } catch (\Exception $e) {
+                Log::error('Support review email failed', [
+                    'error' => $e->getMessage(),
+                    'contact_id' => $contact->id,
+                ]);
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Store a support request created from the frontend Support page.
+     */
+    public function support_store(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            abort(403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'staff_id'    => 'required|integer',
+            'channel'     => 'required|in:video,callback',
+            'scheduled_at'=> 'required|date',
+            'notes'       => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            foreach ($validator->errors()->all() as $error) {
+                flash($error)->error();
+            }
+            return back();
+        }
+
+        $staffUser = User::whereHas('staff', function ($q) use ($request) {
+            $q->where('id', $request->staff_id);
+        })->first();
+
+        if (!$staffUser) {
+            flash(translate('Selected staff could not be found.'))->error();
+            return back();
+        }
+
+        $admin = get_admin();
+
+        $payload = [
+            'channel'       => $request->channel,
+            'scheduled_at'  => $request->scheduled_at,
+            'notes'         => $request->notes,
+            'customer'      => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+            ],
+            'staff'         => [
+                'staff_id' => (int) $request->staff_id,
+                'user_id'  => $staffUser->id,
+                'name'     => $staffUser->name,
+                'email'    => $staffUser->email,
+                'phone'    => $staffUser->phone,
+            ],
+        ];
+
+        $array = [
+            'name'    => $user->name,
+            'email'   => $user->email,
+            'phone'   => $user->phone,
+            'content' => view('emails.support_request_summary', ['payload' => $payload])->render(),
+            'subject' => translate('Support Request') . ' - ' . env('APP_NAME'),
+            'from'    => $user->email,
+        ];
+
+        try {
+            // Try to send email, but don't block saving if it fails
+            Mail::to($admin->email)->queue(new ContactMailManager($array));
+        } catch (\Exception $e) {
+            Log::error('Support request email failed', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
+                'staff_id' => $request->staff_id,
+            ]);
+        }
+
+        Contact::create([
+            'type'    => 'support',
+            'name'    => $user->name,
+            'email'   => $user->email,
+            'phone'   => $user->phone,
+            'content' => $request->notes,
+            'data'    => json_encode($payload),
+            'status'  => 'open',
+        ]);
+
+        flash(translate('Your support request has been submitted successfully.'))->success();
+        return back();
+    }
+
+    /**
+     * Public review form (no login required).
+     */
+    public function support_review_form(string $token)
+    {
+        try {
+            $decoded = json_decode(Crypt::decryptString($token), true);
+        } catch (\Exception $e) {
+            abort(404);
+        }
+
+        if (!is_array($decoded) || ($decoded['type'] ?? null) !== 'support') {
+            abort(404);
+        }
+
+        $contact = Contact::findOrFail($decoded['contact_id']);
+
+        if ($contact->type !== 'support') {
+            abort(404);
+        }
+
+        $data = $contact->data ? json_decode($contact->data, true) : [];
+
+        return view('frontend.support.review', [
+            'contact' => $contact,
+            'data'    => $data,
+            'token'   => $token,
+        ]);
+    }
+
+    /**
+     * Store support review from public form.
+     */
+    public function support_review_store(Request $request)
+    {
+        $request->validate([
+            'token'  => 'required|string',
+            'review' => 'required|integer|min:1|max:5',
+        ]);
+
+        try {
+            $decoded = json_decode(Crypt::decryptString($request->token), true);
+        } catch (\Exception $e) {
+            abort(404);
+        }
+
+        if (!is_array($decoded) || ($decoded['type'] ?? null) !== 'support') {
+            abort(404);
+        }
+
+        $contact = Contact::findOrFail($decoded['contact_id']);
+
+        if ($contact->type !== 'support') {
+            abort(404);
+        }
+
+        // Link only works until review is null
+        if ($contact->review !== null) {
+            return redirect()->route('support.review', ['token' => $request->token]);
+        }
+
+        $contact->review = (int) $request->review;
+        $contact->save();
+
+        return redirect()->route('support.review', ['token' => $request->token])
+            ->with('success', translate('Thank you for your review!'));
+    }
 
     public function product_enquiry_store(Request $request)
     {
