@@ -230,6 +230,7 @@ class OrderController extends Controller
             $tax = 0;
             $shipping = 0;
             $coupon_discount = 0;
+            $affectedProductIds = [];
 
             //Order Details Storing
             foreach ($seller_product as $cartItem) {
@@ -287,6 +288,8 @@ class OrderController extends Controller
                         $product_stock->qty -= $cartItem['quantity'];
                         $product_stock->save();
                     }
+
+                    $affectedProductIds[] = (int) $product->id;
                 }
 
                 $order_detail = new OrderDetail;
@@ -364,6 +367,10 @@ class OrderController extends Controller
             $order->quote_currency_exchange_rate = Session::get('currency_exchange_rate');
 
             $order->save();
+
+            if (!empty($affectedProductIds)) {
+                dispatch_low_stock_admin_notifications($affectedProductIds);
+            }
         }
 
         $combined_order->save();

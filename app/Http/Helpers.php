@@ -2741,6 +2741,90 @@ if (!function_exists('product_restock')) {
     }
 }
 
+if (!function_exists('dispatch_low_stock_admin_notifications')) {
+    /**
+     * Dispatch low stock notifications to admin users for given products.
+     *
+     * @param array<int, int|string> $productIds
+     */
+    function dispatch_low_stock_admin_notifications(array $productIds): void
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+        if (empty($productIds)) {
+            return;
+        }
+
+        $notificationType = get_notification_type('low_stock_admin', 'type');
+        if (!$notificationType || (int) $notificationType->status !== 1) {
+            return;
+        }
+
+        $admins = User::where('user_type', 'admin')->where('banned', 0)->get();
+        if ($admins->isEmpty()) {
+            return;
+        }
+
+        $products = Product::whereIn('id', $productIds)->get(['id', 'name', 'slug', 'low_stock_quantity']);
+
+        foreach ($products as $product) {
+            $threshold = (int) ($product->low_stock_quantity ?? 0);
+            if ($threshold <= 0) {
+                continue;
+            }
+
+            $lowStockBatches = ProductBatch::query()
+                ->with(['stock:id,variant'])
+                ->where('product_id', $product->id)
+                ->where('qty', '<=', $threshold)
+                ->get(['id', 'product_id', 'product_stock_id', 'batch', 'qty']);
+
+            if ($lowStockBatches->isEmpty()) {
+                continue;
+            }
+
+            foreach ($admins as $admin) {
+                $existingUnreadBatchIds = $admin->unreadNotifications()
+                    ->where('type', 'App\\Notifications\\LowStockAdminNotification')
+                    ->get()
+                    ->map(function ($notification) {
+                        return (int) ($notification->data['batch_id'] ?? 0);
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                foreach ($lowStockBatches as $batch) {
+                    if (in_array((int) $batch->id, $existingUnreadBatchIds, true)) {
+                        continue;
+                    }
+
+                    $data = [
+                        'notification_type_id' => $notificationType->id,
+                        'product_id' => $product->id,
+                        'product_name' => $product->getTranslation('name'),
+                        'product_stock_id' => $batch->product_stock_id,
+                        'variant_name' => optional($batch->stock)->variant ?: translate('Default'),
+                        'batch_id' => $batch->id,
+                        'batch_name' => $batch->batch ?: '-',
+                        'stock_count' => (int) $batch->qty,
+                        'low_stock_quantity' => $threshold,
+                        'link' => route('stock_report.index', [
+                            'product_id' => $product->id,
+                            'variant_id' => $batch->product_stock_id,
+                            'batch_id' => $batch->id,
+                        ]),
+                    ];
+
+                    \Illuminate\Support\Facades\Notification::send(
+                        $admin,
+                        new \App\Notifications\LowStockAdminNotification($data)
+                    );
+                }
+            }
+        }
+    }
+}
+
 //Commission Calculation
 if (!function_exists('calculateCommissionAffilationClubPoint')) {
     function calculateCommissionAffilationClubPoint($order)

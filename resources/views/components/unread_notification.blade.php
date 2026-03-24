@@ -77,6 +77,18 @@
                                 $notifyContent = str_replace('[[variant_count]]', $variantCount, $notifyContent);
                                 $notifyContent = str_replace('[[variant_names]]', implode(', ', $variantNames), $notifyContent);
                             @endphp
+                        {{-- Low Stock Notifications --}}
+                        @elseif ($notification->type == 'App\Notifications\LowStockAdminNotification')
+                            @php
+                                $productName = "<span class='text-blue'>".($notification->data['product_name'] ?? '')."</span>";
+                                $variantName = "<span class='text-blue'>".($notification->data['variant_name'] ?? translate('Default'))."</span>";
+                                $batchName = "<span class='text-blue'>".($notification->data['batch_name'] ?? '-')."</span>";
+                                $stockCount = (int) ($notification->data['stock_count'] ?? 0);
+                                $notifyContent = str_replace('[[product_name]]', $productName, $notifyContent);
+                                $notifyContent = str_replace('[[variant_name]]', $variantName, $notifyContent);
+                                $notifyContent = str_replace('[[batch_name]]', $batchName, $notifyContent);
+                                $notifyContent = str_replace('[[stock_count]]', $stockCount, $notifyContent);
+                            @endphp
                         @endif
                         <a href="{{ ($user_type == 'admin' || $user_type == 'staff') ?
                                     route('admin.notification.read-and-redirect', encrypt($notification->id)) :

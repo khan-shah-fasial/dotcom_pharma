@@ -107,6 +107,22 @@
                                 $notifyContent = str_replace('[[variant_count]]', $variantCount, $notifyContent);
                                 $notifyContent = str_replace('[[variant_names]]', implode(', ', $variantNames), $notifyContent);
                             @endphp
+                        {{-- Low Stock Notifications --}}
+                        @elseif ($notification->type == 'App\Notifications\LowStockAdminNotification')
+                            @php
+                                $productId = $notification->data['product_id'] ?? null;
+                                $productLabel = $notification->data['product_name'] ?? '';
+                                $productName = $productId
+                                    ? "<a href='".route('stock_report.index', ['product_id' => $productId])."'>".$productLabel."</a>"
+                                    : $productLabel;
+                                $variantName = $notification->data['variant_name'] ?? translate('Default');
+                                $batchName = $notification->data['batch_name'] ?? '-';
+                                $stockCount = (int) ($notification->data['stock_count'] ?? 0);
+                                $notifyContent = str_replace('[[product_name]]', $productName, $notifyContent);
+                                $notifyContent = str_replace('[[variant_name]]', $variantName, $notifyContent);
+                                $notifyContent = str_replace('[[batch_name]]', $batchName, $notifyContent);
+                                $notifyContent = str_replace('[[stock_count]]', $stockCount, $notifyContent);
+                            @endphp
                         @endif
                         <p class="mb-1 text-truncate-2">
                             {!! $notifyContent !!}

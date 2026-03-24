@@ -223,17 +223,31 @@
                                         @php
                                             $qty = 0;
                                             $stocks = [];
-											if ($product->variant_product) {
-												foreach ($product->stocks as $key => $stock) {
-													$stocks[] = ['variant' => $stock->variant, 'qty' => $stock->qty];
-													$qty += $stock->qty;
-												}
-											} else {
-												$firstStock = $product->stocks->first();
-												$qty = (int) (optional($firstStock)->qty ?? 0);
-												$stocks[] = ['variant' => optional($firstStock)->variant ?? '-', 'qty' => $qty];
-											}
-										@endphp
+
+                                            // Ensure batches are available for qty aggregation
+                                            $product->loadMissing('stocks.batches');
+
+                                            if ($product->variant_product) {
+                                                foreach ($product->stocks as $key => $stock) {
+                                                    $hasBatches = $stock->batches && $stock->batches->count() > 0;
+                                                    $stockQty = $hasBatches
+                                                        ? (int) $stock->batches->sum('qty')
+                                                        : (int) ($stock->qty ?? 0);
+
+                                                    $stocks[] = ['variant' => $stock->variant, 'qty' => $stockQty];
+                                                    $qty += $stockQty;
+                                                }
+                                            } else {
+                                                $firstStock = $product->stocks->first();
+                                                $hasBatches = $firstStock && $firstStock->batches && $firstStock->batches->count() > 0;
+                                                $stockQty = $hasBatches
+                                                    ? (int) $firstStock->batches->sum('qty')
+                                                    : (int) (optional($firstStock)->qty ?? 0);
+
+                                                $qty = $stockQty;
+                                                $stocks[] = ['variant' => optional($firstStock)->variant ?? '-', 'qty' => $stockQty];
+                                            }
+                                        @endphp
 
                                         @if (count($stocks) > 4)
                                             <div class="stock-list" id="stock-list-{{ $product->id }}">

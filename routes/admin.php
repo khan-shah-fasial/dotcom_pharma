@@ -527,6 +527,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/wallet-history', 'wallet_transaction_history')->name('wallet-history.index');
 
         Route::get('/get-products-by-category', 'getProductsByCategory')->name('get.products.by.category');
+        Route::get('/stock-report/filter-options', 'getStockFilterOptions')->name('stock_report.filter_options');
     });
 
     // Earning Report

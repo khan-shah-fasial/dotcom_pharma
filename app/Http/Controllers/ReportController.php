@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\Category;
+use App\Models\ProductStock;
+use App\Models\ProductBatch;
 use App\Models\CommissionHistory;
 use App\Models\Wallet;
 use App\Models\User;
@@ -27,18 +30,79 @@ class ReportController extends Controller
 
     public function stock_report(Request $request)
     {
-        $sort_by = null;
-        $products = Product::with('stocks')->orderBy('created_at', 'desc');
-        if ($request->has('category_id') && $request->category_id != null && $request->category_id != "") {
-            $sort_by = $request->category_id;
-            $products = $products->where('category_id', $sort_by);
+        $categoryId = $request->filled('category_id') ? (int) $request->category_id : null;
+        $productId = $request->filled('product_id') ? (int) $request->product_id : null;
+        $variantId = $request->filled('variant_id') ? (int) $request->variant_id : null;
+        $batchId = $request->filled('batch_id') ? (int) $request->batch_id : null;
+
+        $productsQuery = Product::query()
+            ->orderBy('created_at', 'desc')
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('category_id', $categoryId);
+            })
+            ->when($productId, function ($query) use ($productId) {
+                $query->where('id', $productId);
+            })
+            ->whereHas('stocks.batches')
+            ->with([
+                'stocks' => function ($stockQuery) use ($variantId, $batchId) {
+                    $stockQuery
+                        ->when($variantId, function ($query) use ($variantId) {
+                            $query->where('id', $variantId);
+                        })
+                        ->whereHas('batches', function ($batchQuery) use ($batchId) {
+                            $batchQuery->when($batchId, function ($query) use ($batchId) {
+                                $query->where('id', $batchId);
+                            });
+                        })
+                        ->with(['batches' => function ($batchQuery) use ($batchId) {
+                            $batchQuery
+                                ->when($batchId, function ($query) use ($batchId) {
+                                    $query->where('id', $batchId);
+                                })
+                                ->orderBy('id', 'desc');
+                        }]);
+                }
+            ]);
+
+        $products = $productsQuery->paginate(5);
+
+        $categories = Category::orderBy('name', 'asc')->get(['id', 'name']);
+
+        $productsForFilter = Product::query()
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where('category_id', $categoryId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'name']);
+
+        $variants = collect();
+        $batches = collect();
+
+        if ($productId) {
+            $variants = ProductStock::where('product_id', $productId)
+                ->orderBy('variant')
+                ->get(['id', 'variant']);
+
+            $batches = ProductBatch::where('product_id', $productId)
+                ->when($variantId, function ($query) use ($variantId) {
+                    $query->where('product_stock_id', $variantId);
+                })
+                ->orderBy('batch')
+                ->get(['id', 'batch', 'product_stock_id']);
         }
-        if ($request->has('product_id') && $request->product_id != null && $request->product_id != "") {
-            $sort_by = $request->product_id;
-            $products = $products->where('id', $sort_by);
-        }
-        $products = $products->paginate(5);
-        return view('backend.reports.stock_report', compact('products', 'sort_by'));
+
+        return view('backend.reports.stock_report', compact(
+            'products',
+            'categories',
+            'productsForFilter',
+            'variants',
+            'batches',
+            'categoryId',
+            'productId',
+            'variantId',
+            'batchId'
+        ));
     }
 
     public function in_house_sale_report(Request $request)
@@ -151,10 +215,12 @@ class ReportController extends Controller
     {
         $categoryId = $request->input('category_id');
 
-        // Optional: eager load relationships if needed
-        $products = \App\Models\Product::where('category_id', $categoryId)
+        $products = \App\Models\Product::query()
+                        ->when($categoryId, function ($query) use ($categoryId) {
+                            $query->where('category_id', $categoryId);
+                        })
                         ->orderBy('created_at', 'desc')
-                        ->get(['id', 'name']); // Only send needed fields
+                        ->get(['id', 'name']);
 
         $productsFormatted = $products->map(function($product) {
             return [
@@ -165,6 +231,47 @@ class ReportController extends Controller
 
         return response()->json([
             'products' => $productsFormatted
+        ]);
+    }
+
+    public function getStockFilterOptions(Request $request)
+    {
+        $productId = (int) $request->input('product_id');
+        $variantId = $request->filled('variant_id') ? (int) $request->input('variant_id') : null;
+
+        if (!$productId) {
+            return response()->json([
+                'variants' => [],
+                'batches' => [],
+            ]);
+        }
+
+        $variants = ProductStock::where('product_id', $productId)
+            ->orderBy('variant')
+            ->get(['id', 'variant'])
+            ->map(function ($variant) {
+                return [
+                    'id' => $variant->id,
+                    'name' => $variant->variant,
+                ];
+            });
+
+        $batches = ProductBatch::where('product_id', $productId)
+            ->when($variantId, function ($query) use ($variantId) {
+                $query->where('product_stock_id', $variantId);
+            })
+            ->orderBy('batch')
+            ->get(['id', 'batch'])
+            ->map(function ($batch) {
+                return [
+                    'id' => $batch->id,
+                    'name' => $batch->batch,
+                ];
+            });
+
+        return response()->json([
+            'variants' => $variants,
+            'batches' => $batches,
         ]);
     }
 

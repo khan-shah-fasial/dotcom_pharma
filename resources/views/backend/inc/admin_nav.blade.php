@@ -150,6 +150,10 @@
                                         <a class="nav-link text-dark" data-toggle="tab" data-type="seller" href="javascript:void(0);"
                                             data-target="#payouts-notifications" role="tab" id="sellers-tab">{{ translate('Payouts') }}</a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" data-toggle="tab" data-type="stock" href="javascript:void(0);"
+                                            data-target="#stock-notifications" role="tab" id="stock-tab">{{ translate('Stock') }}</a>
+                                    </li>
                                 </ul>
                                 <div class="tab-content c-scrollbar-light overflow-auto" style="height: 75vh; max-height: 400px; overflow-y: auto;">
                                     <div class="tab-pane active" id="orders-notifications" role="tabpanel">
@@ -160,6 +164,9 @@
                                     </div>
                                     <div class="tab-pane" id="payouts-notifications" role="tabpanel">
                                         <x-unread_notification :notifications="auth()->user()->unreadNotifications()->where('type', 'App\Notifications\PayoutNotification')->take(20)->get()" />
+                                    </div>
+                                    <div class="tab-pane" id="stock-notifications" role="tabpanel">
+                                        <x-unread_notification :notifications="auth()->user()->unreadNotifications()->where('type', 'App\Notifications\LowStockAdminNotification')->take(20)->get()" />
                                     </div>
                                 </div>
                             </div>

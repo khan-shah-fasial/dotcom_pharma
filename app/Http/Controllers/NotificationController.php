@@ -189,6 +189,23 @@ class NotificationController extends Controller
             }
         }
 
+        // Low stock admin notification redirect
+        elseif($notification->type == 'App\Notifications\LowStockAdminNotification'){
+            $productId = $notification->data['product_id'] ?? null;
+            $variantId = $notification->data['product_stock_id'] ?? null;
+            $batchId = $notification->data['batch_id'] ?? null;
+            if($productId){
+                return redirect()->route('stock_report.index', [
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                    'batch_id' => $batchId,
+                ]);
+            }
+            return redirect()->route('stock_report.index');
+        }
+
+        return redirect()->back();
+
     }
 
     // non Linkable custom Notification mark as Read and return total unread count
