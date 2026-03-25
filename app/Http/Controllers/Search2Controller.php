@@ -245,7 +245,7 @@ class Search2Controller extends Controller
         //     ->groupBy('category_id')
         //     ->pluck('aggregate', 'category_id')
         //     ->toArray();
-            
+
         /**
          * ------- PANEL SOURCE SCOPE (for counts) -------
          * This is the pool BEFORE attribute/color/price filters.
@@ -623,15 +623,20 @@ class Search2Controller extends Controller
             return '0';
         }
 
-        $products = Product::where('published', 1)->where('tags', 'like', '%' . $query . '%')->get();
-        foreach ($products as $product) {
-            foreach (explode(',', $product->tags) as $tag) {
+        $tagRows = Product::where('published', 1)
+            ->whereNotNull('tags')
+            ->where('tags', 'like', '%' . $query . '%')
+            ->limit(20)
+            ->pluck('tags');
+        foreach ($tagRows as $tags) {
+            foreach (explode(',', (string)$tags) as $tag) {
                 if (stripos($tag, $query) !== false) {
                     if (count($keywords) > 5) break;
                     $tagLower = strtolower($tag);
                     if (!in_array($tagLower, $keywords)) $keywords[] = $tagLower;
                 }
             }
+            if (count($keywords) > 5) break;
         }
 
         $products_query = filter_products(Product::query());
@@ -678,23 +683,56 @@ class Search2Controller extends Controller
                 ELSE 3
                 END');
 
-        $products    = $products_query->with('brand')->get();
-        $categories  = Category::where(function ($q) use ($query) {
+        $products    = $products_query
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'thumbnail_img',
+                'unit_price',
+                'discount',
+                'discount_type',
+                'discount_start_date',
+                'discount_end_date',
+                'role_price',
+                'mrp_price',
+                'brand_id',
+                'drug_name',
+                'role_label',
+            ])
+            ->with([
+                'brand',
+                'product_translations',
+                'brand.brand_translations',
+            ])
+            ->limit(10)
+            ->get();
+        $categories  = Category::select('id', 'slug', 'name')
+            ->where(function ($q) use ($query) {
             $q->where('name', 'like', '%' . $query . '%')
                 ->orWhereHas('category_translations', function ($qt) use ($query) {
                     $qt->where('name', 'like', '%' . $query . '%');
                 });
-        })->get();
+        })
+            ->with('category_translations')
+            ->limit(10)
+            ->get();
 
-        $brands  = Brand::where(function ($q) use ($query) {
+        $brands  = Brand::select('id', 'slug', 'name')
+            ->where(function ($q) use ($query) {
             $q->where('name', 'like', '%' . $query . '%')
                 ->orWhereHas('brand_translations', function ($qt) use ($query) {
                     $qt->where('name', 'like', '%' . $query . '%');
                 });
-        })->get();
+        })
+            ->with('brand_translations')
+            ->limit(10)
+            ->get();
 
-        $shops       = Shop::whereIn('user_id', verified_sellers_id())
+        $shops       = Shop::select('id', 'slug', 'name', 'logo', 'address')
+            ->whereIn('user_id', verified_sellers_id())
             ->where('name', 'like', '%' . $query . '%')
+            ->limit(10)
             ->get();
 
         if (count($keywords) > 0 || count($categories) > 0 || count($brands) > 0 || count($products) > 0 || count($shops) > 0) {
@@ -775,7 +813,7 @@ class Search2Controller extends Controller
         return [$attributes, $valueCountNested];
     }
 
-    
+
     /**
      * Apply category filter using BOTH:
      * - product_categories pivot
