@@ -1,15 +1,15 @@
 @extends('frontend.layouts.user_panel')
 
 <style>
- .width100 {
-    width: 108px;
+.width100 {
+   width: 108px;
 }
 body .mt-15 {
     margin-top: 15px !important;
 }
     .support-staff-card .card-body {
         padding: 20px !important;
-                height: 195px;
+        min-height: 230px;
     }
 </style>
 
