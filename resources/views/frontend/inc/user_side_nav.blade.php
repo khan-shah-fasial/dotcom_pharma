@@ -28,7 +28,8 @@
                 @endif
             </span>
             <!-- Name -->
-            <h4 class="h5 fs-14 mb-1 fw-700 text-dark">{{ $user->name }}</h4>
+            @php $company = optional($user->user_details)->company_name; @endphp
+            <h4 class="h5 fs-14 mb-1 fw-700 text-dark">{{ !empty($company) ? $company . ' - ' . $user->name : $user->name }}</h4>
             <!-- Phone -->
             @if ($user->phone != null)
                 <div class="text-truncate opacity-60 fs-12">{{ $user->phone }}</div>

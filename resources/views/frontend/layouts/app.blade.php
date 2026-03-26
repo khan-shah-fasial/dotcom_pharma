@@ -723,6 +723,8 @@
 
                 $('.typed-search-box').removeClass('d-none');
                 $('.search-preloader').removeClass('d-none');
+                $('#search-content').html(null);
+                $('.typed-search-box .search-nothing').addClass('d-none').html(null);
 
                 if (searchRequest && typeof searchRequest.abort === 'function') {
                     searchRequest.abort();

@@ -107,6 +107,33 @@ body .translater_menu .select2-container {
 .search-input-box input[value]:not([value=""]) ~ .custom-placeholder {
     display: none;
 }
+.search-clear-btn {
+    position: absolute;
+    right: 4.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 8px;
+    line-height: 1;
+    border: none;
+    background: transparent;
+    color: #888;
+}
+.search-clear-btn:hover {
+    color: #555;
+}
+.search-voice-btn {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 6px 8px;
+    border: none;
+    background: transparent;
+    color: #888;
+}
+.search-voice-btn:hover {
+    color: #555;
+}
 
 .placeholder-fixed {
     color: #999;
@@ -638,7 +665,7 @@ body .translater_menu .select2-container {
 
                             <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
-                            <form action="{{ route('search') }}" method="GET" class="stop-propagation">
+                            <form id="searchForm" action="{{ route('search') }}" method="GET" class="stop-propagation">
                                 <div class="d-flex position-relative align-items-center">
                                     <div class="search-toggle-side-nav-bar" data-toggle="class-toggle" data-target=".front-header-search">
                                         <button class="btn px-2" type="button"><i
@@ -658,6 +685,12 @@ body .translater_menu .select2-container {
                                                 <span class="placeholder-sliding"></span>
                                             </span>
                                         </span>
+                                        <button type="button" id="voiceBtn" class="search-voice-btn d-flex align-items-center" aria-label="Voice search">
+                                            <svg id="Group_mic" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Z" fill="currentColor"/>
+                                                <path d="M6 12a1 1 0 1 0-2 0 8 8 0 0 0 7 7.93V22a1 1 0 1 0 2 0v-2.07A8.001 8.001 0 0 0 20 12a1 1 0 1 0-2 0 6 6 0 0 1-12 0Z" fill="currentColor"/>
+                                            </svg>
+                                        </button>
 
                                         <svg id="Group_723" data-name="Group 723" xmlns="http://www.w3.org/2000/svg"
                                             width="20.001" height="20" viewBox="0 0 20.001 20">
@@ -668,6 +701,7 @@ body .translater_menu .select2-container {
                                                 d="M24.4,25.2a.8.8,0,0,1-.565-.234l-6.15-6.15a.8.8,0,0,1,1.13-1.13l6.15,6.15A.8.8,0,0,1,24.4,25.2Z"
                                                 transform="translate(-5.2 -5.2)" fill="#fff" />
                                         </svg>
+                                        <button type="button" id="clearSearch" class="search-clear-btn d-none" aria-label="Clear search">&times;</button>
                                     </div>
                                 </div>
                             </form>
@@ -1051,19 +1085,20 @@ body .translater_menu .select2-container {
                                                     <img src="{{ $user_avatar }}" class="img-fit h-100"
                                                         alt="{{ translate('avatar') }}"
                                                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
-                                                @else
-                                                    <img src="{{ static_asset('assets/img/avatar-place.png') }}"
+                                            @else
+                                                <img src="{{ static_asset('assets/img/avatar-place.png') }}"
                                                         class="image" alt="{{ translate('avatar') }}"
                                                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/avatar-place.png') }}';">
-                                                @endif
-                                            </span>
-                                            <!-- Name -->
-                                            <h4 class="h5 fs-14 fw-700 text-dark ml-2 mb-0">{{ $user->name }}</h4>
+                                            @endif
                                         </span>
-                                    @else
-                                        <!--Login & Registration -->
-                                        <span class="d-flex align-items-center nav-user-info py-20px">
-                                            <!-- Image -->
+                                        <!-- Name -->
+                                        @php $company = optional($user->user_details)->company_name; @endphp
+                                        <h4 class="h5 fs-14 fw-700 text-dark ml-2 mb-0">{{ !empty($company) ? $company : $user->name }}</h4>
+                                    </span>
+                                @else
+                                    <!--Login & Registration -->
+                                    <span class="d-flex align-items-center nav-user-info py-20px">
+                                        <!-- Image -->
                                             <!-- <span
                                         class="size-40px rounded-circle overflow-hidden border d-flex align-items-center justify-content-center nav-user-img">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="19.902" height="20.012"
@@ -1604,7 +1639,8 @@ body .translater_menu .select2-container {
                         @endif
                     </span>
                     <!-- Name -->
-                    <h4 class="h5 fs-14 fw-700 text-dark ml-2 mb-0">{{ $user->name }}</h4>
+                    @php $company = optional($user->user_details)->company_name; @endphp
+                    <h4 class="h5 fs-14 fw-700 text-dark ml-2 mb-0">{{ !empty($company) ? $company : $user->name }}</h4>
                 </span>
             @else
                 <!--Login & Registration -->
@@ -1812,6 +1848,22 @@ body .translater_menu .select2-container {
             $(document).ready(function() {
                 var searchInput = $('#search');
                 var customPlaceholder = $('#custom-placeholder .placeholder-sliding');
+                var clearBtn = $('#clearSearch');
+
+                function toggleClear() {
+                    if (searchInput.val() && searchInput.val().trim() !== '') {
+                        clearBtn.removeClass('d-none');
+                    } else {
+                        clearBtn.addClass('d-none');
+                    }
+                }
+
+                clearBtn.on('click', function() {
+                    searchInput.val('');
+                    toggleClear();
+                    $('#custom-placeholder').show();
+                    searchInput.focus();
+                });
                 
                 if (searchInput.length && searchInput.attr('data-placeholder-slider') === 'true') {
                     @php
@@ -1887,14 +1939,17 @@ body .translater_menu .select2-container {
                     searchInput.on('input', function() {
                         if (searchInput.val() && searchInput.val().trim() !== '') {
                             $('#custom-placeholder').hide();
+                            toggleClear();
                         } else {
                             $('#custom-placeholder').show();
+                            toggleClear();
                         }
                     });
                     
                     // Initial update - start animation immediately
                     if (searchInput.val() && searchInput.val().trim() !== '') {
                         $('#custom-placeholder').hide();
+                        toggleClear();
                     } else {
                         // Set initial text
                         customPlaceholder.text(slidingTexts[currentIndex]);
@@ -1908,7 +1963,84 @@ body .translater_menu .select2-container {
                         }, 100);
                     }
                 }
+
+                toggleClear();
             });
+        </script>
+        <script type="text/javascript">
+            (function() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const voiceBtn   = document.getElementById('voiceBtn');
+                const searchInput = document.getElementById('search');
+                const clearBtn    = document.getElementById('clearSearch');
+                const searchForm  = document.getElementById('searchForm');
+                if (!voiceBtn || !searchInput || !searchForm) return;
+
+                const defaultLabel = voiceBtn.innerHTML;
+                let isListening = false;
+
+                function updateClear() {
+                    if (!clearBtn) return;
+                    if (searchInput.value && searchInput.value.trim() !== '') {
+                        clearBtn.classList.remove('d-none');
+                    } else {
+                        clearBtn.classList.add('d-none');
+                    }
+                }
+
+                function resetBtn() {
+                    voiceBtn.disabled = false;
+                    voiceBtn.innerHTML = defaultLabel;
+                    isListening = false;
+                }
+
+                if (!SpeechRecognition) {
+                    voiceBtn.addEventListener('click', function() {
+                        alert('Speech recognition is not supported in this browser. Please use Chrome.');
+                    });
+                    return;
+                }
+
+                voiceBtn.addEventListener('click', function() {
+                    if (isListening) return;
+                    searchInput.value = '';
+                    updateClear();
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'en-IN';
+                    recognition.interimResults = false;
+                    recognition.maxAlternatives = 1;
+
+                    isListening = true;
+                    voiceBtn.disabled = true;
+                    voiceBtn.innerHTML = 'Listening...';
+
+                    recognition.addEventListener('result', function(event) {
+                        const transcript = event.results && event.results[0] && event.results[0][0] ? event.results[0][0].transcript : '';
+                        if (transcript) {
+                            searchInput.value = transcript;
+                            updateClear();
+                            searchInput.focus();
+                        }
+                    });
+
+                    recognition.addEventListener('error', function(event) {
+                        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                            alert('Microphone permission is required for voice search.');
+                        }
+                        resetBtn();
+                    });
+
+                    recognition.addEventListener('end', function() {
+                        resetBtn();
+                    });
+
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        resetBtn();
+                    }
+                });
+            })();
         </script>
     @endpush
 

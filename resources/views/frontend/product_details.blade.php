@@ -170,6 +170,8 @@
                     <!-- Right side -->
                     <div class="col-lg-12">
                         
+                        <!-- Reviews & Ratings (visible for regular products) -->
+                        @include('frontend.product_details.review_section')
                        
                     <div class="discription_boxex d-none">
                        <ul class="nav nav-tabs d-none" id="myTab" role="tablist">

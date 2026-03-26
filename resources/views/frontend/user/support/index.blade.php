@@ -91,6 +91,9 @@ body .mt-15 {
                             $fullStars    = (int) floor($ratingValue);
                             $hasHalfStar  = $ratingValue - $fullStars >= 0.5;
                             $emptyStars   = 5 - $fullStars - ($hasHalfStar ? 1 : 0);
+
+                            $staffEmail = $user->email ?? null;
+                            $staffPhone = $user->phone ?? null;
                         @endphp
 
                         <div class="col-4 mb-3">
@@ -125,6 +128,18 @@ body .mt-15 {
                                             <span class="fs-10 text-uppercase text-muted mr-1">{{ translate('District') }}:</span>
                                             <span class="fs-12 fw-600 text-dark text-truncate">
                                                 {{ $districtText }}
+                                            </span>
+                                        </div>
+                                        <div class="d-flex align-items-center w-100 mt-2">
+                                            <i class="las la-envelope fs-16 text-muted mr-1"></i>
+                                            <span class="fs-12 text-dark text-truncate">
+                                                {{ $staffEmail ?: translate('Email not available') }}
+                                            </span>
+                                        </div>
+                                        <div class="d-flex align-items-center w-100 mt-1">
+                                            <i class="las la-phone fs-16 text-muted mr-1"></i>
+                                            <span class="fs-12 text-dark text-truncate">
+                                                {{ $staffPhone ?: translate('Phone not available') }}
                                             </span>
                                         </div>
                                     </div>
