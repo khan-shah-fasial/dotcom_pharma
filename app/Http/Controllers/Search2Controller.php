@@ -13,12 +13,22 @@ use Illuminate\Http\Request;
 use App\Utility\CategoryUtility;
 use App\Models\AttributeCategory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 
 class Search2Controller extends Controller
 {
     public function index(Request $request, $category_id = null, $brand_id = null)
     {
+        Log::info('Web search request', [
+            'keyword'     => (string) $request->keyword,
+            'drug_name'   => (string) $request->input('drug_name', ''),
+            'category_id' => $category_id ?? $request->input('category_id'),
+            'brand_id'    => $brand_id ?? $request->input('brand'),
+            'user_id'     => optional($request->user())->id,
+            'ip'          => $request->ip(),
+        ]);
+
         [$products, $viewData] = $this->buildListing($request, $category_id, $brand_id);
         return view('frontend.product_listing_ajax', array_merge($viewData, compact('products')));
     }

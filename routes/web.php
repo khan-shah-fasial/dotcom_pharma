@@ -285,6 +285,7 @@ Route::controller(CustomerProductController::class)->group(function () {
 
 // Search2
 Route::controller(Search2Controller::class)->group(function () {
+    Route::post('/search/image', [\App\Http\Controllers\ImageSearchController::class, 'search'])->name('search.image');
     Route::get('/search', 'index')->name('search');
 
     // AJAX endpoints

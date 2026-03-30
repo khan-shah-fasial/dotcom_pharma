@@ -91,6 +91,13 @@ body {
 
 <section class="pb-4 pt-2" style="background: #f5f5f5">
   <div class="container sm-px-0">
+    <div class="mb-3 d-none">
+      <form class="d-flex align-items-center gap-2" action="{{ route('search.image') }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <input type="file" name="image" accept="image/*" class="form-control form-control-sm w-auto" required>
+        <button type="submit" class="btn btn-primary btn-sm">{{ translate('Search by Image') }}</button>
+      </form>
+    </div>
     <div class="row">
       <!-- Left Filters -->
       <div class="col-xl-2 col-lg-3 d-none d-lg-block filtration_css pl-0 pr-0 pt-1 h-100"> 

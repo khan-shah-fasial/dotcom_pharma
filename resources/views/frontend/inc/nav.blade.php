@@ -109,7 +109,7 @@ body .translater_menu .select2-container {
 }
 .search-clear-btn {
     position: absolute;
-    right: 4.6rem;
+    right: 5.4rem;
     top: 50%;
     transform: translateY(-50%);
     padding: 4px 8px;
@@ -123,7 +123,7 @@ body .translater_menu .select2-container {
 }
 .search-voice-btn {
     position: absolute;
-    right: 40px;
+    right: 4.6rem;
     top: 50%;
     transform: translateY(-50%);
     padding: 6px 8px;
@@ -133,6 +133,139 @@ body .translater_menu .select2-container {
 }
 .search-voice-btn:hover {
     color: #555;
+}
+.search-image-btn {
+    position: absolute;
+    right: 3rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 6px 8px;
+    border: none;
+    background: transparent;
+    color: #888;
+}
+.search-image-btn:hover {
+    color: #555;
+}
+.search-image-thumb {
+    position: absolute;
+    right: 7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.search-image-thumb button {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: #ef4444;
+    color: #fff;
+    font-size: 12px;
+    line-height: 18px;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+}
+
+.image-search-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+}
+.image-search-modal {
+    background: #2b2b2f;
+    color: #e8e8e8;
+    width: min(720px, 92vw);
+    border-radius: 14px;
+    box-shadow: 0 16px 60px rgba(0,0,0,0.35);
+    overflow: hidden;
+}
+.image-search-modal__header {
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+    background: #1f1f22;
+}
+.image-search-modal__body {
+    padding: 22px;
+}
+.drop-area {
+    border: 1px dashed #4c4c50;
+    border-radius: 12px;
+    background: #1f1f22;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    color: #cfd3dc;
+    cursor: pointer;
+}
+.drop-area:hover {
+    border-color: #5a8dee;
+    background: #242428;
+}
+.drop-area svg {
+    width: 46px;
+    height: 46px;
+    color: #8da8ff;
+}
+.image-search-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #8b8b90;
+    margin: 18px 0;
+}
+.image-search-divider::before,
+.image-search-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #3a3a3f;
+}
+.image-search-url {
+    display: flex;
+    gap: 10px;
+}
+.image-search-url input {
+    flex: 1;
+    border-radius: 40px;
+    border: 1px solid #3a3a3f;
+    background: #1b1b1f;
+    color: #e8e8e8;
+    padding: 12px 16px;
+}
+.image-search-url button {
+    border-radius: 40px;
+    padding: 0 18px;
+}
+.image-search-close {
+    background: transparent;
+    border: none;
+    color: #aaa;
 }
 
 .placeholder-fixed {
@@ -458,11 +591,11 @@ body .translater_menu .select2-container {
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
 
-                         
+
 
                         <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
                             <a class="b2b_buttons d-grid align-items-center" href="{{ route('user.new_registration') }}">
-                                <span><i class="las la-sign-in-alt"></i></span> <span>B2B Registration</span> 
+                                <span><i class="las la-sign-in-alt"></i></span> <span>B2B Registration</span>
                             </a>
                         </li>
 
@@ -473,7 +606,7 @@ body .translater_menu .select2-container {
                                 <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
                                     <i class="fa fa-file-prescription"></i> Prescription</a>
                             </li>
-                        @endauth 
+                        @endauth
                         {{--  --}}
 
 
@@ -496,7 +629,7 @@ body .translater_menu .select2-container {
                             </button>
                         </li>
 
-                        
+
 
                         <!-- Language switcher -->
                         {{-- <!-- @if (get_setting('show_language_switcher') == 'on')
@@ -529,7 +662,7 @@ body .translater_menu .select2-container {
                                     $system_currency = get_system_currency();
                                 @endphp
 
-                                <a href="javascript:void(0)" 
+                                <a href="javascript:void(0)"
                                     class="dropdown-toggle black_light_clr fs-12 pl-md-1 pr-md-1"
                                     data-toggle="dropdown" data-display="static">
 
@@ -660,7 +793,7 @@ body .translater_menu .select2-container {
                         </div>
 
 
-                        
+
                         <div class="col-md-5 d-lg-block d-none mrgleft8">
 
                             <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
@@ -675,9 +808,9 @@ body .translater_menu .select2-container {
                                         <input type="text"
                                             class="border border-soft-light form-control fs-14 hov-animate-outline"
                                             id="search" name="keyword"
-                                            @isset($query)
-                                            value="{{ $query }}"
-                                        @endisset
+                                            @if(isset($query) && !session('image_search_hide_query'))
+                                                value="{{ $query }}"
+                                            @endif
                                             placeholder=" " autocomplete="off" data-placeholder-slider="true">
                                         <span class="custom-placeholder" id="custom-placeholder">
                                             <span class="placeholder-fixed">{{ translate('Search for') }}</span>
@@ -691,6 +824,15 @@ body .translater_menu .select2-container {
                                                 <path d="M6 12a1 1 0 1 0-2 0 8 8 0 0 0 7 7.93V22a1 1 0 1 0 2 0v-2.07A8.001 8.001 0 0 0 20 12a1 1 0 1 0-2 0 6 6 0 0 1-12 0Z" fill="currentColor"/>
                                             </svg>
                                         </button>
+                                        <button type="button" id="imageSearchBtn" class="search-image-btn d-flex align-items-center" aria-label="Image search (AI)">
+                                            <i class="fa-solid fa-camera"></i>
+                                        </button>
+                                        @if(session('image_search_preview'))
+                                            <div class="search-image-thumb" id="imageThumb">
+                                                <img src="{{ session('image_search_preview') }}" alt="{{ translate('Uploaded image preview') }}" class="w-100 h-100 object-fit-cover">
+                                                <button type="button" id="clearImageThumb" aria-label="Remove image preview">&times;</button>
+                                            </div>
+                                        @endif
 
                                         <svg id="Group_723" data-name="Group 723" xmlns="http://www.w3.org/2000/svg"
                                             width="20.001" height="20" viewBox="0 0 20.001 20">
@@ -849,7 +991,7 @@ body .translater_menu .select2-container {
                                 </div>
 
 
-                                
+
 
 
                                 <!-- Cart -->
@@ -861,7 +1003,7 @@ body .translater_menu .select2-container {
                                     </div>
                                 </div>
 
-                                
+
 
                                 @if (Auth::check() && auth()->user()->user_type == 'customer')
                                     <!-- Compare -->
@@ -1164,7 +1306,7 @@ body .translater_menu .select2-container {
                                 @endif
 
                                 @if (isCustomer())
-                                
+
                                 <li class="user-top-nav-element border border-top-0" data-id="1">
                                     <a href="{{ route('profile') }}"
                                         class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
@@ -1463,7 +1605,7 @@ body .translater_menu .select2-container {
                                             @endforeach
                                         </div>
                                     @endif
-                                    
+
                                 </li>
                             @endforeach
                         </div>
@@ -1488,7 +1630,7 @@ body .translater_menu .select2-container {
                         </div>
                     </div> --}}
 
-                    
+
                     <!-- Header Menus -->
                     {{-- @php
                         $nav_txt_color =
@@ -1761,13 +1903,13 @@ body .translater_menu .select2-container {
             .logo_menu .dropdown {
                 position: relative;
             }
-            
+
             .logo_menu .dropdown:hover .dropdown-menu {
                 display: block !important;
                 opacity: 1;
                 visibility: visible;
             }
-            
+
             .logo_menu .dropdown .dropdown-menu {
                 margin-top: 0;
                 transition: opacity 0.2s ease, visibility 0.2s ease;
@@ -1775,33 +1917,33 @@ body .translater_menu .select2-container {
                 overflow-y: auto;
                 overflow-x: hidden;
             }
-            
+
             /* Prevent click toggle on desktop, keep hover only */
             .logo_menu .dropdown .dropdown-toggle {
                 pointer-events: none;
             }
-            
+
             /* Custom scrollbar for navigation dropdown */
             .logo_menu .dropdown .dropdown-menu::-webkit-scrollbar {
                 width: 6px;
             }
-            
+
             .logo_menu .dropdown .dropdown-menu::-webkit-scrollbar-track {
                 background: #f1f1f1;
                 border-radius: 10px;
             }
-            
+
             .logo_menu .dropdown .dropdown-menu::-webkit-scrollbar-thumb {
                 background: #2b56a1;
                 border-radius: 10px;
             }
-            
+
             .logo_menu .dropdown .dropdown-menu::-webkit-scrollbar-thumb:hover {
                 background: #1e3f7a;
             }
         }
     </style>
-    
+
     @section('script')
         <script type="text/javascript">
             function show_order_details(order_id) {
@@ -1821,7 +1963,7 @@ body .translater_menu .select2-container {
                     AIZ.plugins.bootstrapSelect('refresh');
                 });
             }
-            
+
             // Navigation dropdown hover on desktop
             $(document).ready(function() {
                 if ($(window).width() >= 992) {
@@ -1831,7 +1973,7 @@ body .translater_menu .select2-container {
                         e.stopPropagation();
                         return false;
                     });
-                    
+
                     // Close dropdowns when mouse leaves
                     $('.logo_menu .dropdown').on('mouseleave', function() {
                         $(this).removeClass('show');
@@ -1864,7 +2006,7 @@ body .translater_menu .select2-container {
                     $('#custom-placeholder').show();
                     searchInput.focus();
                 });
-                
+
                 if (searchInput.length && searchInput.attr('data-placeholder-slider') === 'true') {
                     @php
                         $category_top_menu = getCategoryTopMenu();
@@ -1873,7 +2015,7 @@ body .translater_menu .select2-container {
                         })->toArray();
                     @endphp
                     var slidingTexts = @json($categoryNames);
-                    
+
                     // Fallback to default if no categories found
                     if (!slidingTexts || slidingTexts.length === 0) {
                         slidingTexts = [
@@ -1885,56 +2027,56 @@ body .translater_menu .select2-container {
                             'Sprays',
                         ];
                     }
-                    
+
                     var currentIndex = 0;
                     var placeholderInterval;
-                    
+
                     function updatePlaceholder() {
                         // Only update if input is empty
                         if (!searchInput.val() || searchInput.val().trim() === '') {
                             // Remove previous animation classes
                             customPlaceholder.removeClass('animate-in animate-out');
-                            
+
                             // Force reflow to restart animation
                             void customPlaceholder.offsetWidth;
-                            
+
                             // First, animate out (scroll down) - same as coming but in reverse
                             customPlaceholder.addClass('animate-out');
-                            
+
                             // After exit animation completes, update text and animate in
                             setTimeout(function() {
                                 // Update text
                                 customPlaceholder.text(slidingTexts[currentIndex]);
-                                
+
                                 // Remove exit animation and add entrance animation
                                 customPlaceholder.removeClass('animate-out');
                                 void customPlaceholder.offsetWidth; // Force reflow
-                                
+
                                 // Animate in (scroll up) - same transition as going out
                                 customPlaceholder.addClass('animate-in');
-                                
+
                                 // Remove animation class after animation completes
                                 setTimeout(function() {
                                     customPlaceholder.removeClass('animate-in');
                                 }, 1200);
-                                
+
                                 currentIndex = (currentIndex + 1) % slidingTexts.length;
                             }, 1200);
                         }
                     }
-                    
+
                     // Pause when user focuses on input
                     searchInput.on('focus', function() {
                         clearInterval(placeholderInterval);
                     });
-                    
+
                     // Resume when user leaves input (if empty)
                     searchInput.on('blur', function() {
                         if (!searchInput.val() || searchInput.val().trim() === '') {
                             placeholderInterval = setInterval(updatePlaceholder, 3500);
                         }
                     });
-                    
+
                     // Hide/show custom placeholder based on input value
                     searchInput.on('input', function() {
                         if (searchInput.val() && searchInput.val().trim() !== '') {
@@ -1945,7 +2087,7 @@ body .translater_menu .select2-container {
                             toggleClear();
                         }
                     });
-                    
+
                     // Initial update - start animation immediately
                     if (searchInput.val() && searchInput.val().trim() !== '') {
                         $('#custom-placeholder').hide();
@@ -1954,7 +2096,7 @@ body .translater_menu .select2-container {
                         // Set initial text
                         customPlaceholder.text(slidingTexts[currentIndex]);
                         currentIndex = (currentIndex + 1) % slidingTexts.length;
-                        
+
                         // Start animation immediately (minimal delay for DOM readiness)
                         setTimeout(function() {
                             updatePlaceholder();
@@ -1974,7 +2116,15 @@ body .translater_menu .select2-container {
                 const searchInput = document.getElementById('search');
                 const clearBtn    = document.getElementById('clearSearch');
                 const searchForm  = document.getElementById('searchForm');
+                const searchIcon  = document.getElementById('Group_723');
                 if (!voiceBtn || !searchInput || !searchForm) return;
+
+                if (searchIcon) {
+                    searchIcon.style.cursor = 'pointer';
+                    searchIcon.addEventListener('click', function() {
+                        searchForm.submit();
+                    });
+                }
 
                 const defaultLabel = voiceBtn.innerHTML;
                 let isListening = false;
@@ -2042,6 +2192,106 @@ body .translater_menu .select2-container {
                 });
             })();
         </script>
+        <div id="imageSearchModal" class="image-search-modal-backdrop">
+            <div class="image-search-modal">
+                <div class="image-search-modal__header">
+                    <span>{{ translate('Search any image') }}</span>
+                    <button type="button" class="image-search-close" aria-label="Close image search">&times;</button>
+                </div>
+                <div class="image-search-modal__body">
+                    <form id="imageSearchForm" action="{{ route('search.image') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <input type="file" id="imageSearchFile" name="image" accept="image/*" class="d-none">
+                        <div id="dropArea" class="drop-area">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+                                <path d="M6 10a4 4 0 0 1 4-4h28a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V10Zm4-1a1 1 0 0 0-1 1v20a1 1 0 0 0 1 1h28a1 1 0 0 0 1-1V10a1 1 0 0 0-1-1H10Zm6.5 13L23 30l5-6 4.5 5H12.5Zm15.25-12.25a2.75 2.75 0 1 1 0 5.5 2.75 2.75 0 0 1 0-5.5Z"/>
+                            </svg>
+                            <div class="fs-15">{{ translate('Drag an image here or') }} <a href="#" id="browseImageLink">{{ translate('upload a file') }}</a></div>
+                        </div>
+
+                        <div class="image-search-divider"><span>{{ translate('OR') }}</span></div>
+
+                        <div class="image-search-url">
+                            <input type="url" id="imageUrlInput" placeholder="{{ translate('Paste image link') }}">
+                            <button type="button" class="btn btn-primary" id="submitImageSearch">{{ translate('Search') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script>
+            (function() {
+                const openBtn   = document.getElementById('imageSearchBtn');
+                const backdrop  = document.getElementById('imageSearchModal');
+                const closeBtn  = backdrop ? backdrop.querySelector('.image-search-close') : null;
+                const dropArea  = document.getElementById('dropArea');
+                const fileInput = document.getElementById('imageSearchFile');
+                const browseLink= document.getElementById('browseImageLink');
+                const urlInput  = document.getElementById('imageUrlInput');
+        const submitBtn = document.getElementById('submitImageSearch');
+        const form      = document.getElementById('imageSearchForm');
+        const clearThumb= document.getElementById('clearImageThumb');
+        const thumbBox  = document.getElementById('imageThumb');
+        const searchInput = document.getElementById('search');
+
+        if (!openBtn || !backdrop) return;
+
+                const openModal = () => { backdrop.style.display = 'flex'; };
+                const closeModal = () => { backdrop.style.display = 'none'; urlInput.value=''; if(fileInput) fileInput.value=''; };
+
+                openBtn.addEventListener('click', openModal);
+                closeBtn?.addEventListener('click', closeModal);
+                backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
+
+                browseLink.addEventListener('click', (e) => { e.preventDefault(); fileInput.click(); });
+                dropArea.addEventListener('click', () => fileInput.click());
+
+                const submitFile = () => { if (fileInput.files.length) { form.submit(); } };
+
+                ['dragenter','dragover'].forEach(evt => dropArea.addEventListener(evt, e => { e.preventDefault(); dropArea.classList.add('border-primary'); }));
+                ['dragleave','drop'].forEach(evt => dropArea.addEventListener(evt, e => { e.preventDefault(); dropArea.classList.remove('border-primary'); }));
+                dropArea.addEventListener('drop', (e) => {
+                    if (e.dataTransfer.files.length) {
+                        const dt = new DataTransfer();
+                        Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+                        fileInput.files = dt.files;
+                        fileInput.dispatchEvent(new Event('change'));
+                    }
+                });
+                ['dragover','drop'].forEach(evt => window.addEventListener(evt, e => e.preventDefault()));
+                fileInput.addEventListener('change', submitFile);
+
+        submitBtn.addEventListener('click', async () => {
+            if (fileInput.files.length) { form.submit(); return; }
+            const url = urlInput.value.trim();
+            if (!url) { urlInput.focus(); return; }
+            try {
+                        const resp = await fetch(url, {mode: 'cors'});
+                        const blob = await resp.blob();
+                        const ext = (blob.type.split('/')[1] || 'jpg').split(';')[0];
+                        const file = new File([blob], `remote.${ext}`, {type: blob.type || 'image/jpeg'});
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        fileInput.files = dt.files;
+                        form.submit();
+            } catch (err) {
+                alert("{{ translate('Unable to fetch image from the provided link. Please upload the file instead.') }}");
+            }
+        });
+
+        if (clearThumb) {
+            clearThumb.addEventListener('click', () => {
+                if (thumbBox) thumbBox.style.display = 'none';
+                if (fileInput) fileInput.value = '';
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                // Redirect to plain search page to reset server-side flash
+                window.location.href = "{{ route('search') }}";
+            });
+        }
+    })();
+</script>
     @endpush
 
     <script>
