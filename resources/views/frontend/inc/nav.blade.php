@@ -1520,7 +1520,7 @@ body .translater_menu .select2-container {
                                             </a>
                                         </li>
                                     @endif
-                                    <li class="d-none user-top-nav-element border border-top-0" data-id="1">
+                                    <li class="user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('support_ticket.index') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16.001"
