@@ -1316,6 +1316,14 @@ body .translater_menu .select2-container {
                                 </li>
 
                                 <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <a href="{{ route('refer.a.friend') }}"
+                                        class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                        <i class="las la-user-plus text-muted"></i>
+                                        <span class="user-top-menu-name has-transition ml-3">{{ translate('Refer a Friend') }}</span>
+                                    </a>
+                                </li>
+
+                                <li class="user-top-nav-element border border-top-0" data-id="1">
                                     <a href="{{ route('purchase_history.spend_save') }}"
                                         class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
@@ -1854,6 +1862,13 @@ body .translater_menu .select2-container {
                                 class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
                                 {{ areActiveRoutes(['customer.all-notifications'], ' active') }}">
                                 {{ translate('Notifications') }}
+                            </a>
+                        </li>
+                        <li class="mr-0">
+                            <a href="{{ route('refer.a.friend') }}"
+                                class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
+                                {{ areActiveRoutes(['refer.a.friend'], ' active') }}">
+                                {{ translate('Refer a Friend') }}
                             </a>
                         </li>
                         <li class="mr-0">

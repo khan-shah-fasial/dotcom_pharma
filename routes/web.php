@@ -533,6 +533,7 @@ Route::controller(AddressController::class)->group(function () {
 Route::group(['middleware' => ['auth']], function () {
 
     Route::get('invoice/{order_id}', [InvoiceController::class, 'invoice_download'])->name('invoice.download');
+    Route::get('/refer-a-friend', [HomeController::class, 'refer_a_friend'])->name('refer.a.friend');
 
     // Reviews
     Route::resource('/reviews', ReviewController::class);

@@ -104,6 +104,8 @@ class CheckoutController extends Controller
         $tax = 0;
         $shipping = 0;
         $subtotal = 0;
+        $coupon_discount = 0;
+        $referral_discount_preview = 0;
         $default_carrier_id = null;
         $default_shipping_type = 'home_delivery';
 
@@ -132,6 +134,7 @@ class CheckoutController extends Controller
                 $product = Product::find($cartItem['product_id']);
                 $tax += cart_product_tax($cartItem, $product, false) * $cartItem['quantity'];
                 $subtotal += cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
+                $coupon_discount += $cartItem['discount'] ?? 0;
 
                 if (get_setting('shipping_type') == 'carrier_wise_shipping') {
                     $cartItem['shipping_cost'] = $country_id != 0 ? getShippingCost($carts, $key, $shipping_info, $default_carrier_id) : 0;
@@ -143,11 +146,15 @@ class CheckoutController extends Controller
                 $shipping += $cartItem['shipping_cost'];
                 $cartItem->save();
             }
-            $total = $subtotal + $tax + $shipping;
+            $totalBeforeCoupon = $subtotal + $tax + $shipping;
+            $totalAfterCoupon = max(0, $totalBeforeCoupon - $coupon_discount);
+            $referral_discount_preview = get_referral_discount_amount_for_user(auth()->user(), $totalAfterCoupon);
+            $totalAfterReferral = max(0, $totalAfterCoupon - $referral_discount_preview);
+            $total = Session::has('club_point') ? max(0, $totalAfterReferral - Session::get('club_point')) : $totalAfterReferral;
 
             $carts = $carts->fresh();
 
-            return view('frontend.checkout', compact('carts', 'address_id', 'billing_address_id', 'total', 'carrier_list', 'shipping_info'));
+            return view('frontend.checkout', compact('carts', 'address_id', 'billing_address_id', 'total', 'carrier_list', 'shipping_info', 'referral_discount_preview'));
         }
         flash(translate('Please Select cart items to Proceed'))->error();
         return back();
@@ -347,6 +354,7 @@ class CheckoutController extends Controller
             
             // Calculate Commission from seller, Customer Affiliate earning and Customers Club Point
             calculateCommissionAffilationClubPoint($order);
+            finalize_referral_rewards_for_paid_order($order);
         }
 
         Session::put('combined_order_id', $combined_order_id);
@@ -911,6 +919,7 @@ class CheckoutController extends Controller
         $order->payment_type = $payment_data['payment_method'];
         $order->save();
         calculateCommissionAffilationClubPoint($order);
+        finalize_referral_rewards_for_paid_order($order);
 
         if($order->notified == 0){
             NotificationUtility::sendOrderPlacedNotification($order);

@@ -2608,6 +2608,7 @@ if (!function_exists('checkout_done')) {
             try {
                 NotificationUtility::sendOrderPlacedNotification($order);
                 calculateCommissionAffilationClubPoint($order);
+                finalize_referral_rewards_for_paid_order($order);
             } catch (\Exception $e) {
             }
         }
@@ -2638,6 +2639,7 @@ if (!function_exists('order_re_payment_done')) {
         $order->payment_type = $payment_method;
         $order->save();
         calculateCommissionAffilationClubPoint($order);
+        finalize_referral_rewards_for_paid_order($order);
 
         if($order->notified == 0){
             NotificationUtility::sendOrderPlacedNotification($order);
@@ -2645,6 +2647,117 @@ if (!function_exists('order_re_payment_done')) {
             $order->save();
         }
 
+    }
+}
+
+if (!function_exists('get_referral_discount_amount_for_user')) {
+    function get_referral_discount_amount_for_user($user, float $amountAfterCoupon): float
+    {
+        $hasHistoricalReferralDiscount = $user
+            ? Order::where('user_id', $user->id)->where('referral_discount_applied', '>', 0)->exists()
+            : false;
+
+        if (
+            !$user ||
+            $hasHistoricalReferralDiscount ||
+            empty($user->referred_by) ||
+            !empty($user->referral_discount_used_at) ||
+            !empty($user->referral_discount_locked_at) ||
+            (int) $user->referred_by === (int) $user->id
+        ) {
+            return 0.0;
+        }
+        if ((int) get_setting('referral_discount_enabled') !== 1) {
+            return 0.0;
+        }
+
+        $configuredAmount = (float) (get_setting('referral_discount_amount') ?? 0);
+        if ($configuredAmount <= 0) {
+            return 0.0;
+        }
+
+        $minOrder = (float) (get_setting('referral_discount_min_order_amount') ?? 0);
+        if ($amountAfterCoupon < $minOrder) {
+            return 0.0;
+        }
+
+        return max(0.0, min($configuredAmount, $amountAfterCoupon));
+    }
+}
+
+if (!function_exists('lock_referral_discount_for_user')) {
+    function lock_referral_discount_for_user(int $userId, int $orderId): bool
+    {
+        $now = Carbon::now();
+        $updated = User::where('id', $userId)
+            ->whereNull('referral_discount_used_at')
+            ->whereNull('referral_discount_locked_at')
+            ->update([
+                'referral_discount_locked_at' => $now,
+                'referral_discount_locked_order_id' => $orderId,
+            ]);
+
+        return $updated > 0;
+    }
+}
+
+if (!function_exists('finalize_referral_rewards_for_paid_order')) {
+    function finalize_referral_rewards_for_paid_order($order): void
+    {
+        if (!$order || $order->payment_status !== 'paid' || !$order->user_id) {
+            return;
+        }
+
+        $user = User::find($order->user_id);
+        if (!$user || empty($user->referred_by) || (int) $user->referred_by === (int) $user->id) {
+            return;
+        }
+
+        $now = Carbon::now();
+
+        if ((float) ($order->referral_discount_applied ?? 0) > 0 && empty($user->referral_discount_used_at)) {
+            User::where('id', $user->id)
+                ->whereNull('referral_discount_used_at')
+                ->where(function ($q) use ($order) {
+                    $q->whereNull('referral_discount_locked_order_id')
+                        ->orWhere('referral_discount_locked_order_id', $order->id);
+                })
+                ->update([
+                    'referral_discount_used_at' => $now,
+                    'referral_discount_locked_at' => null,
+                    'referral_discount_locked_order_id' => null,
+                ]);
+        }
+
+        $points = (int) (get_setting('referral_reward_points_for_referrer') ?? 0);
+        if ($points <= 0 || !empty($user->referral_reward_granted_at)) {
+            return;
+        }
+
+        $marked = User::where('id', $user->id)
+            ->whereNull('referral_reward_granted_at')
+            ->update(['referral_reward_granted_at' => $now]);
+
+        if ($marked) {
+            User::where('id', $user->referred_by)->increment('referral_points', $points);
+        }
+    }
+}
+
+if (!function_exists('release_referral_discount_lock_on_order_cancel')) {
+    function release_referral_discount_lock_on_order_cancel($order): void
+    {
+        if (!$order || (float) ($order->referral_discount_applied ?? 0) <= 0 || !$order->user_id) {
+            return;
+        }
+
+        User::where('id', $order->user_id)
+            ->whereNull('referral_discount_used_at')
+            ->where('referral_discount_locked_order_id', $order->id)
+            ->update([
+                'referral_discount_locked_at' => null,
+                'referral_discount_locked_order_id' => null,
+            ]);
     }
 }
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\AffiliateController;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Cart;
@@ -206,6 +205,7 @@ class OrderController extends Controller
             $seller_products[$product->user_id] = $product_ids;
         }
 
+        $firstOrderForReferral = null;
         foreach ($seller_products as $seller_product) {
             $order = new Order;
             $order->combined_order_id = $combined_order->id;
@@ -223,6 +223,9 @@ class OrderController extends Controller
             $order->code = generate_financial_year_order_code();
             $order->date = strtotime('now');    
             $order->save();
+            if ($firstOrderForReferral === null) {
+                $firstOrderForReferral = $order;
+            }
 
             storeIPLocation('orders', $order->id); //store ip location            
 
@@ -337,12 +340,13 @@ class OrderController extends Controller
                     $seller->save();
                 }
 
-                if (addon_is_activated('affiliate_system')) {
-                    if ($order_detail->product_referral_code) {
-                        $referred_by_user = User::where('referral_code', $order_detail->product_referral_code)->first();
-
-                        $affiliateController = new AffiliateController;
-                        $affiliateController->processAffiliateStats($referred_by_user->id, 0, $order_detail->quantity, 0, 0);
+                if (addon_is_activated('affiliate_system') && $order_detail->product_referral_code) {
+                    $referred_by_user = User::where('referral_code', $order_detail->product_referral_code)->first();
+                    if ($referred_by_user && class_exists('App\\Http\\Controllers\\AffiliateController')) {
+                        $affiliateController = app()->make('App\\Http\\Controllers\\AffiliateController');
+                        if (method_exists($affiliateController, 'processAffiliateStats')) {
+                            $affiliateController->processAffiliateStats($referred_by_user->id, 0, $order_detail->quantity, 0, 0);
+                        }
                     }
                 }
             }
@@ -370,6 +374,18 @@ class OrderController extends Controller
 
             if (!empty($affectedProductIds)) {
                 dispatch_low_stock_admin_notifications($affectedProductIds);
+            }
+        }
+
+        $referralDiscount = get_referral_discount_amount_for_user(Auth::user(), (float) $combined_order->grand_total);
+        if ($referralDiscount > 0 && $firstOrderForReferral) {
+            $isLocked = lock_referral_discount_for_user((int) Auth::id(), (int) $firstOrderForReferral->id);
+            if ($isLocked) {
+                $firstOrderForReferral->grand_total = max(0, (float) $firstOrderForReferral->grand_total - $referralDiscount);
+                $firstOrderForReferral->quote_grand_total = $firstOrderForReferral->grand_total;
+                $firstOrderForReferral->referral_discount_applied = $referralDiscount;
+                $firstOrderForReferral->save();
+                $combined_order->grand_total = max(0, (float) $combined_order->grand_total - $referralDiscount);
             }
         }
 
@@ -467,6 +483,10 @@ class OrderController extends Controller
             $user->save();
         }
 
+        if ($request->status == 'cancelled') {
+            release_referral_discount_lock_on_order_cancel($order);
+        }
+
         // If the order is cancelled and the seller commission is calculated, deduct seller earning
         if($request->status == 'cancelled' && $order->user->user_type == 'seller' && $order->payment_status == 'paid' && $order->commission_calculated == 1){
             $sellerEarning = $order->commissionHistory->seller_earning;
@@ -510,9 +530,12 @@ class OrderController extends Controller
                         }
 
                         $referred_by_user = User::where('referral_code', $orderDetail->product_referral_code)->first();
-
-                        $affiliateController = new AffiliateController;
-                        $affiliateController->processAffiliateStats($referred_by_user->id, 0, 0, $no_of_delivered, $no_of_canceled);
+                        if ($referred_by_user && class_exists('App\\Http\\Controllers\\AffiliateController')) {
+                            $affiliateController = app()->make('App\\Http\\Controllers\\AffiliateController');
+                            if (method_exists($affiliateController, 'processAffiliateStats')) {
+                                $affiliateController->processAffiliateStats($referred_by_user->id, 0, 0, $no_of_delivered, $no_of_canceled);
+                            }
+                        }
                     }
                 }
             }
@@ -597,6 +620,9 @@ class OrderController extends Controller
             $order->commission_calculated == 0
         ) {
             calculateCommissionAffilationClubPoint($order);
+        }
+        if ($order->payment_status == 'paid') {
+            finalize_referral_rewards_for_paid_order($order);
         }
 
         // Payment Status change email notification to Admin, seller, Customer

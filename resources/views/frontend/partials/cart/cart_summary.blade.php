@@ -85,13 +85,6 @@
                         <td class="text-right pr-0 fs-14 pt-0 pb-2 text-dark border-top-0">{{ single_price($shipping) }}</td>
                     </tr>
                     @endif
-                    <!-- Redeem point -->
-                    @if (Session::has('club_point'))
-                        <tr class="cart-club-point">
-                            <th class="pl-0 fs-14 fw-400 pt-0 pb-2 text-dark border-top-0">{{ translate('Redeem point') }}</th>
-                            <td class="text-right pr-0 fs-14 pt-0 pb-2 text-dark border-top-0">{{ single_price(Session::get('club_point')) }}</td>
-                        </tr>
-                    @endif
                     <!-- Coupon Discount -->
                     @if ($coupon_discount > 0)
                         <tr class="cart-coupon-discount">
@@ -102,13 +95,38 @@
 
                     @php
                         $total = $subtotal + $tax + $shipping;
-                        if (Session::has('club_point')) {
-                            $total -= Session::get('club_point');
-                        }
                         if ($coupon_discount > 0) {
                             $total -= $coupon_discount;
                         }
+
+                        $referral_discount = 0;
+                        if (auth()->check()) {
+                            $referral_discount = get_referral_discount_amount_for_user(auth()->user(), max(0, $total));
+                        }
+
+                        if ($referral_discount > 0) {
+                            $total -= $referral_discount;
+                        }
+
+                        if (Session::has('club_point')) {
+                            $total -= Session::get('club_point');
+                        }
+                        $total = max(0, $total);
                     @endphp
+
+                    @if ($referral_discount > 0)
+                        <tr class="cart-referral-discount">
+                            <th class="pl-0 fs-14 fw-400 pt-0 pb-2 text-dark border-top-0">{{ translate('Referral Discount') }}</th>
+                            <td class="text-right pr-0 fs-14 pt-0 pb-2 text-dark border-top-0">-{{ single_price($referral_discount) }}</td>
+                        </tr>
+                    @endif
+                    <!-- Redeem point -->
+                    @if (Session::has('club_point'))
+                        <tr class="cart-club-point">
+                            <th class="pl-0 fs-14 fw-400 pt-0 pb-2 text-dark border-top-0">{{ translate('Redeem point') }}</th>
+                            <td class="text-right pr-0 fs-14 pt-0 pb-2 text-dark border-top-0">{{ single_price(Session::get('club_point')) }}</td>
+                        </tr>
+                    @endif
                     <!-- Total -->
                     <tr class="cart-total">
                         <th class="pl-0 fs-14 text-dark fw-700 border-top-0 pt-3 text-uppercase">{{ translate('Total') }}</th>

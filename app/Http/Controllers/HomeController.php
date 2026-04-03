@@ -240,7 +240,7 @@ class HomeController extends Controller
         if (Auth::check()) {
             return redirect()->route('home');
         }
-        if ($request->has('referral_code') && addon_is_activated('affiliate_system')) {
+        if ($request->has('referral_code')) {
             try {
                 $affiliate_validation_time = AffiliateConfig::where('type', 'validation_time')->first();
                 $cookie_minute = 30 * 24;
@@ -249,10 +249,16 @@ class HomeController extends Controller
                 }
 
                 Cookie::queue('referral_code', $request->referral_code, $cookie_minute);
-                $referred_by_user = User::where('referral_code', $request->referral_code)->first();
-
-                $affiliateController = new AffiliateController;
-                $affiliateController->processAffiliateStats($referred_by_user->id, 1, 0, 0, 0);
+                Session::put('referral_code', $request->referral_code);
+                if (addon_is_activated('affiliate_system')) {
+                    $referred_by_user = User::where('referral_code', $request->referral_code)->first();
+                    if ($referred_by_user && class_exists('App\\Http\\Controllers\\AffiliateController')) {
+                        $affiliateController = app()->make('App\\Http\\Controllers\\AffiliateController');
+                        if (method_exists($affiliateController, 'processAffiliateStats')) {
+                            $affiliateController->processAffiliateStats($referred_by_user->id, 1, 0, 0, 0);
+                        }
+                    }
+                }
             } catch (\Exception $e) {
             }
         }
@@ -262,12 +268,37 @@ class HomeController extends Controller
 
     public function new_user_registrations(Request $request)
     {
+        if ($request->has('referral_code')) {
+            $cookie_minute = 30 * 24;
+            Cookie::queue('referral_code', $request->referral_code, $cookie_minute);
+            Session::put('referral_code', $request->referral_code);
+        }
+
         if (Auth::check()) {
             session()->flush();
             auth()->guard()->logout();
             return view('frontend.user_registration');
         }
         return view('frontend.user_registration');
+    }
+
+    public function refer_a_friend()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('user.login');
+        }
+
+        if (empty($user->referral_code)) {
+            $user->referral_code = substr($user->id . Str::random(10), 0, 10);
+            $user->save();
+        }
+
+        $referralLink = route('user.registration', ['referral_code' => $user->referral_code]);
+        $referralPoints = (int) ($user->referral_points ?? 0);
+        $pointsPerReferral = (int) (get_setting('referral_reward_points_for_referrer') ?? 0);
+
+        return view('frontend.user.refer_a_friend', compact('referralLink', 'referralPoints', 'pointsPerReferral'));
     }
 
 
@@ -353,7 +384,7 @@ class HomeController extends Controller
         // $user->country = $request->country;
         // $user->city = $request->city;
         // $user->postal_code = $request->postal_code;
-        
+
         $user->phone = '+'.$request->phone_code.'-'.str_replace(' ', '', $request->phone);
 
         if ($request->new_password != null && ($request->new_password == $request->confirm_password)) {
@@ -387,25 +418,25 @@ class HomeController extends Controller
             'bank_name.required' => 'The bank name is required.',
             'bank_name.string' => 'The bank name must be a valid string.',
             'bank_name.max' => 'The bank name must not exceed 255 characters.',
-            
+
             'account_no.required' => 'The account number is required.',
             'account_no.regex' => 'The account number must contain only numeric characters.',
             'account_no.max' => 'The account number must not exceed 20 digits.',
-            
+
             'branch_no.required' => 'The branch number is required.',
             'branch_no.string' => 'The branch number must be a valid string.',
             'branch_no.max' => 'The branch number must not exceed 50 characters.',
-            
+
             'branch_code.required' => 'The branch code is required.',
             'branch_code.string' => 'The branch code must be a valid string.',
             'branch_code.max' => 'The branch code must not exceed 50 characters.',
-            
+
             'ifsc_code.required' => 'The IFSC Code is required.',
             'ifsc_code.regex' => 'The IFSC Code format is invalid. It should follow the format: 4 uppercase letters, a 0, followed by 6 alphanumeric characters.',
-            
+
             'micr_code.required' => 'The MICR Code is required.',
             'micr_code.regex' => 'The MICR Code must be exactly 9 numeric digits.',
-            
+
             'customer_care_executive.required' => 'The customer care executive name is required.',
             'customer_care_executive.string' => 'The customer care executive name must be a valid string.',
             'customer_care_executive.max' => 'The customer care executive name must not exceed 255 characters.',
@@ -461,15 +492,15 @@ class HomeController extends Controller
             'cc_no.required' => 'The CC number is required.',
             'cc_no.regex' => 'The CC number must only contain numbers, spaces, dashes, or plus signs.',
             'cc_no.min' => 'The CC number must be at least 5 characters long.',
-            
+
             'd_l_no_1.required' => 'The first D.L.No is required.',
             'd_l_no_1.string' => 'The first D.L.No must be a valid string.',
             'd_l_no_1.max' => 'The first D.L.No must not exceed 50 characters.',
-            
+
             'd_l_no_2.required' => 'The second D.L.No is required.',
             'd_l_no_2.string' => 'The second D.L.No must be a valid string.',
             'd_l_no_2.max' => 'The second D.L.No must not exceed 50 characters.',
-            
+
             'd_l_no_3.required' => 'The third D.L.No is required.',
             'd_l_no_3.string' => 'The third D.L.No must be a valid string.',
             'd_l_no_3.max' => 'The third D.L.No must not exceed 50 characters.',
@@ -521,15 +552,15 @@ class HomeController extends Controller
             // Custom error messages
             'd_l_exp_Date.required' => 'The D.L expiration date is required.',
             'd_l_exp_Date.date' => 'The D.L expiration date must be a valid date.',
-            
+
             'transport.required' => 'The transport field is required.',
             'transport.string' => 'The transport field must be a valid string.',
             'transport.max' => 'The transport field must not exceed 255 characters.',
-            
+
             'cargo.required' => 'The cargo field is required.',
             'cargo.string' => 'The cargo field must be a valid string.',
             'cargo.max' => 'The cargo field must not exceed 255 characters.',
-            
+
             'booked_to.required' => 'The booked-to field is required.',
             'booked_to.string' => 'The booked-to field must be a valid string.',
             'booked_to.max' => 'The booked-to field must not exceed 255 characters.',
@@ -643,13 +674,13 @@ class HomeController extends Controller
 
         if ($request->otp == $otp) {
 
-            
+
             $user = Auth::user();
 
             $user->phone = $phone_update;
             $user->phone_code_meta = $phone_update_meta;
 
-    
+
             $user->save();
 
             session()->forget('otp_timestamp');
@@ -778,9 +809,12 @@ class HomeController extends Controller
                 Cookie::queue('referred_product_id', $detailedProduct->id, $cookie_minute);
 
                 $referred_by_user = User::where('referral_code', $request->product_referral_code)->first();
-
-                $affiliateController = new AffiliateController;
-                $affiliateController->processAffiliateStats($referred_by_user->id, 1, 0, 0, 0);
+                if ($referred_by_user && class_exists('App\\Http\\Controllers\\AffiliateController')) {
+                    $affiliateController = app()->make('App\\Http\\Controllers\\AffiliateController');
+                    if (method_exists($affiliateController, 'processAffiliateStats')) {
+                        $affiliateController->processAffiliateStats($referred_by_user->id, 1, 0, 0, 0);
+                    }
+                }
             }
 
             if(get_setting('last_viewed_product_activation') == 1 && Auth::check() && auth()->user()->user_type == 'customer'){
@@ -940,21 +974,21 @@ class HomeController extends Controller
         foreach ($mainCategories as $mainCategory) {
             $subcategoryCount = 0;
             $totalProducts = 0;
-            
+
             // Process subcategories (level 2)
             foreach ($mainCategory->childrenCategories as $subcategory) {
                 // Get product count for subcategory
                 $subcategory->product_count = category_published_product_count($subcategory->id);
                 $totalProducts += $subcategory->product_count;
                 $subcategoryCount++;
-                
+
                 // Process sub-subcategories (level 3)
                 foreach ($subcategory->childrenCategories as $subSubcategory) {
                     // Get product count for sub-subcategory
                     $subSubcategory->product_count = category_published_product_count($subSubcategory->id);
                 }
             }
-            
+
             $categoriesData[] = [
                 'category' => $mainCategory,
                 'subcategory_count' => $subcategoryCount,
@@ -1067,15 +1101,15 @@ class HomeController extends Controller
 
         // Load batches for this stock
         $batches = $product_stock->batches()->orderBy('id')->get();
-        
+
         // Get selected batch ID from request (if provided)
         $selectedBatchId = $request->input('batch_id', null);
         $selectedBatch = null;
-        
+
         if ($selectedBatchId && $batches->isNotEmpty()) {
             $selectedBatch = $batches->where('id', $selectedBatchId)->first();
         }
-        
+
         // If no batch selected or batch not found, use first batch or fallback to stock data
         if (!$selectedBatch && $batches->isNotEmpty()) {
             $selectedBatch = $batches->first();
@@ -1127,11 +1161,11 @@ class HomeController extends Controller
             $coa_url = null;
         }
 
-        $dimension = 
-            ($length ?? '-') . ' x ' . 
-            ($breadth ?? '-') . ' x ' . 
+        $dimension =
+            ($length ?? '-') . ' x ' .
+            ($breadth ?? '-') . ' x ' .
             ($height ?? '-');
-        
+
         $weight = $product_stock->weight ?? $product->product_weight_vol;
         $count = $product_stock->count;
         $stock_min_qty = $product_stock->min_qty;
@@ -1224,7 +1258,7 @@ class HomeController extends Controller
             $batchExpiry = $batch->product_exp_date ? Carbon::parse($batch->product_exp_date)->format('M Y') : null;
             $batchManufacturing = $batch->manufacturing_date ? Carbon::parse($batch->manufacturing_date)->format('M Y') : null;
             $batchRolePrice = $batch->role_price ?? [];
-            
+
             $batchesData[] = [
                 'id' => $batch->id,
                 'batch' => $batch->batch,
@@ -1278,7 +1312,7 @@ class HomeController extends Controller
     public function getLowestPriceVariantBatch(Request $request)
     {
         $product = Product::find($request->id);
-        
+
         if (!$product || !$product->variant_product) {
             return response()->json([
                 'success' => false,
@@ -1302,13 +1336,13 @@ class HomeController extends Controller
             }
 
             $batches = $stock->batches;
-            
+
             if ($batches && $batches->count() > 0) {
                 // Check each batch for lowest price
                 foreach ($batches as $batch) {
                     $mrpPrice = $batch->mrp_price ?? $stock->price ?? 0;
                     $batchRolePrice = $batch->role_price ?? null;
-                    
+
                     if ($batchRolePrice) {
                         $rolePriceArray = is_string($batchRolePrice) ? json_decode($batchRolePrice, true) : $batchRolePrice;
                         if (is_array($rolePriceArray)) {
