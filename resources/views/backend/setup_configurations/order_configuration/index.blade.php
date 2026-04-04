@@ -74,7 +74,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group row">
+                    {{-- <div class="form-group row">
                         <input type="hidden" name="types[]" value="referral_discount_min_order_amount">
                         <div class="col-md-4">
                             <label class="control-label">{{ translate('Minimum Order Amount For Referral Discount') }}</label>
@@ -82,7 +82,7 @@
                         <div class="col-md-8">
                             <input type="number" min="0" step="0.01" class="form-control" name="referral_discount_min_order_amount" value="{{ get_setting('referral_discount_min_order_amount') ?? 0 }}">
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="form-group row">
                         <input type="hidden" name="types[]" value="referral_reward_amount_for_referrer">
