@@ -2653,58 +2653,26 @@ if (!function_exists('order_re_payment_done')) {
 if (!function_exists('get_referral_discount_amount_for_user')) {
     function get_referral_discount_amount_for_user($user, float $amountAfterCoupon): float
     {
-        $hasHistoricalReferralDiscount = $user
-            ? Order::where('user_id', $user->id)->where('referral_discount_applied', '>', 0)->exists()
-            : false;
-
-        if (
-            !$user ||
-            $hasHistoricalReferralDiscount ||
-            empty($user->referred_by) ||
-            !empty($user->referral_discount_used_at) ||
-            !empty($user->referral_discount_locked_at) ||
-            (int) $user->referred_by === (int) $user->id
-        ) {
-            return 0.0;
-        }
-        if ((int) get_setting('referral_discount_enabled') !== 1) {
-            return 0.0;
-        }
-
-        $configuredAmount = (float) (get_setting('referral_discount_amount') ?? 0);
-        if ($configuredAmount <= 0) {
-            return 0.0;
-        }
-
-        $minOrder = (float) (get_setting('referral_discount_min_order_amount') ?? 0);
-        if ($amountAfterCoupon < $minOrder) {
-            return 0.0;
-        }
-
-        return max(0.0, min($configuredAmount, $amountAfterCoupon));
+        // Upfront referral discount is retired; keep function for compatibility.
+        return 0.0;
     }
 }
 
 if (!function_exists('lock_referral_discount_for_user')) {
     function lock_referral_discount_for_user(int $userId, int $orderId): bool
     {
-        $now = Carbon::now();
-        $updated = User::where('id', $userId)
-            ->whereNull('referral_discount_used_at')
-            ->whereNull('referral_discount_locked_at')
-            ->update([
-                'referral_discount_locked_at' => $now,
-                'referral_discount_locked_order_id' => $orderId,
-            ]);
-
-        return $updated > 0;
+        return false;
     }
 }
 
 if (!function_exists('finalize_referral_rewards_for_paid_order')) {
     function finalize_referral_rewards_for_paid_order($order): void
     {
-        if (!$order || $order->payment_status !== 'paid' || !$order->user_id) {
+        if (
+            !$order ||
+            $order->payment_status !== 'paid' ||
+            !$order->user_id
+        ) {
             return;
         }
 
@@ -2713,51 +2681,111 @@ if (!function_exists('finalize_referral_rewards_for_paid_order')) {
             return;
         }
 
-        $now = Carbon::now();
-
-        if ((float) ($order->referral_discount_applied ?? 0) > 0 && empty($user->referral_discount_used_at)) {
-            User::where('id', $user->id)
-                ->whereNull('referral_discount_used_at')
-                ->where(function ($q) use ($order) {
-                    $q->whereNull('referral_discount_locked_order_id')
-                        ->orWhere('referral_discount_locked_order_id', $order->id);
-                })
-                ->update([
-                    'referral_discount_used_at' => $now,
-                    'referral_discount_locked_at' => null,
-                    'referral_discount_locked_order_id' => null,
-                ]);
-        }
-
-        $points = (int) (get_setting('referral_reward_points_for_referrer') ?? 0);
-        if ($points <= 0 || !empty($user->referral_reward_granted_at)) {
+        // Grant only on the referred user's first paid order.
+        $hasPriorPaidOrder = Order::where('user_id', $user->id)
+            ->where('payment_status', 'paid')
+            ->where('id', '<>', $order->id)
+            ->exists();
+        if ($hasPriorPaidOrder) {
             return;
         }
 
-        $marked = User::where('id', $user->id)
-            ->whereNull('referral_reward_granted_at')
-            ->update(['referral_reward_granted_at' => $now]);
-
-        if ($marked) {
-            User::where('id', $user->referred_by)->increment('referral_points', $points);
+        $rewardAmount = (float) (get_setting('referral_discount_amount') ?? 0);
+        if ($rewardAmount <= 0) {
+            return;
         }
+
+        DB::transaction(function () use ($order, $user, $rewardAmount) {
+            // Prevent duplicate credits for either participant for this order.
+            $existingForReferrer = Wallet::where('user_id', $user->referred_by)
+                ->where('transaction_type', 'referral_reward')
+                ->where('reference_type', 'order')
+                ->where('reference_id', $order->id)
+                ->lockForUpdate()
+                ->first();
+
+            $existingForReferred = Wallet::where('user_id', $user->id)
+                ->where('transaction_type', 'referral_reward')
+                ->where('reference_type', 'order')
+                ->where('reference_id', $order->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existingForReferrer || $existingForReferred) {
+                return;
+            }
+
+            $referrer = User::where('id', $user->referred_by)->lockForUpdate()->first();
+            if (!$referrer) {
+                return;
+            }
+
+            $referred = User::where('id', $user->id)->lockForUpdate()->first();
+            if (!$referred) {
+                return;
+            }
+
+            $referrerName = $referrer->name ?: ($referrer->email ?: ('User ' . $referrer->id));
+            $referredName = $referred->name ?: ($referred->email ?: ('User ' . $referred->id));
+
+            $referrerNote = $referredName . ' completed a paid order via your referral link';
+            $referredNote = 'You were referred by ' . $referrerName ;
+
+            $payloadBase = [
+                'source' => 'referral_reward',
+                'order_id' => (int) $order->id,
+                'referred_user_id' => (int) $user->id,
+                'referrer_id' => (int) $referrer->id,
+                'referrer_name' => $referrerName,
+                'referred_name' => $referredName,
+                'amount' => $rewardAmount,
+            ];
+
+            // Credit referrer
+            $referrer->balance = (float) $referrer->balance + $rewardAmount;
+            $referrer->save();
+
+            $referrerPayload = json_encode(array_merge($payloadBase, [
+                'role' => 'referrer',
+                'note' => $referrerNote,
+            ]));
+            $wallet = new Wallet;
+            $wallet->user_id = $referrer->id;
+            $wallet->amount = $rewardAmount;
+            $wallet->transaction_type = 'referral_reward';
+            $wallet->payment_method = 'Referral Reward';
+            $wallet->payment_details = $referrerPayload;
+            $wallet->reference_type = 'order';
+            $wallet->reference_id = $order->id;
+            $wallet->meta = $referrerPayload;
+            $wallet->save();
+
+            // Credit referred user
+            $referred->balance = (float) $referred->balance + $rewardAmount;
+            $referred->save();
+
+            $referredPayload = json_encode(array_merge($payloadBase, [
+                'role' => 'referred_user',
+                'note' => $referredNote,
+            ]));
+            $wallet = new Wallet;
+            $wallet->user_id = $referred->id;
+            $wallet->amount = $rewardAmount;
+            $wallet->transaction_type = 'referral_reward';
+            $wallet->payment_method = 'Referral Reward';
+            $wallet->payment_details = $referredPayload;
+            $wallet->reference_type = 'order';
+            $wallet->reference_id = $order->id;
+            $wallet->meta = $referredPayload;
+            $wallet->save();
+        });
     }
 }
 
 if (!function_exists('release_referral_discount_lock_on_order_cancel')) {
     function release_referral_discount_lock_on_order_cancel($order): void
     {
-        if (!$order || (float) ($order->referral_discount_applied ?? 0) <= 0 || !$order->user_id) {
-            return;
-        }
-
-        User::where('id', $order->user_id)
-            ->whereNull('referral_discount_used_at')
-            ->where('referral_discount_locked_order_id', $order->id)
-            ->update([
-                'referral_discount_locked_at' => null,
-                'referral_discount_locked_order_id' => null,
-            ]);
+        return;
     }
 }
 

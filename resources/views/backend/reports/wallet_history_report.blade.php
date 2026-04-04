@@ -49,12 +49,19 @@
                             <th>{{ translate('Customer')}}</th>
                             <th data-breakpoints="lg">{{  translate('Date') }}</th>
                             <th>{{ translate('Amount')}}</th>
+                            <th data-breakpoints="lg">{{ translate('Transaction Type')}}</th>
                             <th data-breakpoints="lg">{{ translate('Payment Method')}}</th>
+                            <th data-breakpoints="lg">{{ translate('Note')}}</th>
                             <th data-breakpoints="lg" class="text-right">{{ translate('Approval')}}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($wallets as $key => $wallet)
+                            @php
+                                $transactionType = $wallet->transaction_type ?? 'recharge';
+                                $meta = json_decode($wallet->meta ?? $wallet->payment_details ?? '{}');
+                                $note = $meta->note ?? null;
+                            @endphp
                             <tr>
                                 <td>{{ $key+1 }}</td>
                                 @if ($wallet->user != null)
@@ -64,9 +71,21 @@
                                 @endif
                                 <td>{{ date('d-m-Y', strtotime($wallet->created_at)) }}</td>
                                 <td>{{ single_price($wallet->amount) }}</td>
-                                <td>{{ ucfirst(str_replace('_', ' ', $wallet ->payment_method)) }}</td>
+                                <td>{{ ucfirst(str_replace('_', ' ', $transactionType)) }}</td>
+                                <td>{{ $transactionType === 'referral_reward' ? translate('Referral Reward') : ucfirst(str_replace('_', ' ', $wallet ->payment_method)) }}</td>
+                                <td class="text-break" style="max-width: 240px;">
+                                    @if($note)
+                                        {{ $note }}
+                                    @elseif($transactionType === 'referral_reward')
+                                        {{ translate('Referral reward credited') }}
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td class="text-right">
-                                    @if ($wallet->offline_payment)
+                                    @if ($transactionType === 'referral_reward')
+                                        <span class="badge badge-inline badge-success">{{translate('Completed')}}</span>
+                                    @elseif ($wallet->offline_payment)
                                         @if ($wallet->approval)
                                             <span class="badge badge-inline badge-success">{{translate('Approved')}}</span>
                                         @else

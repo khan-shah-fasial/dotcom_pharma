@@ -29,7 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'referred_by','provider','provider_id','refresh_token','access_token','user_type','type_option','user_subtype',
         'name', 'email', 'password', 'address', 'postal_code', 'phone', 'provider_id', 'email_verified_at',    
-        'verification_code','new_email_verificiation_code','device_token','avatar','avatar_original','balance','banned','referral_code','referral_discount_used_at','referral_discount_locked_at','referral_discount_locked_order_id','referral_reward_granted_at','referral_points','customer_package_id','remaining_uploads',
+        'verification_code','new_email_verificiation_code','device_token','avatar','avatar_original','balance','banned','referral_code','customer_package_id','remaining_uploads',
         'city',
         'state',
         'country',

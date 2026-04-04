@@ -85,12 +85,12 @@
                     </div>
 
                     <div class="form-group row">
-                        <input type="hidden" name="types[]" value="referral_reward_points_for_referrer">
+                        <input type="hidden" name="types[]" value="referral_reward_amount_for_referrer">
                         <div class="col-md-4">
-                            <label class="control-label">{{ translate('Reward Points For Referrer') }}</label>
+                            <label class="control-label">{{ translate('Reward Amount For Referrer (Wallet Credit)') }}</label>
                         </div>
                         <div class="col-md-8">
-                            <input type="number" min="0" step="1" class="form-control" name="referral_reward_points_for_referrer" value="{{ get_setting('referral_reward_points_for_referrer') ?? 0 }}">
+                            <input type="number" min="0" step="0.01" class="form-control" name="referral_reward_amount_for_referrer" value="{{ get_setting('referral_reward_amount_for_referrer') ?? 0 }}">
                         </div>
                     </div>
 

@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Auth\Events\PasswordReset;
 use App\Models\Cart;
+use App\Models\Wallet;
 use App\Utility\EmailUtility;
 use Artisan;
 use DB;
@@ -295,10 +296,12 @@ class HomeController extends Controller
         }
 
         $referralLink = route('user.registration', ['referral_code' => $user->referral_code]);
-        $referralPoints = (int) ($user->referral_points ?? 0);
-        $pointsPerReferral = (int) (get_setting('referral_reward_points_for_referrer') ?? 0);
+        $earnedReferralAmount = (float) Wallet::where('user_id', $user->id)
+            ->where('transaction_type', 'referral_reward')
+            ->sum('amount');
+        $rewardAmountPerReferral = (float) (get_setting('referral_discount_amount') ?? 0);
 
-        return view('frontend.user.refer_a_friend', compact('referralLink', 'referralPoints', 'pointsPerReferral'));
+        return view('frontend.user.refer_a_friend', compact('referralLink', 'earnedReferralAmount', 'rewardAmountPerReferral'));
     }
 
 

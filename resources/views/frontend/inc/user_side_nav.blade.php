@@ -67,6 +67,14 @@
                         <span class="aiz-side-nav-text ml-3">{{ translate('Manage Profile') }}</span>
                     </a>
                 </li>
+
+                <!-- Refer a Friend -->
+                <li class="aiz-side-nav-item">
+                    <a href="{{ route('refer.a.friend') }}" class="aiz-side-nav-link {{ areActiveRoutes(['refer.a.friend']) }}">
+                        <i class="las la-user-plus text-muted"></i>
+                        <span class="aiz-side-nav-text ml-3">{{ translate('Refer a Friend') }}</span>
+                    </a>
+                </li>
                 
                 <!-- Spend & Save -->
                 <li class="aiz-side-nav-item">
@@ -416,7 +424,7 @@
                 @endphp
 
                 <!-- Support Ticket -->
-                <li class="aiz-side-nav-item d-none">
+                <li class="aiz-side-nav-item">
                     <a href="{{ route('support_ticket.index') }}"
                         class="aiz-side-nav-link {{ areActiveRoutes(['support_ticket.index', 'support_ticket.show']) }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16.001" viewBox="0 0 16 16.001">

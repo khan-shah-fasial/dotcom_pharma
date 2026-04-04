@@ -148,8 +148,8 @@ class CheckoutController extends Controller
             }
             $totalBeforeCoupon = $subtotal + $tax + $shipping;
             $totalAfterCoupon = max(0, $totalBeforeCoupon - $coupon_discount);
-            $referral_discount_preview = get_referral_discount_amount_for_user(auth()->user(), $totalAfterCoupon);
-            $totalAfterReferral = max(0, $totalAfterCoupon - $referral_discount_preview);
+            $referral_discount_preview = 0;
+            $totalAfterReferral = $totalAfterCoupon;
             $total = Session::has('club_point') ? max(0, $totalAfterReferral - Session::get('club_point')) : $totalAfterReferral;
 
             $carts = $carts->fresh();

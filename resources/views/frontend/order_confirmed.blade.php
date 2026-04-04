@@ -223,14 +223,6 @@
                                                             <span>{{ single_price($order->coupon_discount) }}</span>
                                                         </td>
                                                     </tr>
-                                                    @if ((float) ($order->referral_discount_applied ?? 0) > 0)
-                                                        <tr>
-                                                            <th class="border-top-0 py-2">{{ translate('Referral Discount')}}</th>
-                                                            <td class="text-right border-top-0 pr-0 py-2">
-                                                                <span>-{{ single_price($order->referral_discount_applied) }}</span>
-                                                            </td>
-                                                        </tr>
-                                                    @endif
                                                     <!-- Total -->
                                                     <tr>
                                                         <th class="py-2"><span class="fw-600">{{ translate('Total')}}</span></th>

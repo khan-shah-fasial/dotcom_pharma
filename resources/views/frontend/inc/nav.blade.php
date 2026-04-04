@@ -1276,7 +1276,7 @@ body .translater_menu .select2-container {
                         <div class="aiz-user-top-menu bg-white rounded-0 border-top shadow-sm" style="width:220px;">
                             <ul class="list-unstyled no-scrollbar mb-0 text-left">
                                 @if (isAdmin())
-                                    <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('admin.dashboard') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -1290,7 +1290,7 @@ body .translater_menu .select2-container {
                                         </a>
                                     </li>
                                 @else
-                                    <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('dashboard') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -1323,7 +1323,7 @@ body .translater_menu .select2-container {
                                     </a>
                                 </li>
 
-                                <li class="user-top-nav-element border border-top-0" data-id="1">
+                                <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                     <a href="{{ route('purchase_history.spend_save') }}"
                                         class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
@@ -1337,7 +1337,7 @@ body .translater_menu .select2-container {
                                     </a>
                                 </li>
 
-                                <li class="user-top-nav-element border border-top-0" data-id="1">
+                                <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                     <a href="{{ route('purchase_history.past_orders') }}"
                                         class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
@@ -1388,7 +1388,7 @@ body .translater_menu .select2-container {
                                     </a>
                                 </li>
 
-                                <li class="user-top-nav-element border border-top-0" data-id="1">
+                                <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                     <a href="{{ route('wishlists.index') }}"
                                         class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                         <svg id="Group_8116" data-name="Group 8116" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="16" viewBox="0 0 16 16">
@@ -1404,7 +1404,7 @@ body .translater_menu .select2-container {
                                         <span class="user-top-menu-name has-transition ml-3">{{ translate('My Saved List') }}</span>
                                     </a>
                                     </li>
-                                    <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('subscribe-list') }}"
                                             class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
@@ -1419,7 +1419,7 @@ body .translater_menu .select2-container {
 
 
                                     @if(!empty($user->user_subtype) && $user->user_subtype != '')
-                                        <li class="user-top-nav-element border border-top-0" data-id="1">
+                                        <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                             <a class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1" href="{{ route('request-doc.form') }}">
                                                 <i class="las la-business-time"></i>
                                                 <span
@@ -1449,7 +1449,7 @@ body .translater_menu .select2-container {
                                         </a>
                                     </li>
                                     @if (get_setting('conversation_system') == 1)
-                                        <li class="user-top-nav-element border border-top-0" data-id="1">
+                                        <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                             <a href="{{ route('conversations.index') }}"
                                                 class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -1501,7 +1501,7 @@ body .translater_menu .select2-container {
                                             </a>
                                         </li>
                                     @endif
-                                    <li class="user-top-nav-element border border-top-0" data-id="1">
+                                    <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('financial-archives.user') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
                                                 <g fill="none" fill-rule="evenodd">
@@ -1839,16 +1839,16 @@ body .translater_menu .select2-container {
                 @endif
                 @auth
                     @if (isAdmin())
-                        <hr>
-                        <li class="mr-0">
+                        <hr class="d-none">
+                        <li class="mr-0 d-none">
                             <a href="{{ route('admin.dashboard') }}"
                                 class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links">
                                 {{ translate('My Account') }}
                             </a>
                         </li>
                     @else
-                        <hr>
-                        <li class="mr-0">
+                        <hr class="d-none">
+                        <li class="mr-0 d-none">
                             <a href="{{ route('dashboard') }}"
                                 class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
                                 {{ areActiveRoutes(['dashboard'], ' active') }}">
@@ -1858,10 +1858,10 @@ body .translater_menu .select2-container {
                     @endif
                     @if (isCustomer())
                         <li class="mr-0">
-                            <a href="{{ route('customer.all-notifications') }}"
+                            <a href="{{ route('profile') }}"
                                 class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
-                                {{ areActiveRoutes(['customer.all-notifications'], ' active') }}">
-                                {{ translate('Notifications') }}
+                                {{ areActiveRoutes(['profile'], ' active') }}">
+                                {{ translate('Manage Profile') }}
                             </a>
                         </li>
                         <li class="mr-0">
@@ -1872,19 +1872,31 @@ body .translater_menu .select2-container {
                             </a>
                         </li>
                         <li class="mr-0">
-                            <a href="{{ route('wishlists.index') }}"
+                            <a href="{{ route('purchase_history.index') }}"
                                 class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
-                                {{ areActiveRoutes(['wishlists.index'], ' active') }}">
-                                {{ translate('My Saved List') }}
+                                {{ areActiveRoutes(['purchase_history.index'], ' active') }}">
+                                {{ translate('My Orders') }}
                             </a>
                         </li>
-                        <li class="mr-0">
-                            <a href="{{ route('compare') }}"
-                                class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
-                                {{ areActiveRoutes(['compare'], ' active') }}">
-                                {{ translate('Compare') }}
-                            </a>
-                        </li>
+                        @if (get_setting('wallet_system') == 1)
+                            <li class="mr-0">
+                                <a href="{{ route('wallet.index') }}"
+                                    class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
+                                    {{ areActiveRoutes(['wallet.index'], ' active') }}">
+                                    {{ translate('My Wallet') }}
+                                </a>
+                            </li>
+                        @endif
+                        @php $authUser = auth()->user(); @endphp
+                        @if ($authUser && $authUser->type_option !== null)
+                            <li class="mr-0">
+                                <a href="{{ route('user.support') }}"
+                                    class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
+                                    {{ areActiveRoutes(['user.support'], ' active') }}">
+                                    {{ translate('Support') }}
+                                </a>
+                            </li>
+                        @endif
                     @endif
                     <hr>
                     <li class="mr-0">

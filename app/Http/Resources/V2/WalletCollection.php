@@ -13,8 +13,12 @@ class WalletCollection extends ResourceCollection
             'data' => $this->collection->map(function ($data) {
                 return [
                     'amount' => single_price(($data->amount)),
+                    'transaction_type' => ucwords(str_replace('_', ' ', $data->transaction_type ?? 'recharge')),
                     'payment_method' => ucwords(str_replace('_', ' ', $data->payment_method)),
-                    'approval_string' => $data->offline_payment ? ($data->approval == 1 ? "Approved" : "Pending") : "N/A",
+                    'note' => optional(json_decode($data->meta ?? $data->payment_details ?? '{}'))->note,
+                    'approval_string' => ($data->transaction_type ?? 'recharge') === 'referral_reward'
+                        ? 'Completed'
+                        : ($data->offline_payment ? ($data->approval == 1 ? "Approved" : "Pending") : "N/A"),
                     'date' => Carbon::createFromTimestamp(strtotime($data->created_at))->format('d-m-Y'),
                 ];
             })

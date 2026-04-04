@@ -377,18 +377,6 @@ class OrderController extends Controller
             }
         }
 
-        $referralDiscount = get_referral_discount_amount_for_user(Auth::user(), (float) $combined_order->grand_total);
-        if ($referralDiscount > 0 && $firstOrderForReferral) {
-            $isLocked = lock_referral_discount_for_user((int) Auth::id(), (int) $firstOrderForReferral->id);
-            if ($isLocked) {
-                $firstOrderForReferral->grand_total = max(0, (float) $firstOrderForReferral->grand_total - $referralDiscount);
-                $firstOrderForReferral->quote_grand_total = $firstOrderForReferral->grand_total;
-                $firstOrderForReferral->referral_discount_applied = $referralDiscount;
-                $firstOrderForReferral->save();
-                $combined_order->grand_total = max(0, (float) $combined_order->grand_total - $referralDiscount);
-            }
-        }
-
         $combined_order->save();
 
         $request->session()->put('combined_order_id', $combined_order->id);
