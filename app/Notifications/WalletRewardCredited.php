@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\NotificationType;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -24,7 +25,7 @@ class WalletRewardCredited extends Notification
 
         // Ensure notification type id is present.
         $walletRewardData['notification_type_id'] = $walletRewardData['notification_type_id']
-            ?? get_notification_type_id('wallet_reward_credited');
+            ?? $this->resolveNotificationTypeId('wallet_reward_credited');
 
         $this->data = $walletRewardData;
         $this->className = self::class;
@@ -46,5 +47,17 @@ class WalletRewardCredited extends Notification
                 'status'   => $this->data['status'] ?? null,
             ],
         ];
+    }
+
+    /**
+     * Resolve notification type id without relying on a global helper.
+     */
+    protected function resolveNotificationTypeId(string $type): ?int
+    {
+        if (function_exists('get_notification_type')) {
+            return optional(get_notification_type($type, 'type'))->id;
+        }
+
+        return NotificationType::where('type', $type)->value('id');
     }
 }

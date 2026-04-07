@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\GiftRequest;
+use App\Models\NotificationType;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -34,7 +35,7 @@ class GiftRequestStatusChanged extends Notification
 
         // Ensure notification type id is present.
         $giftRequestData['notification_type_id'] = $giftRequestData['notification_type_id']
-            ?? get_notification_type_id('gift_request_status_changed');
+            ?? $this->resolveNotificationTypeId('gift_request_status_changed');
 
         $this->data = $giftRequestData;
         $this->className = self::class;
@@ -57,5 +58,17 @@ class GiftRequestStatusChanged extends Notification
                 'note'            => $this->data['note'] ?? null,
             ],
         ];
+    }
+
+    /**
+     * Resolve notification type id without relying on a global helper.
+     */
+    protected function resolveNotificationTypeId(string $type): ?int
+    {
+        if (function_exists('get_notification_type')) {
+            return optional(get_notification_type($type, 'type'))->id;
+        }
+
+        return NotificationType::where('type', $type)->value('id');
     }
 }
