@@ -128,7 +128,31 @@
         get_city(state_id);
     });
 
-    function get_states(country_id) {
+    // Auto-fill state/city from postal code + country
+    $(document).on('blur', 'input[name="postal_code"]', function() {
+        var postal = $(this).val();
+        var country_id = $('[name="country_id"]').val();
+        if (!postal || !country_id) return;
+
+        $.ajax({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            url: "{{ route('get-location') }}",
+            type: 'POST',
+            data: {
+                postal_code: postal,
+                country_id: country_id
+            },
+            success: function (res) {
+                if (res.state_id) {
+                    get_states(country_id, res.state_id, res.city_id);
+                }
+            }
+        });
+    });
+
+    function get_states(country_id, selected_state_id = null, selected_city_id = null) {
         $('[name="state"]').html("");
         $.ajax({
             headers: {
@@ -143,13 +167,19 @@
                 var obj = JSON.parse(response);
                 if(obj != '') {
                     $('[name="state_id"]').html(obj);
+                    if (selected_state_id) {
+                        $('[name="state_id"]').val(selected_state_id);
+                    }
                     AIZ.plugins.bootstrapSelect('refresh');
+                    if (selected_state_id && selected_city_id) {
+                        get_city(selected_state_id, selected_city_id);
+                    }
                 }
             }
         });
     }
 
-    function get_city(state_id) {
+    function get_city(state_id, selected_city_id = null) {
         $('[name="city"]').html("");
         $.ajax({
             headers: {
@@ -164,6 +194,9 @@
                 var obj = JSON.parse(response);
                 if(obj != '') {
                     $('[name="city_id"]').html(obj);
+                    if (selected_city_id) {
+                        $('[name="city_id"]').val(selected_city_id);
+                    }
                     AIZ.plugins.bootstrapSelect('refresh');
                 }
             }

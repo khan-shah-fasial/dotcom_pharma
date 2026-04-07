@@ -87,7 +87,7 @@
                                 @elseif($transactionType === 'referral_reward')
                                     {{ translate('Referral reward credited') }}
                                 @else
-                                    —
+                                    -
                                 @endif
                             </td>
                             <td class="text-right pr-0">

@@ -58,6 +58,8 @@ use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\WarrantyController;
+use App\Http\Controllers\Admin\GiftController as AdminGiftController;
+use App\Http\Controllers\Admin\GiftRequestController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\ZoneController;
 use App\Http\Controllers\RequestDocController;
@@ -537,6 +539,25 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/earning-payout-report/payouts', [EarningReportController::class, 'payouts']);
         Route::post('/earning-payout-report/sale-analytic', [EarningReportController::class, 'sale_analytic']);
         Route::post('/earning-payout-report/payout-analytic', [EarningReportController::class, 'payout_analytic']);
+    });
+
+    // Gifts
+    Route::controller(AdminGiftController::class)->group(function () {
+        Route::get('/gifts', 'index')->name('gifts.index');
+        Route::get('/gifts/create', 'create')->name('gifts.create');
+        Route::get('/gifts/{gift}/edit', 'edit')->name('gifts.edit');
+        Route::post('/gifts', 'store')->name('gifts.store');
+        Route::post('/gifts/{gift}/update', 'update')->name('gifts.update');
+        Route::post('/gifts/{gift}/toggle', 'toggleStatus')->name('gifts.toggle');
+        Route::post('/gifts/{gift}/delete', 'destroy')->name('gifts.destroy');
+    });
+
+    // Gift Requests
+    Route::controller(GiftRequestController::class)->group(function () {
+        Route::get('/gift-requests', 'index')->name('gift_requests.index');
+        Route::post('/gift-requests/approve', 'approve')->name('gift_requests.approve');
+        Route::post('/gift-requests/deliver', 'deliver')->name('gift_requests.deliver');
+        Route::post('/gift-requests/reject', 'reject')->name('gift_requests.reject');
     });
 
     //Blog Section

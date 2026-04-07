@@ -327,6 +327,13 @@
                             <span class="aiz-side-nav-text ml-3">{{ translate('My Wallet') }}</span>
                         </a>
                     </li>
+                    <li class="aiz-side-nav-item">
+                        <a href="{{ route('gifts.front.index') }}"
+                            class="aiz-side-nav-link {{ areActiveRoutes(['gifts.front.index']) }}">
+                            <i class="las la-gift"></i>
+                            <span class="aiz-side-nav-text ml-3">{{ translate('Gifts') }}</span>
+                        </a>
+                    </li>
                 @endif
 
                 <!-- Financial Archive -->

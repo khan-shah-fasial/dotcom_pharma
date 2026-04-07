@@ -77,6 +77,32 @@
                     </li>
                 @endif
 
+                {{-- Gifts --}}
+                <li class="aiz-side-nav-item">
+                    <a href="#" class="aiz-side-nav-link">
+                        <div class="aiz-side-nav-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#575b6a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="8" width="18" height="13" rx="2" ry="2"></rect>
+                                <path d="M12 8v13M12 8h6a3 3 0 0 0-6-3c0 1 0 3 0 3zM12 8H6a3 3 0 1 1 6-3c0 1 0 3 0 3z"></path>
+                            </svg>
+                        </div>
+                        <span class="aiz-side-nav-text">{{ translate('Gifts') }}</span>
+                        <span class="aiz-side-nav-arrow"></span>
+                    </a>
+                    <ul class="aiz-side-nav-list level-2">
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('gifts.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['gifts.index']) }}">
+                                <span class="aiz-side-nav-text">{{ translate('Gift List') }}</span>
+                            </a>
+                        </li>
+                        <li class="aiz-side-nav-item">
+                            <a href="{{ route('gift_requests.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['gift_requests.index']) }}">
+                                <span class="aiz-side-nav-text">{{ translate('Gift Requests') }}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
                 <!-- Product -->
                 @canany(['add_new_product', 'show_all_products','show_in_house_products','show_seller_products','show_digital_products','product_bulk_import','product_bulk_export','view_product_categories', 'view_all_brands', 'brand_bulk_upload','view_product_attributes','view_colors','view_product_warranties','view_product_reviews'])
                     <li class="aiz-side-nav-item">

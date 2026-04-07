@@ -11,6 +11,7 @@ use App\Http\Controllers\CompareController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\GiftController;
 use App\Http\Controllers\CustomerPackageController;
 use App\Http\Controllers\CustomerProductController;
 use App\Http\Controllers\DemoController;
@@ -497,6 +498,13 @@ Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function ()
         Route::get('/wallet', 'index')->name('wallet.index');
         Route::post('/recharge', 'recharge')->name('wallet.recharge');
     });
+
+    // Gifts (frontend)
+    Route::get('/gifts', [GiftController::class, 'index'])->name('gifts.front.index');
+    Route::get('/wallet/gifts/requests', [GiftController::class, 'requests'])->name('gifts.requests');
+    Route::post('/gifts/redeem', [GiftController::class, 'redeem'])->name('gifts.redeem');
+    // keep wallet endpoint for backward compatibility
+    Route::post('/wallet/gift/redeem', [GiftController::class, 'redeem'])->name('wallet.gift.redeem');
 
     // Support Ticket
     Route::resource('support_ticket', SupportTicketController::class);
