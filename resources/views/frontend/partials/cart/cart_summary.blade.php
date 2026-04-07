@@ -122,6 +122,28 @@
                 </tfoot>
             </table>
 
+            @php
+                $rewardPreview = get_gift_reward_preview($total);
+            @endphp
+
+            @if (!empty($rewardPreview['enabled']))
+                @if (!empty($rewardPreview['matched_reward']))
+                    <div class="alert alert-soft-success rounded-0 py-2">
+                        {{ str_replace(':amount', single_price($rewardPreview['matched_reward']), translate("You'll earn :amount wallet reward on this order after payment.")) }}
+                    </div>
+                @endif
+
+                @if (!empty($rewardPreview['next_min']) && (!empty($rewardPreview['delta_to_next']) && $rewardPreview['delta_to_next'] > 0) && (empty($rewardPreview['matched_reward']) || $rewardPreview['next_min'] > ($rewardPreview['matched_min'] ?? 0)))
+                    <div class="alert alert-soft-info rounded-0 py-2 mb-0">
+                        {{ str_replace(
+                            [':amount', ':reward'],
+                            [single_price($rewardPreview['delta_to_next']), single_price($rewardPreview['next_reward'] ?? 0)],
+                            translate('Add :amount more to earn :reward wallet reward.')
+                        ) }}
+                    </div>
+                @endif
+            @endif
+
             <!-- Coupon System -->
             @if (get_setting('coupon_system') == 1)
                 @if ($coupon_discount > 0 && $coupon_code)

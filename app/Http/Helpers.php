@@ -2830,6 +2830,66 @@ if (!function_exists('get_gift_reward_tiers')) {
     }
 }
 
+if (!function_exists('get_gift_reward_preview')) {
+    /**
+     * Compute reward eligibility for a given total using configured tiers.
+     *
+     * @return array{
+     *   enabled: bool,
+     *   matched_reward?: float|null,
+     *   matched_min?: float|null,
+     *   next_min?: float|null,
+     *   next_reward?: float|null,
+     *   delta_to_next?: float|null
+     * }
+     */
+    function get_gift_reward_preview(float $total): array
+    {
+        $enabled = (int) (get_setting('gift_reward_enabled') ?? 0) === 1;
+        if (!$enabled) {
+            return ['enabled' => false];
+        }
+
+        $tiers = get_gift_reward_tiers();
+        if (empty($tiers)) {
+            return ['enabled' => false];
+        }
+
+        $matched = null;
+        foreach ($tiers as $tier) {
+            if ($total >= (float) $tier['min']) {
+                $matched = $tier;
+                break;
+            }
+        }
+
+        // Determine next higher tier (the one immediately above the matched tier, or the first tier if none matched)
+        $nextTier = null;
+        if ($matched) {
+            $currentIndex = array_search($matched, $tiers, true);
+            if ($currentIndex !== false && isset($tiers[$currentIndex - 1])) {
+                $nextTier = $tiers[$currentIndex - 1];
+            }
+        } else {
+            $nextTier = $tiers[0];
+        }
+
+        $deltaToNext = null;
+        if ($nextTier) {
+            $deltaToNext = max(0, (float) $nextTier['min'] - $total);
+        }
+
+        return [
+            'enabled' => true,
+            'matched_reward' => $matched['reward'] ?? null,
+            'matched_min' => $matched['min'] ?? null,
+            'next_min' => $nextTier['min'] ?? null,
+            'next_reward' => $nextTier['reward'] ?? null,
+            'delta_to_next' => $deltaToNext,
+        ];
+    }
+}
+
 if (!function_exists('release_referral_discount_lock_on_order_cancel')) {
     function release_referral_discount_lock_on_order_cancel($order): void
     {

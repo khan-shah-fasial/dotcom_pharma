@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\NotificationType;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 
 class WalletRewardCredited extends Notification
 {
@@ -33,7 +34,7 @@ class WalletRewardCredited extends Notification
 
     public function via($notifiable)
     {
-        return [DbNotification::class];
+        return [DbNotification::class, 'mail'];
     }
 
     public function toArray($notifiable)
@@ -47,6 +48,22 @@ class WalletRewardCredited extends Notification
                 'status'   => $this->data['status'] ?? null,
             ],
         ];
+    }
+
+    public function toMail($notifiable)
+    {
+        $amount = $this->data['amount'] ?? 0;
+        $orderId = $this->data['order_id'] ?? '-';
+        $formattedAmount = number_format((float) $amount, 2, '.', '');
+
+        return (new MailMessage)
+            ->subject(__('Wallet Reward Credited'))
+            ->greeting(__('Hello :name,', ['name' => $notifiable->name ?? '']))
+            ->line(__('We have credited a wallet reward to your account.'))
+            ->line(__('Amount: ₹:amount', ['amount' => $formattedAmount]))
+            ->line(__('Order: #:order', ['order' => $orderId]))
+            ->line(__('You can use this balance on your next purchase.'))
+            ->salutation(__('Thanks for shopping with us!'));
     }
 
     /**
