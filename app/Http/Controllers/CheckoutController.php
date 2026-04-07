@@ -16,6 +16,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Utility\EmailUtility;
 use App\Utility\NotificationUtility;
+use App\Services\WalletRewardService;
 use Session;
 use Auth;
 use Hash;
@@ -355,6 +356,7 @@ class CheckoutController extends Controller
             // Calculate Commission from seller, Customer Affiliate earning and Customers Club Point
             calculateCommissionAffilationClubPoint($order);
             finalize_referral_rewards_for_paid_order($order);
+            app(WalletRewardService::class)->applyReward($order);
         }
 
         Session::put('combined_order_id', $combined_order_id);
@@ -920,6 +922,7 @@ class CheckoutController extends Controller
         $order->save();
         calculateCommissionAffilationClubPoint($order);
         finalize_referral_rewards_for_paid_order($order);
+        app(WalletRewardService::class)->applyReward($order);
 
         if($order->notified == 0){
             NotificationUtility::sendOrderPlacedNotification($order);

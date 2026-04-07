@@ -5,7 +5,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
-class GiftRequestStatusChanged extends Notification
+class WalletRewardCredited extends Notification
 {
     use Queueable;
 
@@ -13,11 +13,11 @@ class GiftRequestStatusChanged extends Notification
     public $className;
 
     /**
-     * @param array $giftRequestData
+     * @param array $walletRewardData
      */
-    public function __construct($giftRequestData)
+    public function __construct($walletRewardData)
     {
-        $this->data = $giftRequestData;
+        $this->data = $walletRewardData;
         $this->className = self::class;
     }
 
@@ -31,11 +31,10 @@ class GiftRequestStatusChanged extends Notification
         return [
             'notification_type_id' => $this->data['notification_type_id'],
             'data' => [
-                'gift_request_id' => $this->data['gift_request_id'] ?? null,
-                'gift_name'       => $this->data['gift_name'] ?? null,
-                'quantity'        => $this->data['quantity'] ?? null,
-                'status'          => $this->data['status'] ?? null,
-                'note'            => $this->data['note'] ?? null,
+                'amount'   => $this->data['amount'] ?? null,
+                'order_id' => $this->data['order_id'] ?? null,
+                'user_id'  => $this->data['user_id'] ?? null,
+                'status'   => $this->data['status'] ?? null,
             ],
         ];
     }

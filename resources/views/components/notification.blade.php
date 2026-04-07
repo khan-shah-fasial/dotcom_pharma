@@ -28,6 +28,7 @@
                     $user_type = auth()->user()->user_type;
                     $notificationType = get_notification_type($notification->notification_type_id, 'id');
                     $notifyContent = $notificationType->getTranslation('default_text');
+                    $variantNames = [];
                 @endphp
                 <div class="d-flex">
                     <div class="form-group d-inline-block">
@@ -122,6 +123,20 @@
                                 $notifyContent = str_replace('[[variant_name]]', $variantName, $notifyContent);
                                 $notifyContent = str_replace('[[batch_name]]', $batchName, $notifyContent);
                                 $notifyContent = str_replace('[[stock_count]]', $stockCount, $notifyContent);
+                            @endphp
+                        {{-- Wallet Reward Notifications --}}
+                        @elseif ($notification->type == 'App\Notifications\WalletRewardCredited')
+                            @php
+                                $amount = single_price($notification->data['amount'] ?? 0);
+                                $notifyContent = str_replace('[[amount]]', $amount, $notifyContent);
+                            @endphp
+                        {{-- Gift Request Status Notifications --}}
+                        @elseif ($notification->type == 'App\Notifications\GiftRequestStatusChanged')
+                            @php
+                                $giftName = "<a href='".route('gifts.requests')."'>".($notification->data['gift_name'] ?? '')."</a>";
+                                $status   = ucfirst($notification->data['status'] ?? '');
+                                $notifyContent = str_replace('[[gift_name]]', $giftName, $notifyContent);
+                                $notifyContent = str_replace('[[status]]', $status, $notifyContent);
                             @endphp
                         @endif
                         <p class="mb-1 text-truncate-2">

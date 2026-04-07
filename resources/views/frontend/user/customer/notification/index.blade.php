@@ -49,6 +49,7 @@
                                 @php
                                     $notificationType = get_notification_type($notification->notification_type_id, 'id');
                                     $notifyContent = $notificationType->getTranslation('default_text');
+                                    $variantNames = [];
                                 @endphp
                                 <div class="form-group d-inline-block">
                                     <label class="aiz-checkbox">
@@ -88,6 +89,18 @@
                                                 if($link != null){
                                                     $notifyContent = "<a href='".$link."'>".$notifyContent."</a>";
                                                 }
+                                            @endphp
+                                        @elseif($notification->type == 'App\Notifications\WalletRewardCredited')
+                                            @php
+                                                $amount = single_price($notification->data['amount'] ?? 0);
+                                                $notifyContent = str_replace('[[amount]]', $amount, $notifyContent);
+                                            @endphp
+                                        @elseif($notification->type == 'App\Notifications\GiftRequestStatusChanged')
+                                            @php
+                                                $giftName = "<a href='".route('gifts.requests')."'>".($notification->data['gift_name'] ?? '')."</a>";
+                                                $status   = ucfirst($notification->data['status'] ?? '');
+                                                $notifyContent = str_replace('[[gift_name]]', $giftName, $notifyContent);
+                                                $notifyContent = str_replace('[[status]]', $status, $notifyContent);
                                             @endphp
                                         @elseif($notification->type == 'App\Notifications\ProductRestockNotification')
                                             {{-- already handled above; keep rendering --}}

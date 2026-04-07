@@ -17,6 +17,7 @@ use DB;
 use \App\Utility\NotificationUtility;
 use App\Models\CombinedOrder;
 use App\Http\Controllers\AffiliateController;
+use App\Services\WalletRewardService;
 
 class OrderController extends Controller
 {
@@ -245,6 +246,10 @@ class OrderController extends Controller
             }
 
             $order->save();
+
+            if ($set_paid) {
+                app(WalletRewardService::class)->applyReward($order);
+            }
         }
         $combined_order->save();
 

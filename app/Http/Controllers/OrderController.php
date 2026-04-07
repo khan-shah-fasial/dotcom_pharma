@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\OrderNotification;
 use App\Utility\EmailUtility;
 use Illuminate\Support\Facades\Session;
+use App\Services\WalletRewardService;
 
 class OrderController extends Controller
 {
@@ -578,6 +579,7 @@ class OrderController extends Controller
     public function update_payment_status(Request $request)
     {
         $order = Order::findOrFail($request->order_id);
+        $previousPaymentStatus = $order->payment_status;
         $order->payment_status_viewed = '0';
         $order->save();
 
@@ -602,6 +604,7 @@ class OrderController extends Controller
         $order->payment_status = $status;
         $order->save();
 
+        $statusChangedToPaid = $previousPaymentStatus !== 'paid' && $order->payment_status == 'paid';
 
         if (
             $order->payment_status == 'paid' &&
@@ -611,6 +614,9 @@ class OrderController extends Controller
         }
         if ($order->payment_status == 'paid') {
             finalize_referral_rewards_for_paid_order($order);
+            if ($statusChangedToPaid) {
+                app(WalletRewardService::class)->applyReward($order);
+            }
         }
 
         // Payment Status change email notification to Admin, seller, Customer

@@ -2782,6 +2782,54 @@ if (!function_exists('finalize_referral_rewards_for_paid_order')) {
     }
 }
 
+if (!function_exists('get_gift_reward_tiers')) {
+    /**
+     * Fetch and normalize configured gift reward tiers (highest min first).
+     */
+    function get_gift_reward_tiers(): array
+    {
+        $raw = get_setting('gift_reward_tiers');
+
+        if (empty($raw)) {
+            return [];
+        }
+
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $tiers = [];
+
+        foreach ($raw as $tier) {
+            if (!is_array($tier)) {
+                continue;
+            }
+
+            $min = $tier['min'] ?? null;
+            $reward = $tier['reward'] ?? null;
+
+            if (!is_numeric($min) || !is_numeric($reward)) {
+                continue;
+            }
+
+            $tiers[] = [
+                'min' => (float) $min,
+                'reward' => (float) $reward,
+            ];
+        }
+
+        usort($tiers, function ($a, $b) {
+            return ($b['min'] ?? 0) <=> ($a['min'] ?? 0);
+        });
+
+        return $tiers;
+    }
+}
+
 if (!function_exists('release_referral_discount_lock_on_order_cancel')) {
     function release_referral_discount_lock_on_order_cancel($order): void
     {
