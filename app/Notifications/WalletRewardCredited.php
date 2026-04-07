@@ -12,11 +12,20 @@ class WalletRewardCredited extends Notification
     public $data;
     public $className;
 
-    /**
-     * @param array $walletRewardData
-     */
-    public function __construct($walletRewardData)
+    public function __construct($walletRewardData, $orderId = null)
     {
+        // Backward compatibility: accept (amount, orderId) signature.
+        if (!is_array($walletRewardData)) {
+            $walletRewardData = [
+                'amount' => $walletRewardData,
+                'order_id' => $orderId,
+            ];
+        }
+
+        // Ensure notification type id is present.
+        $walletRewardData['notification_type_id'] = $walletRewardData['notification_type_id']
+            ?? get_notification_type_id('wallet_reward_credited');
+
         $this->data = $walletRewardData;
         $this->className = self::class;
     }
