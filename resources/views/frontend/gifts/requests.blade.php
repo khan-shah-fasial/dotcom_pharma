@@ -1,5 +1,27 @@
 @extends('frontend.layouts.app')
 
+@push('styles')
+<style>
+    .gift-request-status-cell {
+        white-space: nowrap;
+    }
+
+    .gift-request-status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 96px;
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        text-transform: capitalize;
+        white-space: nowrap;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -43,8 +65,10 @@
                                     <td>{{ optional($req->gift)->name }}</td>
                                     <td>{{ $req->quantity }}</td>
                                     <td>{{ single_price($req->cost_snapshot) }}</td>
-                                    <td>
-                                        <span class="badge badge-pill badge-{{ $req->status_badge_class }} px-3 py-2 text-capitalize">{{ $req->status }}</span>
+                                    <td class="gift-request-status-cell">
+                                        <span class="badge badge-inline badge-{{ $req->status_badge_class }} gift-request-status-badge">
+                                            {{ str_replace('_', ' ', $req->status) }}
+                                        </span>
                                     </td>
                                     <td>{{ $req->created_at }}</td>
                                     <td class="text-muted small">
@@ -52,10 +76,10 @@
                                             {{ $addr['address'] ?? '' }}<br>
                                             {{ $addr['city'] ?? '' }}, {{ $addr['state'] ?? '' }} {{ $addr['postal_code'] ?? '' }}
                                         @else
-                                            —
+                                            -
                                         @endif
                                     </td>
-                                    <td class="text-muted small">{{ $req->admin_note ?? '—' }}</td>
+                                    <td class="text-muted small">{{ $req->admin_note ?? '-' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

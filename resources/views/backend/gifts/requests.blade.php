@@ -1,5 +1,27 @@
 @extends('backend.layouts.app')
 
+@push('styles')
+<style>
+    .gift-request-admin-status-cell {
+        white-space: nowrap;
+    }
+
+    .gift-request-admin-status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 96px;
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        text-transform: capitalize;
+        white-space: nowrap;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="card">
     <div class="card-header">
@@ -28,9 +50,9 @@
                             <td>{{ optional($req->gift)->name }} (ID: {{ $req->gift_id }})</td>
                             <td>{{ $req->quantity }}</td>
                             <td>{{ single_price($req->cost_snapshot) }}</td>
-                            <td>
-                                <span class="badge badge-{{ $req->status_badge_class }}">
-                                    {{ ucfirst($req->status) }}
+                            <td class="gift-request-admin-status-cell">
+                                <span class="badge badge-inline badge-{{ $req->status_badge_class }} gift-request-admin-status-badge">
+                                    {{ str_replace('_', ' ', $req->status) }}
                                 </span>
                             </td>
                             <td>{{ $req->created_at }}</td>
