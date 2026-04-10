@@ -92,7 +92,8 @@
                                             @endphp
                                         @elseif($notification->type == 'App\Notifications\WalletRewardCredited')
                                             @php
-                                                $amount = single_price($notification->data['amount'] ?? 0);
+                                                $amount = $notification->data['amount'] ?? 0;
+                                                // $amount = single_price($notification->data['amount'] ?? 0);
                                                 $notifyContent = str_replace('[[amount]]', $amount, $notifyContent);
                                             @endphp
                                         @elseif($notification->type == 'App\Notifications\GiftRequestStatusChanged')

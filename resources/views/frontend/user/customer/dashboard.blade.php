@@ -24,7 +24,8 @@
             <div class="h-100" style="background-image: url('{{ static_asset("assets/img/wallet-bg.png") }}'); background-size: cover; background-position: center center;">
                 <div class="p-4 h-100 w-100 w-xl-50">
                     <p class="fs-14 fw-400 text-gray mb-3">{{ translate('Wallet Balance') }}</p>
-                    <h1 class="fs-30 fw-700 text-white ">{{ single_price(Auth::user()->balance) }}</h1>
+                    <h1 class="fs-30 fw-700 text-white ">{{ Auth::user()->balance }}</h1>
+                    {{-- <h1 class="fs-30 fw-700 text-white ">{{ single_price(Auth::user()->balance) }}</h1> --}}
                     <hr class="border border-dashed border-white opacity-40 ml-0 mt-4 mb-4">
                     @php
                         $last_recharge = get_user_last_wallet_recharge();

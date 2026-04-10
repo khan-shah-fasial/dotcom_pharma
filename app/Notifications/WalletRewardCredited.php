@@ -60,7 +60,7 @@ class WalletRewardCredited extends Notification
             ->subject(__('Wallet Reward Credited'))
             ->greeting(__('Hello :name,', ['name' => $notifiable->name ?? '']))
             ->line(__('We have credited a wallet reward to your account.'))
-            ->line(__('Amount: ₹:amount', ['amount' => $formattedAmount]))
+            ->line(__('Amount: :amount', ['amount' => $formattedAmount]))
             ->line(__('Order: #:order', ['order' => $orderId]))
             ->line(__('You can use this balance on your next purchase.'))
             ->salutation(__('Thanks for shopping with us!'));

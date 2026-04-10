@@ -64,7 +64,8 @@
                                     <td>{{ $req->id }}</td>
                                     <td>{{ optional($req->gift)->name }}</td>
                                     <td>{{ $req->quantity }}</td>
-                                    <td>{{ single_price($req->cost_snapshot) }}</td>
+                                    <td>{{ $req->cost_snapshot }}</td>
+                                    {{-- <td>{{ single_price($req->cost_snapshot) }}</td> --}}
                                     <td class="gift-request-status-cell">
                                         <span class="badge badge-inline badge-{{ $req->status_badge_class }} gift-request-status-badge">
                                             {{ str_replace('_', ' ', $req->status) }}

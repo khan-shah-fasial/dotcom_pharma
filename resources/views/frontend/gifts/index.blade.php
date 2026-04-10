@@ -118,7 +118,8 @@
             <div class="col-md-6 text-md-right mt-3 mt-md-0">
                 <div class="d-flex justify-content-md-end align-items-center gap-2">
                     <a href="{{ route('gifts.requests') }}" class="btn btn-outline-secondary btn-sm mr-2">{{ translate('View Requests') }}</a>
-                    <span class="wallet-pill">{{ translate('Wallet Balance') }}: {{ single_price($walletBalance) }}</span>
+                    <span class="wallet-pill">{{ translate('Wallet Balance') }}: {{ $walletBalance }}</span>
+                    {{-- <span class="wallet-pill">{{ translate('Wallet Balance') }}: {{ single_price($walletBalance) }}</span> --}}
                 </div>
             </div>
         </div>
@@ -143,7 +144,8 @@
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100 gift-card">
                         <div class="gift-thumb" style="background-image:url('{{ $imageUrl }}')">
-                            <div class="gift-badge cost">{{ single_price($gift->cost) }}</div>
+                            <div class="gift-badge cost">{{ $gift->cost }}</div>
+                            {{-- <div class="gift-badge cost">{{ single_price($gift->cost) }}</div> --}}
                             <div class="gift-badge stock">{{ $gift->stock }} {{ translate('left') }}</div>
                         </div>
                         <div class="card-body d-flex flex-column">
@@ -160,7 +162,8 @@
                                             data-target="#gift-detail-modal"
                                             data-name="{{ $gift->name }}"
                                             data-description="{!! htmlspecialchars($gift->description ?? '', ENT_QUOTES) !!}"
-                                            data-cost="{{ single_price($gift->cost) }}"
+                                            data-cost="{{ $gift->cost }}"
+                                            {{-- data-cost="{{ single_price($gift->cost) }}" --}}
                                             data-stock="{{ $gift->stock }}"
                                             data-gift-id="{{ $gift->id }}"
                                             data-images='@json(collect($gift->photos ?? [])->map(fn($id) => uploaded_asset($id))->filter()->values())'>
@@ -211,7 +214,7 @@
 
                 <div class="d-flex flex-wrap align-items-center mb-3">
                     <div class="mr-3 mb-2">
-                        <div class="text-uppercase text-muted small mb-1">{{ translate('Price') }}</div>
+                        <div class="text-uppercase text-muted small mb-1">{{ translate('Cost') }}</div>
                         <span class="gift-chip cost mr-2 mb-2" id="gift-detail-cost"></span>
                     </div>
                     <div class="mb-2">
