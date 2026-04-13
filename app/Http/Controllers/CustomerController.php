@@ -374,6 +374,15 @@ class CustomerController extends Controller
             'type_option' => old('type_option', 'domestic'),
         ]);
         $details = new UserDetails();
+        $nextCrmId = ((int) UserDetails::query()
+            ->pluck('crm_id')
+            ->filter(function ($value) {
+                return is_numeric($value);
+            })
+            ->map(function ($value) {
+                return (int) $value;
+            })
+            ->max()) + 1;
 
         $countries = Cache::remember('countries_for_customer_edit', 86400, function () {
             return Country::select('id', 'name', 'code')->orderBy('name')->get();
@@ -383,6 +392,7 @@ class CustomerController extends Controller
             'user',
             'details',
             'countries',
+            'nextCrmId',
         ));
     }
 
@@ -487,6 +497,7 @@ class CustomerController extends Controller
 
         $validator = \Validator::make($request->all(), [
             'type_option' => ['required', 'in:domestic,international'],
+            'crm_id' => ['required', 'string', 'max:255', 'unique:user_details,crm_id'],
             'domestic_identity_selection' => ['nullable', 'in:gst,aadhaar_pan'],
             'international_identity_selection' => ['nullable', 'in:iec,passport'],
 
@@ -707,6 +718,7 @@ class CustomerController extends Controller
             $details = new UserDetails(['user_id' => $user->id]);
             $details->fill([
                 'type_option' => $typeOption,
+                'crm_id' => $validated['crm_id'],
                 'transport' => $request->input('transport'),
                 'booked_to' => $request->input('booked_to'),
                 'salesman' => $request->input('salesman'),
@@ -930,6 +942,7 @@ class CustomerController extends Controller
 
         $businessRules = [
             'type_option' => 'required|in:domestic,international',
+            'crm_id' => ['nullable', 'string', 'max:255', 'unique:user_details,crm_id,' . $details->id],
             'registration_date' => [$businessRequired ? 'required' : 'nullable'],
             'const_of_business' => [$businessRequired ? 'required' : 'nullable'],
             'con_person_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'regex:/^[A-Za-z\\s]+$/', 'min:1', 'max:50'],
@@ -1174,6 +1187,7 @@ class CustomerController extends Controller
 
         $details->fill([
             'type_option' => $typeOption,
+            'crm_id' => $request->input('crm_id', $details->crm_id ?? null),
 
             'transport' => $request->input('transport', $details->transport ?? null),
             'booked_to' => $request->input('booked_to', $details->booked_to ?? null),

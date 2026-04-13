@@ -12,6 +12,16 @@
             @csrf
             <div class="card-body">
                 <div id="form-error-box" class="alert alert-danger d-none"></div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label" for="crm_id">{{ translate('Account Number') }}</label>
+                        <input type="text" id="crm_id" name="crm_id" class="form-control" readonly
+                                value="{{ old('crm_id', $details?->crm_id) }}">
+                        @error('crm_id')
+                            <div class="text-danger small">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
                 {{-- Type --}}
                 <div class="row">
                     <div class="col-md-12">
