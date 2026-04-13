@@ -426,7 +426,8 @@ class CustomerController extends Controller
             return back();
         }
 
-        $password = substr(hash('sha512', rand()), 0, 8);
+        $password = '12345678';
+        // $password = substr(hash('sha512', rand()), 0, 8);
         $email = null;
         $phone = null;
         
