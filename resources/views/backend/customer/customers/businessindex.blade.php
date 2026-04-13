@@ -6,11 +6,11 @@
             <h1 class="h3">{{ translate('All Business Customers') }}</h1>
         </div>
         @can('add_customer')
-            {{-- <div class="col text-right">
-                <a href="{{ route('customers.create') }}" class="btn btn-circle btn-info">
+            <div class="col text-right">
+                <a href="{{ route('customers.business.create') }}" class="btn btn-circle btn-info">
                     <span>{{ translate('Add New Customer') }}</span>
                 </a>
-            </div> --}}
+            </div>
         @endcan
     </div>
 

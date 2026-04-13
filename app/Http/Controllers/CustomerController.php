@@ -23,7 +23,7 @@ class CustomerController extends Controller
     public function __construct() {
         // Staff Permission Check
         $this->middleware(['permission:view_all_customers'])->only('index');
-        $this->middleware(['permission:add_customer'])->only('create');
+        $this->middleware(['permission:add_customer'])->only('create', 'createBusiness', 'storeBusiness');
         $this->middleware(['permission:login_as_customer'])->only('login');
         $this->middleware(['permission:ban_customer'])->only('ban');
         $this->middleware(['permission:delete_customer'])->only('destroy');
@@ -368,6 +368,24 @@ class CustomerController extends Controller
         return view('backend.customer.customers.create');
     }
 
+    public function createBusiness()
+    {
+        $user = new User([
+            'type_option' => old('type_option', 'domestic'),
+        ]);
+        $details = new UserDetails();
+
+        $countries = Cache::remember('countries_for_customer_edit', 86400, function () {
+            return Country::select('id', 'name', 'code')->orderBy('name')->get();
+        });
+
+        return view('backend.customer.customers.create_business', compact(
+            'user',
+            'details',
+            'countries',
+        ));
+    }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -457,6 +475,405 @@ class CustomerController extends Controller
         }
 
         return back();
+    }
+
+    public function storeBusiness(Request $request)
+    {
+        $typeOption = $request->input('type_option', 'domestic');
+        $domesticChoice = $request->input('domestic_identity_selection', 'gst');
+        $internationalChoice = $request->input('international_identity_selection', 'iec');
+        $businessRequired = ($typeOption === 'domestic' && $domesticChoice === 'gst')
+            || ($typeOption === 'international' && $internationalChoice === 'iec');
+
+        $validator = \Validator::make($request->all(), [
+            'type_option' => ['required', 'in:domestic,international'],
+            'domestic_identity_selection' => ['nullable', 'in:gst,aadhaar_pan'],
+            'international_identity_selection' => ['nullable', 'in:iec,passport'],
+
+            'registration_date' => [$businessRequired ? 'required' : 'nullable'],
+            'const_of_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
+            'con_person_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:50'],
+            'company_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
+            'street_add_first_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
+            'street_add_sec_business' => ['nullable', 'string', 'max:150'],
+            'locality_land_mark_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
+            'village_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
+            'post_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
+            'district_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
+            'country_code_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
+            'pincode_business' => $businessRequired ? ['required', 'regex:/^\d{6}$/'] : ['nullable'],
+            'city_id_business' => [$businessRequired ? 'required' : 'nullable', 'integer', 'exists:cities,id'],
+            'state_id_business' => [$businessRequired ? 'required' : 'nullable', 'integer', 'exists:states,id'],
+            'country_id_business' => [$businessRequired ? 'required' : 'nullable', 'integer'],
+            'phone_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'alternate_mob_no_business' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'whats_app_no_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'alternate_whats_app_no_business' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'prim_email_business' => [$businessRequired ? 'required' : 'nullable', 'email'],
+            'alt_email_business' => ['nullable', 'email'],
+            'website_business' => ['nullable'],
+            'business_instagram_id' => ['nullable', 'string', 'max:255'],
+            'business_facebook_id' => ['nullable', 'string', 'max:255'],
+            'business_linkedin_id' => ['nullable', 'string', 'max:255'],
+            'bank_name_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
+            'account_no_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^\d+$/', 'max:20'],
+            'account_name_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
+            'branch_code_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:50'],
+            'branch_name_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
+            'branch_address_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
+            'ifsc_code_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'gst_no' => ['nullable', 'regex:/^[0-9A-Z]{15}$/i'],
+            'gst_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'gstin_current_status' => ['nullable', 'string'],
+            'iec_no' => ['nullable', 'regex:/^[0-9A-Z]{10}$/i'],
+            'iec_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'uin_current_status' => ['nullable', 'string'],
+            'passport_no' => ['nullable', 'regex:/^[0-9A-Z]{1,15}$/i'],
+            'passport_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'micr_code_business' => ['nullable', 'regex:/^\d{9}$/'],
+            'ad_code_business' => ['nullable', 'string', 'max:255'],
+
+            'photo_file' => ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'name_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'father_name' => ['required', 'string', 'min:1', 'max:150'],
+            'dob' => ['required'],
+            'religion' => ['nullable', 'string', 'max:150'],
+            'anniversary' => ['nullable', 'date'],
+            'street_add_first_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'street_add_sec_personal' => ['nullable', 'string', 'max:150'],
+            'locality_land_mark_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'village_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'post_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'district_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'country_code_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'pincode_personal' => ['required', 'regex:/^\d{6}$/'],
+            'city_id_personal' => ['required', 'integer', 'exists:cities,id'],
+            'state_id_personal' => ['required', 'integer', 'exists:states,id'],
+            'country_id_personal' => ['required', 'integer'],
+            'phone_personal' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'alternate_mob_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'whats_app_no_personal' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'alternate_whats_app_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'prim_email_personal' => ['required', 'email'],
+            'alt_email_personal' => ['nullable', 'email'],
+            'bank_name_personal' => ['required', 'string', 'max:255'],
+            'account_no_personal' => ['required', 'regex:/^\d+$/', 'max:20'],
+            'account_name_personal' => ['required', 'string', 'max:255'],
+            'branch_code_personal' => ['required', 'string', 'max:50'],
+            'branch_name_personal' => ['required', 'string', 'max:255'],
+            'branch_address_personal' => ['required', 'string', 'max:255'],
+            'ifsc_code_personal' => ['required', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'aadhaar_no' => ['nullable', 'regex:/^[0-9]{12}$/i'],
+            'aadhaar_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'pan_no' => ['nullable', 'regex:/^[0-9A-Z]{10}$/i'],
+            'pan_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'micr_code_personal' => ['nullable', 'regex:/^\d{9}$/'],
+            'ad_code_personal' => ['nullable', 'string', 'max:255'],
+
+            'd_l_no_1' => ['nullable', 'string', 'max:255'],
+            'd_l_no_1_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'd_l_no_2' => ['nullable', 'string', 'max:255'],
+            'd_l_no_2_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'd_l_no_3' => ['nullable', 'string', 'max:255'],
+            'd_l_no_3_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'doctor_hospital_reg_no' => ['nullable', 'string', 'max:255'],
+            'doctor_hospital_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'dairy_trust_ngo_reg_no' => ['nullable', 'string', 'max:255'],
+            'dairy_trust_ngo_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'cc_mdl_reg_no' => ['nullable', 'string', 'max:255'],
+            'cc_mdl_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+            'other_reg_no' => ['nullable', 'string', 'max:255'],
+            'other_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
+
+            'transport' => ['required', 'string', 'max:255'],
+            'booked_to' => ['required', 'string', 'max:255'],
+            'salesman' => ['nullable', 'string', 'max:255'],
+            'dl_expiry' => ['nullable', 'string', 'max:255'],
+            'dl1' => ['nullable', 'string', 'max:255'],
+            'dl2' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $validator->after(function ($validator) use ($request, $typeOption, $domesticChoice, $internationalChoice) {
+            $personalEmail = trim((string) $request->input('prim_email_personal'));
+            if ($personalEmail !== '' && User::where('email', $personalEmail)->exists()) {
+                $validator->errors()->add('prim_email_personal', translate('Email already exists.'));
+            }
+
+            $personalPrimaryCode = $request->input('country_code_phone_code_personal', '');
+            $personalPhone = trim((string) $request->input('phone_personal', ''));
+            $personalUserPhone = $personalPhone !== '' ? '+' . $personalPrimaryCode . '-' . $personalPhone : null;
+            if ($personalUserPhone && User::where('phone', $personalUserPhone)->exists()) {
+                $validator->errors()->add('phone_personal', translate('Phone already exists.'));
+            }
+
+            if ($typeOption === 'domestic' && $domesticChoice === 'gst') {
+                $gstNo = trim((string) $request->input('gst_no'));
+                if ($gstNo === '') {
+                    $validator->errors()->add('gst_no', translate('GST No is required.'));
+                }
+            }
+
+            if ($typeOption === 'international' && $internationalChoice === 'iec') {
+                $iecNo = trim((string) $request->input('iec_no'));
+                if ($iecNo === '') {
+                    $validator->errors()->add('iec_no', translate('IEC No is required.'));
+                }
+            }
+
+            if ($typeOption === 'international' && $internationalChoice === 'passport') {
+                $passportNo = trim((string) $request->input('passport_no'));
+                if ($passportNo === '') {
+                    $validator->errors()->add('passport_no', translate('Passport No is required.'));
+                }
+            }
+        });
+
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            throw new ValidationException($validator);
+        }
+
+        $validated = array_merge($request->all(), $validator->validated());
+        $documentPath = $this->ensureCustomerDocumentDirectory();
+
+        DB::beginTransaction();
+
+        try {
+            $photoFile = $this->moveCustomerDocument($request, 'photo_file', $documentPath);
+            $gstFile = $this->moveCustomerDocument($request, 'gst_no_file', $documentPath);
+            $iecFile = $this->moveCustomerDocument($request, 'iec_no_file', $documentPath);
+            $aadhaarFile = $this->moveCustomerDocument($request, 'aadhaar_no_file', $documentPath);
+            $panFile = $this->moveCustomerDocument($request, 'pan_no_file', $documentPath);
+            $passportFile = $this->moveCustomerDocument($request, 'passport_no_file', $documentPath);
+
+            $licenseFiles = [];
+            foreach ([
+                'd_l_no_1_file',
+                'd_l_no_2_file',
+                'd_l_no_3_file',
+                'doctor_hospital_reg_no_file',
+                'dairy_trust_ngo_reg_no_file',
+                'cc_mdl_reg_no_file',
+                'other_reg_no_file',
+            ] as $field) {
+                $licenseFiles[$field] = $this->moveCustomerDocument($request, $field, $documentPath);
+            }
+
+            $businessPrimaryCode = $request->input('country_code_phone_code_business', '');
+            $businessAltCode = $request->input('country_code_alternate_mob_no_business', '');
+            $businessWhatsCode = $request->input('country_code_whats_app_no_business', '');
+            $businessAltWhatsCode = $request->input('country_code_alternate_whats_app_no_business', '');
+
+            $personalPrimaryCode = $request->input('country_code_phone_code_personal', '');
+            $personalAltCode = $request->input('country_code_alternate_mob_no_personal', '');
+            $personalWhatsCode = $request->input('country_code_whats_app_no_personal', '');
+            $personalAltWhatsCode = $request->input('country_code_alternate_whats_app_no_personal', '');
+
+            $password = substr(hash('sha512', rand()), 0, 8);
+
+            $user = User::create([
+                'user_type' => 'customer',
+                'type_option' => $typeOption,
+                'name' => $validated['name_personal'],
+                'email' => $validated['prim_email_personal'],
+                'email_verified_at' => date('Y-m-d H:m:s'),
+                'phone' => '+' . $personalPrimaryCode . '-' . $validated['phone_personal'],
+                'password' => Hash::make($password),
+                'address' => implode(',', array_filter([
+                    $validated['street_add_first_personal'] ?? null,
+                    $validated['street_add_sec_personal'] ?? null,
+                    $validated['locality_land_mark_personal'] ?? null,
+                    $validated['village_personal'] ?? null,
+                ])),
+                'postal_code' => $businessRequired ? ($validated['pincode_business'] ?? null) : ($validated['pincode_personal'] ?? null),
+                'city' => $businessRequired ? ($validated['city_id_business'] ?? null) : ($validated['city_id_personal'] ?? null),
+                'state' => $businessRequired ? ($validated['state_id_business'] ?? null) : ($validated['state_id_personal'] ?? null),
+                'country' => $businessRequired ? ($validated['country_id_business'] ?? null) : ($validated['country_id_personal'] ?? null),
+                'avatar' => $photoFile,
+                'avatar_original' => $photoFile,
+                'gst_no' => $validated['gst_no'] ?? null,
+                'iec_no' => $typeOption === 'international' ? ($validated['iec_no'] ?? null) : null,
+                'aadhaar_no' => $validated['aadhaar_no'] ?? null,
+                'pan_no' => $validated['pan_no'] ?? null,
+                'passport_no' => $validated['passport_no'] ?? null,
+                'step' => '8',
+            ]);
+
+            $user->approval_status = 0;
+            $user->save();
+
+            $details = new UserDetails(['user_id' => $user->id]);
+            $details->fill([
+                'type_option' => $typeOption,
+                'transport' => $request->input('transport'),
+                'booked_to' => $request->input('booked_to'),
+                'salesman' => $request->input('salesman'),
+                'dl_expiry' => $request->input('dl_expiry'),
+                'dl1' => $request->input('dl1'),
+                'dl2' => $request->input('dl2'),
+
+                'gst_no' => $validated['gst_no'] ?? null,
+                'gst_no_file' => $gstFile,
+                'iec_no' => $typeOption === 'international' ? ($validated['iec_no'] ?? null) : null,
+                'iec_no_file' => $iecFile,
+                'registration_date' => $businessRequired ? ($validated['registration_date'] ?? null) : null,
+                'const_of_business' => $businessRequired ? ($validated['const_of_business'] ?? null) : null,
+                'gstin_current_status' => $typeOption === 'domestic' ? ($validated['gstin_current_status'] ?? null) : null,
+                'uin_current_status' => $typeOption === 'international' ? ($validated['uin_current_status'] ?? null) : null,
+                'con_person_name' => $businessRequired ? ($validated['con_person_name'] ?? null) : null,
+                'company_name' => $businessRequired ? ($validated['company_name'] ?? null) : null,
+                'street_add_first_business' => $businessRequired ? ($validated['street_add_first_business'] ?? null) : null,
+                'street_add_sec_business' => $businessRequired ? ($validated['street_add_sec_business'] ?? null) : null,
+                'locality_land_mark_business' => $businessRequired ? ($validated['locality_land_mark_business'] ?? null) : null,
+                'village_business' => $businessRequired ? ($validated['village_business'] ?? null) : null,
+                'post_business' => $businessRequired ? ($validated['post_business'] ?? null) : null,
+                'city_id_business' => $businessRequired ? ($validated['city_id_business'] ?? null) : null,
+                'district_business' => $businessRequired ? ($validated['district_business'] ?? null) : null,
+                'state_id_business' => $businessRequired ? ($validated['state_id_business'] ?? null) : null,
+                'pincode_business' => $businessRequired ? ($validated['pincode_business'] ?? null) : null,
+                'country_id_business' => $businessRequired ? ($validated['country_id_business'] ?? null) : null,
+                'country_code_business' => $businessRequired ? ($validated['country_code_business'] ?? null) : null,
+                'prim_mobile_no_business' => $businessRequired && !empty($validated['phone_business'])
+                    ? $businessPrimaryCode . '-' . $validated['phone_business']
+                    : null,
+                'prim_mobile_no_business_meta' => $businessRequired ? $request->input('phone_code_meta', '') : '',
+                'alt_mobile_no_business' => ($businessRequired && $businessAltCode && $request->filled('alternate_mob_no_business'))
+                    ? $businessAltCode . '-' . ($validated['alternate_mob_no_business'] ?? '')
+                    : null,
+                'alt_mobile_no_business_meta' => $businessRequired ? $request->input('alternate_mob_no_business_meta', '') : '',
+                'prim_whats_app_no_business' => $businessRequired && !empty($validated['whats_app_no_business'])
+                    ? $businessWhatsCode . '-' . $validated['whats_app_no_business']
+                    : null,
+                'prim_whats_app_no_business_meta' => $businessRequired ? $request->input('whats_app_no_business_meta', '') : '',
+                'alternate_whats_app_no_business' => ($businessRequired && $businessAltWhatsCode && $request->filled('alternate_whats_app_no_business'))
+                    ? $businessAltWhatsCode . '-' . ($validated['alternate_whats_app_no_business'] ?? '')
+                    : null,
+                'alternate_whats_app_no_business_meta' => $businessRequired ? $request->input('alternate_whats_app_no_business_meta', '') : '',
+                'prim_email_business' => $businessRequired ? ($validated['prim_email_business'] ?? null) : null,
+                'alt_email_business' => $businessRequired ? ($validated['alt_email_business'] ?? null) : null,
+                'website_business' => $businessRequired ? ($validated['website_business'] ?? null) : null,
+                'business_instagram_id' => $businessRequired ? ($validated['business_instagram_id'] ?? null) : null,
+                'business_facebook_id' => $businessRequired ? ($validated['business_facebook_id'] ?? null) : null,
+                'business_linkedin_id' => $businessRequired ? ($validated['business_linkedin_id'] ?? null) : null,
+                'bank_name_business' => $businessRequired ? ($validated['bank_name_business'] ?? null) : null,
+                'account_no_business' => $businessRequired ? ($validated['account_no_business'] ?? null) : null,
+                'account_name_business' => $businessRequired ? ($validated['account_name_business'] ?? null) : null,
+                'branch_code_business' => $businessRequired ? ($validated['branch_code_business'] ?? null) : null,
+                'branch_name_business' => $businessRequired ? ($validated['branch_name_business'] ?? null) : null,
+                'branch_address_business' => $businessRequired ? ($validated['branch_address_business'] ?? null) : null,
+                'ifsc_code_business' => $businessRequired ? ($validated['ifsc_code_business'] ?? null) : null,
+                'micr_code_business' => $typeOption === 'international' ? ($validated['micr_code_business'] ?? null) : null,
+                'ad_code_business' => $typeOption === 'international' ? ($validated['ad_code_business'] ?? null) : null,
+
+                'name' => $validated['name_personal'],
+                'father_name' => $validated['father_name'],
+                'dob' => $validated['dob'],
+                'religion' => $validated['religion'] ?? null,
+                'anniversary' => $validated['anniversary'] ?? null,
+                'street_add_first' => $validated['street_add_first_personal'],
+                'street_add_sec' => $validated['street_add_sec_personal'] ?? null,
+                'locality_land_mark' => $validated['locality_land_mark_personal'],
+                'village' => $validated['village_personal'],
+                'post' => $validated['post_personal'],
+                'city_id' => $validated['city_id_personal'],
+                'district' => $validated['district_personal'],
+                'state_id' => $validated['state_id_personal'],
+                'pincode' => $validated['pincode_personal'],
+                'country_id' => $validated['country_id_personal'],
+                'country_code' => $validated['country_code_personal'],
+                'prim_mobile_no' => $personalPrimaryCode . '-' . $validated['phone_personal'],
+                'prim_mobile_no_meta' => $request->input('phone_personal_meta', ''),
+                'alt_mobile_no' => $personalAltCode && $request->filled('alternate_mob_no_personal')
+                    ? $personalAltCode . '-' . ($validated['alternate_mob_no_personal'] ?? '')
+                    : null,
+                'alt_mobile_no_meta' => $request->input('alternate_mob_no_personal_meta', ''),
+                'prim_whats_app_no' => $personalWhatsCode . '-' . $validated['whats_app_no_personal'],
+                'prim_whats_app_no_meta' => $request->input('whats_app_no_personal_meta', ''),
+                'alt_whats_app_no' => $personalAltWhatsCode && $request->filled('alternate_whats_app_no_personal')
+                    ? $personalAltWhatsCode . '-' . ($validated['alternate_whats_app_no_personal'] ?? '')
+                    : null,
+                'alt_whats_app_no_meta' => $request->input('alternate_whats_app_no_personal_meta', ''),
+                'prim_email_personal' => $validated['prim_email_personal'],
+                'alt_email_personal' => $validated['alt_email_personal'] ?? null,
+                'bank_name_personal' => $validated['bank_name_personal'],
+                'account_no_personal' => $validated['account_no_personal'],
+                'account_name_personal' => $validated['account_name_personal'],
+                'branch_code_personal' => $validated['branch_code_personal'],
+                'branch_name_personal' => $validated['branch_name_personal'],
+                'branch_address_personal' => $validated['branch_address_personal'],
+                'ifsc_code_personal' => $validated['ifsc_code_personal'],
+                'micr_code_personal' => $typeOption === 'international' ? ($validated['micr_code_personal'] ?? null) : null,
+                'ad_code_personal' => $typeOption === 'international' ? ($validated['ad_code_personal'] ?? null) : null,
+                'photo_file' => $photoFile,
+                'aadhaar_no' => $validated['aadhaar_no'] ?? null,
+                'aadhaar_no_file' => $aadhaarFile,
+                'pan_no' => $validated['pan_no'] ?? null,
+                'pan_no_file' => $panFile,
+                'passport_no' => $validated['passport_no'] ?? null,
+                'passport_no_file' => $passportFile,
+
+                'd_l_no_1' => $validated['d_l_no_1'] ?? null,
+                'd_l_no_1_file' => $licenseFiles['d_l_no_1_file'],
+                'd_l_no_2' => $validated['d_l_no_2'] ?? null,
+                'd_l_no_2_file' => $licenseFiles['d_l_no_2_file'],
+                'd_l_no_3' => $validated['d_l_no_3'] ?? null,
+                'd_l_no_3_file' => $licenseFiles['d_l_no_3_file'],
+                'doctor_hospital_reg_no' => $validated['doctor_hospital_reg_no'] ?? null,
+                'doctor_hospital_reg_no_file' => $licenseFiles['doctor_hospital_reg_no_file'],
+                'dairy_trust_ngo_reg_no' => $validated['dairy_trust_ngo_reg_no'] ?? null,
+                'dairy_trust_ngo_reg_no_file' => $licenseFiles['dairy_trust_ngo_reg_no_file'],
+                'cc_mdl_reg_no' => $validated['cc_mdl_reg_no'] ?? null,
+                'cc_mdl_reg_no_file' => $licenseFiles['cc_mdl_reg_no_file'],
+                'other_reg_no' => $validated['other_reg_no'] ?? null,
+                'other_reg_no_file' => $licenseFiles['other_reg_no_file'],
+            ]);
+            $details->save();
+
+            sync_business_addresses_to_address_book($user, $details);
+
+            // try {
+            //     EmailUtility::customer_registration_email('registration_from_system_email_to_customer', $user, $password);
+            // } catch (\Exception $e) {
+            //     DB::rollBack();
+            //     if ($request->ajax()) {
+            //         return response()->json([
+            //             'errors' => [
+            //                 'prim_email_personal' => [translate('Registration failed. Please try again later.')],
+            //             ],
+            //         ], 422);
+            //     }
+            //     flash(translate('Registration failed. Please try again later.'))->error();
+            //     return back()->withInput();
+            // }
+
+            // $user->email_verified_at = date('Y-m-d H:m:s');
+            // $user->save();
+            // offerUserWelcomeCoupon();
+
+            // if ((get_email_template_data('customer_reg_email_to_admin', 'status') == 1)) {
+            //     try {
+            //         EmailUtility::customer_registration_email('customer_reg_email_to_admin', $user, null);
+            //     } catch (\Exception $e) {
+            //     }
+            // }
+
+            DB::commit();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'message' => translate('Customer created successfully'),
+                    'redirect_url' => route('customers.business'),
+                ]);
+            }
+
+            flash(translate('Customer created successfully'))->success();
+            return redirect()->route('customers.business');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     /**
@@ -1201,6 +1618,30 @@ class CustomerController extends Controller
             'columns_updated' => array_values($updatableColumns),
             'columns_ignored' => $ignoredColumns,
         ]);
+    }
+
+    private function ensureCustomerDocumentDirectory()
+    {
+        $documentPath = public_path('uploads/document');
+
+        if (!File::exists($documentPath)) {
+            File::makeDirectory($documentPath, 0777, true, true);
+        }
+
+        return $documentPath;
+    }
+
+    private function moveCustomerDocument(Request $request, string $field, string $documentPath, ?string $current = null)
+    {
+        if (!$request->hasFile($field)) {
+            return $current;
+        }
+
+        $file = $request->file($field);
+        $documentName = time() . '_' . str_replace(' ', '-', $file->getClientOriginalName());
+        $file->move($documentPath, $documentName);
+
+        return 'uploads/document/' . $documentName;
     }
 
 
