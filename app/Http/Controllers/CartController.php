@@ -208,19 +208,21 @@ class CartController extends Controller
         // Use batch data for pricing if batch is selected
         // Note: $batchId is already set above from request
         if ($selectedBatch) {
-            $price = CartUtility::get_price_from_batch($product, $selectedBatch, $request->quantity);
+            $resolvedPrice = resolvePrice($product, $product_stock, $selectedBatch, $request->quantity);
+            $price = (float) ($resolvedPrice['price'] ?? 0);
+            $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
             $mrpPrice = $selectedBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
             // Ensure batchId is set
             $batchId = $selectedBatch->id;
         } else {
             $price = CartUtility::get_price($product, $product_stock, $request->quantity);
+            $salePrice = $price;
             $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
             // Clear batchId if no batch selected
             $batchId = null;
         }
-        
-        $tax = CartUtility::tax_calculation($product, $price);
-        $salePrice = $price;
+
+        $tax = CartUtility::tax_calculation($product, $salePrice);
 
         CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId);
         $cart->notify_date = Carbon::now()->addHour(); // First reminder in 1 hours
@@ -274,72 +276,43 @@ class CartController extends Controller
                 : null;
 
             if ($product_stock) {
-                $quantity = $product_stock->qty;
+                $availableQuantity = $product_stock->qty;
                 $minQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
                 
                 // Get batch if batch_id exists
                 $batchId = $cartItem['batch_id'] ?? null;
                 $selectedBatch = null;
                 $price = 0;
+                $salePrice = 0;
                 
                 if ($batchId) {
                     $product_stock->load('batches');
                     $selectedBatch = $product_stock->batches()->where('id', $batchId)->first();
                     if ($selectedBatch) {
-                        $price = CartUtility::get_price_from_batch($product, $selectedBatch, $request->quantity);
+                        $availableQuantity = (int) ($selectedBatch->qty ?? 0);
+                        $resolvedPrice = resolvePrice($product, $product_stock, $selectedBatch, $request->quantity);
+                        $price = (float) ($resolvedPrice['price'] ?? 0);
+                        $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
                     }
                 }
                 
                 if (!$selectedBatch) {
-                    //$price = $product_stock->price;
-                    // IMPORTANT: role_price comes ONLY from batches, NOT from stock
-                    // Use batch-aware pricing helper which checks batches first, then falls back to product-level
-                    $price = getStockPriceByRole($product_stock, $product, false);
-                    if ($price === null || $price === 0) {
-                        // Fallback to product-level role_price (NOT stock-level)
-                        $price = getPriceByRole($product->role_price ?? null, $product_stock->price ?? 0); //price by role
-                    }
+                    $price = CartUtility::get_price($product, $product_stock, $request->quantity);
+                    $salePrice = $price;
                 }
 
-                //discount calculation
-                $discount_applicable = false;
-
-                if ($product->discount_start_date == null) {
-                    $discount_applicable = true;
-                } elseif (
-                    strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
-                    strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
-                ) {
-                    $discount_applicable = true;
-                }
-
-                if ($discount_applicable) {
-                    if ($product->discount_type == 'percent') {
-                        $price -= ($price * $product->discount) / 100;
-                    } elseif ($product->discount_type == 'amount') {
-                        $price -= $product->discount;
-                    }
-                }
-
-                if ($quantity >= $request->quantity) {
+                if ($availableQuantity >= $request->quantity) {
                     if ($request->quantity >= $minQty) {
                         $cartItem['quantity'] = $request->quantity;
                     }
                 }
 
-                if ($product->wholesale_product) {
-                    $wholesalePrice = $product_stock->wholesalePrices->where('min_qty', '<=', $request->quantity)->where('max_qty', '>=', $request->quantity)->first();
-                    if ($wholesalePrice) {
-                        $price = $wholesalePrice->price;
-                    }
-                }
-
                 // Recalculate tax based on updated price
-                $tax = CartUtility::tax_calculation($product, $price);
+                $tax = CartUtility::tax_calculation($product, $salePrice);
                 
                 $cartItem['price'] = $price;
                 $cartItem->mrp_price = $selectedBatch ? ($selectedBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price) : ($product_stock->mrp_price ?? $product->mrp_price);
-                $cartItem->sale_price = $price;
+                $cartItem->sale_price = $salePrice;
                 $cartItem->tax = $tax; // Store recalculated tax
                 $cartItem->save();
             }

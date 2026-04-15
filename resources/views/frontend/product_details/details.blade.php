@@ -1,7 +1,27 @@
 <style>
-    .div_disable {
+.div_disable {
         pointer-events: none;
         opacity: 0.5;
+    }
+
+    .combined-discount-pill {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #e6f4ea;
+        color: #1e7e34;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.3;
+        max-width: 100%;
+    }
+
+    .combined-discount-label {
+        color: #1b5e20;
+        font-weight: 700;
     }
     
     /* Social Share Buttons */
@@ -287,6 +307,10 @@
                     <span id="without-tax-product" class="without-tax-product-1"></span>
                     <!-- <span class="without-tax-product-gst without-tax-product-1"> excl. GST</span> -->
                 </div>
+                <div class="col-12 pl-0 mt-2 pb-0">
+                    <span class="detail-font-14px detail-gray-color">{{ translate('Price (Incl. GST)') }}:</span>
+                    <span id="tax-included-price-product" class="without-tax-product-1"></span>
+                </div>
             @endif
         @endauth
 
@@ -323,6 +347,13 @@
                 <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>
             </span>
             {{-- @endif --}}
+        </div>
+
+        <div id="combined-discount-badge" class="col-12 pl-0 mt-2 pb-0 d-none">
+            <span class="combined-discount-pill">
+                <span class="combined-discount-label">{{ translate('Discount Applied') }}:</span>
+                <span id="combined-discount-text"></span>
+            </span>
         </div>
 
         {{-- Unit/MRP --}}
@@ -2519,6 +2550,8 @@
             @if($detailedProduct->variant_product)
                 var productId = {{ $detailedProduct->id }};
                 var autoSelectInProgress = false;
+                var urlParams = new URLSearchParams(window.location.search);
+                var preselectedBatchId = urlParams.get('batch_id');
                 
                 // Wait for form and functions to be ready
                 setTimeout(function() {
@@ -2573,9 +2606,11 @@
                                 // Wait a bit for DOM updates, then trigger price load
                                 setTimeout(function() {
                                     if (allSelected && checkAddToCartValidity()) {
+                                        var targetBatchId = preselectedBatchId || response.batch_id || null;
+
                                         // Set batch_id in hidden input before calling getVariantPrice
-                                        if (response.batch_id) {
-                                            $('#selected_batch_id').val(response.batch_id);
+                                        if (targetBatchId) {
+                                            $('#selected_batch_id').val(targetBatchId);
                                         }
                                         
                                         // Trigger getVariantPrice to load batches
@@ -2588,20 +2623,20 @@
                                         function trySelectBatch() {
                                             batchSelectAttempts++;
                                             
-                                            if (response.batch_id) {
+                                            if (targetBatchId) {
                                                 var $batchDropdown = $('#batch-dropdown');
                                                 
                                                 if ($batchDropdown.length > 0) {
                                                     // Batches are rendered, select the batch
                                                     var batchesMap = $batchDropdown.data('batches-map') || {};
-                                                    var batchData = batchesMap[response.batch_id];
+                                                    var batchData = batchesMap[targetBatchId];
                                                     
                                                     if (batchData && typeof selectBatch === 'function') {
-                                                        selectBatch(response.batch_id, batchData);
+                                                        selectBatch(targetBatchId, batchData);
                                                     } else {
                                                         // Fallback: set dropdown value and refresh price
-                                                        $batchDropdown.val(String(response.batch_id));
-                                                        $('#selected_batch_id').val(response.batch_id);
+                                                        $batchDropdown.val(String(targetBatchId));
+                                                        $('#selected_batch_id').val(targetBatchId);
                                                         getVariantPrice(true);
                                                     }
                                                     autoSelectInProgress = false;

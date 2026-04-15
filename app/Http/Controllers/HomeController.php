@@ -1047,6 +1047,8 @@ class HomeController extends Controller
         $sku = '-';
         $tax = 0;
         $max_limit = 0;
+        $requestedQty = (int) ($request->quantity ?? 1);
+        $requestedQty = $requestedQty > 0 ? $requestedQty : 1;
 
         if ($request->has('color')) {
             $str = $request['color'];
@@ -1081,6 +1083,7 @@ class HomeController extends Controller
                 'in_stock' => 0,
                 'per_piece_price' => single_price(0),
                 'without_tax_price' => single_price(0),
+                'tax_included_price' => single_price(0),
                 'tax' => single_price(0),
                 'original_price' => single_price(0),
                 'dimension' => null,
@@ -1099,6 +1102,13 @@ class HomeController extends Controller
                 'expiry_date' => null,
                 'manufacturing_date' => null,
                 'batches' => [],
+                'selected_batch_id' => null,
+                'has_batch_offer' => false,
+                'batch_offer_discount' => number_format(0, 2),
+                'batch_offer_discount_percent' => 0,
+                'product_discount_percent' => 0,
+                'batch_discount_percent' => 0,
+                'total_discount_percent' => 0,
             );
         }
 
@@ -1108,12 +1118,31 @@ class HomeController extends Controller
         // Get selected batch ID from request (if provided)
         $selectedBatchId = $request->input('batch_id', null);
         $selectedBatch = null;
+        $hasBatchOffer = false;
+        $batchOfferDiscount = 0;
+        $batchOfferDiscountPercent = 0;
 
         if ($selectedBatchId && $batches->isNotEmpty()) {
             $selectedBatch = $batches->where('id', $selectedBatchId)->first();
         }
 
-        // If no batch selected or batch not found, use first batch or fallback to stock data
+        // Auto-select lowest valid offer batch (qty > 0, active, valid window).
+        if (!$selectedBatch && $batches->isNotEmpty()) {
+            $validOfferBatches = $batches->filter(function ($batch) use ($requestedQty) {
+                return isBatchDiscountValid($batch, $requestedQty);
+            });
+
+            $lowestResolved = null;
+            foreach ($validOfferBatches as $candidateBatch) {
+                $candidate = resolvePrice($product, $product_stock, $candidateBatch, $requestedQty);
+                if ($lowestResolved === null || $candidate['sale_price'] < $lowestResolved['sale_price']) {
+                    $lowestResolved = $candidate;
+                    $selectedBatch = $candidateBatch;
+                }
+            }
+        }
+
+        // If no valid in-stock batch exists, keep existing fallback behavior.
         if (!$selectedBatch && $batches->isNotEmpty()) {
             $selectedBatch = $batches->first();
         }
@@ -1148,8 +1177,11 @@ class HomeController extends Controller
             }
         }
 
-        // Calculate price from batch role_price or product-level role_price (NOT stock-level)
-        $price = getPriceByRole($rolePrice, $product_stock->price ?? 0);
+        $resolvedPricing = resolvePrice($product, $product_stock, $selectedBatch, $requestedQty);
+        $price = (float) ($resolvedPricing['sale_price'] ?? 0);
+        $hasBatchOffer = (bool) ($resolvedPricing['has_batch_offer'] ?? false);
+        $batchOfferDiscount = (float) ($resolvedPricing['discount'] ?? 0);
+        $batchOfferDiscountPercent = (float) ($resolvedPricing['batch_discount_percent'] ?? 0);
         $base = $mrpPrice;
 
         $sku = $product_stock->sku;
@@ -1184,13 +1216,6 @@ class HomeController extends Controller
         $buffer_dimension = ($product_stock->buffer_length ?? '-') . ' x ' . ($product_stock->buffer_width ?? '-') . ' x ' . ($product_stock->buffer_height ?? '-');
         $case_dimension = ($product_stock->case_length ?? '-') . ' x ' . ($product_stock->case_width ?? '-') . ' x ' . ($product_stock->case_height ?? '-');
 
-        if ($product->wholesale_product) {
-            $wholesalePrice = $product_stock->wholesalePrices->where('min_qty', '<=', $request->quantity)->where('max_qty', '>=', $request->quantity)->first();
-            if ($wholesalePrice) {
-                $price = $wholesalePrice->price;
-            }
-        }
-
         // Calculate total quantity from all batches
         $quantity = $batches->isNotEmpty() ? $batches->sum('qty') : ($product_stock->qty ?? 0);
         $max_limit = $quantity;
@@ -1216,28 +1241,10 @@ class HomeController extends Controller
             }
         }
 
-        //discount calculation
-        $discount_applicable = false;
-
-        if ($product->discount_start_date == null) {
-            $discount_applicable = true;
-        } elseif (
-            strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
-            strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
-        ) {
-            $discount_applicable = true;
-        }
-
-        if ($discount_applicable) {
-            if ($product->discount_type == 'percent') {
-                $price -= ($price * $product->discount) / 100;
-            } elseif ($product->discount_type == 'amount') {
-                $price -= $product->discount;
-            }
-        }
-
-        $discount_temp = $base - $price;
+        $discount_temp = max(0, $base - $price);
         $dis_percentage = ($discount_temp * 100) / ($base > 0 ? $base : 1);
+        $displayDiscountAmount = $discount_temp;
+        $displayDiscountPercent = $dis_percentage;
 
         // taxes
         foreach ($product->taxes as $product_tax) {
@@ -1250,8 +1257,6 @@ class HomeController extends Controller
 
         // $price += $tax;
 
-        $requestedQty = (int) ($request->quantity ?? 1);
-        $requestedQty = $requestedQty > 0 ? $requestedQty : 1;
         $appliedQty   = max($requestedQty, $stock_min_qty);
 
         // Prepare batches data for frontend
@@ -1289,7 +1294,8 @@ class HomeController extends Controller
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
             'per_piece_price' => single_price(round($price, 2)),
-            'without_tax_price' => single_price(($price - $tax) * $appliedQty),
+            'without_tax_price' => single_price($price * $appliedQty),
+            'tax_included_price' => single_price(($price + $tax) * $appliedQty),
             'tax' => single_price($tax * $appliedQty),
             'original_price' => single_price($base),
             'dimension' => $dimension,
@@ -1302,13 +1308,23 @@ class HomeController extends Controller
             'weight_case' => $weight_case,
             'buffer_dimension' => $buffer_dimension,
             'case_dimension' => $case_dimension,
-            'discount_percentage' => round($dis_percentage, 2),
-            'discount_price' => number_format($discount_temp, 2),
+            'discount_percentage' => round($displayDiscountPercent, 2),
+            'discount_price' => number_format($displayDiscountAmount, 2),
             'coa_url' => $coa_url,
             'expiry_date' => $formattedExpiry,
             'manufacturing_date' => $formattedManufacturing,
             'batches' => $batchesData,
             'selected_batch_id' => $selectedBatch ? $selectedBatch->id : null,
+            'has_batch_offer' => $hasBatchOffer,
+            'batch_offer_discount' => number_format($batchOfferDiscount, 2, '.', ''),
+            'batch_offer_discount_percent' => round($batchOfferDiscountPercent, 2),
+            'product_discount_percent' => round((float) ($resolvedPricing['product_discount_percent'] ?? 0), 2),
+            'batch_discount_percent' => round((float) ($resolvedPricing['batch_discount_percent'] ?? 0), 2),
+            'total_discount_percent' => round((float) ($resolvedPricing['discount_percent'] ?? 0), 2),
+            'resolved_price' => (float) ($resolvedPricing['price'] ?? 0),
+            'resolved_sale_price' => (float) ($resolvedPricing['sale_price'] ?? 0),
+            'resolved_discount' => (float) ($resolvedPricing['discount'] ?? 0),
+            'resolved_discount_percent' => (float) ($resolvedPricing['discount_percent'] ?? 0),
         );
     }
 
@@ -1332,50 +1348,22 @@ class HomeController extends Controller
         $lowestPriceVariant = null;
         $lowestPriceBatchId = null;
         $lowestPriceVariantString = null;
+        $lowestHasBatchOffer = false;
 
         foreach ($product->stocks as $stock) {
             if ($stock->is_hidden) {
                 continue;
             }
 
-            $batches = $stock->batches;
+            $resolved = resolveLowestListingPriceForStock($product, $stock, 1);
+            $candidatePrice = (float) ($resolved['sale_price'] ?? 0);
 
-            if ($batches && $batches->count() > 0) {
-                // Check each batch for lowest price
-                foreach ($batches as $batch) {
-                    $mrpPrice = $batch->mrp_price ?? $stock->price ?? 0;
-                    $batchRolePrice = $batch->role_price ?? null;
-
-                    if ($batchRolePrice) {
-                        $rolePriceArray = is_string($batchRolePrice) ? json_decode($batchRolePrice, true) : $batchRolePrice;
-                        if (is_array($rolePriceArray)) {
-                            $batchPrice = getPriceByRole($rolePriceArray, $mrpPrice);
-                        } else {
-                            // Invalid format, fallback to product-level (NOT stock-level)
-                            $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
-                        }
-                    } else {
-                        // Batch has no role_price, fallback to product-level (NOT stock-level)
-                        $batchPrice = getPriceByRole($product->role_price ?? null, $mrpPrice);
-                    }
-
-                    if ($lowestPrice === null || $batchPrice < $lowestPrice) {
-                        $lowestPrice = $batchPrice;
-                        $lowestPriceVariant = $stock;
-                        $lowestPriceBatchId = $batch->id;
-                        $lowestPriceVariantString = $stock->variant;
-                    }
-                }
-            } else {
-                // No batches, fallback to product-level role_price (NOT stock-level)
-                $stockPrice = getPriceByRole($product->role_price ?? null, $stock->price ?? 0);
-
-                if ($lowestPrice === null || $stockPrice < $lowestPrice) {
-                    $lowestPrice = $stockPrice;
-                    $lowestPriceVariant = $stock;
-                    $lowestPriceBatchId = null;
-                    $lowestPriceVariantString = $stock->variant;
-                }
+            if ($lowestPrice === null || $candidatePrice < $lowestPrice) {
+                $lowestPrice = $candidatePrice;
+                $lowestPriceVariant = $stock;
+                $lowestPriceBatchId = $resolved['batch_id'] ?? null;
+                $lowestPriceVariantString = $stock->variant;
+                $lowestHasBatchOffer = (bool) ($resolved['has_batch_offer'] ?? false);
             }
         }
 
@@ -1394,6 +1382,7 @@ class HomeController extends Controller
             'variant' => $lowestPriceVariantString,
             'batch_id' => $lowestPriceBatchId,
             'price' => $lowestPrice,
+            'has_batch_offer' => $lowestHasBatchOffer,
             'selection_data' => $variantSelectionData
         ]);
     }

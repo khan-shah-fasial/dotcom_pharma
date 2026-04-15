@@ -23,6 +23,11 @@ class ProductBatch extends Model
         'coa',
         'product_exp_date',
         'manufacturing_date',
+        'discount',
+        'discount_type',
+        'discount_active',
+        'discount_start_date',
+        'discount_end_date',
     ];
 
     // protected $casts = [

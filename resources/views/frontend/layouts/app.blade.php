@@ -959,15 +959,8 @@
                         $('#product-expiry-date').html(data?.expiry_date ?? '-');
                         $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
 
-                        let withoutTaxPrice = data?.without_tax_price ?? '-';
-                        // remove decimal part if it's a number/string with decimals
-                        if (typeof withoutTaxPrice === "string") {
-                            withoutTaxPrice = withoutTaxPrice.split('.')[0];
-                        } else if (typeof withoutTaxPrice === "number") {
-                            withoutTaxPrice = Math.floor(withoutTaxPrice); // removes decimals
-                        }
-
-                        $('#without-tax-product').html(withoutTaxPrice);
+                        $('#without-tax-product').html(data?.without_tax_price ?? '-');
+                        $('#tax-included-price-product').html(data?.tax_included_price ?? '-');
 
                         if (data?.discount_percentage > 0) {
                             $('#discount-show').removeClass('d-none');
@@ -975,6 +968,26 @@
                             $('#dis_per').html('( ' + data.discount_percentage + '% )');
                         } else {
                             $('#discount-show').addClass('d-none');
+                        }
+
+                        const productDiscountPercent = parseFloat(data?.product_discount_percent || 0);
+                        const batchDiscountPercent = parseFloat(data?.batch_discount_percent || 0);
+                        const totalDiscountPercent = parseFloat(data?.total_discount_percent || 0);
+                        const formatPercent = function(value) {
+                            const n = Math.round((parseFloat(value || 0)) * 100) / 100;
+                            return n.toString().replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+                        };
+
+                        if (productDiscountPercent > 0 && batchDiscountPercent > 0 && totalDiscountPercent > 0) {
+                            $('#combined-discount-badge').removeClass('d-none');
+                            $('#combined-discount-text').html(
+                                formatPercent(productDiscountPercent) + '% + ' +
+                                formatPercent(batchDiscountPercent) + '% = ' +
+                                formatPercent(totalDiscountPercent) + '%'
+                            );
+                        } else {
+                            $('#combined-discount-badge').addClass('d-none');
+                            $('#combined-discount-text').html('');
                         }
 
                         // packaging breakdown dynamic fill

@@ -476,17 +476,25 @@
 									<table class="table batch-table mb-0">
 										<thead>
 											<tr>
-												<th style="width: 14%;">{{ translate('Batch Code') }}</th>
-												<th style="width: 12%;">{{ translate('Mfg Month') }}</th>
-												<th style="width: 12%;">{{ translate('Expiry Month') }}</th>
-												<th style="width: 10%;">{{ translate('MRP Price') }}</th>
-												<th style="width: 10%;">{{ translate('Stock Qty') }}</th>
-												<th style="width: 18%;">{{ translate('COA Document') }}</th>
-												<th style="width: 12%;">{{ translate('Role Base Price') }}</th>
-												<th style="width: 8%;" class="text-center">{{ translate('Action') }}</th>
+												<th style="width: 12%;">{{ translate('Batch Code') }}</th>
+												<th style="width: 9%;">{{ translate('Mfg Month') }}</th>
+												<th style="width: 9%;">{{ translate('Expiry Month') }}</th>
+												<th style="width: 8%;">{{ translate('MRP Price') }}</th>
+												<th style="width: 8%;">{{ translate('Stock Qty') }}</th>
+												<th style="width: 7%;">{{ translate('Offer Active') }}</th>
+												<th style="width: 8%;">{{ translate('Discount Type') }}</th>
+												<th style="width: 8%;">{{ translate('Discount') }}</th>
+												<th style="width: 9%;">{{ translate('Offer Start') }}</th>
+												<th style="width: 9%;">{{ translate('Offer End') }}</th>
+												<th style="width: 12%;">{{ translate('COA Document') }}</th>
+												<th style="width: 8%;">{{ translate('Role Base Price') }}</th>
+												<th style="width: 3%;" class="text-center">{{ translate('Action') }}</th>
 											</tr>
 										</thead>
 										<tbody id="batch-rows-{{ $variantKey }}">
+											@php
+												$defaultDiscountActive = (int) data_get(request()->input('batches', []), $variantKey.'.0.discount_active', 0) === 1;
+											@endphp
 											<tr class="batch-row">
 												<td>
 													<input type="text" name="batches[{{ $variantKey }}][0][batch]" class="form-control form-control-sm" placeholder="{{ translate('Batch code') }}" required>
@@ -502,6 +510,60 @@
 												</td>
 												<td>
 													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][qty]" value="10" min="0" step="1" class="form-control form-control-sm" required>
+												</td>
+												<td class="text-center">
+													<input type="hidden" name="batches[{{ $variantKey }}][0][discount_active]" value="0">
+													<input
+														type="checkbox"
+														name="batches[{{ $variantKey }}][0][discount_active]"
+														value="1"
+														class="batch-discount-active"
+														onchange="toggleBatchDiscountFields(this)"
+														{{ $defaultDiscountActive ? 'checked' : '' }}
+													>
+												</td>
+												<td>
+													<select
+														name="batches[{{ $variantKey }}][0][discount_type]"
+														class="form-control form-control-sm batch-discount-type"
+														{{ $defaultDiscountActive ? '' : 'disabled' }}
+														{{ $defaultDiscountActive ? 'required' : '' }}
+													>
+														<option value="">{{ translate('Select') }}</option>
+														<option value="percent" {{ data_get(request()->input('batches', []), $variantKey.'.0.discount_type') === 'percent' ? 'selected' : '' }}>{{ translate('Percent') }}</option>
+														<option value="flat" {{ data_get(request()->input('batches', []), $variantKey.'.0.discount_type') === 'flat' ? 'selected' : '' }}>{{ translate('Flat') }}</option>
+													</select>
+												</td>
+												<td>
+													<input
+														type="number"
+														lang="en"
+														name="batches[{{ $variantKey }}][0][discount]"
+														value="{{ data_get(request()->input('batches', []), $variantKey.'.0.discount', '') }}"
+														min="0"
+														step="0.01"
+														class="form-control form-control-sm batch-discount-value"
+														{{ $defaultDiscountActive ? '' : 'disabled' }}
+														{{ $defaultDiscountActive ? 'required' : '' }}
+													>
+												</td>
+												<td>
+													<input
+														type="date"
+														name="batches[{{ $variantKey }}][0][discount_start_date]"
+														value="{{ data_get(request()->input('batches', []), $variantKey.'.0.discount_start_date', '') }}"
+														class="form-control form-control-sm batch-discount-start"
+														{{ $defaultDiscountActive ? '' : 'disabled' }}
+													>
+												</td>
+												<td>
+													<input
+														type="date"
+														name="batches[{{ $variantKey }}][0][discount_end_date]"
+														value="{{ data_get(request()->input('batches', []), $variantKey.'.0.discount_end_date', '') }}"
+														class="form-control form-control-sm batch-discount-end"
+														{{ $defaultDiscountActive ? '' : 'disabled' }}
+													>
 												</td>
 												<td class="coa-uploader-cell">
 													<div class="coa-uploader-wrapper" id="coa-wrapper-{{ $variantKey }}-0">
@@ -566,6 +628,26 @@
 				<td>
 					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][qty]" min="0" step="1" class="form-control form-control-sm" required>
 				</td>
+				<td class="text-center">
+					<input type="hidden" name="batches[` + variantKey + `][` + index + `][discount_active]" value="0">
+					<input type="checkbox" name="batches[` + variantKey + `][` + index + `][discount_active]" value="1" class="batch-discount-active" onchange="toggleBatchDiscountFields(this)">
+				</td>
+				<td>
+					<select name="batches[` + variantKey + `][` + index + `][discount_type]" class="form-control form-control-sm batch-discount-type" disabled>
+						<option value="">{{ translate('Select') }}</option>
+						<option value="percent">{{ translate('Percent') }}</option>
+						<option value="flat">{{ translate('Flat') }}</option>
+					</select>
+				</td>
+				<td>
+					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][discount]" min="0" step="0.01" class="form-control form-control-sm batch-discount-value" disabled>
+				</td>
+				<td>
+					<input type="date" name="batches[` + variantKey + `][` + index + `][discount_start_date]" class="form-control form-control-sm batch-discount-start" disabled>
+				</td>
+				<td>
+					<input type="date" name="batches[` + variantKey + `][` + index + `][discount_end_date]" class="form-control form-control-sm batch-discount-end" disabled>
+				</td>
 				<td class="coa-uploader-cell">
 					<div class="coa-uploader-wrapper" id="` + wrapperId + `">
 						<div class="input-group" data-toggle="aizuploader" data-type="document">
@@ -591,6 +673,7 @@
 		`;
 
 		$tbody.append(rowHtml);
+		toggleBatchDiscountFields($tbody.find('tr.batch-row:last .batch-discount-active')[0]);
 		
 		// Initialize aizuploader for the new row
 		if (typeof AIZ !== 'undefined' && AIZ.uploader) {
@@ -634,4 +717,24 @@
 			}
 		});
 	}
+
+	function toggleBatchDiscountFields(el) {
+		var $row = $(el).closest('tr.batch-row');
+		var isActive = $(el).is(':checked');
+
+		$row.find('.batch-discount-type')
+			.prop('disabled', !isActive)
+			.prop('required', isActive);
+		$row.find('.batch-discount-value')
+			.prop('disabled', !isActive)
+			.prop('required', isActive);
+		$row.find('.batch-discount-start').prop('disabled', !isActive);
+		$row.find('.batch-discount-end').prop('disabled', !isActive);
+	}
+
+	$(document).ready(function() {
+		$('.batch-discount-active').each(function () {
+			toggleBatchDiscountFields(this);
+		});
+	});
 </script>

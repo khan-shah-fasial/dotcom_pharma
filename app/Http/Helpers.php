@@ -60,6 +60,7 @@ use App\Models\PaymentMethod;
 use App\Models\UserCoupon;
 use App\Models\NotificationType;
 use App\Utility\EmailUtility;
+use App\Utility\CartUtility;
 use App\Models\Address;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
@@ -859,12 +860,303 @@ if (!function_exists('discount_in_percentage')) {
     }
 }
 
+if (!function_exists('isBatchDiscountValid')) {
+    function isBatchDiscountValid($batch, $qty = 1): bool
+    {
+        if (!$batch) {
+            return false;
+        }
+
+        if ((int) ($batch->discount_active ?? 0) !== 1) {
+            return false;
+        }
+
+        $discountType = $batch->discount_type ?? null;
+        if (!in_array($discountType, ['percent', 'flat'], true)) {
+            return false;
+        }
+
+        $discountValue = (float) ($batch->discount ?? 0);
+        if ($discountValue <= 0) {
+            return false;
+        }
+
+        $now = time();
+        $startDate = $batch->discount_start_date;
+        $endDate = $batch->discount_end_date;
+        if ($startDate !== null && $now < (int) $startDate) {
+            return false;
+        }
+        if ($endDate !== null && $now > (int) $endDate) {
+            return false;
+        }
+
+        $batchQty = (int) ($batch->qty ?? 0);
+        if ($batchQty <= 0) {
+            return false;
+        }
+
+        $qty = max(1, (int) $qty);
+        if ($batchQty < $qty) {
+            return false;
+        }
+
+        return true;
+    }
+}
+
+if (!function_exists('resolvePrice')) {
+    function resolvePrice($product, $stock = null, $batch = null, $qty = 1): array
+    {
+        $qty = max(1, (int) $qty);
+
+        if (!$product) {
+            return [
+                'price' => 0.0,
+                'sale_price' => 0.0,
+                'discount' => 0.0,
+                'discount_percent' => 0.0,
+                'has_batch_offer' => false,
+                'batch' => null,
+                'batch_id' => null,
+                'stock_id' => $stock ? (int) $stock->id : null,
+            ];
+        }
+
+        $resolvedStock = $stock;
+        if (!$resolvedStock && $batch) {
+            if (!$batch->relationLoaded('stock')) {
+                $batch->load('stock');
+            }
+            $resolvedStock = $batch->stock;
+        }
+
+        if ($batch && $resolvedStock && (int) $batch->product_stock_id !== (int) $resolvedStock->id) {
+            $batch = null;
+        }
+
+        if ($resolvedStock) {
+            if ($batch) {
+                $existingPrice = (float) CartUtility::get_price_from_batch($product, $batch, $qty);
+            } else {
+                $existingPrice = (float) CartUtility::get_price($product, $resolvedStock, $qty);
+            }
+        } else {
+            $fallbackStockQuery = $product->stocks();
+            if ((bool) ($product->variant_product ?? false)) {
+                $fallbackStockQuery->where('is_hidden', 0);
+            }
+            $fallbackStock = $fallbackStockQuery->first();
+
+            if ($fallbackStock) {
+                $existingPrice = (float) CartUtility::get_price($product, $fallbackStock, $qty);
+            } elseif ((bool) ($product->variant_product ?? false)) {
+                $existingPrice = 0.0;
+            } else {
+                $existingPrice = (float) home_discounted_base_price($product, false);
+            }
+        }
+
+        $finalPrice = $existingPrice;
+        $hasBatchOffer = false;
+        $productDiscountPercent = 0.0;
+        $batchDiscountPercent = 0.0;
+
+        $productDiscountApplicable = false;
+        if (($product->discount_start_date ?? null) === null) {
+            $productDiscountApplicable = true;
+        } elseif (
+            strtotime(date('d-m-Y H:i:s')) >= (int) $product->discount_start_date &&
+            strtotime(date('d-m-Y H:i:s')) <= (int) $product->discount_end_date
+        ) {
+            $productDiscountApplicable = true;
+        }
+
+        if ($productDiscountApplicable) {
+            if (($product->discount_type ?? null) === 'percent') {
+                $productDiscountPercent = max(0, (float) ($product->discount ?? 0));
+            } elseif (($product->discount_type ?? null) === 'amount') {
+                $productDiscountAmount = max(0, (float) ($product->discount ?? 0));
+                $baseBeforeProductDiscount = $existingPrice + $productDiscountAmount;
+                $productDiscountPercent = $baseBeforeProductDiscount > 0
+                    ? (($productDiscountAmount / $baseBeforeProductDiscount) * 100)
+                    : 0.0;
+            }
+        }
+
+        $isPercentProductDiscount = $productDiscountApplicable
+            && (($product->discount_type ?? null) === 'percent')
+            && $productDiscountPercent > 0;
+
+        if ($batch && isBatchDiscountValid($batch, $qty)) {
+            $discountValue = (float) ($batch->discount ?? 0);
+            if (($batch->discount_type ?? null) === 'percent') {
+                $batchDiscountPercent = max(0, $discountValue);
+
+                // If product discount is also percent, merge both percentages and apply once
+                // on the pre-product-discount resolved base price.
+                if ($isPercentProductDiscount) {
+                    $safeProductPercent = min(99.99, $productDiscountPercent);
+                    $productRatio = $safeProductPercent / 100;
+                    $resolvedBaseBeforeProductDiscount = $productRatio < 1
+                        ? ($existingPrice / (1 - $productRatio))
+                        : $existingPrice;
+                    $totalDiscountPercent = min(100, $safeProductPercent + $batchDiscountPercent);
+                    $finalPrice = $resolvedBaseBeforeProductDiscount - (($resolvedBaseBeforeProductDiscount * $totalDiscountPercent) / 100);
+                } else {
+                    $finalPrice = $existingPrice - (($existingPrice * $discountValue) / 100);
+                }
+            } else {
+                $batchDiscountAmount = max(0, min($existingPrice, $discountValue));
+                $batchDiscountPercent = $existingPrice > 0 ? (($batchDiscountAmount / $existingPrice) * 100) : 0.0;
+                $finalPrice = max(0, $existingPrice - $discountValue);
+            }
+            $finalPrice = max(0, (float) $finalPrice);
+            $hasBatchOffer = $finalPrice < $existingPrice;
+        }
+
+        $discountAmount = max(0, $existingPrice - $finalPrice);
+        $discountPercent = $hasBatchOffer ? ($productDiscountPercent + $batchDiscountPercent) : 0.0;
+
+        return [
+            'price' => (float) $existingPrice,
+            'sale_price' => (float) $finalPrice,
+            'discount' => (float) $discountAmount,
+            'discount_percent' => (float) $discountPercent,
+            'product_discount_percent' => (float) $productDiscountPercent,
+            'batch_discount_percent' => (float) $batchDiscountPercent,
+            'has_batch_offer' => (bool) $hasBatchOffer,
+            'batch' => $batch,
+            'batch_id' => $batch ? (int) $batch->id : null,
+            'stock_id' => $resolvedStock ? (int) $resolvedStock->id : null,
+        ];
+    }
+}
+
+if (!function_exists('resolveLowestListingPriceForStock')) {
+    function resolveLowestListingPriceForStock($product, $stock, $qty = 1): array
+    {
+        if (!$stock) {
+            return resolvePrice($product, null, null, $qty);
+        }
+
+        if (!$stock->relationLoaded('batches')) {
+            $stock->load('batches');
+        }
+
+        $eligibleBatches = $stock->batches
+            ? $stock->batches->filter(function ($batch) use ($qty) {
+                return isBatchDiscountValid($batch, $qty);
+            })
+            : collect();
+
+        if ($eligibleBatches->isEmpty()) {
+            return resolvePrice($product, $stock, null, $qty);
+        }
+
+        $best = null;
+        foreach ($eligibleBatches as $batch) {
+            $resolved = resolvePrice($product, $stock, $batch, $qty);
+            if ($best === null || $resolved['sale_price'] < $best['sale_price']) {
+                $best = $resolved;
+            }
+        }
+
+        return $best ?? resolvePrice($product, $stock, null, $qty);
+    }
+}
+
+if (!function_exists('resolveLowestListingPriceForProduct')) {
+    function resolveLowestListingPriceForProduct($product, $qty = 1): array
+    {
+        if (!$product) {
+            return resolvePrice(null, null, null, $qty);
+        }
+
+        if (!(bool) ($product->variant_product ?? false)) {
+            return resolvePrice($product, null, null, $qty);
+        }
+
+        if (!$product->relationLoaded('stocks')) {
+            $product->load(['stocks.batches']);
+        }
+
+        $best = null;
+        foreach ($product->stocks as $stock) {
+            if ((int) ($stock->is_hidden ?? 0) === 1) {
+                continue;
+            }
+
+            $resolved = resolveLowestListingPriceForStock($product, $stock, $qty);
+            if ($best === null || $resolved['sale_price'] < $best['sale_price']) {
+                $best = $resolved;
+            }
+        }
+
+        return $best ?? resolvePrice($product, null, null, $qty);
+    }
+}
+
+if (!function_exists('product_has_batch_offer')) {
+    function product_has_batch_offer($product): bool
+    {
+        if (!$product) {
+            return false;
+        }
+
+        $cacheKey = 'product_has_batch_offer_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest');
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($product) {
+            $resolved = resolveLowestListingPriceForProduct($product, 1);
+            return (bool) ($resolved['has_batch_offer'] ?? false);
+        });
+    }
+}
+
+if (!function_exists('product_lowest_listing_batch_id')) {
+    function product_lowest_listing_batch_id($product): ?int
+    {
+        if (!$product) {
+            return null;
+        }
+
+        $cacheKey = 'product_lowest_listing_batch_id_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest');
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($product) {
+            $resolved = resolveLowestListingPriceForProduct($product, 1);
+            return (bool) ($resolved['has_batch_offer'] ?? false)
+                ? (int) ($resolved['batch_id'] ?? 0) ?: null
+                : null;
+        });
+    }
+}
+
 //Shows Price on page based on carts
 if (!function_exists('cart_product_price')) {
     function cart_product_price($cart_product, $product, $formatted = true, $tax = true)
     {        // 🚨 Guard clause: product deleted / unavailable
         if (!$product) {
             return $formatted ? format_price(0) : 0;
+        }
+
+        $storedBatchId = $cart_product['batch_id'] ?? null;
+        if ($storedBatchId && isset($cart_product['sale_price']) && $cart_product['sale_price'] !== null) {
+            $price = (float) $cart_product['sale_price'];
+            if ($tax) {
+                if (isset($cart_product['tax']) && $cart_product['tax'] !== null) {
+                    $price += (float) $cart_product['tax'];
+                } else {
+                    $taxAmount = 0;
+                    foreach ($product->taxes as $product_tax) {
+                        if ($product_tax->tax_type == 'percent') {
+                            $taxAmount += ($price * $product_tax->tax) / 100;
+                        } elseif ($product_tax->tax_type == 'amount') {
+                            $taxAmount += $product_tax->tax;
+                        }
+                    }
+                    $price += $taxAmount;
+                }
+            }
+
+            return $formatted ? format_price(convert_price($price)) : $price;
         }
 
         $price = 0;
@@ -968,6 +1260,12 @@ if (!function_exists('cart_product_price')) {
 if (!function_exists('cart_product_tax')) {
     function cart_product_tax($cart_product, $product, $formatted = true)
     {
+        $storedBatchId = $cart_product['batch_id'] ?? null;
+        if ($storedBatchId && isset($cart_product['tax']) && $cart_product['tax'] !== null) {
+            $storedTax = (float) $cart_product['tax'];
+            return $formatted ? format_price(convert_price($storedTax)) : $storedTax;
+        }
+
         $str = '';
         if ($cart_product['variation'] != null) {
             $str = $cart_product['variation'];
@@ -1298,11 +1596,12 @@ if (!function_exists('getLowestPriceStock')) {
                 if ($stock->is_hidden) {
                     continue;
                 }
-                
-                $stockPrice = getStockPriceByRole($stock, $product, false);
-                
-                if ($lowestPrice === null || $stockPrice < $lowestPrice) {
-                    $lowestPrice = $stockPrice;
+
+                $resolved = resolveLowestListingPriceForStock($product, $stock, 1);
+                $stockSalePrice = (float) ($resolved['sale_price'] ?? 0);
+
+                if ($lowestPrice === null || $stockSalePrice < $lowestPrice) {
+                    $lowestPrice = $stockSalePrice;
                     $lowestPriceStock = $stock;
                 }
             }
@@ -1661,39 +1960,31 @@ if (!function_exists('home_discounted_base_price')) {
             // For non-variant products, use product-level pricing
             // For variant products, find lowest price across all stocks/batches
             if ($product->variant_product) {
-                if (!$product->relationLoaded('stocks')) {
-                    $product->load(['stocks.batches']);
-                }
-                
-                $lowestPrice = null;
-                foreach ($product->stocks as $stock) {
-                    $stockPrice = getStockPriceByRole($stock, $product, false);
-                    if ($lowestPrice === null || $stockPrice < $lowestPrice) {
-                        $lowestPrice = $stockPrice;
-                    }
-                }
-                $price = $lowestPrice ?? getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
+                $resolved = resolveLowestListingPriceForProduct($product, 1);
+                $price = (float) ($resolved['sale_price'] ?? getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0));
             } else {
                 $price = getPriceByRole($product->role_price ?? null, $product->unit_price ?? 0);
             }
-            
+
             $tax = 0;
 
-            $discount_applicable = false;
-            if ($product->discount_start_date == null) {
-                $discount_applicable = true;
-            } elseif (
-                strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
-                strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
-            ) {
-                $discount_applicable = true;
-            }
+            if (!$product->variant_product) {
+                $discount_applicable = false;
+                if ($product->discount_start_date == null) {
+                    $discount_applicable = true;
+                } elseif (
+                    strtotime(date('d-m-Y H:i:s')) >= $product->discount_start_date &&
+                    strtotime(date('d-m-Y H:i:s')) <= $product->discount_end_date
+                ) {
+                    $discount_applicable = true;
+                }
 
-            if ($discount_applicable) {
-                if ($product->discount_type == 'percent') {
-                    $price -= ($price * $product->discount) / 100;
-                } elseif ($product->discount_type == 'amount') {
-                    $price -= $product->discount;
+                if ($discount_applicable) {
+                    if ($product->discount_type == 'percent') {
+                        $price -= ($price * $product->discount) / 100;
+                    } elseif ($product->discount_type == 'amount') {
+                        $price -= $product->discount;
+                    }
                 }
             }
 

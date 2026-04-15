@@ -38,6 +38,78 @@ class ProductStockService
         return null;
     }
 
+    protected function normalizeBatchDiscountTimestamp($value, bool $isEndDate = false): ?int
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            $timestamp = (int) $value;
+            return $timestamp > 0 ? $timestamp : null;
+        }
+
+        $dateString = $value . ($isEndDate ? ' 23:59:59' : ' 00:00:00');
+        $parsed = strtotime($dateString);
+
+        return $parsed !== false ? (int) $parsed : null;
+    }
+
+    protected function extractBatchDiscountData(array $row): array
+    {
+        $isActive = (int) ($row['discount_active'] ?? 0) === 1;
+
+        if (!$isActive) {
+            return [
+                'discount_active' => 0,
+                'discount_type' => null,
+                'discount' => null,
+                'discount_start_date' => null,
+                'discount_end_date' => null,
+            ];
+        }
+
+        $discountType = $row['discount_type'] ?? null;
+        if (!in_array($discountType, ['percent', 'flat'], true)) {
+            $discountType = null;
+        }
+
+        $discount = isset($row['discount']) && is_numeric($row['discount']) ? (float) $row['discount'] : null;
+        if ($discount !== null && $discount <= 0) {
+            $discount = null;
+        }
+
+        $discountStartDate = $this->normalizeBatchDiscountTimestamp($row['discount_start_date'] ?? null, false);
+        $discountEndDate = $this->normalizeBatchDiscountTimestamp($row['discount_end_date'] ?? null, true);
+
+        if ($discountStartDate !== null && $discountEndDate !== null && $discountEndDate < $discountStartDate) {
+            $discountEndDate = $discountStartDate;
+        }
+
+        if ($discountType === null || $discount === null) {
+            return [
+                'discount_active' => 0,
+                'discount_type' => null,
+                'discount' => null,
+                'discount_start_date' => null,
+                'discount_end_date' => null,
+            ];
+        }
+
+        return [
+            'discount_active' => 1,
+            'discount_type' => $discountType,
+            'discount' => $discount,
+            'discount_start_date' => $discountStartDate,
+            'discount_end_date' => $discountEndDate,
+        ];
+    }
+
     public function store(array $data, $product)
     {
         $collection = collect($data);
@@ -433,6 +505,12 @@ class ProductStockService
             $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null);
             $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
+            $batchDiscountData       = $this->extractBatchDiscountData($row);
+            $batch->discount_active  = $batchDiscountData['discount_active'];
+            $batch->discount_type    = $batchDiscountData['discount_type'];
+            $batch->discount         = $batchDiscountData['discount'];
+            $batch->discount_start_date = $batchDiscountData['discount_start_date'];
+            $batch->discount_end_date = $batchDiscountData['discount_end_date'];
 
             // Role-based prices per batch: preserve submitted value when available.
             if (!empty($row['role_price'])) {
@@ -529,6 +607,12 @@ class ProductStockService
             $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null);
             $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
+            $batchDiscountData       = $this->extractBatchDiscountData($row);
+            $batch->discount_active  = $batchDiscountData['discount_active'];
+            $batch->discount_type    = $batchDiscountData['discount_type'];
+            $batch->discount         = $batchDiscountData['discount'];
+            $batch->discount_start_date = $batchDiscountData['discount_start_date'];
+            $batch->discount_end_date = $batchDiscountData['discount_end_date'];
 
             if (!empty($row['role_price'])) {
                 $batch->role_price = is_string($row['role_price']) ? $row['role_price'] : json_encode($row['role_price']);

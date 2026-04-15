@@ -1,5 +1,7 @@
 @php
     $cart_added = [];
+    $hasBatchOffer = product_has_batch_offer($product);
+    $discountPercent = discount_in_percentage($product);
 @endphp
 <div class="aiz-card-box h-auto bg-white hov-scale-img">
     <div class="position-relative h-140px h-md-170px img-fit overflow-hidden">
@@ -7,6 +9,10 @@
             $product_url = route('product', $product->slug);
             if ($product->auction_product == 1) {
                 $product_url = route('auction-product', $product->slug);
+            }
+            $preselectBatchId = product_lowest_listing_batch_id($product);
+            if ($product->auction_product == 0 && $preselectBatchId) {
+                $product_url .= (str_contains($product_url, '?') ? '&' : '?') . 'batch_id=' . $preselectBatchId;
             }
         @endphp
         <!-- Image -->
@@ -17,15 +23,29 @@
                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
         </a>
         <!-- Discount percentage tag -->
-        @if (discount_in_percentage($product) > 0)
+        @if ($discountPercent > 0)
             <span class="absolute-top-left bg-primary ml-1 mt-1 fs-11 fw-700 text-white w-35px text-center"
-                style="padding-top:2px;padding-bottom:2px;">-{{ discount_in_percentage($product) }}%</span>
+                style="padding-top:2px;padding-bottom:2px;">
+                @if ($hasBatchOffer)
+                    {{ translate('Batch Offer') }} {{ $discountPercent }}% OFF
+                @else
+                    -{{ $discountPercent }}%
+                @endif
+            </span>
         @endif
         <!-- Wholesale tag -->
         @if ($product->wholesale_product)
             <span class="absolute-top-left fs-11 text-white fw-700 px-2 lh-1-8 ml-1 mt-1"
-                style="background-color: #455a64; @if (discount_in_percentage($product) > 0) top:25px; @endif">
+                style="background-color: #455a64; @if ($discountPercent > 0) top:25px; @endif">
                 {{ translate('Wholesale') }}
+            </span>
+        @endif
+        @if ($hasBatchOffer && $discountPercent <= 0)
+            <span class="absolute-top-left fs-11 text-white fw-700 px-2 lh-1-8 ml-1 mt-1"
+                style="background-color: #1e88e5;
+                    @if ($discountPercent > 0 && $product->wholesale_product) top:49px;
+                    @elseif ($discountPercent > 0 || $product->wholesale_product) top:25px; @endif">
+                {{ translate('Batch Offer') }}
             </span>
         @endif
         @if ($product->auction_product == 0)

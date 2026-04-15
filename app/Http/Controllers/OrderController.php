@@ -241,6 +241,7 @@ class OrderController extends Controller
                 $product = Product::find($cartItem['product_id']);
 
                 $unitSalePrice = $cartItem['sale_price'] ?? cart_product_price($cartItem, $product, false, false);
+                $unitBasePrice = $cartItem['price'] ?? $unitSalePrice;
 
                 $subtotal += $unitSalePrice * $cartItem['quantity'];
                 // Use stored tax from cart (calculated from batch/stock price at add-to-cart)
@@ -302,9 +303,12 @@ class OrderController extends Controller
                 $order_detail->product_id = $product->id;
                 $order_detail->variation = $product_variation;
                 $order_detail->batch_id = $batchId;
-                $order_detail->price = $unitSalePrice * $cartItem['quantity'];
+                $order_detail->price = $unitBasePrice * $cartItem['quantity'];
                 $order_detail->sale_price = $unitSalePrice;
                 $order_detail->mrp_price = $cartItem['mrp_price'] ?? ($selectedBatch ? $selectedBatch->mrp_price : (optional($product_stock)->mrp_price ?? $product->mrp_price));
+                $productDiscountAmountPerUnit = $this->resolveProductDiscountAmountPerUnit($product, (float) $unitBasePrice);
+                $batchDiscountAmountPerUnit = max(0, (float) $unitBasePrice - (float) $unitSalePrice);
+                $order_detail->discount_amount = ($productDiscountAmountPerUnit + $batchDiscountAmountPerUnit) * (int) $cartItem['quantity'];
                 // Use stored tax from cart so order_detail matches cart (batch-aware)
                 $order_detail->tax = ($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity'];
                 $order_detail->shipping_type = $cartItem['shipping_type'];
@@ -381,6 +385,39 @@ class OrderController extends Controller
         $combined_order->save();
 
         $request->session()->put('combined_order_id', $combined_order->id);
+    }
+
+    private function isProductDiscountCurrentlyActive(Product $product): bool
+    {
+        if (($product->discount_start_date ?? null) === null) {
+            return true;
+        }
+
+        $now = strtotime(date('d-m-Y H:i:s'));
+        return $now >= (int) $product->discount_start_date && $now <= (int) $product->discount_end_date;
+    }
+
+    private function resolveProductDiscountAmountPerUnit(Product $product, float $unitPriceAfterProductDiscount): float
+    {
+        if (!$this->isProductDiscountCurrentlyActive($product)) {
+            return 0.0;
+        }
+
+        if (($product->discount_type ?? null) === 'amount') {
+            return max(0, (float) ($product->discount ?? 0));
+        }
+
+        if (($product->discount_type ?? null) === 'percent') {
+            $percent = max(0, min(99.99, (float) ($product->discount ?? 0)));
+            if ($percent <= 0) {
+                return 0.0;
+            }
+
+            $baseBeforeProductDiscount = $unitPriceAfterProductDiscount / (1 - ($percent / 100));
+            return max(0, $baseBeforeProductDiscount - $unitPriceAfterProductDiscount);
+        }
+
+        return 0.0;
     }
 
     /**
