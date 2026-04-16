@@ -841,6 +841,21 @@
         
         // Handle quantity changes separately
         $('#option-choice-form input[name="quantity"]').on('change input', function(){
+            const $qtyInput = $(this);
+            const minQty = parseInt($qtyInput.attr('min'), 10) || 1;
+            const maxQty = parseInt($qtyInput.attr('max'), 10);
+            let qty = parseInt($qtyInput.val(), 10);
+
+            if (isNaN(qty) || qty < minQty) {
+                qty = minQty;
+            }
+            if (!isNaN(maxQty) && qty > maxQty) {
+                qty = maxQty;
+            }
+            if (String($qtyInput.val()) !== String(qty)) {
+                $qtyInput.val(qty);
+            }
+
             if (!isUpdatingBatch) {
                 getVariantPrice();
             }
@@ -852,6 +867,39 @@
         let isUpdatingBatch = false; // flag to prevent recursive batch updates
         let ajaxInProgress = false; // flag to prevent multiple simultaneous AJAX calls
         let selectedBatchQty = null; // track selected batch quantity for UI availability
+
+        function enforceQuantityBounds(minQty = 1, defaultMax = null) {
+            const $qtyInput = $('#product_quantity');
+            if (!$qtyInput.length) {
+                return;
+            }
+
+            const safeMin = Math.max(1, parseInt(minQty, 10) || 1);
+            let effectiveMax = parseInt(defaultMax, 10);
+            const batchMax = parseInt(selectedBatchQty, 10);
+
+            if (!Number.isNaN(batchMax)) {
+                effectiveMax = batchMax;
+            }
+            if (Number.isNaN(effectiveMax)) {
+                effectiveMax = safeMin;
+            }
+            if (effectiveMax < safeMin) {
+                effectiveMax = safeMin;
+            }
+
+            let qty = parseInt($qtyInput.val(), 10);
+            if (Number.isNaN(qty) || qty < safeMin) {
+                qty = safeMin;
+            }
+            if (qty > effectiveMax) {
+                qty = effectiveMax;
+            }
+
+            $qtyInput.attr('min', safeMin).attr('max', effectiveMax).val(qty);
+            $qtyInput.siblings('[data-type="minus"], [data-type="plus"]').prop('disabled', false);
+            $('.input-number').prop('max', effectiveMax);
+        }
 
         function getVariantPrice(immediate = false){
             const invoke = function(){
@@ -1119,7 +1167,7 @@
                                             : ('Batch #' + selectedBatch.id);
                                         $('#batch-lot-product-details').html(batchLabel);
 
-                                        const qty = selectedBatch.qty || 0;
+                                        const qty = parseInt(selectedBatch.qty || 0, 10);
                                         selectedBatchQty = qty;
                                         $('#qnt-product-details').html(qty > 0 ? qty : 'Not Available');
                                     } else {
@@ -1143,7 +1191,7 @@
                             }
                         }
 
-                        $('.input-number').prop('max', data.max_limit);
+                        enforceQuantityBounds(stock_min_qty, data?.max_limit ?? null);
                         let effectiveInStock = parseInt(data.in_stock);
                         if (selectedBatchQty !== null) {
                             effectiveInStock = selectedBatchQty > 0 ? 1 : 0;
@@ -1273,9 +1321,10 @@
                 $('#batch-lot-product-details').html(batchLabel);
 
                 // Update batch-specific available quantity and availability buttons
-                const qty = batchData.qty || 0;
+                const qty = parseInt(batchData.qty || 0, 10);
                 selectedBatchQty = qty;
                 $('#qnt-product-details').html(qty > 0 ? qty : 'Not Available');
+                enforceQuantityBounds(parseInt($('#product_quantity').attr('min'), 10) || 1, qty);
                 if (parseInt(qty) > 0) {
                     $('.buy-now').removeClass('d-none');
                     $('.add-to-cart').removeClass('d-none');

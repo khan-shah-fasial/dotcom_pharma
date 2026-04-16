@@ -1129,6 +1129,33 @@ if (!function_exists('product_lowest_listing_batch_id')) {
     }
 }
 
+if (!function_exists('product_listing_discount_breakdown')) {
+    function product_listing_discount_breakdown($product): array
+    {
+        if (!$product) {
+            return [
+                'product_percent' => 0.0,
+                'batch_percent' => 0.0,
+                'total_percent' => 0.0,
+                'has_batch_offer' => false,
+            ];
+        }
+
+        $cacheKey = 'product_listing_discount_breakdown_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest');
+        return Cache::remember($cacheKey, now()->addHour(), function () use ($product) {
+            $resolved = resolveLowestListingPriceForProduct($product, 1);
+            $hasBatchOffer = (bool) ($resolved['has_batch_offer'] ?? false);
+
+            return [
+                'product_percent' => (float) ($resolved['product_discount_percent'] ?? 0),
+                'batch_percent' => $hasBatchOffer ? (float) ($resolved['batch_discount_percent'] ?? 0) : 0.0,
+                'total_percent' => $hasBatchOffer ? (float) ($resolved['discount_percent'] ?? 0) : (float) ($resolved['product_discount_percent'] ?? 0),
+                'has_batch_offer' => $hasBatchOffer,
+            ];
+        });
+    }
+}
+
 //Shows Price on page based on carts
 if (!function_exists('cart_product_price')) {
     function cart_product_price($cart_product, $product, $formatted = true, $tax = true)

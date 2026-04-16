@@ -1,7 +1,12 @@
 @php
     $cart_added = [];
-    $hasBatchOffer = product_has_batch_offer($product);
-    $discountPercent = discount_in_percentage($product);
+    $discountBreakdown = product_listing_discount_breakdown($product);
+    $productDiscountPercent = round((float) ($discountBreakdown['product_percent'] ?? 0), 2);
+    $batchDiscountPercent = round((float) ($discountBreakdown['batch_percent'] ?? 0), 2);
+    $showProductDiscountBadge = $productDiscountPercent > 0;
+    $showBatchDiscountBadge = $batchDiscountPercent > 0;
+    $discountBadgeCount = ($showProductDiscountBadge ? 1 : 0) + ($showBatchDiscountBadge ? 1 : 0);
+    $wholesaleBadgeTop = $discountBadgeCount > 0 ? 20 + ($discountBadgeCount * 24) : null;
 @endphp
 <div class="aiz-card-box h-auto product_img_bg">
     <div class="position-relative img-fit overflow-hidden">
@@ -26,30 +31,22 @@
 
         </a>
 
-        <!-- Discount percentage tag -->
-        @if ($discountPercent > 0)
-            <span class="left25 absolute-top-left bg-success ml-1 mt-1 fs-11 fw-700 text-white w-50px text-center"
-                style="padding-top:2px;padding-bottom:2px;">
-                @if ($hasBatchOffer)
-                    {{ translate('Batch Offer') }} {{ $discountPercent }}% OFF
-                @else
-                    {{ $discountPercent }}% OFF
-                @endif
+        @if ($showProductDiscountBadge)
+            <span class="left25 absolute-top-left fs-11 fw-700 text-white px-2 lh-1-8 ml-1 mt-1"
+                style="background-color:#43a047;">
+                {{ translate('Product') }} {{ $productDiscountPercent }}% OFF
             </span>
         @endif
-        <!-- Wholesale tag -->
+        @if ($showBatchDiscountBadge)
+            <span class="left25 absolute-top-left fs-11 fw-700 text-white px-2 lh-1-8 ml-1 mt-1"
+                style="background-color:#1e88e5; top:{{ $showProductDiscountBadge ? 44 : 20 }}px;">
+                {{ translate('Batch') }} {{ $batchDiscountPercent }}% OFF
+            </span>
+        @endif
         @if ($product->wholesale_product)
             <span class="absolute-top-left fs-11 text-white fw-700 px-2 lh-1-8 ml-1 mt-1"
-                style="background-color: #455a64; @if ($discountPercent > 0) top:25px; @endif">
+                style="background-color:#455a64; @if ($wholesaleBadgeTop !== null) top:{{ $wholesaleBadgeTop }}px; @endif">
                 {{ translate('Wholesale') }}
-            </span>
-        @endif
-        @if ($hasBatchOffer && $discountPercent <= 0)
-            <span class="absolute-top-left fs-11 text-white fw-700 px-2 lh-1-8 ml-1 mt-1"
-                style="background-color: #1e88e5;
-                    @if ($discountPercent > 0 && $product->wholesale_product) top:49px;
-                    @elseif ($discountPercent > 0 || $product->wholesale_product) top:25px; @endif">
-                {{ translate('Batch Offer') }}
             </span>
         @endif
         @if ($product->auction_product == 0)

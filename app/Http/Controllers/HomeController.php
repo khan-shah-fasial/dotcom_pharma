@@ -1126,14 +1126,19 @@ class HomeController extends Controller
             $selectedBatch = $batches->where('id', $selectedBatchId)->first();
         }
 
-        // Auto-select lowest valid offer batch (qty > 0, active, valid window).
+        // Auto-select lowest in-stock batch by resolved sale price (align detail UX with listing).
         if (!$selectedBatch && $batches->isNotEmpty()) {
-            $validOfferBatches = $batches->filter(function ($batch) use ($requestedQty) {
-                return isBatchDiscountValid($batch, $requestedQty);
+            $candidateBatches = $batches->filter(function ($batch) {
+                return (int) ($batch->qty ?? 0) > 0;
             });
 
+            // Keep fallback behavior when no in-stock batch exists.
+            if ($candidateBatches->isEmpty()) {
+                $candidateBatches = $batches;
+            }
+
             $lowestResolved = null;
-            foreach ($validOfferBatches as $candidateBatch) {
+            foreach ($candidateBatches as $candidateBatch) {
                 $candidate = resolvePrice($product, $product_stock, $candidateBatch, $requestedQty);
                 if ($lowestResolved === null || $candidate['sale_price'] < $lowestResolved['sale_price']) {
                     $lowestResolved = $candidate;
@@ -1145,6 +1150,14 @@ class HomeController extends Controller
         // If no valid in-stock batch exists, keep existing fallback behavior.
         if (!$selectedBatch && $batches->isNotEmpty()) {
             $selectedBatch = $batches->first();
+        }
+
+        // When a batch is selected, quantity must not exceed selected batch stock.
+        if ($selectedBatch) {
+            $selectedBatchQtyLimit = max(0, (int) ($selectedBatch->qty ?? 0));
+            if ($selectedBatchQtyLimit > 0) {
+                $requestedQty = min($requestedQty, $selectedBatchQtyLimit);
+            }
         }
 
         // Use batch data if available, otherwise fallback to product-level data (NOT stock-level)
@@ -1218,7 +1231,8 @@ class HomeController extends Controller
 
         // Calculate total quantity from all batches
         $quantity = $batches->isNotEmpty() ? $batches->sum('qty') : ($product_stock->qty ?? 0);
-        $max_limit = $quantity;
+        $selectedBatchQty = $selectedBatch ? max(0, (int) ($selectedBatch->qty ?? 0)) : null;
+        $max_limit = $selectedBatch ? $selectedBatchQty : $quantity;
 
         if ($quantity >= 1 && $stock_min_qty <= $quantity) {
             $in_stock = 1;
@@ -1283,8 +1297,11 @@ class HomeController extends Controller
             ];
         }
 
+        $displayUnitPrice = round((float) $price, 2);
+        $displaySubtotal = round($displayUnitPrice * $appliedQty, 2);
+
         return array(
-            'price' => single_price($price * $appliedQty),
+            'price' => single_price($displaySubtotal),
             'quantity' => $quantity,
             'sku' => $sku,
             'digital' => $product->digital,
@@ -1293,8 +1310,8 @@ class HomeController extends Controller
             'applied_quantity' => $appliedQty,
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
-            'per_piece_price' => single_price(round($price, 2)),
-            'without_tax_price' => single_price($price * $appliedQty),
+            'per_piece_price' => single_price($displayUnitPrice),
+            'without_tax_price' => single_price($displaySubtotal),
             'tax_included_price' => single_price(($price + $tax) * $appliedQty),
             'tax' => single_price($tax * $appliedQty),
             'original_price' => single_price($base),
@@ -1315,6 +1332,7 @@ class HomeController extends Controller
             'manufacturing_date' => $formattedManufacturing,
             'batches' => $batchesData,
             'selected_batch_id' => $selectedBatch ? $selectedBatch->id : null,
+            'selected_batch_qty' => $selectedBatchQty,
             'has_batch_offer' => $hasBatchOffer,
             'batch_offer_discount' => number_format($batchOfferDiscount, 2, '.', ''),
             'batch_offer_discount_percent' => round($batchOfferDiscountPercent, 2),
