@@ -26,7 +26,7 @@
                 <div class="col-sm-9">
                     <div class="fs-16 fw-700 text-primary">
                         <strong>
-                            {{ single_price(cart_product_price($cart, $product, false) * $cart->quantity) }}
+                            {{ single_price(isset($added_total_display) ? $added_total_display : (cart_product_price($cart, $product, false) * ($added_quantity ?? $cart->quantity))) }}
                         </strong>
                     </div>
                 </div>

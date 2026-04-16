@@ -18,6 +18,24 @@ use Cookie;
 
 class CartController extends Controller
 {
+    protected function calculateDisplayLineTotal($product, float $unitSalePrice, int $quantity): float
+    {
+        $safeQty = max(1, (int) $quantity);
+        $displayUnitPrice = round($unitSalePrice, 2);
+        $displayUnitTax = 0.0;
+
+        foreach ($product->taxes as $product_tax) {
+            if ($product_tax->tax_type == 'percent') {
+                $displayUnitTax += ($displayUnitPrice * $product_tax->tax) / 100;
+            } elseif ($product_tax->tax_type == 'amount') {
+                $displayUnitTax += (float) $product_tax->tax;
+            }
+        }
+
+        $displayUnitPriceWithTax = round($displayUnitPrice + $displayUnitTax, 2);
+        return round($displayUnitPriceWithTax * $safeQty, 2);
+    }
+
     public function index(Request $request)
     {
         if (auth()->user() != null) {
@@ -156,14 +174,16 @@ class CartController extends Controller
             $cart = Cart::firstOrNew([
                 'variation' => $str,
                 'user_id' => $user_id,
-                'product_id' => $request['id']
+                'product_id' => $request['id'],
+                'batch_id' => $batchId,
             ]);
         } else {
             $temp_user_id = $request->session()->get('temp_user_id');
             $cart = Cart::firstOrNew([
                 'variation' => $str,
                 'temp_user_id' => $temp_user_id,
-                'product_id' => $request['id']
+                'product_id' => $request['id'],
+                'batch_id' => $batchId,
             ]);
         }
 
@@ -177,7 +197,9 @@ class CartController extends Controller
                 );
             }
             // Check available quantity from batches or stock
-            if ($product_stock) {
+            if ($selectedBatch) {
+                $totalAvailableQty = (int) ($selectedBatch->qty ?? 0);
+            } elseif ($product_stock) {
                 $product_stock->load('batches');
                 $batches = $product_stock->batches;
                 $totalAvailableQty = $batches->isNotEmpty() ? $batches->sum('qty') : ($product_stock->qty ?? 0);
@@ -236,10 +258,16 @@ class CartController extends Controller
             $carts = Cart::where('temp_user_id', $temp_user_id)->get();
         }
 
+        $addedQuantity = (int) $request['quantity'];
+        $addedTotalDisplay = $this->calculateDisplayLineTotal($product, (float) $salePrice, $addedQuantity);
+
         return array(
             'status' => 1,
             'cart_count' => count($carts),
-            'modal_view' => view('frontend.partials.cart.addedToCart', compact('product', 'cart'))->render(),
+            'modal_view' => view('frontend.partials.cart.addedToCart', compact('product', 'cart'))
+                ->with('added_quantity', $addedQuantity)
+                ->with('added_total_display', $addedTotalDisplay)
+                ->render(),
             'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
         );
     }

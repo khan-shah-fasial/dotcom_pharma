@@ -23,6 +23,132 @@
         color: #1b5e20;
         font-weight: 700;
     }
+
+    .combined-discount-item {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(27, 94, 32, 0.12);
+        color: #1b5e20;
+        font-weight: 600;
+    }
+
+    .savings-breakdown-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #5b6470;
+        font-size: 15px;
+        font-weight: 600;
+        background: transparent;
+        border: 0;
+        padding: 0;
+        line-height: 1.2;
+    }
+
+    .savings-breakdown-toggle:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .savings-breakdown-toggle-icon {
+        transition: transform 0.2s ease;
+    }
+
+    .savings-breakdown-toggle[aria-expanded="true"] .savings-breakdown-toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .savings-breakdown-card {
+        border: 1px solid #d9dee4;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .savings-breakdown-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 11px 14px;
+        border-bottom: 1px dashed #d9dee4;
+    }
+
+    .savings-breakdown-row:last-child {
+        border-bottom: 0;
+    }
+
+    .savings-breakdown-row-left {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        color: #202733;
+    }
+
+    .savings-breakdown-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        background: #edf0f3;
+        color: #607080;
+        flex: 0 0 auto;
+    }
+
+    .savings-breakdown-label {
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .savings-breakdown-mid {
+        margin-left: auto;
+        margin-right: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .savings-breakdown-mid.minus {
+        color: #18a058;
+    }
+
+    .savings-breakdown-mid.plus {
+        color: #e53935;
+    }
+
+    .savings-breakdown-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: #0f2d6b;
+        white-space: nowrap;
+    }
+
+    .savings-breakdown-row.total {
+        background: #e8f4ee;
+    }
+
+    .savings-breakdown-row.total .savings-breakdown-label {
+        color: #0f8b5f;
+    }
+
+    .savings-breakdown-row.total .savings-breakdown-value {
+        color: #0f8b5f;
+    }
+
+    .savings-breakdown-off {
+        margin-left: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #2c9a6d;
+    }
     
     /* Social Share Buttons */
     .social-share-btn {
@@ -285,16 +411,16 @@
 
 
 
-        <div class="col-12 pl-0 d-flex mt-md-3">
+        {{-- <div class="col-12 pl-0 d-flex mt-md-3">
             <span class="fs-18 detail-gray-color">{{ translate('MRP') }}:</span>
             <span id="mrp-unit" class="fs-18 detail-gray-color"></span>
-        </div>
+        </div> --}}
 
-        <div class="col-12 pl-0 mt-md-2 mt-1 pb-0">
+        {{-- <div class="col-12 pl-0 mt-md-2 mt-1 pb-0"> --}}
             {{-- <span class="fw-500 fs-14 text-dark">{{ translate('Tax Amount') }}:</span> --}}
             {{-- <span id="tax-product-details" class="text-secondary fs-14"></span> --}}
-            <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span>
-        </div>
+            {{-- <span class="fw-500 fs-14 text-dark">Inclusive of all taxes</span> --}}
+        {{-- </div> --}}
 
 
 
@@ -332,8 +458,76 @@
             <span id="package-count-product-details" class="text-secondary fs-14 ">
                 {{ $detailedProduct->product_count ?? '-' }} / Count</span> --}}
         </div>
+        <div class="col-12 pl-0 d-flex mt-md-3">
+            <span class="fs-18 detail-gray-color">{{ translate('MRP') }}:</span>
+            <span id="mrp-unit" class="fs-18 detail-gray-color"></span>
+            <span class="px-2 fw-500 fs-14 text-dark">Inclusive of all taxes</span>
+        </div>
 
+        <div id="combined-discount-badge" class="col-12 pl-0 mt-2 pb-0 d-none">
+            <span class="combined-discount-pill">
+                <span class="combined-discount-label">{{ translate('Discount Applied') }}:</span>
+                <span id="combined-discount-product" class="combined-discount-item d-none"></span>
+                <span id="combined-discount-batch" class="combined-discount-item d-none"></span>
+                <span id="combined-discount-total" class="combined-discount-item d-none"></span>
+            </span>
+        </div>
 
+        <div id="savings-breakdown-card-wrap" class="col-12 pl-0 mt-3 pb-0 d-none">
+            <button type="button" class="savings-breakdown-toggle" data-toggle="collapse"
+                data-target="#savings-breakdown-collapse" aria-expanded="false"
+                aria-controls="savings-breakdown-collapse">
+                <i class="las la-certificate fs-20"></i>
+                <span>{{ translate('View Price Breakdown') }}</span>
+                <i class="las la-angle-down savings-breakdown-toggle-icon"></i>
+            </button>
+
+            <div id="savings-breakdown-collapse" class="collapse mt-2">
+            <div class="savings-breakdown-card">
+                <div class="savings-breakdown-row d-none">
+                    <div class="savings-breakdown-row-left">
+                        <span class="savings-breakdown-dot">&#8377;</span>
+                        <span class="savings-breakdown-label">{{ translate('MRP') }}</span>
+                    </div>
+                    <div class="savings-breakdown-value" id="sb-mrp-value">-</div>
+                </div>
+                <div class="savings-breakdown-row">
+                    <div class="savings-breakdown-row-left">
+                        <span class="savings-breakdown-dot" style="background:#e8f4ee;color:#18a058;">&#8595;</span>
+                        <span class="savings-breakdown-label">{{ translate('Price') }}</span>
+                    </div>
+                    <div class="savings-breakdown-mid minus" id="sb-role-save">-</div>
+                    <div class="savings-breakdown-value" id="sb-role-price">-</div>
+                </div>
+                <div class="savings-breakdown-row">
+                    <div class="savings-breakdown-row-left">
+                        <span class="savings-breakdown-dot" style="background:#e8f4ee;color:#18a058;">&#8595;</span>
+                        <span class="savings-breakdown-label" id="sb-discount-label">{{ translate('Discount') }}</span>
+                    </div>
+                    <div class="savings-breakdown-mid minus" id="sb-discount-amount">-</div>
+                    <div class="savings-breakdown-value" id="sb-discount-price">-</div>
+                </div>
+                <div class="savings-breakdown-row">
+                    <div class="savings-breakdown-row-left">
+                        <span class="savings-breakdown-dot" style="background:#ffe9e9;color:#e53935;">+</span>
+                        <span class="savings-breakdown-label" id="sb-tax-label">{{ translate('Tax') }}</span>
+                    </div>
+                    <div class="savings-breakdown-mid plus" id="sb-tax-amount">-</div>
+                    <div class="savings-breakdown-value" id="sb-final-price">-</div>
+                </div>
+                <div class="savings-breakdown-row total">
+                    <div class="savings-breakdown-row-left">
+                        <span class="savings-breakdown-dot" style="background:#1ea970;color:#fff;">&#8600;</span>
+                        <span class="savings-breakdown-label">{{ translate('Total You Save') }}</span>
+                    </div>
+                    <div class="savings-breakdown-value" id="sb-total-save">
+                        -
+                        <span class="savings-breakdown-off" id="sb-total-save-percent"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
 
         <div id="discount-show" class="col-12 pl-0 mt-md-3 mt-2 pb-0 d-none">
             {{-- @if (discount_in_percentage($detailedProduct) > 0)
@@ -347,13 +541,6 @@
                 <span id="dis_per" class="fs-18 text-center" style="color: #E31E24 !important;"></span>
             </span>
             {{-- @endif --}}
-        </div>
-
-        <div id="combined-discount-badge" class="col-12 pl-0 mt-2 pb-0 d-none">
-            <span class="combined-discount-pill">
-                <span class="combined-discount-label">{{ translate('Discount Applied') }}:</span>
-                <span id="combined-discount-text"></span>
-            </span>
         </div>
 
         {{-- Unit/MRP --}}

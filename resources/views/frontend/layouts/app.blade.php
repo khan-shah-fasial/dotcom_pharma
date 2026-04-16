@@ -1010,32 +1010,118 @@
                         $('#without-tax-product').html(data?.without_tax_price ?? '-');
                         $('#tax-included-price-product').html(data?.tax_included_price ?? '-');
 
-                        if (data?.discount_percentage > 0) {
-                            $('#discount-show').removeClass('d-none');
-                            $('#discount-product-price').html('Rs. ' + data.discount_price);
-                            $('#dis_per').html('( ' + data.discount_percentage + '% )');
-                        } else {
-                            $('#discount-show').addClass('d-none');
-                        }
+                        // if (data?.discount_percentage > 0) {
+                        //     $('#discount-show').removeClass('d-none');
+                        //     $('#discount-product-price').html('Rs. ' + data.discount_price);
+                        //     $('#dis_per').html('( ' + data.discount_percentage + '% )');
+                        // } else {
+                        //     $('#discount-show').addClass('d-none');
+                        // }
 
                         const productDiscountPercent = parseFloat(data?.product_discount_percent || 0);
                         const batchDiscountPercent = parseFloat(data?.batch_discount_percent || 0);
                         const totalDiscountPercent = parseFloat(data?.total_discount_percent || 0);
+                        const configuredTaxPercent = parseFloat(data?.configured_tax_percent || 0);
+                        const hasFixedTaxComponent = Boolean(data?.has_fixed_tax_component);
                         const formatPercent = function(value) {
                             const n = Math.round((parseFloat(value || 0)) * 100) / 100;
                             return n.toString().replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
                         };
 
-                        if (productDiscountPercent > 0 && batchDiscountPercent > 0 && totalDiscountPercent > 0) {
-                            $('#combined-discount-badge').removeClass('d-none');
-                            $('#combined-discount-text').html(
-                                formatPercent(productDiscountPercent) + '% + ' +
-                                formatPercent(batchDiscountPercent) + '% = ' +
-                                formatPercent(totalDiscountPercent) + '%'
-                            );
-                        } else {
-                            $('#combined-discount-badge').addClass('d-none');
-                            $('#combined-discount-text').html('');
+                        if ($('#savings-breakdown-card-wrap').length) {
+                            const parseAmount = function (value) {
+                                const raw = (value ?? '').toString().replace(/[^0-9.-]/g, '');
+                                const n = parseFloat(raw);
+                                return Number.isFinite(n) ? n : 0;
+                            };
+                            const appliedQty = Math.max(1, parseInt(data?.applied_quantity || $('#product_quantity').val() || 1, 10) || 1);
+                            const breakdownMrp = parseAmount(data?.original_price);
+                            const breakdownRolePriceAfterProduct = Math.max(0, parseFloat(data?.resolved_price || 0));
+                            const breakdownDiscountedPrice = Math.max(0, parseFloat(data?.resolved_sale_price || 0));
+                            const breakdownFinalPrice = parseAmount(data?.per_piece_price);
+                            let breakdownTaxAmount = parseAmount(data?.tax) / appliedQty;
+                            if (!Number.isFinite(breakdownTaxAmount) || breakdownTaxAmount < 0) {
+                                breakdownTaxAmount = 0;
+                            }
+                            if (breakdownTaxAmount <= 0 && breakdownFinalPrice > breakdownDiscountedPrice) {
+                                breakdownTaxAmount = breakdownFinalPrice - breakdownDiscountedPrice;
+                            }
+                            let normalizedRolePrice = breakdownRolePriceAfterProduct > 0 ? breakdownRolePriceAfterProduct : breakdownDiscountedPrice;
+                            const productDiscountRatio = productDiscountPercent > 0 ? (productDiscountPercent / 100) : 0;
+                            // Rebuild pre-product-discount role price so combined % discount is represented correctly.
+                            if (productDiscountRatio > 0 && productDiscountRatio < 1 && normalizedRolePrice > 0) {
+                                normalizedRolePrice = normalizedRolePrice / (1 - productDiscountRatio);
+                            }
+                            const normalizedFinalPrice = breakdownFinalPrice > 0 ? breakdownFinalPrice : (breakdownDiscountedPrice + breakdownTaxAmount);
+                            const breakdownRoleSave = Math.max(0, breakdownMrp - normalizedRolePrice);
+                            const breakdownDiscountAmount = Math.max(0, normalizedRolePrice - breakdownDiscountedPrice);
+                            const breakdownTotalSaveAmount = Math.max(0, breakdownMrp - normalizedFinalPrice);
+                            const breakdownTotalSavePercent = breakdownMrp > 0 ? ((breakdownTotalSaveAmount / breakdownMrp) * 100) : 0;
+                            const breakdownTaxPercent = breakdownDiscountedPrice > 0 ? ((breakdownTaxAmount / breakdownDiscountedPrice) * 100) : 0;
+
+                            const currencySource = (data?.per_piece_price || data?.price || data?.original_price || '').toString();
+                            let currencyPrefix = currencySource.replace(/[0-9.,\s-]/g, '').trim();
+                            if (!currencyPrefix) {
+                                currencyPrefix = '₹';
+                            }
+
+                            const formatMoney = function (value) {
+                                const n = Math.round((parseFloat(value || 0) + Number.EPSILON) * 100) / 100;
+                                return currencyPrefix + n.toFixed(2);
+                            };
+
+                            if (breakdownMrp > 0) {
+                                $('#savings-breakdown-card-wrap').removeClass('d-none');
+
+                                $('#sb-mrp-value').html(formatMoney(breakdownMrp));
+                                $('#sb-role-save').html('-' + formatMoney(breakdownRoleSave));
+                                $('#sb-role-price').html(formatMoney(normalizedRolePrice));
+
+                                const discountLabelParts = [];
+                                if (productDiscountPercent > 0) {
+                                    discountLabelParts.push('Product ' + formatPercent(productDiscountPercent) + '%');
+                                }
+                                if (batchDiscountPercent > 0) {
+                                    discountLabelParts.push('Batch ' + formatPercent(batchDiscountPercent) + '%');
+                                }
+                                const discountLabel = discountLabelParts.length > 0
+                                    ? 'Discount (' + discountLabelParts.join(' + ') + ')'
+                                    : 'Discount';
+
+                                $('#sb-discount-label').html(discountLabel);
+                                $('#sb-discount-amount').html('-' + formatMoney(breakdownDiscountAmount));
+                                $('#sb-discount-price').html(formatMoney(breakdownDiscountedPrice));
+
+                                let taxLabel = 'Tax';
+                                if (configuredTaxPercent > 0 && hasFixedTaxComponent) {
+                                    taxLabel = 'Tax (' + formatPercent(configuredTaxPercent) + '% + fixed)';
+                                } else if (configuredTaxPercent > 0) {
+                                    taxLabel = 'Tax (' + formatPercent(configuredTaxPercent) + '%)';
+                                } else if (hasFixedTaxComponent) {
+                                    taxLabel = 'Tax (fixed)';
+                                } else if (breakdownTaxPercent > 0) {
+                                    taxLabel = 'Tax (' + formatPercent(breakdownTaxPercent) + '%)';
+                                }
+                                $('#sb-tax-label').html(taxLabel);
+                                $('#sb-tax-amount').html('+' + formatMoney(breakdownTaxAmount));
+                                $('#sb-final-price').html(formatMoney(normalizedFinalPrice));
+
+                                $('#sb-total-save').html(formatMoney(breakdownTotalSaveAmount));
+                                $('#sb-total-save').append('<span class="savings-breakdown-off" id="sb-total-save-percent">' + formatPercent(breakdownTotalSavePercent) + '% off</span>');
+                            } else {
+                                $('#savings-breakdown-card-wrap').addClass('d-none');
+                                $('#sb-mrp-value').html('-');
+                                $('#sb-role-save').html('-');
+                                $('#sb-role-price').html('-');
+                                $('#sb-discount-label').html('Discount');
+                                $('#sb-discount-amount').html('-');
+                                $('#sb-discount-price').html('-');
+                                $('#sb-tax-label').html('Tax');
+                                $('#sb-tax-amount').html('-');
+                                $('#sb-final-price').html('-');
+                                $('#sb-total-save').html('-');
+                                $('#sb-total-save').append('<span class="savings-breakdown-off" id="sb-total-save-percent"></span>');
+                            }
                         }
 
                         // packaging breakdown dynamic fill

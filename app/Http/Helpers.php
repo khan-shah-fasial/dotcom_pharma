@@ -1933,7 +1933,7 @@ if (!function_exists('home_base_price')) {
 if (!function_exists('home_discounted_base_price_by_stock_id')) {
     function home_discounted_base_price_by_stock_id($id)
     {
-        $cacheKey = 'home_discounted_base_price_stock_' . $id . '_' . (getCurrentUserRole() ?? 'guest');
+        $cacheKey = 'home_discounted_base_price_stock_v2_' . $id . '_' . (getCurrentUserRole() ?? 'guest');
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($id) {
             $product_stock = ProductStock::with(['batches', 'product.taxes'])->findOrFail($id);
@@ -1961,15 +1961,18 @@ if (!function_exists('home_discounted_base_price_by_stock_id')) {
                 }
             }
 
+            $displayUnitPrice = round((float) $price, 2);
+            $displayTax = 0.0;
+
             $taxes = $product->taxes;
             foreach ($taxes as $product_tax) {
                 if ($product_tax->tax_type == 'percent') {
-                    $tax += ($price * $product_tax->tax) / 100;
+                    $displayTax += ($displayUnitPrice * $product_tax->tax) / 100;
                 } elseif ($product_tax->tax_type == 'amount') {
-                    $tax += $product_tax->tax;
+                    $displayTax += $product_tax->tax;
                 }
             }
-            $price += $tax;
+            $price = round($displayUnitPrice + $displayTax, 2);
 
             return format_price(convert_price($price));
         });
@@ -1981,7 +1984,7 @@ if (!function_exists('home_discounted_base_price_by_stock_id')) {
 if (!function_exists('home_discounted_base_price')) {
     function home_discounted_base_price($product, $formatted = true)
     {
-        $cacheKey = 'home_discounted_base_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
+        $cacheKey = 'home_discounted_base_price_v2_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($product, $formatted) {
             // For non-variant products, use product-level pricing
@@ -2021,14 +2024,17 @@ if (!function_exists('home_discounted_base_price')) {
                 $taxes = $product->taxes()->get();
             }
             
+            $displayUnitPrice = round((float) $price, 2);
+            $displayTax = 0.0;
+
             foreach ($taxes as $product_tax) {
                 if ($product_tax->tax_type == 'percent') {
-                    $tax += ($price * $product_tax->tax) / 100;
+                    $displayTax += ($displayUnitPrice * $product_tax->tax) / 100;
                 } elseif ($product_tax->tax_type == 'amount') {
-                    $tax += $product_tax->tax;
+                    $displayTax += $product_tax->tax;
                 }
             }
-            $price += $tax;
+            $price = round($displayUnitPrice + $displayTax, 2);
 
             return $formatted ? format_price(convert_price($price)) : convert_price($price);
         });

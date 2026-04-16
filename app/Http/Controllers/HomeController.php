@@ -1298,10 +1298,27 @@ class HomeController extends Controller
         }
 
         $displayUnitPrice = round((float) $price, 2);
+        $displayUnitTax = 0.0;
+        $configuredTaxPercent = 0.0;
+        $hasFixedTaxComponent = false;
+
+        foreach ($product->taxes as $product_tax) {
+            if ($product_tax->tax_type == 'percent') {
+                $displayUnitTax += ($displayUnitPrice * $product_tax->tax) / 100;
+                $configuredTaxPercent += (float) $product_tax->tax;
+            } elseif ($product_tax->tax_type == 'amount') {
+                $displayUnitTax += (float) $product_tax->tax;
+                $hasFixedTaxComponent = true;
+            }
+        }
+
+        $displayUnitPriceWithTax = round((float) ($displayUnitPrice + $displayUnitTax), 2);
         $displaySubtotal = round($displayUnitPrice * $appliedQty, 2);
+        $displaySubtotalWithTax = round($displayUnitPriceWithTax * $appliedQty, 2);
+        $displayTaxTotal = round($displaySubtotalWithTax - $displaySubtotal, 2);
 
         return array(
-            'price' => single_price($displaySubtotal),
+            'price' => single_price($displaySubtotalWithTax),
             'quantity' => $quantity,
             'sku' => $sku,
             'digital' => $product->digital,
@@ -1310,10 +1327,10 @@ class HomeController extends Controller
             'applied_quantity' => $appliedQty,
             'max_limit' => $max_limit,
             'in_stock' => $in_stock,
-            'per_piece_price' => single_price($displayUnitPrice),
+            'per_piece_price' => single_price($displayUnitPriceWithTax),
             'without_tax_price' => single_price($displaySubtotal),
-            'tax_included_price' => single_price(($price + $tax) * $appliedQty),
-            'tax' => single_price($tax * $appliedQty),
+            'tax_included_price' => single_price($displaySubtotalWithTax),
+            'tax' => single_price($displayTaxTotal),
             'original_price' => single_price($base),
             'dimension' => $dimension,
             'weight_volume' => $weight,
@@ -1327,6 +1344,8 @@ class HomeController extends Controller
             'case_dimension' => $case_dimension,
             'discount_percentage' => round($displayDiscountPercent, 2),
             'discount_price' => number_format($displayDiscountAmount, 2),
+            'configured_tax_percent' => round($configuredTaxPercent, 2),
+            'has_fixed_tax_component' => $hasFixedTaxComponent,
             'coa_url' => $coa_url,
             'expiry_date' => $formattedExpiry,
             'manufacturing_date' => $formattedManufacturing,

@@ -306,9 +306,9 @@ class OrderController extends Controller
                 $order_detail->price = $unitBasePrice * $cartItem['quantity'];
                 $order_detail->sale_price = $unitSalePrice;
                 $order_detail->mrp_price = $cartItem['mrp_price'] ?? ($selectedBatch ? $selectedBatch->mrp_price : (optional($product_stock)->mrp_price ?? $product->mrp_price));
-                $productDiscountAmountPerUnit = $this->resolveProductDiscountAmountPerUnit($product, (float) $unitBasePrice);
-                $batchDiscountAmountPerUnit = max(0, (float) $unitBasePrice - (float) $unitSalePrice);
-                $order_detail->discount_amount = ($productDiscountAmountPerUnit + $batchDiscountAmountPerUnit) * (int) $cartItem['quantity'];
+                $productDiscountAmountPerUnit = round($this->resolveProductDiscountAmountPerUnit($product, (float) $unitBasePrice), 2);
+                $batchDiscountAmountPerUnit = round(max(0, (float) $unitBasePrice - (float) $unitSalePrice), 2);
+                $order_detail->discount_amount = round(($productDiscountAmountPerUnit + $batchDiscountAmountPerUnit) * (int) $cartItem['quantity'], 2);
                 // Use stored tax from cart so order_detail matches cart (batch-aware)
                 $order_detail->tax = ($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity'];
                 $order_detail->shipping_type = $cartItem['shipping_type'];
