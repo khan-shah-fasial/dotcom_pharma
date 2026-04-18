@@ -908,7 +908,7 @@
         <!-- Certificates Section -->
         <div class="certificates-section mt-md-4 mt-3 col-md-12 pl-0">
             <h3 class="fs-14 fw-500 text-dark mb-3">
-                <span class="mr-4">{{ translate('Certificates') }}:</span>
+                <span class="mr-4">{{ translate('Ceritifcations ') }}:</span>
             </h3>
             <div class="certificates-row">
                  <div class="certificate-item">
@@ -1089,6 +1089,31 @@
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                                     viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-package w-5 h-5">
+                                                    <path
+                                                        d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
+                                                    </path>
+                                                    <path d="M12 22V12"></path>
+                                                    <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
+                                                    <path d="m7.5 4.27 9 5.15"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Stock Available') }}:</p>
+                                                <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                     class="lucide lucide-hash w-5 h-5">
                                                     <line x1="4" x2="20" y1="9"
                                                         y2="9"></line>
@@ -1115,19 +1140,46 @@
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                                     viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-package w-5 h-5">
-                                                    <path
-                                                        d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z">
-                                                    </path>
-                                                    <path d="M12 22V12"></path>
-                                                    <path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"></path>
-                                                    <path d="m7.5 4.27 9 5.15"></path>
+                                                    class="lucide lucide-calendar w-5 h-5">
+                                                    <path d="M8 2v4"></path>
+                                                    <path d="M16 2v4"></path>
+                                                    <rect width="18" height="18" x="3" y="4" rx="2">
+                                                    </rect>
+                                                    <path d="M3 10h18"></path>
                                                 </svg>
                                             </div>
                                             <div class="">
                                                 <p class="detail-font-14px detail-gray-color mb-0">
-                                                    {{ translate('Stock Available') }}:</p>
-                                                <p id="qnt-product-details" class="fw-500 fs-14 mb-0 pl21"></p>
+                                                    {{ translate('Shelf life') }}:</p>
+                                                <p id="product-expiry-date" class="fw-500 fs-14 mb-0">
+                                                  </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                
+
+                                <div class="col-12 col-md-6 pl-0 mb-3">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-calendar-check-2 w-5 h-5">
+                                                    <path d="M8 2v4"></path>
+                                                    <path d="M16 2v4"></path>
+                                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                                    <path d="M3 10h18"></path>
+                                                    <path d="m9 16 2 2 4-4"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Manufacturing Date') }}:</p>
+                                                <p id="product-manufacturing-date" class="fw-500 fs-14 mb-0">
+                                                    {{ $initialManufacturingFormatted }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1153,31 +1205,6 @@
                                                     {{ translate('Expiry Date') }}:</p>
                                                 <p id="product-expiry-date" class="fw-500 fs-14 mb-0">
                                                     {{ $initialExpiryFormatted }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-12 col-md-6 pl-0 mb-3">
-                                    <div class="detail-product-specs rounded h-100">
-                                        <div class="display_flex3">
-                                            <div class="">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="lucide lucide-calendar-check-2 w-5 h-5">
-                                                    <path d="M8 2v4"></path>
-                                                    <path d="M16 2v4"></path>
-                                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-                                                    <path d="M3 10h18"></path>
-                                                    <path d="m9 16 2 2 4-4"></path>
-                                                </svg>
-                                            </div>
-                                            <div class="">
-                                                <p class="detail-font-14px detail-gray-color mb-0">
-                                                    {{ translate('Manufacturing Date') }}:</p>
-                                                <p id="product-manufacturing-date" class="fw-500 fs-14 mb-0">
-                                                    {{ $initialManufacturingFormatted }}</p>
                                             </div>
                                         </div>
                                     </div>
