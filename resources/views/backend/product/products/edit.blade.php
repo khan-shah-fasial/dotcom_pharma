@@ -15,10 +15,10 @@
         </div>
     </div>
 
-    <div class="d-sm-flex">
+    <div class="row">
         <!-- page side nav -->
-        <div class="page-side-nav c-scrollbar-light px-3 py-2">
-            <ul class="nav nav-tabs flex-sm-column border-0" role="tablist" aria-orientation="vertical">
+        <div class="col-md-12 page-side-nav c-scrollbar-light px-3 py-2">
+            <ul class="nav nav-tabs border-0" role="tablist" aria-orientation="vertical">
                 <!-- General -->
                 <li class="nav-item">
                     <a class="nav-link" id="general-tab" href="#general"
@@ -74,7 +74,7 @@
         </div>
 
         <!-- tab content -->
-        <div class="flex-grow-1 p-sm-3 p-lg-2rem mb-2rem mb-md-0">
+        <div class="col-md-12 flex-grow-1 pt-lg-0 pb-lg-2rem pl-lg-2rem pr-lg-2rem mb-2rem mb-md-0">
             <!-- Error Meassages -->
             @if ($errors->any())
                 <div class="alert alert-danger">
@@ -93,7 +93,7 @@
                 <input type="hidden" name="lang" value="{{ $lang }}">
                 <input type="hidden" name="tab" id="tab">
 
-                <ul class="nav nav-tabs nav-fill language-bar">
+                <!-- <ul class="nav nav-tabs nav-fill language-bar">
                     @foreach (get_all_active_language() as $key => $language)
                     <li class="nav-item">
                         <a class="nav-link text-reset @if ($language->code == $lang) active @endif py-3" href="{{ route('products.admin.edit', ['id'=>$product->id, 'lang'=> $language->code] ) }}">
@@ -102,7 +102,7 @@
                         </a>
                     </li>
                     @endforeach
-                </ul>
+                </ul> -->
 
                 <div class="tab-content">
                     <!-- General -->
@@ -725,6 +725,27 @@
 
                     <!-- Price & Stock -->
                     <div class="tab-pane fade" id="price_and_stocks" role="tabpanel" aria-labelledby="price-and-stocks-tab">
+                        <style>
+                            #price_and_stocks .price-stocks-sku-scroll {
+                                width: 100%;
+                                overflow-x: auto;
+                                overflow-y: visible;
+                                padding: 0.75rem;
+                                border: 1px solid #e4e5eb;
+                                border-radius: 8px;
+                                margin-bottom: 20px;
+                                background: #fafbfc;
+                                -webkit-overflow-scrolling: touch;
+                            }
+                            .page-side-nav {
+                                width: auto;
+                                min-width: auto;
+                                min-height: auto !important;
+                                overflow-y: auto;
+                                background: #fff;
+                                margin-left: 42px;
+                            }
+                                                    </style>
                         <div class="bg-white p-3 p-sm-2rem">
                             <!-- tab Title -->
                             <h5 class="mb-3 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Product price & stock')}}</h5>
@@ -871,8 +892,10 @@
 
                                 <br>
                                 <!-- sku combination -->
-                                <div class="sku_combination" id="sku_combination">
+                                <div class="price-stocks-sku-scroll">
+                                    <div class="sku_combination" id="sku_combination">
 
+                                    </div>
                                 </div>
                             </div>
 
