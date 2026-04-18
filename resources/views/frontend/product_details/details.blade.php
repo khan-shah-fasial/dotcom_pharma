@@ -1045,8 +1045,8 @@
                 <div class="card">
                     <div class="card-header" id="headingBatchStock">
                         <h2 class="mb-0">
-                            <button class="btn btn-link accordion-custom" type="button" data-toggle="collapse"
-                                data-target="#collapseBatchStock" aria-expanded="true"
+                            <button class="btn btn-link accordion-custom collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseBatchStock" aria-expanded="false"
                                 aria-controls="collapseBatchStock">
                                 {{ translate('Batch & Stock Details') }}
                                 <i class="fas fa-chevron-down"></i>
@@ -1054,7 +1054,7 @@
                         </h2>
                     </div>
 
-                    <div id="collapseBatchStock" class="collapse show" aria-labelledby="headingBatchStock"
+                    <div id="collapseBatchStock" class="collapse" aria-labelledby="headingBatchStock"
                         data-parent="#productAccordion">
                         <div class="card-body p-0">
                             <div class="col-12 d-flex flex-wrap mt-2 bg-white pr-0">
