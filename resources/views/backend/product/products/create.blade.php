@@ -7,6 +7,19 @@
     CoreComponentRepository::initializeCache();
 @endphp
 
+
+<style>
+
+.page-side-nav {
+width: auto;
+min-width: auto;
+min-height: auto !important;
+overflow-y: auto;
+background: #fff;
+margin-left: 42px;
+}
+</style>
+
 <div class="page-content">
     <div class="aiz-titlebar text-left mt-2 pb-2 px-3 px-md-2rem border-bottom border-gray">
         <div class="row align-items-center">
@@ -29,10 +42,10 @@
         </div>
     </div>
 
-    <div class="d-sm-flex">
+    <div class="row">
         <!-- page side nav -->
-        <div class="page-side-nav c-scrollbar-light px-3 py-2">
-            <ul class="nav nav-tabs flex-sm-column border-0" role="tablist" aria-orientation="vertical">
+        <div class="col-md-12 page-side-nav c-scrollbar-light px-3 py-2">
+            <ul class="nav nav-tabs border-0" role="tablist" aria-orientation="vertical">
                 <!-- General -->
                 <li class="nav-item">
                     <a class="nav-link" id="general-tab" href="#general"
@@ -88,7 +101,7 @@
         </div>
 
         <!-- tab content -->
-        <div class="flex-grow-1 p-sm-3 p-lg-2rem mb-2rem mb-md-0">
+        <div class="col-md-12 flex-grow-1 pt-lg-0 pb-lg-2rem pl-lg-2rem pr-lg-2rem mb-2rem mb-md-0">
             <!-- Error Meassages -->
             @if ($errors->any())
                 <div class="alert alert-danger">
