@@ -485,6 +485,10 @@ class CustomerController extends Controller
             } catch (\Exception $e) {}
         }
 
+        if (isset($user) && !empty($user->id) && function_exists('storeIPLocation')) {
+            storeIPLocation('users', $user->id);
+        }
+
         return back();
     }
 
@@ -873,6 +877,10 @@ class CustomerController extends Controller
             // }
 
             DB::commit();
+
+            if (!empty($user->id) && function_exists('storeIPLocation')) {
+                storeIPLocation('users', $user->id);
+            }
 
             if ($request->ajax()) {
                 return response()->json([

@@ -481,6 +481,7 @@
 												<th style="width: 9%;">{{ translate('Expiry Month') }}</th>
 												<th style="width: 8%;">{{ translate('MRP Price') }}</th>
 												<th style="width: 8%;">{{ translate('Stock Qty') }}</th>
+												<th style="width: 8%;">{{ translate('Scheme') }}</th>
 												<th style="width: 7%;">{{ translate('Offer Active') }}</th>
 												<th style="width: 8%;">{{ translate('Discount Type') }}</th>
 												<th style="width: 8%;">{{ translate('Discount') }}</th>
@@ -510,6 +511,9 @@
 												</td>
 												<td>
 													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][qty]" value="10" min="0" step="1" class="form-control form-control-sm" required>
+												</td>
+												<td>
+													<input type="number" lang="en" name="batches[{{ $variantKey }}][0][scheme]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.scheme', '') }}" min="0" step="1" class="form-control form-control-sm" placeholder="{{ translate('Scheme') }}">
 												</td>
 												<td class="text-center">
 													<input type="hidden" name="batches[{{ $variantKey }}][0][discount_active]" value="0">
@@ -627,6 +631,9 @@
 				</td>
 				<td>
 					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][qty]" min="0" step="1" class="form-control form-control-sm" required>
+				</td>
+				<td>
+					<input type="number" lang="en" name="batches[` + variantKey + `][` + index + `][scheme]" min="0" step="1" class="form-control form-control-sm" placeholder="{{ translate('Scheme') }}">
 				</td>
 				<td class="text-center">
 					<input type="hidden" name="batches[` + variantKey + `][` + index + `][discount_active]" value="0">

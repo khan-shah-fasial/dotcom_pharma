@@ -901,6 +901,154 @@
             $('.input-number').prop('max', effectiveMax);
         }
 
+        function parseShelfLifeDate(value) {
+            if (value === null || value === undefined) {
+                return null;
+            }
+
+            const raw = String(value).trim();
+            if (!raw || raw === '-') {
+                return null;
+            }
+
+            const buildDate = function (year, month, day) {
+                const y = parseInt(year, 10);
+                const m = parseInt(month, 10);
+                const d = parseInt(day, 10);
+                const dt = new Date(y, m - 1, d);
+                if (
+                    dt.getFullYear() !== y ||
+                    dt.getMonth() !== (m - 1) ||
+                    dt.getDate() !== d
+                ) {
+                    return null;
+                }
+                dt.setHours(0, 0, 0, 0);
+                return dt;
+            };
+
+            let match = raw.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+            if (match) {
+                return buildDate(match[3], match[2], match[1]);
+            }
+
+            match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+            if (match) {
+                return buildDate(match[1], match[2], match[3]);
+            }
+
+            match = raw.match(/^([A-Za-z]{3,9})\s+(\d{4})$/);
+            if (match) {
+                const monthMap = {
+                    jan: 1, january: 1,
+                    feb: 2, february: 2,
+                    mar: 3, march: 3,
+                    apr: 4, april: 4,
+                    may: 5,
+                    jun: 6, june: 6,
+                    jul: 7, july: 7,
+                    aug: 8, august: 8,
+                    sep: 9, sept: 9, september: 9,
+                    oct: 10, october: 10,
+                    nov: 11, november: 11,
+                    dec: 12, december: 12
+                };
+                const month = monthMap[(match[1] || '').toLowerCase()];
+                if (month) {
+                    return buildDate(match[2], month, 1);
+                }
+            }
+
+            const fallback = new Date(raw);
+            if (!Number.isNaN(fallback.getTime())) {
+                fallback.setHours(0, 0, 0, 0);
+                return fallback;
+            }
+
+            return null;
+        }
+
+        function buildShelfLifeText(manufacturingDate, expiryDate) {
+            if (!manufacturingDate || !expiryDate || expiryDate < manufacturingDate) {
+                return '-';
+            }
+
+            let totalMonths = (expiryDate.getFullYear() - manufacturingDate.getFullYear()) * 12;
+            totalMonths += (expiryDate.getMonth() - manufacturingDate.getMonth());
+            if (expiryDate.getDate() < manufacturingDate.getDate()) {
+                totalMonths -= 1;
+            }
+
+            if (totalMonths < 0) {
+                return '-';
+            }
+
+            const years = Math.floor(totalMonths / 12);
+            const months = totalMonths % 12;
+            const parts = [];
+
+            if (years > 0) {
+                parts.push(years + ' year' + (years === 1 ? '' : 's'));
+            }
+            if (months > 0) {
+                parts.push(months + ' month' + (months === 1 ? '' : 's'));
+            }
+
+            if (!parts.length) {
+                const msPerDay = 24 * 60 * 60 * 1000;
+                const dayDiff = Math.round((expiryDate.getTime() - manufacturingDate.getTime()) / msPerDay);
+                if (dayDiff >= 0) {
+                    parts.push(dayDiff + ' day' + (dayDiff === 1 ? '' : 's'));
+                }
+            }
+
+            return parts.length ? parts.join(' ') : '-';
+        }
+
+        function updateProductShelfLifeDate(manufacturingText = null, expiryText = null) {
+            const $shelfLife = $('#product-shelf-life-date');
+            if (!$shelfLife.length) {
+                return;
+            }
+
+            const manufacturingValue = manufacturingText !== null
+                ? manufacturingText
+                : ($('#product-manufacturing-date').text() || '');
+            const expiryValue = expiryText !== null
+                ? expiryText
+                : ($('#product-expiry-date').text() || '');
+
+            const manufacturingDate = parseShelfLifeDate(manufacturingValue);
+            const expiryDate = parseShelfLifeDate(expiryValue);
+            const shelfLifeText = buildShelfLifeText(manufacturingDate, expiryDate);
+
+            if (shelfLifeText === '-') {
+                $shelfLife.text('-');
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const shouldShowRemaining = manufacturingDate < today;
+            if (!shouldShowRemaining) {
+                $shelfLife.text(shelfLifeText);
+                return;
+            }
+
+            const msPerDay = 24 * 60 * 60 * 1000;
+            const remainingDays = Math.ceil((expiryDate.getTime() - today.getTime()) / msPerDay);
+
+            if (remainingDays >= 0) {
+                $shelfLife.text(
+                    shelfLifeText + ' (' + remainingDays + ' day' + (remainingDays === 1 ? '' : 's') + ' left)'
+                );
+            } else {
+                $shelfLife.text(shelfLifeText + ' (expired)');
+            }
+        }
+
+        updateProductShelfLifeDate();
+
         function getVariantPrice(immediate = false){
             const invoke = function(){
                 // Prevent multiple simultaneous AJAX calls
@@ -1006,6 +1154,7 @@
                         $('#tax-product-details').html('Rs. ' + (data?.tax ?? '-'));
                         $('#product-expiry-date').html(data?.expiry_date ?? '-');
                         $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
+                        updateProductShelfLifeDate(data?.manufacturing_date ?? '-', data?.expiry_date ?? '-');
 
                         $('#without-tax-product').html(data?.without_tax_price ?? '-');
                         $('#tax-included-price-product').html(data?.tax_included_price ?? '-');
@@ -1262,6 +1411,7 @@
                                         $('#batch-lot-product-details').html('');
                                         $('#qnt-product-details').html(qnt > 0 ? data?.quantity : 'Not Available');
                                         $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
+                                        updateProductShelfLifeDate(data?.manufacturing_date ?? '-', data?.expiry_date ?? '-');
                                         selectedBatchQty = null;
                                     }
                                 })();
@@ -1274,6 +1424,7 @@
                                 selectedBatchQty = null;
                                 $('#selected_batch_id').val('');
                                 $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
+                                updateProductShelfLifeDate(data?.manufacturing_date ?? '-', data?.expiry_date ?? '-');
                             }
                         }
 
@@ -1399,6 +1550,7 @@
                 // Update expiry date immediately
                 $('#product-expiry-date').html(batchData.expiry_date || '-');
                 $('#product-manufacturing-date').html(batchData.manufacturing_date || '-');
+                updateProductShelfLifeDate(batchData.manufacturing_date || '-', batchData.expiry_date || '-');
 
                 // Update batch / lot no.
                 const batchLabel = (batchData.batch && batchData.batch.trim() !== '')

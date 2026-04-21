@@ -946,6 +946,7 @@
     <script>
         const locationStatesRoute = "{{ route('get-state') }}";
         const locationCitiesRoute = "{{ route('get-city') }}";
+        const locationLookupRoute = "{{ route('get-location') }}";
         const defaultStateText = @json(translate('Select State'));
         const defaultCityText = @json(translate('Select City'));
 
@@ -966,20 +967,18 @@
             refreshPicker($select);
         }
 
-        function loadStates(scope, preserveSelected = false) {
+        function loadStates(scope, preserveSelected = false, forcedSelected = null) {
             const $country = $('#country_id_' + scope);
             const $state = $('#state_id_' + scope);
-            const $city = $('#city_id_' + scope);
             const countryId = $country.val();
-            const selectedState = preserveSelected ? $state.data('selected') : '';
+            const selectedState = forcedSelected !== null ? forcedSelected : (preserveSelected ? $state.data('selected') : '');
 
             if (!countryId) {
                 setOptions($state, `<option value="">${defaultStateText}</option>`, defaultStateText, '');
-                setOptions($city, `<option value="">${defaultCityText}</option>`, defaultCityText, '');
-                return;
+                return $.Deferred().resolve().promise();
             }
 
-            $.post(locationStatesRoute, {
+            return $.post(locationStatesRoute, {
                 _token: '{{ csrf_token() }}',
                 country_id: countryId
             }).done(function (resp) {
@@ -990,22 +989,23 @@
                     }
                 } catch (e) {}
                 setOptions($state, html, defaultStateText, selectedState);
-                loadCities(scope, true);
+            }).fail(function () {
+                setOptions($state, `<option value="">${defaultStateText}</option>`, defaultStateText, '');
             });
         }
 
-        function loadCities(scope, preserveSelected = false) {
+        function loadCities(scope, preserveSelected = false, forcedSelected = null) {
             const $state = $('#state_id_' + scope);
             const $city = $('#city_id_' + scope);
             const stateId = $state.val();
-            const selectedCity = preserveSelected ? $city.data('selected') : '';
+            const selectedCity = forcedSelected !== null ? forcedSelected : (preserveSelected ? $city.data('selected') : '');
 
             if (!stateId) {
                 setOptions($city, `<option value="">${defaultCityText}</option>`, defaultCityText, '');
-                return;
+                return $.Deferred().resolve().promise();
             }
 
-            $.post(locationCitiesRoute, {
+            return $.post(locationCitiesRoute, {
                 _token: '{{ csrf_token() }}',
                 state_id: stateId
             }).done(function (resp) {
@@ -1016,17 +1016,23 @@
                     }
                 } catch (e) {}
                 setOptions($city, html, defaultCityText, selectedCity);
+            }).fail(function () {
+                setOptions($city, `<option value="">${defaultCityText}</option>`, defaultCityText, '');
             });
         }
 
         function initEditLocationDropdowns() {
             ['business', 'personal'].forEach(function (scope) {
-                loadStates(scope, true);
+                loadStates(scope, true).done(function () {
+                    loadCities(scope, true);
+                });
 
                 $('#country_id_' + scope).on('change', function () {
                     $('#state_id_' + scope).data('selected', '');
                     $('#city_id_' + scope).data('selected', '');
-                    loadStates(scope, false);
+                    loadStates(scope, false).done(function () {
+                        loadCities(scope, false);
+                    });
                 });
 
                 $('#state_id_' + scope).on('change', function () {
@@ -1227,6 +1233,36 @@
         /* ----------------------------- Pincode ----------------------- */
 
         let debounceTimeout;
+        function normalizeLocationLabel(value) {
+            return String(value || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function findSelectValueByLabel($select, targetLabel) {
+            const needle = normalizeLocationLabel(targetLabel);
+            if (!needle || !$select || !$select.length) return '';
+
+            let exact = '';
+            let contains = '';
+            $select.find('option').each(function () {
+                const val = String(this.value || '').trim();
+                if (!val) return;
+                const normalized = normalizeLocationLabel($(this).text());
+                if (!normalized) return;
+                if (!exact && normalized === needle) {
+                    exact = val;
+                    return false;
+                }
+                if (!contains && (normalized.includes(needle) || needle.includes(normalized))) {
+                    contains = val;
+                }
+            });
+
+            return exact || contains || '';
+        }
 
         function setCountryByIso(iso, isBusiness) {
             if (!iso) return;
@@ -1291,26 +1327,65 @@
                 }
 
                 const isBusiness = $input.attr('id') === 'pincode_business';
+                const scope = isBusiness ? 'business' : 'personal';
+                const $country = isBusiness ? $('#country_id_business') : $('#country_id_personal');
                 const $city = isBusiness ? $('#city_id_business') : $('#city_id_personal');
                 const $state = isBusiness ? $('#state_id_business') : $('#state_id_personal');
 
                 $.ajax({
-                    url: 'https://secure.geonames.org/postalCodeSearchJSON',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    url: locationLookupRoute,
+                    type: 'POST',
                     dataType: 'json',
                     data: {
-                        postalcode: postalCode,
-                        country: '',
-                        username: 'umair.makent'
+                        postal_code: postalCode,
+                        country_id: $country.val() || ''
                     },
                     success: function (data) {
-                        console.dir(data);
-                        if (data.postalCodes && data.postalCodes.length > 0) {
-                            const entry = data.postalCodes[0];
-                            $city.val(entry.placeName || entry.adminName2 || '');
-                            $state.val(entry.adminName1 || '');
-                            if (entry.countryCode) {
-                                setCountryByIso(entry.countryCode, isBusiness);
+                        if (data.country_id) {
+                            $country.val(String(data.country_id));
+                            refreshPicker($country);
+                        }
+                        if (data.country_code) {
+                            setCountryByIso(data.country_code, isBusiness);
+                        }
+
+                        const selectedState = data.state_id ? String(data.state_id) : '';
+                        const selectedCity = data.city_id ? String(data.city_id) : '';
+                        $state.data('selected', selectedState);
+                        $city.data('selected', selectedCity);
+
+                        loadStates(scope, true, selectedState).done(function () {
+                            let resolvedState = selectedState;
+                            if (!resolvedState && data.state_name) {
+                                resolvedState = findSelectValueByLabel($state, data.state_name);
+                                if (resolvedState) {
+                                    $state.val(String(resolvedState));
+                                    refreshPicker($state);
+                                }
                             }
+
+                            if (!resolvedState && !$state.val()) {
+                                setOptions($city, `<option value="">${defaultCityText}</option>`, defaultCityText, '');
+                                return;
+                            }
+
+                            loadCities(scope, true, selectedCity).done(function () {
+                                if (!selectedCity && data.city_name) {
+                                    const resolvedCity = findSelectValueByLabel($city, data.city_name);
+                                    if (resolvedCity) {
+                                        $city.val(String(resolvedCity));
+                                        refreshPicker($city);
+                                    }
+                                }
+                            });
+                        });
+                    },
+                    error: function () {
+                        if (window.AIZ?.plugins?.notify) {
+                            AIZ.plugins.notify('danger', '{{ translate('Unable to fetch location details') }}');
                         }
                     }
                 });

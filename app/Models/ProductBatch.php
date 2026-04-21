@@ -20,6 +20,7 @@ class ProductBatch extends Model
         'mrp_price',
         'role_price',
         'qty',
+        'scheme',
         'coa',
         'product_exp_date',
         'manufacturing_date',
@@ -30,9 +31,9 @@ class ProductBatch extends Model
         'discount_end_date',
     ];
 
-    // protected $casts = [
-    //     'role_price' => 'array',
-    // ];
+    protected $casts = [
+        'scheme' => 'integer',
+    ];
 
     public function product()
     {

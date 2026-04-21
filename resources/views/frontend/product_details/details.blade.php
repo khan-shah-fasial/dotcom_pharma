@@ -1151,7 +1151,7 @@
                                             <div class="">
                                                 <p class="detail-font-14px detail-gray-color mb-0">
                                                     {{ translate('Shelf life') }}:</p>
-                                                <p id="product-expiry-date" class="fw-500 fs-14 mb-0">
+                                                <p id="product-shelf-life-date" class="fw-500 fs-14 mb-0">
                                                   </p>
                                             </div>
                                         </div>

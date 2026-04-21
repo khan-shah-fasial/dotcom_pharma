@@ -16,6 +16,29 @@ use Illuminate\Support\Facades\Log;
 
 class ProductStockService
 {
+    protected function normalizeBatchScheme($value): ?int
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_int($value)) {
+            return $value >= 0 ? $value : null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        // Scheme must be a whole number only (no decimal).
+        if (!preg_match('/^\d+$/', $value)) {
+            return null;
+        }
+
+        return (int) $value;
+    }
+
     protected function normalizeBatchMonthYearDate($value): ?string
     {
         if ($value === null) {
@@ -451,6 +474,7 @@ class ProductStockService
      *   'batch'           => string,
      *   'mrp_price'       => numeric,
      *   'qty'             => int,
+     *   'scheme'          => string|null,
      *   'product_exp_date'=> date string,
      *   'coa'             => string/file id,
      * ]
@@ -481,7 +505,7 @@ class ProductStockService
         foreach ($batchesInput as $row) {
             // Skip completely empty rows (e.g. template clones not filled)
             $hasContent = false;
-            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
+            foreach (['batch', 'mrp_price', 'qty', 'scheme', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
                 if (!empty($row[$field])) {
                     $hasContent = true;
                     break;
@@ -502,6 +526,7 @@ class ProductStockService
             $batch->batch            = $row['batch'] ?? null;
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
+            $batch->scheme           = $this->normalizeBatchScheme($row['scheme'] ?? null);
             $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null);
             $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
@@ -577,7 +602,7 @@ class ProductStockService
 
         foreach ($batchesInput as $row) {
             $hasContent = false;
-            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
+            foreach (['batch', 'mrp_price', 'qty', 'scheme', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
                 if (isset($row[$field]) && (string) $row[$field] !== '') {
                     $hasContent = true;
                     break;
@@ -604,6 +629,9 @@ class ProductStockService
             $batch->batch            = $row['batch'] ?? $batch->batch;
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
+            if (array_key_exists('scheme', $row)) {
+                $batch->scheme = $this->normalizeBatchScheme($row['scheme']);
+            }
             $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null);
             $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
