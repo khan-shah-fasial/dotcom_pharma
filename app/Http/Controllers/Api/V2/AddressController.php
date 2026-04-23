@@ -228,7 +228,7 @@ class AddressController extends Controller
 
     public function getCountries(Request $request)
     {
-        $country_query = Country::where('status', 1);
+        $country_query = Country::where('status', 1)->with(['defaultCurrency', 'defaultLanguage']);
         if ($request->name != "" || $request->name != null) {
             $country_query->where('name', 'like', '%' . $request->name . '%');
         }

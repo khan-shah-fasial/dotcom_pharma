@@ -618,7 +618,7 @@ body .translater_menu .select2-container {
                             <button type="button" class="btn language-currency btn-outline-dark btn-sm d-flex align-items-center"
                                         data-toggle="modal" data-target="#languageCurrencyModal">
                                 <i class="fa fa-globe mr-1"></i>
-                                <span id="selectedLang">English</span>
+                                <span id="selectedLang">{{ optional(get_session_language())->name ?? 'English' }}</span>
                                 <span class="mx-1">|</span>
                                 <span class="d-none d-md-inline" id="selectedCurrency">
                                     {{ get_system_currency()->symbol . ' ' . (get_system_currency()->name ?? '-') }}

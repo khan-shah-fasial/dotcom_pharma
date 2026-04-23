@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 
 @php
-    $rtl = get_session_language()->rtl;
+    // This project uses Google Translate for most non-English languages; keep the layout LTR
+    // to avoid full UI mirroring/shifting when selecting RTL languages like Arabic.
+    $rtl = 0;
 @endphp
 
 @if ($rtl == 1)
@@ -176,6 +178,18 @@
         }
 
         .pac-container { z-index: 100000; }
+
+        /* ---- Google Translate: prevent top banner/frame layout shift ---- */
+        iframe.goog-te-banner-frame,
+        .goog-te-banner-frame.skiptranslate { display: none !important; }
+        html { margin-top: 0 !important; }
+        body { top: 0 !important; }
+        #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+        .goog-text-highlight { background-color: inherit !important; box-shadow: none !important; }
+
+        /* ---- Select2 in Bootstrap modal ---- */
+        .select2-container--open { z-index: 1065 !important; }
+        .select2-dropdown { z-index: 1065 !important; }
     </style>
 
 @if (get_setting('google_analytics') == 1)
@@ -510,8 +524,8 @@
         </div>
     @endauth
 
-    <!-- Hidden Google widget (kept in DOM but hidden) -->
-    <div id="google_translate_element" style="display: none;"></div>
+    <!-- Hidden Google widget (must remain renderable for proper init) -->
+    <div id="google_translate_element" style="position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;"></div>
 
     <!-- ======= Language + Currency Modal ======= -->
     <div class="modal fade" id="languageCurrencyModal" tabindex="-1" role="dialog"
@@ -526,11 +540,93 @@
             </div>
 
             <div class="modal-body pl-4 pr-4 pt-4 pb-0">
+                @php
+                    $sessionCountryId = session('country_id');
+                    $sessionLocale = session('locale', env('DEFAULT_LANGUAGE', 'en'));
+                @endphp
+
+                <!-- Country -->
+                <div class="mb-md-4 mb-3">
+                    <h6 class="font-weight-bold mb-2">Select Country</h6>
+                    <select id="countryDropdown" class="form-control" style="width:100%;">
+                        @foreach (get_active_countries() as $country)
+                            <option
+                                value="{{ $country->id }}"
+                                data-default-currency-code="{{ optional($country->defaultCurrency)->code }}"
+                                data-default-locale="{{ optional($country->defaultLanguage)->code }}"
+                                @selected((string) $sessionCountryId === (string) $country->id)
+                            >
+                                {{ $country->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <!-- Language -->
                 <div class="mb-md-4 mb-3">
                 <h6 class="font-weight-bold mb-2">Select Language</h6>
                 <select id="languageDropdown" class="form-control" style="width:100%;">
-                    <!-- options injected by JS (with flags) -->
+                    @foreach (get_all_active_language() as $language)
+                        @php
+                            // Google Translate uses language codes (e.g. hi, mr, gu, bn, ar). This app's Language codes may be country-like (e.g. in, bd, sa).
+                            $codeLower = mb_strtolower(trim((string) ($language->code ?? '')));
+                            $appLower = mb_strtolower(trim((string) ($language->app_lang_code ?? '')));
+
+                            $codeToGt = [
+                                'in' => 'hi',     // Hindi (often stored as IN in AIZ language seeds)
+                                'bd' => 'bn',     // Bangla
+                                'sa' => 'ar',     // Arabic
+                                'jp' => 'ja',     // Japanese
+                                'cn' => 'zh-CN',  // Chinese Simplified
+                                'tw' => 'zh-TW',  // Chinese Traditional
+                                'pk' => 'ur',     // Urdu
+                            ];
+
+                            $nameLower = (string) ($language->name ?? '');
+                            $nameLower = preg_replace('/\s+/u', ' ', trim($nameLower));
+                            $nameLower = mb_strtolower($nameLower);
+
+                            $nameToGt = [
+                                'hindi' => 'hi',
+                                'marathi' => 'mr',
+                                'gujarati' => 'gu',
+                                'arabic' => 'ar',
+                                'bangla' => 'bn',
+                                'bengali' => 'bn',
+                            ];
+
+                            $gtCode = $codeToGt[$codeLower] ?? $codeToGt[$appLower] ?? $nameToGt[$nameLower] ?? ($language->app_lang_code ?: $language->code);
+
+                            // Display name guard/fix: some installs have broken names like "No" for valid language codes.
+                            $displayName = (string) ($language->name ?? '');
+                            $displayName = preg_replace('/\s+/u', ' ', trim($displayName));
+
+                            $displayByCode = [
+                                'in' => 'Hindi',
+                                'hi' => 'Hindi',
+                                'mr' => 'Marathi',
+                                'gu' => 'Gujarati',
+                            ];
+
+                            if ($displayName === '' || mb_strtolower($displayName) === 'no') {
+                                $displayName = $displayByCode[$codeLower] ?? $displayByCode[$appLower] ?? $displayName;
+                            }
+
+                            // Guard: still hide truly invalid rows.
+                            if ($displayName === '') {
+                                continue;
+                            }
+                        @endphp
+                        <option
+                            value="{{ $language->code }}"
+                            data-gt-code="{{ $gtCode }}"
+                            data-app-code="{{ $language->app_lang_code }}"
+                            data-flag="{{ static_asset('assets/img/flags/' . $language->code . '.png') }}"
+                            @selected((string) $sessionLocale === (string) $language->code)
+                        >
+                            {{ $displayName }}
+                        </option>
+                    @endforeach
                 </select>
                 </div>
 
@@ -2237,30 +2333,11 @@ function scrollTabs(direction) {
 <script>
 (function($){
   // ---- CONFIG ----
-  var currencyChangeUrl = '{{ route('currency.change') }}';
+  var locationChangeUrl = '{{ route('location.change') }}';
   var csrfToken = (window.AIZ && AIZ.data && AIZ.data.csrf) ? AIZ.data.csrf : '{{ csrf_token() }}';
-
-  // ---- Language list with flags ----
-  var languages = [
-    { code: "en",    name: "English",               flag: "https://flagcdn.com/w20/us.png" },
-    { code: "fr",    name: "French",                flag: "https://flagcdn.com/w20/fr.png" },
-    { code: "de",    name: "German",                flag: "https://flagcdn.com/w20/de.png" },
-    { code: "es",    name: "Spanish",               flag: "https://flagcdn.com/w20/es.png" },
-    { code: "hi",    name: "Hindi",                 flag: "https://flagcdn.com/w20/in.png" },
-    { code: "mr",    name: "Marathi",               flag: "https://flagcdn.com/w20/in.png" },
-    { code: "gu",    name: "Gujarati",              flag: "https://flagcdn.com/w20/in.png" },
-    { code: "ta",    name: "Tamil",                 flag: "https://flagcdn.com/w20/in.png" },
-    { code: "te",    name: "Telugu",                flag: "https://flagcdn.com/w20/in.png" },
-    { code: "bn",    name: "Bengali",               flag: "https://flagcdn.com/w20/bd.png" },
-    { code: "pa",    name: "Punjabi",               flag: "https://flagcdn.com/w20/in.png" },
-    { code: "ur",    name: "Urdu",                  flag: "https://flagcdn.com/w20/pk.png" },
-    { code: "ar",    name: "Arabic",                flag: "https://flagcdn.com/w20/sa.png" },
-    { code: "it",    name: "Italian",               flag: "https://flagcdn.com/w20/it.png" },
-    { code: "ja",    name: "Japanese",              flag: "https://flagcdn.com/w20/jp.png" },
-    { code: "ru",    name: "Russian",               flag: "https://flagcdn.com/w20/ru.png" },
-    { code: "zh-CN", name: "Chinese (Simplified)",  flag: "https://flagcdn.com/w20/cn.png" },
-    { code: "zh-TW", name: "Chinese (Traditional)", flag: "https://flagcdn.com/w20/tw.png" }
-  ];
+  var initialCountryId = null;
+  var initialLocale = null;
+  var initialCurrencyCode = null;
 
   // ==================== COOKIE HELPERS (robust, base-domain only) ====================
   // Get base domain (eTLD+1) for cookies: works for most TLDs; extend two-part list if needed.
@@ -2309,7 +2386,19 @@ function scrollTabs(direction) {
     var base = getBaseDomain();
     var exp = new Date(Date.now() + days*24*60*60*1000).toUTCString();
     var attrs = ';path=/;SameSite=Lax' + (location.protocol === 'https:' ? ';Secure' : '');
-    document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + exp + ';domain=.' + base + attrs;
+
+    // Browsers typically reject Domain=localhost cookies; use host-only cookies for localhost/IP.
+    var isLocalhost = (base === 'localhost');
+    var isIp = /^\d+\.\d+\.\d+\.\d+$/.test(base);
+    var domainAttr = (isLocalhost || isIp) ? '' : ';domain=.' + base;
+
+    document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + exp + domainAttr + attrs;
+  }
+
+  function setCookieHostOnly(name, value, days) {
+    var exp = new Date(Date.now() + days*24*60*60*1000).toUTCString();
+    var attrs = ';path=/;SameSite=Lax' + (location.protocol === 'https:' ? ';Secure' : '');
+    document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + exp + attrs;
   }
 
   function getCookie(name) {
@@ -2318,33 +2407,73 @@ function scrollTabs(direction) {
   }
 
   // Write ONE shared googtrans cookie at base domain and remove duplicates.
-  function setGoogleTranslateLang(langCode) {
-    var val = '/auto/' + langCode;
+  function setGoogleTranslateLang(gtLangCode) {
+    if (!gtLangCode) return;
+    // Use a fixed source language to match the widget init (pageLanguage: 'en').
+    var val = '/en/' + gtLangCode;
     deleteCookieEverywhere('googtrans');
+    // Write both host-only and base-domain cookies for maximum compatibility.
+    setCookieHostOnly('googtrans', val, 365);
     setCookieBaseDomain('googtrans', val, 365);
   }
 
   function getGoogleTranslateLangFromCookie() {
-    var v = getCookie('googtrans'); // e.g. "/auto/hi"
+    var v = getCookie('googtrans'); // e.g. "/auto/ar"
     if (!v) return null;
     var parts = v.split('/');
     return parts.length >= 3 ? parts[2] : null;
   }
+
+  // Best-effort: also drive the widget's internal select (some setups won't apply cookie-only reliably).
+  function forceGoogleTranslateTo(codes) {
+    if (!codes) return;
+    if (!Array.isArray(codes)) codes = [codes];
+    codes = codes.filter(function(c){ return !!c; });
+    if (!codes.length) return;
+
+    var attempts = 0;
+    function trySet() {
+      attempts++;
+      var combo = document.querySelector('.goog-te-combo');
+      if (combo) {
+        var picked = null;
+        for (var i = 0; i < codes.length; i++) {
+          var c = codes[i];
+          if (combo.querySelector('option[value="'+c+'"]')) {
+            picked = c;
+            break;
+          }
+        }
+        picked = picked || codes[0];
+        combo.value = picked;
+
+        // Trigger change in a cross-browser way (some environments ignore `new Event('change')`).
+        try {
+          var evt = document.createEvent('HTMLEvents');
+          evt.initEvent('change', true, false);
+          combo.dispatchEvent(evt);
+        } catch (e) {
+          try { combo.dispatchEvent(new Event('change')); } catch (e2) {}
+          if (combo.fireEvent) {
+            try { combo.fireEvent('onchange'); } catch (e3) {}
+          }
+        }
+        return;
+      }
+      if (attempts < 40) {
+        setTimeout(trySet, 300);
+      }
+    }
+    trySet();
+  }
   // ==================== END COOKIE HELPERS ====================
 
-  // ---- Build language dropdown with flags + Select2 ----
-  function buildLanguageDropdown() {
-    var $dd = $('#languageDropdown');
-    $dd.empty();
-    languages.forEach(function(l){
-      var $opt = $('<option/>', { value: l.code, text: l.name });
-      $opt.attr('data-flag', l.flag);
-      $dd.append($opt);
-    });
-
+  function initSelect2() {
+    var $modal = $('#languageCurrencyModal');
+    var $lang = $('#languageDropdown');
     function tpl(opt) {
       if (!opt.id) return opt.text;
-      var flag = $(opt.element).data('flag');
+      var flag = $(opt.element).attr('data-flag');
       var text = opt.text || '';
       return $(
         '<span style="display:flex;align-items:center;gap:8px;">' +
@@ -2354,73 +2483,214 @@ function scrollTabs(direction) {
       );
     }
 
-    if ($dd.select2) {
-      $dd.select2({
+    function enhanceSelect($el, select2Options) {
+      if (!$el.length) return;
+
+      // Prefer Select2 when available (better UX + no blank dropdown issues).
+      if ($el.select2) {
+        var current = $el.val();
+
+        // If bootstrap-select was previously applied, remove it before applying Select2.
+        if ($el.data('selectpicker') && $el.selectpicker) {
+          try { $el.selectpicker('destroy'); } catch (e) {}
+          $el.removeClass('selectpicker');
+        }
+
+        if ($el.hasClass('select2-hidden-accessible')) {
+          try { $el.select2('destroy'); } catch (e) {}
+        }
+        $el.select2(select2Options);
+        if (current !== null && current !== undefined) {
+          $el.val(current).trigger('change');
+        }
+        return;
+      }
+
+      // Fallback to bootstrap-select (selectpicker) if Select2 isn't available (CDN blocked).
+      if ($el.selectpicker) {
+        $el.addClass('selectpicker');
+        if (!$el.attr('data-live-search')) {
+          $el.attr('data-live-search', 'true');
+        }
+        try {
+          if (!$el.data('selectpicker')) {
+            $el.selectpicker();
+          }
+          $el.selectpicker('refresh');
+        } catch (e) {}
+      }
+    }
+
+    enhanceSelect($lang, {
         width: '100%',
+        dropdownParent: $modal,
         templateResult: tpl,
         templateSelection: tpl,
         minimumResultsForSearch: 5
-      });
+    });
+
+    var $country = $('#countryDropdown');
+    enhanceSelect($country, { width: '100%', dropdownParent: $modal });
+
+    var $currency = $('#currencyDropdown');
+    enhanceSelect($currency, { width: '100%', dropdownParent: $modal });
+  }
+
+  function updateNavFromSelections() {
+    var langText = $('#languageDropdown option:selected').text().trim();
+    if (langText) {
+      $('#selectedLang').text(langText);
     }
 
-    // Preselect from cookie if any
-    var currentLang = getGoogleTranslateLangFromCookie();
-    if (currentLang && $dd.find('option[value="'+currentLang+'"]').length) {
-      $dd.val(currentLang).trigger('change.select2');
+    var $opt = $('#currencyDropdown option:selected');
+    if ($opt.length) {
+      $('#selectedCurrency').text(($opt.data('symbol') || '') + ' ' + ($opt.data('name') || ''));
     }
   }
 
-  // ---- Update nav labels from current state (on load) ----
-  function updateNavLabelsFromState() {
-    var langCode = getGoogleTranslateLangFromCookie() || 'en';
-    var match = languages.find(function(l){ return l.code.toLowerCase() === langCode.toLowerCase(); });
-    $('#selectedLang').text(match ? match.name : 'English');
-    // Currency label is server-rendered; nothing else needed here.
+  function applyCountryDefaultsFromSelection(force) {
+    var $opt = $('#countryDropdown option:selected');
+    if (!$opt.length) return;
+
+    var defaultLocale = $opt.attr('data-default-locale');
+    var defaultCurrencyCode = $opt.attr('data-default-currency-code');
+
+    function refreshPicker($el) {
+      if ($el && $el.length && $el.selectpicker && $el.hasClass('selectpicker')) {
+        try { $el.selectpicker('refresh'); } catch (e) {}
+      }
+    }
+
+    var $lang = $('#languageDropdown');
+    var $cur = $('#currencyDropdown');
+
+    var hasLang = $lang.length && $lang.val();
+    var hasCur = $cur.length && $cur.val();
+
+    if ((force || !hasLang) && defaultLocale && $lang.find('option[value="'+defaultLocale+'"]').length) {
+      var $lang = $('#languageDropdown');
+      $lang.val(defaultLocale).trigger('change');
+      refreshPicker($lang);
+    }
+
+    if ((force || !hasCur) && defaultCurrencyCode && $cur.find('option[value="'+defaultCurrencyCode+'"]').length) {
+      $cur.val(defaultCurrencyCode).trigger('change');
+      refreshPicker($cur);
+    }
   }
 
   // ---- Save handler ----
-  function wireSave() {
+  function wireEvents() {
+    $('#countryDropdown').on('change select2:select', function() {
+      applyCountryDefaultsFromSelection(true);
+      updateNavFromSelections();
+    });
+
+    $('#languageDropdown').on('change select2:select', function() {
+      // Preview only; actual apply happens on Save (like before).
+      updateNavFromSelections();
+    });
+
+    $('#currencyDropdown').on('change select2:select', function() {
+      updateNavFromSelections();
+    });
+
     $('#saveLangCurrency').on('click', function() {
-      var $btn = $(this).prop('disabled', true).text('Applying...');
-      var selectedLang = $('#languageDropdown').val();
-      var selectedCurrency = $('#currencyDropdown').val();
-      var initialCurrency  = $('#currencyDropdown').data('initial');
+      var $btn = $(this);
+      $btn.prop('disabled', true).text('Applying...');
 
-      if (selectedLang) setGoogleTranslateLang(selectedLang);
+      var countryId = $('#countryDropdown').val();
+      var locale = $('#languageDropdown').val();
+      var currencyCode = $('#currencyDropdown').val();
+      var gtLangCode = $('#languageDropdown option:selected').attr('data-gt-code');
 
-      var needsCurrencyPost = selectedCurrency && (selectedCurrency !== initialCurrency);
-      function reload() { window.location.reload(); }
+      var countryChanged = initialCountryId !== null && String(countryId) !== String(initialCountryId);
+      var currencyChanged = initialCurrencyCode !== null && currencyCode && String(currencyCode) !== String(initialCurrencyCode);
+      // Only language change should not need a reload; currency/country changes should reload to refresh server-rendered prices & state.
+      var needsReload = countryChanged || currencyChanged;
 
-      if (needsCurrencyPost) {
-        $.post(currencyChangeUrl, { _token: csrfToken, currency_code: selectedCurrency })
-          .always(reload);
+      if (!needsReload) {
+        // Language-only: apply immediately without reload.
+        setGoogleTranslateLang(gtLangCode);
+        forceGoogleTranslateTo([gtLangCode, locale]);
       } else {
-        reload();
+        // Country/currency change: just persist the cookie now; after reload we apply via page init.
+        setGoogleTranslateLang(gtLangCode);
       }
-    });
 
-    // Optional live preview in nav (no persistence until Save)
-    $('#languageDropdown').on('change', function() {
-      $('#selectedLang').text($('#languageDropdown option:selected').text().trim());
-    });
-    $('#currencyDropdown').on('change', function() {
-      var $opt = $('#currencyDropdown option:selected');
-      $('#selectedCurrency').text(($opt.data('symbol') || '') + ' ' + ($opt.data('name') || ''));
+      $.post(locationChangeUrl, {
+        _token: csrfToken,
+        country_id: countryId,
+        locale: locale,
+        currency_code: currencyCode
+      })
+      .done(function() {
+        if (needsReload) {
+          window.location.reload();
+          return;
+        }
+
+        // Persisted successfully; close modal without reload.
+        initialCountryId = countryId;
+        initialLocale = locale;
+        initialCurrencyCode = currencyCode;
+        $('#languageCurrencyModal').modal('hide');
+        $btn.prop('disabled', false).text('Save Changes');
+      })
+      .fail(function() {
+        $btn.prop('disabled', false).text('Save Changes');
+        if (window.toastr && toastr.error) {
+          toastr.error('Unable to save changes. Please try again.');
+        }
+      });
     });
   }
 
   // ---- Init ----
   $(function(){
-    buildLanguageDropdown();
-    updateNavLabelsFromState();
-    wireSave();
+    initSelect2();
+    // Initial: if session values are missing, fill from selected country's defaults.
+    applyCountryDefaultsFromSelection(false);
+    updateNavFromSelections();
+    wireEvents();
+
+    // Capture initial (session-based) selections for change detection.
+    initialCountryId = $('#countryDropdown').val();
+    initialLocale = $('#languageDropdown').val();
+    initialCurrencyCode = $('#currencyDropdown').val();
+
+    // Select2 inside Bootstrap modals can break if initialized while hidden; re-init on open.
+    $('#languageCurrencyModal').on('shown.bs.modal', function () {
+      initSelect2();
+      applyCountryDefaultsFromSelection(false);
+      updateNavFromSelections();
+    });
+    $('#languageCurrencyModal').on('hidden.bs.modal', function () {
+      // Avoid duplicate Select2 containers when reopening.
+      ['#countryDropdown', '#languageDropdown', '#currencyDropdown'].forEach(function(sel){
+        var $el = $(sel);
+        if ($el.length && $el.hasClass('select2-hidden-accessible') && $el.select2) {
+          try { $el.select2('destroy'); } catch (e) {}
+        }
+      });
+    });
+
+    // Ensure the current session-selected language is applied through Google Translate on page load.
+    var selectedGt = $('#languageDropdown option:selected').attr('data-gt-code');
+    if (selectedGt) {
+      setGoogleTranslateLang(selectedGt);
+      forceGoogleTranslateTo(selectedGt);
+    } else {
+      var cookieLang = getGoogleTranslateLangFromCookie();
+      if (cookieLang) {
+        forceGoogleTranslateTo(cookieLang);
+      }
+    }
   });
 
 })(jQuery);
 </script>
 
-  <!-- Google Translate script -->
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <script src="https://hcaptcha.com/1/api.js" async defer></script>
 
 </body>

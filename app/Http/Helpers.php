@@ -261,8 +261,21 @@ if (!function_exists('get_active_countries')) {
     function get_active_countries()
     {
         return Cache::remember('active_countries', now()->addHours(6), function () {
-            $country_query = Country::query();
-            return $country_query->isEnabled()->get();
+            $countries = Country::query()
+                ->isEnabled()
+                ->with(['defaultCurrency', 'defaultLanguage'])
+                ->orderBy('name')
+                ->get();
+
+            // Safety fallback for misconfigured installs (no enabled countries).
+            if ($countries->isEmpty()) {
+                return Country::query()
+                    ->with(['defaultCurrency', 'defaultLanguage'])
+                    ->orderBy('name')
+                    ->get();
+            }
+
+            return $countries;
         });
     }
 }
@@ -3570,9 +3583,31 @@ if (!function_exists('get_all_active_language')) {
     function get_all_active_language()
     {
         $language_query = Language::query();
-        $language_query->where('status', 1);
+        $language_query->where('status', 1)->orderBy('name');
 
-        return $language_query->get();
+        $languages = $language_query->get();
+
+        // Guard: filter out accidentally-created junk rows like a language named "No" (often from bad imports).
+        // Keep legitimate languages even if misnamed (e.g. Hindi sometimes ends up with name="No" but code/app_lang_code indicates otherwise).
+        return $languages
+            ->filter(function ($language) {
+                $name = (string) ($language->name ?? '');
+                // Normalize unicode whitespace (e.g. NBSP) and collapse runs.
+                $name = preg_replace('/\s+/u', ' ', trim($name));
+                if ($name === '') {
+                    return false;
+                }
+
+                if (mb_strtolower($name) !== 'no') {
+                    return true;
+                }
+
+                $code = mb_strtolower(trim((string) ($language->code ?? '')));
+                $app = mb_strtolower(trim((string) ($language->app_lang_code ?? '')));
+                $allow = ['in', 'hi', 'mr', 'gu', 'bn', 'ar'];
+                return in_array($code, $allow, true) || in_array($app, $allow, true);
+            })
+            ->values();
     }
 }
 
@@ -5611,7 +5646,8 @@ if (! function_exists('getLocationFromIP')) {
 
             // Localhost test fix
             if ($ip == '127.0.0.1' || $ip == '::1') {
-                $ip = '8.8.8.8';
+                // $ip = '8.8.8.8';
+                $ip = '49.37.0.1'; // Example Indian IP
             }
 
             //$url = "https://ipapi.co/{$ip}/json/";

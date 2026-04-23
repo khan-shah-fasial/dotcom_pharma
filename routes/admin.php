@@ -682,6 +682,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     // Countries
     Route::resource('countries', CountryController::class);
     Route::post('/countries/status', [CountryController::class, 'updateStatus'])->name('countries.status');
+    Route::post('/countries/defaults', [CountryController::class, 'updateDefaults'])->name('countries.defaults');
+    Route::post('/countries/system-default', [CountryController::class, 'updateSystemDefaultCountry'])->name('countries.system_default');
 
     // States
     Route::resource('states', StateController::class);

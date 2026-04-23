@@ -23,5 +23,15 @@ class Country extends Model
     {
         return $query->where('status', '1');
     }
+
+    public function defaultCurrency()
+    {
+        return $this->belongsTo(Currency::class, 'default_currency_id');
+    }
+
+    public function defaultLanguage()
+    {
+        return $this->belongsTo(Language::class, 'default_language_id');
+    }
     
 }

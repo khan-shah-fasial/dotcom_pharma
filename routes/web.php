@@ -19,6 +19,7 @@ use App\Http\Controllers\FollowSellerController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
@@ -258,6 +259,9 @@ Route::post('/language', [LanguageController::class, 'changeLanguage'])->name('l
 
 // Currency Switch
 Route::post('/currency', [CurrencyController::class, 'changeCurrency'])->name('currency.change');
+
+// Country + Language + Currency (session) switch
+Route::post('/location', [LocationController::class, 'change'])->name('location.change');
 
 // Size Chart Show
 Route::get('/size-charts-show/{id}', [SizeChartController::class, 'show'])->name('size-charts-show');
