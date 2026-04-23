@@ -180,12 +180,12 @@
         .pac-container { z-index: 100000; }
 
         /* ---- Google Translate: prevent top banner/frame layout shift ---- */
-        iframe.goog-te-banner-frame,
+        /* iframe.goog-te-banner-frame,
         .goog-te-banner-frame.skiptranslate { display: none !important; }
         html { margin-top: 0 !important; }
         body { top: 0 !important; }
         #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
-        .goog-text-highlight { background-color: inherit !important; box-shadow: none !important; }
+        .goog-text-highlight { background-color: inherit !important; box-shadow: none !important; } */
 
         /* ---- Select2 in Bootstrap modal ---- */
         .select2-container--open { z-index: 1065 !important; }
@@ -2607,16 +2607,16 @@ function scrollTabs(direction) {
       var countryChanged = initialCountryId !== null && String(countryId) !== String(initialCountryId);
       var currencyChanged = initialCurrencyCode !== null && currencyCode && String(currencyCode) !== String(initialCurrencyCode);
       // Only language change should not need a reload; currency/country changes should reload to refresh server-rendered prices & state.
-      var needsReload = countryChanged || currencyChanged;
+    //   var needsReload = countryChanged || currencyChanged;
 
-      if (!needsReload) {
-        // Language-only: apply immediately without reload.
-        setGoogleTranslateLang(gtLangCode);
-        forceGoogleTranslateTo([gtLangCode, locale]);
-      } else {
+    //   if (!needsReload) {
+    //     // Language-only: apply immediately without reload.
+    //     setGoogleTranslateLang(gtLangCode);
+    //     forceGoogleTranslateTo([gtLangCode, locale]);
+    //   } else {
         // Country/currency change: just persist the cookie now; after reload we apply via page init.
         setGoogleTranslateLang(gtLangCode);
-      }
+    //   }
 
       $.post(locationChangeUrl, {
         _token: csrfToken,
@@ -2625,17 +2625,17 @@ function scrollTabs(direction) {
         currency_code: currencyCode
       })
       .done(function() {
-        if (needsReload) {
+        // if (needsReload) {
           window.location.reload();
           return;
-        }
+        // }
 
         // Persisted successfully; close modal without reload.
-        initialCountryId = countryId;
-        initialLocale = locale;
-        initialCurrencyCode = currencyCode;
-        $('#languageCurrencyModal').modal('hide');
-        $btn.prop('disabled', false).text('Save Changes');
+        // initialCountryId = countryId;
+        // initialLocale = locale;
+        // initialCurrencyCode = currencyCode;
+        // $('#languageCurrencyModal').modal('hide');
+        // $btn.prop('disabled', false).text('Save Changes');
       })
       .fail(function() {
         $btn.prop('disabled', false).text('Save Changes');
