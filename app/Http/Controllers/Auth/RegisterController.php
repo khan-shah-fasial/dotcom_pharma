@@ -17,6 +17,7 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use App\Http\Controllers\OTPVerificationController;
 use App\Models\Address;
 use App\Utility\EmailUtility;
+use App\Services\SurepassDigilockerService;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\File;
@@ -695,9 +696,21 @@ class RegisterController extends Controller
 
             $rsp_msg = $this->iec_validate($request);
 
-        } elseif ($param == "aadhaar-validate") {
+        // } elseif ($param == "aadhaar-validate") {
 
-            $rsp_msg = $this->aadhaar_validate($request);
+        //     $rsp_msg = $this->aadhaar_validate($request);
+
+        } elseif ($param == "digilocker-initiate") {
+
+            $rsp_msg = $this->digilocker_initiate($request);
+
+        } elseif ($param == "digilocker-callback") {
+
+            $rsp_msg = $this->digilocker_callback($request);
+
+        } elseif ($param == "digilocker-status") {
+
+            $rsp_msg = $this->digilocker_status();
 
         } elseif ($param == "aadhar-otp-verify") {
 
@@ -1401,7 +1414,11 @@ class RegisterController extends Controller
 
         if (
             $prev_form == 'domestic' &&
-            (!Session::has('aadhaar_validate') || Session::get('aadhaar_validate') != "True")
+            (
+                !Session::has('aadhaar_validate') ||
+                Session::get('aadhaar_validate') != "True" ||
+                Session::get('digilocker_aadhaar_no') !== $request->aadhaar_no
+            )
         ) {
 
             return response()->json([
@@ -2400,41 +2417,41 @@ class RegisterController extends Controller
             }
         }
 
-        // $response = json_decode(fetchGstinDetails($request->gst_no));
+        $response = json_decode(fetchGstinDetails($request->gst_no));
 
-        // if (isset($response->message_code) && $response->message_code == "success") {
+        if (isset($response->message_code) && $response->message_code == "success") {
 
-        //     Session::put('gst_validate', 'True');
-        //     Session::put('pan_no', $response->data->pan_number);
+            Session::put('gst_validate', 'True');
+            Session::put('pan_no', $response->data->pan_number);
 
-        //     return response()->json([
-        //         'status' => 'success',
-        //         'message' => 'GST No Validate Successfully',
-        //         'data' => $response->data,
-        //     ], 200);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'GST No Validate Successfully',
+                'data' => $response->data,
+            ], 200);
 
-        // } else {
+        } else {
 
-        //     Session::put('gst_validate', 'false');
+            Session::put('gst_validate', 'false');
 
-        //     if (Session::has('pan_no')) {
-        //         Session::forget('pan_no');
-        //     }
+            if (Session::has('pan_no')) {
+                Session::forget('pan_no');
+            }
 
-        //     return response()->json([
-        //         'status' => 'error',
-        //         'message' => $response->message ?? 'GST Not Valid',
-        //     ], 200);
+            return response()->json([
+                'status' => 'error',
+                'message' => $response->message ?? 'GST Not Valid',
+            ], 200);
 
-        // }
+        }
 
-        Session::put('gst_validate', 'True');
+        // Session::put('gst_validate', 'True');
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'GST No Validate Successfully',
-            'data' => [], // empty data
-        ], 200);
+        // return response()->json([
+        //     'status' => 'success',
+        //     'message' => 'GST No Validate Successfully',
+        //     'data' => [], // empty data
+        // ], 200);
 
     }
 
@@ -2513,6 +2530,141 @@ class RegisterController extends Controller
     }
 
 
+    public function digilocker_initiate($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'aadhaar_no' => ['required', 'regex:/^[0-9]{12}$/'],
+        ], [
+            'aadhaar_no.required' => 'The Aadhaar Number is required.',
+            'aadhaar_no.regex' => 'The Aadhaar Number format is invalid.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->all(),
+            ], 200);
+        }
+
+        $existingUser = User::where('aadhaar_no', $request->aadhaar_no)
+            ->where('approval_status', 1)
+            ->whereNotNull('user_subtype')
+            ->first();
+
+        if ($existingUser) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Aadhaar Number Already registered',
+            ], 200);
+        }
+
+        $state = (string) Str::uuid();
+        $callbackUrl = config('services.surepass.digilocker.callback_url') ?: route('new.user.account.create', ['param' => 'digilocker-callback']);
+
+        try {
+            $session = (new SurepassDigilockerService())->initiate($request->aadhaar_no, $state, $callbackUrl);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 200);
+        }
+
+        Session::put('digilocker_session_id', $session['session_id'] ?? null);
+        Session::put('customer_aadhar_clientId', $session['client_id'] ?? $session['session_id'] ?? null);
+        Session::put('digilocker_aadhaar_no', $request->aadhaar_no);
+        Session::put('digilocker_authorization_url', $session['authorization_url']);
+        Session::forget('digilocker_aadhaar_data');
+        Session::put('aadhaar_validate', 'false');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'DigiLocker verification started.',
+            'authorization_url' => $session['authorization_url'],
+        ], 200);
+    }
+
+    public function digilocker_callback($request)
+    {
+        $success = false;
+        $message = 'DigiLocker verification failed.';
+
+        try {
+            $clientId = $request->input('client_id') ?: $request->input('clientId') ?: $request->input('id');
+            $sessionClientId = Session::get('customer_aadhar_clientId') ?: Session::get('digilocker_session_id');
+
+            if (!$clientId || !$sessionClientId || $clientId !== $sessionClientId) {
+                throw new \RuntimeException('Invalid DigiLocker verification session.');
+            }
+
+            if (Session::get('aadhaar_validate') === 'True' && Session::has('digilocker_aadhaar_data')) {
+                $success = true;
+                $message = 'Aadhaar details verified through DigiLocker.';
+                return $this->digilockerCallbackResponse($success, $message);
+            }
+
+            $normalized = (new SurepassDigilockerService())->downloadAadhaar($clientId);
+            $enteredAadhaarNo = Session::get('digilocker_aadhaar_no');
+
+            if (!empty($normalized['aadhaar_no']) && strlen($normalized['aadhaar_no']) === 12 && $normalized['aadhaar_no'] !== $enteredAadhaarNo) {
+                throw new \RuntimeException('DigiLocker Aadhaar does not match the entered Aadhaar number.');
+            }
+
+            $normalized['aadhaar_no'] = $enteredAadhaarNo;
+
+            Session::put('digilocker_aadhaar_data', array_filter($normalized, fn ($value) => $value !== null && $value !== ''));
+            Session::put('aadhar_no', $enteredAadhaarNo);
+            Session::put('aadhaar_validate', 'True');
+
+            $success = true;
+            $message = 'Aadhaar details verified through DigiLocker.';
+        } catch (\Throwable $e) {
+            if (Session::get('aadhaar_validate') === 'True' && Session::has('digilocker_aadhaar_data')) {
+                $success = true;
+                $message = 'Aadhaar details verified through DigiLocker.';
+            } else {
+                Session::put('aadhaar_validate', 'false');
+                $message = $e->getMessage();
+            }
+        }
+
+        return $this->digilockerCallbackResponse($success, $message);
+    }
+
+    private function digilockerCallbackResponse(bool $success, string $message)
+    {
+        $payload = json_encode([
+            'type' => 'digilocker-aadhaar',
+            'status' => $success ? 'success' : 'error',
+            'message' => $message,
+        ]);
+
+        return response(
+            '<!doctype html><html><body><script>window.opener&&window.opener.postMessage(' . $payload . ', window.location.origin); window.close();</script>' .
+            '<p>' . e($message) . '</p></body></html>',
+            200,
+            ['Content-Type' => 'text/html']
+        );
+    }
+
+    public function digilocker_status()
+    {
+        if (Session::get('aadhaar_validate') !== 'True' || !Session::has('digilocker_aadhaar_data')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'DigiLocker Aadhaar verification is not complete.',
+            ], 200);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'DigiLocker Aadhaar verification is complete.',
+            'data' => Session::get('digilocker_aadhaar_data', []),
+        ], 200);
+    }
+
+
+    /*
     public function aadhaar_validate($request)
     {
         $validator = Validator::make($request->all(), [
@@ -2590,6 +2742,7 @@ class RegisterController extends Controller
         ], 200);
 
     }
+    */
 
     public function aadhaar_otp_validate($request)
     {

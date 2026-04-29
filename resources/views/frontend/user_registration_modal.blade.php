@@ -949,21 +949,33 @@
 
                         @if($reg_locality == "domestic")
 
+                                    @php
+                                        $aadhaarValue = $data['aadhaar_no'] ?? $session_data_user['aadhaar_no'] ?? '';
+                                        $aadhaarVerified = Session::get('aadhaar_validate') === 'True' && Session::get('digilocker_aadhaar_no') === $aadhaarValue;
+                                    @endphp
 
                                     <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
                                             <label for="gst_no" class="col-form-label form-label">Aadhaar.No: *</label>
-                                            <input type="text" class="form-control form-control-lg" id="aadhaar_no" name="aadhaar_no"
-                                            minlength="12" maxlength="12" placeholder="Please Enter Aadhaar No Ex: 123456789012" value="{{ $data['aadhaar_no'] ?? $session_data_user['aadhaar_no'] ?? '' }}" required>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control form-control-lg" id="aadhaar_no" name="aadhaar_no"
+                                                minlength="12" maxlength="12" placeholder="Please Enter Aadhaar No Ex: 123456789012" value="{{ $aadhaarValue }}" data-verified-aadhaar="{{ $aadhaarVerified ? $aadhaarValue : '' }}" required>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-primary js-digilocker-verify {{ $aadhaarVerified ? 'd-none' : '' }}" data-aadhaar="#aadhaar_no">Verify via DigiLocker</button>
+                                                </div>
+                                            </div>
+                                            <small id="digilocker_aadhaar_status" class="{{ $aadhaarVerified ? 'text-success' : 'text-muted' }}">
+                                                {{ $aadhaarVerified ? 'Aadhaar verified through DigiLocker' : 'DigiLocker verification required' }}
+                                            </small>
                                         </div>
                                     </div>
         
                                     <div class="col-md-3 mb-md-2 mb-2">
                                         <div class="form-group">
-                                            <label for="gst_no" class="col-form-label form-label">Aadhaar Upload : *</label>
+                                            <label for="gst_no" class="col-form-label form-label">Aadhaar Upload :</label>
                                             <input type="file" class="form-control form-control-lg" id="aadhaar_no_file" name="aadhaar_no_file"
                                             accept=".jpg, .jpeg, .webp, .png, .pdf"
-                                            required>
+                                            >
                                         </div>
                                     </div>
 

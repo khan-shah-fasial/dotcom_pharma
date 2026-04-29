@@ -95,6 +95,41 @@ Route::get('/csrf-token', function () {
     return response()->json(['token' => csrf_token()]);
 });
 
+// Route::get('/fetch-gstin-details/{gstin}', function ($gstin) {
+//     $bearer_token = env('SUREPASS_API_TOKEN');
+//     $URL = "https://sandbox.surepass.io";
+//     $curl = curl_init();
+
+//     curl_setopt_array($curl, array(
+//         CURLOPT_URL => $URL.'/api/v1/corporate/gstin-advanced',
+//         CURLOPT_RETURNTRANSFER => true,
+//         CURLOPT_ENCODING => '',
+//         CURLOPT_MAXREDIRS => 10,
+//         CURLOPT_TIMEOUT => 0,
+//         CURLOPT_FOLLOWLOCATION => true,
+//         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+//         CURLOPT_CUSTOMREQUEST => 'POST',
+//         CURLOPT_POSTFIELDS => json_encode(['id_number' => $gstin]),
+//         CURLOPT_HTTPHEADER => array(
+//             'Content-Type: application/json',
+//             'Authorization: Bearer '.$bearer_token,
+//         ),
+//     ));
+
+//     $response = curl_exec($curl);
+//     $curl_error = curl_error($curl);
+//     $http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+//     curl_close($curl);
+
+//     if ($response === false) {
+//         return response()->json(['error' => $curl_error], 500);
+//     }
+
+//     return response($response, $http_status)
+//         ->header('Content-Type', 'application/json');
+// });
+
 Route::get('/utilities/ifsc-lookup', function (Request $request) {
     $result = fetch_bank_details_by_ifsc($request->query('ifsc', ''));
     $status = $result['success']
@@ -247,6 +282,9 @@ Route::controller(HomeController::class)->group(function () {
 Route::post('/register/create-new-user-registration', [RegisterController::class, 'new_user_register'])->name('create.new.user.registration')->middleware('handle-demo-login');
 Route::get('/get-reg-step', [RegisterController::class, 'get_reg_step'])->name('get-reg-step');
 Route::any('/create-account/{param}', [RegisterController::class, 'create_account'])->name('new.user.account.create');
+Route::any('/api/digilocker/callback', [RegisterController::class, 'create_account'])
+    ->defaults('param', 'digilocker-callback')
+    ->name('digilocker.callback');
 
 // Route::post('/register/create-new-user-phone-verify', [RegisterController::class, 'verify_otp'])->name('create.new.user.registration.phone.verify')->middleware('handle-demo-login');
 

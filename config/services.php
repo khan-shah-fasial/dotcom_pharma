@@ -72,4 +72,13 @@ return [
         'secret' => env('CRON_TOKEN'),
     ],
 
+    'surepass' => [
+        'token' => env('SUREPASS_API_TOKEN'),
+        'digilocker' => [
+            'initiate_url' => env('SUREPASS_DIGILOCKER_INITIALIZE_URL', env('SUREPASS_DIGILOCKER_INITIATE_URL')),
+            'download_aadhaar_url' => env('SUREPASS_DIGILOCKER_DOWNLOAD_AADHAAR_URL'),
+            'callback_url' => env('SUREPASS_DIGILOCKER_CALLBACK_URL'),
+        ],
+    ],
+
 ];

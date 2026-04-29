@@ -93,48 +93,6 @@
         </div>
     </div>
 
-    {{--- //------------------------------ aadhar verify modal -----------------------// ----}}
-
-    <div class="modal fade" id="aadhar_otp_model" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content py-3">
-                <div class="modal-header">
-                    <div class="heading">
-                        <h5 class="modal-title" id="exampleModalLabel">Verify aadhar</h5>
-                    </div>
-                    <div class="purple_btn_close">
-                        <button type="button" onclick="close_Emai_modal();" class="close p-1 px-3" data-dismiss="modal" aria-label="Close">
-                        </button>
-                    </div>
-                </div>
-                <form id="aadhar-verify-otp" action="{{ url(route('new.user.account.create', ['param' => 'aadhar-otp-verify'])) }}"
-                    method="post">
-                    @csrf
-
-                    <div class="modal-body">
-                            <div class="form-group">
-                                <label for="recipient-name" class="col-form-label form-label">Verification Code:</label>
-                                <input type="number" class="form-control" id="recipient-name" name="otp" pattern="[0-9]+" minlength="6"
-                                maxlength="6" placeholder="Please Enter Code" required>
-                            </div>
-                    </div>
-                    <div class="modal-footer">
-                        <div class="blue_btn">
-                            <button type="button" onclick="close_aadhar_modal();" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        </div>
-                        <div class="purple_btn">
-                            <button type="submit" class="btn btn-primary">Verify</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    {{--- //------------------------------  aadhar verify modal -----------------------// ----}}
-
-
 @endsection
 
 @section('custome-script')
@@ -191,22 +149,155 @@
 
         {{--    // ---------------- ICE verify --------------------------- // --}}
 
-        {{--    // ---------------- aadhaar_no verify --------------------------- // --}}
+        {{--    // ---------------- DigiLocker Aadhaar verify --------------------------- // --}}
 
-            function checkAndAppendaadhaarButton() {
-                const val = $('#aadhaar_no').val().trim();
-                if (val.length === 12) {
-                    verifyDocument('aadhaar_no', 'aadhaar-validate', 12);
-                }
+            let digilockerPopup = null;
+
+            function setDigilockerStatus(message, verified) {
+                const status = $('#digilocker_aadhaar_status');
+                status.text(message || '');
+                status.toggleClass('text-success', !!verified);
+                status.toggleClass('text-muted', !verified);
+                status.toggleClass('text-danger', verified === false && !!message);
             }
 
-            // Watch changes on IEC input
-            $('body').on('input', '#aadhaar_no', function () {
-                setTimeout(checkAndAppendaadhaarButton, 50); // wait for paste/input value
+            function setDigilockerButtonVisible(visible) {
+                $('.js-digilocker-verify').toggleClass('d-none', !visible);
+            }
+
+            function applyDigilockerData(data) {
+                const fieldMap = {
+                    aadhaar_no: '#aadhaar_no',
+                    name: '#name',
+                    father_name: '#father_name',
+                    dob: '#dob',
+                    street_add_first_personal: '#street_add_first_personal',
+                    locality_land_mark_personal: '#locality_land_mark_personal',
+                    village_personal: '#village_personal',
+                    post_personal: '#post_personal',
+                    pincode_personal: '[name="pincode_personal"]',
+                    district_personal: '#district_personal'
+                };
+
+                Object.keys(fieldMap).forEach(function (key) {
+                    if (data[key]) {
+                        $(fieldMap[key]).val(data[key]).trigger('change');
+                    }
+                });
+
+                if (data.pincode_personal) {
+                    pincode_info({ target: document.querySelector('[name="pincode_personal"]') });
+                }
+
+                if (data.aadhaar_no) {
+                    $('#aadhaar_no').attr('data-verified-aadhaar', data.aadhaar_no);
+                }
+
+                setDigilockerButtonVisible(false);
+                setDigilockerStatus('Aadhaar verified through DigiLocker', true);
+            }
+
+            function fetchDigilockerStatus() {
+                $.ajax({
+                    url: "{{ route('new.user.account.create', ['param' => 'digilocker-status']) }}",
+                    method: 'GET',
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            applyDigilockerData(response.data || {});
+                            AIZ.plugins.notify('success', response.message);
+                        } else {
+                            setDigilockerStatus(response.message || 'DigiLocker verification failed', false);
+                            AIZ.plugins.notify('danger', response.message || 'DigiLocker verification failed');
+                        }
+                    },
+                    error: function () {
+                        setDigilockerStatus('Unable to read DigiLocker verification status', false);
+                        AIZ.plugins.notify('danger', 'Unable to read DigiLocker verification status');
+                    }
+                });
+            }
+
+            function startDigilockerVerification(button) {
+                const aadhaarSelector = button.dataset.aadhaar || '#aadhaar_no';
+                const aadhaarNo = ($(aadhaarSelector).val() || '').trim();
+
+                if (!/^\d{12}$/.test(aadhaarNo)) {
+                    AIZ.plugins.notify('danger', 'Aadhaar Number must be 12 digits');
+                    return;
+                }
+
+                const originalText = button.innerText;
+                button.disabled = true;
+                button.innerText = 'Starting...';
+                setDigilockerStatus('Starting DigiLocker verification...', null);
+
+                $.ajax({
+                    url: "{{ route('new.user.account.create', ['param' => 'digilocker-initiate']) }}",
+                    method: 'POST',
+                    data: {
+                        aadhaar_no: aadhaarNo,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (response) {
+                        if (response.status !== 'success') {
+                            setDigilockerStatus(response.message || 'DigiLocker verification failed', false);
+                            AIZ.plugins.notify('danger', response.message || 'DigiLocker verification failed');
+                            return;
+                        }
+
+                        digilockerPopup = window.open(response.authorization_url, 'digilockerVerification', 'width=720,height=780');
+
+                        if (!digilockerPopup) {
+                            setDigilockerStatus('Allow popup access to continue DigiLocker verification', false);
+                            AIZ.plugins.notify('danger', 'Allow popup access to continue DigiLocker verification');
+                            return;
+                        }
+
+                        setDigilockerStatus('Complete verification in the DigiLocker popup...', null);
+                    },
+                    error: function () {
+                        setDigilockerStatus('Unable to start DigiLocker verification', false);
+                        AIZ.plugins.notify('danger', 'Unable to start DigiLocker verification');
+                    },
+                    complete: function () {
+                        button.disabled = false;
+                        button.innerText = originalText;
+                    }
+                });
+            }
+
+            $('body').on('click', '.js-digilocker-verify', function () {
+                startDigilockerVerification(this);
             });
 
+            $('body').on('input', '#aadhaar_no', function () {
+                const currentValue = ($(this).val() || '').trim();
+                const verifiedValue = ($(this).attr('data-verified-aadhaar') || '').trim();
 
-            // ---------------- aadhaar_no verify --------------------------- //
+                if (verifiedValue && currentValue === verifiedValue) {
+                    setDigilockerButtonVisible(false);
+                    setDigilockerStatus('Aadhaar verified through DigiLocker', true);
+                    return;
+                }
+
+                setDigilockerButtonVisible(true);
+                setDigilockerStatus('Re-verify required for changed Aadhaar number', false);
+            });
+
+            window.addEventListener('message', function (event) {
+                if (event.origin !== window.location.origin || !event.data || event.data.type !== 'digilocker-aadhaar') {
+                    return;
+                }
+
+                if (event.data.status === 'success') {
+                    fetchDigilockerStatus();
+                } else {
+                    setDigilockerStatus(event.data.message || 'DigiLocker verification failed', false);
+                    AIZ.plugins.notify('danger', event.data.message || 'DigiLocker verification failed');
+                }
+            });
+
+            // ---------------- DigiLocker Aadhaar verify --------------------------- //
 
             // ---------------- pan_no verify --------------------------- //
 
@@ -1346,14 +1437,14 @@
                                 if (fieldId == "gst_no") {
 
                                     // --------------- Temp comment ------------- //
-                                    // $('#street_add_first_business').val(data.contact_details.principal.address);
-                                    // $('#registration_date').val(data.date_of_registration);
-                                    // $('#const_of_business').val(data.constitution_of_business);
-                                    // $('#gstin_current_status').val(data.gstin_status);
-                                    // $('#company_name').val(data.business_name);
-                                    // $('#phone_code').val(data.contact_details.principal.mobile);
-                                    // $('#whats_app_no').val(data.contact_details.principal.mobile);
-                                    // $('#prim_email_business').val(data.contact_details.principal.email);
+                                    $('#street_add_first_business').val(data.contact_details.principal.address);
+                                    $('#registration_date').val(data.date_of_registration);
+                                    $('#const_of_business').val(data.constitution_of_business);
+                                    $('#gstin_current_status').val(data.gstin_status);
+                                    $('#company_name').val(data.business_name);
+                                    $('#phone_code').val(data.contact_details.principal.mobile);
+                                    $('#whats_app_no').val(data.contact_details.principal.mobile);
+                                    $('#prim_email_business').val(data.contact_details.principal.email);
                                     // --------------- Temp comment ------------- //
 
 
@@ -1363,26 +1454,19 @@
 
                                 if (fieldId == "iec_no") {
 
-                                    // $('#street_add_first_business').val(data.address);
-                                    // $('#registration_date').val(data.iec_issuance_date);
+                                    $('#street_add_first_business').val(data.address);
+                                    $('#registration_date').val(data.iec_issuance_date);
 
-                                    // $('#const_of_business').val(data.constitution_of_business);
+                                    $('#const_of_business').val(data.constitution_of_business);
 
-                                    // $('#uin_current_status').val(data.iec_status);
-                                    // $('#company_name').val(data.firm_name);
-                                    // $('#phone_code').val(data.firm_mobile_no);
-                                    // $('#whats_app_no').val(data.firm_mobile_no);
-                                    // $('#prim_email_business').val(data.firm_email_id);
+                                    $('#uin_current_status').val(data.iec_status);
+                                    $('#company_name').val(data.firm_name);
+                                    $('#phone_code').val(data.firm_mobile_no);
+                                    $('#whats_app_no').val(data.firm_mobile_no);
+                                    $('#prim_email_business').val(data.firm_email_id);
 
                                     // Correctly accessing the first promoter, or showing an empty string if it doesn't exist
-                                    // $('#con_person_name').val(data.director_details.length > 0 ? data.director_details[0].name : '');
-                                }
-
-                                if (fieldId == "aadhaar_no" && data == "open") {
-                                    setTimeout(function () {
-                                        // location.reload();
-                                        $('#aadhar_otp_model').modal('show');
-                                    }, 100);
+                                    $('#con_person_name').val(data.director_details.length > 0 ? data.director_details[0].name : '');
                                 }
 
                                 if (fieldId === "passport_no") {
@@ -1404,51 +1488,6 @@
                     AIZ.plugins.notify('danger', 'Something went wrong.');
                 });
         }
-
-
-
-
-        /*--------------------- Aadhar otp ------------------*/ 
-
-            initValidate('#aadhar-verify-otp');
-
-            $('#aadhar-verify-otp').on('submit', function(e){
-                var form = $(this);
-                ajax_form_submit(e, form, responseHandler_aadhar_verify_otp);
-            });
-
-            var responseHandler_aadhar_verify_otp = function (response) {
-                var form = $('#aadhar-verify-otp'); 
-                
-                form.find("input[type=text]").val("");
-
-                $('#aadhar_otp_model').modal('toggle');
-
-                if(response.status == "success"){
-                    let data = response.data;
-                    var address = data.address.house + ',' + data.address.street + ',' + data.address.landmark + ',' + data.address.loc + ',' + data.address.dist + ',' + data.address.state + ',' + data.address.country;
-
-                    $('#street_add_first_personal').val(address);
-                    $('#locality_land_mark_personal').val(data.address.landmark);
-                    $('#dob').val(data.dob);
-                    $('#name').val(data.full_name);
-
-                    $('#post_personal').val(data.address.po);
-
-                    $('#pincode_personal').val(data.zip);
-                    $('#district_personal').val(data.address.dist);
-                } else {
-                    $('#aadhaar_no').val('');
-                }
-
-            };
-
-            function close_aadhar_modal() {
-                $('#aadhar_otp_model').modal('toggle');
-            };
-
-         /*--------------------- email verify otp ------------------*/ 
-
          /* ----------------------------- Pincode ----------------------- */
 
             function pincode_info(e){
