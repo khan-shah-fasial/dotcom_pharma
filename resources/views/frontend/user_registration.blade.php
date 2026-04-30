@@ -217,7 +217,15 @@
                 });
             }
 
-            function startDigilockerVerification(button) {
+            function refreshCsrfToken() {
+                return getCsrfToken().done(function (response) {
+                    if (response && response.token) {
+                        $('meta[name="csrf-token"]').attr('content', response.token);
+                    }
+                });
+            }
+
+            function startDigilockerVerification(button, retriedAfterCsrf) {
                 const aadhaarSelector = button.dataset.aadhaar || '#aadhaar_no';
                 const aadhaarNo = ($(aadhaarSelector).val() || '').trim();
 
@@ -266,7 +274,20 @@
 
                         setDigilockerStatus('Complete verification in the DigiLocker popup...', null);
                     },
-                    error: function () {
+                    error: function (xhr) {
+                        if (xhr.status === 419 && !retriedAfterCsrf) {
+                            setDigilockerStatus('Session refreshed. Starting DigiLocker verification again...', null);
+                            refreshCsrfToken()
+                                .done(function () {
+                                    startDigilockerVerification(button, true);
+                                })
+                                .fail(function () {
+                                    setDigilockerStatus('Session expired. Please refresh the page and try again.', false);
+                                    AIZ.plugins.notify('danger', 'Session expired. Please refresh the page and try again.');
+                                });
+                            return;
+                        }
+
                         setDigilockerStatus('Unable to start DigiLocker verification', false);
                         AIZ.plugins.notify('danger', 'Unable to start DigiLocker verification');
                     },
@@ -278,7 +299,7 @@
             }
 
             $('body').on('click', '.js-digilocker-verify', function () {
-                startDigilockerVerification(this);
+                startDigilockerVerification(this, false);
             });
 
             $('body').on('input', '#aadhaar_no', function () {

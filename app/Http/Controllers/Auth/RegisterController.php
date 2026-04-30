@@ -2711,7 +2711,7 @@ class RegisterController extends Controller
 
     private function digilockerAlreadyDownloadedMessage(): string
     {
-        return 'Aadhaar data was already downloaded by Surepass, but it is not available in this browser session. Please open /clear-session and start DigiLocker verification again.';
+        return 'Aadhaar data was already downloaded by Surepass, but it is not available in this browser session. Please open /clear-session, refresh the registration page, and start DigiLocker verification again.';
     }
 
     private function digilockerAlreadyDownloadedJsonResponse()

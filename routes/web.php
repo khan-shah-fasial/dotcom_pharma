@@ -159,10 +159,11 @@ Route::get('/create-storage-link', function () {
 
 Route::get('/send-cart-reminder-emails', [MarketingController::class, 'sendCartReminderEmails'])->name('send.cart.reminder.emails');
 
-Route::get('/clear-session', function () {
-    Session()->flush();
+Route::get('/clear-session', function (Request $request) {
+    $request->session()->flush();
+    $request->session()->regenerateToken();
 
-    echo"clear";
+    return response('Session cleared. Please refresh the registration page and start DigiLocker verification again.');
 });
 
 Route::middleware(['auth'])->get('/utilities/sync-user-location-ids', function () {
