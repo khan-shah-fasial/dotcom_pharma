@@ -2558,12 +2558,56 @@ class RegisterController extends Controller
             ], 200);
         }
 
+        $sameAadhaarSession = Session::get('digilocker_aadhaar_no') === $request->aadhaar_no;
+
+        if ($sameAadhaarSession && Session::get('aadhaar_validate') === 'True' && Session::has('digilocker_aadhaar_data')) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Aadhaar details already verified through DigiLocker.',
+                'already_verified' => true,
+            ], 200);
+        }
+
+        if ($sameAadhaarSession && Session::has('digilocker_authorization_url')) {
+            $sessionClientId = Session::get('customer_aadhar_clientId') ?: Session::get('digilocker_session_id');
+            if ($sessionClientId) {
+                try {
+                    $normalized = $this->downloadDigilockerAadhaarWithRetry(new SurepassDigilockerService(), $sessionClientId);
+                    if (!empty($normalized['aadhaar_no']) && strlen($normalized['aadhaar_no']) === 12 && $normalized['aadhaar_no'] !== $request->aadhaar_no) {
+                        throw new \RuntimeException('DigiLocker Aadhaar does not match the entered Aadhaar number.');
+                    }
+
+                    $this->storeDigilockerAadhaarData($normalized, $request->aadhaar_no);
+
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'Aadhaar details verified through DigiLocker.',
+                        'already_verified' => true,
+                    ], 200);
+                } catch (\Throwable $e) {
+                    if ($this->isDigilockerAlreadyDownloaded($e->getMessage())) {
+                        return $this->digilockerAlreadyDownloadedJsonResponse();
+                    }
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'DigiLocker verification is already in progress.',
+                'authorization_url' => Session::get('digilocker_authorization_url'),
+            ], 200);
+        }
+
         $state = (string) Str::uuid();
         $callbackUrl = config('services.surepass.digilocker.callback_url') ?: route('new.user.account.create', ['param' => 'digilocker-callback']);
 
         try {
             $session = (new SurepassDigilockerService())->initiate($request->aadhaar_no, $state, $callbackUrl);
         } catch (\Throwable $e) {
+            if ($this->isDigilockerAlreadyDownloaded($e->getMessage())) {
+                return $this->digilockerAlreadyDownloadedJsonResponse();
+            }
+
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage(),
@@ -2603,18 +2647,14 @@ class RegisterController extends Controller
                 return $this->digilockerCallbackResponse($success, $message);
             }
 
-            $normalized = (new SurepassDigilockerService())->downloadAadhaar($clientId);
+            $normalized = $this->downloadDigilockerAadhaarWithRetry(new SurepassDigilockerService(), $clientId);
             $enteredAadhaarNo = Session::get('digilocker_aadhaar_no');
 
             if (!empty($normalized['aadhaar_no']) && strlen($normalized['aadhaar_no']) === 12 && $normalized['aadhaar_no'] !== $enteredAadhaarNo) {
                 throw new \RuntimeException('DigiLocker Aadhaar does not match the entered Aadhaar number.');
             }
 
-            $normalized['aadhaar_no'] = $enteredAadhaarNo;
-
-            Session::put('digilocker_aadhaar_data', array_filter($normalized, fn ($value) => $value !== null && $value !== ''));
-            Session::put('aadhar_no', $enteredAadhaarNo);
-            Session::put('aadhaar_validate', 'True');
+            $this->storeDigilockerAadhaarData($normalized, $enteredAadhaarNo);
 
             $success = true;
             $message = 'Aadhaar details verified through DigiLocker.';
@@ -2624,20 +2664,89 @@ class RegisterController extends Controller
                 $message = 'Aadhaar details verified through DigiLocker.';
             } else {
                 Session::put('aadhaar_validate', 'false');
-                $message = $e->getMessage();
+                $message = $this->isDigilockerAlreadyDownloaded($e->getMessage())
+                    ? $this->digilockerAlreadyDownloadedMessage()
+                    : $e->getMessage();
             }
         }
 
         return $this->digilockerCallbackResponse($success, $message);
     }
 
+    private function downloadDigilockerAadhaarWithRetry(SurepassDigilockerService $service, string $clientId): array
+    {
+        $attempts = 4;
+
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            try {
+                return $service->downloadAadhaar($clientId);
+            } catch (\Throwable $e) {
+                if ($attempt === $attempts || !$this->isDigilockerProcessingConflict($e->getMessage())) {
+                    throw $e;
+                }
+
+                sleep(2);
+            }
+        }
+
+        throw new \RuntimeException('Unable to fetch Aadhaar details from DigiLocker.');
+    }
+
+    private function isDigilockerProcessingConflict(string $message): bool
+    {
+        $message = strtolower($message);
+
+        return str_contains($message, 'same operation already processing')
+            || str_contains($message, 'operation already processing')
+            || str_contains($message, 'conflict');
+    }
+
+    private function isDigilockerAlreadyDownloaded(string $message): bool
+    {
+        $message = strtolower($message);
+
+        return str_contains($message, 'aadhaar data is already downloaded')
+            || str_contains($message, 'already downloaded');
+    }
+
+    private function digilockerAlreadyDownloadedMessage(): string
+    {
+        return 'Aadhaar data was already downloaded by Surepass, but it is not available in this browser session. Please open /clear-session and start DigiLocker verification again.';
+    }
+
+    private function digilockerAlreadyDownloadedJsonResponse()
+    {
+        Session::put('aadhaar_validate', 'false');
+
+        return response()->json([
+            'status' => 'error',
+            'message' => $this->digilockerAlreadyDownloadedMessage(),
+            'clear_session_url' => url('/clear-session'),
+        ], 200);
+    }
+
+    private function storeDigilockerAadhaarData(array $normalized, ?string $enteredAadhaarNo): void
+    {
+        $normalized['aadhaar_no'] = $enteredAadhaarNo;
+
+        Session::put('digilocker_aadhaar_data', array_filter($normalized, fn ($value) => $value !== null && $value !== ''));
+        Session::put('aadhar_no', $enteredAadhaarNo);
+        Session::put('aadhaar_validate', 'True');
+    }
+
     private function digilockerCallbackResponse(bool $success, string $message)
     {
-        $payload = json_encode([
+        $payloadData = [
             'type' => 'digilocker-aadhaar',
             'status' => $success ? 'success' : 'error',
             'message' => $message,
-        ]);
+        ];
+
+        if (!$success && $this->isDigilockerAlreadyDownloaded($message)) {
+            $payloadData['clear_session_url'] = url('/clear-session');
+        }
+
+        $payload = json_encode($payloadData);
 
         return response(
             '<!doctype html><html><body><script>window.opener&&window.opener.postMessage(' . $payload . ', window.location.origin); window.close();</script>' .

@@ -245,6 +245,17 @@
                             return;
                         }
 
+                        if (response.already_verified) {
+                            fetchDigilockerStatus();
+                            return;
+                        }
+
+                        if (!response.authorization_url) {
+                            setDigilockerStatus(response.message || 'Unable to start DigiLocker verification', false);
+                            AIZ.plugins.notify('danger', response.message || 'Unable to start DigiLocker verification');
+                            return;
+                        }
+
                         digilockerPopup = window.open(response.authorization_url, 'digilockerVerification', 'width=720,height=780');
 
                         if (!digilockerPopup) {
