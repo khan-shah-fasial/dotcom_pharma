@@ -18,6 +18,7 @@ use App\Http\Controllers\OTPVerificationController;
 use App\Models\Address;
 use App\Utility\EmailUtility;
 use App\Services\SurepassDigilockerService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\File;
@@ -28,6 +29,8 @@ use function Ramsey\Uuid\v1;
 
 class RegisterController extends Controller
 {
+    private const DIGILOCKER_CACHE_TTL_MINUTES = 60;
+
     /*
     |--------------------------------------------------------------------------
     | Register Controller
@@ -2560,6 +2563,14 @@ class RegisterController extends Controller
 
         $sameAadhaarSession = Session::get('digilocker_aadhaar_no') === $request->aadhaar_no;
 
+        if ($this->restoreCachedDigilockerAadhaarData($request->aadhaar_no)) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Aadhaar details restored from the recent DigiLocker verification.',
+                'already_verified' => true,
+            ], 200);
+        }
+
         if ($sameAadhaarSession && Session::get('aadhaar_validate') === 'True' && Session::has('digilocker_aadhaar_data')) {
             return response()->json([
                 'status' => 'success',
@@ -2577,7 +2588,7 @@ class RegisterController extends Controller
                         throw new \RuntimeException('DigiLocker Aadhaar does not match the entered Aadhaar number.');
                     }
 
-                    $this->storeDigilockerAadhaarData($normalized, $request->aadhaar_no);
+                    $this->storeDigilockerAadhaarData($normalized, $request->aadhaar_no, $sessionClientId);
 
                     return response()->json([
                         'status' => 'success',
@@ -2586,6 +2597,14 @@ class RegisterController extends Controller
                     ], 200);
                 } catch (\Throwable $e) {
                     if ($this->isDigilockerAlreadyDownloaded($e->getMessage())) {
+                        if ($this->restoreCachedDigilockerAadhaarData($request->aadhaar_no, $sessionClientId)) {
+                            return response()->json([
+                                'status' => 'success',
+                                'message' => 'Aadhaar details restored from the recent DigiLocker verification.',
+                                'already_verified' => true,
+                            ], 200);
+                        }
+
                         return $this->digilockerAlreadyDownloadedJsonResponse();
                     }
                 }
@@ -2620,6 +2639,7 @@ class RegisterController extends Controller
         Session::put('digilocker_authorization_url', $session['authorization_url']);
         Session::forget('digilocker_aadhaar_data');
         Session::put('aadhaar_validate', 'false');
+        $this->cacheDigilockerSession($session['client_id'] ?? $session['session_id'] ?? null, $request->aadhaar_no, $session['authorization_url']);
 
         return response()->json([
             'status' => 'success',
@@ -2635,7 +2655,8 @@ class RegisterController extends Controller
 
         try {
             $clientId = $request->input('client_id') ?: $request->input('clientId') ?: $request->input('id');
-            $sessionClientId = Session::get('customer_aadhar_clientId') ?: Session::get('digilocker_session_id');
+            $cachedSession = $this->cachedDigilockerSession($clientId);
+            $sessionClientId = Session::get('customer_aadhar_clientId') ?: Session::get('digilocker_session_id') ?: ($cachedSession ? $clientId : null);
 
             if (!$clientId || !$sessionClientId || $clientId !== $sessionClientId) {
                 throw new \RuntimeException('Invalid DigiLocker verification session.');
@@ -2648,13 +2669,13 @@ class RegisterController extends Controller
             }
 
             $normalized = $this->downloadDigilockerAadhaarWithRetry(new SurepassDigilockerService(), $clientId);
-            $enteredAadhaarNo = Session::get('digilocker_aadhaar_no');
+            $enteredAadhaarNo = Session::get('digilocker_aadhaar_no') ?: ($cachedSession['aadhaar_no'] ?? null);
 
             if (!empty($normalized['aadhaar_no']) && strlen($normalized['aadhaar_no']) === 12 && $normalized['aadhaar_no'] !== $enteredAadhaarNo) {
                 throw new \RuntimeException('DigiLocker Aadhaar does not match the entered Aadhaar number.');
             }
 
-            $this->storeDigilockerAadhaarData($normalized, $enteredAadhaarNo);
+            $this->storeDigilockerAadhaarData($normalized, $enteredAadhaarNo, $clientId);
 
             $success = true;
             $message = 'Aadhaar details verified through DigiLocker.';
@@ -2664,9 +2685,14 @@ class RegisterController extends Controller
                 $message = 'Aadhaar details verified through DigiLocker.';
             } else {
                 Session::put('aadhaar_validate', 'false');
-                $message = $this->isDigilockerAlreadyDownloaded($e->getMessage())
-                    ? $this->digilockerAlreadyDownloadedMessage()
-                    : $e->getMessage();
+                if ($this->isDigilockerAlreadyDownloaded($e->getMessage()) && $this->restoreCachedDigilockerAadhaarData(null, $request->input('client_id') ?: $request->input('clientId') ?: $request->input('id'))) {
+                    $success = true;
+                    $message = 'Aadhaar details restored from the recent DigiLocker verification.';
+                } else {
+                    $message = $this->isDigilockerAlreadyDownloaded($e->getMessage())
+                        ? $this->digilockerAlreadyDownloadedMessage()
+                        : $e->getMessage();
+                }
             }
         }
 
@@ -2725,13 +2751,89 @@ class RegisterController extends Controller
         ], 200);
     }
 
-    private function storeDigilockerAadhaarData(array $normalized, ?string $enteredAadhaarNo): void
+    private function storeDigilockerAadhaarData(array $normalized, ?string $enteredAadhaarNo, ?string $clientId = null): void
     {
         $normalized['aadhaar_no'] = $enteredAadhaarNo;
+        $filtered = array_filter($normalized, fn ($value) => $value !== null && $value !== '');
 
-        Session::put('digilocker_aadhaar_data', array_filter($normalized, fn ($value) => $value !== null && $value !== ''));
+        Session::put('digilocker_aadhaar_data', $filtered);
         Session::put('aadhar_no', $enteredAadhaarNo);
+        Session::put('digilocker_aadhaar_no', $enteredAadhaarNo);
         Session::put('aadhaar_validate', 'True');
+
+        $expiresAt = now()->addMinutes(self::DIGILOCKER_CACHE_TTL_MINUTES);
+
+        if ($clientId) {
+            Cache::put($this->digilockerAadhaarClientCacheKey($clientId), $filtered, $expiresAt);
+        }
+
+        if ($enteredAadhaarNo) {
+            Cache::put($this->digilockerAadhaarNoCacheKey($enteredAadhaarNo), $filtered, $expiresAt);
+        }
+    }
+
+    private function cacheDigilockerSession(?string $clientId, ?string $aadhaarNo, ?string $authorizationUrl = null): void
+    {
+        if (!$clientId || !$aadhaarNo) {
+            return;
+        }
+
+        Cache::put($this->digilockerSessionCacheKey($clientId), [
+            'aadhaar_no' => $aadhaarNo,
+            'authorization_url' => $authorizationUrl,
+        ], now()->addMinutes(self::DIGILOCKER_CACHE_TTL_MINUTES));
+    }
+
+    private function cachedDigilockerSession(?string $clientId): ?array
+    {
+        if (!$clientId) {
+            return null;
+        }
+
+        $session = Cache::get($this->digilockerSessionCacheKey($clientId));
+
+        return is_array($session) ? $session : null;
+    }
+
+    private function restoreCachedDigilockerAadhaarData(?string $aadhaarNo = null, ?string $clientId = null): bool
+    {
+        $data = null;
+
+        if ($clientId) {
+            $data = Cache::get($this->digilockerAadhaarClientCacheKey($clientId));
+        }
+
+        if (!$data && $aadhaarNo) {
+            $data = Cache::get($this->digilockerAadhaarNoCacheKey($aadhaarNo));
+        }
+
+        if (!is_array($data) || empty($data)) {
+            return false;
+        }
+
+        $cachedAadhaarNo = $data['aadhaar_no'] ?? $aadhaarNo;
+        if ($aadhaarNo && $cachedAadhaarNo && $cachedAadhaarNo !== $aadhaarNo) {
+            return false;
+        }
+
+        $this->storeDigilockerAadhaarData($data, $cachedAadhaarNo, $clientId);
+
+        return true;
+    }
+
+    private function digilockerSessionCacheKey(string $clientId): string
+    {
+        return 'digilocker:session:' . sha1($clientId);
+    }
+
+    private function digilockerAadhaarClientCacheKey(string $clientId): string
+    {
+        return 'digilocker:aadhaar:client:' . sha1($clientId);
+    }
+
+    private function digilockerAadhaarNoCacheKey(string $aadhaarNo): string
+    {
+        return 'digilocker:aadhaar:no:' . hash_hmac('sha256', $aadhaarNo, (string) config('app.key'));
     }
 
     private function digilockerCallbackResponse(bool $success, string $message)
@@ -2759,6 +2861,17 @@ class RegisterController extends Controller
     public function digilocker_status()
     {
         if (Session::get('aadhaar_validate') !== 'True' || !Session::has('digilocker_aadhaar_data')) {
+            $clientId = Session::get('customer_aadhar_clientId') ?: Session::get('digilocker_session_id');
+            $aadhaarNo = Session::get('digilocker_aadhaar_no') ?: Session::get('aadhar_no');
+
+            if ($this->restoreCachedDigilockerAadhaarData($aadhaarNo, $clientId)) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'DigiLocker Aadhaar verification is complete.',
+                    'data' => Session::get('digilocker_aadhaar_data', []),
+                ], 200);
+            }
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'DigiLocker Aadhaar verification is not complete.',
