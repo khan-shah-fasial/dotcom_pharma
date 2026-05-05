@@ -29,6 +29,58 @@ class CustomerController extends Controller
         $this->middleware(['permission:delete_customer'])->only('destroy');
     }
 
+    public function gstDetails(Request $request)
+    {
+        $validated = $request->validate([
+            'gst_no' => ['required', 'regex:/^[0-9A-Z]{15}$/i'],
+        ]);
+
+        if (!function_exists('fetchGstinDetails')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => translate('GST verification is not configured.'),
+            ], 500);
+        }
+
+        $gstNo = strtoupper((string) $validated['gst_no']);
+        $response = fetchGstinDetails($gstNo);
+        $decoded = json_decode((string) $response, true);
+
+        if (!is_array($decoded)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => translate('Invalid GST response payload.'),
+            ], 502);
+        }
+
+        if (($decoded['message_code'] ?? null) !== 'success') {
+            return response()->json([
+                'status' => 'error',
+                'message' => (string) ($decoded['message'] ?? translate('GST details not found.')),
+            ], 422);
+        }
+
+        $data = $decoded['data'] ?? [];
+        $principal = $data['contact_details']['principal'] ?? [];
+
+        return response()->json([
+            'status' => 'success',
+            'message' => translate('GST details fetched successfully.'),
+            'data' => [
+                'gst_no' => $gstNo,
+                'pan_no' => $data['pan_number'] ?? substr($gstNo, 2, 10),
+                'registration_date' => $data['date_of_registration'] ?? null,
+                'const_of_business' => $data['constitution_of_business'] ?? null,
+                'gstin_current_status' => $data['gstin_status'] ?? null,
+                'company_name' => $data['business_name'] ?? $data['legal_name'] ?? null,
+                'street_add_first_business' => $principal['address'] ?? null,
+                'phone_business' => $principal['mobile'] ?? null,
+                'whats_app_no_business' => $principal['mobile'] ?? null,
+                'prim_email_business' => $principal['email'] ?? null,
+            ],
+        ]);
+    }
+
     /**
      * Display a listing of the resource.
      *

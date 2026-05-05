@@ -65,8 +65,14 @@
                     <div class="col-md-4 domestic-gst-block">
                         <div class="form-group">
                             <label class="form-label" for="gst_no">{{ translate('GST No') }} *</label>
-                            <input type="text" id="gst_no" name="gst_no" class="form-control"
-                                  value="{{ old('gst_no') ?? ($details?->gst_no ?? $user?->gst_no) }}" placeholder="22AAAAA0000A1Z5" oninput="validateGstFormat(this)">
+                            <div class="input-group">
+                                <input type="text" id="gst_no" name="gst_no" class="form-control"
+                                      value="{{ old('gst_no') ?? ($details?->gst_no ?? $user?->gst_no) }}" placeholder="22AAAAA0000A1Z5" oninput="validateGstFormat(this)">
+                                <div class="input-group-append">
+                                    <button type="button" id="verify_gst_btn" class="btn btn-primary">{{ translate('Verify') }}</button>
+                                </div>
+                            </div>
+                            <small id="gst_verify_status" class="form-text text-muted"></small>
                             @error('gst_no')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -1317,6 +1323,90 @@
             return isValid;
         }
 
+        function setGstStatus(message, type) {
+            const status = document.getElementById('gst_verify_status');
+            if (!status) return;
+            status.className = 'form-text ' + (type === 'success' ? 'text-success' : (type === 'error' ? 'text-danger' : 'text-muted'));
+            status.textContent = message || '';
+        }
+
+        function notifyGst(message, type) {
+            if (window.AIZ?.plugins?.notify) {
+                AIZ.plugins.notify(type === 'success' ? 'success' : 'danger', message);
+            }
+            setGstStatus(message, type);
+        }
+
+        function normalizeGstDate(value) {
+            if (!value) return '';
+            const text = String(value).trim();
+            const parts = text.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+            if (parts) {
+                return parts[3] + '-' + parts[2].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+            }
+            return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : '';
+        }
+
+        function fillIfPresent(id, value) {
+            const field = document.getElementById(id);
+            if (!field || value === null || value === undefined || value === '') return;
+            field.value = id === 'registration_date' ? normalizeGstDate(value) : value;
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        function applyGstDetails(data) {
+            fillIfPresent('pan_no_domestic', data.pan_no);
+            fillIfPresent('registration_date', data.registration_date);
+            fillIfPresent('const_of_business', data.const_of_business);
+            fillIfPresent('gstin_current_status', data.gstin_current_status);
+            fillIfPresent('company_name', data.company_name);
+            fillIfPresent('street_add_first_business', data.street_add_first_business);
+            fillIfPresent('phone_business', data.phone_business);
+            fillIfPresent('whats_app_no_business', data.whats_app_no_business);
+            fillIfPresent('prim_email_business', data.prim_email_business);
+        }
+
+        async function verifyGstDetails() {
+            const gstField = document.getElementById('gst_no');
+            const button = document.getElementById('verify_gst_btn');
+            if (!gstField || !validateGstFormat(gstField)) {
+                notifyGst('{{ translate('Enter a valid GST number before verification.') }}', 'error');
+                return;
+            }
+
+            const originalText = button ? button.textContent : '';
+            if (button) {
+                button.disabled = true;
+                button.textContent = '{{ translate('Verifying') }}...';
+            }
+            setGstStatus('{{ translate('Verifying GST details...') }}', 'muted');
+
+            try {
+                const response = await fetch('{{ route('customers.gst.details') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ gst_no: gstField.value.trim() })
+                });
+                const payload = await response.json();
+                if (!response.ok || payload.status !== 'success') {
+                    throw new Error(payload.message || '{{ translate('GST verification failed.') }}');
+                }
+                applyGstDetails(payload.data || {});
+                notifyGst(payload.message || '{{ translate('GST details fetched successfully.') }}', 'success');
+            } catch (error) {
+                notifyGst(error.message || '{{ translate('GST verification failed.') }}', 'error');
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            }
+        }
+
         function pincode_info(inputEl){
             clearTimeout(debounceTimeout);
             debounceTimeout = setTimeout(() => {
@@ -1570,6 +1660,7 @@
         AIZ.plugins.bootstrapSelect('refresh');
         initValidate('#edit-customer-form');
         autofillPanFromGst();
+        document.getElementById('verify_gst_btn')?.addEventListener('click', verifyGstDetails);
 
         document.addEventListener('input', function (e) {
             if (e.target.id === 'gst_no') {
