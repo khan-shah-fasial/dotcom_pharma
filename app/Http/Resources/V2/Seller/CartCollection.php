@@ -19,6 +19,7 @@ class CartCollection extends ResourceCollection
                     'price' =>  cart_product_price($data, $data->product, true, false),
                     'tax' => cart_product_tax($data,  $data->product, true),
                     'cart_quantity' => (int) $data->quantity,
+                    'is_scheme' => (bool) ($data->is_scheme ?? false),
                     'min_purchase_qty' => $data->product->min_qty,
                     'stock_qty' => $stock->qty
                 ];

@@ -139,9 +139,13 @@ class CartUtility
         return $tax;
     }
 
-    public static function save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice = null, $salePrice = null, $batchId = null)
+    public static function save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice = null, $salePrice = null, $batchId = null, $isScheme = false)
     {
+        if ($cart->status === null) {
+            $cart->status = 1;
+        }
         $cart->quantity = $quantity;
+        $cart->is_scheme = (bool) $isScheme;
         $cart->product_id = $product->id;
         $cart->owner_id = $product->user_id;
         $cart->price = $price;

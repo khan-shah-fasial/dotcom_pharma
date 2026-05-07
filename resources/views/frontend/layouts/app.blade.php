@@ -974,7 +974,7 @@
             let effectiveMax = parseInt(defaultMax, 10);
             const batchMax = parseInt(selectedBatchQty, 10);
 
-            if (!Number.isNaN(batchMax)) {
+            if (Number.isNaN(effectiveMax) && !Number.isNaN(batchMax)) {
                 effectiveMax = batchMax;
             }
             if (Number.isNaN(effectiveMax)) {
@@ -995,6 +995,26 @@
             $qtyInput.attr('min', safeMin).attr('max', effectiveMax).val(qty);
             $qtyInput.siblings('[data-type="minus"], [data-type="plus"]').prop('disabled', false);
             $('.input-number').prop('max', effectiveMax);
+        }
+
+        function updateSchemeDisplay(schemeQty = 0, scheme = 0, minQty = 1) {
+            const freeQty = Math.max(0, parseInt(schemeQty, 10) || 0);
+            const schemePerMinQty = Math.max(0, parseInt(scheme, 10) || 0);
+            const safeMinQty = Math.max(1, parseInt(minQty, 10) || 1);
+            const $row = $('[data-scheme-row], [id="scheme-product-row"]');
+            const $value = $('[data-scheme-value], [id="scheme-product-details"]');
+
+            if (!$row.length || !$value.length) {
+                return;
+            }
+
+            if (schemePerMinQty > 0) {
+                $row.show();
+                $value.text(freeQty + ' (' + schemePerMinQty + ' free per ' + safeMinQty + ')');
+            } else {
+                $row.hide();
+                $value.text('0');
+            }
         }
 
         function parseShelfLifeDate(value) {
@@ -1207,6 +1227,7 @@
                         let package_count = data?.package_count ?? 1;
                         let stock_min_qty = data?.stock_min_qty ?? 1;
                         let temp_per_piece_price = data?.per_piece_price?.replace(/[^0-9.]/g, "") || "";
+                        updateSchemeDisplay(data?.scheme_qty ?? 0, data?.scheme ?? 0, stock_min_qty);
 
                         let original = data?.per_piece_price || "";
 
@@ -1501,6 +1522,7 @@
                                         const qty = parseInt(selectedBatch.qty || 0, 10);
                                         selectedBatchQty = qty;
                                         $('#qnt-product-details').html(qty > 0 ? qty : 'Not Available');
+                                        updateSchemeDisplay(data?.scheme_qty ?? selectedBatch.scheme_qty ?? 0, selectedBatch.scheme ?? data?.scheme ?? 0, data?.stock_min_qty ?? 1);
                                     } else {
                                         // Fallback to overall quantity if no specific batch is resolved
                                         let qnt = data?.quantity ?? 0;
@@ -1509,6 +1531,7 @@
                                         $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
                                         updateProductShelfLifeDate(data?.manufacturing_date ?? '-', data?.expiry_date ?? '-');
                                         selectedBatchQty = null;
+                                        updateSchemeDisplay(0, 0, data?.stock_min_qty ?? 1);
                                     }
                                 })();
                             } else {
@@ -1521,13 +1544,16 @@
                                 $('#selected_batch_id').val('');
                                 $('#product-manufacturing-date').html(data?.manufacturing_date ?? '-');
                                 updateProductShelfLifeDate(data?.manufacturing_date ?? '-', data?.expiry_date ?? '-');
+                                updateSchemeDisplay(0, 0, data?.stock_min_qty ?? 1);
                             }
                         }
 
                         enforceQuantityBounds(stock_min_qty, data?.max_limit ?? null);
                         let effectiveInStock = parseInt(data.in_stock);
                         if (selectedBatchQty !== null) {
-                            effectiveInStock = selectedBatchQty > 0 ? 1 : 0;
+                            const maxPaidQty = parseInt(data?.max_paid_qty ?? 0, 10);
+                            const minPaidQty = parseInt(data?.stock_min_qty ?? 1, 10) || 1;
+                            effectiveInStock = maxPaidQty >= minPaidQty ? 1 : 0;
                         }
 
                         if(effectiveInStock == 0 && data.digital  == 0){
@@ -1632,7 +1658,7 @@
             isUpdatingBatch = true;
             
             // Update selected batch ID first (use attr to avoid triggering change event)
-            $('#selected_batch_id').attr('value', batchId);
+            $('#selected_batch_id').val(batchId);
             
             // Update UI immediately
             // Sync dropdown selected value
@@ -1658,8 +1684,12 @@
                 const qty = parseInt(batchData.qty || 0, 10);
                 selectedBatchQty = qty;
                 $('#qnt-product-details').html(qty > 0 ? qty : 'Not Available');
-                enforceQuantityBounds(parseInt($('#product_quantity').attr('min'), 10) || 1, qty);
-                if (parseInt(qty) > 0) {
+                const selectedMaxPaidQty = parseInt(batchData.max_paid_qty || qty || 0, 10);
+                enforceQuantityBounds(parseInt($('#product_quantity').attr('min'), 10) || 1, selectedMaxPaidQty);
+                updateSchemeDisplay(batchData.scheme_qty || 0, batchData.scheme || 0, parseInt($('#product_quantity').attr('min'), 10) || 1);
+                const minPaidQty = parseInt($('#product_quantity').attr('min'), 10) || 1;
+                const maxPaidQty = parseInt(batchData.max_paid_qty || 0, 10);
+                if (maxPaidQty >= minPaidQty) {
                     $('.buy-now').removeClass('d-none');
                     $('.add-to-cart').removeClass('d-none');
                     $('.out-of-stock').addClass('d-none');

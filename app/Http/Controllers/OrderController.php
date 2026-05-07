@@ -239,15 +239,16 @@ class OrderController extends Controller
             //Order Details Storing
             foreach ($seller_product as $cartItem) {
                 $product = Product::find($cartItem['product_id']);
+                $isSchemeLine = (bool) ($cartItem['is_scheme'] ?? false);
 
-                $unitSalePrice = $cartItem['sale_price'] ?? cart_product_price($cartItem, $product, false, false);
-                $unitBasePrice = $cartItem['price'] ?? $unitSalePrice;
+                $unitSalePrice = $isSchemeLine ? 0 : ($cartItem['sale_price'] ?? cart_product_price($cartItem, $product, false, false));
+                $unitBasePrice = $isSchemeLine ? 0 : ($cartItem['price'] ?? $unitSalePrice);
 
                 $subtotal += $unitSalePrice * $cartItem['quantity'];
                 // Use stored tax from cart (calculated from batch/stock price at add-to-cart)
-                $itemTax = ($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity'];
+                $itemTax = $isSchemeLine ? 0 : (($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity']);
                 $tax += $itemTax;
-                $coupon_discount += $cartItem['discount'];
+                $coupon_discount += $isSchemeLine ? 0 : $cartItem['discount'];
 
                 $product_variation = $cartItem['variation'];
 
@@ -256,9 +257,11 @@ class OrderController extends Controller
                 // Get batch_id from cart if available
                 $batchId = $cartItem['batch_id'] ?? null;
                 $selectedBatch = null;
+                $schemeQty = 0;
+                $hasSchemeCartLine = false;
                 
                 // Stock validation and deduction
-                if ($product->digital != 1 && $product_stock) {
+                if (!$isSchemeLine && $product->digital != 1 && $product_stock) {
                     if ($batchId) {
                         // Validate batch belongs to this stock and deduct from batch
                         $selectedBatch = $product_stock->batches()->where('id', $batchId)->first();
@@ -267,14 +270,25 @@ class OrderController extends Controller
                             $order->delete();
                             return redirect()->route('cart')->send();
                         }
+
+                        $minQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
+                        $schemeCartLine = collect($seller_product)->first(function ($line) use ($cartItem) {
+                            return (bool) ($line['is_scheme'] ?? false)
+                                && (int) $line['product_id'] === (int) $cartItem['product_id']
+                                && (string) ($line['variation'] ?? '') === (string) ($cartItem['variation'] ?? '')
+                                && (int) ($line['batch_id'] ?? 0) === (int) ($cartItem['batch_id'] ?? 0);
+                        });
+                        $hasSchemeCartLine = $schemeCartLine != null;
+                        $schemeQty = $schemeCartLine ? (int) $schemeCartLine['quantity'] : calculate_scheme_qty($cartItem['quantity'], $minQty, $selectedBatch->scheme ?? 0);
+                        $stockRequired = $cartItem['quantity'] + $schemeQty;
                         
-                        if ($cartItem['quantity'] > $selectedBatch->qty) {
+                        if ($stockRequired > $selectedBatch->qty) {
                             flash(translate('The requested quantity is not available for ') . $product->getTranslation('name'))->warning();
                             $order->delete();
                             return redirect()->route('cart')->send();
                         }
                         
-                        $selectedBatch->qty -= $cartItem['quantity'];
+                        $selectedBatch->qty -= $stockRequired;
                         $selectedBatch->save();
                         
                         // Update parent stock quantity (aggregate from batches)
@@ -310,42 +324,66 @@ class OrderController extends Controller
                 $batchDiscountAmountPerUnit = round(max(0, (float) $unitBasePrice - (float) $unitSalePrice), 2);
                 $order_detail->discount_amount = round(($productDiscountAmountPerUnit + $batchDiscountAmountPerUnit) * (int) $cartItem['quantity'], 2);
                 // Use stored tax from cart so order_detail matches cart (batch-aware)
-                $order_detail->tax = ($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity'];
+                $order_detail->tax = $isSchemeLine ? 0 : (($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity']);
                 $order_detail->shipping_type = $cartItem['shipping_type'];
-                $order_detail->product_referral_code = $cartItem['product_referral_code'];
-                $order_detail->shipping_cost = $cartItem['shipping_cost'];
+                $order_detail->product_referral_code = $isSchemeLine ? null : $cartItem['product_referral_code'];
+                $order_detail->shipping_cost = $isSchemeLine ? 0 : $cartItem['shipping_cost'];
+                $order_detail->is_scheme = $isSchemeLine ? 1 : 0;
 
                 $shipping += $order_detail->shipping_cost;
                 //End of storing shipping cost
 
                 $order_detail->quantity = $cartItem['quantity'];
 
-                if (addon_is_activated('club_point')) {
+                if (!$isSchemeLine && addon_is_activated('club_point')) {
                     $order_detail->earn_point = $product->earn_point;
                 }
 
                 $order_detail->save();
 
-                $product->num_of_sale += $cartItem['quantity'];
-                $product->save();
+                if (!$isSchemeLine && $schemeQty > 0 && !$hasSchemeCartLine) {
+                    $scheme_order_detail = new OrderDetail;
+                    $scheme_order_detail->order_id = $order->id;
+                    $scheme_order_detail->seller_id = $product->user_id;
+                    $scheme_order_detail->product_id = $product->id;
+                    $scheme_order_detail->variation = $product_variation;
+                    $scheme_order_detail->batch_id = $batchId;
+                    $scheme_order_detail->price = 0;
+                    $scheme_order_detail->sale_price = 0;
+                    $scheme_order_detail->mrp_price = $order_detail->mrp_price;
+                    $scheme_order_detail->tax = 0;
+                    $scheme_order_detail->shipping_type = $cartItem['shipping_type'];
+                    $scheme_order_detail->product_referral_code = null;
+                    $scheme_order_detail->shipping_cost = 0;
+                    $scheme_order_detail->is_scheme = 1;
+                    $scheme_order_detail->quantity = $schemeQty;
+                    $scheme_order_detail->save();
+                }
+
+                if (!$isSchemeLine) {
+                    $product->num_of_sale += $cartItem['quantity'];
+                    $product->save();
+                }
 
                 $order->seller_id = $product->user_id;
-                $order->shipping_type = $cartItem['shipping_type'];
+                if (!$isSchemeLine) {
+                    $order->shipping_type = $cartItem['shipping_type'];
 
-                if ($cartItem['shipping_type'] == 'pickup_point') {
-                    $order->pickup_point_id = $cartItem['pickup_point'];
-                }
-                if ($cartItem['shipping_type'] == 'carrier') {
-                    $order->carrier_id = $cartItem['carrier_id'];
+                    if ($cartItem['shipping_type'] == 'pickup_point') {
+                        $order->pickup_point_id = $cartItem['pickup_point'];
+                    }
+                    if ($cartItem['shipping_type'] == 'carrier') {
+                        $order->carrier_id = $cartItem['carrier_id'];
+                    }
                 }
 
-                if ($product->added_by == 'seller' && $product->user->seller != null) {
+                if (!$isSchemeLine && $product->added_by == 'seller' && $product->user->seller != null) {
                     $seller = $product->user->seller;
                     $seller->num_of_sale += $cartItem['quantity'];
                     $seller->save();
                 }
 
-                if (addon_is_activated('affiliate_system') && $order_detail->product_referral_code) {
+                if (!$isSchemeLine && addon_is_activated('affiliate_system') && $order_detail->product_referral_code) {
                     $referred_by_user = User::where('referral_code', $order_detail->product_referral_code)->first();
                     if ($referred_by_user && class_exists('App\\Http\\Controllers\\AffiliateController')) {
                         $affiliateController = app()->make('App\\Http\\Controllers\\AffiliateController');

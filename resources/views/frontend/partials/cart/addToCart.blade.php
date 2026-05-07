@@ -228,6 +228,10 @@
                             <div class="text-secondary fs-13 fw-400">{{ translate('Mfg Date') }}</div>
                             <div id="product-manufacturing-date" class="fw-600 text-dark fs-14">-</div>
                         </div>
+                        <div class="col-12 mt-2" id="scheme-product-row" data-scheme-row style="display:none;">
+                            <div class="text-secondary fs-13 fw-400">{{ translate('Scheme Free Qty') }}</div>
+                            <div id="scheme-product-details" data-scheme-value class="fw-600 text-success fs-14">0</div>
+                        </div>
                     </div>
 
                     <div class="row no-gutters mt-3" id="coaParentDiv" style="display:none;">

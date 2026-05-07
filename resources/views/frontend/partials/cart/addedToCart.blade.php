@@ -29,6 +29,11 @@
                             {{ single_price(isset($added_total_display) ? $added_total_display : (cart_product_price($cart, $product, false) * ($added_quantity ?? $cart->quantity))) }}
                         </strong>
                     </div>
+                    @if((int) ($scheme_quantity ?? 0) > 0)
+                        <div class="fs-13 fw-600 text-success mt-1">
+                            {{ translate('Scheme Free') }}: {{ (int) $scheme_quantity }}
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

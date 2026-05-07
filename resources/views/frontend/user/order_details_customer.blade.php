@@ -115,6 +115,9 @@
                                         @if ($orderDetail->product != null && $orderDetail->product->auction_product == 0)
                                             <a href="{{ route('product', $orderDetail->product->slug) }}"
                                                 target="_blank">{{ $orderDetail->product->getTranslation('name') }}</a>
+                                            @if((bool) ($orderDetail->is_scheme ?? false))
+                                                <span class="badge badge-inline badge-success ml-1">{{ translate('Scheme Free') }}</span>
+                                            @endif
                                         @elseif($orderDetail->product != null && $orderDetail->product->auction_product == 1)
                                             <a href="{{ route('auction-product', $orderDetail->product->slug) }}"
                                                 target="_blank">{{ $orderDetail->product->getTranslation('name') }}</a>
@@ -127,6 +130,11 @@
                                     </td>
                                     <td>
                                         {{ $orderDetail->quantity }}
+                                        @if((bool) ($orderDetail->is_scheme ?? false))
+                                            <div class="fs-12 text-success fw-600">
+                                                {{ translate('Free item') }}
+                                            </div>
+                                        @endif
                                     </td>
                                     <td>
                                         @if ($order->shipping_type != null && $order->shipping_type == 'home_delivery')

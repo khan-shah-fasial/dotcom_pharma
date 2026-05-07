@@ -1,6 +1,7 @@
 @php
     $total = 0;
-    $carts = get_user_cart();
+    $all_carts = get_user_cart();
+    $carts = $all_carts->where('is_scheme', 0);
     if(count($carts) > 0) {
         foreach ($carts as $key => $cartItem) {
             $product = get_single_product($cartItem['product_id']);
@@ -30,6 +31,14 @@
             @foreach ($carts as $key => $cartItem)
                 @php
                     $product = get_single_product($cartItem['product_id']);
+                    $schemeCartItem = $all_carts->first(function ($row) use ($cartItem) {
+                        return (bool) ($row->is_scheme ?? false)
+                            && (int) $row->product_id === (int) $cartItem->product_id
+                            && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '')
+                            && (int) ($row->batch_id ?? 0) === (int) ($cartItem->batch_id ?? 0);
+                    });
+                    $schemeQty = (int) optional($schemeCartItem)->quantity;
+                    $batchName = optional($cartItem->batch)->batch;
                 @endphp
                 @if ($product != null)
                     <li class="list-group-item border-0 hov-scale-img">
@@ -47,6 +56,12 @@
                                     </span>
                                     <span class="fs-14 fw-400 text-secondary">{{ $cartItem['quantity'] }}x</span>
                                     <span class="fs-14 fw-400 text-secondary">{{ cart_product_price($cartItem, $product) }}</span>
+                                    @if($batchName)
+                                        <span class="d-block fs-12 text-secondary">{{ translate('Batch') }}: {{ $batchName }}</span>
+                                    @endif
+                                    @if($schemeQty > 0)
+                                        <span class="d-block fs-12 text-success">{{ translate('Scheme Free') }}: {{ $schemeQty }}</span>
+                                    @endif
                                 </span>
                             </a>
                             <span class="">

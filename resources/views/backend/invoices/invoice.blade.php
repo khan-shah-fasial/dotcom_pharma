@@ -160,7 +160,12 @@
 										@endif
 									@endif
 								</td>
-								<td class="">{{ $orderDetail->quantity }}</td>
+								<td class="">
+                                    {{ $orderDetail->quantity }}
+                                    @if((bool) ($orderDetail->is_scheme ?? false))
+                                        <br><span style="font-size:10px;color:#178a3f;">{{ translate('Scheme Free') }}</span>
+                                    @endif
+                                </td>
 								<td class="currency">{{ single_price($orderDetail->price/$orderDetail->quantity) }}</td>
 								<td class="currency">{{ single_price($orderDetail->tax/$orderDetail->quantity) }}</td>
 			                    <td class="text-right currency">{{ single_price($orderDetail->price+$orderDetail->tax) }}</td>

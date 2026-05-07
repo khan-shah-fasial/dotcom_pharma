@@ -669,6 +669,12 @@
                             <select id="batch-dropdown" class="form-control form-control-sm" data-placeholder="{{ translate('Search batch code') }}">
                                 <option value="">{{ translate('Choose Batch') }}</option>
                             </select>
+                            <div id="scheme-product-row" data-scheme-row class="mt-2" style="display:none;">
+                                <span class="badge badge-inline badge-success fs-12 px-2 py-1">
+                                    {{ translate('Scheme Free') }}:
+                                    <span id="scheme-product-details" data-scheme-value>0</span>
+                                </span>
+                            </div>
                         </div>
 
 
@@ -1077,6 +1083,30 @@
                                                 <p class="detail-font-14px detail-gray-color mb-0">
                                                     {{ translate('SKU') }}:</p>
                                                 <p id="sku-product-details" class="fw-500 fs-14 mb-0"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6 pl-0 mb-3" id="scheme-product-row" data-scheme-row style="display:none;">
+                                    <div class="detail-product-specs rounded h-100">
+                                        <div class="display_flex3">
+                                            <div class="">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-gift w-5 h-5">
+                                                    <rect x="3" y="8" width="18" height="4" rx="1"></rect>
+                                                    <path d="M12 8v13"></path>
+                                                    <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path>
+                                                    <path d="M7.5 8a2.5 2.5 0 1 1 2.5-2.5V8"></path>
+                                                    <path d="M14 8V5.5A2.5 2.5 0 1 1 16.5 8"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="">
+                                                <p class="detail-font-14px detail-gray-color mb-0">
+                                                    {{ translate('Scheme Free Qty') }}:</p>
+                                                <p id="scheme-product-details" data-scheme-value class="fw-500 fs-14 mb-0 pl21 text-success">0</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2896,7 +2926,7 @@
 @endsection
 
 
-
+@push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const enquiryButtons = document.querySelectorAll('.detail-product-enquiry-btn');
@@ -3045,8 +3075,9 @@
         var batch = map[batchId];
         if (!batch) return;
 
-        var qty = parseInt(batch.qty || 0);
-        if (qty > 0) {
+        var minQty = parseInt($('#product_quantity').attr('min') || 1);
+        var maxPaidQty = parseInt(batch.max_paid_qty || batch.qty || 0);
+        if (maxPaidQty >= minQty) {
             $('.buy-now').removeClass('d-none');
             $('.add-to-cart').removeClass('d-none');
             $('.out-of-stock').addClass('d-none');
@@ -3121,6 +3152,7 @@
         }
     }
 </script>
+@endpush
 
 
 <style>

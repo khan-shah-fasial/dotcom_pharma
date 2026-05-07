@@ -2,6 +2,8 @@
     <div class="card rounded-0 border">
 
         @php
+            $paid_carts = collect($carts)->where('is_scheme', 0);
+            $product_count = count($paid_carts);
             $subtotal_for_min_order_amount = 0;
             $subtotal = 0;
             $tax = 0;
@@ -25,7 +27,7 @@
                     $coupon_code = $cartItem->coupon_code;
                     $coupon_discount = $carts->sum('discount');
                 }
-                if (addon_is_activated('club_point')) {
+                if (addon_is_activated('club_point') && !(bool) ($cartItem->is_scheme ?? false)) {
                     $total_point += $product->earn_point * $cartItem['quantity'];
                 }
             @endphp
@@ -50,7 +52,7 @@
                 <div class="@if (addon_is_activated('club_point')) col-6 @else col-12 @endif">
                     <div class="d-flex align-items-center justify-content-between bg-primary p-2" style="background: #2b56a1 !important;">
                         <span class="fs-13 text-white">{{ translate('Total Products') }}</span>
-                        <span class="fs-13 fw-700 text-white">{{ sprintf("%02d", count($carts)) }}</span>
+                        <span class="fs-13 fw-700 text-white">{{ sprintf("%02d", $product_count) }}</span>
                     </div>
                 </div>
                 @if (addon_is_activated('club_point'))
@@ -70,7 +72,7 @@
                 <tfoot>
                     <!-- Subtotal -->
                     <tr class="cart-subtotal">
-                        <th class="pl-0 fs-14 fw-400 pt-0 pb-2 text-dark border-top-0">{{ translate('Subtotal') }} ({{ sprintf("%02d", count($carts)) }} {{ translate('Products') }})</th>
+                        <th class="pl-0 fs-14 fw-400 pt-0 pb-2 text-dark border-top-0">{{ translate('Subtotal') }} ({{ sprintf("%02d", $product_count) }} {{ translate('Products') }})</th>
                         <td class="text-right pr-0 fs-14 pt-0 pb-2 text-dark border-top-0">{{ single_price($subtotal) }}</td>
                     </tr>
                     <!-- Tax -->
@@ -187,7 +189,7 @@
             <!-- Continue to Shipping -->
             <div class="mt-4">
                 <a href="{{ route('checkout') }}" class="btn btn-primary btn-block fs-14 fw-700 rounded-0 px-4" style="background: #2b56a1 !important;">
-                    {{ translate('Proceed to Checkout')}} ({{ sprintf("%02d", count($carts)) }})
+                    {{ translate('Proceed to Checkout')}} ({{ sprintf("%02d", $product_count) }})
                 </a>
             </div>
             @endif

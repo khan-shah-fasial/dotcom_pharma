@@ -188,7 +188,7 @@
     $ewbNumber = $grandTotal >= 50000 ? ($order->eway_bill ?? '-') : '-';
     $totalQty = $order->orderDetails->sum('quantity');
     $schemeQtyTotal = $order->orderDetails->sum(function ($row) {
-        return $row->scheme_qty ?? 0;
+        return (bool) ($row->is_scheme ?? false) ? ($row->quantity ?? 0) : 0;
     });
     $taxableTotal = $order->orderDetails->sum(function ($row) {
         $lineGross = $row->price ?? 0;
@@ -200,6 +200,28 @@
     $igstTotal = 0;
     $exemptedValue = 0;
     $roundOff = 0;
+
+    $invoiceLines = $order->orderDetails
+        ->filter(function ($detail) {
+            return !(bool) ($detail->is_scheme ?? false);
+        })
+        ->values()
+        ->map(function ($detail) use ($order) {
+            $schemeQty = $order->orderDetails
+                ->filter(function ($row) use ($detail) {
+                    return (bool) ($row->is_scheme ?? false)
+                        && (int) ($row->product_id ?? 0) === (int) ($detail->product_id ?? 0)
+                        && (string) ($row->variation ?? '') === (string) ($detail->variation ?? '')
+                        && (int) ($row->batch_id ?? 0) === (int) ($detail->batch_id ?? 0);
+                })
+                ->sum('quantity');
+
+            return [
+                'detail' => $detail,
+                'scheme_qty' => (int) $schemeQty,
+                'total_qty' => (int) ($detail->quantity ?? 0) + (int) $schemeQty,
+            ];
+        });
 @endphp
 <div class="invoice-wrap">
     <table class="band">
@@ -317,14 +339,16 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($order->orderDetails as $idx => $detail)
+                @forelse($invoiceLines as $idx => $invoiceLine)
                     @php
+                        $detail = $invoiceLine['detail'];
                         $product = $detail->product;
                         $variation = $detail->variation ? ' (' . $detail->variation . ')' : '';
                         $category = optional($product?->main_category)->getTranslation('name') ?? '-';
                         $hsn = $product->product_hsn ?? '-';
                         $qty = $detail->quantity;
-                        $schemeQty = $detail->scheme_qty ?? 0;
+                        $schemeQty = $invoiceLine['scheme_qty'];
+                        $displayTotalQty = $invoiceLine['total_qty'];
                         $unitPrice = $qty > 0 ? $detail->price / $qty : $detail->price;
                         $lineGross = $detail->price;
                         $lineTax = $detail->tax;
@@ -349,12 +373,11 @@
                         $igstPercent = $taxableAmount > 0 ? round(($igst / $taxableAmount) * 100, 2) : 0;
                         $brandName = optional($product?->brand)->getTranslation('name') ?? optional($product?->brand)->name ?? '-';
                         $matchingStock = $product?->stocks?->where('variant', $detail->variation)->first() ?? $product?->stocks?->first();
-                        $batchNo = '-';
-                        $expiryFormatted = '-';
-                        // $batchNo = $detail->batch_no ?? optional($product)->batch_no ?? '-';
-                        // $expiryDate = $detail->expiry_date ?? optional($matchingStock)->product_exp_date ?? optional($product)->product_exp_date ?? null;
-                        // $expiryFormatted = $expiryDate ? format_dd_mm_yy($expiryDate) : '-';
-                        $mrp = optional($matchingStock)->mrp_price ?? $product?->unit_price ?? $unitPrice;
+                        $detailBatch = $detail->batch;
+                        $batchNo = optional($detailBatch)->batch ?? '-';
+                        $expiryDate = optional($detailBatch)->product_exp_date ?? optional($matchingStock)->product_exp_date ?? optional($product)->product_exp_date ?? null;
+                        $expiryFormatted = $expiryDate ? format_dd_mm_yy($expiryDate) : '-';
+                        $mrp = optional($detailBatch)->mrp_price ?? optional($matchingStock)->mrp_price ?? $product?->unit_price ?? $unitPrice;
                         $grossWithShipping = $lineGross + $lineShipping;
                         $discountPercent = $lineGross > 0 ? round(($discountValue / $lineGross) * 100, 2) : 0;
                         $pack = $matchingStock?->variant ?? $detail->variation ?? '-';
@@ -380,8 +403,8 @@
                         <td class="text-center">{{ $category }} <br> {{ $hsn }}</td>
                         <td class="text-center">{{ $brandName }}</td>
                         <td class="text-center">
-                            <div class="label">{{ $qty }}</div>
-                            <div class="small">{{ translate('SCM') }}: {{ $schemeQty }}</div>
+                            <div class="label">{{ $displayTotalQty }}</div>
+                            <div class="small">{{ translate('QTY') }}: {{ $qty }} &nbsp; {{ translate('SCM') }}: {{ $schemeQty }}</div>
                         </td>
                         <td class="text-center">
                             <div>{{ single_price($sgst) }}</div>
@@ -409,7 +432,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="14" class="text-center">{{ translate('No items found for this order.') }}</td>
+                        <td colspan="15" class="text-center">{{ translate('No items found for this order.') }}</td>
                     </tr>
                 @endforelse
             </tbody>
