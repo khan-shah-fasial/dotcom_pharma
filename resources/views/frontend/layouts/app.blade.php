@@ -2501,7 +2501,7 @@ function scrollTabs(direction) {
         }
         $el.select2(select2Options);
         if (current !== null && current !== undefined) {
-          $el.val(current).trigger('change');
+          $el.val(current).trigger('change.select2');
         }
         return;
       }
@@ -2649,7 +2649,8 @@ function scrollTabs(direction) {
   // ---- Init ----
   $(function(){
     initSelect2();
-    // Initial: if session values are missing, fill from selected country's defaults.
+    // Initial page load can fill missing values from the detected country.
+    // Reopening the modal must not re-apply country defaults over saved choices.
     applyCountryDefaultsFromSelection(false);
     updateNavFromSelections();
     wireEvents();
@@ -2662,7 +2663,6 @@ function scrollTabs(direction) {
     // Select2 inside Bootstrap modals can break if initialized while hidden; re-init on open.
     $('#languageCurrencyModal').on('shown.bs.modal', function () {
       initSelect2();
-      applyCountryDefaultsFromSelection(false);
       updateNavFromSelections();
     });
     $('#languageCurrencyModal').on('hidden.bs.modal', function () {

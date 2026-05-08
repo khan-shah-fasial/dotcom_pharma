@@ -47,11 +47,11 @@ class HomeController extends Controller
         $theme = get_setting('homepage_select') ?: 'default';
         $webType = session('web_type_name', 'default');
         $lang = get_system_language() ? get_system_language()->code : 'default';
-        $currency = session('currency_code', 'default');
+        $currency = function_exists('active_currency_cache_suffix') ? active_currency_cache_suffix() : session('currency_code', 'default');
         $role = getCurrentUserRole() ?? 'guest';
         $subtype = get_user_subtype() ?? 'na';
 
-        return 'home_section_' . $section . '_' . $theme . '_' . $webType . '_' . $lang . '_' . $currency . '_' . $role . '_' . $subtype;
+        return 'home_section_v2_' . $section . '_' . $theme . '_' . $webType . '_' . $lang . '_' . $currency . '_' . $role . '_' . $subtype;
     }
 
     /**

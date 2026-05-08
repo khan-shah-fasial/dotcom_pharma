@@ -116,14 +116,14 @@
         <div class="fs-14 d-flex justify-content-center mt-2">
             @if ($product->auction_product == 0)
                 <!-- Previous price -->
-                @if (home_base_price($product) != home_discounted_base_price($product))
+                @if (home_base_price($product, false) != home_discounted_base_price($product, false))
                     <div class="disc-amount has-transition">
-                        <del class="fw-400 text-secondary mr-1">{{ home_base_price($product) }}</del>
+                        <del class="fw-400 text-secondary mr-1">{{ format_price(home_base_price($product, false)) }}</del>
                     </div>
                 @endif
                 <!-- price -->
                 <div class="">
-                    <span class="fw-700 text-primary">{{ home_discounted_base_price($product) }}</span>
+                    <span class="fw-700 text-primary">{{ format_price(home_discounted_base_price($product, false)) }}</span>
                 </div>
             @endif
             @if ($product->auction_product == 1)

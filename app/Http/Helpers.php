@@ -818,6 +818,17 @@ if (!function_exists('currency_symbol')) {
     }
 }
 
+if (!function_exists('active_currency_cache_suffix')) {
+    function active_currency_cache_suffix()
+    {
+        $currencyCode = Session::get('currency_code') ?: request()->header('Currency-Code') ?: get_system_default_currency()->code;
+        $exchangeRate = Session::get('currency_exchange_rate') ?: request()->header('Currency-Exchange-Rate') ?: get_system_default_currency()->exchange_rate;
+        $currencySymbol = Session::get('currency_symbol') ?: request()->header('Currency-Symbol') ?: get_system_default_currency()->symbol;
+
+        return $currencyCode . '_' . $exchangeRate . '_' . md5($currencySymbol);
+    }
+}
+
 //formats currency
 if (!function_exists('format_price')) {
     function format_price($price, $isMinimize = false)
@@ -1731,7 +1742,7 @@ if (!function_exists('getStockPriceByRole')) {
 if (!function_exists('home_price')) {
     function home_price($product, $formatted = true)
     {
-        $cacheKey = 'home_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
+        $cacheKey = 'home_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw') . '_' . active_currency_cache_suffix();
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($product, $formatted) {
             // Start with product-level price
@@ -1791,7 +1802,7 @@ if (!function_exists('home_price')) {
 if (!function_exists('home_discounted_price')) {
     function home_discounted_price($product, $formatted = true)
     {
-        $cacheKey = 'home_discounted_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
+        $cacheKey = 'home_discounted_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw') . '_' . active_currency_cache_suffix();
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($product, $formatted) {
             // Start with product-level price
@@ -1872,7 +1883,7 @@ if (!function_exists('home_discounted_price')) {
 if (!function_exists('home_base_price_by_stock_id')) {
     function home_base_price_by_stock_id($id)
     {
-        $cacheKey = 'home_base_price_stock_' . $id . '_' . (getCurrentUserRole() ?? 'guest');
+        $cacheKey = 'home_base_price_stock_' . $id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . active_currency_cache_suffix();
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($id) {
             $product_stock = ProductStock::with(['batches', 'product.taxes'])->findOrFail($id);
@@ -1899,7 +1910,7 @@ if (!function_exists('home_base_price_by_stock_id')) {
 if (!function_exists('home_base_price')) {
     function home_base_price($product, $formatted = true)
     {
-        $cacheKey = 'home_base_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
+        $cacheKey = 'home_base_price_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw') . '_' . active_currency_cache_suffix();
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($product, $formatted) {
             // For non-variant products, use product-level pricing
@@ -1946,7 +1957,7 @@ if (!function_exists('home_base_price')) {
 if (!function_exists('home_discounted_base_price_by_stock_id')) {
     function home_discounted_base_price_by_stock_id($id)
     {
-        $cacheKey = 'home_discounted_base_price_stock_v2_' . $id . '_' . (getCurrentUserRole() ?? 'guest');
+        $cacheKey = 'home_discounted_base_price_stock_v2_' . $id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . active_currency_cache_suffix();
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($id) {
             $product_stock = ProductStock::with(['batches', 'product.taxes'])->findOrFail($id);
@@ -1997,7 +2008,7 @@ if (!function_exists('home_discounted_base_price_by_stock_id')) {
 if (!function_exists('home_discounted_base_price')) {
     function home_discounted_base_price($product, $formatted = true)
     {
-        $cacheKey = 'home_discounted_base_price_v2_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw');
+        $cacheKey = 'home_discounted_base_price_v2_' . $product->id . '_' . (getCurrentUserRole() ?? 'guest') . '_' . ($formatted ? 'fmt' : 'raw') . '_' . active_currency_cache_suffix();
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($product, $formatted) {
             // For non-variant products, use product-level pricing
@@ -4006,7 +4017,7 @@ if (!function_exists('get_single_attribute_name')) {
 if (!function_exists('get_user_cart')) {
     function get_user_cart()
     {
-        $cart = [];
+        $cart = collect();
         if (auth()->user() != null) {
             $cart = Cart::where('user_id', Auth::user()->id)->get();
         } else {
@@ -4790,7 +4801,7 @@ if (!function_exists('home_usertype_base_price')) {
         $roleKey = getCurrentUserRole() ?? 'guest';
 
         if (!empty($product->id)) {
-            $cacheKey = 'home_usertype_base_price_' . $product->id . '_' . ($userSubtype ?: 'na') . '_' . $roleKey;
+            $cacheKey = 'home_usertype_base_price_' . $product->id . '_' . ($userSubtype ?: 'na') . '_' . $roleKey . '_' . active_currency_cache_suffix();
 
             return Cache::remember($cacheKey, now()->addHours(6), function () use ($product, $userSubtype) {
                 //$lowest_price = $product->unit_price;
