@@ -132,6 +132,13 @@ class CheckoutController extends Controller
             }
 
             foreach ($carts as $key => $cartItem) {
+                if ((bool) ($cartItem->is_scheme ?? false)) {
+                    $cartItem['shipping_cost'] = 0;
+                    $cartItem['shipping_type'] = $default_shipping_type;
+                    $cartItem['carrier_id'] = $default_carrier_id;
+                    $cartItem->save();
+                    continue;
+                }
                 $product = Product::find($cartItem['product_id']);
                 $tax += cart_product_tax($cartItem, $product, false) * $cartItem['quantity'];
                 $subtotal += cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
@@ -501,6 +508,11 @@ class CheckoutController extends Controller
 
         if ($carts && count($carts) > 0) {
             foreach ($carts as $key => $cartItem) {
+                if ((bool) ($cartItem->is_scheme ?? false)) {
+                    $cartItem['shipping_cost'] = 0;
+                    $cartItem->save();
+                    continue;
+                }
                 $product = Product::find($cartItem['product_id']);
                 $tax += cart_product_tax($cartItem, $product, false) * $cartItem['quantity'];
                 $subtotal += cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
@@ -579,12 +591,13 @@ class CheckoutController extends Controller
                             Cart::where('owner_id', $coupon->user_id)->where('temp_user_id', $temp_user)->active()->get();
 
                     $coupon_discount = 0;
+                    $paid_user_carts = $user_carts->where('is_scheme', 0)->values();
 
                     if ($coupon->type == 'cart_base' || $coupon->type == 'welcome_base') {
                         $subtotal = 0;
                         $tax = 0;
                         $shipping = 0;
-                        foreach ($user_carts as $key => $cartItem) {
+                        foreach ($paid_user_carts as $key => $cartItem) {
                             $product = Product::find($cartItem['product_id']);
                             $subtotal += cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
                             $tax += cart_product_tax($cartItem, $product, false) * $cartItem['quantity'];
@@ -606,7 +619,7 @@ class CheckoutController extends Controller
                         }
                     }
                     elseif ($coupon->type == 'product_base') {
-                        foreach ($user_carts as $key => $cartItem) {
+                        foreach ($paid_user_carts as $key => $cartItem) {
                             $product = Product::find($cartItem['product_id']);
                             foreach ($coupon_details as $key => $coupon_detail) {
                                 if ($coupon_detail->product_id == $cartItem['product_id']) {
@@ -622,13 +635,21 @@ class CheckoutController extends Controller
 
                     if ($coupon_discount > 0) {
 
-                        $user_carts->toQuery()->update(
+                        $paid_user_carts->toQuery()->update(
                             [
-                                'discount' => $coupon_discount / count($user_carts),
+                                'discount' => $coupon_discount / max(count($paid_user_carts), 1),
                                 'coupon_code' => $request->code,
                                 'coupon_applied' => 1
                             ]
                         );
+                        $scheme_user_carts = $user_carts->where('is_scheme', 1);
+                        if ($scheme_user_carts->isNotEmpty()) {
+                            $scheme_user_carts->toQuery()->update([
+                                'discount' => 0,
+                                'coupon_code' => null,
+                                'coupon_applied' => 0,
+                            ]);
+                        }
 
                         $response_message['response'] = 'success';
                         $response_message['message'] = translate('Coupon has been applied');
@@ -756,6 +777,14 @@ class CheckoutController extends Controller
         $carts = $carts->fresh();
 
         foreach ($carts as $key => $cartItem) {
+            if ((bool) ($cartItem->is_scheme ?? false)) {
+                $cartItem['shipping_cost'] = 0;
+                $cartItem['address_id'] = $user != null ? $request->address_id : 0;
+                $cartItem['shipping_type'] = $default_shipping_type;
+                $cartItem['carrier_id'] = $default_carrier_id;
+                $cartItem->save();
+                continue;
+            }
             if (get_setting('shipping_type') == 'carrier_wise_shipping') {
                 $cartItem['shipping_cost'] = getShippingCost($carts, $key, $shipping_info, $default_carrier_id);
             } else {
@@ -800,6 +829,11 @@ class CheckoutController extends Controller
 
         $shipping_type = $request->shipping_type;
         foreach ($user_carts as $key => $cartItem) {
+            if ((bool) ($cartItem->is_scheme ?? false)) {
+                $cartItem['shipping_cost'] = 0;
+                $cartItem->save();
+                continue;
+            }
             if ($shipping_type != 'carrier' || $shipping_type == 'pickup_point') {
                 if ($shipping_type == 'pickup_point') {
                     $cartItem['shipping_type'] = 'pickup_point';
@@ -842,10 +876,17 @@ class CheckoutController extends Controller
 
         // apply to this owner's items; charge once
         $userCarts = $carts->where('owner_id', $ownerId)->values();
-        foreach ($userCarts as $i => $item) {
+        $shippingApplied = false;
+        foreach ($userCarts as $item) {
+            if ((bool) ($item->is_scheme ?? false)) {
+                $item->shipping_cost = 0.0;
+                $item->save();
+                continue;
+            }
             // $item->shipping_type = 'carrier';
             // $item->carrier_id    = $carrierId;
-            $item->shipping_cost = $i === 0 ? $fee : 0.0;
+            $item->shipping_cost = $shippingApplied ? 0.0 : $fee;
+            $shippingApplied = true;
             $item->save();
         }
 

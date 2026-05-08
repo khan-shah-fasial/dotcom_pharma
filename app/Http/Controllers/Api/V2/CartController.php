@@ -12,6 +12,42 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    protected function syncSchemeCartLine(Cart $paidCart, Product $product, int $schemeQty): void
+    {
+        $identity = [
+            'variation' => $paidCart->variation,
+            'product_id' => $paidCart->product_id,
+            'batch_id' => $paidCart->batch_id,
+            'is_scheme' => 1,
+        ];
+
+        if ($paidCart->user_id) {
+            $identity['user_id'] = $paidCart->user_id;
+        } else {
+            $identity['temp_user_id'] = $paidCart->temp_user_id;
+        }
+
+        if ($schemeQty <= 0) {
+            Cart::where($identity)->delete();
+            return;
+        }
+
+        $schemeCart = Cart::firstOrNew($identity);
+        $schemeCart->quantity = $schemeQty;
+        $schemeCart->owner_id = $product->user_id;
+        $schemeCart->price = 0;
+        $schemeCart->mrp_price = 0;
+        $schemeCart->sale_price = 0;
+        $schemeCart->tax = 0;
+        $schemeCart->shipping_cost = 0;
+        $schemeCart->discount = 0;
+        $schemeCart->coupon_code = '';
+        $schemeCart->coupon_applied = 0;
+        $schemeCart->status = $paidCart->status ?? 1;
+        $schemeCart->product_referral_code = null;
+        $schemeCart->save();
+    }
+
     public function summary(Request $request)
     {
         // $user  = auth()->user();
@@ -115,6 +151,7 @@ class CartController extends Controller
                         $shop_items_data_item["tax"] = single_price($tax);
                         $shop_items_data_item["shipping_cost"] = (float) $shop_items_raw_data_item["shipping_cost"];
                         $shop_items_data_item["quantity"] = intval($shop_items_raw_data_item["quantity"]);
+                        $shop_items_data_item["is_scheme"] = (bool) ($shop_items_raw_data_item["is_scheme"] ?? false);
                         $cartStock = $product->stocks->where('variant', $shop_items_raw_data_item['variation'])->first();
                         $shop_items_data_item["lower_limit"] = intval($cartStock->min_qty ?? $product->min_qty ?? 1);
                         $shop_items_data_item["upper_limit"] = intval(optional($cartStock)->qty);
@@ -185,7 +222,23 @@ class CartController extends Controller
         $quantity = $request->quantity;
 
         $product_stock = $product->stocks->where('variant', $variant)->first();
+        if (!$product_stock) {
+            return response()->json([
+                'result' => false,
+                'temp_user_id' => $temp_user_id,
+                'message' => translate("Stock out")
+            ], 200);
+        }
+
         $minQty = optional($product_stock)->min_qty ?? $product->min_qty ?? 1;
+        $batchId = $request->input('batch_id', null);
+        $selectedBatch = null;
+        if ($batchId && $product_stock) {
+            $selectedBatch = $product_stock->batches()->where('id', $batchId)->first();
+            if (!$selectedBatch) {
+                $batchId = null;
+            }
+        }
 
         if ($quantity < $minQty) {
             return response()->json([
@@ -199,13 +252,17 @@ class CartController extends Controller
             $cart = Cart::firstOrNew([
                 'variation' => $variant,
                 'user_id' => $user_id,
-                'product_id' => $request['id']
+                'product_id' => $request['id'],
+                'batch_id' => $batchId,
+                'is_scheme' => 0
             ]);
         } else {
             $cart = Cart::firstOrNew([
                 'variation' => $variant,
                 'temp_user_id' => $temp_user_id,
-                'product_id' => $request['id']
+                'product_id' => $request['id'],
+                'batch_id' => $batchId,
+                'is_scheme' => 0
             ]);
         }
 
@@ -218,21 +275,6 @@ class CartController extends Controller
                     'result' => false,
                     'message' => translate('This auction product is already added to your cart.')
                 ], 200);
-            }
-            if ($product_stock->qty < $cart->quantity + $request['quantity']) {
-                if ($product_stock->qty == 0) {
-                    return response()->json([
-                        'result' => false,
-                        'temp_user_id' => $temp_user_id,
-                        'message' => translate("Stock out")
-                    ], 200);
-                } else {
-                    return response()->json([
-                        'result' => false,
-                        'temp_user_id' => $temp_user_id,
-                        'message' => translate("Only") . " {$product_stock->qty} " . translate("item(s) are available") . " {$variant_string}"
-                    ], 200);
-                }
             }
             if ($product->digital == 1 && ($cart->product_id == $product->id)) {
                 return response()->json([
@@ -252,9 +294,34 @@ class CartController extends Controller
             }
         }
 
-        $price = CartUtility::get_price($product, $product_stock, $request->quantity);
-        $tax = CartUtility::tax_calculation($product, $price);
-        CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity);
+        $schemePerMinQty = $selectedBatch ? (int) ($selectedBatch->scheme ?? 0) : 0;
+        $schemeQty = calculate_scheme_qty($quantity, $minQty, $schemePerMinQty);
+        $stockRequired = $quantity + $schemeQty;
+        $availableQty = $selectedBatch ? (int) ($selectedBatch->qty ?? 0) : (int) optional($product_stock)->qty;
+
+        if ($product->digital == 0 && $availableQty < $stockRequired) {
+            return response()->json([
+                'result' => false,
+                'temp_user_id' => $temp_user_id,
+                'message' => $availableQty == 0
+                    ? translate("Stock out")
+                    : translate("Only") . " {$availableQty} " . translate("item(s) are available") . " {$variant_string}"
+            ], 200);
+        }
+
+        if ($selectedBatch) {
+            $resolvedPrice = resolvePrice($product, $product_stock, $selectedBatch, $request->quantity);
+            $price = (float) ($resolvedPrice['price'] ?? 0);
+            $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
+            $mrpPrice = $selectedBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
+        } else {
+            $price = CartUtility::get_price($product, $product_stock, $request->quantity);
+            $salePrice = $price;
+            $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
+        }
+        $tax = CartUtility::tax_calculation($product, $salePrice);
+        CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId, false);
+        $this->syncSchemeCartLine($cart, $product, $schemeQty);
 
         if (NagadUtility::create_balance_reference($request->cost_matrix) == false) {
             return response()->json(['result' => false, 'message' => 'Cost matrix error']);
@@ -274,10 +341,21 @@ class CartController extends Controller
             if ($product->auction_product == 1) {
                 return response()->json(['result' => false, 'message' => translate('Maximum available quantity reached')], 200);
             }
-            if ($cart->product->stocks->where('variant', $cart->variation)->first()->qty >= $request->quantity) {
+            if ((bool) $cart->is_scheme) {
+                return response()->json(['result' => false, 'message' => translate('Scheme quantity cannot be changed')], 200);
+            }
+            $stock = $cart->product->stocks->where('variant', $cart->variation)->first();
+            $minQty = optional($stock)->min_qty ?? $product->min_qty ?? 1;
+            $batch = $cart->batch_id && $stock ? $stock->batches()->where('id', $cart->batch_id)->first() : null;
+            $schemeQty = $batch ? calculate_scheme_qty($request->quantity, $minQty, $batch->scheme ?? 0) : 0;
+            $stockRequired = (int) $request->quantity + $schemeQty;
+            $availableQty = $batch ? (int) ($batch->qty ?? 0) : (int) optional($stock)->qty;
+
+            if ($availableQty >= $stockRequired) {
                 $cart->update([
                     'quantity' => $request->quantity
                 ]);
+                $this->syncSchemeCartLine($cart->fresh(), $product, $schemeQty);
 
                 return response()->json(['result' => true, 'message' => translate('Cart updated')], 200);
             } else {

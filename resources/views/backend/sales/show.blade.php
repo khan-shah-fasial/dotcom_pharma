@@ -210,6 +210,13 @@
                         </thead>
                         <tbody>
                             @foreach ($order->orderDetails as $key => $orderDetail)
+                                @php
+                                    $isSchemeLine = (bool) ($orderDetail->is_scheme ?? false);
+                                    $batchName = optional($orderDetail->batch)->batch;
+                                    $product_stock = $orderDetail->product
+                                        ? $orderDetail->product->stocks->where('variant', $orderDetail->variation)->first()
+                                        : null;
+                                @endphp
                                 <tr>
                                     <td>{{ $key + 1 }}</td>
                                     <td>
@@ -232,16 +239,20 @@
                                                     class="text-muted">
                                                     {{ $orderDetail->product->getTranslation('name') }}
                                                 </a>
+                                                @if($isSchemeLine)
+                                                    <span class="badge badge-inline badge-success ml-1">{{ translate('Scheme Free') }}</span>
+                                                @endif
                                             </strong>
                                             <small>
                                                 {{ $orderDetail->variation }}
                                             </small>
+                                            @if($batchName)
+                                                <br>
+                                                <small>{{ translate('Batch') }}: {{ $batchName }}</small>
+                                            @endif
                                             <br>
                                             <small>
-                                                @php
-                                                    $product_stock = $orderDetail->product->stocks->where('variant', $orderDetail->variation)->first();
-                                                @endphp
-                                                {{translate('SKU')}}: {{ $product_stock['sku'] }}
+                                                {{ translate('SKU') }}: {{ $product_stock['sku'] ?? '-' }}
                                             </small>
                                         @elseif ($orderDetail->product != null && $orderDetail->product->auction_product == 1)
                                             <strong>
@@ -276,9 +287,13 @@
                                     </td>
                                     <td class="text-center">
                                         {{ $orderDetail->quantity }}
+                                        @if($isSchemeLine)
+                                            <br>
+                                            <small class="text-success fw-600">{{ translate('Free item') }}</small>
+                                        @endif
                                     </td>
                                     <td class="text-center">
-                                        {{ single_price($orderDetail->price / $orderDetail->quantity) }}
+                                        {{ single_price($orderDetail->quantity > 0 ? $orderDetail->price / $orderDetail->quantity : 0) }}
                                     </td>
                                     <td class="text-center">
                                         {{ single_price($orderDetail->price) }}

@@ -22,6 +22,7 @@ class CartCollection extends ResourceCollection
                     'tax' => (double)cart_product_tax($data,  $data->product ,false),
                     'shipping_cost' => (double) $data->shipping_cost,
                     'quantity' => (integer) $data->quantity,
+                    'is_scheme' => (bool) ($data->is_scheme ?? false),
                     'date' => $data->created_at->diffForHumans()
                 ];
             })

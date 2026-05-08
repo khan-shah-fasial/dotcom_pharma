@@ -68,10 +68,24 @@
         .items th,
         .items td {
             border: 1px solid #000;
-            padding: 6px 5px;
+            padding: 3px 4px;
             font-size: 10px;
         }
-        .items th { background: #dfe6f3; font-weight: 700; }
+        .items th {
+            background: #dfe6f3;
+            font-weight: 700;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 1.12;
+        }
+        .items td {
+            vertical-align: middle;
+            line-height: 1.15;
+        }
+        .items .product-name { font-weight: 700; text-align: left; }
+        .items .qty-total { color: #00f; font-weight: 700; }
+        .items .rate-value { color: #00f; }
+        .items .mrp-value { color: #f00; font-weight: 700; }
         .text-right { text-align: {{ $not_text_align }}; }
         .text-center { text-align: center; }
         .note-band {
@@ -188,7 +202,7 @@
     $ewbNumber = $grandTotal >= 50000 ? ($order->eway_bill ?? '-') : '-';
     $totalQty = $order->orderDetails->sum('quantity');
     $schemeQtyTotal = $order->orderDetails->sum(function ($row) {
-        return $row->scheme_qty ?? 0;
+        return (bool) ($row->is_scheme ?? false) ? ($row->quantity ?? 0) : 0;
     });
     $taxableTotal = $order->orderDetails->sum(function ($row) {
         $lineGross = $row->price ?? 0;
@@ -200,6 +214,28 @@
     $igstTotal = 0;
     $exemptedValue = 0;
     $roundOff = 0;
+
+    $invoiceLines = $order->orderDetails
+        ->filter(function ($detail) {
+            return !(bool) ($detail->is_scheme ?? false);
+        })
+        ->values()
+        ->map(function ($detail) use ($order) {
+            $schemeQty = $order->orderDetails
+                ->filter(function ($row) use ($detail) {
+                    return (bool) ($row->is_scheme ?? false)
+                        && (int) ($row->product_id ?? 0) === (int) ($detail->product_id ?? 0)
+                        && (string) ($row->variation ?? '') === (string) ($detail->variation ?? '')
+                        && (int) ($row->batch_id ?? 0) === (int) ($detail->batch_id ?? 0);
+                })
+                ->sum('quantity');
+
+            return [
+                'detail' => $detail,
+                'scheme_qty' => (int) $schemeQty,
+                'total_qty' => (int) ($detail->quantity ?? 0) + (int) $schemeQty,
+            ];
+        });
 @endphp
 <div class="invoice-wrap">
     <table class="band">
@@ -299,32 +335,41 @@
         <table class="items">
             <thead>
                 <tr>
-                    <th width="3%">{{ translate('Sr. No.') }}</th>
-                    <th width="15%">{{ translate('Description') }}</th>
-                    <th width="6%">{{ translate('Pack') }}</th>
-                    <th width="12%">{{ translate('Batch / Expiry') }}</th>
-                    <th width="7%">{{ translate('Category / HSN') }}</th>
-                    <th width="8%">{{ translate('MFG / MKT') }}</th>
-                    <th width="7%">{{ translate('Total Qty') }}<br><span class="small">{{ translate('Qty / SCM') }}</span></th>
-                    <th width="7%">{{ translate('SGST') }}<br><span class="small">{{ translate('SGST') }}%</span></th>
-                    <th width="7%">{{ translate('CGST') }}<br><span class="small">{{ translate('CGST') }}%</span></th>
-                    <th width="7%">{{ translate('IGST') }}<br><span class="small">{{ translate('IGST') }}%</span></th>
-                    <th width="7%">{{ translate('GST Value') }}</th>
-                    <th width="7%">{{ translate('Rate / MRP') }}</th>
-                    <th width="7%">{{ translate('Gross Value') }}</th>
-                    <th width="6%">{{ translate('Amt Dis') }} %</th>
-                    <th width="8%" class="text-right">{{ translate('Taxable Amount') }}</th>
+                    <th width="3%" rowspan="2">{{ translate('Sr.') }}<br>{{ translate('No.') }}</th>
+                    <th width="16%">{{ translate('Description') }}</th>
+                    <th width="7%">{{ translate('Category') }}</th>
+                    <th width="7%">{{ translate('Pack') }}</th>
+                    <th width="8%" colspan="2">{{ translate('Total Qty') }}</th>
+                    <th width="20%" colspan="4">{{ translate('GST Details') }}</th>
+                    <th width="7%">{{ translate('Rate') }}</th>
+                    <th width="8%" rowspan="2">{{ translate('Gross') }}<br>{{ translate('Value') }}</th>
+                    <th width="7%" rowspan="2">{{ translate('Amt') }}<br>{{ translate('Dis') }} %</th>
+                    <th width="9%" rowspan="2">{{ translate('Taxable') }}<br>{{ translate('Amount') }}</th>
+                </tr>
+                <tr>
+                    <th>{{ translate('Batch No. / Expiry') }}</th>
+                    <th>{{ translate('HSN') }}</th>
+                    <th>{{ translate('MFG/MKT') }}</th>
+                    <th>{{ translate('Qty') }}</th>
+                    <th>{{ translate('SCM') }}</th>
+                    <th>{{ translate('SGST') }}%</th>
+                    <th>{{ translate('CGST') }}%</th>
+                    <th>{{ translate('IGST') }}%</th>
+                    <th>{{ translate('Value') }}</th>
+                    <th class="red-color">{{ translate('M.R.P') }}</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($order->orderDetails as $idx => $detail)
+                @forelse($invoiceLines as $idx => $invoiceLine)
                     @php
+                        $detail = $invoiceLine['detail'];
                         $product = $detail->product;
                         $variation = $detail->variation ? ' (' . $detail->variation . ')' : '';
                         $category = optional($product?->main_category)->getTranslation('name') ?? '-';
                         $hsn = $product->product_hsn ?? '-';
                         $qty = $detail->quantity;
-                        $schemeQty = $detail->scheme_qty ?? 0;
+                        $schemeQty = $invoiceLine['scheme_qty'];
+                        $displayTotalQty = $invoiceLine['total_qty'];
                         $unitPrice = $qty > 0 ? $detail->price / $qty : $detail->price;
                         $lineGross = $detail->price;
                         $lineTax = $detail->tax;
@@ -349,12 +394,11 @@
                         $igstPercent = $taxableAmount > 0 ? round(($igst / $taxableAmount) * 100, 2) : 0;
                         $brandName = optional($product?->brand)->getTranslation('name') ?? optional($product?->brand)->name ?? '-';
                         $matchingStock = $product?->stocks?->where('variant', $detail->variation)->first() ?? $product?->stocks?->first();
-                        $batchNo = '-';
-                        $expiryFormatted = '-';
-                        // $batchNo = $detail->batch_no ?? optional($product)->batch_no ?? '-';
-                        // $expiryDate = $detail->expiry_date ?? optional($matchingStock)->product_exp_date ?? optional($product)->product_exp_date ?? null;
-                        // $expiryFormatted = $expiryDate ? format_dd_mm_yy($expiryDate) : '-';
-                        $mrp = optional($matchingStock)->mrp_price ?? $product?->unit_price ?? $unitPrice;
+                        $detailBatch = $detail->batch;
+                        $batchNo = optional($detailBatch)->batch ?? '-';
+                        $expiryDate = optional($detailBatch)->product_exp_date ?? optional($matchingStock)->product_exp_date ?? optional($product)->product_exp_date ?? null;
+                        $expiryFormatted = $expiryDate ? format_dd_mm_yy($expiryDate) : '-';
+                        $mrp = optional($detailBatch)->mrp_price ?? optional($matchingStock)->mrp_price ?? $product?->unit_price ?? $unitPrice;
                         $grossWithShipping = $lineGross + $lineShipping;
                         $discountPercent = $lineGross > 0 ? round(($discountValue / $lineGross) * 100, 2) : 0;
                         $pack = $matchingStock?->variant ?? $detail->variation ?? '-';
@@ -363,49 +407,41 @@
                         $igstTotal += $igst;
                         $taxTotal += $lineTax;
                     @endphp
-                    <tr>
-                        <td class="text-center">{{ $idx + 1 }}</td>
-                        <td>
+                    <tr class="item-top">
+                        <td rowspan="2" class="text-center">{{ $idx + 1 }}</td>
+                        <td class="product-name">
                             {{ optional($product)->name ?? translate('Product Removed') }}{{ $variation }}
                             @php $stockArray = $matchingStock ? $matchingStock->toArray() : []; @endphp
                             @if(!empty($stockArray['sku']))
                                 <div class="small">{{ translate('SKU') }}: {{ $stockArray['sku'] }}</div>
                             @endif
                         </td>
+                        <td class="text-center">{{ $category }}</td>
                         <td class="text-center">{{ $pack }}</td>
-                        <td class="text-center">
-                            <div>{{ translate('Batch') }}: {{ $batchNo }}</div>
-                            <div>{{ translate('Expiry') }}: {{ $expiryFormatted }}</div>
-                        </td>
-                        <td class="text-center">{{ $category }} <br> {{ $hsn }}</td>
-                        <td class="text-center">{{ $brandName }}</td>
-                        <td class="text-center">
-                            <div class="label">{{ $qty }}</div>
-                            <div class="small">{{ translate('SCM') }}: {{ $schemeQty }}</div>
-                        </td>
-                        <td class="text-center">
-                            <div>{{ single_price($sgst) }}</div>
-                            <div class="small">{{ $sgstPercent }}%</div>
-                        </td>
-                        <td class="text-center">
-                            <div>{{ single_price($cgst) }}</div>
-                            <div class="small">{{ $cgstPercent }}%</div>
-                        </td>
-                        <td class="text-center">
-                            <div>{{ single_price($igst) }}</div>
-                            <div class="small">{{ $igstPercent }}%</div>
-                        </td>
+                        <td colspan="2" class="text-center qty-total">{{ $displayTotalQty }}</td>
+                        <td class="text-center">{{ single_price($sgst) }}</td>
+                        <td class="text-center">{{ single_price($cgst) }}</td>
+                        <td class="text-center">{{ single_price($igst) }}</td>
                         <td class="text-center">{{ single_price($lineTax) }}</td>
+                        <td class="text-center rate-value">{{ single_price($unitPrice) }}</td>
+                        <td rowspan="2" class="text-center">{{ single_price($grossWithShipping) }}</td>
+                        <td class="text-center">{{ single_price($discountValue) }}</td>
+                        <td rowspan="2" class="text-right">{{ single_price($taxableAmount) }}</td>
+                    </tr>
+                    <tr class="item-bottom">
                         <td class="text-center">
-                            <div class="label">{{ single_price($unitPrice) }}</div>
-                            <div class="small red-color">{{ single_price($mrp) }}</div>
+                            {{ $batchNo }} &nbsp; {{ $expiryFormatted }}
                         </td>
-                        <td class="text-center">{{ single_price($grossWithShipping) }}</td>
-                        <td class="text-center">
-                            <div class="label">{{ single_price($discountValue) }}</div>
-                            <div class="small">{{ $discountPercent }}%</div>
-                        </td>
-                        <td class="text-right">{{ single_price($taxableAmount) }}</td>
+                        <td class="text-center">{{ $hsn }}</td>
+                        <td class="text-center">{{ $brandName }}</td>
+                        <td class="text-center">{{ $qty }}</td>
+                        <td class="text-center">{{ $schemeQty }}</td>
+                        <td class="text-center">{{ $sgstPercent }}</td>
+                        <td class="text-center">{{ $cgstPercent }}</td>
+                        <td class="text-center">{{ $igstPercent }}</td>
+                        <td class="text-center"></td>
+                        <td class="text-center mrp-value">{{ single_price($mrp) }}</td>
+                        <td class="text-center">{{ $discountPercent }}</td>
                     </tr>
                 @empty
                     <tr>

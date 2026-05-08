@@ -1,11 +1,15 @@
 <div class="card rounded-0 border shadow-none">
+    @php
+        $paid_carts = collect($carts)->where('is_scheme', 0);
+        $product_count = count($paid_carts);
+    @endphp
 
     <div class="card-header pt-4 pb-1 border-bottom-0">
         <h3 class="fs-16 fw-700 mb-0">{{ translate('Summary') }}</h3>
         <div class="text-right">
             <!-- Items Count -->
             <span class="badge badge-inline badge-primary fs-12 rounded-0 px-2">
-                {{ count($carts) }}
+                {{ $product_count }}
                 {{ translate('Items') }}
             </span>
 
@@ -18,7 +22,7 @@
                     $coupon_code = null;
                 @endphp
 
-                @foreach ($carts as $key => $cartItem)
+                @foreach ($paid_carts as $key => $cartItem)
                     @if ($cartItem->coupon_applied == 1)
                         @php
                             $coupon_code = $cartItem->coupon_code;
@@ -54,7 +58,7 @@
                 @php
                     $total_point = 0;
                 @endphp
-                @foreach ($carts as $key => $cartItem)
+                @foreach ($paid_carts as $key => $cartItem)
                     @php
                         $product = get_single_product($cartItem['product_id']);
                         $total_point += $product->earn_point * $cartItem['quantity'];
@@ -93,7 +97,7 @@
                     $shipping = 0;
                     $product_shipping_cost = 0;
                 @endphp
-                @foreach ($carts as $key => $cartItem)
+                @foreach ($paid_carts as $key => $cartItem)
                     @php
                         $product = get_single_product($cartItem['product_id']);
                         $subtotal += cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
@@ -103,9 +107,10 @@
                         $shipping += $product_shipping_cost;
 
                         $product_name_with_choice = $product->getTranslation('name');
-                        if ($cartItem['variant'] != null) {
-                            $product_name_with_choice = $product->getTranslation('name') . ' - ' . $cartItem['variant'];
+                        if ($cartItem['variation'] != null) {
+                            $product_name_with_choice = $product->getTranslation('name') . ' - ' . $cartItem['variation'];
                         }
+                        $batchName = optional($cartItem->batch)->batch;
                     @endphp
                     <tr class="cart_item">
                         <td class="product-name pl-0 fs-14 text-dark fw-400 border-top-0 border-bottom">
@@ -113,6 +118,9 @@
                             <strong class="product-quantity">
                                 × {{ $cartItem['quantity'] }}
                             </strong>
+                            @if ($batchName)
+                                <span class="d-block fs-12 text-secondary">{{ translate('Batch') }}: {{ $batchName }}</span>
+                            @endif
                         </td>
                         <td class="product-total text-right pr-0 fs-14 text-primary fw-600 border-top-0 border-bottom">
                             <span
@@ -205,7 +213,7 @@
                 <div class="mt-3">
                     <form class="" id="apply-coupon-form" enctype="multipart/form-data">
                         @csrf
-                        <input type="hidden" name="owner_id" value="{{ $carts[0]['owner_id'] }}">
+                        <input type="hidden" name="owner_id" value="{{ optional($paid_carts->first())['owner_id'] }}">
                         <div class="input-group">
                             <input type="text" class="form-control rounded-0" name="code"
                                 onkeydown="return event.key != 'Enter';"

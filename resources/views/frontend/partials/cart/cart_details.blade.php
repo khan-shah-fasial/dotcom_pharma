@@ -1,7 +1,8 @@
 <div class="container">
     @php
-        $cart_count = count($carts);
-        $active_carts = $cart_count > 0 ? $carts->toQuery()->active()->get() : [];
+        $paid_carts = collect($carts)->where('is_scheme', 0);
+        $cart_count = count($paid_carts);
+        $active_carts = $cart_count > 0 ? $paid_carts->where('status', 1) : collect();
     @endphp
     @if( $cart_count > 0 )
         <div class="row">
@@ -37,34 +38,30 @@
                         <ul class="list-group list-group-flush">
                             @php
                                 $total = 0;
-                                $admin_products = array();
-                                $seller_products = array();
-                                $admin_product_variation = array();
-                                $seller_product_variation = array();
-                                foreach ($carts as $key => $cartItem){
+                                $admin_carts = array();
+                                $seller_carts = array();
+                                foreach ($paid_carts as $key => $cartItem){
                                     $product = get_single_product($cartItem['product_id']);
 
                                     if($product->added_by == 'admin'){
-                                        array_push($admin_products, $cartItem['product_id']);
-                                        $admin_product_variation[] = $cartItem['variation'];
+                                        array_push($admin_carts, $cartItem->id);
                                     }
                                     else{
-                                        $product_ids = array();
-                                        if(isset($seller_products[$product->user_id])){
-                                            $product_ids = $seller_products[$product->user_id];
+                                        $cart_ids = array();
+                                        if(isset($seller_carts[$product->user_id])){
+                                            $cart_ids = $seller_carts[$product->user_id];
                                         }
-                                        array_push($product_ids, $cartItem['product_id']);
-                                        $seller_products[$product->user_id] = $product_ids;
-                                        $seller_product_variation[] = $cartItem['variation'];
+                                        array_push($cart_ids, $cartItem->id);
+                                        $seller_carts[$product->user_id] = $cart_ids;
                                     }
                                 }
                             @endphp
 
                             <!-- Inhouse Products -->
-                            @if (!empty($admin_products))
+                            @if (!empty($admin_carts))
                                 @php
                                     $all_admin_products = true;
-                                    if(count($admin_products) != count($carts->toQuery()->active()->whereIn('product_id', $admin_products)->get())){
+                                    if(count($admin_carts) != count($carts->toQuery()->active()->whereIn('id', $admin_carts)->where('is_scheme', 0)->get())){
                                         $all_admin_products = false;
                                     }
                                 @endphp
@@ -73,26 +70,45 @@
                                         <label class="aiz-checkbox d-block">
                                             <input type="checkbox" class="check-one check-seller" value="admin" @if($all_admin_products) checked @endif>
                                             <span class="fs-16 fw-700 text-dark ml-3 pb-3 d-block border-left-0 border-top-0 border-right-0 border-bottom border-dashed">
-                                                {{ translate('Inhouse Products') }} ({{ count($admin_products) }})
+                                                {{ translate('Inhouse Products') }} ({{ count($admin_carts) }})
                                             </span>
                                             <span class="aiz-square-check"></span>
                                         </label>
                                     </div>
                                 </div>
-                                @foreach ($admin_products as $key => $product_id)
+                                @foreach ($admin_carts as $key => $cart_id)
                                     @php
-                                        $product = get_single_product($product_id);
-                                        $cartItem = $carts->toQuery()->where('product_id', $product_id)->where('variation', $admin_product_variation[$key])->first();
+                                        $cartItem = $paid_carts->firstWhere('id', $cart_id);
+                                        $product = get_single_product($cartItem->product_id);
+                                        $schemeCartItem = $carts->first(function ($row) use ($cartItem) {
+                                            return (bool) ($row->is_scheme ?? false)
+                                                && (int) $row->product_id === (int) $cartItem->product_id
+                                                && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '')
+                                                && (int) ($row->batch_id ?? 0) === (int) ($cartItem->batch_id ?? 0);
+                                        });
+                                        $schemeQty = (int) optional($schemeCartItem)->quantity;
                                         $product_stock = $product->stocks->where('variant', $cartItem->variation)->first();
+                                        $cartMinQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
+                                        $cartMaxQty = $product_stock->qty ?? 0;
+                                        if (!empty($cartItem->batch_id) && $product_stock) {
+                                            $cartBatch = \App\Models\ProductBatch::where('id', $cartItem->batch_id)->where('product_stock_id', $product_stock->id)->first();
+                                            if ($cartBatch) {
+                                                $cartMaxQty = resolve_scheme_max_paid_qty($cartBatch->qty ?? 0, $cartMinQty, $cartBatch->scheme ?? 0);
+                                                if ($schemeQty <= 0) {
+                                                    $schemeQty = calculate_scheme_qty($cartItem->quantity, $cartMinQty, $cartBatch->scheme ?? 0);
+                                                }
+                                            }
+                                        }
+                                        $batchName = optional($cartItem->batch)->batch;
                                         $total = $total + cart_product_price($cartItem, $product, false) * $cartItem->quantity;
                                     @endphp
                                     <li class="list-group-item px-0 border-md-0">
                                         <div class="row gutters-5 align-items-center">
                                             <!-- select -->
                                             <div class="col-auto">
-                                                <div class="aiz-checkbox pl-0">
-                                                    <label class="aiz-checkbox">
-                                                        <input type="checkbox" class="check-one check-one-admin" name="id[]" value="{{$product_id}}" @if($cartItem->status == 1) checked @endif>
+                                                    <div class="aiz-checkbox pl-0">
+                                                        <label class="aiz-checkbox">
+                                                        <input type="checkbox" class="check-one check-one-admin" name="id[]" value="{{ $cartItem->id }}" @if($cartItem->status == 1) checked @endif>
                                                         <span class="aiz-square-check"></span>
                                                     </label>
                                                 </div>
@@ -105,10 +121,13 @@
                                                         alt="{{ $product->getTranslation('name')  }}"
                                                         onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
                                                 </span>
-                                                <span>
-                                                    <span class="fs-14 fw-400 text-dark text-truncate-2 mb-2">{{ $product->getTranslation('name') }}</span>
-                                                    @if ($admin_product_variation[$key] != '')
-                                                        <span class="fs-12 text-secondary">{{ translate('Variation') }}: {{ $admin_product_variation[$key] }}</span>
+                                                    <span>
+                                                        <span class="fs-14 fw-400 text-dark text-truncate-2 mb-2">{{ $product->getTranslation('name') }}</span>
+                                                    @if ($cartItem->variation != '')
+                                                        <span class="fs-12 text-secondary">{{ translate('Variation') }}: {{ $cartItem->variation }}</span>
+                                                    @endif
+                                                    @if ($batchName)
+                                                        <span class="d-block fs-12 text-secondary">{{ translate('Batch') }}: {{ $batchName }}</span>
                                                     @endif
                                                 </span>
                                             </div>
@@ -119,6 +138,9 @@
                                                 <span>
                                                     <span class="opacity-90 fs-12">{{ translate('Tax')}}: {{ single_price(($cartItem->tax ?? 0) * $cartItem->quantity) }}</span>
                                                 </span>
+                                                @if($schemeQty > 0)
+                                                    <span class="opacity-90 fs-12 text-success">{{ translate('Scheme Free')}}: {{ $schemeQty }}</span>
+                                                @endif
                                             </div>
                                             <!-- Quantity & Total -->
                                             <div class="col-xl-4 col-md-3 col d-flex flex-column flex-xl-row justify-content-xl-between align-items-xl-center">
@@ -134,9 +156,9 @@
                                                             </button>
                                                             <input type="number" name="quantity[{{ $cartItem->id }}]"
                                                                 class="col border-0 text-center px-0 fs-14 input-number"
-                                                                placeholder="1" value="{{ $cartItem['quantity'] }}"
-                                                                min="{{ $product->min_qty }}"
-                                                                max="{{ $product_stock->qty }}"
+                                                     placeholder="1" value="{{ $cartItem['quantity'] }}"
+                                                     min="{{ $cartMinQty }}"
+                                                     max="{{ $cartMaxQty }}"
                                                                 onchange="updateQuantity({{ $cartItem->id }}, this)" style="min-width: 45px;">
                                                             <button
                                                                 class="btn col-auto btn-icon btn-sm btn-light rounded-0"
@@ -170,11 +192,11 @@
                             @endif
 
                             <!-- Seller Products -->
-                            @if (!empty($seller_products))
-                                @foreach ($seller_products as $key => $seller_product)
+                            @if (!empty($seller_carts))
+                                @foreach ($seller_carts as $key => $seller_cart_ids)
                                     @php
                                         $all_seller_products = true;
-                                        if(count($seller_product) != count($carts->toQuery()->active()->whereIn('product_id', $seller_product)->get())){
+                                        if(count($seller_cart_ids) != count($carts->toQuery()->active()->whereIn('id', $seller_cart_ids)->where('is_scheme', 0)->get())){
                                             $all_seller_products = false;
                                         }
                                     @endphp
@@ -183,17 +205,36 @@
                                             <label class="aiz-checkbox d-block">
                                                 <input type="checkbox" class="check-one check-seller" value="seller-{{ $key }}"  @if($all_seller_products) checked @endif>
                                                 <span class="fs-16 fw-700 text-dark ml-3 pb-3 d-block border-left-0 border-top-0 border-right-0 border-bottom border-dashed">
-                                                    {{ get_shop_by_user_id($key)->name }} {{ translate('Products') }} ({{ count($seller_product) }})
+                                                    {{ get_shop_by_user_id($key)->name }} {{ translate('Products') }} ({{ count($seller_cart_ids) }})
                                                 </span>
                                                 <span class="aiz-square-check"></span>
                                             </label>
                                         </div>
                                     </div>
-                                    @foreach ($seller_product as $key2 => $product_id)
+                                    @foreach ($seller_cart_ids as $key2 => $cart_id)
                                         @php
-                                            $product = get_single_product($product_id);
-                                            $cartItem = $carts->toQuery()->where('product_id', $product_id)->where('variation', $seller_product_variation[$key2])->first();
+                                            $cartItem = $paid_carts->firstWhere('id', $cart_id);
+                                            $product = get_single_product($cartItem->product_id);
+                                            $schemeCartItem = $carts->first(function ($row) use ($cartItem) {
+                                                return (bool) ($row->is_scheme ?? false)
+                                                    && (int) $row->product_id === (int) $cartItem->product_id
+                                                    && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '')
+                                                    && (int) ($row->batch_id ?? 0) === (int) ($cartItem->batch_id ?? 0);
+                                            });
+                                            $schemeQty = (int) optional($schemeCartItem)->quantity;
                                             $product_stock = $product->stocks->where('variant', $cartItem->variation)->first();
+                                            $cartMinQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
+                                            $cartMaxQty = $product_stock->qty ?? 0;
+                                            if (!empty($cartItem->batch_id) && $product_stock) {
+                                                $cartBatch = \App\Models\ProductBatch::where('id', $cartItem->batch_id)->where('product_stock_id', $product_stock->id)->first();
+                                                if ($cartBatch) {
+                                                    $cartMaxQty = resolve_scheme_max_paid_qty($cartBatch->qty ?? 0, $cartMinQty, $cartBatch->scheme ?? 0);
+                                                    if ($schemeQty <= 0) {
+                                                        $schemeQty = calculate_scheme_qty($cartItem->quantity, $cartMinQty, $cartBatch->scheme ?? 0);
+                                                    }
+                                                }
+                                            }
+                                            $batchName = optional($cartItem->batch)->batch;
                                             $total = $total + cart_product_price($cartItem, $product, false) * $cartItem->quantity;
                                         @endphp
                                         <li class="list-group-item px-0 border-md-0">
@@ -202,7 +243,7 @@
                                                 <div class="col-auto">
                                                     <div class="aiz-checkbox pl-0">
                                                         <label class="aiz-checkbox">
-                                                            <input type="checkbox" class="check-one check-one-seller-{{ $key }}" name="id[]" value="{{$product_id}}" @if($cartItem->status == 1) checked @endif>
+                                                            <input type="checkbox" class="check-one check-one-seller-{{ $key }}" name="id[]" value="{{ $cartItem->id }}" @if($cartItem->status == 1) checked @endif>
                                                             <span class="aiz-square-check"></span>
                                                         </label>
                                                     </div>
@@ -217,8 +258,11 @@
                                                     </span>
                                                     <span>
                                                         <span class="fs-14 fw-400 text-dark text-truncate-2 mb-2">{{ $product->getTranslation('name') }}</span>
-                                                        @if ($seller_product_variation[$key2] != '')
-                                                            <span class="fs-12 text-secondary">{{ translate('Variation') }}: {{ $seller_product_variation[$key2] }}</span>
+                                                        @if ($cartItem->variation != '')
+                                                            <span class="fs-12 text-secondary">{{ translate('Variation') }}: {{ $cartItem->variation }}</span>
+                                                        @endif
+                                                        @if ($batchName)
+                                                            <span class="d-block fs-12 text-secondary">{{ translate('Batch') }}: {{ $batchName }}</span>
                                                         @endif
                                                     </span>
                                                 </div>
@@ -229,6 +273,9 @@
                                                     <span>
                                                         <span class="opacity-90 fs-12">{{ translate('Tax')}}: {{ single_price(($cartItem->tax ?? 0) * $cartItem->quantity) }}</span>
                                                     </span>
+                                                    @if($schemeQty > 0)
+                                                        <span class="opacity-90 fs-12 text-success">{{ translate('Scheme Free')}}: {{ $schemeQty }}</span>
+                                                    @endif
                                                 </div>
                                                 <!-- Quantity & Total -->
                                                 <div class="col-xl-4 col-md-3 col d-flex flex-column flex-xl-row justify-content-xl-between align-items-xl-center">
@@ -244,9 +291,9 @@
                                                                 </button>
                                                                 <input type="number" name="quantity[{{ $cartItem->id }}]"
                                                                     class="col border-0 text-center px-0 fs-14 input-number"
-                                                                    placeholder="1" value="{{ $cartItem['quantity'] }}"
-                                                                    min="{{ $product->min_qty }}"
-                                                                    max="{{ $product_stock->qty }}"
+                 placeholder="1" value="{{ $cartItem['quantity'] }}"
+                 min="{{ $cartMinQty }}"
+                 max="{{ $cartMaxQty }}"
                                                                     onchange="updateQuantity({{ $cartItem->id }}, this)" style="min-width: 45px;">
                                                                 <button
                                                                     class="btn col-auto btn-icon btn-sm btn-light rounded-0"

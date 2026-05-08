@@ -1057,6 +1057,61 @@ if (!function_exists('resolvePrice')) {
     }
 }
 
+if (!function_exists('calculate_scheme_qty')) {
+    function calculate_scheme_qty($paidQty, $minQty, $scheme): int
+    {
+        $paidQty = max(0, (int) $paidQty);
+        $minQty = max(1, (int) $minQty);
+        $scheme = max(0, (int) $scheme);
+
+        if ($paidQty <= 0 || $scheme <= 0) {
+            return 0;
+        }
+
+        return intdiv($paidQty, $minQty) * $scheme;
+    }
+}
+
+if (!function_exists('scheme_stock_required')) {
+    function scheme_stock_required($paidQty, $minQty, $scheme): int
+    {
+        $paidQty = max(0, (int) $paidQty);
+        return $paidQty + calculate_scheme_qty($paidQty, $minQty, $scheme);
+    }
+}
+
+if (!function_exists('resolve_scheme_max_paid_qty')) {
+    function resolve_scheme_max_paid_qty($availableQty, $minQty, $scheme): int
+    {
+        $availableQty = max(0, (int) $availableQty);
+        $minQty = max(1, (int) $minQty);
+        $scheme = max(0, (int) $scheme);
+
+        if ($availableQty <= 0) {
+            return 0;
+        }
+        if ($scheme <= 0) {
+            return $availableQty;
+        }
+
+        $low = 0;
+        $high = $availableQty;
+        $best = 0;
+
+        while ($low <= $high) {
+            $mid = intdiv($low + $high, 2);
+            if (scheme_stock_required($mid, $minQty, $scheme) <= $availableQty) {
+                $best = $mid;
+                $low = $mid + 1;
+            } else {
+                $high = $mid - 1;
+            }
+        }
+
+        return $best;
+    }
+}
+
 if (!function_exists('resolveLowestListingPriceForStock')) {
     function resolveLowestListingPriceForStock($product, $stock, $qty = 1): array
     {
@@ -1184,6 +1239,10 @@ if (!function_exists('product_listing_discount_breakdown')) {
 if (!function_exists('cart_product_price')) {
     function cart_product_price($cart_product, $product, $formatted = true, $tax = true)
     {        // 🚨 Guard clause: product deleted / unavailable
+        if ((bool) ($cart_product['is_scheme'] ?? false)) {
+            return $formatted ? format_price(0) : 0;
+        }
+
         if (!$product) {
             return $formatted ? format_price(0) : 0;
         }
@@ -1311,6 +1370,10 @@ if (!function_exists('cart_product_price')) {
 if (!function_exists('cart_product_tax')) {
     function cart_product_tax($cart_product, $product, $formatted = true)
     {
+        if ((bool) ($cart_product['is_scheme'] ?? false)) {
+            return $formatted ? format_price(0) : 0;
+        }
+
         $storedBatchId = $cart_product['batch_id'] ?? null;
         if ($storedBatchId && isset($cart_product['tax']) && $cart_product['tax'] !== null) {
             $storedTax = (float) $cart_product['tax'];
@@ -3327,12 +3390,33 @@ if (!function_exists('product_restock')) {
             ->where('variant', $variant)
             ->first();
 
-        if ($product_stock != null && (!in_array($orderDetail->delivery_status, ['delivered', 'cancelled']))) {
+        if ($product_stock != null && $orderDetail->delivery_status != 'delivered') {
             $product = $product_stock->product;
-            $product->num_of_sale -= $orderDetail->quantity;
-            $product->save();
+            if (!(bool) ($orderDetail->is_scheme ?? false)) {
+                $product->num_of_sale -= $orderDetail->quantity;
+                $product->save();
+            }
 
-            $product_stock->qty += $orderDetail->quantity;
+            $restockQty = (int) $orderDetail->quantity;
+
+            if (!empty($orderDetail->batch_id)) {
+                $batch = ProductBatch::where('id', $orderDetail->batch_id)
+                    ->where('product_stock_id', $product_stock->id)
+                    ->first();
+
+                if ($batch) {
+                    $batch->qty += $restockQty;
+                    $batch->save();
+
+                    $product_stock->load('batches');
+                    $product_stock->qty = $product_stock->batches->sum('qty');
+                    $product_stock->save();
+
+                    return;
+                }
+            }
+
+            $product_stock->qty += $restockQty;
             $product_stock->save();
         }
     }

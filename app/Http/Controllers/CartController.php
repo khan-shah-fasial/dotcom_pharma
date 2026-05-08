@@ -18,6 +18,58 @@ use Cookie;
 
 class CartController extends Controller
 {
+    protected function syncSchemeCartLine(Cart $paidCart, Product $product, int $schemeQty): void
+    {
+        $identity = [
+            'variation' => $paidCart->variation,
+            'product_id' => $paidCart->product_id,
+            'batch_id' => $paidCart->batch_id,
+            'is_scheme' => 1,
+        ];
+
+        if ($paidCart->user_id) {
+            $identity['user_id'] = $paidCart->user_id;
+        } else {
+            $identity['temp_user_id'] = $paidCart->temp_user_id;
+        }
+
+        if ($schemeQty <= 0) {
+            Cart::where($identity)->delete();
+            return;
+        }
+
+        $schemeCart = Cart::firstOrNew($identity);
+        $schemeCart->quantity = $schemeQty;
+        $schemeCart->owner_id = $product->user_id;
+        $schemeCart->price = 0;
+        $schemeCart->mrp_price = 0;
+        $schemeCart->sale_price = 0;
+        $schemeCart->tax = 0;
+        $schemeCart->shipping_cost = 0;
+        $schemeCart->discount = 0;
+        $schemeCart->coupon_code = '';
+        $schemeCart->coupon_applied = 0;
+        $schemeCart->status = $paidCart->status ?? 1;
+        $schemeCart->product_referral_code = null;
+        $schemeCart->save();
+    }
+
+    protected function deleteSchemeCartLine(Cart $paidCart): void
+    {
+        $query = Cart::where('product_id', $paidCart->product_id)
+            ->where('variation', $paidCart->variation)
+            ->where('batch_id', $paidCart->batch_id)
+            ->where('is_scheme', 1);
+
+        if ($paidCart->user_id) {
+            $query->where('user_id', $paidCart->user_id);
+        } else {
+            $query->where('temp_user_id', $paidCart->temp_user_id);
+        }
+
+        $query->delete();
+    }
+
     protected function calculateDisplayLineTotal($product, float $unitSalePrice, int $quantity): float
     {
         $safeQty = max(1, (int) $quantity);
@@ -176,6 +228,7 @@ class CartController extends Controller
                 'user_id' => $user_id,
                 'product_id' => $request['id'],
                 'batch_id' => $batchId,
+                'is_scheme' => 0,
             ]);
         } else {
             $temp_user_id = $request->session()->get('temp_user_id');
@@ -184,6 +237,7 @@ class CartController extends Controller
                 'temp_user_id' => $temp_user_id,
                 'product_id' => $request['id'],
                 'batch_id' => $batchId,
+                'is_scheme' => 0,
             ]);
         }
 
@@ -193,25 +247,6 @@ class CartController extends Controller
                     'status' => 0,
                     'cart_count' => count($carts),
                     'modal_view' => view('frontend.partials.cart.auctionProductAlredayAddedCart')->render(),
-                    'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
-                );
-            }
-            // Check available quantity from batches or stock
-            if ($selectedBatch) {
-                $totalAvailableQty = (int) ($selectedBatch->qty ?? 0);
-            } elseif ($product_stock) {
-                $product_stock->load('batches');
-                $batches = $product_stock->batches;
-                $totalAvailableQty = $batches->isNotEmpty() ? $batches->sum('qty') : ($product_stock->qty ?? 0);
-            } else {
-                $totalAvailableQty = 0;
-            }
-            
-            if ($totalAvailableQty < $cart->quantity + $request['quantity']) {
-                return array(
-                    'status' => 0,
-                    'cart_count' => count($carts),
-                    'modal_view' => view('frontend.partials.outOfStockCart')->render(),
                     'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
                 );
             }
@@ -225,6 +260,31 @@ class CartController extends Controller
                     'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
                 );
             }
+        }
+
+        if ($selectedBatch) {
+            $totalAvailableQty = (int) ($selectedBatch->qty ?? 0);
+            $schemePerMinQty = (int) ($selectedBatch->scheme ?? 0);
+        } elseif ($product_stock) {
+            $product_stock->load('batches');
+            $batches = $product_stock->batches;
+            $totalAvailableQty = $batches->isNotEmpty() ? (int) $batches->sum('qty') : (int) ($product_stock->qty ?? 0);
+            $schemePerMinQty = 0;
+        } else {
+            $totalAvailableQty = 0;
+            $schemePerMinQty = 0;
+        }
+
+        $schemeQty = calculate_scheme_qty($quantity, $minQty, $schemePerMinQty);
+        $stockRequired = $quantity + $schemeQty;
+
+        if ($product->digital == 0 && $totalAvailableQty < $stockRequired) {
+            return array(
+                'status' => 0,
+                'cart_count' => count($carts),
+                'modal_view' => view('frontend.partials.outOfStockCart')->render(),
+                'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
+            );
         }
 
         // Use batch data for pricing if batch is selected
@@ -246,9 +306,10 @@ class CartController extends Controller
 
         $tax = CartUtility::tax_calculation($product, $salePrice);
 
-        CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId);
+        CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId, false);
         $cart->notify_date = Carbon::now()->addHour(); // First reminder in 1 hours
         $cart->save();
+        $this->syncSchemeCartLine($cart, $product, $schemeQty);
 
         if($authUser != null) {
             $user_id = $authUser->id;
@@ -266,6 +327,7 @@ class CartController extends Controller
             'cart_count' => count($carts),
             'modal_view' => view('frontend.partials.cart.addedToCart', compact('product', 'cart'))
                 ->with('added_quantity', $addedQuantity)
+                ->with('scheme_quantity', $schemeQty)
                 ->with('added_total_display', $addedTotalDisplay)
                 ->render(),
             'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
@@ -275,6 +337,10 @@ class CartController extends Controller
     //removes from Cart
     public function removeFromCart(Request $request)
     {
+        $cart = Cart::find($request->id);
+        if ($cart && !(bool) $cart->is_scheme) {
+            $this->deleteSchemeCartLine($cart);
+        }
         Cart::destroy($request->id);
         $authUser = auth()->user();
         if ($authUser != null) {
@@ -296,6 +362,19 @@ class CartController extends Controller
     public function updateQuantity(Request $request)
     {
         $cartItem = Cart::findOrFail($request->id);
+        if ((bool) $cartItem->is_scheme) {
+            if (auth()->user() != null) {
+                $carts = Cart::where('user_id', Auth::user()->id)->get();
+            } else {
+                $temp_user_id = $request->session()->get('temp_user_id');
+                $carts = Cart::where('temp_user_id', $temp_user_id)->get();
+            }
+            return array(
+                'cart_count' => count($carts),
+                'cart_view' => view('frontend.partials.cart.cart_details', compact('carts'))->render(),
+                'nav_cart_view' => view('frontend.partials.cart.cart')->render(),
+            );
+        }
 
         if ($cartItem['id'] == $request->id) {
             $product = Product::find($cartItem['product_id']);
@@ -329,10 +408,27 @@ class CartController extends Controller
                     $salePrice = $price;
                 }
 
-                if ($availableQuantity >= $request->quantity) {
+                $schemePerMinQty = $selectedBatch ? (int) ($selectedBatch->scheme ?? 0) : 0;
+                $requestedSchemeQty = calculate_scheme_qty($request->quantity, $minQty, $schemePerMinQty);
+                $requestedStockRequired = (int) $request->quantity + $requestedSchemeQty;
+
+                if ($availableQuantity >= $requestedStockRequired) {
                     if ($request->quantity >= $minQty) {
                         $cartItem['quantity'] = $request->quantity;
                     }
+                }
+
+                $schemeQty = $selectedBatch
+                    ? calculate_scheme_qty($cartItem['quantity'], $minQty, $schemePerMinQty)
+                    : 0;
+
+                if ($selectedBatch) {
+                    $resolvedPrice = resolvePrice($product, $product_stock, $selectedBatch, $cartItem['quantity']);
+                    $price = (float) ($resolvedPrice['price'] ?? 0);
+                    $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
+                } else {
+                    $price = CartUtility::get_price($product, $product_stock, $cartItem['quantity']);
+                    $salePrice = $price;
                 }
 
                 // Recalculate tax based on updated price
@@ -343,6 +439,7 @@ class CartController extends Controller
                 $cartItem->sale_price = $salePrice;
                 $cartItem->tax = $tax; // Store recalculated tax
                 $cartItem->save();
+                $this->syncSchemeCartLine($cartItem, $product, $schemeQty);
             }
         }
 
@@ -363,7 +460,8 @@ class CartController extends Controller
 
     public function updateCartStatus(Request $request)
     {
-        $product_ids = $request->product_id;
+        $cart_ids = $request->cart_id ?? $request->product_id;
+        $cartIdColumn = $request->has('cart_id') ? 'id' : 'product_id';
 
         if (auth()->user() != null) {
             $user_id = Auth::user()->id;
@@ -378,7 +476,7 @@ class CartController extends Controller
             $owner_id = $coupon_applied->owner_id;
             $coupon_code = $coupon_applied->coupon_code;
             $user_carts = $carts->toQuery()->where('owner_id', $owner_id)->get();
-            $coupon_discount = $user_carts->toQuery()->sum('discount');
+            $coupon_discount = $user_carts->where('is_scheme', 0)->sum('discount');
             $user_carts->toQuery()->update(
                 [
                     'discount' => 0.00,
@@ -389,9 +487,9 @@ class CartController extends Controller
         }
 
         $carts->toQuery()->update(['status' => 0]);
-        if($product_ids != null){
+        if($cart_ids != null){
             if($coupon_applied != null){
-                $active_user_carts = $user_carts->toQuery()->whereIn('product_id', $product_ids)->get();
+                $active_user_carts = $user_carts->toQuery()->whereIn($cartIdColumn, $cart_ids)->where('is_scheme', 0)->get();
                 if (count($active_user_carts) > 0) {
                     $active_user_carts->toQuery()->update(
                         [
@@ -403,7 +501,23 @@ class CartController extends Controller
                 }
             }
 
-            $carts->toQuery()->whereIn('product_id', $product_ids)->update(['status' => 1]);
+            $carts->toQuery()->whereIn($cartIdColumn, $cart_ids)->where('is_scheme', 0)->update(['status' => 1]);
+            $activePaidCarts = $carts->whereIn($cartIdColumn, $cart_ids)->where('is_scheme', 0);
+            foreach ($activePaidCarts as $paidCart) {
+                $schemeQuery = $carts->toQuery()
+                    ->where('product_id', $paidCart->product_id)
+                    ->where('variation', $paidCart->variation)
+                    ->where('batch_id', $paidCart->batch_id)
+                    ->where('is_scheme', 1);
+
+                if ($paidCart->user_id) {
+                    $schemeQuery->where('user_id', $paidCart->user_id);
+                } else {
+                    $schemeQuery->where('temp_user_id', $paidCart->temp_user_id);
+                }
+
+                $schemeQuery->update(['status' => 1]);
+            }
         }
         $carts = $carts->fresh();
 

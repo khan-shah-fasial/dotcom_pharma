@@ -43,14 +43,14 @@
         });
         function updateCartStatus() {
             $('.aiz-refresh').addClass('active');
-            let product_id = [];
+            let cart_id = [];
             $(".check-one[name='id[]']:checked").each(function() {
-                product_id.push($(this).val());
+                cart_id.push($(this).val());
             });
 
             $.post('{{ route('cart.updateCartStatus') }}', {
                 _token: AIZ.data.csrf,
-                product_id: product_id
+                cart_id: cart_id
             }, function(data) {
                 $('#cart-details').html(data);
                 AIZ.extra.plusMinus();

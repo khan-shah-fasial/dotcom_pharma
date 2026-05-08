@@ -155,6 +155,9 @@
                                                             @if ($orderDetail->product != null)
                                                                 <a href="{{ route('product', $orderDetail->product->slug) }}" target="_blank" class="text-reset">
                                                                     {{ $orderDetail->product->getTranslation('name') }}
+                                                                    @if((bool) ($orderDetail->is_scheme ?? false))
+                                                                        <span class="badge badge-inline badge-success ml-1">{{ translate('Scheme Free') }}</span>
+                                                                    @endif
                                                                     @php
                                                                         if($orderDetail->combo_id != null) {
                                                                             $combo = \App\ComboProduct::findOrFail($orderDetail->combo_id);
@@ -169,9 +172,19 @@
                                                         </td>
                                                         <td class="border-top-0 border-bottom">
                                                             {{ $orderDetail->variation }}
+                                                            @if (optional($orderDetail->batch)->batch)
+                                                                <div class="fs-12 text-secondary">
+                                                                    {{ translate('Batch') }}: {{ $orderDetail->batch->batch }}
+                                                                </div>
+                                                            @endif
                                                         </td>
                                                         <td class="border-top-0 border-bottom">
                                                             {{ $orderDetail->quantity }}
+                                                            @if((bool) ($orderDetail->is_scheme ?? false))
+                                                                <div class="fs-12 text-success fw-600">
+                                                                    {{ translate('Free item') }}
+                                                                </div>
+                                                            @endif
                                                         </td>
                                                         <td class="border-top-0 border-bottom">
                                                             @if ($order->shipping_type != null && $order->shipping_type == 'home_delivery')

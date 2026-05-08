@@ -2,8 +2,8 @@
     @php
         $physical = false;
         $col_val = 'col-12';
-        foreach ($products as $key => $cartItem){
-            $product = get_single_product($cartItem);
+        foreach ($cart_items as $key => $cartItem){
+            $product = get_single_product($cartItem->product_id);
             if ($product->digital == 0) {
                 $physical = true;
                 $col_val = 'col-md-6';
@@ -13,9 +13,10 @@
     <!-- Product List -->
     <div class="{{ $col_val }}">
         <ul class="list-group list-group-flush mb-3">
-            @foreach ($products as $key => $cartItem)
+            @foreach ($cart_items as $key => $cartItem)
                 @php
-                    $product = get_single_product($cartItem);
+                    $product = get_single_product($cartItem->product_id);
+                    $batchName = optional($cartItem->batch)->batch;
                 @endphp
                 <li class="list-group-item pl-0 py-3 border-0">
                     <div class="d-flex align-items-center">
@@ -27,8 +28,11 @@
                         </span>
                         <span class="fs-14 fw-400 text-dark">
                             <span class="text-truncate-2">{{ $product->getTranslation('name') }}</span>
-                            @if ($product_variation[$key] != '')
-                                <span class="fs-12 text-secondary">{{ translate('Variation') }}: {{ $product_variation[$key] }}</span>
+                            @if ($cartItem->variation != '')
+                                <span class="d-block fs-12 text-secondary">{{ translate('Variation') }}: {{ $cartItem->variation }}</span>
+                            @endif
+                            @if ($batchName)
+                                <span class="d-block fs-12 text-secondary">{{ translate('Batch') }}: {{ $batchName }}</span>
                             @endif
                         </span>
                     </div>
