@@ -199,6 +199,36 @@
     $couponDiscount = $order->coupon_discount ?? 0;
     $discountTotal = $couponDiscount + $lineDiscountTotal;
     $grandTotal = $order->grand_total;
+    $systemCurrency = get_system_default_currency();
+    $invoiceCurrencyCode = $order->quote_currency_code ?: optional($systemCurrency)->code;
+    $invoiceCurrency = $invoiceCurrencyCode
+        ? \App\Models\Currency::where('code', $invoiceCurrencyCode)->first()
+        : null;
+    $invoiceCurrency = $invoiceCurrency ?: $systemCurrency;
+    $invoiceCurrencySymbol = optional($invoiceCurrency)->symbol ?: optional($systemCurrency)->symbol;
+    $invoiceExchangeRate = $order->quote_currency_exchange_rate ?: optional($invoiceCurrency)->exchange_rate ?: optional($systemCurrency)->exchange_rate ?: 1;
+    $systemExchangeRate = optional($systemCurrency)->exchange_rate ?: 1;
+    $invoicePrice = function ($price) use ($invoiceCurrencyCode, $invoiceCurrencySymbol, $invoiceExchangeRate, $systemCurrency, $systemExchangeRate) {
+        $price = (float) $price;
+
+        if ($invoiceCurrencyCode && $invoiceCurrencyCode !== optional($systemCurrency)->code) {
+            $price = ($price / (float) $systemExchangeRate) * (float) $invoiceExchangeRate;
+        }
+
+        if (get_setting('decimal_separator') == 1) {
+            $formattedPrice = number_format($price, get_setting('no_of_decimals'));
+        } else {
+            $formattedPrice = number_format($price, get_setting('no_of_decimals'), ',', '.');
+        }
+
+        if (get_setting('symbol_format') == 1 || get_setting('symbol_format') == 3) {
+            return $invoiceCurrencySymbol . ' ' . $formattedPrice;
+        } elseif (get_setting('symbol_format') == 4) {
+            return $formattedPrice . ' ' . $invoiceCurrencySymbol;
+        }
+
+        return $formattedPrice . $invoiceCurrencySymbol;
+    };
     $ewbNumber = $grandTotal >= 50000 ? ($order->eway_bill ?? '-') : '-';
     $totalQty = $order->orderDetails->sum('quantity');
     $schemeQtyTotal = $order->orderDetails->sum(function ($row) {
@@ -419,14 +449,14 @@
                         <td class="text-center">{{ $category }}</td>
                         <td class="text-center">{{ $pack }}</td>
                         <td colspan="2" class="text-center qty-total">{{ $displayTotalQty }}</td>
-                        <td class="text-center">{{ single_price($sgst) }}</td>
-                        <td class="text-center">{{ single_price($cgst) }}</td>
-                        <td class="text-center">{{ single_price($igst) }}</td>
-                        <td class="text-center">{{ single_price($lineTax) }}</td>
-                        <td class="text-center rate-value">{{ single_price($unitPrice) }}</td>
-                        <td rowspan="2" class="text-center">{{ single_price($grossWithShipping) }}</td>
-                        <td class="text-center">{{ single_price($discountValue) }}</td>
-                        <td rowspan="2" class="text-right">{{ single_price($taxableAmount) }}</td>
+                        <td class="text-center">{{ $invoicePrice($sgst) }}</td>
+                        <td class="text-center">{{ $invoicePrice($cgst) }}</td>
+                        <td class="text-center">{{ $invoicePrice($igst) }}</td>
+                        <td class="text-center">{{ $invoicePrice($lineTax) }}</td>
+                        <td class="text-center rate-value">{{ $invoicePrice($unitPrice) }}</td>
+                        <td rowspan="2" class="text-center">{{ $invoicePrice($grossWithShipping) }}</td>
+                        <td class="text-center">{{ $invoicePrice($discountValue) }}</td>
+                        <td rowspan="2" class="text-right">{{ $invoicePrice($taxableAmount) }}</td>
                     </tr>
                     <tr class="item-bottom">
                         <td class="text-center">
@@ -440,7 +470,7 @@
                         <td class="text-center">{{ $cgstPercent }}</td>
                         <td class="text-center">{{ $igstPercent }}</td>
                         <td class="text-center"></td>
-                        <td class="text-center mrp-value">{{ single_price($mrp) }}</td>
+                        <td class="text-center mrp-value">{{ $invoicePrice($mrp) }}</td>
                         <td class="text-center">{{ $discountPercent }}</td>
                     </tr>
                 @empty
@@ -455,31 +485,31 @@
     <table class="meta" style="margin-top: 8px;">
         <tr>
             <td colspan="2" class="head">{{ translate('Qty') }}: {{ $totalQty }}</td>
-            <td class="head">{{ translate('Gross Value') }}: {{ single_price($subTotal + $shippingTotal) }}</td>
-            <td class="head">{{ translate('SGST') }}: {{ single_price($sgstTotal) }}</td>
-            <td class="head">{{ translate('Total Taxable Amount') }}: {{ single_price($taxableTotal) }}</td>
+            <td class="head">{{ translate('Gross Value') }}: {{ $invoicePrice($subTotal + $shippingTotal) }}</td>
+            <td class="head">{{ translate('SGST') }}: {{ $invoicePrice($sgstTotal) }}</td>
+            <td class="head">{{ translate('Total Taxable Amount') }}: {{ $invoicePrice($taxableTotal) }}</td>
         </tr>
         <tr>
             <td colspan="2" class="head">{{ translate('Scheme Qty (Free)') }}: {{ $schemeQtyTotal }}</td>
-            <td class="head">{{ translate('Less Discount') }}: {{ single_price($discountTotal) }}</td>
-            <td class="head">{{ translate('CGST') }}: {{ single_price($cgstTotal) }}</td>
-            <td class="head">{{ translate('Total GST Payable') }}: {{ single_price($taxTotal) }}</td>
+            <td class="head">{{ translate('Less Discount') }}: {{ $invoicePrice($discountTotal) }}</td>
+            <td class="head">{{ translate('CGST') }}: {{ $invoicePrice($cgstTotal) }}</td>
+            <td class="head">{{ translate('Total GST Payable') }}: {{ $invoicePrice($taxTotal) }}</td>
         </tr>
         <tr>
-            <td colspan="2" class="head">{{ translate('Coupon Discount') }}: {{ single_price($couponDiscount) }}</td>
-            <td class="head">{{ translate('Line Discount') }}: {{ single_price($lineDiscountTotal) }}</td>
-            <td class="head">{{ translate('IGST') }}: {{ single_price($igstTotal) }}</td>
-            <td class="head">{{ translate('CR/DR Note Adjusted') }}: {{ single_price(0) }}</td>
+            <td colspan="2" class="head">{{ translate('Coupon Discount') }}: {{ $invoicePrice($couponDiscount) }}</td>
+            <td class="head">{{ translate('Line Discount') }}: {{ $invoicePrice($lineDiscountTotal) }}</td>
+            <td class="head">{{ translate('IGST') }}: {{ $invoicePrice($igstTotal) }}</td>
+            <td class="head">{{ translate('CR/DR Note Adjusted') }}: {{ $invoicePrice(0) }}</td>
         </tr>
         <tr>
-            <td colspan="2" class="head">{{ translate('Exempted Value') }}: {{ single_price($exemptedValue) }}</td>
-            <td class="head">{{ translate('Insurance / Packing') }}: {{ single_price(0) }}</td>
-            <td class="head">{{ translate('GST') }}: {{ single_price($taxTotal) }}</td>
-            <td class="head">{{ translate('Round Off') }}: {{ single_price($roundOff) }}</td>
+            <td colspan="2" class="head">{{ translate('Exempted Value') }}: {{ $invoicePrice($exemptedValue) }}</td>
+            <td class="head">{{ translate('Insurance / Packing') }}: {{ $invoicePrice(0) }}</td>
+            <td class="head">{{ translate('GST') }}: {{ $invoicePrice($taxTotal) }}</td>
+            <td class="head">{{ translate('Round Off') }}: {{ $invoicePrice($roundOff) }}</td>
         </tr>
         <tr>
             <td colspan="4" class="head text-right">{{ translate('Grand Total') }}</td>
-            <td colspan="1"><strong>{{ single_price($grandTotal) }}</strong></td>
+            <td colspan="1"><strong>{{ $invoicePrice($grandTotal) }}</strong></td>
         </tr>
     </table>
 
