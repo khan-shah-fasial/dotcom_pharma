@@ -68,10 +68,24 @@
         .items th,
         .items td {
             border: 1px solid #000;
-            padding: 6px 5px;
+            padding: 3px 4px;
             font-size: 10px;
         }
-        .items th { background: #dfe6f3; font-weight: 700; }
+        .items th {
+            background: #dfe6f3;
+            font-weight: 700;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 1.12;
+        }
+        .items td {
+            vertical-align: middle;
+            line-height: 1.15;
+        }
+        .items .product-name { font-weight: 700; text-align: left; }
+        .items .qty-total { color: #00f; font-weight: 700; }
+        .items .rate-value { color: #00f; }
+        .items .mrp-value { color: #f00; font-weight: 700; }
         .text-right { text-align: {{ $not_text_align }}; }
         .text-center { text-align: center; }
         .note-band {
@@ -321,21 +335,28 @@
         <table class="items">
             <thead>
                 <tr>
-                    <th width="3%">{{ translate('Sr. No.') }}</th>
-                    <th width="15%">{{ translate('Description') }}</th>
-                    <th width="6%">{{ translate('Pack') }}</th>
-                    <th width="12%">{{ translate('Batch / Expiry') }}</th>
-                    <th width="7%">{{ translate('Category / HSN') }}</th>
-                    <th width="8%">{{ translate('MFG / MKT') }}</th>
-                    <th width="7%">{{ translate('Total Qty') }}<br><span class="small">{{ translate('Qty / SCM') }}</span></th>
-                    <th width="7%">{{ translate('SGST') }}<br><span class="small">{{ translate('SGST') }}%</span></th>
-                    <th width="7%">{{ translate('CGST') }}<br><span class="small">{{ translate('CGST') }}%</span></th>
-                    <th width="7%">{{ translate('IGST') }}<br><span class="small">{{ translate('IGST') }}%</span></th>
-                    <th width="7%">{{ translate('GST Value') }}</th>
-                    <th width="7%">{{ translate('Rate / MRP') }}</th>
-                    <th width="7%">{{ translate('Gross Value') }}</th>
-                    <th width="6%">{{ translate('Amt Dis') }} %</th>
-                    <th width="8%" class="text-right">{{ translate('Taxable Amount') }}</th>
+                    <th width="3%" rowspan="2">{{ translate('Sr.') }}<br>{{ translate('No.') }}</th>
+                    <th width="16%">{{ translate('Description') }}</th>
+                    <th width="7%">{{ translate('Category') }}</th>
+                    <th width="7%">{{ translate('Pack') }}</th>
+                    <th width="8%" colspan="2">{{ translate('Total Qty') }}</th>
+                    <th width="20%" colspan="4">{{ translate('GST Details') }}</th>
+                    <th width="7%">{{ translate('Rate') }}</th>
+                    <th width="8%" rowspan="2">{{ translate('Gross') }}<br>{{ translate('Value') }}</th>
+                    <th width="7%" rowspan="2">{{ translate('Amt') }}<br>{{ translate('Dis') }} %</th>
+                    <th width="9%" rowspan="2">{{ translate('Taxable') }}<br>{{ translate('Amount') }}</th>
+                </tr>
+                <tr>
+                    <th>{{ translate('Batch No. / Expiry') }}</th>
+                    <th>{{ translate('HSN') }}</th>
+                    <th>{{ translate('MFG/MKT') }}</th>
+                    <th>{{ translate('Qty') }}</th>
+                    <th>{{ translate('SCM') }}</th>
+                    <th>{{ translate('SGST') }}%</th>
+                    <th>{{ translate('CGST') }}%</th>
+                    <th>{{ translate('IGST') }}%</th>
+                    <th>{{ translate('Value') }}</th>
+                    <th class="red-color">{{ translate('M.R.P') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -386,53 +407,45 @@
                         $igstTotal += $igst;
                         $taxTotal += $lineTax;
                     @endphp
-                    <tr>
-                        <td class="text-center">{{ $idx + 1 }}</td>
-                        <td>
+                    <tr class="item-top">
+                        <td rowspan="2" class="text-center">{{ $idx + 1 }}</td>
+                        <td class="product-name">
                             {{ optional($product)->name ?? translate('Product Removed') }}{{ $variation }}
                             @php $stockArray = $matchingStock ? $matchingStock->toArray() : []; @endphp
                             @if(!empty($stockArray['sku']))
                                 <div class="small">{{ translate('SKU') }}: {{ $stockArray['sku'] }}</div>
                             @endif
                         </td>
+                        <td class="text-center">{{ $category }}</td>
                         <td class="text-center">{{ $pack }}</td>
-                        <td class="text-center">
-                            <div>{{ translate('Batch') }}: {{ $batchNo }}</div>
-                            <div>{{ translate('Expiry') }}: {{ $expiryFormatted }}</div>
-                        </td>
-                        <td class="text-center">{{ $category }} <br> {{ $hsn }}</td>
-                        <td class="text-center">{{ $brandName }}</td>
-                        <td class="text-center">
-                            <div class="label">{{ $displayTotalQty }}</div>
-                            <div class="small">{{ translate('QTY') }}: {{ $qty }} &nbsp; {{ translate('SCM') }}: {{ $schemeQty }}</div>
-                        </td>
-                        <td class="text-center">
-                            <div>{{ single_price($sgst) }}</div>
-                            <div class="small">{{ $sgstPercent }}%</div>
-                        </td>
-                        <td class="text-center">
-                            <div>{{ single_price($cgst) }}</div>
-                            <div class="small">{{ $cgstPercent }}%</div>
-                        </td>
-                        <td class="text-center">
-                            <div>{{ single_price($igst) }}</div>
-                            <div class="small">{{ $igstPercent }}%</div>
-                        </td>
+                        <td colspan="2" class="text-center qty-total">{{ $displayTotalQty }}</td>
+                        <td class="text-center">{{ single_price($sgst) }}</td>
+                        <td class="text-center">{{ single_price($cgst) }}</td>
+                        <td class="text-center">{{ single_price($igst) }}</td>
                         <td class="text-center">{{ single_price($lineTax) }}</td>
+                        <td class="text-center rate-value">{{ single_price($unitPrice) }}</td>
+                        <td rowspan="2" class="text-center">{{ single_price($grossWithShipping) }}</td>
+                        <td class="text-center">{{ single_price($discountValue) }}</td>
+                        <td rowspan="2" class="text-right">{{ single_price($taxableAmount) }}</td>
+                    </tr>
+                    <tr class="item-bottom">
                         <td class="text-center">
-                            <div class="label">{{ single_price($unitPrice) }}</div>
-                            <div class="small red-color">{{ single_price($mrp) }}</div>
+                            {{ $batchNo }} &nbsp; {{ $expiryFormatted }}
                         </td>
-                        <td class="text-center">{{ single_price($grossWithShipping) }}</td>
-                        <td class="text-center">
-                            <div class="label">{{ single_price($discountValue) }}</div>
-                            <div class="small">{{ $discountPercent }}%</div>
-                        </td>
-                        <td class="text-right">{{ single_price($taxableAmount) }}</td>
+                        <td class="text-center">{{ $hsn }}</td>
+                        <td class="text-center">{{ $brandName }}</td>
+                        <td class="text-center">{{ $qty }}</td>
+                        <td class="text-center">{{ $schemeQty }}</td>
+                        <td class="text-center">{{ $sgstPercent }}</td>
+                        <td class="text-center">{{ $cgstPercent }}</td>
+                        <td class="text-center">{{ $igstPercent }}</td>
+                        <td class="text-center"></td>
+                        <td class="text-center mrp-value">{{ single_price($mrp) }}</td>
+                        <td class="text-center">{{ $discountPercent }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="15" class="text-center">{{ translate('No items found for this order.') }}</td>
+                        <td colspan="14" class="text-center">{{ translate('No items found for this order.') }}</td>
                     </tr>
                 @endforelse
             </tbody>
