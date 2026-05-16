@@ -2875,7 +2875,10 @@
                                                     var batchesMap = $batchDropdown.data('batches-map') || {};
                                                     var batchData = batchesMap[targetBatchId];
                                                     
-                                                    if (batchData && typeof selectBatch === 'function') {
+                                                    if (batchData && (batchData.is_expired || batchData.is_selectable === false)) {
+                                                        $('#selected_batch_id').val('');
+                                                        autoSelectInProgress = false;
+                                                    } else if (batchData && typeof selectBatch === 'function') {
                                                         selectBatch(targetBatchId, batchData);
                                                     } else {
                                                         // Fallback: set dropdown value and refresh price

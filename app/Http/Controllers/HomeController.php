@@ -1117,8 +1117,12 @@ class HomeController extends Controller
             );
         }
 
-        // Load batches for this stock
-        $batches = $product_stock->batches()->orderBy('id')->get();
+        // Load all batches for display, and valid batches for every selectable/usable path.
+        $batches = $product_stock->batches()
+            ->orderBy('product_exp_date')
+            ->orderBy('id')
+            ->get();
+        $validBatches = valid_batches_for_stock($product_stock, true);
 
         // Get selected batch ID from request (if provided)
         $selectedBatchId = $request->input('batch_id', null);
@@ -1127,23 +1131,14 @@ class HomeController extends Controller
         $batchOfferDiscount = 0;
         $batchOfferDiscountPercent = 0;
 
-        if ($selectedBatchId && $batches->isNotEmpty()) {
-            $selectedBatch = $batches->where('id', $selectedBatchId)->first();
+        if ($selectedBatchId && $validBatches->isNotEmpty()) {
+            $selectedBatch = $validBatches->where('id', (int) $selectedBatchId)->first();
         }
 
         // Auto-select lowest in-stock batch by resolved sale price (align detail UX with listing).
-        if (!$selectedBatch && $batches->isNotEmpty()) {
-            $candidateBatches = $batches->filter(function ($batch) {
-                return (int) ($batch->qty ?? 0) > 0;
-            });
-
-            // Keep fallback behavior when no in-stock batch exists.
-            if ($candidateBatches->isEmpty()) {
-                $candidateBatches = $batches;
-            }
-
+        if (!$selectedBatch && $validBatches->isNotEmpty()) {
             $lowestResolved = null;
-            foreach ($candidateBatches as $candidateBatch) {
+            foreach ($validBatches as $candidateBatch) {
                 $candidate = resolvePrice($product, $product_stock, $candidateBatch, $requestedQty);
                 if ($lowestResolved === null || $candidate['sale_price'] < $lowestResolved['sale_price']) {
                     $lowestResolved = $candidate;
@@ -1152,19 +1147,10 @@ class HomeController extends Controller
             }
         }
 
-        // If no valid in-stock batch exists, keep existing fallback behavior.
-        if (!$selectedBatch && $batches->isNotEmpty()) {
-            $selectedBatch = $batches->first();
-        }
-
         // When a batch is selected, quantity must not exceed selected batch stock.
         if ($selectedBatch) {
             $selectedBatchQtyLimit = max(0, (int) ($selectedBatch->qty ?? 0));
-            $selectedBatchPaidQtyLimit = resolve_scheme_max_paid_qty(
-                $selectedBatchQtyLimit,
-                $product_stock->min_qty ?? $product->min_qty ?? 1,
-                $selectedBatch->scheme ?? 0
-            );
+            $selectedBatchPaidQtyLimit = $selectedBatchQtyLimit;
             if ($selectedBatchPaidQtyLimit > 0) {
                 $requestedQty = min($requestedQty, $selectedBatchPaidQtyLimit);
             }
@@ -1179,18 +1165,18 @@ class HomeController extends Controller
             $expiryDate = $selectedBatch->product_exp_date ?? null;
             $manufacturingDate = $selectedBatch->manufacturing_date ?? null;
             $batchQty = $selectedBatch->qty ?? 0;
-            $batchScheme = (int) ($selectedBatch->scheme ?? 0);
+            $batchScheme = (int) ($product_stock->scheme ?? 0);
         } else {
             // No batch selected - try to get from first available batch or fallback to product-level
-            if ($batches->isNotEmpty()) {
-                $firstBatch = $batches->first();
+            if ($validBatches->isNotEmpty()) {
+                $firstBatch = $validBatches->first();
                 $mrpPrice = $firstBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
                 $rolePrice = $firstBatch->role_price ?? $product->role_price;
                 $coa = $firstBatch->coa ?? null;
                 $expiryDate = $firstBatch->product_exp_date ?? null;
                 $manufacturingDate = $firstBatch->manufacturing_date ?? null;
                 $batchQty = $firstBatch->qty ?? 0;
-                $batchScheme = (int) ($firstBatch->scheme ?? 0);
+                $batchScheme = (int) ($product_stock->scheme ?? 0);
             } else {
                 // No batches exist - fallback to product-level (NOT stock-level)
                 $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
@@ -1199,7 +1185,7 @@ class HomeController extends Controller
                 $expiryDate = $product_stock->product_exp_date ?? null;
                 $manufacturingDate = null;
                 $batchQty = $product_stock->qty ?? 0;
-                $batchScheme = 0;
+                $batchScheme = (int) ($product_stock->scheme ?? 0);
             }
         }
 
@@ -1243,13 +1229,11 @@ class HomeController extends Controller
         $case_dimension = ($product_stock->case_length ?? '-') . ' x ' . ($product_stock->case_width ?? '-') . ' x ' . ($product_stock->case_height ?? '-');
 
         // Calculate total quantity from all batches
-        $quantity = $batches->isNotEmpty() ? $batches->sum('qty') : ($product_stock->qty ?? 0);
+        $quantity = $batches->isNotEmpty() ? $validBatches->sum('qty') : ($product_stock->qty ?? 0);
         $selectedBatchQty = $selectedBatch ? max(0, (int) ($selectedBatch->qty ?? 0)) : null;
-        $schemeQty = $selectedBatch ? calculate_scheme_qty($requestedQty, $stock_min_qty, $batchScheme) : 0;
+        $schemeQty = calculate_scheme_qty($requestedQty, $stock_min_qty, $batchScheme);
         $stockRequired = $requestedQty + $schemeQty;
-        $selectedBatchMaxPaidQty = $selectedBatch
-            ? resolve_scheme_max_paid_qty($selectedBatchQty, $stock_min_qty, $batchScheme)
-            : null;
+        $selectedBatchMaxPaidQty = $selectedBatch ? $selectedBatchQty : null;
         $max_limit = $selectedBatch ? $selectedBatchMaxPaidQty : $quantity;
 
         if ($quantity >= 1 && $stock_min_qty <= $quantity) {
@@ -1301,6 +1285,8 @@ class HomeController extends Controller
             $batchExpiry = $batch->product_exp_date ? Carbon::parse($batch->product_exp_date)->format('M Y') : null;
             $batchManufacturing = $batch->manufacturing_date ? Carbon::parse($batch->manufacturing_date)->format('M Y') : null;
             $batchRolePrice = $batch->role_price ?? [];
+            $batchExpired = is_batch_expired($batch);
+            $batchSelectable = !$batchExpired && (int) ($batch->qty ?? 0) > 0;
 
             $batchesData[] = [
                 'id' => $batch->id,
@@ -1315,9 +1301,11 @@ class HomeController extends Controller
                 'manufacturing_date_raw' => $batch->manufacturing_date,
                 'role_price' => $batchRolePrice,
                 'role_price_formatted' => $batchRolePrice ? json_encode($batchRolePrice) : null,
-                'scheme' => (int) ($batch->scheme ?? 0),
-                'scheme_qty' => calculate_scheme_qty($requestedQty, $stock_min_qty, $batch->scheme ?? 0),
-                'max_paid_qty' => resolve_scheme_max_paid_qty($batch->qty ?? 0, $stock_min_qty, $batch->scheme ?? 0),
+                'scheme' => $batchScheme,
+                'scheme_qty' => calculate_scheme_qty($requestedQty, $stock_min_qty, $batchScheme),
+                'max_paid_qty' => $batchSelectable ? (int) ($batch->qty ?? 0) : 0,
+                'is_expired' => $batchExpired,
+                'is_selectable' => $batchSelectable,
             ];
         }
 

@@ -57,7 +57,7 @@
                         </tr>
                         <tr>
                             <td class="w-50 fw-600">{{ translate('Total order amount') }}:</td>
-                            <td>{{ single_price($order->orderDetails->sum('price') + $order->orderDetails->sum('tax')) }}
+                            <td>{{ single_price($order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail)) + $order->orderDetails->sum('tax')) }}
                             </td>
                         </tr>
                         <tr>
@@ -155,7 +155,7 @@
                                             @endif
                                         @endif
                                     </td>
-                                    <td class="fw-700">{{ single_price($orderDetail->price) }}</td>
+                                    <td class="fw-700">{{ single_price(order_detail_line_subtotal($orderDetail)) }}</td>
                                     @if (addon_is_activated('refund_request'))
                                         @php
                                             $no_of_max_day = get_setting('refund_request_time');
@@ -208,7 +208,7 @@
                             <tr>
                                 <td class="w-50 fw-600">{{ translate('Subtotal') }}</td>
                                 <td class="text-right">
-                                    <span class="strong-600">{{ single_price($order->orderDetails->sum('price')) }}</span>
+                                    <span class="strong-600">{{ single_price($order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail))) }}</span>
                                 </td>
                             </tr>
                             <tr>

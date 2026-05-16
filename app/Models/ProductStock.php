@@ -26,6 +26,7 @@ class ProductStock extends Model
         'weight',
         'count',
         'min_qty',
+        'scheme',
         'product_exp_date',
         'qty_per_piece',
         'qty_per_buffer_box',
@@ -45,6 +46,7 @@ class ProductStock extends Model
 
     protected $casts = [
         'is_hidden' => 'boolean',
+        'scheme' => 'integer',
     ];
     //
     public function product(){

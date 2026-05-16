@@ -23,19 +23,11 @@
                                 @php
                                     $product = get_single_product($cartItem['product_id']);
                                     $product_stock = $product->stocks->where('variant', $cartItem['variation'])->first();
-                                    $schemeCartItem = $carts->first(function ($row) use ($cartItem) {
+                                    $schemeQty = $carts->filter(function ($row) use ($cartItem) {
                                         return (bool) ($row->is_scheme ?? false)
                                             && (int) $row->product_id === (int) $cartItem->product_id
-                                            && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '')
-                                            && (int) ($row->batch_id ?? 0) === (int) ($cartItem->batch_id ?? 0);
-                                    });
-                                    $schemeQty = (int) optional($schemeCartItem)->quantity;
-                                    if ($schemeQty <= 0 && !empty($cartItem->batch_id) && $product_stock) {
-                                        $cartBatch = \App\Models\ProductBatch::where('id', $cartItem->batch_id)->where('product_stock_id', $product_stock->id)->first();
-                                        if ($cartBatch) {
-                                            $schemeQty = calculate_scheme_qty($cartItem->quantity, $product_stock->min_qty ?? $product->min_qty ?? 1, $cartBatch->scheme ?? 0);
-                                        }
-                                    }
+                                            && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '');
+                                    })->sum('quantity');
                                     // $total = $total + ($cartItem['price']  + $cartItem['tax']) * $cartItem['quantity'];
                                     $total = $total + cart_product_price($cartItem, $product, false) * $cartItem['quantity'];
                                     $product_name_with_choice = $product->getTranslation('name');

@@ -197,7 +197,7 @@
                                                                 @endif
                                                             @endif
                                                         </td>
-                                                        <td class="border-top-0 border-bottom pr-0 text-right">{{ single_price($orderDetail->price) }}</td>
+                                                        <td class="border-top-0 border-bottom pr-0 text-right">{{ single_price(order_detail_line_subtotal($orderDetail)) }}</td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
@@ -212,7 +212,7 @@
                                                     <tr>
                                                         <th class="border-top-0 py-2">{{ translate('Subtotal')}}</th>
                                                         <td class="text-right border-top-0 pr-0 py-2">
-                                                            <span class="fw-600">{{ single_price($order->orderDetails->sum('price')) }}</span>
+                                                            <span class="fw-600">{{ single_price($order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail))) }}</span>
                                                         </td>
                                                     </tr>
                                                     <!-- Shipping -->

@@ -192,7 +192,7 @@
         $deliveryType = $order->carrier->name;
     }
 
-    $subTotal = $order->orderDetails->sum('price');
+    $subTotal = $order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail));
     $shippingTotal = $order->orderDetails->sum('shipping_cost');
     $taxTotal = 0;
     $lineDiscountTotal = 0; // order details do not carry a discount field
@@ -245,27 +245,64 @@
     $exemptedValue = 0;
     $roundOff = 0;
 
-    $invoiceLines = $order->orderDetails
+    $paidDetails = $order->orderDetails
         ->filter(function ($detail) {
             return !(bool) ($detail->is_scheme ?? false);
         })
-        ->values()
-        ->map(function ($detail) use ($order) {
-            $schemeQty = $order->orderDetails
-                ->filter(function ($row) use ($detail) {
-                    return (bool) ($row->is_scheme ?? false)
-                        && (int) ($row->product_id ?? 0) === (int) ($detail->product_id ?? 0)
-                        && (string) ($row->variation ?? '') === (string) ($detail->variation ?? '')
-                        && (int) ($row->batch_id ?? 0) === (int) ($detail->batch_id ?? 0);
-                })
-                ->sum('quantity');
+        ->values();
+    $schemeDetails = $order->orderDetails
+        ->filter(function ($detail) {
+            return (bool) ($detail->is_scheme ?? false);
+        })
+        ->values();
 
-            return [
-                'detail' => $detail,
-                'scheme_qty' => (int) $schemeQty,
-                'total_qty' => (int) ($detail->quantity ?? 0) + (int) $schemeQty,
-            ];
+    $invoiceLines = collect();
+    $mergedSchemeDetailIds = [];
+    foreach ($paidDetails as $detail) {
+        $sameBatchSchemeRows = $schemeDetails
+            ->filter(function ($row) use ($detail) {
+                return (int) ($row->product_id ?? 0) === (int) ($detail->product_id ?? 0)
+                    && (string) ($row->variation ?? '') === (string) ($detail->variation ?? '')
+                    && (int) ($row->batch_id ?? 0) === (int) ($detail->batch_id ?? 0);
+            })
+            ->filter(function ($row) use ($mergedSchemeDetailIds) {
+                return !in_array((int) ($row->id ?? 0), $mergedSchemeDetailIds, true);
+            });
+        $sameBatchSchemeQty = $sameBatchSchemeRows->sum('quantity');
+        foreach ($sameBatchSchemeRows as $row) {
+            $mergedSchemeDetailIds[] = (int) ($row->id ?? 0);
+        }
+
+        $invoiceLines->push([
+            'detail' => $detail,
+            'scheme_qty' => (int) $sameBatchSchemeQty,
+            'paid_qty' => (int) ($detail->quantity ?? 0),
+            'total_qty' => (int) ($detail->quantity ?? 0) + (int) $sameBatchSchemeQty,
+            'is_scheme_only' => false,
+        ]);
+    }
+
+    foreach ($schemeDetails as $schemeDetail) {
+        if (in_array((int) ($schemeDetail->id ?? 0), $mergedSchemeDetailIds, true)) {
+            continue;
+        }
+
+        $hasPaidSameBatch = $paidDetails->contains(function ($detail) use ($schemeDetail) {
+            return (int) ($detail->product_id ?? 0) === (int) ($schemeDetail->product_id ?? 0)
+                && (string) ($detail->variation ?? '') === (string) ($schemeDetail->variation ?? '')
+                && (int) ($detail->batch_id ?? 0) === (int) ($schemeDetail->batch_id ?? 0);
         });
+
+        if (!$hasPaidSameBatch) {
+            $invoiceLines->push([
+                'detail' => $schemeDetail,
+                'scheme_qty' => (int) ($schemeDetail->quantity ?? 0),
+                'paid_qty' => 0,
+                'total_qty' => (int) ($schemeDetail->quantity ?? 0),
+                'is_scheme_only' => true,
+            ]);
+        }
+    }
 @endphp
 <div class="invoice-wrap">
     <table class="band">
@@ -397,11 +434,11 @@
                         $variation = $detail->variation ? ' (' . $detail->variation . ')' : '';
                         $category = optional($product?->main_category)->getTranslation('name') ?? '-';
                         $hsn = $product->product_hsn ?? '-';
-                        $qty = $detail->quantity;
+                        $qty = $invoiceLine['paid_qty'] ?? $detail->quantity;
                         $schemeQty = $invoiceLine['scheme_qty'];
                         $displayTotalQty = $invoiceLine['total_qty'];
-                        $unitPrice = $qty > 0 ? $detail->price / $qty : $detail->price;
-                        $lineGross = $detail->price;
+                        $lineGross = order_detail_line_subtotal($detail);
+                        $unitPrice = $qty > 0 ? $lineGross / $qty : 0;
                         $lineTax = $detail->tax;
                         $lineShipping = $detail->shipping_cost;
                         $lineDiscountValue = 0; // order details do not store per-line discount
@@ -441,6 +478,9 @@
                         <td rowspan="2" class="text-center">{{ $idx + 1 }}</td>
                         <td class="product-name">
                             {{ optional($product)->name ?? translate('Product Removed') }}{{ $variation }}
+                            @if(!empty($invoiceLine['is_scheme_only']))
+                                <div class="small">{{ translate('Scheme Free') }}</div>
+                            @endif
                             @php $stockArray = $matchingStock ? $matchingStock->toArray() : []; @endphp
                             @if(!empty($stockArray['sku']))
                                 <div class="small">{{ translate('SKU') }}: {{ $stockArray['sku'] }}</div>

@@ -80,23 +80,18 @@
                                     @php
                                         $cartItem = $paid_carts->firstWhere('id', $cart_id);
                                         $product = get_single_product($cartItem->product_id);
-                                        $schemeCartItem = $carts->first(function ($row) use ($cartItem) {
+                                        $schemeQty = $carts->filter(function ($row) use ($cartItem) {
                                             return (bool) ($row->is_scheme ?? false)
                                                 && (int) $row->product_id === (int) $cartItem->product_id
-                                                && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '')
-                                                && (int) ($row->batch_id ?? 0) === (int) ($cartItem->batch_id ?? 0);
-                                        });
-                                        $schemeQty = (int) optional($schemeCartItem)->quantity;
+                                                && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '');
+                                        })->sum('quantity');
                                         $product_stock = $product->stocks->where('variant', $cartItem->variation)->first();
                                         $cartMinQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
                                         $cartMaxQty = $product_stock->qty ?? 0;
                                         if (!empty($cartItem->batch_id) && $product_stock) {
                                             $cartBatch = \App\Models\ProductBatch::where('id', $cartItem->batch_id)->where('product_stock_id', $product_stock->id)->first();
                                             if ($cartBatch) {
-                                                $cartMaxQty = resolve_scheme_max_paid_qty($cartBatch->qty ?? 0, $cartMinQty, $cartBatch->scheme ?? 0);
-                                                if ($schemeQty <= 0) {
-                                                    $schemeQty = calculate_scheme_qty($cartItem->quantity, $cartMinQty, $cartBatch->scheme ?? 0);
-                                                }
+                                                $cartMaxQty = is_batch_usable_for_sale($cartBatch) ? ($cartBatch->qty ?? 0) : 0;
                                             }
                                         }
                                         $batchName = optional($cartItem->batch)->batch;
@@ -215,23 +210,18 @@
                                         @php
                                             $cartItem = $paid_carts->firstWhere('id', $cart_id);
                                             $product = get_single_product($cartItem->product_id);
-                                            $schemeCartItem = $carts->first(function ($row) use ($cartItem) {
+                                            $schemeQty = $carts->filter(function ($row) use ($cartItem) {
                                                 return (bool) ($row->is_scheme ?? false)
                                                     && (int) $row->product_id === (int) $cartItem->product_id
-                                                    && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '')
-                                                    && (int) ($row->batch_id ?? 0) === (int) ($cartItem->batch_id ?? 0);
-                                            });
-                                            $schemeQty = (int) optional($schemeCartItem)->quantity;
+                                                    && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '');
+                                            })->sum('quantity');
                                             $product_stock = $product->stocks->where('variant', $cartItem->variation)->first();
                                             $cartMinQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
                                             $cartMaxQty = $product_stock->qty ?? 0;
                                             if (!empty($cartItem->batch_id) && $product_stock) {
                                                 $cartBatch = \App\Models\ProductBatch::where('id', $cartItem->batch_id)->where('product_stock_id', $product_stock->id)->first();
                                                 if ($cartBatch) {
-                                                    $cartMaxQty = resolve_scheme_max_paid_qty($cartBatch->qty ?? 0, $cartMinQty, $cartBatch->scheme ?? 0);
-                                                    if ($schemeQty <= 0) {
-                                                        $schemeQty = calculate_scheme_qty($cartItem->quantity, $cartMinQty, $cartBatch->scheme ?? 0);
-                                                    }
+                                                    $cartMaxQty = is_batch_usable_for_sale($cartBatch) ? ($cartBatch->qty ?? 0) : 0;
                                                 }
                                             }
                                             $batchName = optional($cartItem->batch)->batch;

@@ -112,7 +112,7 @@ class ProductController extends Controller
 
         //Product Stock
         $this->productStockService->store($request->only([
-            'colors_active', 'colors', 'choice_no', 'unit_price', 'sku', 'current_stock', 'product_id'
+            'colors_active', 'colors', 'choice_no', 'unit_price', 'sku', 'current_stock', 'scheme', 'product_id'
         ]), $product);
 
         // Frequently Bought Products
@@ -185,7 +185,7 @@ class ProductController extends Controller
 
         $stockData = $request->only([
             'colors_active', 'colors', 'choice_no', 'unit_price', 'mrp_price', 'sku', 'current_stock',
-            'length', 'width', 'height', 'weight', 'count', 'min_qty', 'product_exp_date',
+            'length', 'width', 'height', 'weight', 'count', 'min_qty', 'scheme', 'product_exp_date',
             'qty_per_piece', 'qty_per_buffer_box', 'total_qty_per_case', 'weight_buffer_box', 'weight_case',
             'buffer_length', 'buffer_width', 'buffer_height', 'case_length', 'case_width', 'case_height',
             'product_id'

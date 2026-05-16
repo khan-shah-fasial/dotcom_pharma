@@ -102,17 +102,97 @@ class OrderController extends Controller
             $tax = 0;
             $shipping = 0;
             $coupon_discount = 0;
+            $schemeAllocationsByGroup = [];
+            $schemeGroupsWritten = [];
+
+            $paidSellerItems = collect($seller_product)->filter(function ($item) {
+                return !(bool) ($item['is_scheme'] ?? false);
+            });
+
+            foreach ($paidSellerItems->groupBy(function ($item) {
+                return (int) $item['product_id'] . '|' . (string) ($item['variation'] ?? '');
+            }) as $groupKey => $groupItems) {
+                $firstItem = $groupItems->first();
+                $groupProduct = Product::find($firstItem['product_id']);
+                $groupStock = $groupProduct ? $groupProduct->stocks->where('variant', $firstItem['variation'])->first() : null;
+
+                if (!$groupProduct || $groupProduct->digital == 1 || !$groupStock) {
+                    $schemeAllocationsByGroup[$groupKey] = [];
+                    continue;
+                }
+
+                $reservations = [];
+                $unbatchedQty = 0;
+                foreach ($groupItems as $line) {
+                    if (!empty($line['batch_id'])) {
+                        $lineBatch = $groupStock->batches()->where('id', $line['batch_id'])->first();
+                        if (!$lineBatch || is_batch_expired($lineBatch)) {
+                            $order->delete();
+                            $combined_order->delete();
+                            return response()->json([
+                                'combined_order_id' => 0,
+                                'result' => false,
+                                'message' => translate('Invalid batch selected for ') . $groupProduct->name
+                            ]);
+                        }
+                        $reservations[(int) $lineBatch->id] = ($reservations[(int) $lineBatch->id] ?? 0) + (int) $line['quantity'];
+                    } else {
+                        $unbatchedQty += (int) $line['quantity'];
+                    }
+                }
+
+                if ($unbatchedQty > (int) $groupStock->qty) {
+                    $order->delete();
+                    $combined_order->delete();
+                    return response()->json([
+                        'combined_order_id' => 0,
+                        'result' => false,
+                        'message' => translate('The requested quantity is not available for ') . $groupProduct->name
+                    ]);
+                }
+
+                foreach ($reservations as $reservedBatchId => $reservedQty) {
+                    $reservedBatch = $groupStock->batches()->where('id', $reservedBatchId)->first();
+                    if (!$reservedBatch || (int) $reservedBatch->qty < (int) $reservedQty) {
+                        $order->delete();
+                        $combined_order->delete();
+                        return response()->json([
+                            'combined_order_id' => 0,
+                            'result' => false,
+                            'message' => translate('The requested quantity is not available for ') . $groupProduct->name
+                        ]);
+                    }
+                }
+
+                $minQty = $groupStock->min_qty ?? $groupProduct->min_qty ?? 1;
+                $schemeQty = calculate_scheme_qty($groupItems->sum('quantity'), $minQty, (int) ($groupStock->scheme ?? 0));
+                $schemePreview = allocate_scheme_free_batches($groupStock, $schemeQty, $reservations);
+                if (!$schemePreview['success']) {
+                    $order->delete();
+                    $combined_order->delete();
+                    return response()->json([
+                        'combined_order_id' => 0,
+                        'result' => false,
+                        'message' => translate('The requested scheme quantity is not available for ') . $groupProduct->name
+                    ]);
+                }
+                $schemeAllocationsByGroup[$groupKey] = $schemePreview['allocations'];
+            }
 
             //Order Details Storing
             foreach ($seller_product as $cartItem) {
                 $product = Product::find($cartItem['product_id']);
                 $isSchemeLine = (bool) ($cartItem['is_scheme'] ?? false);
+                if ($isSchemeLine) {
+                    continue;
+                }
 
-                $subtotal += $isSchemeLine ? 0 : cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
+                $unitSalePrice = $cartItem['sale_price'] ?? cart_product_price($cartItem, $product, false, false);
+                $subtotal += $unitSalePrice * $cartItem['quantity'];
                 // Use stored tax from cart (calculated from batch/stock price at add-to-cart)
-                $itemTax = $isSchemeLine ? 0 : (($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity']);
+                $itemTax = ($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity'];
                 $tax += $itemTax;
-                $coupon_discount += $isSchemeLine ? 0 : $cartItem['discount'];
+                $coupon_discount += $cartItem['discount'];
 
                 $product_variation = $cartItem['variation'];
 
@@ -121,15 +201,14 @@ class OrderController extends Controller
                 // Get batch_id from cart if available
                 $batchId = $cartItem['batch_id'] ?? null;
                 $selectedBatch = null;
-                $schemeQty = 0;
-                $hasSchemeCartLine = false;
+                $groupKey = (int) $cartItem['product_id'] . '|' . (string) ($product_variation ?? '');
                 
                 // Stock validation and deduction
-                if (!$isSchemeLine && $product->digital != 1 && $product_stock) {
+                if ($product->digital != 1 && $product_stock) {
                     if ($batchId) {
                         // Validate batch belongs to this stock and deduct from batch
                         $selectedBatch = $product_stock->batches()->where('id', $batchId)->first();
-                        if (!$selectedBatch) {
+                        if (!$selectedBatch || is_batch_expired($selectedBatch)) {
                             $order->delete();
                             $combined_order->delete();
                             return response()->json([
@@ -139,18 +218,7 @@ class OrderController extends Controller
                             ]);
                         }
 
-                        $minQty = $product_stock->min_qty ?? $product->min_qty ?? 1;
-                        $schemeCartLine = collect($seller_product)->first(function ($line) use ($cartItem) {
-                            return (bool) ($line['is_scheme'] ?? false)
-                                && (int) $line['product_id'] === (int) $cartItem['product_id']
-                                && (string) ($line['variation'] ?? '') === (string) ($cartItem['variation'] ?? '')
-                                && (int) ($line['batch_id'] ?? 0) === (int) ($cartItem['batch_id'] ?? 0);
-                        });
-                        $hasSchemeCartLine = $schemeCartLine != null;
-                        $schemeQty = $schemeCartLine ? (int) $schemeCartLine['quantity'] : calculate_scheme_qty($cartItem['quantity'], $minQty, $selectedBatch->scheme ?? 0);
-                        $stockRequired = $cartItem['quantity'] + $schemeQty;
-                        
-                        if ($stockRequired > $selectedBatch->qty) {
+                        if ($cartItem['quantity'] > $selectedBatch->qty) {
                             $order->delete();
                             $combined_order->delete();
                             return response()->json([
@@ -160,7 +228,7 @@ class OrderController extends Controller
                             ]);
                         }
                         
-                        $selectedBatch->qty -= $stockRequired;
+                        $selectedBatch->qty -= $cartItem['quantity'];
                         $selectedBatch->save();
                         
                         // Update parent stock quantity (aggregate from batches)
@@ -180,6 +248,7 @@ class OrderController extends Controller
                                 'message' => translate('The requested quantity is not available for ') . $product->name
                             ]);
                         }
+
                         $product_stock->qty -= $cartItem['quantity'];
                         $product_stock->save();
                     }
@@ -191,63 +260,83 @@ class OrderController extends Controller
                 $order_detail->product_id = $product->id;
                 $order_detail->variation = $product_variation;
                 $order_detail->batch_id = $batchId;
-                $order_detail->price = $isSchemeLine ? 0 : cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
-                $order_detail->sale_price = $isSchemeLine ? 0 : ($cartItem['sale_price'] ?? cart_product_price($cartItem, $product, false, false));
+                $order_detail->price = $unitSalePrice * $cartItem['quantity'];
+                $order_detail->sale_price = $unitSalePrice;
                 $order_detail->mrp_price = $cartItem['mrp_price'] ?? ($selectedBatch ? $selectedBatch->mrp_price : (optional($product_stock)->mrp_price ?? $product->mrp_price));
                 // Use stored tax from cart so order_detail matches cart (batch-aware)
-                $order_detail->tax = $isSchemeLine ? 0 : (($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity']);
+                $order_detail->tax = ($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $cartItem['quantity'];
                 $order_detail->shipping_type = $cartItem['shipping_type'];
-                $order_detail->product_referral_code = $isSchemeLine ? null : $cartItem['product_referral_code'];
-                $order_detail->shipping_cost = $isSchemeLine ? 0 : $cartItem['shipping_cost'];
-                $order_detail->is_scheme = $isSchemeLine ? 1 : 0;
+                $order_detail->product_referral_code = $cartItem['product_referral_code'];
+                $order_detail->shipping_cost = $cartItem['shipping_cost'];
+                $order_detail->is_scheme = 0;
 
                 $shipping += $order_detail->shipping_cost;
 
                 //End of storing shipping cost
-                if (!$isSchemeLine && addon_is_activated('club_point')) {
+                if (addon_is_activated('club_point')) {
                     $order_detail->earn_point = $product->earn_point;
                 }
 
                 $order_detail->quantity = $cartItem['quantity'];
                 $order_detail->save();
 
-                if (!$isSchemeLine && $schemeQty > 0 && !$hasSchemeCartLine) {
+                foreach (($schemeGroupsWritten[$groupKey] ?? false) ? [] : ($schemeAllocationsByGroup[$groupKey] ?? []) as $allocation) {
+                    $schemeGroupsWritten[$groupKey] = true;
+                    $schemeBatchForDeduction = ProductBatch::find($allocation['batch_id']);
+                    if (!$schemeBatchForDeduction || is_batch_expired($schemeBatchForDeduction) || (int) $schemeBatchForDeduction->qty < (int) $allocation['quantity']) {
+                        $order->delete();
+                        $combined_order->delete();
+                        return response()->json([
+                            'combined_order_id' => 0,
+                            'result' => false,
+                            'message' => translate('The requested scheme quantity is not available for ') . $product->name
+                        ]);
+                    }
+                    $schemeBatchForDeduction->qty -= (int) $allocation['quantity'];
+                    $schemeBatchForDeduction->save();
+
+                    $schemeBatch = $allocation['batch'] ?? ProductBatch::find($allocation['batch_id']);
                     $scheme_order_detail = new OrderDetail;
                     $scheme_order_detail->order_id = $order->id;
                     $scheme_order_detail->seller_id = $product->user_id;
                     $scheme_order_detail->product_id = $product->id;
                     $scheme_order_detail->variation = $product_variation;
-                    $scheme_order_detail->batch_id = $batchId;
+                    $scheme_order_detail->batch_id = $allocation['batch_id'];
                     $scheme_order_detail->price = 0;
                     $scheme_order_detail->sale_price = 0;
-                    $scheme_order_detail->mrp_price = $order_detail->mrp_price;
+                    $scheme_order_detail->mrp_price = $schemeBatch->mrp_price ?? $order_detail->mrp_price;
                     $scheme_order_detail->tax = 0;
                     $scheme_order_detail->shipping_type = $cartItem['shipping_type'];
                     $scheme_order_detail->product_referral_code = null;
                     $scheme_order_detail->shipping_cost = 0;
                     $scheme_order_detail->is_scheme = 1;
-                    $scheme_order_detail->quantity = $schemeQty;
+                    $scheme_order_detail->quantity = (int) $allocation['quantity'];
                     $scheme_order_detail->save();
                 }
+                $schemeGroupsWritten[$groupKey] = true;
 
-                if (!$isSchemeLine) {
-                    $product->num_of_sale = $product->num_of_sale + $cartItem['quantity'];
-                    $product->save();
+                if ($product_stock) {
+                    $product_stock->load('batches');
+                    if ($product_stock->batches->isNotEmpty()) {
+                        $product_stock->qty = $product_stock->batches->sum('qty');
+                        $product_stock->save();
+                    }
                 }
+
+                $product->num_of_sale = $product->num_of_sale + $cartItem['quantity'];
+                $product->save();
 
                 $order->seller_id = $product->user_id;
 
-                if (!$isSchemeLine) {
-                    $order->shipping_type = $cartItem['shipping_type'];
-                    if ($cartItem['shipping_type'] == 'pickup_point') {
-                        $order->pickup_point_id = $cartItem['pickup_point'];
-                    }
-                    if ($cartItem['shipping_type'] == 'carrier') {
-                        $order->carrier_id = $cartItem['carrier_id'];
-                    }
+                $order->shipping_type = $cartItem['shipping_type'];
+                if ($cartItem['shipping_type'] == 'pickup_point') {
+                    $order->pickup_point_id = $cartItem['pickup_point'];
+                }
+                if ($cartItem['shipping_type'] == 'carrier') {
+                    $order->carrier_id = $cartItem['carrier_id'];
                 }
 
-                if (!$isSchemeLine && $product->added_by == 'seller' && $product->user->seller != null) {
+                if ($product->added_by == 'seller' && $product->user->seller != null) {
                     $seller = $product->user->seller;
                     $seller->num_of_sale += $cartItem['quantity'];
                     $seller->save();

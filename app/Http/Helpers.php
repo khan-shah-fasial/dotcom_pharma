@@ -891,6 +891,10 @@ if (!function_exists('isBatchDiscountValid')) {
             return false;
         }
 
+        if (!is_batch_usable_for_sale($batch, $qty)) {
+            return false;
+        }
+
         if ((int) ($batch->discount_active ?? 0) !== 1) {
             return false;
         }
@@ -915,17 +919,123 @@ if (!function_exists('isBatchDiscountValid')) {
             return false;
         }
 
-        $batchQty = (int) ($batch->qty ?? 0);
-        if ($batchQty <= 0) {
-            return false;
-        }
-
-        $qty = max(1, (int) $qty);
-        if ($batchQty < $qty) {
-            return false;
-        }
-
         return true;
+    }
+}
+
+if (!function_exists('batch_expiry_month_end')) {
+    function batch_expiry_month_end($batchOrDate): ?Carbon
+    {
+        $date = is_object($batchOrDate)
+            ? ($batchOrDate->product_exp_date ?? null)
+            : $batchOrDate;
+
+        if (empty($date)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($date)->endOfMonth()->endOfDay();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+}
+
+if (!function_exists('is_batch_expired')) {
+    function is_batch_expired($batchOrDate): bool
+    {
+        $expiryEnd = batch_expiry_month_end($batchOrDate);
+
+        return $expiryEnd === null || Carbon::now()->greaterThan($expiryEnd);
+    }
+}
+
+if (!function_exists('is_batch_usable_for_sale')) {
+    function is_batch_usable_for_sale($batch, int $requiredQty = 1): bool
+    {
+        if (!$batch || is_batch_expired($batch)) {
+            return false;
+        }
+
+        $requiredQty = max(1, $requiredQty);
+        return (int) ($batch->qty ?? 0) >= $requiredQty;
+    }
+}
+
+if (!function_exists('valid_batches_for_stock')) {
+    function valid_batches_for_stock($stock, bool $requireStock = true)
+    {
+        if (!$stock) {
+            return collect();
+        }
+
+        if (!$stock->relationLoaded('batches')) {
+            $stock->load('batches');
+        }
+
+        return collect($stock->batches ?? [])
+            ->filter(function ($batch) use ($requireStock) {
+                if (is_batch_expired($batch)) {
+                    return false;
+                }
+
+                return !$requireStock || (int) ($batch->qty ?? 0) > 0;
+            })
+            ->sortBy(function ($batch) {
+                return sprintf('%s-%010d', $batch->product_exp_date ?? '9999-12-31', (int) $batch->id);
+            })
+            ->values();
+    }
+}
+
+if (!function_exists('batch_available_after_reservations')) {
+    function batch_available_after_reservations($batch, array $reservations = []): int
+    {
+        $batchId = (int) ($batch->id ?? 0);
+        $reserved = $batchId > 0 ? (int) ($reservations[$batchId] ?? 0) : 0;
+
+        return max(0, (int) ($batch->qty ?? 0) - max(0, $reserved));
+    }
+}
+
+if (!function_exists('allocate_scheme_free_batches')) {
+    function allocate_scheme_free_batches($stock, int $schemeQty, array $reservations = []): array
+    {
+        $remaining = max(0, $schemeQty);
+        if (!$stock || $remaining <= 0) {
+            return [
+                'success' => true,
+                'allocations' => [],
+                'missing_qty' => 0,
+            ];
+        }
+
+        $allocations = [];
+        foreach (valid_batches_for_stock($stock, true) as $batch) {
+            $available = batch_available_after_reservations($batch, $reservations);
+            if ($available <= 0) {
+                continue;
+            }
+
+            $take = min($remaining, $available);
+            $allocations[] = [
+                'batch' => $batch,
+                'batch_id' => (int) $batch->id,
+                'quantity' => $take,
+            ];
+
+            $remaining -= $take;
+            if ($remaining <= 0) {
+                break;
+            }
+        }
+
+        return [
+            'success' => $remaining <= 0,
+            'allocations' => $allocations,
+            'missing_qty' => $remaining,
+        ];
     }
 }
 
@@ -956,6 +1066,10 @@ if (!function_exists('resolvePrice')) {
         }
 
         if ($batch && $resolvedStock && (int) $batch->product_stock_id !== (int) $resolvedStock->id) {
+            $batch = null;
+        }
+
+        if ($batch && is_batch_expired($batch)) {
             $batch = null;
         }
 
@@ -1123,11 +1237,10 @@ if (!function_exists('resolveLowestListingPriceForStock')) {
             $stock->load('batches');
         }
 
-        $eligibleBatches = $stock->batches
-            ? $stock->batches->filter(function ($batch) use ($qty) {
+        $eligibleBatches = valid_batches_for_stock($stock, true)
+            ->filter(function ($batch) use ($qty) {
                 return isBatchDiscountValid($batch, $qty);
-            })
-            : collect();
+            });
 
         if ($eligibleBatches->isEmpty()) {
             return resolvePrice($product, $stock, null, $qty);
@@ -1247,8 +1360,7 @@ if (!function_exists('cart_product_price')) {
             return $formatted ? format_price(0) : 0;
         }
 
-        $storedBatchId = $cart_product['batch_id'] ?? null;
-        if ($storedBatchId && isset($cart_product['sale_price']) && $cart_product['sale_price'] !== null) {
+        if (isset($cart_product['sale_price']) && $cart_product['sale_price'] !== null) {
             $price = (float) $cart_product['sale_price'];
             if ($tax) {
                 if (isset($cart_product['tax']) && $cart_product['tax'] !== null) {
@@ -1367,6 +1479,21 @@ if (!function_exists('cart_product_price')) {
     }
 }
 
+if (!function_exists('order_detail_line_subtotal')) {
+    function order_detail_line_subtotal($orderDetail)
+    {
+        if (!$orderDetail) {
+            return 0;
+        }
+
+        if ($orderDetail->sale_price !== null) {
+            return (float) $orderDetail->sale_price * (int) $orderDetail->quantity;
+        }
+
+        return (float) $orderDetail->price;
+    }
+}
+
 if (!function_exists('cart_product_tax')) {
     function cart_product_tax($cart_product, $product, $formatted = true)
     {
@@ -1374,8 +1501,7 @@ if (!function_exists('cart_product_tax')) {
             return $formatted ? format_price(0) : 0;
         }
 
-        $storedBatchId = $cart_product['batch_id'] ?? null;
-        if ($storedBatchId && isset($cart_product['tax']) && $cart_product['tax'] !== null) {
+        if (isset($cart_product['tax']) && $cart_product['tax'] !== null) {
             $storedTax = (float) $cart_product['tax'];
             return $formatted ? format_price(convert_price($storedTax)) : $storedTax;
         }
@@ -1756,7 +1882,7 @@ if (!function_exists('getStockPriceByRole')) {
                 $stock->load('batches');
             }
             
-            $batches = $stock->batches;
+            $batches = valid_batches_for_stock($stock, true);
             
             if ($batches && $batches->count() > 0) {
                 // Stock has batches - use batch-level pricing (lowest price across all batches)

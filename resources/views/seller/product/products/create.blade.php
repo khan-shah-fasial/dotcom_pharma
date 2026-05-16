@@ -277,6 +277,15 @@
                                     </div>
                                 </div>
                                 <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{ translate('Scheme Free Qty') }}</label>
+                                    <div class="col-md-6">
+                                        <input type="number" lang="en" min="0" value="0" step="1"
+                                            placeholder="{{ translate('Free Qty') }}" name="scheme"
+                                            class="form-control">
+                                        <small class="text-muted">{{ translate('Free quantity per minimum order quantity.') }}</small>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
                                     <label class="col-md-3 col-from-label">
                                         {{ translate('SKU') }}
                                     </label>

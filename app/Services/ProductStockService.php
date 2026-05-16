@@ -16,6 +16,13 @@ use Illuminate\Support\Facades\Log;
 
 class ProductStockService
 {
+    protected function normalizeStockScheme($value): int
+    {
+        $scheme = $this->normalizeBatchScheme($value);
+
+        return $scheme !== null ? $scheme : 0;
+    }
+
     protected function normalizeBatchScheme($value): ?int
     {
         if ($value === null) {
@@ -39,7 +46,7 @@ class ProductStockService
         return (int) $value;
     }
 
-    protected function normalizeBatchMonthYearDate($value): ?string
+    protected function normalizeBatchMonthYearDate($value, bool $useEndOfMonth = false): ?string
     {
         if ($value === null) {
             return null;
@@ -51,10 +58,18 @@ class ProductStockService
         }
 
         if (preg_match('/^\d{4}-\d{2}$/', $value)) {
+            if ($useEndOfMonth) {
+                return \Carbon\Carbon::createFromFormat('Y-m-d', $value . '-01')->endOfMonth()->toDateString();
+            }
+
             return $value . '-01';
         }
 
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            if ($useEndOfMonth) {
+                return \Carbon\Carbon::parse($value)->endOfMonth()->toDateString();
+            }
+
             return $value;
         }
 
@@ -165,6 +180,7 @@ class ProductStockService
                 $product_stock->weight = request()->get('weight_' . str_replace('.', '_', $str), null);
                 $product_stock->count = request()->get('count_' . str_replace('.', '_', $str), null);
                 $product_stock->min_qty = request()->get('min_qty_' . str_replace('.', '_', $str), 1);
+                $product_stock->scheme = $this->normalizeStockScheme(request()->get('scheme_' . str_replace('.', '_', $str), 0));
                 $product_stock->qty_per_piece = request()->get('qty_per_piece_' . str_replace('.', '_', $str), null);
                 $product_stock->qty_per_buffer_box = request()->get('qty_per_buffer_box_' . str_replace('.', '_', $str), null);
                 $product_stock->total_qty_per_case = request()->get('total_qty_per_case_' . str_replace('.', '_', $str), null);
@@ -199,7 +215,8 @@ class ProductStockService
             $weight = $collection['weight'] ?? null;
             $count = $collection['count'] ?? null;
             $min_qty = $collection['min_qty'] ?? 1;
-            $product_exp_date = $collection['product_exp_date'] ?? null;
+            $scheme = $this->normalizeStockScheme($collection['scheme'] ?? 0);
+            $product_exp_date = $this->normalizeBatchMonthYearDate($collection['product_exp_date'] ?? null, true);
             $qty_per_piece = $collection['qty_per_piece'] ?? null;
             $qty_per_buffer_box = $collection['qty_per_buffer_box'] ?? null;
             $total_qty_per_case = $collection['total_qty_per_case'] ?? null;
@@ -229,6 +246,7 @@ class ProductStockService
                 'weight',
                 'count',
                 'min_qty',
+                'scheme',
                 'product_exp_date',
                 'qty_per_piece',
                 'qty_per_buffer_box',
@@ -265,6 +283,7 @@ class ProductStockService
             $product_stock->weight      = $stock->weight;
             $product_stock->count       = $stock->count;
             $product_stock->min_qty     = $stock->min_qty;
+            $product_stock->scheme      = $stock->scheme ?? 0;
             $product_stock->product_exp_date = $stock->product_exp_date;
             $product_stock->qty_per_piece = $stock->qty_per_piece;
             $product_stock->qty_per_buffer_box = $stock->qty_per_buffer_box;
@@ -331,6 +350,7 @@ class ProductStockService
                 $productStock->weight = request()->get('weight_' . str_replace('.', '_', $str), null);
                 $productStock->count = request()->get('count_' . str_replace('.', '_', $str), null);
                 $productStock->min_qty = request()->get('min_qty_' . str_replace('.', '_', $str), 1);
+                $productStock->scheme = $this->normalizeStockScheme(request()->get('scheme_' . str_replace('.', '_', $str), $productStock->scheme ?? 0));
                 $productStock->qty_per_piece = request()->get('qty_per_piece_' . str_replace('.', '_', $str), null);
                 $productStock->qty_per_buffer_box = request()->get('qty_per_buffer_box_' . str_replace('.', '_', $str), null);
                 $productStock->total_qty_per_case = request()->get('total_qty_per_case_' . str_replace('.', '_', $str), null);
@@ -380,7 +400,8 @@ class ProductStockService
             $weight = $collection['weight'] ?? null;
             $count = $collection['count'] ?? null;
             $min_qty = $collection['min_qty'] ?? 1;
-            $product_exp_date = $collection['product_exp_date'] ?? null;
+            $schemeInput = $collection['scheme'] ?? null;
+            $product_exp_date = $this->normalizeBatchMonthYearDate($collection['product_exp_date'] ?? null, true);
             $qty_per_piece = $collection['qty_per_piece'] ?? null;
             $qty_per_buffer_box = $collection['qty_per_buffer_box'] ?? null;
             $total_qty_per_case = $collection['total_qty_per_case'] ?? null;
@@ -429,6 +450,7 @@ class ProductStockService
             $productStock->weight = $weight;
             $productStock->count = $count;
             $productStock->min_qty = $min_qty;
+            $productStock->scheme = $this->normalizeStockScheme($schemeInput ?? ($productStock->scheme ?? 0));
             $productStock->product_exp_date = $product_exp_date;
             $productStock->qty_per_piece = $qty_per_piece;
             $productStock->qty_per_buffer_box = $qty_per_buffer_box;
@@ -474,7 +496,6 @@ class ProductStockService
      *   'batch'           => string,
      *   'mrp_price'       => numeric,
      *   'qty'             => int,
-     *   'scheme'          => string|null,
      *   'product_exp_date'=> date string,
      *   'coa'             => string/file id,
      * ]
@@ -505,7 +526,7 @@ class ProductStockService
         foreach ($batchesInput as $row) {
             // Skip completely empty rows (e.g. template clones not filled)
             $hasContent = false;
-            foreach (['batch', 'mrp_price', 'qty', 'scheme', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
+            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
                 if (!empty($row[$field])) {
                     $hasContent = true;
                     break;
@@ -526,8 +547,8 @@ class ProductStockService
             $batch->batch            = $row['batch'] ?? null;
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
-            $batch->scheme           = $this->normalizeBatchScheme($row['scheme'] ?? null);
-            $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null);
+            $batch->scheme           = null;
+            $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null, true);
             $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
             $batchDiscountData       = $this->extractBatchDiscountData($row);
@@ -602,7 +623,7 @@ class ProductStockService
 
         foreach ($batchesInput as $row) {
             $hasContent = false;
-            foreach (['batch', 'mrp_price', 'qty', 'scheme', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
+            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
                 if (isset($row[$field]) && (string) $row[$field] !== '') {
                     $hasContent = true;
                     break;
@@ -629,10 +650,8 @@ class ProductStockService
             $batch->batch            = $row['batch'] ?? $batch->batch;
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
-            if (array_key_exists('scheme', $row)) {
-                $batch->scheme = $this->normalizeBatchScheme($row['scheme']);
-            }
-            $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null);
+            $batch->scheme           = null;
+            $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null, true);
             $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
             $batchDiscountData       = $this->extractBatchDiscountData($row);

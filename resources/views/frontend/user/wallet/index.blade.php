@@ -16,8 +16,7 @@
                 <img src="{{ static_asset('assets/img/wallet-icon.png') }}" alt="">
                 <div class="py-2">
                     <div class="fs-14 fw-400 text-center">{{ translate('Wallet Balance') }}</div>
-                    <div class="fs-30 fw-700 text-center">{{ Auth::user()->balance }}</div>
-                    {{-- <div class="fs-30 fw-700 text-center">{{ single_price(Auth::user()->balance) }}</div> --}}
+                    <div class="fs-30 fw-700 text-center">{{ single_price(Auth::user()->balance) }}</div>
                 </div>
             </div>
         </div>

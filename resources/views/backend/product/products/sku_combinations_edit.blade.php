@@ -204,6 +204,19 @@
                                                 >
                                             </div>
                                             <div class="col-sm-6 col-lg-4 mb-3">
+                                                <label class="form-label mb-1">{{ translate('Scheme Free Qty') }}</label>
+                                                <input
+                                                    type="number"
+                                                    lang="en"
+                                                    name="scheme_{{ $str }}"
+                                                    value="{{ request('scheme_'.$str, $stock && $stock->scheme !== null ? $stock->scheme : 0) }}"
+                                                    min="0"
+                                                    step="1"
+                                                    class="form-control"
+                                                >
+                                                <small class="text-muted">{{ translate('Free quantity per minimum order quantity.') }}</small>
+                                            </div>
+                                            <div class="col-sm-6 col-lg-4 mb-3">
                                                 <label class="form-label mb-1">{{ translate('Package Count') }}</label>
                                                 <input
                                                     type="text"
@@ -499,7 +512,6 @@
                                                         <th style="width: 9%;">{{ translate('Expiry Month') }}</th>
                                                         <th style="width: 8%;">{{ translate('MRP Price') }}</th>
                                                         <th style="width: 8%;">{{ translate('Stock Qty') }}</th>
-                                                        <th style="width: 8%;">{{ translate('Scheme') }}</th>
                                                         <th style="width: 7%;">{{ translate('Offer Active') }}</th>
                                                         <th style="width: 8%;">{{ translate('Discount Type') }}</th>
                                                         <th style="width: 8%;">{{ translate('Discount') }}</th>
@@ -549,15 +561,15 @@
                                                                             : ($batch->product_exp_date ? \Carbon\Carbon::parse($batch->product_exp_date)->format('Y-m') : '');
                                                                     @endphp
                                                                     <input type="month" name="batches[{{ $variantKey }}][{{ $batchIndex }}][product_exp_date]" value="{{ $batchExpiryValue }}" class="form-control form-control-sm">
+                                                                    @if(function_exists('is_batch_expired') && is_batch_expired($batch))
+                                                                        <small class="text-danger d-block mt-1">{{ translate('Expired') }}</small>
+                                                                    @endif
                                                                 </td>
                                                                 <td>
                                                                     <input type="number" lang="en" name="batches[{{ $variantKey }}][{{ $batchIndex }}][mrp_price]" value="{{ data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.mrp_price', $batch->mrp_price) }}" min="0" step="0.01" class="form-control form-control-sm" required>
                                                                 </td>
                                                                 <td>
                                                                     <input type="number" lang="en" name="batches[{{ $variantKey }}][{{ $batchIndex }}][qty]" value="{{ data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.qty', $batch->qty) }}" min="0" step="1" class="form-control form-control-sm" required>
-                                                                </td>
-                                                                <td>
-                                                                    <input type="number" lang="en" name="batches[{{ $variantKey }}][{{ $batchIndex }}][scheme]" value="{{ data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.scheme', $batch->scheme ?? '') }}" min="0" step="1" class="form-control form-control-sm" placeholder="{{ translate('Scheme') }}">
                                                                 </td>
                                                                 <td class="text-center">
                                                                     <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][discount_active]" value="0">
@@ -663,9 +675,6 @@
                                                             </td>
                                                             <td>
                                                                 <input type="number" lang="en" name="batches[{{ $variantKey }}][0][qty]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.qty', $stock && $stock->qty !== null ? $stock->qty : 10) }}" min="0" step="1" class="form-control form-control-sm" required>
-                                                            </td>
-                                                            <td>
-                                                                <input type="number" lang="en" name="batches[{{ $variantKey }}][0][scheme]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.scheme', '') }}" min="0" step="1" class="form-control form-control-sm" placeholder="{{ translate('Scheme') }}">
                                                             </td>
                                                             @php
                                                                 $defaultDiscountActive = (int) data_get(request()->input('batches', []), $variantKey.'.0.discount_active', 0) === 1;
@@ -852,13 +861,6 @@
                         min="0" step="1"
                         class="form-control form-control-sm"
                         required>
-                </td>
-                <td>
-                    <input type="number" lang="en"
-                        name="batches[` + variantKey + `][` + index + `][scheme]"
-                        min="0" step="1"
-                        class="form-control form-control-sm"
-                        placeholder="{{ translate('Scheme') }}">
                 </td>
                 <td class="text-center">
                     <input type="hidden" name="batches[` + variantKey + `][` + index + `][discount_active]" value="0">

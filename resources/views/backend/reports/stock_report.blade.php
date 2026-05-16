@@ -60,6 +60,7 @@
                                     <select id="batch_select" class="form-control aiz-selectpicker" name="batch_id" data-live-search="true">
                                         <option value="">{{ translate('All Batches') }}</option>
                                         @foreach ($batches as $batch)
+                                            @continue(function_exists('is_batch_expired') && is_batch_expired($batch))
                                             <option value="{{ $batch->id }}" @selected($batchId == $batch->id)>
                                                 {{ $batch->batch }}
                                             </option>

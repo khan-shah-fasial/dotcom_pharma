@@ -1460,12 +1460,23 @@
                                 
                                 // Build compact dropdown with batch code only
                                 $batchDropdown.empty();
+                                const selectableBatches = batches.filter(function(batch) {
+                                    return batch.is_selectable !== false && !batch.is_expired;
+                                });
+
                                 batches.forEach(function(batch) {
                                     const batchLabel = (batch.batch && batch.batch.trim() !== '')
                                         ? batch.batch
                                         : ('Batch ' + batch.id);
+                                    const optionText = batch.is_expired
+                                        ? (batchLabel + ' (Expired)')
+                                        : batchLabel;
                                     $batchDropdown.append(
-                                        $('<option>', { value: batch.id, text: batchLabel })
+                                        $('<option>', {
+                                            value: batch.id,
+                                            text: optionText,
+                                            disabled: batch.is_selectable === false || batch.is_expired
+                                        })
                                     );
                                 });
 
@@ -1477,7 +1488,9 @@
                                 $batchDropdown.data('batches-map', batchesMap).data('variant', data.variation);
 
                                 // Set selected option
-                                const selectedBatchId = data.selected_batch_id ? String(data.selected_batch_id) : String(batches[0].id);
+                                const selectedBatchId = data.selected_batch_id
+                                    ? String(data.selected_batch_id)
+                                    : (selectableBatches.length ? String(selectableBatches[0].id) : '');
                                 $batchDropdown.val(selectedBatchId);
 
                                 // Attach change handler
@@ -1501,10 +1514,12 @@
                                 });
                                 
                                 // Set first batch as selected if none selected
-                                if (!data.selected_batch_id && batches.length > 0) {
-                                    $('#selected_batch_id').val(batches[0].id);
+                                if (!data.selected_batch_id && selectableBatches.length > 0) {
+                                    $('#selected_batch_id').val(selectableBatches[0].id);
                                 } else if (data.selected_batch_id) {
                                     $('#selected_batch_id').val(data.selected_batch_id);
+                                } else {
+                                    $('#selected_batch_id').val('');
                                 }
 
                                 // Update batch-specific summary (batch no. and qty) based on currently selected batch
@@ -1666,6 +1681,12 @@
             
             // Update batch-specific UI elements only (MRP, expiry, COA, batch lot/qty)
             if (batchData) {
+                if (batchData.is_expired || batchData.is_selectable === false) {
+                    isUpdatingBatch = false;
+                    $('#selected_batch_id').val('');
+                    return;
+                }
+
                 // Update MRP immediately
                 $('#mrp-unit').html(batchData.mrp_price_formatted || '-');
                 

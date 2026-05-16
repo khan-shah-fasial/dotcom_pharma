@@ -31,13 +31,11 @@
             @foreach ($carts as $key => $cartItem)
                 @php
                     $product = get_single_product($cartItem['product_id']);
-                    $schemeCartItem = $all_carts->first(function ($row) use ($cartItem) {
+                    $schemeQty = $all_carts->filter(function ($row) use ($cartItem) {
                         return (bool) ($row->is_scheme ?? false)
                             && (int) $row->product_id === (int) $cartItem->product_id
-                            && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '')
-                            && (int) ($row->batch_id ?? 0) === (int) ($cartItem->batch_id ?? 0);
-                    });
-                    $schemeQty = (int) optional($schemeCartItem)->quantity;
+                            && (string) ($row->variation ?? '') === (string) ($cartItem->variation ?? '');
+                    })->sum('quantity');
                     $batchName = optional($cartItem->batch)->batch;
                 @endphp
                 @if ($product != null)

@@ -166,9 +166,9 @@
                                         <br><span style="font-size:10px;color:#178a3f;">{{ translate('Scheme Free') }}</span>
                                     @endif
                                 </td>
-								<td class="currency">{{ single_price($orderDetail->price/$orderDetail->quantity) }}</td>
+								<td class="currency">{{ single_price($orderDetail->quantity > 0 ? order_detail_line_subtotal($orderDetail) / $orderDetail->quantity : order_detail_line_subtotal($orderDetail)) }}</td>
 								<td class="currency">{{ single_price($orderDetail->tax/$orderDetail->quantity) }}</td>
-			                    <td class="text-right currency">{{ single_price($orderDetail->price+$orderDetail->tax) }}</td>
+			                    <td class="text-right currency">{{ single_price(order_detail_line_subtotal($orderDetail)+$orderDetail->tax) }}</td>
 							</tr>
 		                @endif
 					@endforeach
@@ -197,7 +197,7 @@
 						        <tbody>
 							        <tr>
 							            <th class="gry-color text-left">{{ translate('Sub Total') }}</th>
-							            <td class="currency">{{ single_price($order->orderDetails->sum('price')) }}</td>
+							            <td class="currency">{{ single_price($order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail))) }}</td>
 							        </tr>
 							        <tr>
 							            <th class="gry-color text-left">{{ translate('Shipping Cost') }}</th>
