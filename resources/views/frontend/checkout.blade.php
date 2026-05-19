@@ -716,6 +716,27 @@
                 btnDisable = false;
             }
 
+            var selectedShippingMethod = $('input[name="shipping_method"]:checked').val();
+            if (selectedShippingMethod === 'transport') {
+                allOk = Boolean(($('input[name="transport_name"]').val() || '').trim())
+                    && Boolean(($('input[name="booked_to_name"]').val() || '').trim())
+                    && Boolean($('input[name="fod_mode"]:checked').val())
+                    && Boolean($('select[name="transport_delivery_type"]').val());
+                if ($('input[name="fod_mode"]:checked').val() === 'surface') {
+                    allOk = allOk && Boolean($('input[name="transport_surface_mode"]:checked').val());
+                }
+            } else if (selectedShippingMethod === 'local') {
+                allOk = Boolean(($('input[name="local_delivery_partner_name"]').val() || '').trim());
+            }
+
+            if (allOk) {
+                headColor = '#15a405';
+                btnDisable = false;
+            } else {
+                headColor = '#9d9da6';
+                btnDisable = true;
+            }
+
             $('#headingDeliveryInfo svg *').css('fill', headColor);
             $("#submitOrderBtn").prop('disabled', btnDisable);
             return allOk;
@@ -848,6 +869,9 @@
         function getFodBlock() {
             return document.getElementById('fod-block');
         }
+        function getLocalBlock() {
+            return document.getElementById('local-block');
+        }
         function getCourierBlock() {
             return document.getElementById('courier-block');
         }
@@ -873,11 +897,13 @@
 
             // Blocks
             var fodBlock = getFodBlock();
+            var localBlock = getLocalBlock();
             var courierBlock = getCourierBlock();
             var servicesWrap = getServicesWrap();
             var servicesList = getServicesList();
 
             var ratesUrl = "{{ route('shipment.rates') }}";
+            var bookedToUrl = "{{ route('checkout.booked_to_options') }}";
 
             function currentShipType() {
                 var el = document.querySelector('input[name="shipping_method"]:checked');
@@ -992,8 +1018,10 @@
             function toggleShippingBlocks(selected) {
                 var courierBlock = getCourierBlock();
                 var fodBlock = getFodBlock();
+                var localBlock = getLocalBlock();
                 if (selected === 'courier') {
                     fodBlock.style.display = 'none';
+                    if (localBlock) localBlock.style.display = 'none';
                     courierBlock.style.display = 'block';
 
                     // Ensure one provider is checked
@@ -1003,23 +1031,183 @@
                         firstProvider.checked = true;
                     }
                     loadCourierRates();
-                } else {
-                    fodBlock.style.display = 'block';
+                } else if (selected === 'local') {
+                    fodBlock.style.display = 'none';
+                    if (localBlock) localBlock.style.display = 'block';
                     courierBlock.style.display = 'none';
                     if (servicesWrap) servicesWrap.style.display = 'none';
                     setFodFreeShipping();
+                } else {
+                    fodBlock.style.display = 'block';
+                    if (localBlock) localBlock.style.display = 'none';
+                    courierBlock.style.display = 'none';
+                    if (servicesWrap) servicesWrap.style.display = 'none';
+                    toggleSurfaceMode();
+                    setFodFreeShipping();
                 }
+                stepCompletionDeliveryInfo();
             }
 
-            // === INIT: show Courier by default and fetch ===
-            // NOTE: we will auto-switch to FOD if there's no address/pincode (user requested behavior).
-            if (!hasAddressOrPincode()) {
-                // Auto-switch to FOD because no address/pincode exists.
-                var fodRadioInit = document.querySelector('input[name="shipping_method"][value="fod"]');
-                if (fodRadioInit) {
-                    fodRadioInit.checked = true;
+            function normalizeComboText(value) {
+                return (value || '').trim().toLowerCase();
+            }
+
+            function getComboItems(menu) {
+                return menu ? Array.prototype.slice.call(menu.querySelectorAll('.checkout-combo-option')) : [];
+            }
+
+            function filterComboMenu(combo) {
+                var input = combo.querySelector('.checkout-combo-input');
+                var menu = combo.querySelector('.checkout-combo-menu');
+                if (!input || !menu) return;
+
+                var needle = normalizeComboText(input.value);
+                var visible = 0;
+                getComboItems(menu).forEach(function(item) {
+                    var matched = !needle || normalizeComboText(item.dataset.name).indexOf(needle) !== -1;
+                    item.style.display = matched ? 'block' : 'none';
+                    if (matched) visible++;
+                });
+
+                var empty = menu.querySelector('.checkout-combo-empty');
+                if (!empty) {
+                    empty = document.createElement('div');
+                    empty.className = 'checkout-combo-empty';
+                    empty.textContent = "{{ translate('No match. Type new value to request it.') }}";
+                    menu.appendChild(empty);
                 }
-                toggleShippingBlocks('fod');
+                empty.style.display = visible ? 'none' : 'block';
+            }
+
+            function openComboMenu(combo) {
+                var menu = combo.querySelector('.checkout-combo-menu');
+                if (!menu) return;
+                filterComboMenu(combo);
+                menu.style.display = 'block';
+            }
+
+            function closeComboMenus(exceptCombo) {
+                document.querySelectorAll('.checkout-combo').forEach(function(combo) {
+                    if (exceptCombo && combo === exceptCombo) return;
+                    var menu = combo.querySelector('.checkout-combo-menu');
+                    if (menu) menu.style.display = 'none';
+                });
+            }
+
+            function syncComboId(inputSelector, hiddenSelector, menuSelector) {
+                var input = document.querySelector(inputSelector);
+                var hidden = document.querySelector(hiddenSelector);
+                var menu = document.querySelector(menuSelector);
+                if (!input || !hidden) return null;
+                var selectedId = '';
+                getComboItems(menu).forEach(function(option) {
+                    if (normalizeComboText(option.dataset.name) === normalizeComboText(input.value)) {
+                        selectedId = option.dataset.id || '';
+                    }
+                });
+                hidden.value = selectedId;
+                return selectedId;
+            }
+
+            function loadBookedToOptions(transportId) {
+                var bookedToList = document.getElementById('booked-to-options');
+                var bookedToName = document.getElementById('booked_to_name');
+                var bookedToId = document.getElementById('booked_to_id');
+                if (!bookedToList) return;
+                bookedToList.innerHTML = '';
+                if (bookedToName) bookedToName.value = '';
+                if (bookedToId) bookedToId.value = '';
+                if (!transportId) return;
+
+                $.getJSON(bookedToUrl, { transport_id: transportId }).done(function(items) {
+                    (items || []).forEach(function(item) {
+                        var option = document.createElement('div');
+                        option.className = 'checkout-combo-option';
+                        option.dataset.name = item.name;
+                        option.dataset.id = item.id;
+                        option.textContent = item.name;
+                        bookedToList.appendChild(option);
+                    });
+                });
+            }
+
+            function toggleSurfaceMode() {
+                var block = document.getElementById('transport-surface-mode-block');
+                var selectedMode = document.querySelector('input[name="fod_mode"]:checked');
+                if (block) block.style.display = selectedMode && selectedMode.value === 'surface' ? 'flex' : 'none';
+            }
+
+            $(document).on('focus click', '.checkout-combo-input', function() {
+                var combo = this.closest('.checkout-combo');
+                closeComboMenus(combo);
+                openComboMenu(combo);
+            });
+
+            $(document).on('input', '.checkout-combo-input', function() {
+                var combo = this.closest('.checkout-combo');
+                filterComboMenu(combo);
+            });
+
+            $(document).on('mousedown', '.checkout-combo-option', function(e) {
+                e.preventDefault();
+                var option = this;
+                var combo = option.closest('.checkout-combo');
+                var input = combo.querySelector('.checkout-combo-input');
+                var hidden = combo.querySelector('input[type="hidden"]');
+                var menu = combo.querySelector('.checkout-combo-menu');
+
+                input.value = option.dataset.name || option.textContent || '';
+                hidden.value = option.dataset.id || '';
+                if (menu) menu.style.display = 'none';
+
+                if (input.id === 'transport_name') {
+                    loadBookedToOptions(hidden.value);
+                }
+                $(input).trigger('change');
+            });
+
+            $(document).on('click', function(e) {
+                if (!e.target.closest('.checkout-combo')) {
+                    closeComboMenus();
+                }
+            });
+
+            $(document).on('input change', '#transport_name', function() {
+                var previousTransportId = $('#transport_id').val();
+                var transportId = syncComboId('#transport_name', '#transport_id', '#transport-provider-options');
+                if (previousTransportId !== transportId) {
+                    loadBookedToOptions(transportId);
+                }
+                stepCompletionDeliveryInfo();
+            });
+
+            $(document).on('input change', '#booked_to_name', function() {
+                syncComboId('#booked_to_name', '#booked_to_id', '#booked-to-options');
+                stepCompletionDeliveryInfo();
+            });
+
+            $(document).on('input change', '#local_delivery_partner_name', function() {
+                syncComboId('#local_delivery_partner_name', '#local_delivery_partner_id', '#local-delivery-partner-options');
+                stepCompletionDeliveryInfo();
+            });
+
+            $(document).on('change', 'input[name="fod_mode"]', function() {
+                toggleSurfaceMode();
+                stepCompletionDeliveryInfo();
+            });
+
+            $(document).on('change', 'input[name="transport_surface_mode"], select[name="transport_delivery_type"]', function() {
+                stepCompletionDeliveryInfo();
+            });
+
+            // === INIT: show Courier by default and fetch ===
+            // NOTE: we will auto-switch to Transport if there's no address/pincode.
+            if (!hasAddressOrPincode()) {
+                var transportRadioInit = document.querySelector('input[name="shipping_method"][value="transport"]');
+                if (transportRadioInit) {
+                    transportRadioInit.checked = true;
+                }
+                toggleShippingBlocks('transport');
             } else {
                 // normal behaviour: keep courier selected (or whatever is currently checked)
                 toggleShippingBlocks(currentShipType());
@@ -1042,12 +1230,12 @@
                         console.dir('No address/pincode - cannot switch to courier.');
                     }
 
-                    // Revert selection back to FOD
-                    var fodRadio = document.querySelector('input[name="shipping_method"][value="fod"]');
-                    if (fodRadio) fodRadio.checked = true;
+                    // Revert selection back to Transport
+                    var transportRadio = document.querySelector('input[name="shipping_method"][value="transport"]');
+                    if (transportRadio) transportRadio.checked = true;
 
-                    // Ensure the UI reflects the FOD block
-                    toggleShippingBlocks('fod');
+                    // Ensure the UI reflects the Transport block
+                    toggleShippingBlocks('transport');
 
                     // Prevent any further courier actions
                     return;

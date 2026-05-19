@@ -1726,6 +1726,31 @@
                                     </ul>
                                 </li>
                             @endif
+                            @can('manage_carriers')
+                                <li class="aiz-side-nav-item">
+                                    <a href="javascript:void(0);" class="aiz-side-nav-link">
+                                        <span class="aiz-side-nav-text">{{ translate('Transport') }}</span>
+                                        <span class="aiz-side-nav-arrow"></span>
+                                    </a>
+                                    <ul class="aiz-side-nav-list level-3">
+                                        <li class="aiz-side-nav-item">
+                                            <a href="{{ route('transports.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['transports.index','transports.create','transports.edit']) }}">
+                                                <span class="aiz-side-nav-text">{{ translate('Transports') }}</span>
+                                            </a>
+                                        </li>
+                                        <li class="aiz-side-nav-item">
+                                            <a href="{{ route('booked-to.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['booked-to.index','booked-to.create','booked-to.edit']) }}">
+                                                <span class="aiz-side-nav-text">{{ translate('Booked To') }}</span>
+                                            </a>
+                                        </li>
+                                        <li class="aiz-side-nav-item">
+                                            <a href="{{ route('local-delivery-partners.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['local-delivery-partners.index','local-delivery-partners.create','local-delivery-partners.edit']) }}">
+                                                <span class="aiz-side-nav-text">{{ translate('Local Delivery Partners') }}</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            @endcan
                         </ul>
                     </li>
                 @endcanany

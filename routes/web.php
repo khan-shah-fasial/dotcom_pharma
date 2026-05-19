@@ -435,6 +435,7 @@ Route::group(['prefix' => 'checkout'], function () {
         Route::post('/updateDeliveryInfo', 'updateDeliveryInfo')->name('checkout.updateDeliveryInfo');
         Route::post('/updateDeliveryInfoByShipping', 'updateDeliveryInfoByShipping')->name('checkout.updateDeliveryInfoByShipping');
         Route::post('/setFodShipping', 'setFodShipping')->name('checkout.setFodShipping');
+        Route::get('/booked-to-options', 'bookedToOptions')->name('checkout.booked_to_options');
 
         //Club point
         // Route::post('/apply-club-point', 'apply_club_point')->name('checkout.apply_club_point');

@@ -217,10 +217,19 @@
                                     @endif
                                 </td>
                                 <td>
-                                    {{ $order->shipping_choice }}
+                                    {{ $order->shipping_choice ? translate(ucfirst(str_replace('_', ' ', $order->shipping_choice))) : '-' }}
                                 </td>
                                 <td>
-                                    {{ $order->shipping_by }}
+                                    @if($order->shipping_choice === 'transport')
+                                        {{ optional($order->transport)->name ?? $order->shipping_by ?? '-' }}
+                                        @if($order->bookedTo)
+                                            <br><small>{{ translate('Booked To') }}: {{ $order->bookedTo->name }}</small>
+                                        @endif
+                                    @elseif($order->shipping_choice === 'local')
+                                        {{ optional($order->localDeliveryPartner)->name ?? $order->shipping_by ?? '-' }}
+                                    @else
+                                        {{ $order->shipping_by ?? '-' }}
+                                    @endif
                                 </td>
                                 @if (addon_is_activated('refund_request'))
                                     <td>

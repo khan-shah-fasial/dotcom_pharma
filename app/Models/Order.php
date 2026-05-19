@@ -38,6 +38,21 @@ class Order extends Model
         return $this->belongsTo(Carrier::class);
     }
 
+    public function transport()
+    {
+        return $this->belongsTo(Transport::class);
+    }
+
+    public function bookedTo()
+    {
+        return $this->belongsTo(BookedTo::class, 'booked_to_id');
+    }
+
+    public function localDeliveryPartner()
+    {
+        return $this->belongsTo(LocalDeliveryPartner::class);
+    }
+
     public function affiliate_log()
     {
         return $this->hasMany(AffiliateLog::class);

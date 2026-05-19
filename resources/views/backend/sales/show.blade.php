@@ -182,6 +182,30 @@
                                     {{ translate(ucfirst(str_replace('_', ' ', $order->payment_type))) }}</td>
                             </tr>
                             <tr>
+                                <td class="text-main text-bold">{{ translate('Shipping Method') }}</td>
+                                <td class="text-right">
+                                    @if($order->shipping_choice === 'transport')
+                                        {{ translate('Transport') }}: {{ optional($order->transport)->name ?? $order->shipping_by ?? '-' }}
+                                        @if($order->bookedTo)
+                                            <br>{{ translate('Booked To') }}: {{ $order->bookedTo->name }}
+                                        @endif
+                                        @if($order->transport_mode)
+                                            <br>{{ translate('Mode') }}: {{ translate(ucfirst($order->transport_mode)) }}
+                                            @if($order->transport_surface_mode)
+                                                / {{ translate(ucfirst($order->transport_surface_mode)) }}
+                                            @endif
+                                        @endif
+                                        @if($order->transport_delivery_type)
+                                            <br>{{ translate(ucfirst(str_replace('_', ' ', $order->transport_delivery_type))) }}
+                                        @endif
+                                    @elseif($order->shipping_choice === 'local')
+                                        {{ translate('Local') }}: {{ optional($order->localDeliveryPartner)->name ?? $order->shipping_by ?? '-' }}
+                                    @else
+                                        {{ $order->shipping_by ?? $order->shipping_choice ?? '-' }}
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
                                 <td class="text-main text-bold">{{ translate('Additional Info') }}</td>
                                 <td class="text-right">{{ $order->additional_info }}</td>
                             </tr>

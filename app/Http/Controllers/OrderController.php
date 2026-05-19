@@ -14,6 +14,9 @@ use App\Models\User;
 use App\Models\CombinedOrder;
 use App\Models\SmsTemplate;
 use App\Models\ProductBatch;
+use App\Models\BookedTo;
+use App\Models\LocalDeliveryPartner;
+use App\Models\Transport;
 use Auth;
 use Mail;
 use App\Mail\InvoiceEmailManager;
@@ -52,7 +55,7 @@ class OrderController extends Controller
         $order_type = '';
 
         // $orders = Order::orderBy('id', 'desc');
-        $orders = Order::with(['orderDetails', 'shipment'])->orderBy('id', 'desc');
+        $orders = Order::with(['orderDetails', 'shipment', 'transport', 'bookedTo', 'localDeliveryPartner'])->orderBy('id', 'desc');
         $admin_user_id = get_admin()->id;
 
         if (Route::currentRouteName() == 'inhouse_orders.index' && Auth::user()->can('view_inhouse_orders')) {
@@ -119,7 +122,7 @@ class OrderController extends Controller
     public function show($id)
     {
         // $order = Order::findOrFail(decrypt($id));
-        $order = Order::with(['orderDetails', 'shipment'])->findOrFail(decrypt($id));
+        $order = Order::with(['orderDetails', 'shipment', 'transport', 'bookedTo', 'localDeliveryPartner'])->findOrFail(decrypt($id));
         
         $order_shipping_address = json_decode($order->shipping_address);
         $delivery_boys = User::where('city', $order_shipping_address->city)
@@ -208,6 +211,18 @@ class OrderController extends Controller
 
         $firstOrderForReferral = null;
         foreach ($seller_products as $seller_product) {
+            $shippingChoice = $request->shipping_method ?: 'courier';
+            $transport = null;
+            $bookedTo = null;
+            $localDeliveryPartner = null;
+
+            if ($shippingChoice === 'transport') {
+                $transport = $this->resolveTransport($request);
+                $bookedTo = $this->resolveBookedTo($request, $transport);
+            } elseif ($shippingChoice === 'local') {
+                $localDeliveryPartner = $this->resolveLocalDeliveryPartner($request);
+            }
+
             $order = new Order;
             $order->combined_order_id = $combined_order->id;
             $order->user_id = Auth::user()->id;
@@ -215,10 +230,18 @@ class OrderController extends Controller
             $order->billing_address = json_encode(!empty($billingAddress) ? $billingAddress : $shippingAddress);
             $order->additional_info = $request->additional_info;
             $order->payment_type = $request->payment_option;
-            $order->shipping_choice = $request->shipping_method;
-            $order->shipping_by = $request->shipping_method === 'courier' ? (get_shipping_method_slug_by_id($request->shipping_method_id) ?? 'shipway') : ($request->shipping_method === 'fod' ? null : 'N/A');
-            $order->fod_mode = $request->shipping_method === 'courier' ? null : $request->fod_mode;
-            $order->shipping_courier_id = $request->shipping_method === 'fod' ? null : $request->courier_service;
+            $order->shipping_choice = $shippingChoice;
+            $order->shipping_by = $shippingChoice === 'courier'
+                ? (get_shipping_method_slug_by_id($request->shipping_method_id) ?? 'shipway')
+                : ($shippingChoice === 'transport' ? optional($transport)->name : optional($localDeliveryPartner)->name);
+            $order->fod_mode = $shippingChoice === 'transport' ? $request->fod_mode : null;
+            $order->shipping_courier_id = $shippingChoice === 'courier' ? $request->courier_service : null;
+            $order->transport_id = optional($transport)->id;
+            $order->booked_to_id = optional($bookedTo)->id;
+            $order->local_delivery_partner_id = optional($localDeliveryPartner)->id;
+            $order->transport_mode = $shippingChoice === 'transport' ? $request->fod_mode : null;
+            $order->transport_surface_mode = ($shippingChoice === 'transport' && $request->fod_mode === 'surface') ? $request->transport_surface_mode : null;
+            $order->transport_delivery_type = $shippingChoice === 'transport' ? $request->transport_delivery_type : null;
             $order->delivery_viewed = '0';
             $order->payment_status_viewed = '0';
             $order->code = generate_financial_year_order_code();
@@ -489,6 +512,94 @@ class OrderController extends Controller
         $combined_order->save();
 
         $request->session()->put('combined_order_id', $combined_order->id);
+    }
+
+    private function resolveTransport(Request $request): ?Transport
+    {
+        $id = (int) $request->input('transport_id');
+        if ($id > 0) {
+            $transport = Transport::find($id);
+            if ($transport) {
+                return $transport;
+            }
+        }
+
+        $name = trim((string) $request->input('transport_name'));
+        if ($name === '') {
+            return null;
+        }
+
+        $transport = Transport::whereRaw('LOWER(name) = ?', [strtolower($name)])->first();
+        if ($transport) {
+            return $transport;
+        }
+
+        return Transport::create([
+            'name' => $name,
+            'status' => 'inactive',
+            'created_by' => Auth::id(),
+        ]);
+    }
+
+    private function resolveBookedTo(Request $request, ?Transport $transport): ?BookedTo
+    {
+        if (!$transport) {
+            return null;
+        }
+
+        $id = (int) $request->input('booked_to_id');
+        if ($id > 0) {
+            $bookedTo = BookedTo::where('transport_id', $transport->id)->where('id', $id)->first();
+            if ($bookedTo) {
+                return $bookedTo;
+            }
+        }
+
+        $name = trim((string) $request->input('booked_to_name'));
+        if ($name === '') {
+            return null;
+        }
+
+        $bookedTo = BookedTo::where('transport_id', $transport->id)
+            ->whereRaw('LOWER(name) = ?', [strtolower($name)])
+            ->first();
+        if ($bookedTo) {
+            return $bookedTo;
+        }
+
+        return BookedTo::create([
+            'transport_id' => $transport->id,
+            'name' => $name,
+            'status' => 'inactive',
+            'created_by' => Auth::id(),
+        ]);
+    }
+
+    private function resolveLocalDeliveryPartner(Request $request): ?LocalDeliveryPartner
+    {
+        $id = (int) $request->input('local_delivery_partner_id');
+        if ($id > 0) {
+            $partner = LocalDeliveryPartner::find($id);
+            if ($partner) {
+                return $partner;
+            }
+        }
+
+        $name = trim((string) $request->input('local_delivery_partner_name'));
+        if ($name === '') {
+            return null;
+        }
+
+        $partner = LocalDeliveryPartner::whereRaw('LOWER(name) = ?', [strtolower($name)])->first();
+        if ($partner) {
+            return $partner;
+        }
+
+        return LocalDeliveryPartner::create([
+            'name' => $name,
+            'status' => 'inactive',
+            'created_by' => Auth::id(),
+        ]);
     }
 
     private function isProductDiscountCurrentlyActive(Product $product): bool

@@ -14,6 +14,7 @@ use App\Models\CombinedOrder;
 use App\Models\Country;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\BookedTo;
 use App\Utility\EmailUtility;
 use App\Utility\NotificationUtility;
 use App\Services\WalletRewardService;
@@ -37,9 +38,15 @@ class CheckoutController extends Controller
 
         // get the shipping method the user selected at checkout
         $selectedShippingMethodId = session('shipping_method_id'); // from step 1
+        if (!$selectedShippingMethodId) {
+            return;
+        }
         $selectedShippingSlug    = get_shipping_method_slug_by_id($selectedShippingMethodId) ?? 'shipway'; // fallback
 
         foreach ($combined_order->orders as $order) {
+            if ($order->shipping_choice !== 'courier') {
+                continue;
+            }
             $shipmentResolver->createShipment($selectedShippingSlug, $order, [
                 // 'shipping_type'       => $order->shipping_type ?? null,
                 // 'carrier_id'          => $order->carrier_id ?? null,
@@ -229,8 +236,10 @@ class CheckoutController extends Controller
 
         $request->session()->put('payment_type', 'cart_payment');
 
-        if ($request->has('shipping_method_id')) {
+        if ($request->shipping_method === 'courier' && $request->has('shipping_method_id')) {
             $request->session()->put('shipping_method_id', $request->shipping_method_id);
+        } else {
+            $request->session()->forget('shipping_method_id');
         }
 
         $data['combined_order_id'] = $request->session()->get('combined_order_id');
@@ -918,6 +927,18 @@ class CheckoutController extends Controller
 
         $carts = $carts->fresh();
         return view('frontend.partials.cart.cart_summary', compact('carts','proceed'))->render();
+    }
+
+    public function bookedToOptions(Request $request)
+    {
+        $transportId = (int) $request->input('transport_id');
+
+        $options = BookedTo::active()
+            ->where('transport_id', $transportId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($options);
     }
 
     public function orderRePayment(Request $request){

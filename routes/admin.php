@@ -56,6 +56,7 @@ use App\Http\Controllers\StateController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TaxController;
+use App\Http\Controllers\TransportController;
 use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\WarrantyController;
 use App\Http\Controllers\Admin\GiftController as AdminGiftController;
@@ -64,6 +65,8 @@ use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\ZoneController;
 use App\Http\Controllers\RequestDocController;
 use App\Http\Controllers\PurchaseHistoryReportController;
+use App\Http\Controllers\BookedToController;
+use App\Http\Controllers\LocalDeliveryPartnerController;
 use Illuminate\Support\Facades\Storage;
 
 /*
@@ -695,6 +698,25 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     Route::controller(CarrierController::class)->group(function () {
         Route::get('/carriers/destroy/{id}', 'destroy')->name('carriers.destroy');
         Route::post('/carriers/update_status', 'updateStatus')->name('carriers.update_status');
+    });
+
+    // Transport delivery masters
+    Route::resource('transports', TransportController::class);
+    Route::controller(TransportController::class)->group(function () {
+        Route::get('/transports/destroy/{id}', 'destroy')->name('transports.destroy');
+        Route::post('/transports/update_status', 'updateStatus')->name('transports.update_status');
+    });
+
+    Route::resource('booked-to', BookedToController::class);
+    Route::controller(BookedToController::class)->group(function () {
+        Route::get('/booked-to/destroy/{id}', 'destroy')->name('booked-to.destroy');
+        Route::post('/booked-to/update_status', 'updateStatus')->name('booked-to.update_status');
+    });
+
+    Route::resource('local-delivery-partners', LocalDeliveryPartnerController::class);
+    Route::controller(LocalDeliveryPartnerController::class)->group(function () {
+        Route::get('/local-delivery-partners/destroy/{id}', 'destroy')->name('local-delivery-partners.destroy');
+        Route::post('/local-delivery-partners/update_status', 'updateStatus')->name('local-delivery-partners.update_status');
     });
 
 
