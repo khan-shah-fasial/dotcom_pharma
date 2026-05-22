@@ -35,7 +35,7 @@
                             <label class="form-label">{{ translate('Type') }}</label>
                             <select name="type" class="form-control aiz-selectpicker" required>
                                 @foreach ($types as $value => $label)
-                                    <option value="{{ $value }}">{{ translate($label) }}</option>
+                                    <option value="{{ $value }}">{{ $label }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -63,7 +63,7 @@
                                 <select name="type" class="form-control aiz-selectpicker" data-live-search="true">
                                     <option value="">{{ translate('All Types') }}</option>
                                     @foreach ($types as $value => $label)
-                                        <option value="{{ $value }}" @selected($filterType == $value)>{{ translate($label) }}</option>
+                                        <option value="{{ $value }}" @selected($filterType == $value)>{{ $label }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -89,7 +89,7 @@
                             @forelse ($archives as $key => $archive)
                                 <tr>
                                     <td>{{ $key + 1 + ($archives->currentPage() - 1) * $archives->perPage() }}</td>
-                                    <td>{{ translate($types[$archive->type] ?? $archive->type) }}</td>
+                                    <td>{{ $types[$archive->type] ?? $archive->type }}</td>
                                     <td>
                                         @if ($archive->upload)
                                             <a href="{{ uploaded_asset($archive->upload_id) }}" target="_blank" rel="noopener">

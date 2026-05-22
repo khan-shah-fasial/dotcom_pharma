@@ -10,7 +10,7 @@
                         <select name="type" class="form-control aiz-selectpicker" data-live-search="true">
                             <option value="">{{ translate('All Types') }}</option>
                             @foreach ($types as $value => $label)
-                                <option value="{{ $value }}" @selected($filterType == $value)>{{ translate($label) }}</option>
+                                <option value="{{ $value }}" @selected($filterType == $value)>{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
