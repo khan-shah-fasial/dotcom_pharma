@@ -547,7 +547,7 @@ class ProductStockService
             $batch->batch            = $row['batch'] ?? null;
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
-            $batch->scheme           = null;
+            $batch->scheme           = $this->normalizeStockScheme($row['scheme'] ?? 0);
             $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null, true);
             $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
@@ -650,7 +650,7 @@ class ProductStockService
             $batch->batch            = $row['batch'] ?? $batch->batch;
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
-            $batch->scheme           = null;
+            $batch->scheme           = $this->normalizeStockScheme($row['scheme'] ?? 0);
             $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null, true);
             $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
             $batch->coa              = $row['coa'] ?? null;
