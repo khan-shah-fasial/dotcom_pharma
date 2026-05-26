@@ -8,6 +8,8 @@ use App\Models\Country;
 use App\Models\UserDetails;
 use App\Models\State;
 use App\Models\City;
+use App\Models\Transport;
+use App\Models\BookedTo;
 use App\Utility\EmailUtility;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
@@ -439,13 +441,47 @@ class CustomerController extends Controller
         $countries = Cache::remember('countries_for_customer_edit', 86400, function () {
             return Country::select('id', 'name', 'code')->orderBy('name')->get();
         });
+        $transports = $this->activeTransportsWithBookedTo();
 
         return view('backend.customer.customers.create_business', compact(
             'user',
             'details',
             'countries',
             'nextCrmId',
+            'transports',
         ));
+    }
+
+    private function activeTransportsWithBookedTo()
+    {
+        return Transport::active()
+            ->with(['bookedTo' => function ($query) {
+                $query->active()->orderBy('name');
+            }])
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function resolveTransportSelection(Request $request, ?UserDetails $details = null): array
+    {
+        $transportId = $request->filled('transport_id')
+            ? (int) $request->input('transport_id')
+            : (int) ($details->transport_id ?? 0);
+        $bookedToId = $request->filled('booked_to_id')
+            ? (int) $request->input('booked_to_id')
+            : (int) ($details->booked_to_id ?? 0);
+
+        $transport = $transportId > 0 ? Transport::find($transportId) : null;
+        $bookedTo = ($transport && $bookedToId > 0)
+            ? BookedTo::where('transport_id', $transport->id)->where('id', $bookedToId)->first()
+            : null;
+
+        return [
+            'transport_id' => optional($transport)->id,
+            'booked_to_id' => optional($bookedTo)->id,
+            'transport' => optional($transport)->name ?? $request->input('transport', $details->transport ?? null),
+            'booked_to' => optional($bookedTo)->name ?? $request->input('booked_to', $details->booked_to ?? null),
+        ];
     }
 
     /**
@@ -655,6 +691,8 @@ class CustomerController extends Controller
 
             'transport' => ['required', 'string', 'max:255'],
             'booked_to' => ['required', 'string', 'max:255'],
+            'transport_id' => ['required', 'integer', 'exists:transports,id'],
+            'booked_to_id' => ['required', 'integer', 'exists:booked_to,id'],
             'salesman' => ['nullable', 'string', 'max:255'],
             'dl_expiry' => ['nullable', 'string', 'max:255'],
             'dl1' => ['nullable', 'string', 'max:255'],
@@ -692,6 +730,15 @@ class CustomerController extends Controller
                 $passportNo = trim((string) $request->input('passport_no'));
                 if ($passportNo === '') {
                     $validator->errors()->add('passport_no', translate('Passport No is required.'));
+                }
+            }
+
+            if ($request->filled('transport_id') && $request->filled('booked_to_id')) {
+                $bookedToExists = BookedTo::where('id', $request->input('booked_to_id'))
+                    ->where('transport_id', $request->input('transport_id'))
+                    ->exists();
+                if (!$bookedToExists) {
+                    $validator->errors()->add('booked_to_id', translate('Booked To must belong to selected transport.'));
                 }
             }
         });
@@ -773,11 +820,14 @@ class CustomerController extends Controller
             $user->save();
 
             $details = new UserDetails(['user_id' => $user->id]);
+            $transportSelection = $this->resolveTransportSelection($request);
             $details->fill([
                 'type_option' => $typeOption,
                 'crm_id' => $validated['crm_id'],
-                'transport' => $request->input('transport'),
-                'booked_to' => $request->input('booked_to'),
+                'transport_id' => $transportSelection['transport_id'],
+                'booked_to_id' => $transportSelection['booked_to_id'],
+                'transport' => $transportSelection['transport'],
+                'booked_to' => $transportSelection['booked_to'],
                 'salesman' => $request->input('salesman'),
                 'dl_expiry' => $request->input('dl_expiry'),
                 'dl1' => $request->input('dl1'),
@@ -973,11 +1023,13 @@ class CustomerController extends Controller
         $countries = Cache::remember('countries_for_customer_edit', 86400, function () {
             return Country::select('id', 'name', 'code')->orderBy('name')->get();
         });
+        $transports = $this->activeTransportsWithBookedTo();
 
         return view('backend.customer.customers.edit', compact(
             'user',
             'details',
             'countries',
+            'transports',
         ));
     }
 
@@ -1246,12 +1298,15 @@ class CustomerController extends Controller
             'passport_no' => $validated['passport_no'] ?? null,
         ]);
 
+        $transportSelection = $this->resolveTransportSelection($request, $details);
         $details->fill([
             'type_option' => $typeOption,
             'crm_id' => $request->input('crm_id', $details->crm_id ?? null),
 
-            'transport' => $request->input('transport', $details->transport ?? null),
-            'booked_to' => $request->input('booked_to', $details->booked_to ?? null),
+            'transport_id' => $transportSelection['transport_id'],
+            'booked_to_id' => $transportSelection['booked_to_id'],
+            'transport' => $transportSelection['transport'],
+            'booked_to' => $transportSelection['booked_to'],
             'salesman' => $request->input('salesman', $details->salesman ?? null),
             'dl_expiry' => $request->input('dl_expiry', $details->dl_expiry ?? null),
             'dl1' => $request->input('dl1', $details->dl1 ?? null),

@@ -5979,7 +5979,7 @@ if (!function_exists('format_dd_mm_yy')) {
 
 if (!function_exists('generate_financial_year_order_code')) {
     /**
-     * Build an order code like 786-DP-S-25-26- 626 based on the current financial year (Apr-Mar).
+     * Build an order code like 786-DP-S-25-26-626 based on the current financial year (Apr-Mar).
      */
     function generate_financial_year_order_code(): string
     {
@@ -6004,6 +6004,6 @@ if (!function_exists('generate_financial_year_order_code')) {
             $nextSequence = ((int) $matches[1]) + 1;
         }
 
-        return $prefix . ' ' . $nextSequence;
+        return $prefix . $nextSequence;
     }
 }

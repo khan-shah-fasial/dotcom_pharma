@@ -318,12 +318,6 @@
                                value="{{ old('district_business', $details?->district_business) }}">
                         @error('district_business') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label" for="transport">{{ translate('Transport') }}</label>
-                        <input type="text" name="transport" id="transport" class="form-control"
-                               value="{{ old('transport', $details?->transport) }}">
-                        @error('transport') <div class="text-danger small">{{ $message }}</div> @enderror
-                    </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label" for="country_id_business">{{ translate('Country') }} *</label>
                         <select name="country_id_business" id="country_id_business" class="form-control aiz-selectpicker" data-live-search="true">
@@ -903,19 +897,48 @@
 
 
                 {{-- Transport details --}}
+                @php
+                    $selectedTransportId = old('transport_id', $details?->transport_id);
+                    if (!$selectedTransportId && $details?->transport) {
+                        $matchedTransport = $transports->first(function ($transport) use ($details) {
+                            return strcasecmp($transport->name, (string) $details->transport) === 0;
+                        });
+                        $selectedTransportId = optional($matchedTransport)->id;
+                    }
+
+                    $selectedBookedToId = old('booked_to_id', $details?->booked_to_id);
+                    if (!$selectedBookedToId && $selectedTransportId && $details?->booked_to) {
+                        $matchedBookedTo = optional($transports->firstWhere('id', (int) $selectedTransportId))->bookedTo
+                            ?->first(function ($bookedTo) use ($details) {
+                                return strcasecmp($bookedTo->name, (string) $details->booked_to) === 0;
+                            });
+                        $selectedBookedToId = optional($matchedBookedTo)->id;
+                    }
+                @endphp
                 <div class="row">
                     <div class="col-md-12">
                         <h5 class="mb-3">{{ translate('Transport Details') }}</h5>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="form-label" for="transport">{{ translate('Transport Name') }} *</label>
-                        <input type="text" id="transport" name="transport" class="form-control" value="{{ old('transport', $details?->transport) }}" required>
-                        @error('transport') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <label class="form-label" for="transport_id">{{ translate('Transport Name') }} *</label>
+                        <input type="hidden" id="transport_name_hidden" name="transport" value="{{ old('transport', $details?->transport) }}">
+                        <select id="transport_id" name="transport_id" class="form-control aiz-selectpicker" data-live-search="true" required>
+                            <option value="">{{ translate('Select Transport') }}</option>
+                            @foreach ($transports as $transport)
+                                <option value="{{ $transport->id }}" {{ (string) $selectedTransportId === (string) $transport->id ? 'selected' : '' }}>
+                                    {{ $transport->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('transport_id') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="form-label" for="booked_to">{{ translate('Booked To') }} *</label>
-                        <input type="text" id="booked_to" name="booked_to" class="form-control" value="{{ old('booked_to', $details?->booked_to) }}" required>
-                        @error('booked_to') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <label class="form-label" for="booked_to_id">{{ translate('Booked To') }} *</label>
+                        <input type="hidden" id="booked_to_name_hidden" name="booked_to" value="{{ old('booked_to', $details?->booked_to) }}">
+                        <select id="booked_to_id" name="booked_to_id" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ $selectedBookedToId }}" required>
+                            <option value="">{{ translate('Select Booked To') }}</option>
+                        </select>
+                        @error('booked_to_id') <div class="text-danger small">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="salesman">{{ translate('Salesman') }}</label>
@@ -955,6 +978,11 @@
         const locationLookupRoute = "{{ route('get-location') }}";
         const defaultStateText = @json(translate('Select State'));
         const defaultCityText = @json(translate('Select City'));
+        const transportBookedToOptions = @json($transports->mapWithKeys(function ($transport) {
+            return [(string) $transport->id => $transport->bookedTo->map(function ($bookedTo) {
+                return ['id' => $bookedTo->id, 'name' => $bookedTo->name];
+            })->values()];
+        }));
 
         function refreshPicker($el) {
             if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.bootstrapSelect === 'function') {
@@ -971,6 +999,49 @@
             }
             $select.data('selected', '');
             refreshPicker($select);
+        }
+
+        function initTransportDropdowns() {
+            const $transport = $('#transport_id');
+            const $bookedTo = $('#booked_to_id');
+            const $transportName = $('#transport_name_hidden');
+            const $bookedToName = $('#booked_to_name_hidden');
+            const defaultBookedToText = @json(translate('Select Booked To'));
+
+            function syncTransportName() {
+                $transportName.val($transport.val() ? $transport.find('option:selected').text().trim() : '');
+            }
+
+            function syncBookedToName() {
+                $bookedToName.val($bookedTo.val() ? $bookedTo.find('option:selected').text().trim() : '');
+            }
+
+            function renderBookedToOptions(selectedId) {
+                const transportId = String($transport.val() || '');
+                const options = transportBookedToOptions[transportId] || [];
+                $bookedTo.empty().append($('<option>', { value: '', text: defaultBookedToText }));
+
+                options.forEach(function (item) {
+                    $bookedTo.append($('<option>', {
+                        value: item.id,
+                        text: item.name,
+                        selected: String(selectedId || '') === String(item.id)
+                    }));
+                });
+
+                syncTransportName();
+                syncBookedToName();
+                refreshPicker($bookedTo);
+            }
+
+            renderBookedToOptions($bookedTo.data('selected'));
+
+            $transport.on('change', function () {
+                $bookedTo.data('selected', '');
+                renderBookedToOptions('');
+            });
+
+            $bookedTo.on('change', syncBookedToName);
         }
 
         function loadStates(scope, preserveSelected = false, forcedSelected = null) {
@@ -1655,6 +1726,7 @@
         toggleLocalityBlocks();
         toggleIdentityBlocks();
         initEditLocationDropdowns();
+        initTransportDropdowns();
         initIntlInputsEdit();
         initIfscButtons();
         AIZ.plugins.bootstrapSelect('refresh');

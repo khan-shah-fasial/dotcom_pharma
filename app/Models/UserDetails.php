@@ -10,6 +10,8 @@ class UserDetails extends Model
     protected $fillable = [
         'user_id',
         'type_option',
+        'transport_id',
+        'booked_to_id',
         'booked_to',
         'salesman',
         'dl_expiry',
@@ -136,5 +138,15 @@ class UserDetails extends Model
     public function details()
     {
         return $this->hasOne(UserDetails::class);
+    }
+
+    public function transportMaster()
+    {
+        return $this->belongsTo(Transport::class, 'transport_id');
+    }
+
+    public function bookedToMaster()
+    {
+        return $this->belongsTo(BookedTo::class, 'booked_to_id');
     }
 }
