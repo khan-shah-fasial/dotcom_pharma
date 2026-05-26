@@ -1062,6 +1062,24 @@
             document.querySelectorAll('#edit-customer-form [required]').forEach(el => el.removeAttribute('required'));
         }
 
+        function setTemporaryRequiredFlags() {
+            const requiredIds = ['crm_id', 'name_personal', 'prim_email_personal', 'phone_personal'];
+            requiredIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.setAttribute('required', 'required');
+                }
+            });
+
+            document.querySelectorAll('#edit-customer-form label[for]').forEach(label => {
+                const isRequired = requiredIds.includes(label.getAttribute('for'));
+                label.textContent = label.textContent.replace(/\s*\*$/, '');
+                if (isRequired) {
+                    label.textContent = label.textContent + ' *';
+                }
+            });
+        }
+
         function toggleIdentityBlocks() {
             const domChoice = document.querySelector('input[name="domestic_identity_selection"]:checked')?.value || 'gst';
             document.querySelectorAll('.domestic-gst-block').forEach(el => el.classList.toggle('d-none', domChoice !== 'gst'));
@@ -1555,6 +1573,7 @@
         }
         cacheOriginalRequiredFlags();
         removeAllRequiredFlags();
+        setTemporaryRequiredFlags();
         
         // Initialize intlTelInput on edit form and sync values to hidden fields used by controller
         function initEditIntlTel(name, codeTargets = [], metaTargets = []) {
@@ -1654,6 +1673,7 @@
 
         toggleLocalityBlocks();
         toggleIdentityBlocks();
+        setTemporaryRequiredFlags();
         initEditLocationDropdowns();
         initIntlInputsEdit();
         initIfscButtons();

@@ -1264,6 +1264,7 @@
                         $('#weight-volume-product-details').html(data?.weight_volume ?? '-');
 
                         $('#min-package-count-product-details').html((data?.package_count ?? '-') + ' Pcs');
+                        $('#min-order-qty-product-details').html(stock_min_qty ?? '-');
 
                         // $('#mrp-unit').html(stringPart + ' ' + (data?.original_price ?? '-'));
                         $('#mrp-unit').html(data?.original_price ?? '-');
@@ -1458,7 +1459,7 @@
                             if (batches.length > 0) {
                                 $batchSection.show();
                                 
-                                // Build compact dropdown with batch code only
+                                // Build compact dropdown with batch code and expiry date.
                                 $batchDropdown.empty();
                                 const selectableBatches = batches.filter(function(batch) {
                                     return batch.is_selectable !== false && !batch.is_expired;
@@ -1468,9 +1469,12 @@
                                     const batchLabel = (batch.batch && batch.batch.trim() !== '')
                                         ? batch.batch
                                         : ('Batch ' + batch.id);
+                                    const expiryLabel = batch.expiry_date
+                                        ? (' - Exp: ' + batch.expiry_date)
+                                        : '';
                                     const optionText = batch.is_expired
-                                        ? (batchLabel + ' (Expired)')
-                                        : batchLabel;
+                                        ? (batchLabel + expiryLabel + ' (Expired)')
+                                        : (batchLabel + expiryLabel);
                                     $batchDropdown.append(
                                         $('<option>', {
                                             value: batch.id,

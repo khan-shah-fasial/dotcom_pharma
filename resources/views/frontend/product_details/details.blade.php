@@ -1283,7 +1283,9 @@
                                             <div class="">
                                                 <p class="detail-font-14px detail-gray-color mb-0">Minimum Order Qty:
                                                 </p>
-                                                <p class="fw-500 fs-14 mb-0">06</p>
+                                                <p id="min-order-qty-product-details" class="fw-500 fs-14 mb-0">
+                                                    {{ $detailedProduct->min_qty ?? '-' }}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>

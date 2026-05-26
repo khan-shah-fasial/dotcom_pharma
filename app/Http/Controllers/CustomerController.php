@@ -558,38 +558,38 @@ class CustomerController extends Controller
             'domestic_identity_selection' => ['nullable', 'in:gst,aadhaar_pan'],
             'international_identity_selection' => ['nullable', 'in:iec,passport'],
 
-            'registration_date' => [$businessRequired ? 'required' : 'nullable'],
-            'const_of_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
-            'con_person_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:50'],
-            'company_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
-            'street_add_first_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
+            'registration_date' => ['nullable'],
+            'const_of_business' => ['nullable', 'string', 'max:255'],
+            'con_person_name' => ['nullable', 'string', 'max:50'],
+            'company_name' => ['nullable', 'string', 'max:150'],
+            'street_add_first_business' => ['nullable', 'string', 'max:150'],
             'street_add_sec_business' => ['nullable', 'string', 'max:150'],
-            'locality_land_mark_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
-            'village_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
-            'post_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
-            'district_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
-            'country_code_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:150'],
-            'pincode_business' => $businessRequired ? ['required', 'regex:/^\d{6}$/'] : ['nullable'],
-            'city_id_business' => [$businessRequired ? 'required' : 'nullable', 'integer', 'exists:cities,id'],
-            'state_id_business' => [$businessRequired ? 'required' : 'nullable', 'integer', 'exists:states,id'],
-            'country_id_business' => [$businessRequired ? 'required' : 'nullable', 'integer'],
-            'phone_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'locality_land_mark_business' => ['nullable', 'string', 'max:150'],
+            'village_business' => ['nullable', 'string', 'max:150'],
+            'post_business' => ['nullable', 'string', 'max:150'],
+            'district_business' => ['nullable', 'string', 'max:150'],
+            'country_code_business' => ['nullable', 'string', 'max:150'],
+            'pincode_business' => ['nullable', 'regex:/^\d{6}$/'],
+            'city_id_business' => ['nullable', 'integer', 'exists:cities,id'],
+            'state_id_business' => ['nullable', 'integer', 'exists:states,id'],
+            'country_id_business' => ['nullable', 'integer'],
+            'phone_business' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
             'alternate_mob_no_business' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
-            'whats_app_no_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'whats_app_no_business' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
             'alternate_whats_app_no_business' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
-            'prim_email_business' => [$businessRequired ? 'required' : 'nullable', 'email'],
+            'prim_email_business' => ['nullable', 'email'],
             'alt_email_business' => ['nullable', 'email'],
             'website_business' => ['nullable'],
             'business_instagram_id' => ['nullable', 'string', 'max:255'],
             'business_facebook_id' => ['nullable', 'string', 'max:255'],
             'business_linkedin_id' => ['nullable', 'string', 'max:255'],
-            'bank_name_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
-            'account_no_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^\d+$/', 'max:20'],
-            'account_name_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
-            'branch_code_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:50'],
-            'branch_name_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
-            'branch_address_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'max:255'],
-            'ifsc_code_business' => [$businessRequired ? 'required' : 'nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'bank_name_business' => ['nullable', 'string', 'max:255'],
+            'account_no_business' => ['nullable', 'regex:/^\d+$/', 'max:20'],
+            'account_name_business' => ['nullable', 'string', 'max:255'],
+            'branch_code_business' => ['nullable', 'string', 'max:50'],
+            'branch_name_business' => ['nullable', 'string', 'max:255'],
+            'branch_address_business' => ['nullable', 'string', 'max:255'],
+            'ifsc_code_business' => ['nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
             'gst_no' => ['nullable', 'regex:/^[0-9A-Z]{15}$/i'],
             'gst_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
             'gstin_current_status' => ['nullable', 'string'],
@@ -601,36 +601,36 @@ class CustomerController extends Controller
             'micr_code_business' => ['nullable', 'regex:/^\d{9}$/'],
             'ad_code_business' => ['nullable', 'string', 'max:255'],
 
-            'photo_file' => ['required', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
+            'photo_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf', 'max:5120'],
             'name_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'father_name' => ['required', 'string', 'min:1', 'max:150'],
-            'dob' => ['required'],
+            'father_name' => ['nullable', 'string', 'min:1', 'max:150'],
+            'dob' => ['nullable'],
             'religion' => ['nullable', 'string', 'max:150'],
             'anniversary' => ['nullable', 'date'],
-            'street_add_first_personal' => ['required', 'string', 'min:1', 'max:150'],
+            'street_add_first_personal' => ['nullable', 'string', 'min:1', 'max:150'],
             'street_add_sec_personal' => ['nullable', 'string', 'max:150'],
-            'locality_land_mark_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'village_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'post_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'district_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'country_code_personal' => ['required', 'string', 'min:1', 'max:150'],
-            'pincode_personal' => ['required', 'regex:/^\d{6}$/'],
-            'city_id_personal' => ['required', 'integer', 'exists:cities,id'],
-            'state_id_personal' => ['required', 'integer', 'exists:states,id'],
-            'country_id_personal' => ['required', 'integer'],
+            'locality_land_mark_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'village_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'post_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'district_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'country_code_personal' => ['nullable', 'string', 'min:1', 'max:150'],
+            'pincode_personal' => ['nullable', 'regex:/^\d{6}$/'],
+            'city_id_personal' => ['nullable', 'integer', 'exists:cities,id'],
+            'state_id_personal' => ['nullable', 'integer', 'exists:states,id'],
+            'country_id_personal' => ['nullable', 'integer'],
             'phone_personal' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
             'alternate_mob_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
-            'whats_app_no_personal' => ['required', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
+            'whats_app_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
             'alternate_whats_app_no_personal' => ['nullable', 'regex:/^[\d\s\-\+]+$/', 'min:5', 'max:15'],
             'prim_email_personal' => ['required', 'email'],
             'alt_email_personal' => ['nullable', 'email'],
-            'bank_name_personal' => ['required', 'string', 'max:255'],
-            'account_no_personal' => ['required', 'regex:/^\d+$/', 'max:20'],
-            'account_name_personal' => ['required', 'string', 'max:255'],
-            'branch_code_personal' => ['required', 'string', 'max:50'],
-            'branch_name_personal' => ['required', 'string', 'max:255'],
-            'branch_address_personal' => ['required', 'string', 'max:255'],
-            'ifsc_code_personal' => ['required', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'bank_name_personal' => ['nullable', 'string', 'max:255'],
+            'account_no_personal' => ['nullable', 'regex:/^\d+$/', 'max:20'],
+            'account_name_personal' => ['nullable', 'string', 'max:255'],
+            'branch_code_personal' => ['nullable', 'string', 'max:50'],
+            'branch_name_personal' => ['nullable', 'string', 'max:255'],
+            'branch_address_personal' => ['nullable', 'string', 'max:255'],
+            'ifsc_code_personal' => ['nullable', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
             'aadhaar_no' => ['nullable', 'regex:/^[0-9]{12}$/i'],
             'aadhaar_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
             'pan_no' => ['nullable', 'regex:/^[0-9A-Z]{10}$/i'],
@@ -653,8 +653,8 @@ class CustomerController extends Controller
             'other_reg_no' => ['nullable', 'string', 'max:255'],
             'other_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
 
-            'transport' => ['required', 'string', 'max:255'],
-            'booked_to' => ['required', 'string', 'max:255'],
+            'transport' => ['nullable', 'string', 'max:255'],
+            'booked_to' => ['nullable', 'string', 'max:255'],
             'salesman' => ['nullable', 'string', 'max:255'],
             'dl_expiry' => ['nullable', 'string', 'max:255'],
             'dl1' => ['nullable', 'string', 'max:255'],
@@ -674,26 +674,7 @@ class CustomerController extends Controller
                 $validator->errors()->add('phone_personal', translate('Phone already exists.'));
             }
 
-            if ($typeOption === 'domestic' && $domesticChoice === 'gst') {
-                $gstNo = trim((string) $request->input('gst_no'));
-                if ($gstNo === '') {
-                    $validator->errors()->add('gst_no', translate('GST No is required.'));
-                }
-            }
-
-            if ($typeOption === 'international' && $internationalChoice === 'iec') {
-                $iecNo = trim((string) $request->input('iec_no'));
-                if ($iecNo === '') {
-                    $validator->errors()->add('iec_no', translate('IEC No is required.'));
-                }
-            }
-
-            if ($typeOption === 'international' && $internationalChoice === 'passport') {
-                $passportNo = trim((string) $request->input('passport_no'));
-                if ($passportNo === '') {
-                    $validator->errors()->add('passport_no', translate('Passport No is required.'));
-                }
-            }
+            // Temporary create flow: only account number, name, email, and phone are required.
         });
 
         if ($validator->fails()) {
@@ -729,14 +710,14 @@ class CustomerController extends Controller
                 $licenseFiles[$field] = $this->moveCustomerDocument($request, $field, $documentPath);
             }
 
-            $businessPrimaryCode = $request->input('country_code_phone_code_business', '');
+            $businessPrimaryCode = $request->input('country_code_phone_code_business', '') ?: '91';
             $businessAltCode = $request->input('country_code_alternate_mob_no_business', '');
-            $businessWhatsCode = $request->input('country_code_whats_app_no_business', '');
+            $businessWhatsCode = $request->input('country_code_whats_app_no_business', '') ?: '91';
             $businessAltWhatsCode = $request->input('country_code_alternate_whats_app_no_business', '');
 
-            $personalPrimaryCode = $request->input('country_code_phone_code_personal', '');
+            $personalPrimaryCode = $request->input('country_code_phone_code_personal', '') ?: '91';
             $personalAltCode = $request->input('country_code_alternate_mob_no_personal', '');
-            $personalWhatsCode = $request->input('country_code_whats_app_no_personal', '');
+            $personalWhatsCode = $request->input('country_code_whats_app_no_personal', '') ?: $personalPrimaryCode;
             $personalAltWhatsCode = $request->input('country_code_alternate_whats_app_no_personal', '');
 
             $password = substr(hash('sha512', rand()), 0, 8);
@@ -837,28 +818,30 @@ class CustomerController extends Controller
                 'ad_code_business' => $typeOption === 'international' ? ($validated['ad_code_business'] ?? null) : null,
 
                 'name' => $validated['name_personal'],
-                'father_name' => $validated['father_name'],
-                'dob' => $validated['dob'],
+                'father_name' => $validated['father_name'] ?? null,
+                'dob' => $validated['dob'] ?? null,
                 'religion' => $validated['religion'] ?? null,
                 'anniversary' => $validated['anniversary'] ?? null,
-                'street_add_first' => $validated['street_add_first_personal'],
+                'street_add_first' => $validated['street_add_first_personal'] ?? null,
                 'street_add_sec' => $validated['street_add_sec_personal'] ?? null,
-                'locality_land_mark' => $validated['locality_land_mark_personal'],
-                'village' => $validated['village_personal'],
-                'post' => $validated['post_personal'],
-                'city_id' => $validated['city_id_personal'],
-                'district' => $validated['district_personal'],
-                'state_id' => $validated['state_id_personal'],
-                'pincode' => $validated['pincode_personal'],
-                'country_id' => $validated['country_id_personal'],
-                'country_code' => $validated['country_code_personal'],
+                'locality_land_mark' => $validated['locality_land_mark_personal'] ?? null,
+                'village' => $validated['village_personal'] ?? null,
+                'post' => $validated['post_personal'] ?? null,
+                'city_id' => $validated['city_id_personal'] ?? null,
+                'district' => $validated['district_personal'] ?? null,
+                'state_id' => $validated['state_id_personal'] ?? null,
+                'pincode' => $validated['pincode_personal'] ?? null,
+                'country_id' => $validated['country_id_personal'] ?? null,
+                'country_code' => $validated['country_code_personal'] ?? null,
                 'prim_mobile_no' => $personalPrimaryCode . '-' . $validated['phone_personal'],
                 'prim_mobile_no_meta' => $request->input('phone_personal_meta', ''),
                 'alt_mobile_no' => $personalAltCode && $request->filled('alternate_mob_no_personal')
                     ? $personalAltCode . '-' . ($validated['alternate_mob_no_personal'] ?? '')
                     : null,
                 'alt_mobile_no_meta' => $request->input('alternate_mob_no_personal_meta', ''),
-                'prim_whats_app_no' => $personalWhatsCode . '-' . $validated['whats_app_no_personal'],
+                'prim_whats_app_no' => !empty($validated['whats_app_no_personal'])
+                    ? $personalWhatsCode . '-' . $validated['whats_app_no_personal']
+                    : null,
                 'prim_whats_app_no_meta' => $request->input('whats_app_no_personal_meta', ''),
                 'alt_whats_app_no' => $personalAltWhatsCode && $request->filled('alternate_whats_app_no_personal')
                     ? $personalAltWhatsCode . '-' . ($validated['alternate_whats_app_no_personal'] ?? '')
@@ -866,13 +849,13 @@ class CustomerController extends Controller
                 'alt_whats_app_no_meta' => $request->input('alternate_whats_app_no_personal_meta', ''),
                 'prim_email_personal' => $validated['prim_email_personal'],
                 'alt_email_personal' => $validated['alt_email_personal'] ?? null,
-                'bank_name_personal' => $validated['bank_name_personal'],
-                'account_no_personal' => $validated['account_no_personal'],
-                'account_name_personal' => $validated['account_name_personal'],
-                'branch_code_personal' => $validated['branch_code_personal'],
-                'branch_name_personal' => $validated['branch_name_personal'],
-                'branch_address_personal' => $validated['branch_address_personal'],
-                'ifsc_code_personal' => $validated['ifsc_code_personal'],
+                'bank_name_personal' => $validated['bank_name_personal'] ?? null,
+                'account_no_personal' => $validated['account_no_personal'] ?? null,
+                'account_name_personal' => $validated['account_name_personal'] ?? null,
+                'branch_code_personal' => $validated['branch_code_personal'] ?? null,
+                'branch_name_personal' => $validated['branch_name_personal'] ?? null,
+                'branch_address_personal' => $validated['branch_address_personal'] ?? null,
+                'ifsc_code_personal' => $validated['ifsc_code_personal'] ?? null,
                 'micr_code_personal' => $typeOption === 'international' ? ($validated['micr_code_personal'] ?? null) : null,
                 'ad_code_personal' => $typeOption === 'international' ? ($validated['ad_code_personal'] ?? null) : null,
                 'photo_file' => $photoFile,
