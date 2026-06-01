@@ -10,11 +10,12 @@
             <div class="row gutters-5">
                 <div class="col text-md-left text-center">
                     {{-- show.blade.php --}}
-                    @if(isset($order) && $order->shipping_choice === 'courier' && !$order->shipment)
+                    @if(isset($order) && $order->shipping_choice === 'courier' && (!$order->shipment || $order->shipment->status === 'error'))
                         <button id="create-shipment-btn"
                                 class="btn btn-primary"
                                 data-order="{{ encrypt($order->id) }}"
                                 data-provider="{{ $order->shipping_by ?? '' }}"
+                                data-total="{{ (float) $order->grand_total }}"
                                 type="button">
                             Create Shipment
                         </button>
@@ -417,11 +418,23 @@
         $('#create-shipment-btn').on('click', function () {
             const btn = $(this);
             const provider = btn.data('provider');
+            const providerSlug = String(provider || '').toLowerCase();
             const orderEnc = btn.data('order');
+            const orderTotal = parseFloat(btn.data('total')) || 0;
+            let ewaybill = '';
 
             if (!provider || provider === 'N/A') {
                 AIZ.plugins.notify('danger', 'No shipment provider configured for this order.');
                 return;
+            }
+
+            if (providerSlug === 'delhivery' && orderTotal > 50000) {
+                ewaybill = prompt('Enter E-waybill number for this Delhivery shipment:');
+                if (!ewaybill || !ewaybill.trim()) {
+                    AIZ.plugins.notify('danger', 'E-waybill number is required for Delhivery shipments above Rs.50,000.');
+                    return;
+                }
+                ewaybill = ewaybill.trim();
             }
 
             if (!confirm('Create shipment with provider: ' + provider + ' ?')) return;
@@ -435,7 +448,8 @@
                 type: 'POST',
                 data: {
                     provider: provider,
-                    order: orderEnc
+                    order: orderEnc,
+                    ewaybill: ewaybill
                 },
                 headers: {
                     'X-CSRF-TOKEN': "{{ csrf_token() }}",

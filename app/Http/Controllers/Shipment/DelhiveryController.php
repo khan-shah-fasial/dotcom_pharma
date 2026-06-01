@@ -279,7 +279,7 @@ class DelhiveryController extends Controller
             return $data;
         }
 
-        $payload = $this->buildOrderPayload($order);
+        $payload = $this->buildOrderPayload($order, $extra);
         $payloadErrors = $this->validateShipmentPayload($payload);
 
         if (!empty($payloadErrors)) {
@@ -323,6 +323,7 @@ class DelhiveryController extends Controller
             'seller_gst_present' => !empty($payload['shipments'][0]['seller_gst_tin'] ?? null),
             'client_gst_present' => !empty($payload['shipments'][0]['client_gst_tin'] ?? null),
             'hsn_code_present' => !empty($payload['shipments'][0]['hsn_code'] ?? null),
+            'ewaybill_present' => !empty($payload['shipments'][0]['ewaybill'] ?? null) || !empty($payload['shipments'][0]['ewbn'] ?? null),
             'weight' => $payload['shipments'][0]['weight'] ?? null,
             'shipment_length' => $payload['shipments'][0]['shipment_length'] ?? null,
             'shipment_width' => $payload['shipments'][0]['shipment_width'] ?? null,
@@ -401,7 +402,7 @@ class DelhiveryController extends Controller
         return $data;
     }
 
-    protected function buildOrderPayload(Order $order): array
+    protected function buildOrderPayload(Order $order, array $extra = []): array
     {
         $addr = json_decode($order->shipping_address ?? '{}', true) ?: [];
         $package = $this->buildPackageFromOrder($order);
@@ -411,6 +412,7 @@ class DelhiveryController extends Controller
         $businessFields = $isBusiness ? $this->businessShipmentFields($order) : [];
         $shipmentOrderCode = $this->shipmentOrderCode($order);
         $defaultHsnCode = $this->cleanValue($this->cfg('default_hsn_code'));
+        $ewaybillNumber = $this->resolveEwaybillNumber($order, $extra);
 
         $shipment = array_merge([
             'order' => $shipmentOrderCode,
@@ -443,9 +445,9 @@ class DelhiveryController extends Controller
             'return_name' => '',
             'seller_add' => $this->cleanValue($this->cfg('seller_address', '')),
             'seller_name' => $this->cleanValue($this->cfg('seller_name', '')),
-            'seller_inv' => '',
-            'ewaybill' => '',
-            'ewbn' => '',
+            'seller_inv' => $shipmentOrderCode,
+            'ewaybill' => $ewaybillNumber,
+            'ewbn' => $ewaybillNumber,
             'waybill' => '',
             'order_date' => null,
             'fragile_shipment' => false,
@@ -643,7 +645,33 @@ class DelhiveryController extends Controller
             $errors['pickup_location.name'] = 'pickup location name is required for Delhivery shipment creation.';
         }
 
+        $totalAmount = (float) ($shipment['total_amount'] ?? 0);
+        if ($totalAmount > 50000 && empty($shipment['ewaybill']) && empty($shipment['ewbn'])) {
+            $errors['ewaybill'] = 'E-waybill number is required for Delhivery shipments above Rs.50,000.';
+        }
+
         return $errors;
+    }
+
+    protected function resolveEwaybillNumber(Order $order, array $extra = []): string
+    {
+        foreach ([
+            $extra['ewaybill'] ?? null,
+            $extra['ewbn'] ?? null,
+            $extra['eway_bill'] ?? null,
+            $order->ewaybill ?? null,
+            $order->ewbn ?? null,
+            $order->eway_bill ?? null,
+            $order->eway_bill_no ?? null,
+            $order->ewaybill_no ?? null,
+        ] as $candidate) {
+            $candidate = $this->cleanValue($candidate);
+            if ($candidate !== '') {
+                return $candidate;
+            }
+        }
+
+        return '';
     }
 
     protected function normalizeApiFailure(array $data): array

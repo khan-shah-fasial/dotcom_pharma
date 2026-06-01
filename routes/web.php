@@ -487,7 +487,9 @@ Route::post('/shipment/create', function (Request $request) {
     }
 
     try {
-        $res = app($class)->create($order);
+        $res = app($class)->create($order, [
+            'ewaybill' => $request->input('ewaybill') ?: $request->input('ewbn') ?: $request->input('eway_bill'),
+        ]);
     } catch (\Throwable $e) {
         \Log::error('[Shipment][Create] Provider create() threw', ['err' => $e->getMessage()]);
         return response()->json(['success' => false, 'message' => 'Provider create failed'], 500);
