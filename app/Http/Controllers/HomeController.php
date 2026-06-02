@@ -1056,10 +1056,14 @@ class HomeController extends Controller
 
         if (json_decode($product->choice_options) != null) {
             foreach (json_decode($product->choice_options) as $key => $choice) {
+                $attributeKey = 'attribute_id_' . $choice->attribute_id;
+                if (!$request->has($attributeKey)) {
+                    continue;
+                }
                 if ($str != null) {
-                    $str .= '-' . str_replace(' ', '', $request['attribute_id_' . $choice->attribute_id]);
+                    $str .= '-' . str_replace(' ', '', $request[$attributeKey]);
                 } else {
-                    $str .= str_replace(' ', '', $request['attribute_id_' . $choice->attribute_id]);
+                    $str .= str_replace(' ', '', $request[$attributeKey]);
                 }
             }
         }

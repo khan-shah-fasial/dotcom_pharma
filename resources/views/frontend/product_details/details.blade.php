@@ -590,9 +590,31 @@
                     <input type="hidden" name="id" value="{{ $detailedProduct->id }}">
 
                     @if ($detailedProduct->digital == 0)
+                        @php
+                            $visibleVariantParts = $detailedProduct->stocks
+                                ->where('is_hidden', 0)
+                                ->pluck('variant')
+                                ->flatMap(function ($variant) {
+                                    return explode('-', (string) $variant);
+                                })
+                                ->map(function ($part) {
+                                    return strtolower(str_replace(' ', '', trim((string) $part)));
+                                })
+                                ->filter()
+                                ->unique()
+                                ->values();
+                        @endphp
                         <!-- Choice Options -->
                         @if ($detailedProduct->choice_options != null)
                             @foreach (json_decode($detailedProduct->choice_options) as $key => $choice)
+                                @php
+                                    $visibleValues = collect($choice->values)
+                                        ->filter(function ($value) use ($visibleVariantParts) {
+                                            return $visibleVariantParts->contains(strtolower(str_replace(' ', '', trim((string) $value))));
+                                        })
+                                        ->values();
+                                @endphp
+                                @continue($visibleValues->isEmpty())
                                 <!--<div class="row no-gutters mb-3">--> <!--old code-->
                                 <div
                                     class="row no-gutters mt-md-2 mt-2 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
@@ -605,7 +627,7 @@
                                     <div class="col-sm-12">
                                         <div class="aiz-radio-inline">
                                             @php
-                                                $sortedValues = collect($choice->values)
+                                                $sortedValues = $visibleValues
                                                     ->sortBy(function ($val) {
                                                         preg_match('/\\d+(\\.\\d+)?/', $val, $matches);
                                                         return isset($matches[0]) ? (float) $matches[0] : $val;
@@ -638,13 +660,21 @@
 
                         <!-- Color Options -->
                         @if ($detailedProduct->colors != null && count(json_decode($detailedProduct->colors)) > 0)
+                            @php
+                                $visibleColors = collect(json_decode($detailedProduct->colors))
+                                    ->filter(function ($color) use ($visibleVariantParts) {
+                                        return $visibleVariantParts->contains(strtolower(str_replace(' ', '', get_single_color_name($color))));
+                                    })
+                                    ->values();
+                            @endphp
+                            @if($visibleColors->isNotEmpty())
                             <div class="row no-gutters mb-3">
                                 <div class="col-sm-2">
                                     <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Color') }}</div>
                                 </div>
                                 <div class="col-sm-10">
                                     <div class="aiz-radio-inline">
-                                        @foreach (json_decode($detailedProduct->colors) as $key => $color)
+                                        @foreach ($visibleColors as $key => $color)
                                             <label class="aiz-megabox pl-0 mr-1 mb-2" data-toggle="tooltip"
                                                 data-title="{{ get_single_color_name($color) }}">
                                                 <input type="radio" name="color"
@@ -660,6 +690,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                         @endif
 
 

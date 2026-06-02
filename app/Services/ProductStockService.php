@@ -168,6 +168,7 @@ class ProductStockService
 
                 $product_stock->variant = $str;
                 $product_stock->is_hidden = (int) request()->get('is_hidden_' . str_replace('.', '_', $str), 0);
+                $variantInputKey = str_replace('.', '_', $str);
                 
                 // $product_stock->price = request()['price_' . str_replace('.', '_', $str)];
                 // $product_stock->role_price = generateRoleBasedPrices(request()['price_' . str_replace('.', '_', $str)]); //price by role
@@ -193,8 +194,10 @@ class ProductStockService
                 $product_stock->case_width = request()->get('case_width_' . str_replace('.', '_', $str), null);
                 $product_stock->case_height = request()->get('case_height_' . str_replace('.', '_', $str), null);
 
-                $product_stock->sku = request()['sku_' . str_replace('.', '_', $str)];
-                $product_stock->image = request()['img_' . str_replace('.', '_', $str)];
+                $product_stock->sku = $product_stock->is_hidden
+                    ? '-'
+                    : request()->get('sku_' . $variantInputKey, '');
+                $product_stock->image = request()->get('img_' . $variantInputKey);
                 $product_stock->save();
 
                 $this->syncBatchesFromRequest($product_stock, $str, $product);
@@ -338,6 +341,7 @@ class ProductStockService
 
                 // Update the fields (non-batch level)
                 $productStock->is_hidden = (int) request()->get('is_hidden_' . str_replace('.', '_', $str), 0);
+                $variantInputKey = str_replace('.', '_', $str);
                 // $productStock->mrp_role_price = generateRoleBasedPrices(request()['mrp_price_' . str_replace('.', '_', $str)]);
 
                 // $productStock->price = request()['price_' . str_replace('.', '_', $str)];
@@ -363,8 +367,10 @@ class ProductStockService
                 $productStock->case_width = request()->get('case_width_' . str_replace('.', '_', $str), null);
                 $productStock->case_height = request()->get('case_height_' . str_replace('.', '_', $str), null);
 
-                $productStock->sku = request()['sku_' . str_replace('.', '_', $str)];
-                $productStock->image = request()['img_' . str_replace('.', '_', $str)];
+                $productStock->sku = $productStock->is_hidden
+                    ? '-'
+                    : request()->get('sku_' . $variantInputKey, $productStock->sku ?? '');
+                $productStock->image = request()->get('img_' . $variantInputKey, $productStock->image ?? null);
                 $productStock->save();
                 $this->syncBatchesUpdateFromRequest($productStock, $str, $product);
 

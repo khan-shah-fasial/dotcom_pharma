@@ -100,9 +100,31 @@
                     <input type="hidden" name="id" value="{{ $product->id }}">
                     
                     @if($product->digital !=1)
+                        @php
+                            $visibleVariantParts = $product->stocks
+                                ->where('is_hidden', 0)
+                                ->pluck('variant')
+                                ->flatMap(function ($variant) {
+                                    return explode('-', (string) $variant);
+                                })
+                                ->map(function ($part) {
+                                    return strtolower(str_replace(' ', '', trim((string) $part)));
+                                })
+                                ->filter()
+                                ->unique()
+                                ->values();
+                        @endphp
                         <!-- Product Choice options -->
                         @if ($product->choice_options != null)
                             @foreach (json_decode($product->choice_options) as $key => $choice)
+                                @php
+                                    $visibleValues = collect($choice->values)
+                                        ->filter(function ($value) use ($visibleVariantParts) {
+                                            return $visibleVariantParts->contains(strtolower(str_replace(' ', '', trim((string) $value))));
+                                        })
+                                        ->values();
+                                @endphp
+                                @continue($visibleValues->isEmpty())
 
                                 <!--<div class="row no-gutters mt-3">--> <!--old code-->
                                     <div class="row no-gutters mb-3 @if($key == 1) d-none @endif"> <!--hiding 1st attribute ROLE [by nexgeno]-->
@@ -111,7 +133,7 @@
                                     </div>
                                     <div class="col-9">
                                         <div class="aiz-radio-inline">
-                                            @foreach ($choice->values as $key => $value)
+                                            @foreach ($visibleValues as $key => $value)
                                             <label class="aiz-megabox pl-0 mr-2 mb-0">
                                                 <!--<input
                                                     type="radio"
@@ -139,13 +161,21 @@
 
                         <!-- Color -->
                         @if ($product->colors && count(json_decode($product->colors)) > 0)
+                            @php
+                                $visibleColors = collect(json_decode($product->colors))
+                                    ->filter(function ($color) use ($visibleVariantParts) {
+                                        return $visibleVariantParts->contains(strtolower(str_replace(' ', '', get_single_color_name($color))));
+                                    })
+                                    ->values();
+                            @endphp
+                            @if($visibleColors->isNotEmpty())
                             <div class="row no-gutters mt-3">
                                 <div class="col-3">
                                     <div class="text-secondary fs-14 fw-400 mt-2">{{ translate('Color')}}</div>
                                 </div>
                                 <div class="col-9">
                                     <div class="aiz-radio-inline">
-                                        @foreach (json_decode($product->colors) as $key => $color)
+                                        @foreach ($visibleColors as $key => $color)
                                         <label class="aiz-megabox pl-0 mr-2 mb-0" data-toggle="tooltip" data-title="{{ get_single_color_name($color) }}">
                                             <input
                                                 type="radio"
@@ -161,6 +191,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                         @endif
 
                         <!-- Batch selection (matches product details behaviour) -->

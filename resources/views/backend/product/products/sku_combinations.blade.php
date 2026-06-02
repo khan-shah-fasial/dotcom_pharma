@@ -117,7 +117,7 @@
 			$variantKey = strtolower(str_replace(['.', ' ', '-'], '_', $str));
 		@endphp
 		@if(strlen($str) > 0)
-		<div class="card mb-3">
+		<div class="card mb-3 sku-card">
 			<div class="card-header d-flex justify-content-between align-items-center sku-card-header" id="heading-{{ $key }}">
 				<div class="d-flex align-items-center" style="gap:10px;">
 					<span class="badge badge-primary">{{ $str }}</span>
@@ -141,7 +141,7 @@
 										type="text"
 										name="sku_{{ $str }}"
 										value="{{ request('sku_'.$str, '') }}"
-										class="form-control"
+										class="form-control variant-sku-input"
 										required
 									>
 								</div>
@@ -151,6 +151,7 @@
 										<label class="aiz-switch aiz-switch-success mb-0 mr-2 mt-1">
 											<input
 												type="checkbox"
+												class="variant-hidden-toggle"
 												name="is_hidden_{{ $str }}"
 												value="1"
 												{{ request('is_hidden_'.$str) ? 'checked' : '' }}
@@ -784,12 +785,47 @@
 		});
 	}
 
+	function toggleHiddenVariantFields(el) {
+		var $card = $(el).closest('.sku-card');
+		var isHidden = $(el).is(':checked');
+		var $sku = $card.find('.variant-sku-input');
+
+		$card.find('input, select, textarea').each(function () {
+			var $field = $(this);
+			if ($field.is('.variant-hidden-toggle') || $field.is('.variant-sku-input')) {
+				return;
+			}
+			if (!$field.data('required-state-captured')) {
+				$field.data('was-required', $field.prop('required'));
+				$field.data('required-state-captured', true);
+			}
+			if (isHidden) {
+				$field.prop('required', false).prop('disabled', true);
+			} else {
+				$field.prop('disabled', false).prop('required', !!$field.data('was-required'));
+			}
+		});
+
+		if (isHidden) {
+			$sku.val('-').prop('required', false);
+		} else {
+			$sku.prop('required', true);
+		}
+	}
+
+	$(document).on('change', '.variant-hidden-toggle', function () {
+		toggleHiddenVariantFields(this);
+	});
+
 	$(document).ready(function() {
 		$('.batch-discount-active').each(function () {
 			toggleBatchDiscountFields(this);
 		});
 		$('.batch-non-batch').each(function () {
 			toggleNonBatchFields(this);
+		});
+		$('.variant-hidden-toggle').each(function () {
+			toggleHiddenVariantFields(this);
 		});
 		$('#choice_form').off('submit.nonBatchRows').on('submit.nonBatchRows', function () {
 			prepareNonBatchRows();
