@@ -72,9 +72,14 @@
                     <input type="hidden" name="transport_id" id="transport_id">
                     <input type="text" class="form-control rounded-0 checkout-combo-input" name="transport_name" id="transport_name"
                         autocomplete="off" placeholder="{{ translate('Select or enter transport provider') }}">
+                    <div id="transport-service-url-wrap" class="mt-2" style="display:none;">
+                        <a href="#" id="transport-service-url" target="_blank" rel="noopener" class="fs-13">
+                            {{ translate('Check transport availability for your pincode') }}
+                        </a>
+                    </div>
                     <div class="checkout-combo-menu" id="transport-provider-options">
                         @foreach ($transportProviders as $transport)
-                            <div class="checkout-combo-option" data-id="{{ $transport->id }}" data-name="{{ $transport->name }}">{{ $transport->name }}</div>
+                            <div class="checkout-combo-option" data-id="{{ $transport->id }}" data-name="{{ $transport->name }}" data-url="{{ $transport->url }}">{{ $transport->name }}</div>
                         @endforeach
                     </div>
                 </div>

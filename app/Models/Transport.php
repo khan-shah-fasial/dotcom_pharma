@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transport extends Model
 {
-    protected $fillable = ['name', 'status', 'created_by'];
+    protected $fillable = ['name', 'url', 'status', 'created_by'];
 
     public function bookedTo()
     {

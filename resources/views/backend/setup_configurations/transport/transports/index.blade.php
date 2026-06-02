@@ -31,6 +31,7 @@
                 <tr>
                     <th>#</th>
                     <th>{{ translate('Name') }}</th>
+                    <th>{{ translate('URL') }}</th>
                     <th>{{ translate('Created By') }}</th>
                     <th>{{ translate('Status') }}</th>
                     <th class="text-right">{{ translate('Options') }}</th>
@@ -41,6 +42,13 @@
                     <tr>
                         <td>{{ $transports->firstItem() + $key }}</td>
                         <td>{{ $transport->name }}</td>
+                        <td>
+                            @if($transport->url)
+                                <a href="{{ $transport->url }}" target="_blank" rel="noopener">{{ translate('Open') }}</a>
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td>{{ optional($transport->creator)->name ?? '-' }}</td>
                         <td>
                             <label class="aiz-switch aiz-switch-success mb-0">

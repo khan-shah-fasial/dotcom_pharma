@@ -508,6 +508,7 @@
                                                 <thead>
                                                     <tr>
                                                         <th style="width: 12%;">{{ translate('Batch Code') }}</th>
+                                                        <th style="width: 7%;">{{ translate('is non-batch?') }}</th>
                                                         <th style="width: 9%;">{{ translate('Mfg Month') }}</th>
                                                         <th style="width: 9%;">{{ translate('Expiry Month') }}</th>
                                                         <th style="width: 8%;">{{ translate('MRP Price') }}</th>
@@ -538,30 +539,42 @@
                                                                 $batchDiscountEnd = $batchDiscountEndReq !== null
                                                                     ? $batchDiscountEndReq
                                                                     : (!empty($batch->discount_end_date) ? date('Y-m-d', (int) $batch->discount_end_date) : '');
+                                                                $nonBatchRequest = data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.is_non_batch');
+                                                                $isNonBatch = $nonBatchRequest !== null
+                                                                    ? (int) $nonBatchRequest === 1
+                                                                    : empty($batch->product_exp_date);
+                                                                $batchCodeValue = data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.batch', $batch->batch);
+                                                                if ($isNonBatch && trim((string) $batchCodeValue) === '') {
+                                                                    $batchCodeValue = '-';
+                                                                }
                                                             @endphp
                                                             <tr class="batch-row">
                                                                 <td>
                                                                     <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][id]" value="{{ $batch->id }}">
-                                                                    <input type="text" name="batches[{{ $variantKey }}][{{ $batchIndex }}][batch]" class="form-control form-control-sm" value="{{ data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.batch', $batch->batch) }}" placeholder="{{ translate('Batch code') }}" required>
+                                                                    <input type="text" name="batches[{{ $variantKey }}][{{ $batchIndex }}][batch]" class="form-control form-control-sm batch-code-input" value="{{ $batchCodeValue }}" placeholder="{{ translate('Batch code') }}" required>
                                                                 </td>
-                                                                <td>
+                                                                <td class="text-center">
+                                                                    <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][is_non_batch]" value="0">
+                                                                    <input type="checkbox" name="batches[{{ $variantKey }}][{{ $batchIndex }}][is_non_batch]" value="1" class="batch-non-batch" onchange="toggleNonBatchFields(this)" {{ $isNonBatch ? 'checked' : '' }}>
+                                                                </td>
+                                                                <td class="batch-mfg-cell">
                                                                     @php
                                                                         $reqMfg = data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.manufacturing_date');
                                                                         $batchMfgValue = $reqMfg !== null
                                                                             ? $reqMfg
                                                                             : ($batch->manufacturing_date ? \Carbon\Carbon::parse($batch->manufacturing_date)->format('Y-m') : '');
                                                                     @endphp
-                                                                    <input type="month" name="batches[{{ $variantKey }}][{{ $batchIndex }}][manufacturing_date]" value="{{ $batchMfgValue }}" class="form-control form-control-sm">
+                                                                    <input type="month" name="batches[{{ $variantKey }}][{{ $batchIndex }}][manufacturing_date]" value="{{ $isNonBatch ? '' : $batchMfgValue }}" class="form-control form-control-sm batch-mfg-input">
                                                                 </td>
-                                                                <td>
+                                                                <td class="batch-expiry-cell">
                                                                     @php
                                                                         $reqExpiry = data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.product_exp_date');
                                                                         $batchExpiryValue = $reqExpiry !== null
                                                                             ? $reqExpiry
                                                                             : ($batch->product_exp_date ? \Carbon\Carbon::parse($batch->product_exp_date)->format('Y-m') : '');
                                                                     @endphp
-                                                                    <input type="month" name="batches[{{ $variantKey }}][{{ $batchIndex }}][product_exp_date]" value="{{ $batchExpiryValue }}" class="form-control form-control-sm">
-                                                                    @if(function_exists('is_batch_expired') && is_batch_expired($batch))
+                                                                    <input type="month" name="batches[{{ $variantKey }}][{{ $batchIndex }}][product_exp_date]" value="{{ $isNonBatch ? '' : $batchExpiryValue }}" class="form-control form-control-sm batch-expiry-input">
+                                                                    @if(!$isNonBatch && function_exists('is_batch_expired') && is_batch_expired($batch))
                                                                         <small class="text-danger d-block mt-1">{{ translate('Expired') }}</small>
                                                                     @endif
                                                                 </td>
@@ -625,14 +638,14 @@
                                                                         {{ $batchDiscountActive ? '' : 'disabled' }}
                                                                     >
                                                                 </td>
-                                                                <td class="coa-uploader-cell">
+                                                                <td class="coa-uploader-cell batch-coa-cell">
                                                                     <div class="coa-uploader-wrapper" id="coa-wrapper-{{ $variantKey }}-{{ $batchIndex }}">
                                                                         <div class="input-group" data-toggle="aizuploader" data-type="document">
                                                                             <div class="input-group-prepend">
                                                                                 <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
                                                                             </div>
                                                                             <div class="form-control file-amount text-truncate">{{ $batch->coa ? translate('File Selected') : translate('Choose PDF') }}</div>
-                                                                            <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][coa]" class="selected-files" value="{{ data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.coa', $batch->coa ?? '') }}">
+                                                                            <input type="hidden" name="batches[{{ $variantKey }}][{{ $batchIndex }}][coa]" class="selected-files batch-coa-input" value="{{ $isNonBatch ? '' : data_get(request()->input('batches', []), $variantKey.'.'.$batchIndex.'.coa', $batch->coa ?? '') }}">
                                                                         </div>
                                                                         <div class="file-preview box sm"></div>
                                                                     </div>
@@ -662,13 +675,24 @@
                                                     @else
                                                         <tr class="batch-row">
                                                             <td>
-                                                                <input type="text" name="batches[{{ $variantKey }}][0][batch]" class="form-control form-control-sm" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.batch', '') }}" placeholder="{{ translate('Batch code') }}" required>
+                                                                @php
+                                                                    $defaultIsNonBatch = (int) data_get(request()->input('batches', []), $variantKey.'.0.is_non_batch', 0) === 1;
+                                                                    $defaultBatchCode = data_get(request()->input('batches', []), $variantKey.'.0.batch', '');
+                                                                    if ($defaultIsNonBatch && trim((string) $defaultBatchCode) === '') {
+                                                                        $defaultBatchCode = '-';
+                                                                    }
+                                                                @endphp
+                                                                <input type="text" name="batches[{{ $variantKey }}][0][batch]" class="form-control form-control-sm batch-code-input" value="{{ $defaultBatchCode }}" placeholder="{{ translate('Batch code') }}" required>
                                                             </td>
-                                                            <td>
-                                                                <input type="month" name="batches[{{ $variantKey }}][0][manufacturing_date]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.manufacturing_date', '') }}" class="form-control form-control-sm">
+                                                            <td class="text-center">
+                                                                <input type="hidden" name="batches[{{ $variantKey }}][0][is_non_batch]" value="0">
+                                                                <input type="checkbox" name="batches[{{ $variantKey }}][0][is_non_batch]" value="1" class="batch-non-batch" onchange="toggleNonBatchFields(this)" {{ $defaultIsNonBatch ? 'checked' : '' }}>
                                                             </td>
-                                                            <td>
-                                                                <input type="month" name="batches[{{ $variantKey }}][0][product_exp_date]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.product_exp_date', $stock && $stock->product_exp_date ? \Carbon\Carbon::parse($stock->product_exp_date)->format('Y-m') : '') }}" class="form-control form-control-sm">
+                                                            <td class="batch-mfg-cell">
+                                                                <input type="month" name="batches[{{ $variantKey }}][0][manufacturing_date]" value="{{ $defaultIsNonBatch ? '' : data_get(request()->input('batches', []), $variantKey.'.0.manufacturing_date', '') }}" class="form-control form-control-sm batch-mfg-input">
+                                                            </td>
+                                                            <td class="batch-expiry-cell">
+                                                                <input type="month" name="batches[{{ $variantKey }}][0][product_exp_date]" value="{{ $defaultIsNonBatch ? '' : data_get(request()->input('batches', []), $variantKey.'.0.product_exp_date', $stock && $stock->product_exp_date ? \Carbon\Carbon::parse($stock->product_exp_date)->format('Y-m') : '') }}" class="form-control form-control-sm batch-expiry-input">
                                                             </td>
                                                             <td>
                                                                 <input type="number" lang="en" name="batches[{{ $variantKey }}][0][mrp_price]" value="{{ data_get(request()->input('batches', []), $variantKey.'.0.mrp_price', $stock && $stock->mrp_price !== null ? $stock->mrp_price : $unit_price) }}" min="0" step="0.01" class="form-control form-control-sm" required>
@@ -733,14 +757,14 @@
                                                                     {{ $defaultDiscountActive ? '' : 'disabled' }}
                                                                 >
                                                             </td>
-                                                            <td class="coa-uploader-cell">
+                                                            <td class="coa-uploader-cell batch-coa-cell">
                                                                 <div class="coa-uploader-wrapper" id="coa-wrapper-{{ $variantKey }}-0">
                                                                     <div class="input-group" data-toggle="aizuploader" data-type="document">
                                                                         <div class="input-group-prepend">
                                                                             <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
                                                                         </div>
                                                                         <div class="form-control file-amount text-truncate">{{ ($stock->coa ?? '') ? translate('File Selected') : translate('Choose PDF') }}</div>
-                                                                        <input type="hidden" name="batches[{{ $variantKey }}][0][coa]" class="selected-files" value="{{ $stock->coa ?? '' }}">
+                                                                        <input type="hidden" name="batches[{{ $variantKey }}][0][coa]" class="selected-files batch-coa-input" value="{{ $defaultIsNonBatch ? '' : ($stock->coa ?? '') }}">
                                                                     </div>
                                                                     <div class="file-preview box sm"></div>
                                                                 </div>
@@ -834,19 +858,27 @@
                 <td>
                     <input type="text"
                         name="batches[` + variantKey + `][` + index + `][batch]"
-                        class="form-control form-control-sm"
+                        class="form-control form-control-sm batch-code-input"
                         placeholder="{{ translate('Batch code') }}"
                         required>
                 </td>
-                <td>
+                <td class="text-center">
+                    <input type="hidden" name="batches[` + variantKey + `][` + index + `][is_non_batch]" value="0">
+                    <input type="checkbox"
+                        name="batches[` + variantKey + `][` + index + `][is_non_batch]"
+                        value="1"
+                        class="batch-non-batch"
+                        onchange="toggleNonBatchFields(this)">
+                </td>
+                <td class="batch-mfg-cell">
                     <input type="month"
                         name="batches[` + variantKey + `][` + index + `][manufacturing_date]"
-                        class="form-control form-control-sm">
+                        class="form-control form-control-sm batch-mfg-input">
                 </td>
-                <td>
+                <td class="batch-expiry-cell">
                     <input type="month"
                         name="batches[` + variantKey + `][` + index + `][product_exp_date]"
-                        class="form-control form-control-sm">
+                        class="form-control form-control-sm batch-expiry-input">
                 </td>
                 <td>
                     <input type="number" lang="en"
@@ -898,7 +930,7 @@
                         class="form-control form-control-sm batch-discount-end"
                         disabled>
                 </td>
-                <td class="coa-uploader-cell">
+                <td class="coa-uploader-cell batch-coa-cell">
                     <div class="coa-uploader-wrapper" id="` + wrapperId + `">
                         <div class="input-group" data-toggle="aizuploader" data-type="document">
                             <div class="input-group-prepend">
@@ -909,7 +941,7 @@
                             <div class="form-control file-amount text-truncate">
                                 {{ translate('Choose PDF') }}
                             </div>
-                            <input type="hidden" name="batches[` + variantKey + `][` + index + `][coa]" class="selected-files">
+                            <input type="hidden" name="batches[` + variantKey + `][` + index + `][coa]" class="selected-files batch-coa-input">
                         </div>
                         <div class="file-preview box sm"></div>
                     </div>
@@ -931,6 +963,7 @@
 
         $tbody.append(rowHtml);
         toggleBatchDiscountFields($tbody.find('tr.batch-row:last .batch-discount-active')[0]);
+        toggleNonBatchFields($tbody.find('tr.batch-row:last .batch-non-batch')[0]);
         
         // Initialize aizuploader for the new row
         if (typeof AIZ !== 'undefined' && AIZ.uploader) {
@@ -989,10 +1022,44 @@
         $row.find('.batch-discount-end').prop('disabled', !isActive);
     }
 
+    function toggleNonBatchFields(el) {
+        var $row = $(el).closest('tr.batch-row');
+        var isNonBatch = $(el).is(':checked');
+        var $batchCode = $row.find('.batch-code-input');
+
+        if (isNonBatch && $.trim($batchCode.val()) === '') {
+            $batchCode.val('-');
+        }
+
+        $row.find('.batch-mfg-input, .batch-expiry-input')
+            .prop('disabled', isNonBatch)
+            .prop('required', false);
+        $row.find('.batch-coa-input').prop('disabled', isNonBatch);
+        if (isNonBatch) {
+            $row.find('.batch-mfg-input, .batch-expiry-input').val('');
+            $row.find('.batch-coa-input').val('');
+            $row.find('.batch-coa-cell .file-amount').text('{{ translate('Choose PDF') }}');
+            $row.find('.batch-coa-cell .file-preview').empty();
+        }
+        $row.find('.batch-mfg-cell, .batch-expiry-cell, .batch-coa-cell').toggleClass('d-none', isNonBatch);
+    }
+
+    function prepareNonBatchRows() {
+        $('.batch-non-batch:checked').each(function () {
+            toggleNonBatchFields(this);
+        });
+    }
+
     // Initialize aizuploader for existing batches on page load
     $(document).ready(function() {
         $('.batch-discount-active').each(function () {
             toggleBatchDiscountFields(this);
+        });
+        $('.batch-non-batch').each(function () {
+            toggleNonBatchFields(this);
+        });
+        $('#choice_form').off('submit.nonBatchRows').on('submit.nonBatchRows', function () {
+            prepareNonBatchRows();
         });
 
         if (typeof AIZ !== 'undefined' && AIZ.uploader) {

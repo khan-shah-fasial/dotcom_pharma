@@ -21,6 +21,13 @@
                 </div>
             </div>
             <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('URL') }}</label>
+                <div class="col-md-9">
+                    <input type="url" name="url" class="form-control" value="{{ old('url') }}" placeholder="https://example.com">
+                    @error('url') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
                 <label class="col-md-2 col-form-label">{{ translate('Status') }}</label>
                 <div class="col-md-9">
                     <select name="status" class="form-control aiz-selectpicker">

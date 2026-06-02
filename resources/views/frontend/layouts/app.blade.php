@@ -932,6 +932,14 @@
             if ($(this).attr('name') === 'batch_id') {
                 return;
             }
+
+            // Variant changes must not post the previous variant's batch id.
+            if ($(this).is(':radio')) {
+                $('#selected_batch_id').val('');
+                selectedBatchQty = null;
+                isUpdatingBatch = false;
+            }
+
             getVariantPrice();
         });
         
@@ -962,6 +970,7 @@
         const variantPriceDebounceMs = 250;
         let isUpdatingBatch = false; // flag to prevent recursive batch updates
         let ajaxInProgress = false; // flag to prevent multiple simultaneous AJAX calls
+        let pendingVariantPriceRequest = false; // rerun once if a variant change happens during AJAX
         let selectedBatchQty = null; // track selected batch quantity for UI availability
 
         function enforceQuantityBounds(minQty = 1, defaultMax = null) {
@@ -1170,6 +1179,7 @@
                 // Prevent multiple simultaneous AJAX calls
                 if (ajaxInProgress) {
                     console.log('AJAX already in progress, skipping...');
+                    pendingVariantPriceRequest = true;
                     return;
                 }
                 
@@ -1603,6 +1613,11 @@
                         
                         // Reset timer
                         variantPriceTimer = null;
+
+                        if (pendingVariantPriceRequest) {
+                            pendingVariantPriceRequest = false;
+                            getVariantPrice(true);
+                        }
                     },
                     error: function(xhr, status, error) {
                         console.error('Variant price AJAX error:', error);
@@ -1610,6 +1625,7 @@
                         ajaxInProgress = false;
                         isUpdatingBatch = false;
                         variantPriceTimer = null;
+                        pendingVariantPriceRequest = false;
                     },
                     complete: function() {
                         // Ensure flag is reset even if there's an error

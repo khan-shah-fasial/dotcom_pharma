@@ -945,9 +945,21 @@ if (!function_exists('batch_expiry_month_end')) {
 if (!function_exists('is_batch_expired')) {
     function is_batch_expired($batchOrDate): bool
     {
+        $rawExpiryDate = is_object($batchOrDate)
+            ? ($batchOrDate->product_exp_date ?? null)
+            : $batchOrDate;
+
+        if (empty($rawExpiryDate)) {
+            return false;
+        }
+
         $expiryEnd = batch_expiry_month_end($batchOrDate);
 
-        return $expiryEnd === null || Carbon::now()->greaterThan($expiryEnd);
+        if ($expiryEnd === null) {
+            return true;
+        }
+
+        return Carbon::now()->greaterThan($expiryEnd);
     }
 }
 

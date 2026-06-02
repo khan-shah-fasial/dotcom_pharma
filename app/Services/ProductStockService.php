@@ -526,7 +526,7 @@ class ProductStockService
         foreach ($batchesInput as $row) {
             // Skip completely empty rows (e.g. template clones not filled)
             $hasContent = false;
-            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
+            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa', 'is_non_batch'] as $field) {
                 if (!empty($row[$field])) {
                     $hasContent = true;
                     break;
@@ -540,17 +540,22 @@ class ProductStockService
             $totalQty += $qty;
 
             $mrpPrice = $row['mrp_price'] ?? null;
+            $isNonBatch = !empty($row['is_non_batch']);
+            $batchCode = trim((string) ($row['batch'] ?? ''));
+            if ($isNonBatch && $batchCode === '') {
+                $batchCode = '-';
+            }
 
             $batch = new ProductBatch();
             $batch->product_id       = $product->id;
             $batch->product_stock_id = $stock->id;
-            $batch->batch            = $row['batch'] ?? null;
+            $batch->batch            = $batchCode !== '' ? $batchCode : null;
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
             $batch->scheme           = $this->normalizeStockScheme($row['scheme'] ?? 0);
-            $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null, true);
-            $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
-            $batch->coa              = $row['coa'] ?? null;
+            $batch->product_exp_date = $isNonBatch ? null : $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null, true);
+            $batch->manufacturing_date = $isNonBatch ? null : $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
+            $batch->coa              = $isNonBatch ? null : ($row['coa'] ?? null);
             $batchDiscountData       = $this->extractBatchDiscountData($row);
             $batch->discount_active  = $batchDiscountData['discount_active'];
             $batch->discount_type    = $batchDiscountData['discount_type'];
@@ -623,7 +628,15 @@ class ProductStockService
 
         foreach ($batchesInput as $row) {
             $hasContent = false;
-            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa'] as $field) {
+            foreach (['batch', 'mrp_price', 'qty', 'product_exp_date', 'manufacturing_date', 'coa', 'is_non_batch'] as $field) {
+                if ($field === 'is_non_batch') {
+                    if (!empty($row[$field])) {
+                        $hasContent = true;
+                        break;
+                    }
+                    continue;
+                }
+
                 if (isset($row[$field]) && (string) $row[$field] !== '') {
                     $hasContent = true;
                     break;
@@ -636,6 +649,11 @@ class ProductStockService
             $qty = (int) ($row['qty'] ?? 0);
             $totalQty += $qty;
             $mrpPrice = $row['mrp_price'] ?? null;
+            $isNonBatch = !empty($row['is_non_batch']);
+            $batchCode = trim((string) ($row['batch'] ?? ''));
+            if ($isNonBatch && $batchCode === '') {
+                $batchCode = '-';
+            }
 
             $batch = null;
             if (!empty($row['id'])) {
@@ -647,13 +665,13 @@ class ProductStockService
                 $batch->product_stock_id = $stock->id;
             }
 
-            $batch->batch            = $row['batch'] ?? $batch->batch;
+            $batch->batch            = $batchCode !== '' ? $batchCode : ($batch->batch ?? null);
             $batch->mrp_price        = $mrpPrice;
             $batch->qty              = $qty;
             $batch->scheme           = $this->normalizeStockScheme($row['scheme'] ?? 0);
-            $batch->product_exp_date = $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null, true);
-            $batch->manufacturing_date = $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
-            $batch->coa              = $row['coa'] ?? null;
+            $batch->product_exp_date = $isNonBatch ? null : $this->normalizeBatchMonthYearDate($row['product_exp_date'] ?? null, true);
+            $batch->manufacturing_date = $isNonBatch ? null : $this->normalizeBatchMonthYearDate($row['manufacturing_date'] ?? null);
+            $batch->coa              = $isNonBatch ? null : ($row['coa'] ?? null);
             $batchDiscountData       = $this->extractBatchDiscountData($row);
             $batch->discount_active  = $batchDiscountData['discount_active'];
             $batch->discount_type    = $batchDiscountData['discount_type'];

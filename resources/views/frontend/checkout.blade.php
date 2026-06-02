@@ -1109,6 +1109,29 @@
                 return selectedId;
             }
 
+            function updateTransportServiceUrl() {
+                var input = document.getElementById('transport_name');
+                var menu = document.getElementById('transport-provider-options');
+                var wrap = document.getElementById('transport-service-url-wrap');
+                var link = document.getElementById('transport-service-url');
+                if (!input || !menu || !wrap || !link) return;
+
+                var selectedUrl = '';
+                getComboItems(menu).forEach(function(option) {
+                    if (normalizeComboText(option.dataset.name) === normalizeComboText(input.value)) {
+                        selectedUrl = option.dataset.url || '';
+                    }
+                });
+
+                if (selectedUrl) {
+                    link.href = selectedUrl;
+                    wrap.style.display = 'block';
+                } else {
+                    link.href = '#';
+                    wrap.style.display = 'none';
+                }
+            }
+
             function loadBookedToOptions(transportId) {
                 var bookedToList = document.getElementById('booked-to-options');
                 var bookedToName = document.getElementById('booked_to_name');
@@ -1162,6 +1185,7 @@
 
                 if (input.id === 'transport_name') {
                     loadBookedToOptions(hidden.value);
+                    updateTransportServiceUrl();
                 }
                 $(input).trigger('change');
             });
@@ -1178,6 +1202,7 @@
                 if (previousTransportId !== transportId) {
                     loadBookedToOptions(transportId);
                 }
+                updateTransportServiceUrl();
                 stepCompletionDeliveryInfo();
             });
 

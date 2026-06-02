@@ -203,8 +203,7 @@ class CustomerController extends Controller
         // Base query
         $users = User::with('details')
             ->where('user_type', 'customer')
-            ->whereNotNull('step')
-            ->orderBy('created_at', 'desc');
+            ->whereNotNull('step');
             // ->orderBy(
             //     UserDetails::select('crm_id')
             //         ->whereColumn('user_details.user_id', 'users.id'),
@@ -344,6 +343,7 @@ class CustomerController extends Controller
             ->all();
 
         // Sorting
+        $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
         if ($sortBy === 'crm_id') {
             $users = $users->orderBy(
                 UserDetails::select('crm_id')->whereColumn('user_details.user_id', 'users.id'),
@@ -355,7 +355,10 @@ class CustomerController extends Controller
                 $sortOrder
             );
         } else {
-            $users = $users->orderBy('created_at', 'desc');
+            $users = $users->orderBy(
+                UserDetails::select('crm_id')->whereColumn('user_details.user_id', 'users.id'),
+                'desc'
+            );
         }
 
         $users = $users->paginate(15)->appends($request->query());
