@@ -692,8 +692,8 @@ class CustomerController extends Controller
             'other_reg_no' => ['nullable', 'string', 'max:255'],
             'other_reg_no_file' => ['nullable', 'mimes:jpg,jpeg,webp,png,pdf,doc,docx', 'max:5120'],
 
-            'transport_id' => ['required', 'integer', 'exists:transports,id'],
-            'booked_to_id' => ['required', 'integer', 'exists:booked_to,id'],
+            'transport_id' => ['nullable', 'integer', 'exists:transports,id'],
+            'booked_to_id' => ['nullable', 'integer', 'exists:booked_to,id'],
             'transport' => ['nullable', 'string', 'max:255'],
             'booked_to' => ['nullable', 'string', 'max:255'],
             'salesman' => ['nullable', 'string', 'max:255'],
