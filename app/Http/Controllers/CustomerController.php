@@ -715,35 +715,35 @@ class CustomerController extends Controller
                 $validator->errors()->add('phone_personal', translate('Phone already exists.'));
             }
 
-            if ($typeOption === 'domestic' && $domesticChoice === 'gst') {
-                $gstNo = trim((string) $request->input('gst_no'));
-                if ($gstNo === '') {
-                    $validator->errors()->add('gst_no', translate('GST No is required.'));
-                }
-            }
+            // if ($typeOption === 'domestic' && $domesticChoice === 'gst') {
+            //     $gstNo = trim((string) $request->input('gst_no'));
+            //     if ($gstNo === '') {
+            //         $validator->errors()->add('gst_no', translate('GST No is required.'));
+            //     }
+            // }
 
-            if ($typeOption === 'international' && $internationalChoice === 'iec') {
-                $iecNo = trim((string) $request->input('iec_no'));
-                if ($iecNo === '') {
-                    $validator->errors()->add('iec_no', translate('IEC No is required.'));
-                }
-            }
+            // if ($typeOption === 'international' && $internationalChoice === 'iec') {
+            //     $iecNo = trim((string) $request->input('iec_no'));
+            //     if ($iecNo === '') {
+            //         $validator->errors()->add('iec_no', translate('IEC No is required.'));
+            //     }
+            // }
 
-            if ($typeOption === 'international' && $internationalChoice === 'passport') {
-                $passportNo = trim((string) $request->input('passport_no'));
-                if ($passportNo === '') {
-                    $validator->errors()->add('passport_no', translate('Passport No is required.'));
-                }
-            }
+            // if ($typeOption === 'international' && $internationalChoice === 'passport') {
+            //     $passportNo = trim((string) $request->input('passport_no'));
+            //     if ($passportNo === '') {
+            //         $validator->errors()->add('passport_no', translate('Passport No is required.'));
+            //     }
+            // }
 
-            if ($request->filled('transport_id') && $request->filled('booked_to_id')) {
-                $bookedToExists = BookedTo::where('id', $request->input('booked_to_id'))
-                    ->where('transport_id', $request->input('transport_id'))
-                    ->exists();
-                if (!$bookedToExists) {
-                    $validator->errors()->add('booked_to_id', translate('Booked To must belong to selected transport.'));
-                }
-            }
+            // if ($request->filled('transport_id') && $request->filled('booked_to_id')) {
+            //     $bookedToExists = BookedTo::where('id', $request->input('booked_to_id'))
+            //         ->where('transport_id', $request->input('transport_id'))
+            //         ->exists();
+            //     if (!$bookedToExists) {
+            //         $validator->errors()->add('booked_to_id', translate('Booked To must belong to selected transport.'));
+            //     }
+            // }
             // Temporary create flow: only account number, name, email, and phone are required.
         });
 
