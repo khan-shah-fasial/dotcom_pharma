@@ -1766,9 +1766,13 @@
             if (!form || !window.fetch) return;
             const errorBox = document.getElementById('form-error-box');
             const submitBtn = form.querySelector('button[type="submit"]');
+            let isSubmitting = false;
 
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
+                if (isSubmitting) {
+                    return;
+                }
                 if (typeof $ !== 'undefined' && typeof $(form).valid === 'function' && !$(form).valid()) {
                     return;
                 }
@@ -1792,19 +1796,22 @@
                 form.querySelectorAll('.invalid-feedback.dynamic-error').forEach(el => el.remove());
 
                 if (submitBtn) {
+                    isSubmitting = true;
                     submitBtn.disabled = true;
                     submitBtn.dataset.originalText = submitBtn.innerHTML;
                     submitBtn.innerHTML = '{{ translate('Saving...') }}';
                 }
 
                 const formData = new FormData(form);
+                let isRedirecting = false;
 
                 fetch(form.action, {
                     method: 'POST',
                     body: formData,
                     credentials: 'same-origin',
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
                     }
                 }).then(async (resp) => {
                     const contentType = resp.headers.get('content-type') || '';
@@ -1813,7 +1820,8 @@
                         payload = await resp.json();
                     }
                     if (resp.ok && payload && payload.redirect_url) {
-                        window.location.href = payload.redirect_url;
+                        isRedirecting = true;
+                        window.location.assign(payload.redirect_url);
                         return;
                     }
                     if (!resp.ok && payload && payload.errors) {
@@ -1836,12 +1844,16 @@
                         }
                         return;
                     }
-                    // fallback: if not JSON or other issue, do full submit
-                    form.submit();
-                }).catch(() => {
-                    form.submit();
+                    throw new Error(payload?.message || '{{ translate('Customer could not be created. Please try again.') }}');
+                }).catch((error) => {
+                    if (errorBox) {
+                        errorBox.innerHTML = error.message || '{{ translate('Customer could not be created. Please try again.') }}';
+                        errorBox.classList.remove('d-none');
+                        errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 }).finally(() => {
-                    if (submitBtn) {
+                    if (!isRedirecting && submitBtn) {
+                        isSubmitting = false;
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = submitBtn.dataset.originalText || submitBtn.innerHTML;
                     }

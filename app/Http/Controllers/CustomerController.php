@@ -987,7 +987,10 @@ class CustomerController extends Controller
             DB::commit();
 
             if (!empty($user->id) && function_exists('storeIPLocation')) {
-                storeIPLocation('users', $user->id);
+                $createdUserId = $user->id;
+                app()->terminating(function () use ($createdUserId) {
+                    storeIPLocation('users', $createdUserId);
+                });
             }
 
             if ($request->ajax()) {
