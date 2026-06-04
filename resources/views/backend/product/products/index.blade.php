@@ -136,21 +136,24 @@
                                         </div>
                                     </div>
                                 </th>
-                            @else
-                                <th data-breakpoints="lg">#</th>
                             @endif
+                            <th>{{ translate('Sr No.') }}</th>
+                            <th>{{ translate('SKU') }}</th>
                             <th>{{ translate('Name') }}</th>
                             {{-- @if ($type == 'Seller' || $type == 'All')
                                 <th data-breakpoints="lg">{{ translate('Added By') }}</th>
                             @endif
                             <th data-breakpoints="sm">{{ translate('Info') }}</th> --}}
+                            <th>{{ translate('Category') }} <span class="text-muted">({{ translate('Main only') }})</span></th>
                             <th data-breakpoints="md">{{ translate('Total Stock') }}</th>
-                            <th data-breakpoints="lg">{{ translate('Todays Deal') }}</th>
-                            <th data-breakpoints="lg">{{ translate('Published') }}</th>
+                            <th>{{ translate('Group') }}</th>
+                            <th>{{ translate('Schedule') }}</th>
+                            <th data-breakpoints="xs sm md lg xl">{{ translate('Todays Deal') }}</th>
+                            <th data-breakpoints="xs sm md lg xl">{{ translate('Published') }}</th>
                             @if (get_setting('product_approve_by_admin') == 1 && $type == 'Seller')
                                 <th data-breakpoints="lg">{{ translate('Approved') }}</th>
                             @endif
-                            <th data-breakpoints="lg">{{ translate('Featured') }}</th>
+                            <th data-breakpoints="xs sm md lg xl">{{ translate('Featured') }}</th>
                             <th data-breakpoints="sm" class="">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
@@ -167,9 +170,28 @@
                                             </label>
                                         </div>
                                     </td>
-                                @else
-                                    <td>{{ $key + 1 + ($products->currentPage() - 1) * $products->perPage() }}</td>
                                 @endif
+                                <td>{{ $key + 1 + ($products->currentPage() - 1) * $products->perPage() }}</td>
+                                <td>
+                                    @php
+                                        $skus = $product->stocks
+                                            ->pluck('sku')
+                                            ->map(function ($sku) {
+                                                return trim((string) $sku);
+                                            })
+                                            ->filter()
+                                            ->unique()
+                                            ->values();
+                                    @endphp
+
+                                    @if ($skus->isNotEmpty())
+                                        @foreach ($skus as $sku)
+                                            <div>{{ $sku }}</div>
+                                        @endforeach
+                                    @else
+                                        -
+                                    @endif
+                                </td>
                                 <td>
                                     <div class="row gutters-5 w-200px w-md-300px mw-100">
                                         <div class="col-auto">
@@ -216,6 +238,7 @@
                                     @endif
 
                                 </td> --}}
+                                <td>{{ optional($product->main_category)->getTranslation('name') ?? '-' }}</td>
                                 <td>
                                     @if ($product->digital == 1)
                                         <span class="badge badge-inline badge-info">{{ translate('Digital Product') }}</span>
@@ -223,9 +246,6 @@
                                         @php
                                             $qty = 0;
                                             $stocks = [];
-
-                                            // Ensure batches are available for qty aggregation
-                                            $product->loadMissing('stocks.batches');
 
                                             if ($product->variant_product) {
                                                 foreach ($product->stocks as $key => $stock) {
@@ -259,7 +279,6 @@
                                                     @endforeach
                                                 </div>
 
-                                                <!-- View More / View Less Toggle Button -->
                                                 <a class="badge badge-inline badge-primary text-light view-more-all-product btn-sm btn-link view-more-toggle" onclick="toggleViewMore('stock-list-{{ $product->id }}')">View More</a>
                                             </div>
                                         @else
@@ -277,6 +296,8 @@
                                         @endif
                                     @endif
                                 </td>
+                                <td>{{ optional($product->main_group)->getTranslation('name') ?? '-' }}</td>
+                                <td>{{ $product->schedule ?: '-' }}</td>
                                 <td>
                                     <label class="aiz-switch aiz-switch-success mb-0">
                                         <input onchange="update_todays_deal(this)" value="{{ $product->id }}"
