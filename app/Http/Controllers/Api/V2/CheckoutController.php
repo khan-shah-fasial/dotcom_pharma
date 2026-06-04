@@ -29,7 +29,6 @@ class CheckoutController
                             Cart::where('user_id', $user_id)->where('owner_id', $coupon->user_id)->active()->get():
                             Cart::where('temp_user_id', $temp_user_id)->where('owner_id', $coupon->user_id)->active()->get();
 
-        $coupon_discount = 0;
         if ($cart_items->isEmpty()) {
             return response()->json([
                 'result' => false,
@@ -60,52 +59,29 @@ class CheckoutController
         $coupon_details = json_decode($coupon->details);
 
 
-        if ($coupon->type == 'cart_base') {
-            $subtotal = 0;
-            $tax = 0;
-            $shipping = 0;
-            foreach ($cart_items as $key => $cartItem) {
-                $product = Product::find($cartItem['product_id']);
-                $subtotal += cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
-                $tax += cart_product_tax($cartItem, $product,false) * $cartItem['quantity'];
-                $shipping += $cartItem['shipping'] * $cartItem['quantity'];
-            }
-            $sum = $subtotal + $tax + $shipping;
-
-            if ($sum >= $coupon_details->min_buy) {
-                if ($coupon->discount_type == 'percent') {
-                    $coupon_discount = ($sum * $coupon->discount) / 100;
-                    if ($coupon_discount > $coupon_details->max_discount) {
-                        $coupon_discount = $coupon_details->max_discount;
-                    }
-                } elseif ($coupon->discount_type == 'amount') {
-                    $coupon_discount = $coupon->discount;
-                }
-            }
-        } elseif ($coupon->type == 'product_base') {
-
-            foreach ($cart_items as $key => $cartItem) {
-                $product = Product::find($cartItem['product_id']);
-                foreach ($coupon_details as $key => $coupon_detail) {
-                    if ($coupon_detail->product_id == $cartItem['product_id']) {
-                        if ($coupon->discount_type == 'percent') {
-                            $coupon_discount += cart_product_price($cartItem, $product, false, false) * $coupon->discount / 100;
-                        } elseif ($coupon->discount_type == 'amount') {
-                            $coupon_discount += $coupon->discount;
-                        }
-                    }
-                }
-            }
-
-        }
+        $couponResult = coupon_cart_discount_allocations($coupon, $cart_items, $coupon_details);
+        $coupon_discount = $couponResult['discount'];
+        $couponAllocations = $couponResult['allocations'];
 
         if($coupon_discount>0){
             $cart_query = $user_id != null ? Cart::where('user_id', $user_id) : Cart::where('temp_user_id', $temp_user_id);
             $cart_query->where('owner_id', $coupon->user_id)->active()->update([
-                'discount' => $coupon_discount / count($cart_items),
-                'coupon_code' => $request->coupon_code,
-                'coupon_applied' => 1
+                'discount' => 0,
+                'coupon_code' => null,
+                'coupon_applied' => 0
             ]);
+
+            foreach ($cart_items as $cartItem) {
+                $lineDiscount = $couponAllocations[(int) $cartItem->id] ?? 0;
+                if ($lineDiscount <= 0) {
+                    continue;
+                }
+
+                $cartItem->discount = $lineDiscount;
+                $cartItem->coupon_code = $request->coupon_code;
+                $cartItem->coupon_applied = 1;
+                $cartItem->save();
+            }
             
 
             return response()->json([
@@ -115,7 +91,9 @@ class CheckoutController
         }else{
             return response()->json([
                 'result' => false,
-                'message' => translate('This coupon is not applicable to your cart products!')
+                'message' => ($couponResult['excluded_discounted_items_count'] ?? 0) > 0
+                    ? translate('Coupon discount is not applied to products that already have product or batch discounts.')
+                    : translate('This coupon is not applicable to your cart products!')
             ]);
         }
 

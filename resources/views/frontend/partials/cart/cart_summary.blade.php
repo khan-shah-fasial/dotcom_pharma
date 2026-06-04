@@ -148,6 +148,9 @@
 
             <!-- Coupon System -->
             @if (get_setting('coupon_system') == 1)
+                <div class="mt-2 fs-12 text-muted">
+                    {{ translate('Coupon discount applies only to products without product or batch discounts. Products already discounted are excluded.') }}
+                </div>
                 @if ($coupon_discount > 0 && $coupon_code)
                     <div class="mt-3">
                         <form class="" id="remove-coupon-form" enctype="multipart/form-data">

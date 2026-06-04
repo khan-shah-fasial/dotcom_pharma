@@ -197,9 +197,10 @@
     $subTotal = $order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail));
     $shippingTotal = $order->orderDetails->sum('shipping_cost');
     $taxTotal = 0;
-    $lineDiscountTotal = 0; // order details do not carry a discount field
+    $productDiscountTotal = $order->orderDetails->sum(function ($detail) {
+        return (bool) ($detail->is_scheme ?? false) ? 0 : (float) ($detail->discount_amount ?? 0);
+    });
     $couponDiscount = $order->coupon_discount ?? 0;
-    $discountTotal = $couponDiscount + $lineDiscountTotal;
     $grandTotal = $order->grand_total;
     $systemCurrency = get_system_default_currency();
     $invoiceCurrencyCode = $order->quote_currency_code ?: optional($systemCurrency)->code;
@@ -232,14 +233,28 @@
         return $formattedPrice . $invoiceCurrencySymbol;
     };
     $ewbNumber = $grandTotal >= 50000 ? ($order->eway_bill ?? '-') : '-';
+    $paidQtyTotal = $order->orderDetails->sum(function ($row) {
+        return (bool) ($row->is_scheme ?? false) ? 0 : ($row->quantity ?? 0);
+    });
     $totalQty = $order->orderDetails->sum('quantity');
     $schemeQtyTotal = $order->orderDetails->sum(function ($row) {
         return (bool) ($row->is_scheme ?? false) ? ($row->quantity ?? 0) : 0;
     });
+    $productGrossTotal = $order->orderDetails->sum(function ($row) {
+        if ((bool) ($row->is_scheme ?? false)) {
+            return 0;
+        }
+
+        $qty = max(0, (int) ($row->quantity ?? 0));
+        $saleUnit = $row->sale_price !== null
+            ? (float) $row->sale_price
+            : ($qty > 0 ? ((float) ($row->price ?? 0) / $qty) : 0);
+        $beforeUnit = $row->before_productandbatch_discount ?? $saleUnit;
+
+        return max(0, (float) $beforeUnit) * $qty;
+    });
     $taxableTotal = $order->orderDetails->sum(function ($row) {
-        $lineGross = $row->price ?? 0;
-        $discount = $row->discount ?? 0;
-        return max($lineGross - $discount, 0);
+        return (bool) ($row->is_scheme ?? false) ? 0 : order_detail_line_subtotal($row);
     });
     $sgstTotal = 0;
     $cgstTotal = 0;
@@ -439,15 +454,13 @@
                         $qty = $invoiceLine['paid_qty'] ?? $detail->quantity;
                         $schemeQty = $invoiceLine['scheme_qty'];
                         $displayTotalQty = $invoiceLine['total_qty'];
-                        $lineGross = order_detail_line_subtotal($detail);
-                        $unitPrice = $qty > 0 ? $lineGross / $qty : 0;
+                        $lineSaleSubtotal = order_detail_line_subtotal($detail);
+                        $saleUnitPrice = $qty > 0 ? $lineSaleSubtotal / $qty : 0;
+                        $unitPrice = $detail->before_productandbatch_discount ?? $saleUnitPrice;
+                        $lineGross = $unitPrice * max(0, (int) $qty);
                         $lineTax = $detail->tax;
                         $lineShipping = $detail->shipping_cost;
-                        $lineDiscountValue = 0; // order details do not store per-line discount
-                        $lineCouponDiscount = ($couponDiscount > 0 && $subTotal > 0)
-                            ? ($couponDiscount * ($lineGross / $subTotal))
-                            : 0;
-                        $discountValue = $lineDiscountValue + $lineCouponDiscount;
+                        $discountValue = (float) ($detail->discount_amount ?? 0);
                         $taxableAmount = max($lineGross - $discountValue, 0);
                         if ($isMaharashtra) {
                             $sgst = $lineTax / 2;
@@ -526,20 +539,20 @@
 
     <table class="meta" style="margin-top: 8px;">
         <tr>
-            <td colspan="2" class="head">{{ translate('Qty') }}: {{ $totalQty }}</td>
-            <td class="head">{{ translate('Gross Value') }}: {{ $invoicePrice($subTotal + $shippingTotal) }}</td>
+            <td colspan="2" class="head">{{ translate('Qty') }}: {{ $paidQtyTotal }}</td>
+            <td class="head">{{ translate('Gross Value') }}: {{ $invoicePrice($productGrossTotal + $shippingTotal) }}</td>
             <td class="head">{{ translate('SGST') }}: {{ $invoicePrice($sgstTotal) }}</td>
             <td class="head">{{ translate('Total Taxable Amount') }}: {{ $invoicePrice($taxableTotal) }}</td>
         </tr>
         <tr>
             <td colspan="2" class="head">{{ translate('Scheme Qty (Free)') }}: {{ $schemeQtyTotal }}</td>
-            <td class="head">{{ translate('Less Discount') }}: {{ $invoicePrice($discountTotal) }}</td>
+            <td class="head">{{ translate('Product Discount') }}: {{ $invoicePrice($productDiscountTotal) }}</td>
             <td class="head">{{ translate('CGST') }}: {{ $invoicePrice($cgstTotal) }}</td>
             <td class="head">{{ translate('Total GST Payable') }}: {{ $invoicePrice($taxTotal) }}</td>
         </tr>
         <tr>
-            <td colspan="2" class="head">{{ translate('Coupon Discount') }}: {{ $invoicePrice($couponDiscount) }}</td>
-            <td class="head">{{ translate('Line Discount') }}: {{ $invoicePrice($lineDiscountTotal) }}</td>
+            <td colspan="2" class="head">{{ translate('Total QTY') }}: {{ $totalQty }}</td>
+            <td class="head">{{ translate('Coupon Discount') }}: {{ $invoicePrice($couponDiscount) }}</td>
             <td class="head">{{ translate('IGST') }}: {{ $invoicePrice($igstTotal) }}</td>
             <td class="head">{{ translate('CR/DR Note Adjusted') }}: {{ $invoicePrice(0) }}</td>
         </tr>

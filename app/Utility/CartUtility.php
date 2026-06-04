@@ -143,7 +143,7 @@ class CartUtility
         return $tax;
     }
 
-    public static function save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice = null, $salePrice = null, $batchId = null, $isScheme = false)
+    public static function save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice = null, $salePrice = null, $batchId = null, $isScheme = false, $beforeProductAndBatchDiscount = null)
     {
         if ($cart->status === null) {
             $cart->status = 1;
@@ -153,6 +153,7 @@ class CartUtility
         $cart->product_id = $product->id;
         $cart->owner_id = $product->user_id;
         $cart->price = $price;
+        $cart->before_productandbatch_discount = (bool) $isScheme ? 0 : ($beforeProductAndBatchDiscount ?? $salePrice ?? $price);
         $cart->mrp_price = $mrpPrice;
         $cart->sale_price = $salePrice ?? $price;
         $cart->tax = $tax;

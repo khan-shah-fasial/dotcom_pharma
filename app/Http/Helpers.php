@@ -1059,6 +1059,7 @@ if (!function_exists('resolvePrice')) {
         if (!$product) {
             return [
                 'price' => 0.0,
+                'before_productandbatch_discount' => 0.0,
                 'sale_price' => 0.0,
                 'discount' => 0.0,
                 'discount_percent' => 0.0,
@@ -1108,9 +1109,11 @@ if (!function_exists('resolvePrice')) {
         }
 
         $finalPrice = $existingPrice;
+        $beforeProductAndBatchDiscount = $existingPrice;
         $hasBatchOffer = false;
         $productDiscountPercent = 0.0;
         $batchDiscountPercent = 0.0;
+        $productDiscountAmount = 0.0;
 
         $productDiscountApplicable = false;
         if (($product->discount_start_date ?? null) === null) {
@@ -1131,6 +1134,18 @@ if (!function_exists('resolvePrice')) {
                 $productDiscountPercent = $baseBeforeProductDiscount > 0
                     ? (($productDiscountAmount / $baseBeforeProductDiscount) * 100)
                     : 0.0;
+            }
+        }
+
+        if ($productDiscountApplicable) {
+            if (($product->discount_type ?? null) === 'percent' && $productDiscountPercent > 0) {
+                $safeProductPercent = min(99.99, $productDiscountPercent);
+                $productRatio = $safeProductPercent / 100;
+                $beforeProductAndBatchDiscount = $productRatio < 1
+                    ? ($existingPrice / (1 - $productRatio))
+                    : $existingPrice;
+            } elseif (($product->discount_type ?? null) === 'amount' && $productDiscountAmount > 0) {
+                $beforeProductAndBatchDiscount = $existingPrice + $productDiscountAmount;
             }
         }
 
@@ -1170,6 +1185,7 @@ if (!function_exists('resolvePrice')) {
 
         return [
             'price' => (float) $existingPrice,
+            'before_productandbatch_discount' => (float) $beforeProductAndBatchDiscount,
             'sale_price' => (float) $finalPrice,
             'discount' => (float) $discountAmount,
             'discount_percent' => (float) $discountPercent,
@@ -1195,6 +1211,169 @@ if (!function_exists('calculate_scheme_qty')) {
         }
 
         return intdiv($paidQty, $minQty) * $scheme;
+    }
+}
+
+if (!function_exists('cart_coupon_line_is_eligible')) {
+    function cart_coupon_line_is_eligible($cartItem): bool
+    {
+        $isScheme = is_array($cartItem)
+            ? (bool) ($cartItem['is_scheme'] ?? false)
+            : (bool) ($cartItem->is_scheme ?? false);
+
+        if ($isScheme) {
+            return false;
+        }
+
+        $salePrice = is_array($cartItem)
+            ? ($cartItem['sale_price'] ?? $cartItem['price'] ?? 0)
+            : ($cartItem->sale_price ?? $cartItem->price ?? 0);
+        $beforeDiscount = is_array($cartItem)
+            ? ($cartItem['before_productandbatch_discount'] ?? $salePrice)
+            : ($cartItem->before_productandbatch_discount ?? $salePrice);
+
+        return (float) $beforeDiscount <= ((float) $salePrice + 0.009);
+    }
+}
+
+if (!function_exists('cart_coupon_line_value')) {
+    function cart_coupon_line_value($cartItem): float
+    {
+        $salePrice = is_array($cartItem)
+            ? ($cartItem['sale_price'] ?? $cartItem['price'] ?? 0)
+            : ($cartItem->sale_price ?? $cartItem->price ?? 0);
+        $quantity = is_array($cartItem)
+            ? ($cartItem['quantity'] ?? 0)
+            : ($cartItem->quantity ?? 0);
+
+        return max(0, (float) $salePrice) * max(0, (int) $quantity);
+    }
+}
+
+if (!function_exists('allocate_coupon_discount_by_line_value')) {
+    function allocate_coupon_discount_by_line_value($cartItems, float $couponDiscount): array
+    {
+        $items = collect($cartItems)->values();
+        $couponDiscount = round(max(0, $couponDiscount), 2);
+        $totalValue = $items->sum(fn ($item) => cart_coupon_line_value($item));
+        $allocations = [];
+        $allocated = 0.0;
+
+        foreach ($items as $index => $item) {
+            $id = is_array($item) ? ($item['id'] ?? null) : ($item->id ?? null);
+            if ($id === null) {
+                continue;
+            }
+
+            if ($index === $items->count() - 1) {
+                $lineDiscount = round($couponDiscount - $allocated, 2);
+            } else {
+                $lineDiscount = $totalValue > 0
+                    ? round($couponDiscount * (cart_coupon_line_value($item) / $totalValue), 2)
+                    : 0.0;
+                $allocated += $lineDiscount;
+            }
+
+            $allocations[(int) $id] = max(0, $lineDiscount);
+        }
+
+        return $allocations;
+    }
+}
+
+if (!function_exists('coupon_cart_discount_allocations')) {
+    function coupon_cart_discount_allocations($coupon, $cartItems, $couponDetails = null, $userCoupon = null): array
+    {
+        $cartItems = collect($cartItems);
+        $paidItems = $cartItems->filter(function ($item) {
+            return is_array($item)
+                ? !(bool) ($item['is_scheme'] ?? false)
+                : !(bool) ($item->is_scheme ?? false);
+        })->values();
+        $eligibleItems = $cartItems->filter(fn ($item) => cart_coupon_line_is_eligible($item))->values();
+        $discountExcludedItems = $paidItems->filter(fn ($item) => !cart_coupon_line_is_eligible($item))->values();
+        $couponDiscount = 0.0;
+        $allocations = [];
+        $defaultResult = [
+            'discount' => 0.0,
+            'allocations' => [],
+            'eligible_subtotal' => 0.0,
+            'excluded_discounted_items_count' => $discountExcludedItems->count(),
+        ];
+
+        if (!$coupon || $eligibleItems->isEmpty()) {
+            return $defaultResult;
+        }
+
+        $eligibleSubtotal = $eligibleItems->sum(fn ($item) => cart_coupon_line_value($item));
+        $defaultResult['eligible_subtotal'] = $eligibleSubtotal;
+
+        if ($coupon->type === 'cart_base' || $coupon->type === 'welcome_base') {
+            $minBuy = $coupon->type === 'welcome_base'
+                ? (float) ($userCoupon->min_buy ?? 0)
+                : (float) ($couponDetails->min_buy ?? 0);
+
+            if ($eligibleSubtotal >= $minBuy) {
+                if ($coupon->type === 'welcome_base') {
+                    $discountType = $userCoupon->discount_type ?? null;
+                    $discountValue = (float) ($userCoupon->discount ?? 0);
+                } else {
+                    $discountType = $coupon->discount_type;
+                    $discountValue = (float) $coupon->discount;
+                }
+
+                if ($discountType === 'percent') {
+                    $couponDiscount = ($eligibleSubtotal * $discountValue) / 100;
+                    if ($coupon->type === 'cart_base') {
+                        $couponDiscount = min($couponDiscount, (float) ($couponDetails->max_discount ?? $couponDiscount));
+                    }
+                } elseif ($discountType === 'amount') {
+                    $couponDiscount = $discountValue;
+                }
+
+                $couponDiscount = round(min(max(0, $couponDiscount), $eligibleSubtotal), 2);
+                $allocations = allocate_coupon_discount_by_line_value($eligibleItems, $couponDiscount);
+            }
+        } elseif ($coupon->type === 'product_base') {
+            $couponProductIds = collect($couponDetails)
+                ->pluck('product_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            foreach ($eligibleItems as $item) {
+                $id = is_array($item) ? ($item['id'] ?? null) : ($item->id ?? null);
+                $productId = is_array($item) ? ($item['product_id'] ?? null) : ($item->product_id ?? null);
+                $quantity = is_array($item) ? ($item['quantity'] ?? 0) : ($item->quantity ?? 0);
+
+                if ($id === null || !in_array((int) $productId, $couponProductIds, true)) {
+                    continue;
+                }
+
+                $lineValue = cart_coupon_line_value($item);
+                if ($coupon->discount_type === 'percent') {
+                    $lineDiscount = ($lineValue * (float) $coupon->discount) / 100;
+                } elseif ($coupon->discount_type === 'amount') {
+                    $lineDiscount = (float) $coupon->discount * max(0, (int) $quantity);
+                } else {
+                    $lineDiscount = 0.0;
+                }
+
+                $lineDiscount = round(min(max(0, $lineDiscount), $lineValue), 2);
+                if ($lineDiscount > 0) {
+                    $allocations[(int) $id] = $lineDiscount;
+                    $couponDiscount += $lineDiscount;
+                }
+            }
+
+            $couponDiscount = round($couponDiscount, 2);
+        }
+
+        return [
+            'discount' => $couponDiscount,
+            'allocations' => $allocations,
+            'eligible_subtotal' => $eligibleSubtotal,
+            'excluded_discounted_items_count' => $discountExcludedItems->count(),
+        ];
     }
 }
 
@@ -1698,6 +1877,8 @@ if (!function_exists('carts_coupon_discount')) {
     {
         $coupon = Coupon::where('code', $code)->first();
         $coupon_discount = 0;
+        $couponAllocations = [];
+        $carts = collect();
         if ($coupon != null) {
             if (strtotime(date('d-m-Y')) >= $coupon->start_date && strtotime(date('d-m-Y')) <= $coupon->end_date) {
                 if (CouponUsage::where('user_id', Auth::user()->id)->where('coupon_id', $coupon->id)->first() == null) {
@@ -1705,51 +1886,18 @@ if (!function_exists('carts_coupon_discount')) {
                     $carts = Cart::where('user_id', Auth::user()->id)
                         ->where('owner_id', $coupon->user_id)
                         ->get();
-                    if ($coupon->type == 'cart_base') {
-                        $subtotal = 0;
-                        $tax = 0;
-                        $shipping = 0;
-                        foreach ($carts as $key => $cartItem) {
-                            $product = Product::find($cartItem['product_id']);
-                            $subtotal += cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
-                            $tax += cart_product_tax($cartItem, $product, false) * $cartItem['quantity'];
-                            $shipping += $cartItem['shipping_cost'];
-                        }
-                        $sum = $subtotal + $tax + $shipping;
-                        if ($sum >= $coupon_details->min_buy) {
-                            if ($coupon->discount_type == 'percent') {
-                                $coupon_discount = ($sum * $coupon->discount) / 100;
-                                if ($coupon_discount > $coupon_details->max_discount) {
-                                    $coupon_discount = $coupon_details->max_discount;
-                                }
-                            } elseif ($coupon->discount_type == 'amount') {
-                                $coupon_discount = $coupon->discount;
-                            }
-                        }
-                    } elseif ($coupon->type == 'product_base') {
-                        foreach ($carts as $key => $cartItem) {
-                            $product = Product::find($cartItem['product_id']);
-                            foreach ($coupon_details as $key => $coupon_detail) {
-                                if ($coupon_detail->product_id == $cartItem['product_id']) {
-                                    if ($coupon->discount_type == 'percent') {
-                                        $coupon_discount += (cart_product_price($cartItem, $product, false, false) * $coupon->discount / 100) * $cartItem['quantity'];
-                                    } elseif ($coupon->discount_type == 'amount') {
-                                        $coupon_discount += $coupon->discount * $cartItem['quantity'];
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    $couponResult = coupon_cart_discount_allocations($coupon, $carts, $coupon_details);
+                    $coupon_discount = $couponResult['discount'];
+                    $couponAllocations = $couponResult['allocations'];
                 }
             }
             if ($coupon_discount > 0) {
-                Cart::where('user_id', Auth::user()->id)
-                    ->where('owner_id', $coupon->user_id)
-                    ->update(
-                        [
-                            'discount' => $coupon_discount / count($carts),
-                        ]
-                    );
+                foreach ($carts as $cartItem) {
+                    $cartItem->discount = $couponAllocations[(int) $cartItem->id] ?? 0;
+                    $cartItem->coupon_code = $cartItem->discount > 0 ? $code : null;
+                    $cartItem->coupon_applied = $cartItem->discount > 0 ? 1 : 0;
+                    $cartItem->save();
+                }
             } else {
                 Cart::where('user_id', Auth::user()->id)
                     ->where('owner_id', $coupon->user_id)
@@ -1757,6 +1905,7 @@ if (!function_exists('carts_coupon_discount')) {
                         [
                             'discount' => 0,
                             'coupon_code' => null,
+                            'coupon_applied' => 0,
                         ]
                     );
             }

@@ -326,19 +326,24 @@ class PurchaseHistoryController extends Controller
 
                     // Price calculation matches product detail page (batch-first, role-aware, discount-aware)
                     if ($batch) {
-                        $price = CartUtility::get_price_from_batch($product, $batch, $quantity);
+                        $resolvedPrice = resolvePrice($product, $product_stock, $batch, $quantity);
+                        $price = (float) ($resolvedPrice['price'] ?? 0);
+                        $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $price);
+                        $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
                         $mrpPrice = $batch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
                         $batchId = $batch->id;
                     } else {
-                        $price = CartUtility::get_price($product, $product_stock, $quantity);
+                        $resolvedPrice = resolvePrice($product, $product_stock, null, $quantity);
+                        $price = (float) ($resolvedPrice['price'] ?? 0);
+                        $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $price);
+                        $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
                         $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
                         $batchId = null;
                     }
 
-                    $tax = CartUtility::tax_calculation($product, $price);
-                    $salePrice = $price;
+                    $tax = CartUtility::tax_calculation($product, $salePrice);
 
-                    CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId);
+                    CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId, false, $beforeProductAndBatchDiscount);
                     Log::info('Reorder item added', [
                         'product_id' => $product->id,
                         'variant' => $orderDetail->variation,

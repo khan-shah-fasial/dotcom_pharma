@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V2;
 
 use App\Models\Cart;
+use App\Models\Coupon;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\User;
@@ -17,6 +18,45 @@ class CartController extends Controller
         return $cart->user_id
             ? ['user_id' => $cart->user_id]
             : ['temp_user_id' => $cart->temp_user_id];
+    }
+
+    protected function refreshAppliedCouponForCarts($carts): void
+    {
+        $couponApplied = collect($carts)->firstWhere('coupon_applied', 1);
+        if (!$couponApplied || empty($couponApplied->coupon_code)) {
+            return;
+        }
+
+        $coupon = Coupon::where('code', $couponApplied->coupon_code)->first();
+        $ownerId = $couponApplied->owner_id;
+        $cartQuery = $couponApplied->user_id
+            ? Cart::where('user_id', $couponApplied->user_id)
+            : Cart::where('temp_user_id', $couponApplied->temp_user_id);
+
+        (clone $cartQuery)->where('owner_id', $ownerId)->update([
+            'discount' => 0,
+            'coupon_code' => null,
+            'coupon_applied' => 0,
+        ]);
+
+        if (!$coupon) {
+            return;
+        }
+
+        $activeOwnerCarts = (clone $cartQuery)->where('owner_id', $ownerId)->active()->get();
+        $couponResult = coupon_cart_discount_allocations($coupon, $activeOwnerCarts, json_decode($coupon->details));
+
+        foreach ($activeOwnerCarts as $cartItem) {
+            $lineDiscount = $couponResult['allocations'][(int) $cartItem->id] ?? 0;
+            if ($lineDiscount <= 0) {
+                continue;
+            }
+
+            $cartItem->discount = $lineDiscount;
+            $cartItem->coupon_code = $coupon->code;
+            $cartItem->coupon_applied = 1;
+            $cartItem->save();
+        }
     }
 
     protected function schemeCartQuery(Cart $paidCart)
@@ -110,6 +150,7 @@ class CartController extends Controller
             $schemeCart->quantity = (int) $row['quantity'];
             $schemeCart->owner_id = $product->user_id;
             $schemeCart->price = 0;
+            $schemeCart->before_productandbatch_discount = 0;
             $schemeCart->mrp_price = 0;
             $schemeCart->sale_price = 0;
             $schemeCart->tax = 0;
@@ -159,6 +200,7 @@ class CartController extends Controller
         $shipping_cost = $items->sum('shipping_cost');
         $discount = $items->sum('discount');
         $sum = ($subtotal + $tax + $shipping_cost) - $discount;
+        $couponAppliedItem = $items->firstWhere('coupon_applied', 1);
 
         return response()->json([
             'sub_total' => single_price($subtotal),
@@ -167,8 +209,8 @@ class CartController extends Controller
             'discount' => single_price($discount),
             'grand_total' => single_price($sum),
             'grand_total_value' => convert_price($sum),
-            'coupon_code' => $items[0]->coupon_code,
-            'coupon_applied' => $items[0]->coupon_applied == 1,
+            'coupon_code' => $couponAppliedItem ? $couponAppliedItem->coupon_code : "",
+            'coupon_applied' => $couponAppliedItem != null,
         ]);
     }
 
@@ -420,17 +462,20 @@ class CartController extends Controller
         if ($selectedBatch) {
             $resolvedPrice = resolvePrice($product, $product_stock, $selectedBatch, $request->quantity);
             $price = (float) ($resolvedPrice['price'] ?? 0);
+            $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $price);
             $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
             $mrpPrice = $selectedBatch->mrp_price ?? $product_stock->mrp_price ?? $product->mrp_price;
         } else {
-            $price = CartUtility::get_price($product, $product_stock, $request->quantity);
-            $salePrice = $price;
+            $resolvedPrice = resolvePrice($product, $product_stock, null, $request->quantity);
+            $price = (float) ($resolvedPrice['price'] ?? 0);
+            $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $price);
+            $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
             $mrpPrice = $product_stock->mrp_price ?? $product->mrp_price;
         }
         $tax = CartUtility::tax_calculation($product, $salePrice);
         try {
-            \DB::transaction(function () use ($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId, $product_stock) {
-                CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId, false);
+            \DB::transaction(function () use ($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId, $product_stock, $beforeProductAndBatchDiscount) {
+                CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, $mrpPrice, $salePrice, $batchId, false, $beforeProductAndBatchDiscount);
 
                 if (!$this->syncSchemeCartLinesForStock($cart, $product, $product_stock)) {
                     throw new \RuntimeException('Unable to allocate scheme stock.');
@@ -484,10 +529,24 @@ class CartController extends Controller
             $schemePreview = $this->getSchemePreview($cart, $product, $stock, (int) $request->quantity, $cart->batch_id);
 
             if ($availableQty >= (int) $request->quantity && $schemePreview['allocation']['success']) {
+                $resolvedPrice = resolvePrice($product, $stock, $batch, (int) $request->quantity);
+                $price = (float) ($resolvedPrice['price'] ?? 0);
+                $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
+                $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $price);
+                $tax = CartUtility::tax_calculation($product, $salePrice);
+
                 $cart->update([
-                    'quantity' => $request->quantity
+                    'quantity' => $request->quantity,
+                    'price' => $price,
+                    'before_productandbatch_discount' => $beforeProductAndBatchDiscount,
+                    'sale_price' => $salePrice,
+                    'tax' => $tax,
                 ]);
                 $this->syncSchemeCartLinesForStock($cart->fresh(), $product, $stock);
+                $ownerCarts = $cart->user_id
+                    ? Cart::where('user_id', $cart->user_id)->get()
+                    : Cart::where('temp_user_id', $cart->temp_user_id)->get();
+                $this->refreshAppliedCouponForCarts($ownerCarts);
 
                 return response()->json(['result' => true, 'message' => translate('Cart updated')], 200);
             } else {
@@ -535,8 +594,22 @@ class CartController extends Controller
                     if ($product->digital != 1 && !$schemePreview['allocation']['success']) {
                         return response()->json(['result' => false, 'message' => translate("Maximum available quantity reached")], 200);
                     }
+                    $selectedBatch = null;
+                    if (!empty($cart_item->batch_id) && $stockEntry) {
+                        $selectedBatch = $stockEntry->batches()->where('id', $cart_item->batch_id)->first();
+                    }
+                    $resolvedPrice = resolvePrice($product, $stockEntry, $selectedBatch, (int) $cart_quantities[$i]);
+                    $price = (float) ($resolvedPrice['price'] ?? 0);
+                    $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
+                    $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $price);
+                    $tax = CartUtility::tax_calculation($product, $salePrice);
+
                     $cart_item->update([
-                        'quantity' => $cart_quantities[$i]
+                        'quantity' => $cart_quantities[$i],
+                        'price' => $price,
+                        'before_productandbatch_discount' => $beforeProductAndBatchDiscount,
+                        'sale_price' => $salePrice,
+                        'tax' => $tax,
                     ]);
                     $this->syncSchemeCartLinesForStock($cart_item->fresh(), $product, $stockEntry);
                 } else {
@@ -548,6 +621,14 @@ class CartController extends Controller
                 }
 
                 $i++;
+            }
+
+            $firstCart = Cart::where('id', $cart_ids[0])->first();
+            if ($firstCart) {
+                $ownerCarts = $firstCart->user_id
+                    ? Cart::where('user_id', $firstCart->user_id)->get()
+                    : Cart::where('temp_user_id', $firstCart->temp_user_id)->get();
+                $this->refreshAppliedCouponForCarts($ownerCarts);
             }
 
             return response()->json(['result' => true, 'message' => translate('Cart updated')], 200);
@@ -568,6 +649,10 @@ class CartController extends Controller
             } else {
                 $this->schemeCartQuery($cart)->delete();
             }
+            $ownerCarts = $cart->user_id
+                ? Cart::where('user_id', $cart->user_id)->get()
+                : Cart::where('temp_user_id', $cart->temp_user_id)->get();
+            $this->refreshAppliedCouponForCarts($ownerCarts);
         } else {
             Cart::destroy($id);
         }

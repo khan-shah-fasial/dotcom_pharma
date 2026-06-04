@@ -60,8 +60,14 @@ class CartService
             }
 
             // recalc
-            $newPrice = CartUtility::get_price($product, $variant, $old->quantity);
-            $newTax   = CartUtility::tax_calculation($product, $newPrice);
+            $batch = $old->batch_id && $variant
+                ? $variant->batches()->where('id', $old->batch_id)->first()
+                : null;
+            $resolvedPrice = resolvePrice($product, $variant, $batch, $old->quantity);
+            $newPrice = (float) ($resolvedPrice['price'] ?? 0);
+            $newSalePrice = (float) ($resolvedPrice['sale_price'] ?? $newPrice);
+            $newBeforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $newPrice);
+            $newTax = CartUtility::tax_calculation($product, $newSalePrice);
 
             // re‑create exactly the same shape of row
             Cart::create([
@@ -73,11 +79,15 @@ class CartService
                 'product_id'           => $old->product_id,
                 'variation'            => $old->variation,
                 'price'                => $newPrice,
+                'before_productandbatch_discount' => $newBeforeProductAndBatchDiscount,
+                'mrp_price'            => $old->mrp_price,
+                'sale_price'           => $newSalePrice,
                 'tax'                  => $newTax,
                 'shipping_cost'        => $old->shipping_cost,
                 'shipping_type'        => $old->shipping_type,
                 'pickup_point'         => $old->pickup_point,
                 'carrier_id'           => $old->carrier_id,
+                'batch_id'             => $old->batch_id,
                 'discount'             => $old->discount,
                 'product_referral_code'=> $old->product_referral_code,
                 'coupon_code'          => $old->coupon_code,

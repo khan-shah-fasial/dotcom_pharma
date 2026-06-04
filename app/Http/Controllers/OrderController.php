@@ -328,7 +328,7 @@ class OrderController extends Controller
                 }
 
                 $unitSalePrice = $cartItem['sale_price'] ?? cart_product_price($cartItem, $product, false, false);
-                $unitBasePrice = $cartItem['price'] ?? $unitSalePrice;
+                $unitBasePrice = $cartItem['before_productandbatch_discount'] ?? $cartItem['price'] ?? $unitSalePrice;
 
                 $subtotal += $unitSalePrice * $cartItem['quantity'];
                 // Use stored tax from cart (calculated from batch/stock price at add-to-cart)
@@ -393,6 +393,7 @@ class OrderController extends Controller
                 $order_detail->variation = $product_variation;
                 $order_detail->batch_id = $batchId;
                 $order_detail->price = $unitSalePrice * $cartItem['quantity'];
+                $order_detail->before_productandbatch_discount = $unitBasePrice;
                 $order_detail->sale_price = $unitSalePrice;
                 $order_detail->mrp_price = $cartItem['mrp_price'] ?? ($selectedBatch ? $selectedBatch->mrp_price : (optional($product_stock)->mrp_price ?? $product->mrp_price));
                 $order_detail->discount_amount = round(max(0, (float) $unitBasePrice - (float) $unitSalePrice) * (int) $cartItem['quantity'], 2);
@@ -433,6 +434,7 @@ class OrderController extends Controller
                     $scheme_order_detail->variation = $product_variation;
                     $scheme_order_detail->batch_id = $allocation['batch_id'];
                     $scheme_order_detail->price = 0;
+                    $scheme_order_detail->before_productandbatch_discount = 0;
                     $scheme_order_detail->sale_price = 0;
                     $scheme_order_detail->mrp_price = $schemeBatch->mrp_price ?? $order_detail->mrp_price;
                     $scheme_order_detail->tax = 0;
@@ -485,14 +487,22 @@ class OrderController extends Controller
 
             $order->grand_total = $subtotal + $tax + $shipping;
 
-            if ($seller_product[0]->coupon_code != null) {
+            $couponCode = collect($seller_product)
+                ->filter(fn ($item) => (float) ($item['discount'] ?? 0) > 0 && !empty($item['coupon_code']))
+                ->pluck('coupon_code')
+                ->first();
+
+            if ($coupon_discount > 0 && $couponCode != null) {
                 $order->coupon_discount = $coupon_discount;
                 $order->grand_total -= $coupon_discount;
 
                 $coupon_usage = new CouponUsage;
                 $coupon_usage->user_id = Auth::user()->id;
-                $coupon_usage->coupon_id = Coupon::where('code', $seller_product[0]->coupon_code)->first()->id;
-                $coupon_usage->save();
+                $coupon = Coupon::where('code', $couponCode)->first();
+                if ($coupon) {
+                    $coupon_usage->coupon_id = $coupon->id;
+                    $coupon_usage->save();
+                }
             }
 
             $combined_order->grand_total += $order->grand_total;

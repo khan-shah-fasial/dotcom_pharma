@@ -147,10 +147,13 @@ class PurchaseHistoryController extends Controller
                     }
                 }
 
-                $price = CartUtility::get_price($product, $product_stock, $quantity);
-                $tax = CartUtility::tax_calculation($product, $price);
+                $resolvedPrice = resolvePrice($product, $product_stock, null, $quantity);
+                $price = (float) ($resolvedPrice['price'] ?? 0);
+                $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $price);
+                $salePrice = (float) ($resolvedPrice['sale_price'] ?? $price);
+                $tax = CartUtility::tax_calculation($product, $salePrice);
 
-                CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity);
+                CartUtility::save_cart_data($cart, $product, $price, $tax, $quantity, null, $salePrice, null, false, $beforeProductAndBatchDiscount);
                 array_push($success_msgs, $product->getTranslation('name') . ' ' . translate('added to cart.'));
             } else {
                 array_push($failed_msgs, $product->getTranslation('name') . ' ' . translate(' is stock out.'));

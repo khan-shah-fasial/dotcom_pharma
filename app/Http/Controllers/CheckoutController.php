@@ -599,72 +599,36 @@ class CheckoutController extends Controller
                             Cart::where('user_id', $user->id)->where('owner_id', $coupon->user_id)->active()->get() :
                             Cart::where('owner_id', $coupon->user_id)->where('temp_user_id', $temp_user)->active()->get();
 
-                    $coupon_discount = 0;
-                    $paid_user_carts = $user_carts->where('is_scheme', 0)->values();
-
-                    if ($coupon->type == 'cart_base' || $coupon->type == 'welcome_base') {
-                        $subtotal = 0;
-                        $tax = 0;
-                        $shipping = 0;
-                        foreach ($paid_user_carts as $key => $cartItem) {
-                            $product = Product::find($cartItem['product_id']);
-                            $subtotal += cart_product_price($cartItem, $product, false, false) * $cartItem['quantity'];
-                            $tax += cart_product_tax($cartItem, $product, false) * $cartItem['quantity'];
-                            $shipping += $cartItem['shipping_cost'];
-                        }
-                        $sum = $subtotal + $tax + $shipping;
-                        if ($coupon->type == 'cart_base' && $sum >= $coupon_details->min_buy) {
-                            if ($coupon->discount_type == 'percent') {
-                                $coupon_discount = ($sum * $coupon->discount) / 100;
-                                if ($coupon_discount > $coupon_details->max_discount) {
-                                    $coupon_discount = $coupon_details->max_discount;
-                                }
-                            } elseif ($coupon->discount_type == 'amount') {
-                                $coupon_discount = $coupon->discount;
-                            }
-                        }
-                        elseif ($coupon->type == 'welcome_base' && $sum >= $userCoupon->min_buy)  {
-                            $coupon_discount  = $userCoupon->discount_type == 'percent' ?  (($sum * $userCoupon->discount) / 100) : $userCoupon->discount;
-                        }
-                    }
-                    elseif ($coupon->type == 'product_base') {
-                        foreach ($paid_user_carts as $key => $cartItem) {
-                            $product = Product::find($cartItem['product_id']);
-                            foreach ($coupon_details as $key => $coupon_detail) {
-                                if ($coupon_detail->product_id == $cartItem['product_id']) {
-                                    if ($coupon->discount_type == 'percent') {
-                                        $coupon_discount += (cart_product_price($cartItem, $product, false, false) * $coupon->discount / 100) * $cartItem['quantity'];
-                                    } elseif ($coupon->discount_type == 'amount') {
-                                        $coupon_discount += $coupon->discount * $cartItem['quantity'];
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    $couponResult = coupon_cart_discount_allocations($coupon, $user_carts, $coupon_details, $userCoupon ?? null);
+                    $coupon_discount = $couponResult['discount'];
+                    $couponAllocations = $couponResult['allocations'];
 
                     if ($coupon_discount > 0) {
+                        $user_carts->toQuery()->update([
+                            'discount' => 0,
+                            'coupon_code' => null,
+                            'coupon_applied' => 0,
+                        ]);
 
-                        $paid_user_carts->toQuery()->update(
-                            [
-                                'discount' => $coupon_discount / max(count($paid_user_carts), 1),
-                                'coupon_code' => $request->code,
-                                'coupon_applied' => 1
-                            ]
-                        );
-                        $scheme_user_carts = $user_carts->where('is_scheme', 1);
-                        if ($scheme_user_carts->isNotEmpty()) {
-                            $scheme_user_carts->toQuery()->update([
-                                'discount' => 0,
-                                'coupon_code' => null,
-                                'coupon_applied' => 0,
-                            ]);
+                        foreach ($user_carts as $cartItem) {
+                            $lineDiscount = $couponAllocations[(int) $cartItem->id] ?? 0;
+                            if ($lineDiscount <= 0) {
+                                continue;
+                            }
+
+                            $cartItem->discount = $lineDiscount;
+                            $cartItem->coupon_code = $request->code;
+                            $cartItem->coupon_applied = 1;
+                            $cartItem->save();
                         }
 
                         $response_message['response'] = 'success';
                         $response_message['message'] = translate('Coupon has been applied');
                     } else {
                         $response_message['response'] = 'warning';
-                        $response_message['message'] = translate('This coupon is not applicable to your cart products!');
+                        $response_message['message'] = ($couponResult['excluded_discounted_items_count'] ?? 0) > 0
+                            ? translate('Coupon discount is not applied to products that already have product or batch discounts.')
+                            : translate('This coupon is not applicable to your cart products!');
                     }
                 } else {
                     $response_message['response'] = 'warning';
