@@ -1769,7 +1769,7 @@
                                             </div>
                                             <div class="">
                                                 <p class="detail-font-14px detail-gray-color mb-0">
-                                                    {{ translate('Weight of Each Piece') }}:</p>
+                                                    {{ translate('Weight of Each Piece') }}(gm):</p>
                                                 <p id="weight-per-piece-details"
                                                     class="fw-500 fs-14 mb-0 clamped-text"></p>
                                             </div>

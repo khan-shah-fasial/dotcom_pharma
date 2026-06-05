@@ -272,7 +272,7 @@
 										>
 									</div>
 									<div class="col-6 mb-3">
-										<label class="form-label mb-1">{{ translate('Weight Of Each Piece') }}</label>
+										<label class="form-label mb-1">{{ translate('Weight Of Each Piece') }}(gm)</label>
 										<input
 											type="number"
 											lang="en"
