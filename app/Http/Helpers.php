@@ -1685,6 +1685,68 @@ if (!function_exists('order_detail_line_subtotal')) {
     }
 }
 
+if (!function_exists('shipping_invoice_line')) {
+    function shipping_invoice_line($orderItems, $shippingInclusivePrice, $courierName, $shippingLabel = null)
+    {
+        $shippingInclusivePrice = round((float) $shippingInclusivePrice, 2);
+        if ($shippingInclusivePrice <= 0) {
+            return null;
+        }
+
+        $gstCounts = [];
+        foreach (($orderItems ?? []) as $item) {
+            $isScheme = (bool) data_get($item, 'is_scheme', false);
+            $price = (float) data_get($item, 'price', 0);
+            if (is_object($item) && function_exists('order_detail_line_subtotal')) {
+                $price = (float) order_detail_line_subtotal($item);
+            }
+
+            if ($isScheme || $price <= 0) {
+                continue;
+            }
+
+            $gstPercent = data_get($item, 'gst_percent', data_get($item, 'gst_percentage'));
+            if ($gstPercent === null) {
+                $tax = (float) data_get($item, 'tax', 0);
+                $gstPercent = $price > 0 ? ($tax / $price) * 100 : 0;
+            }
+
+            $gstPercent = round((float) $gstPercent, 2);
+            $key = (string) $gstPercent;
+            $gstCounts[$key] = ($gstCounts[$key] ?? 0) + 1;
+        }
+
+        $selectedGstRate = 0.0;
+        $highestCount = 0;
+        foreach ($gstCounts as $gstRate => $count) {
+            $gstRate = (float) $gstRate;
+            if ($count > $highestCount || ($count === $highestCount && $gstRate > $selectedGstRate)) {
+                $highestCount = $count;
+                $selectedGstRate = $gstRate;
+            }
+        }
+
+        $baseAmount = round($shippingInclusivePrice / (1 + ($selectedGstRate / 100)), 2);
+        $gstAmount = round($shippingInclusivePrice - $baseAmount, 2);
+        $description = trim((string) $courierName);
+        $shippingLabel = trim((string) $shippingLabel);
+        if ($shippingLabel !== '' && strcasecmp($description, $shippingLabel) !== 0) {
+            $description = trim($description . ' - ' . $shippingLabel, ' -');
+        }
+        if ($description === '') {
+            $description = translate('Shipping');
+        }
+
+        return [
+            'description' => $description,
+            'base_amount' => $baseAmount,
+            'gst_percent' => $selectedGstRate,
+            'gst_amount' => $gstAmount,
+            'total_amount' => $shippingInclusivePrice,
+        ];
+    }
+}
+
 if (!function_exists('cart_product_tax')) {
     function cart_product_tax($cart_product, $product, $formatted = true)
     {

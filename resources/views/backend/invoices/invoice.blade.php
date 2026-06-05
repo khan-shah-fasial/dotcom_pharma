@@ -115,6 +115,14 @@
 		</div>
 
 	    <div style="padding: 1rem;">
+            @php
+                $shippingTotal = $order->orderDetails->sum('shipping_cost');
+                $courierName = $order->shipping_by
+                    ?: optional($order->transport)->name
+                    ?: optional($order->localDeliveryPartner)->name
+                    ?: translate('Shipping');
+                $shippingInvoiceLine = shipping_invoice_line($order->orderDetails, $shippingTotal, $courierName, translate('Shipping'));
+            @endphp
 			<table class="padding text-left small border-bottom">
 				<thead>
 	                <tr class="gry-color" style="background: #eceff4;">
@@ -172,6 +180,16 @@
 							</tr>
 		                @endif
 					@endforeach
+                    @if($shippingInvoiceLine)
+                        <tr>
+                            <td>{{ $shippingInvoiceLine['description'] }}</td>
+                            <td>{{ translate('Shipping') }}</td>
+                            <td>1</td>
+                            <td class="currency">{{ single_price($shippingInvoiceLine['base_amount']) }}</td>
+                            <td class="currency">{{ single_price($shippingInvoiceLine['gst_amount']) }} ({{ $shippingInvoiceLine['gst_percent'] }}%)</td>
+                            <td class="text-right currency">{{ single_price($shippingInvoiceLine['total_amount']) }}</td>
+                        </tr>
+                    @endif
 	            </tbody>
 			</table>
 		</div>
@@ -205,7 +223,7 @@
 							        </tr>
 							        <tr class="border-bottom">
 							            <th class="gry-color text-left">{{ translate('Total Tax') }}</th>
-							            <td class="currency">{{ single_price($order->orderDetails->sum('tax')) }}</td>
+							            <td class="currency">{{ single_price($order->orderDetails->sum('tax') + ($shippingInvoiceLine['gst_amount'] ?? 0)) }}</td>
 							        </tr>
 				                    <tr class="border-bottom">
 							            <th class="gry-color text-left">{{ translate('Coupon Discount') }}</th>

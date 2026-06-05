@@ -196,6 +196,8 @@
 
     $subTotal = $order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail));
     $shippingTotal = $order->orderDetails->sum('shipping_cost');
+    $shippingInvoiceLine = shipping_invoice_line($order->orderDetails, $shippingTotal, $transport, translate('Shipping'));
+    $shippingBaseAmount = $shippingInvoiceLine['base_amount'] ?? 0;
     $taxTotal = 0;
     $productDiscountTotal = $order->orderDetails->sum(function ($detail) {
         return (bool) ($detail->is_scheme ?? false) ? 0 : (float) ($detail->discount_amount ?? 0);
@@ -459,7 +461,6 @@
                         $unitPrice = $detail->before_productandbatch_discount ?? $saleUnitPrice;
                         $lineGross = $unitPrice * max(0, (int) $qty);
                         $lineTax = $detail->tax;
-                        $lineShipping = $detail->shipping_cost;
                         $discountValue = (float) ($detail->discount_amount ?? 0);
                         $taxableAmount = max($lineGross - $discountValue, 0);
                         if ($isMaharashtra) {
@@ -481,7 +482,7 @@
                         $expiryDate = optional($detailBatch)->product_exp_date ?? optional($matchingStock)->product_exp_date ?? optional($product)->product_exp_date ?? null;
                         $expiryFormatted = $expiryDate ? format_dd_mm_yy($expiryDate) : '-';
                         $mrp = optional($detailBatch)->mrp_price ?? optional($matchingStock)->mrp_price ?? $product?->unit_price ?? $unitPrice;
-                        $grossWithShipping = $lineGross + $lineShipping;
+                        $grossWithShipping = $lineGross;
                         $discountPercent = $lineGross > 0 ? round(($discountValue / $lineGross) * 100, 2) : 0;
                         $pack = $matchingStock?->variant ?? $detail->variation ?? '-';
                         $sgstTotal += $sgst;
@@ -533,6 +534,48 @@
                         <td colspan="14" class="text-center">{{ translate('No items found for this order.') }}</td>
                     </tr>
                 @endforelse
+                @if($shippingInvoiceLine)
+                    @php
+                        $shippingSgst = $isMaharashtra ? $shippingInvoiceLine['gst_amount'] / 2 : 0;
+                        $shippingCgst = $isMaharashtra ? $shippingInvoiceLine['gst_amount'] / 2 : 0;
+                        $shippingIgst = $isMaharashtra ? 0 : $shippingInvoiceLine['gst_amount'];
+                        $shippingSgstPercent = $isMaharashtra ? $shippingInvoiceLine['gst_percent'] / 2 : 0;
+                        $shippingCgstPercent = $isMaharashtra ? $shippingInvoiceLine['gst_percent'] / 2 : 0;
+                        $shippingIgstPercent = $isMaharashtra ? 0 : $shippingInvoiceLine['gst_percent'];
+                        $sgstTotal += $shippingSgst;
+                        $cgstTotal += $shippingCgst;
+                        $igstTotal += $shippingIgst;
+                        $taxTotal += $shippingInvoiceLine['gst_amount'];
+                    @endphp
+                    <tr class="item-top">
+                        <td rowspan="2" class="text-center">{{ $invoiceLines->count() + 1 }}</td>
+                        <td class="product-name">{{ $shippingInvoiceLine['description'] }}</td>
+                        <td class="text-center">{{ translate('Shipping') }}</td>
+                        <td class="text-center">-</td>
+                        <td colspan="2" class="text-center qty-total">1</td>
+                        <td class="text-center">{{ $invoicePrice($shippingSgst) }}</td>
+                        <td class="text-center">{{ $invoicePrice($shippingCgst) }}</td>
+                        <td class="text-center">{{ $invoicePrice($shippingIgst) }}</td>
+                        <td class="text-center">{{ $invoicePrice($shippingInvoiceLine['gst_amount']) }}</td>
+                        <td class="text-center rate-value">{{ $invoicePrice($shippingInvoiceLine['base_amount']) }}</td>
+                        <td rowspan="2" class="text-center">{{ $invoicePrice($shippingInvoiceLine['total_amount']) }}</td>
+                        <td class="text-center">{{ $invoicePrice(0) }}</td>
+                        <td rowspan="2" class="text-right">{{ $invoicePrice($shippingInvoiceLine['base_amount']) }}</td>
+                    </tr>
+                    <tr class="item-bottom">
+                        <td class="text-center">-</td>
+                        <td class="text-center">-</td>
+                        <td class="text-center">-</td>
+                        <td class="text-center">1</td>
+                        <td class="text-center">0</td>
+                        <td class="text-center">{{ round($shippingSgstPercent, 2) }}</td>
+                        <td class="text-center">{{ round($shippingCgstPercent, 2) }}</td>
+                        <td class="text-center">{{ round($shippingIgstPercent, 2) }}</td>
+                        <td class="text-center"></td>
+                        <td class="text-center mrp-value">{{ $invoicePrice($shippingInvoiceLine['total_amount']) }}</td>
+                        <td class="text-center">0</td>
+                    </tr>
+                @endif
             </tbody>
         </table>
     </div>
@@ -540,9 +583,9 @@
     <table class="meta" style="margin-top: 8px;">
         <tr>
             <td colspan="2" class="head">{{ translate('Qty') }}: {{ $paidQtyTotal }}</td>
-            <td class="head">{{ translate('Gross Value') }}: {{ $invoicePrice($productGrossTotal + $shippingTotal) }}</td>
+            <td class="head">{{ translate('Gross Value') }}: {{ $invoicePrice($productGrossTotal + $shippingBaseAmount) }}</td>
             <td class="head">{{ translate('SGST') }}: {{ $invoicePrice($sgstTotal) }}</td>
-            <td class="head">{{ translate('Total Taxable Amount') }}: {{ $invoicePrice($taxableTotal) }}</td>
+            <td class="head">{{ translate('Total Taxable Amount') }}: {{ $invoicePrice($taxableTotal + $shippingBaseAmount) }}</td>
         </tr>
         <tr>
             <td colspan="2" class="head">{{ translate('Scheme Qty (Free)') }}: {{ $schemeQtyTotal }}</td>
