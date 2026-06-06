@@ -162,11 +162,14 @@ class ProductStockService
             $product->variant_product = 1;
             $product->save();
             foreach ($combinations as $key => $combination) {
-                $str = ProductUtility::get_combination_string($combination, $collection);
+                $variantData = ProductUtility::get_combination_variant_data($combination, $collection);
+                $str = $variantData['variant'];
+                $idVariant = $variantData['id_variant'];
                 $product_stock = new ProductStock();
                 $product_stock->product_id = $product->id;
 
                 $product_stock->variant = $str;
+                $product_stock->id_variant = $idVariant;
                 $product_stock->is_hidden = (int) request()->get('is_hidden_' . str_replace('.', '_', $str), 0);
                 $variantInputKey = str_replace('.', '_', $str);
                 
@@ -238,8 +241,11 @@ class ProductStockService
 
             // $data = $collection->merge(compact('variant', 'qty', 'price', 'per_piece_price'))->toArray();
 
+            $id_variant = null;
+
             $data = $collection->merge(compact(
                 'variant',
+                'id_variant',
                 'qty',
                 'price',
                 'mrp_price',
@@ -275,6 +281,7 @@ class ProductStockService
             $product_stock              = new ProductStock;
             $product_stock->product_id  = $product_new->id;
             $product_stock->variant     = $stock->variant;
+            $product_stock->id_variant  = $stock->id_variant;
             $product_stock->is_hidden   = $stock->is_hidden ?? 0;
             $product_stock->price       = $stock->price;
             $product_stock->mrp_price   = $stock->mrp_price;
@@ -321,19 +328,32 @@ class ProductStockService
             $product->save();
 
             foreach ($combinations as $key => $combination) {
-                $str = ProductUtility::get_combination_string($combination, $collection);
+                $variantData = ProductUtility::get_combination_variant_data($combination, $collection);
+                $str = $variantData['variant'];
+                $idVariant = $variantData['id_variant'];
 
-                // Find existing product stock by variant or SKU
-                $productStock = ProductStock::where('product_id', $product->id)
-                    ->where('variant', $str)
-                    ->first();
+                // Find existing product stock by stable ID variant first, then legacy text variant.
+                $productStock = null;
+                if ($idVariant !== null) {
+                    $productStock = ProductStock::where('product_id', $product->id)
+                        ->where('id_variant', $idVariant)
+                        ->first();
+                }
+
+                if (!$productStock) {
+                    $productStock = ProductStock::where('product_id', $product->id)
+                        ->where('variant', $str)
+                        ->first();
+                }
 
                 if (!$productStock) {
                     // Optionally create new stock if not found
                     $productStock = new ProductStock();
                     $productStock->product_id = $product->id;
-                    $productStock->variant = $str;
                 }
+
+                $productStock->variant = $str;
+                $productStock->id_variant = $idVariant;
 
                 $oldQty = $productStock->batches()->exists()
                     ? (int) $productStock->batches()->sum('qty')
@@ -439,6 +459,7 @@ class ProductStockService
                 $productStock = new ProductStock();
                 $productStock->product_id = $product->id;
                 $productStock->variant = $variant;
+                $productStock->id_variant = null;
                 $productStock->sku = $sku;
             }
 
@@ -447,6 +468,8 @@ class ProductStockService
                 : (int) ($productStock->qty ?? 0);
 
             // Update fields
+            $productStock->variant = $variant;
+            $productStock->id_variant = null;
             $productStock->qty = $qty;
             $productStock->price = $price;
             $productStock->mrp_price = $mrp_price;

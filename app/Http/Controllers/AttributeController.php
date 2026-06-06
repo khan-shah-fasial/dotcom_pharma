@@ -266,7 +266,7 @@ class AttributeController extends Controller
                     foreach ($choiceOptions as &$option) {
                         $attributeId = $option['attribute_id'] ?? ($option['attribute_at'] ?? null);
 
-                        if ($attributeId !== $attributeValue->attribute_id) {
+                        if ((int) $attributeId !== (int) $attributeValue->attribute_id) {
                             continue;
                         }
 
@@ -296,38 +296,99 @@ class AttributeController extends Controller
                             'product_id' => $product->id,
                         ]);
 
+                        $attributeValueId = (string) $attributeValue->id;
+
                         $product->stocks()
-                            ->where('variant', 'like', '%' . $oldValue . '%')
+                            ->whereNotNull('id_variant')
+                            ->whereRaw("CONCAT('-', id_variant, '-') LIKE ?", ['%-' . $attributeValueId . '-%'])
                             ->get()
-                            ->each(function ($stock) use ($oldValue, $newValue) {
+                            ->each(function ($stock) use ($attributeValueId, $newValue) {
                                 Log::debug('Updating stock variant', [
                                     'stock_id' => $stock->id,
                                     'old_variant' => $stock->variant,
                                 ]);
 
-                                $stock->variant = str_replace($oldValue, $newValue, $stock->variant);
-                                $stock->save();
+                                $updatedVariant = $this->replaceVariantSegmentById($stock->variant, $stock->id_variant, $attributeValueId, $newValue);
+                                if ($updatedVariant !== null && $updatedVariant !== $stock->variant) {
+                                    $stock->variant = $updatedVariant;
+                                    $stock->save();
+                                }
                             });
 
                         Cart::where('product_id', $product->id)
-                            ->whereNotNull('variation')
-                            ->where('variation', 'like', '%' . $oldValue . '%')
-                            ->chunkById(100, function ($carts) use ($oldValue, $newValue) {
+                            ->whereNotNull('id_variant')
+                            ->whereRaw("CONCAT('-', id_variant, '-') LIKE ?", ['%-' . $attributeValueId . '-%'])
+                            ->chunkById(100, function ($carts) use ($attributeValueId, $newValue) {
 
-                                Log::debug('Updating cart variations', [
+                                Log::debug('Updating cart variations by id_variant', [
                                     'count' => $carts->count(),
                                 ]);
 
                                 foreach ($carts as $cart) {
-                                    $cart->variation = str_replace($oldValue, $newValue, $cart->variation);
-                                    $cart->save();
+                                    $updatedVariation = $this->replaceVariantSegmentById($cart->variation, $cart->id_variant, $attributeValueId, $newValue);
+                                    if ($updatedVariation !== null && $updatedVariation !== $cart->variation) {
+                                        $cart->variation = $updatedVariation;
+                                        $cart->save();
+                                    }
                                 }
                             });
+
+                        $legacyStockCount = $product->stocks()
+                            ->whereNull('id_variant')
+                            ->where('variant', 'like', '%' . $oldValue . '%')
+                            ->count();
+
+                        $legacyCartCount = Cart::where('product_id', $product->id)
+                            ->whereNull('id_variant')
+                            ->whereNotNull('variation')
+                            ->where('variation', 'like', '%' . $oldValue . '%')
+                            ->count();
+
+                        if ($legacyStockCount > 0 || $legacyCartCount > 0) {
+                            Log::warning('Skipped legacy text-based variant rename; id_variant is required', [
+                                'product_id' => $product->id,
+                                'attribute_value_id' => $attributeValue->id,
+                                'old_value' => $oldValue,
+                                'new_value' => $newValue,
+                                'legacy_stock_count' => $legacyStockCount,
+                                'legacy_cart_count' => $legacyCartCount,
+                            ]);
+                        }
                     }
                 }
             });
 
         Log::info('Finished attribute value rename propagation');
+    }
+
+    private function replaceVariantSegmentById(?string $variant, ?string $idVariant, string $attributeValueId, string $newValue): ?string
+    {
+        if ($variant === null || $variant === '' || $idVariant === null || $idVariant === '') {
+            return null;
+        }
+
+        $variantParts = explode('-', $variant);
+        $idParts = explode('-', $idVariant);
+
+        if (count($variantParts) !== count($idParts)) {
+            Log::warning('Variant and id_variant segment count mismatch', [
+                'variant' => $variant,
+                'id_variant' => $idVariant,
+            ]);
+            return null;
+        }
+
+        $changed = false;
+        foreach ($idParts as $index => $idPart) {
+            if ((string) $idPart !== $attributeValueId) {
+                continue;
+            }
+
+            $variantParts[$index] = str_replace(' ', '', $newValue);
+            $changed = true;
+        }
+
+        return $changed ? implode('-', $variantParts) : null;
     }
 
 

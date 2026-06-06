@@ -16,6 +16,7 @@ class ProductStock extends Model
     protected $fillable = [
         'product_id',
         'variant',
+        'id_variant',
         'is_hidden',
         'sku',
         'price',

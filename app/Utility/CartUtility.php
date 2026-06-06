@@ -4,15 +4,25 @@ namespace App\Utility;
 
 use App\Models\Cart;
 use Cookie;
+use App\Utility\ProductUtility;
 
 class CartUtility
 {
 
     public static function create_cart_variant($product, $request)
     {
+        return self::create_cart_variant_data($product, $request)['variant'];
+    }
+
+    public static function create_cart_variant_data($product, $request): array
+    {
         $str = null;
+        $idParts = [];
+        $hasUnresolvedAttribute = false;
+
         if (isset($request['color'])) {
             $str = $request['color'];
+            $idParts[] = 'color_' . trim(preg_replace('/[^A-Za-z0-9_]/', '_', (string) $request['color']), '_');
         }
 
         if (isset($product->choice_options) && count(json_decode($product->choice_options)) > 0) {
@@ -27,9 +37,19 @@ class CartUtility
                 } else {
                     $str .= str_replace(' ', '', $request[$attributeKey]);
                 }
+
+                $valueId = ProductUtility::attribute_value_id($choice->attribute_id, $request[$attributeKey]);
+                if ($valueId === null) {
+                    $hasUnresolvedAttribute = true;
+                }
+                $idParts[] = $valueId;
             }
         }
-        return $str;
+
+        return [
+            'variant' => $str,
+            'id_variant' => $hasUnresolvedAttribute || empty($idParts) ? null : implode('-', $idParts),
+        ];
     }
 
     public static function get_price($product, $product_stock, $quantity)

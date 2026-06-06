@@ -52,7 +52,11 @@ class CartService
             $product = Product::find($old->product_id);
             $variant = $product
                 ->stocks()
-                ->where('variant', $old->variation)
+                ->when($old->id_variant, function ($query) use ($old) {
+                    $query->where('id_variant', $old->id_variant);
+                }, function ($query) use ($old) {
+                    $query->where('variant', $old->variation);
+                })
                 ->first();
 
             if (! $product || ! $variant) {
@@ -78,6 +82,7 @@ class CartService
                 'address_id'           => $old->address_id,
                 'product_id'           => $old->product_id,
                 'variation'            => $old->variation,
+                'id_variant'           => $old->id_variant ?? $variant->id_variant,
                 'price'                => $newPrice,
                 'before_productandbatch_discount' => $newBeforeProductAndBatchDiscount,
                 'mrp_price'            => $old->mrp_price,

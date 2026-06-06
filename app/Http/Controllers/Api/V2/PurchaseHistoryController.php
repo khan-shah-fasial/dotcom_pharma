@@ -123,13 +123,20 @@ class PurchaseHistoryController extends Controller
                 $order_qty = $product->min_qty;
             }
 
-            $cart = Cart::firstOrNew([
-                'variation' => $orderDetail->variation,
-                'user_id' => $user_id,
-                'product_id' => $product->id
-            ]);
-
             $product_stock = $product->stocks->where('variant', $orderDetail->variation)->first();
+            $cartIdentity = [
+                'user_id' => $user_id,
+                'product_id' => $product->id,
+            ];
+            if ($product_stock && $product_stock->id_variant) {
+                $cartIdentity['id_variant'] = $product_stock->id_variant;
+            } else {
+                $cartIdentity['variation'] = $orderDetail->variation;
+            }
+
+            $cart = Cart::firstOrNew($cartIdentity);
+            $cart->variation = $orderDetail->variation;
+            $cart->id_variant = $product_stock->id_variant ?? null;
             if ($product_stock) {
                 $quantity = 1;
 

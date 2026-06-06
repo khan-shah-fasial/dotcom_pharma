@@ -62,8 +62,13 @@ class CartController extends Controller
     protected function schemeCartQuery(Cart $paidCart)
     {
         $query = Cart::where('product_id', $paidCart->product_id)
-            ->where('variation', $paidCart->variation)
             ->where('is_scheme', 1);
+
+        if ($paidCart->id_variant) {
+            $query->where('id_variant', $paidCart->id_variant);
+        } else {
+            $query->where('variation', $paidCart->variation);
+        }
 
         foreach ($this->cartOwnerIdentity($paidCart) as $column => $value) {
             $query->where($column, $value);
@@ -75,8 +80,13 @@ class CartController extends Controller
     protected function paidCartQuery(Cart $paidCart)
     {
         $query = Cart::where('product_id', $paidCart->product_id)
-            ->where('variation', $paidCart->variation)
             ->where('is_scheme', 0);
+
+        if ($paidCart->id_variant) {
+            $query->where('id_variant', $paidCart->id_variant);
+        } else {
+            $query->where('variation', $paidCart->variation);
+        }
 
         foreach ($this->cartOwnerIdentity($paidCart) as $column => $value) {
             $query->where($column, $value);
@@ -141,6 +151,7 @@ class CartController extends Controller
         foreach ($allocation['allocations'] as $row) {
             $identity = array_merge($this->cartOwnerIdentity($paidCart), [
                 'variation' => $paidCart->variation,
+                'id_variant' => $paidCart->id_variant,
                 'product_id' => $paidCart->product_id,
                 'batch_id' => $row['batch_id'],
                 'is_scheme' => 1,
@@ -362,6 +373,7 @@ class CartController extends Controller
                 'message' => translate("Stock out")
             ], 200);
         }
+        $idVariant = $product_stock->id_variant;
 
         $minQty = optional($product_stock)->min_qty ?? $product->min_qty ?? 1;
         $batchId = $request->input('batch_id', null);
@@ -386,22 +398,27 @@ class CartController extends Controller
         }
 
         if($user_id != null) {
-            $cart = Cart::firstOrNew([
-                'variation' => $variant,
+            $cartIdentity = [
                 'user_id' => $user_id,
                 'product_id' => $request['id'],
                 'batch_id' => $batchId,
                 'is_scheme' => 0
-            ]);
+            ];
+            $cartIdentity[$idVariant ? 'id_variant' : 'variation'] = $idVariant ?: $variant;
+            $cart = Cart::firstOrNew($cartIdentity);
         } else {
-            $cart = Cart::firstOrNew([
-                'variation' => $variant,
+            $cartIdentity = [
                 'temp_user_id' => $temp_user_id,
                 'product_id' => $request['id'],
                 'batch_id' => $batchId,
                 'is_scheme' => 0
-            ]);
+            ];
+            $cartIdentity[$idVariant ? 'id_variant' : 'variation'] = $idVariant ?: $variant;
+            $cart = Cart::firstOrNew($cartIdentity);
         }
+
+        $cart->variation = $variant;
+        $cart->id_variant = $idVariant;
 
 
         $variant_string = $variant != null && $variant != "" ? translate("for") . " ($variant)" : "";
@@ -510,7 +527,9 @@ class CartController extends Controller
             if ((bool) $cart->is_scheme) {
                 return response()->json(['result' => false, 'message' => translate('Scheme quantity cannot be changed')], 200);
             }
-            $stock = $cart->product->stocks->where('variant', $cart->variation)->first();
+            $stock = $cart->id_variant
+                ? $cart->product->stocks->where('id_variant', $cart->id_variant)->first()
+                : $cart->product->stocks->where('variant', $cart->variation)->first();
             $minQty = optional($stock)->min_qty ?? $product->min_qty ?? 1;
             $batch = $cart->batch_id && $stock ? $stock->batches()->where('id', $cart->batch_id)->first() : null;
             if ($batch && is_batch_expired($batch)) {
@@ -572,7 +591,9 @@ class CartController extends Controller
                 }
                 $product = Product::where('id', $cart_item->product_id)->first();
 
-                $stockEntry = $cart_item->product->stocks->where('variant', $cart_item->variation)->first();
+                $stockEntry = $cart_item->id_variant
+                    ? $cart_item->product->stocks->where('id_variant', $cart_item->id_variant)->first()
+                    : $cart_item->product->stocks->where('variant', $cart_item->variation)->first();
                 $stockMinQty = $stockEntry->min_qty ?? $product->min_qty ?? 1;
 
                 if ($stockMinQty > $cart_quantities[$i]) {
@@ -642,7 +663,15 @@ class CartController extends Controller
         $cart = Cart::find($id);
         if ($cart && !(bool) $cart->is_scheme) {
             $product = Product::find($cart->product_id);
-            $stock = $product ? $product->stocks()->where('variant', $cart->variation)->first() : null;
+            $stock = $product
+                ? $product->stocks()
+                    ->when($cart->id_variant, function ($query) use ($cart) {
+                        $query->where('id_variant', $cart->id_variant);
+                    }, function ($query) use ($cart) {
+                        $query->where('variant', $cart->variation);
+                    })
+                    ->first()
+                : null;
             Cart::destroy($id);
             if ($product && $stock && $this->paidCartQuery($cart)->exists()) {
                 $this->syncSchemeCartLinesForStock($cart, $product, $stock);
@@ -685,8 +714,13 @@ class CartController extends Controller
             foreach ($activePaidCarts as $paidCart) {
                 $schemeQuery = $carts->toQuery()
                     ->where('product_id', $paidCart->product_id)
-                    ->where('variation', $paidCart->variation)
                     ->where('is_scheme', 1);
+
+                if ($paidCart->id_variant) {
+                    $schemeQuery->where('id_variant', $paidCart->id_variant);
+                } else {
+                    $schemeQuery->where('variation', $paidCart->variation);
+                }
 
                 if ($paidCart->user_id) {
                     $schemeQuery->where('user_id', $paidCart->user_id);
