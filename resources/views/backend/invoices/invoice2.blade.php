@@ -326,9 +326,9 @@
 <div class="invoice-wrap">
     <table class="band">
         <tr>
-            <td>{{ translate('Original For Buyers') }}<br>{{ translate('Duplicate For Records') }}</td>
+            {{-- <td>{{ translate('Original For Buyers') }}<br>{{ translate('Duplicate For Records') }}</td> --}}
             <td>{{ translate('Reverse Charges') }} : {{ translate('Yes') }} / {{ translate('No') }}<br>{{ translate('GST Invoice / Bill of Supply') }}</td>
-            <td>{{ translate('Triplicate For Transporter') }}<br>{{ translate('For GST & FDA Record') }}</td>
+            {{-- <td>{{ translate('Triplicate For Transporter') }}<br>{{ translate('For GST & FDA Record') }}</td> --}}
         </tr>
     </table>
 
@@ -649,14 +649,8 @@
             </td>
         </tr>
         <tr>
-            <td colspan="3" style="border-top:0; padding-top:2px; font-size:10px;">
+            <td colspan="4" style="border-top:0; padding-top:2px; font-size:10px;">
                 {{ translate('We hereby certify that my / our Registration Certificate under the Goods & Services Tax Act.2017 is in force on the date 1st July 2017 on which the sale of the goods specified in this GST invoice & Bill of Supply is made by me / us and that the transaction of sale covered by this GST invoice has been effected by me/ us and it shall be accounted for in the turnover of sales while filling of return and the due tax if any payable on the sale has been paid or shall be paid') }}
-            </td>
-            <td class="footer-box text-center">
-                <br>
-                <br>
-                <div class="red-color label">{{ translate('Payment Terms') }}</div>
-                <div>{{ translate('Immediate Payment / 15 Days Max') }}</div>
             </td>
         </tr>
         <tr>
