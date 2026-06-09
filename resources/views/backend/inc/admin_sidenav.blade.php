@@ -338,6 +338,35 @@
                     </li>
                 @endcanany
 
+                <!-- Leads -->
+                @canany(['view_leads', 'add_lead'])
+                    <li class="aiz-side-nav-item">
+                        <a href="#" class="aiz-side-nav-link">
+                            <div class="aiz-side-nav-icon">
+                                <i class="las la-user-tag fs-16"></i>
+                            </div>
+                            <span class="aiz-side-nav-text">{{ translate('Leads') }}</span>
+                            <span class="aiz-side-nav-arrow"></span>
+                        </a>
+                        <ul class="aiz-side-nav-list level-2">
+                            @can('add_lead')
+                                <li class="aiz-side-nav-item">
+                                    <a class="aiz-side-nav-link {{ areActiveRoutes(['leads.create']) }}" href="{{ route('leads.create') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Add New Lead') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_leads')
+                                <li class="aiz-side-nav-item">
+                                    <a class="aiz-side-nav-link {{ areActiveRoutes(['leads.index','leads.show','leads.edit']) }}" href="{{ route('leads.index') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Lead List') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </li>
+                @endcanany
+
 
                 <!-- Auction Product -->
                 @if(addon_is_activated('auction'))

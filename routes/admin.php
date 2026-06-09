@@ -30,6 +30,7 @@ use App\Http\Controllers\FinancialArchiveController;
 use App\Http\Controllers\FlashDealController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\FormEnquiryController;
 use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\MeasurementPointsController;
@@ -312,6 +313,18 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/admin/request-docs/pdf-store', [RequestDocController::class, 'storeBusinessRequestPdfs'])
         ->name('admin.request-doc.pdf.store');
 
+    });
+
+    // Leads
+    Route::controller(LeadController::class)->group(function () {
+        Route::get('/leads', 'index')->name('leads.index');
+        Route::get('/leads/create', 'create')->name('leads.create');
+        Route::post('/leads', 'store')->name('leads.store');
+        Route::get('/leads/destroy/{lead}', 'destroy')->name('leads.destroy');
+        Route::get('/leads/{lead}', 'show')->name('leads.show');
+        Route::get('/leads/{lead}/edit', 'edit')->name('leads.edit');
+        Route::post('/leads/{lead}/update', 'update')->name('leads.update');
+        Route::post('/leads/{lead}/activities', 'storeActivity')->name('leads.activities.store');
     });
 
     // Newsletter
