@@ -5460,8 +5460,8 @@ if (!function_exists('fetchGstinDetails')) {
 
         $bearer_token = env('SUREPASS_API_TOKEN');
 
-        $URL = "https://sandbox.surepass.io";
-        // $URL ="https://kyc-api.surepass.io";
+        // $URL = "https://sandbox.surepass.io";
+        $URL ="https://kyc-api.surepass.io";
 
         $curl = curl_init();
 
@@ -5496,8 +5496,8 @@ if (!function_exists('fetchIECDetails')) {
 
         $bearer_token = env('SUREPASS_API_TOKEN');
 
-        $URL = "https://sandbox.surepass.io";
-        // $URL ="https://kyc-api.surepass.io";
+        // $URL = "https://sandbox.surepass.io";
+        $URL ="https://kyc-api.surepass.io";
 
         $curl = curl_init();
 
@@ -5533,8 +5533,8 @@ if (!function_exists('requestOtpAadhar')) {
 
         $bearer_token = env('SUREPASS_API_TOKEN');
 
-        $URL = "https://sandbox.surepass.io";
-        // $URL ="https://kyc-api.surepass.io";
+        // $URL = "https://sandbox.surepass.io";
+        $URL ="https://kyc-api.surepass.io";
 
         $curl = curl_init();
 
@@ -5569,8 +5569,8 @@ if (!function_exists('validateOtpAadhar')) {
 
         $bearer_token = env('SUREPASS_API_TOKEN');
 
-        $URL = "https://sandbox.surepass.io";
-        // $URL ="https://kyc-api.surepass.io";
+        // $URL = "https://sandbox.surepass.io";
+        $URL ="https://kyc-api.surepass.io";
 
         $curl = curl_init();
 
@@ -5606,8 +5606,8 @@ if (!function_exists('passport_details')) {
 
         $bearer_token = env('SUREPASS_API_TOKEN');
 
-        $URL = "https://sandbox.surepass.io";
-        // $URL ="https://kyc-api.surepass.io";
+        // $URL = "https://sandbox.surepass.io";
+        $URL ="https://kyc-api.surepass.io";
 
         $curl = curl_init();
 
