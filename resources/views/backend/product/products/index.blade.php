@@ -77,6 +77,18 @@
                         </select>
                     </div>
                 @endif
+                <div class="col-md-2">
+                    <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0"
+                        name="category_id" id="category_id" data-live-search="true"
+                        onchange="sort_products()">
+                        <option value="">{{ translate('All Categories') }}</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}" @selected((string) $selected_category_id === (string) $category->id)>
+                                {{ $category->getTranslation('name') }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
                 <div class="col-md-2 ml-auto">
                     <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0" name="type" id="type"
                         onchange="sort_products()">
@@ -138,13 +150,23 @@
                                 </th>
                             @endif
                             <th>{{ translate('Sr No.') }}</th>
-                            <th>{{ translate('SKU') }}</th>
+                            <th>
+                                <a href="{{ url()->current() . '?' . http_build_query(array_merge(request()->except('page', 'type'), [
+                                    'sort_by' => 'sku',
+                                    'sort_order' => request('sort_by') === 'sku' && request('sort_order') === 'asc' ? 'desc' : 'asc',
+                                ])) }}">
+                                    {{ translate('SKU') }}
+                                    @if (request('sort_by') === 'sku')
+                                        <i class="las la-sort-amount-{{ request('sort_order') === 'asc' ? 'up' : 'down' }}"></i>
+                                    @endif
+                                </a>
+                            </th>
                             <th>{{ translate('Name') }}</th>
                             {{-- @if ($type == 'Seller' || $type == 'All')
                                 <th data-breakpoints="lg">{{ translate('Added By') }}</th>
                             @endif
                             <th data-breakpoints="sm">{{ translate('Info') }}</th> --}}
-                            <th>{{ translate('Category') }} <span class="text-muted">({{ translate('Main only') }})</span></th>
+                            <th>{{ translate('Category') }}</th>
                             <th data-breakpoints="md">{{ translate('Total Stock') }}</th>
                             <th>{{ translate('Group') }}</th>
                             <th>{{ translate('Schedule') }}</th>
@@ -238,7 +260,25 @@
                                     @endif
 
                                 </td> --}}
-                                <td>{{ optional($product->main_category)->getTranslation('name') ?? '-' }}</td>
+                                <td>
+                                    @php
+                                        $productCategories = $product->categories;
+                                        if ($product->main_category && !$productCategories->contains('id', $product->main_category->id)) {
+                                            $productCategories = $productCategories->prepend($product->main_category);
+                                        }
+                                    @endphp
+                                    @forelse ($productCategories->unique('id') as $category)
+                                        <span class="badge badge-inline mb-1 {{ (int) $category->id === (int) $product->category_id ? 'badge-primary' : 'badge-soft-secondary' }}"
+                                            @if ((int) $category->id === (int) $product->category_id) title="{{ translate('Main Category') }}" @endif>
+                                            {{ $category->getTranslation('name') }}
+                                            @if ((int) $category->id === (int) $product->category_id)
+                                                ({{ translate('Main') }})
+                                            @endif
+                                        </span>
+                                    @empty
+                                        -
+                                    @endforelse
+                                </td>
                                 <td>
                                     @if ($product->digital == 1)
                                         <span class="badge badge-inline badge-info">{{ translate('Digital Product') }}</span>

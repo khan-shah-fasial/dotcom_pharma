@@ -82,10 +82,13 @@ class ProductController extends Controller
         $col_name = null;
         $query = null;
         $sort_search = null;
+        $selected_category_id = $request->category_id;
 
         $products = Product::where('added_by', 'admin')->where('auction_product', 0)->where('wholesale_product', 0);
 
-        if ($request->type != null) {
+        $products = $this->applyBackendCategoryFilter($products, $selected_category_id);
+
+        if ($request->type != null && $request->get('sort_by') !== 'sku') {
             $var = explode(",", $request->type);
             $col_name = $var[0];
             $query = $var[1];
@@ -97,9 +100,14 @@ class ProductController extends Controller
             $products = $this->applyBackendSearchFilters($products, $sort_search);
         }
 
-        $products = $products->where('digital', 0)->orderBy('created_at', 'desc')->paginate(10);
+        $products = $this->applyBackendSkuSorting($products, $request)
+            ->where('digital', 0)
+            ->with(['categories', 'main_category', 'main_group', 'stocks.batches'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+        $categories = $this->backendProductCategories();
 
-        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'sort_search'));
+        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'sort_search', 'categories', 'selected_category_id'));
     }
 
     /**
@@ -113,7 +121,9 @@ class ProductController extends Controller
         $query = null;
         $seller_id = null;
         $sort_search = null;
+        $selected_category_id = $request->category_id;
         $products = Product::where('added_by', 'seller')->where('auction_product', 0)->where('wholesale_product', 0);
+        $products = $this->applyBackendCategoryFilter($products, $selected_category_id);
         if ($request->has('user_id') && $request->user_id != null) {
             $products = $products->where('user_id', $request->user_id);
             $seller_id = $request->user_id;
@@ -122,7 +132,7 @@ class ProductController extends Controller
             $sort_search = $request->search;
             $products = $this->applyBackendSearchFilters($products, $sort_search);
         }
-        if ($request->type != null) {
+        if ($request->type != null && $request->get('sort_by') !== 'sku') {
             $var = explode(",", $request->type);
             $col_name = $var[0];
             $query = $var[1];
@@ -130,16 +140,17 @@ class ProductController extends Controller
             $sort_type = $request->type;
         }
         $products = $product_type == 'physical' ? $products->where('digital', 0) : $products->where('digital', 1);
-        $products = $products
-            ->with(['main_category', 'main_group', 'stocks.batches'])
+        $products = $this->applyBackendSkuSorting($products, $request)
+            ->with(['categories', 'main_category', 'main_group', 'stocks.batches'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         $type = 'Seller';
+        $categories = $this->backendProductCategories();
 
         if ($product_type == 'digital') {
             return view('backend.product.digital_products.index', compact('products', 'sort_search', 'type'));
         }
-        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search'));
+        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'categories', 'selected_category_id'));
     }
 
     public function all_products(Request $request)
@@ -149,7 +160,9 @@ class ProductController extends Controller
         $seller_id = null;
         $sort_search = null;
         $published_status = null;
+        $selected_category_id = $request->category_id;
         $products = Product::where('auction_product', 0)->where('wholesale_product', 0);
+        $products = $this->applyBackendCategoryFilter($products, $selected_category_id);
         if (get_setting('vendor_system_activation') != 1) {
             $products = $products->where('added_by', 'admin');
         }
@@ -162,7 +175,7 @@ class ProductController extends Controller
             $products = $this->applyBackendSearchFilters($products, $sort_search);
         }
         
-        if ($request->type != null) {
+        if ($request->type != null && $request->get('sort_by') !== 'sku') {
             $var = explode(",", $request->type);
             $col_name = $var[0];
             $query = $var[1];
@@ -177,13 +190,46 @@ class ProductController extends Controller
             $published_status = 'All';
         }
 
-        $products = $products
-            ->with(['main_category', 'main_group', 'stocks.batches'])
+        $products = $this->applyBackendSkuSorting($products, $request)
+            ->with(['categories', 'main_category', 'main_group', 'stocks.batches'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         $type = 'All';
+        $categories = $this->backendProductCategories();
 
-        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status'));
+        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id'));
+    }
+
+    private function applyBackendCategoryFilter($products, $categoryId)
+    {
+        if (!$categoryId) {
+            return $products;
+        }
+
+        return $products->where(function ($query) use ($categoryId) {
+            $query->where('category_id', $categoryId)
+                ->orWhereHas('categories', function ($categoryQuery) use ($categoryId) {
+                    $categoryQuery->where('categories.id', $categoryId);
+                });
+        });
+    }
+
+    private function applyBackendSkuSorting($products, Request $request)
+    {
+        if ($request->get('sort_by') !== 'sku') {
+            return $products;
+        }
+
+        $direction = strtolower((string) $request->get('sort_order')) === 'desc' ? 'desc' : 'asc';
+
+        return $products->orderByRaw(
+            "(SELECT MIN(LOWER(TRIM(product_stocks.sku))) FROM product_stocks WHERE product_stocks.product_id = products.id AND TRIM(product_stocks.sku) <> '') {$direction}"
+        );
+    }
+
+    private function backendProductCategories()
+    {
+        return Category::where('digital', 0)->orderBy('name')->get(['id', 'name']);
     }
 
     private function applyBackendSearchFilters($products, string $search)

@@ -47,7 +47,7 @@
                         <div class="row gutters-5">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" for="lead_search">{{ translate('Search') }}</label>
-                                <input type="text" id="lead_search" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="{{ translate('Lead no / name / company / email / phone') }}">
+                                <input type="text" id="lead_search" name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="{{ translate('Lead no / name / company / email / phone / WhatsApp') }}">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" for="lead_assigned_to">{{ translate('Assigned To') }}</label>
@@ -166,6 +166,9 @@
                         <td>
                             <div>{{ $lead->name }}</div>
                             <small class="text-muted">{{ $lead->email ?: $lead->phone }}</small>
+                            @if ($lead->whatsapp_number)
+                                <small class="d-block text-muted">{{ translate('WhatsApp') }}: {{ $lead->whatsapp_number }}</small>
+                            @endif
                         </td>
                         <td>{{ $lead->company_name ?? '-' }}</td>
                         <td>
@@ -182,6 +185,11 @@
                         <td>
                             @if($lastActivity)
                                 {{ translate(ucfirst($lastActivity->activity_type)) }}
+                                @if($lastActivity->activity_sub_status)
+                                    <small class="d-block text-muted">
+                                        {{ translate(ucwords(str_replace('_', ' ', $lastActivity->activity_sub_status))) }}
+                                    </small>
+                                @endif
                                 @if($lastActivity->next_followup)
                                     <small class="d-block text-muted">{{ $lastActivity->next_followup->format('d-m-Y') }}</small>
                                 @endif
@@ -249,12 +257,29 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label for="quick_activity_sub_status">{{ translate('Sub-status') }} <span class="text-danger">*</span></label>
+                            <select id="quick_activity_sub_status" name="activity_sub_status" class="form-control aiz-selectpicker" required></select>
+                        </div>
+                        <div class="form-group">
                             <label for="quick_activity_description">{{ translate('Description') }}</label>
                             <textarea id="quick_activity_description" name="description" rows="4" class="form-control"></textarea>
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_next_followup">{{ translate('Next Follow-up') }}</label>
                             <input id="quick_activity_next_followup" type="datetime-local" name="next_followup" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="quick_activity_attachments">{{ translate('Attachments') }}</label>
+                            <select id="quick_activity_attachments" name="attachments[]" class="form-control" multiple size="6">
+                                @foreach ($activityUploads as $upload)
+                                    @php
+                                        $fileName = $upload->file_original_name ?: translate('Unknown');
+                                        $extension = $upload->extension ? '.'.$upload->extension : '';
+                                    @endphp
+                                    <option value="{{ $upload->id }}">#{{ $upload->id }} - {{ $fileName }}{{ $extension }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted d-block mt-1">{{ translate('Hold Ctrl to select multiple uploaded files.') }}</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -274,6 +299,19 @@
 
 @section('script')
     <script>
+        var leadActivitySubStatuses = @json($activitySubStatuses);
+
+        function updateQuickActivitySubStatuses(selected) {
+            var type = $('#quick_activity_type').val();
+            var $status = $('#quick_activity_sub_status');
+            $status.empty();
+            (leadActivitySubStatuses[type] || []).forEach(function (value) {
+                var label = value.replace(/_/g, ' ').replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
+                $status.append($('<option>', { value: value, text: label, selected: value === selected }));
+            });
+            $status.selectpicker('refresh');
+        }
+
         $('.btn-apply-lead-filters').on('click', function () {
             $('#leadFilterModal').modal('hide');
             $('#sort_leads').submit();
@@ -288,14 +326,21 @@
             $('#quickLeadActivityLead').text($button.data('lead'));
             $('#quick_activity_description').val('');
             $('#quick_activity_next_followup').val('');
+            $('#quick_activity_attachments').val([]);
             $('#quick_activity_type').val('call');
 
             if ($.fn.selectpicker) {
                 $('#quick_activity_type').selectpicker('refresh');
             }
+            updateQuickActivitySubStatuses();
 
             $('#quickLeadActivityModal').modal('show');
         });
 
+        $('#quick_activity_type').on('change', function () {
+            updateQuickActivitySubStatuses();
+        });
+
+        updateQuickActivitySubStatuses();
     </script>
 @endsection

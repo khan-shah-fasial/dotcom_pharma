@@ -30,7 +30,8 @@
             </div>
         </form>
         <div class="card-body">
-            <table class="table aiz-table table-striped table-bordered" cellspacing="0" width="100%">
+            <div class="table-responsive">
+            <table class="table table-striped table-bordered" cellspacing="0" width="100%">
                 <thead>
                     <tr>
                         <th width="10%">#</th>
@@ -48,7 +49,10 @@
                             <td>{{ $country->name }}</td>
                             <td>{{ $country->code }}</td>
                             <td>
-                                <select id="default_currency_id_{{ $country->id }}" class="form-control form-control-sm" onchange="update_defaults({{ $country->id }}, false, this)">
+                                <select id="default_currency_id_{{ $country->id }}"
+                                    class="form-control form-control-sm aiz-selectpicker"
+                                    data-live-search="true" data-width="100%"
+                                    onchange="update_defaults({{ $country->id }}, false, this)">
                                     <option value="">{{ translate('Select') }}</option>
                                     @foreach($active_currencies as $currency)
                                         <option value="{{ $currency->id }}" @selected((string)$country->default_currency_id === (string)$currency->id)>
@@ -58,7 +62,10 @@
                                 </select>
                             </td>
                             <td>
-                                <select id="default_language_id_{{ $country->id }}" class="form-control form-control-sm" onchange="update_defaults({{ $country->id }}, false, this)">
+                                <select id="default_language_id_{{ $country->id }}"
+                                    class="form-control form-control-sm aiz-selectpicker"
+                                    data-live-search="true" data-width="100%"
+                                    onchange="update_defaults({{ $country->id }}, false, this)">
                                     <option value="">{{ translate('Select') }}</option>
                                     @foreach($active_languages as $language)
                                         <option value="{{ $language->id }}" @selected((string)$country->default_language_id === (string)$language->id)>
@@ -77,6 +84,7 @@
                     @endforeach
                 </tbody>
             </table>
+            </div>
             <div class="aiz-pagination">
                 {{ $countries->appends(request()->input())->links() }}
             </div>
@@ -128,11 +136,13 @@
                 if (currencyId && !languageId && DEFAULT_LANGUAGE_ID) {
                     languageId = DEFAULT_LANGUAGE_ID;
                     $('#default_language_id_' + countryId).val(languageId);
+                    $('#default_language_id_' + countryId).selectpicker('refresh');
                 }
             } else if (changedId && changedId.indexOf('default_language_id_') === 0) {
                 if (languageId && !currencyId && SYSTEM_DEFAULT_CURRENCY_ID) {
                     currencyId = SYSTEM_DEFAULT_CURRENCY_ID;
                     $('#default_currency_id_' + countryId).val(currencyId);
+                    $('#default_currency_id_' + countryId).selectpicker('refresh');
                 }
             }
 
@@ -192,10 +202,12 @@
                         var needsUpdate = false;
                         if (!$currencySel.val() && SYSTEM_DEFAULT_CURRENCY_ID) {
                             $currencySel.val(SYSTEM_DEFAULT_CURRENCY_ID);
+                            $currencySel.selectpicker('refresh');
                             needsUpdate = true;
                         }
                         if (!$languageSel.val() && DEFAULT_LANGUAGE_ID) {
                             $languageSel.val(DEFAULT_LANGUAGE_ID);
+                            $languageSel.selectpicker('refresh');
                             needsUpdate = true;
                         }
                         if (needsUpdate) {

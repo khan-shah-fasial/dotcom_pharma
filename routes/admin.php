@@ -319,12 +319,14 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     Route::controller(LeadController::class)->group(function () {
         Route::get('/leads', 'index')->name('leads.index');
         Route::get('/leads/create', 'create')->name('leads.create');
+        Route::get('/leads/customer-by-phone', 'customerByPhone')->name('leads.customer_by_phone');
         Route::post('/leads', 'store')->name('leads.store');
         Route::get('/leads/destroy/{lead}', 'destroy')->name('leads.destroy');
         Route::get('/leads/{lead}', 'show')->name('leads.show');
         Route::get('/leads/{lead}/edit', 'edit')->name('leads.edit');
         Route::post('/leads/{lead}/update', 'update')->name('leads.update');
         Route::post('/leads/{lead}/activities', 'storeActivity')->name('leads.activities.store');
+        Route::get('/leads/{lead}/activities/{activity}/destroy', 'destroyActivity')->name('leads.activities.destroy');
     });
 
     // Newsletter

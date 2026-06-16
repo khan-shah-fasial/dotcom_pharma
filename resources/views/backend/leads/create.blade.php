@@ -17,3 +17,7 @@
     </div>
 </div>
 @endsection
+
+@section('script')
+    @include('backend.leads._form_script')
+@endsection

@@ -24,6 +24,12 @@
                     <tr><th>{{ translate('Company') }}</th><td>{{ $lead->company_name ?? '-' }}</td></tr>
                     <tr><th>{{ translate('Email') }}</th><td>{{ $lead->email ?? '-' }}</td></tr>
                     <tr><th>{{ translate('Phone') }}</th><td>{{ $lead->phone ?? '-' }}</td></tr>
+                    <tr><th>{{ translate('WhatsApp Number') }}</th><td>{{ $lead->whatsapp_number ?? '-' }}</td></tr>
+                    <tr><th>{{ translate('Address') }}</th><td>{{ $lead->address ?? '-' }}</td></tr>
+                    <tr><th>{{ translate('Country') }}</th><td>{{ optional($lead->country)->name ?? '-' }}</td></tr>
+                    <tr><th>{{ translate('State') }}</th><td>{{ optional($lead->state)->name ?? '-' }}</td></tr>
+                    <tr><th>{{ translate('City') }}</th><td>{{ optional($lead->city)->name ?? '-' }}</td></tr>
+                    <tr><th>{{ translate('Pincode') }}</th><td>{{ $lead->pincode ?? '-' }}</td></tr>
                     <tr><th>{{ translate('Source') }}</th><td>{{ optional($lead->source)->name ?? '-' }}</td></tr>
                     <tr>
                         <th>{{ translate('Status') }}</th>
@@ -55,4 +61,33 @@
         @endcan
     </div>
 </div>
+@endsection
+
+@section('modal')
+    @include('modals.delete_modal')
+@endsection
+
+@section('script')
+<script>
+    var leadActivitySubStatuses = @json($activitySubStatuses);
+
+    function updateLeadActivitySubStatuses($type, $status, selected) {
+        var options = leadActivitySubStatuses[$type.val()] || [];
+        $status.empty();
+        options.forEach(function (value) {
+            var label = value.replace(/_/g, ' ').replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
+            $status.append($('<option>', { value: value, text: label, selected: value === selected }));
+        });
+        $status.selectpicker('refresh');
+    }
+
+    $(function () {
+        var $type = $('.js-lead-activity-type');
+        var $status = $('.js-lead-activity-sub-status');
+        updateLeadActivitySubStatuses($type, $status, @json(old('activity_sub_status')));
+        $type.on('change', function () {
+            updateLeadActivitySubStatuses($type, $status, null);
+        });
+    });
+</script>
 @endsection
