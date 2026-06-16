@@ -151,26 +151,60 @@
                     <th>{{ translate('Status') }}</th>
                     <th>{{ translate('Source') }}</th>
                     <th>{{ translate('Created By') }}</th>
-                    <th>{{ translate('Assigned To') }}</th>
                     <th>{{ translate('Value') }}</th>
+                    <th>{{ translate('Next Follow-up') }}</th>
                     <th>{{ translate('Last Activity') }}</th>
                     <th class="text-right">{{ translate('Options') }}</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($leads as $key => $lead)
-                    @php $lastActivity = $lead->activities->first(); @endphp
+                    @php
+                        $lastActivity = $lead->activities->first();
+                        $phoneHref = $lead->phone ? preg_replace('/\s+/', '', $lead->phone) : null;
+                        $whatsappHref = $lead->whatsapp_number ? preg_replace('/\D+/', '', $lead->whatsapp_number) : null;
+                    @endphp
                     <tr>
                         <td>{{ $leads->firstItem() + $key }}</td>
                         <td class="fw-700">{{ $lead->lead_no }}</td>
                         <td>
                             <div>{{ $lead->name }}</div>
-                            <small class="text-muted">{{ $lead->email ?: $lead->phone }}</small>
-                            @if ($lead->whatsapp_number)
-                                <small class="d-block text-muted">{{ translate('WhatsApp') }}: {{ $lead->whatsapp_number }}</small>
+                            <small class="text-muted">
+                                @if ($lead->email)
+                                    <a href="mailto:{{ $lead->email }}" class="text-muted">{{ $lead->email }}</a>
+                                @else
+                                    -
+                                @endif
+                            </small>
+                            @if ($lead->phone)
+                                <small class="d-block text-muted">
+                                    {{ translate('Phone') }}:
+                                    <a href="tel:{{ $phoneHref }}" class="text-muted">{{ $lead->phone }}</a>
+                                </small>
+                            @endif
+                            @if ($lead->whatsapp_number && $whatsappHref)
+                                <small class="d-block text-muted">
+                                    {{ translate('WhatsApp') }}:
+                                    <a href="https://wa.me/{{ $whatsappHref }}" class="text-muted" target="_blank" rel="noopener">{{ $lead->whatsapp_number }}</a>
+                                </small>
                             @endif
                         </td>
-                        <td>{{ $lead->company_name ?? '-' }}</td>
+                        <td>
+                            <div>{{ $lead->company_name ?? '-' }}</div>
+                            @if($lead->country || $lead->state || $lead->city)
+                                <ul class="list-unstyled mb-0 mt-1 text-muted small">
+                                    @if($lead->country)
+                                        <li>{{ $lead->country->name }}</li>
+                                    @endif
+                                    @if($lead->state)
+                                        <li>{{ $lead->state->name }}</li>
+                                    @endif
+                                    @if($lead->city)
+                                        <li>{{ $lead->city->name }}</li>
+                                    @endif
+                                </ul>
+                            @endif
+                        </td>
                         <td>
                             @if($lead->status)
                                 <span class="badge badge-inline text-white" style="background-color: {{ $lead->status->color ?? '#6c757d' }}">{{ $lead->status->name }}</span>
@@ -179,9 +213,12 @@
                             @endif
                         </td>
                         <td>{{ optional($lead->source)->name ?? '-' }}</td>
-                        <td>{{ optional($lead->creator)->name ?? '-' }}</td>
-                        <td>{{ optional($lead->assignedUser)->name ?? '-' }}</td>
+                        <td>
+                            <div>{{ optional($lead->creator)->name ?? '-' }}</div>
+                            <small class="d-block text-muted">{{ translate('Assign to') }}: {{ optional($lead->assignedUser)->name ?? '-' }}</small>
+                        </td>
                         <td>{{ number_format((float) $lead->expected_value, 2) }}</td>
+                        <td>{{ $lastActivity && $lastActivity->next_followup ? $lastActivity->next_followup->format('d-m-Y h:i A') : '-' }}</td>
                         <td>
                             @if($lastActivity)
                                 {{ translate(ucfirst($lastActivity->activity_type)) }}
@@ -189,9 +226,6 @@
                                     <small class="d-block text-muted">
                                         {{ translate(ucwords(str_replace('_', ' ', $lastActivity->activity_sub_status))) }}
                                     </small>
-                                @endif
-                                @if($lastActivity->next_followup)
-                                    <small class="d-block text-muted">{{ $lastActivity->next_followup->format('d-m-Y') }}</small>
                                 @endif
                             @else
                                 -
@@ -238,7 +272,7 @@
     <div class="modal fade" id="quickLeadActivityModal" tabindex="-1" role="dialog" aria-labelledby="quickLeadActivityModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <form id="quickLeadActivityForm" method="POST">
+                <form id="quickLeadActivityForm" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="quickLeadActivityModalLabel">{{ translate('Add Activity') }}</h5>
@@ -250,7 +284,7 @@
                         <div class="alert alert-soft-info" id="quickLeadActivityLead"></div>
                         <div class="form-group">
                             <label for="quick_activity_type">{{ translate('Activity Type') }} <span class="text-danger">*</span></label>
-                            <select id="quick_activity_type" name="activity_type" class="form-control aiz-selectpicker" required>
+                            <select id="quick_activity_type" name="activity_type" class="form-control" required>
                                 @foreach ($activityTypes as $type)
                                     <option value="{{ $type }}">{{ translate(ucfirst($type)) }}</option>
                                 @endforeach
@@ -258,7 +292,11 @@
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_sub_status">{{ translate('Sub-status') }} <span class="text-danger">*</span></label>
-                            <select id="quick_activity_sub_status" name="activity_sub_status" class="form-control aiz-selectpicker" required></select>
+                            <select id="quick_activity_sub_status" name="activity_sub_status" class="form-control" required>
+                                @foreach (($activitySubStatuses['call'] ?? []) as $subStatus)
+                                    <option value="{{ $subStatus }}">{{ translate(ucwords(str_replace('_', ' ', $subStatus))) }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_description">{{ translate('Description') }}</label>
@@ -270,16 +308,9 @@
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_attachments">{{ translate('Attachments') }}</label>
-                            <select id="quick_activity_attachments" name="attachments[]" class="form-control" multiple size="6">
-                                @foreach ($activityUploads as $upload)
-                                    @php
-                                        $fileName = $upload->file_original_name ?: translate('Unknown');
-                                        $extension = $upload->extension ? '.'.$upload->extension : '';
-                                    @endphp
-                                    <option value="{{ $upload->id }}">#{{ $upload->id }} - {{ $fileName }}{{ $extension }}</option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted d-block mt-1">{{ translate('Hold Ctrl to select multiple uploaded files.') }}</small>
+                            <input id="quick_activity_attachments" type="file" name="attachments[]" class="form-control" multiple
+                                accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.xml,.zip,.rar,.7z,image/*">
+                            <small class="text-muted d-block mt-1">{{ translate('You can upload multiple images or documents.') }}</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -302,14 +333,27 @@
         var leadActivitySubStatuses = @json($activitySubStatuses);
 
         function updateQuickActivitySubStatuses(selected) {
-            var type = $('#quick_activity_type').val();
+            var type = ($('#quick_activity_type').val() || 'call').toString().toLowerCase();
             var $status = $('#quick_activity_sub_status');
+            var options = leadActivitySubStatuses[type] || leadActivitySubStatuses.call || [];
+
+            if (!options.length) {
+                return;
+            }
+
             $status.empty();
-            (leadActivitySubStatuses[type] || []).forEach(function (value) {
+            options.forEach(function (value) {
                 var label = value.replace(/_/g, ' ').replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
-                $status.append($('<option>', { value: value, text: label, selected: value === selected }));
+                var $option = $('<option>', { value: value, text: label });
+                if (value === selected) {
+                    $option.prop('selected', true);
+                }
+                $status.append($option);
             });
-            $status.selectpicker('refresh');
+
+            if (!$status.val() && options.length) {
+                $status.val(options[0]);
+            }
         }
 
         $('.btn-apply-lead-filters').on('click', function () {
@@ -326,12 +370,9 @@
             $('#quickLeadActivityLead').text($button.data('lead'));
             $('#quick_activity_description').val('');
             $('#quick_activity_next_followup').val('');
-            $('#quick_activity_attachments').val([]);
+            $('#quick_activity_attachments').val('');
             $('#quick_activity_type').val('call');
 
-            if ($.fn.selectpicker) {
-                $('#quick_activity_type').selectpicker('refresh');
-            }
             updateQuickActivitySubStatuses();
 
             $('#quickLeadActivityModal').modal('show');
@@ -342,5 +383,7 @@
         });
 
         updateQuickActivitySubStatuses();
+        setTimeout(function () { updateQuickActivitySubStatuses(); }, 300);
+        setTimeout(function () { updateQuickActivitySubStatuses(); }, 1000);
     </script>
 @endsection

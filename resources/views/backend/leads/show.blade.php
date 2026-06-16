@@ -1,6 +1,10 @@
 @extends('backend.layouts.app')
 
 @section('content')
+@php
+    $phoneHref = $lead->phone ? preg_replace('/\s+/', '', $lead->phone) : null;
+    $whatsappHref = $lead->whatsapp_number ? preg_replace('/\D+/', '', $lead->whatsapp_number) : null;
+@endphp
 <div class="aiz-titlebar text-left mt-2 mb-3">
     <div class="row align-items-center">
         <div class="col-md-6"><h1 class="h3">{{ translate('Lead Details') }} {{ $lead->lead_no ? '- '.$lead->lead_no : '' }}</h1></div>
@@ -22,9 +26,36 @@
                     <tr><th width="25%">{{ translate('Lead No') }}</th><td>{{ $lead->lead_no ?? '-' }}</td></tr>
                     <tr><th>{{ translate('Name') }}</th><td>{{ $lead->name }}</td></tr>
                     <tr><th>{{ translate('Company') }}</th><td>{{ $lead->company_name ?? '-' }}</td></tr>
-                    <tr><th>{{ translate('Email') }}</th><td>{{ $lead->email ?? '-' }}</td></tr>
-                    <tr><th>{{ translate('Phone') }}</th><td>{{ $lead->phone ?? '-' }}</td></tr>
-                    <tr><th>{{ translate('WhatsApp Number') }}</th><td>{{ $lead->whatsapp_number ?? '-' }}</td></tr>
+                    <tr>
+                        <th>{{ translate('Email') }}</th>
+                        <td>
+                            @if ($lead->email)
+                                <a href="mailto:{{ $lead->email }}">{{ $lead->email }}</a>
+                            @else
+                                -
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ translate('Phone') }}</th>
+                        <td>
+                            @if ($lead->phone)
+                                <a href="tel:{{ $phoneHref }}">{{ $lead->phone }}</a>
+                            @else
+                                -
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ translate('WhatsApp Number') }}</th>
+                        <td>
+                            @if ($lead->whatsapp_number && $whatsappHref)
+                                <a href="https://wa.me/{{ $whatsappHref }}" target="_blank" rel="noopener">{{ $lead->whatsapp_number }}</a>
+                            @else
+                                -
+                            @endif
+                        </td>
+                    </tr>
                     <tr><th>{{ translate('Address') }}</th><td>{{ $lead->address ?? '-' }}</td></tr>
                     <tr><th>{{ translate('Country') }}</th><td>{{ optional($lead->country)->name ?? '-' }}</td></tr>
                     <tr><th>{{ translate('State') }}</th><td>{{ optional($lead->state)->name ?? '-' }}</td></tr>
@@ -71,23 +102,43 @@
 <script>
     var leadActivitySubStatuses = @json($activitySubStatuses);
 
-    function updateLeadActivitySubStatuses($type, $status, selected) {
-        var options = leadActivitySubStatuses[$type.val()] || [];
+    function updateLeadActivitySubStatuses(selected) {
+        var $type = $('.js-lead-activity-type');
+        var $status = $('.js-lead-activity-sub-status');
+        var activityType = ($type.val() || 'call').toString().toLowerCase();
+        var options = leadActivitySubStatuses[activityType] || leadActivitySubStatuses.call || [];
+
+        if (!options.length) {
+            return;
+        }
+
         $status.empty();
         options.forEach(function (value) {
             var label = value.replace(/_/g, ' ').replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
-            $status.append($('<option>', { value: value, text: label, selected: value === selected }));
+            var $option = $('<option>', { value: value, text: label });
+            if (value === selected) {
+                $option.prop('selected', true);
+            }
+            $status.append($option);
         });
-        $status.selectpicker('refresh');
+
+        if (!$status.val() && options.length) {
+            $status.val(options[0]);
+        }
     }
 
     $(function () {
         var $type = $('.js-lead-activity-type');
-        var $status = $('.js-lead-activity-sub-status');
-        updateLeadActivitySubStatuses($type, $status, @json(old('activity_sub_status')));
+        if (!$type.val()) {
+            $type.val('call');
+        }
+        updateLeadActivitySubStatuses(@json(old('activity_sub_status')));
         $type.on('change', function () {
-            updateLeadActivitySubStatuses($type, $status, null);
+            updateLeadActivitySubStatuses(null);
         });
+
+        setTimeout(function () { updateLeadActivitySubStatuses(@json(old('activity_sub_status'))); }, 300);
+        setTimeout(function () { updateLeadActivitySubStatuses(@json(old('activity_sub_status'))); }, 1000);
     });
 </script>
 @endsection

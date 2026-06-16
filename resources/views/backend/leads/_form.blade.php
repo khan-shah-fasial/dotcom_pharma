@@ -29,6 +29,20 @@
 
 @csrf
 <div class="form-group row">
+    <label class="col-md-2 col-form-label">{{ translate('Phone') }}</label>
+    <div class="col-md-4">
+        <input type="text" name="phone" id="lead_phone" class="form-control" autocomplete="off"
+            value="{{ old('phone', $lead->phone ?? '') }}">
+        <small id="lead_customer_lookup_status" class="form-text"></small>
+        @error('phone') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+    <label class="col-md-1 col-form-label">{{ translate('WhatsApp Number') }}</label>
+    <div class="col-md-4">
+        <input type="text" name="whatsapp_number" class="form-control" value="{{ old('whatsapp_number', $lead->whatsapp_number ?? '') }}">
+        @error('whatsapp_number') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+</div>
+<div class="form-group row">
     <label class="col-md-2 col-form-label">{{ translate('Name') }} <span class="text-danger">*</span></label>
     <div class="col-md-9">
         <input type="text" name="name" class="form-control" value="{{ old('name', $lead->name ?? '') }}" required>
@@ -44,23 +58,9 @@
 </div>
 <div class="form-group row">
     <label class="col-md-2 col-form-label">{{ translate('Email') }}</label>
-    <div class="col-md-4">
+    <div class="col-md-9">
         <input type="email" name="email" class="form-control" value="{{ old('email', $lead->email ?? '') }}">
         @error('email') <span class="text-danger small">{{ $message }}</span> @enderror
-    </div>
-    <label class="col-md-1 col-form-label">{{ translate('Phone') }}</label>
-    <div class="col-md-4">
-        <input type="text" name="phone" id="lead_phone" class="form-control" autocomplete="off"
-            value="{{ old('phone', $lead->phone ?? '') }}">
-        <small id="lead_customer_lookup_status" class="form-text"></small>
-        @error('phone') <span class="text-danger small">{{ $message }}</span> @enderror
-    </div>
-</div>
-<div class="form-group row">
-    <label class="col-md-2 col-form-label">{{ translate('WhatsApp Number') }}</label>
-    <div class="col-md-4">
-        <input type="text" name="whatsapp_number" class="form-control" value="{{ old('whatsapp_number', $lead->whatsapp_number ?? '') }}">
-        @error('whatsapp_number') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
 </div>
 <div class="form-group row">

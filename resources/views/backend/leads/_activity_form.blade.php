@@ -1,8 +1,8 @@
-<form action="{{ route('leads.activities.store', $lead->id) }}" method="POST">
+<form action="{{ route('leads.activities.store', $lead->id) }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div class="form-group">
         <label>{{ translate('Activity Type') }} <span class="text-danger">*</span></label>
-        <select name="activity_type" class="form-control aiz-selectpicker js-lead-activity-type" required>
+        <select name="activity_type" class="form-control js-lead-activity-type" required>
             @foreach ($activityTypes as $type)
                 <option value="{{ $type }}" @if(old('activity_type') == $type) selected @endif>{{ translate(ucfirst($type)) }}</option>
             @endforeach
@@ -11,7 +11,14 @@
     </div>
     <div class="form-group">
         <label>{{ translate('Sub-status') }} <span class="text-danger">*</span></label>
-        <select name="activity_sub_status" class="form-control aiz-selectpicker js-lead-activity-sub-status" required></select>
+        @php $selectedActivityType = old('activity_type', $activityTypes[0] ?? 'call'); @endphp
+        <select name="activity_sub_status" class="form-control js-lead-activity-sub-status" required>
+            @foreach (($activitySubStatuses[$selectedActivityType] ?? []) as $subStatus)
+                <option value="{{ $subStatus }}" @if(old('activity_sub_status') == $subStatus) selected @endif>
+                    {{ translate(ucwords(str_replace('_', ' ', $subStatus))) }}
+                </option>
+            @endforeach
+        </select>
         @error('activity_sub_status') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
     <div class="form-group">
@@ -26,18 +33,9 @@
     </div>
     <div class="form-group">
         <label>{{ translate('Attachments') }}</label>
-        <select name="attachments[]" class="form-control" multiple size="6">
-            @foreach ($activityUploads as $upload)
-                @php
-                    $fileName = $upload->file_original_name ?: translate('Unknown');
-                    $extension = $upload->extension ? '.'.$upload->extension : '';
-                @endphp
-                <option value="{{ $upload->id }}" @if(collect(old('attachments', []))->contains($upload->id)) selected @endif>
-                    #{{ $upload->id }} - {{ $fileName }}{{ $extension }}
-                </option>
-            @endforeach
-        </select>
-        <small class="text-muted d-block mt-1">{{ translate('Hold Ctrl to select multiple uploaded files.') }}</small>
+        <input type="file" name="attachments[]" class="form-control" multiple
+            accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.xml,.zip,.rar,.7z,image/*">
+        <small class="text-muted d-block mt-1">{{ translate('You can upload multiple images or documents.') }}</small>
         @error('attachments') <span class="text-danger small">{{ $message }}</span> @enderror
         @error('attachments.*') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>

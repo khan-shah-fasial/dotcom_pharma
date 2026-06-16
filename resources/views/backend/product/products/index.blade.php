@@ -6,11 +6,56 @@
         .stock-item.hidden {
             display: none;
         }
+        .product-category-hierarchy + .product-category-hierarchy {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #eef0f4;
+        }
+        .product-category-item {
+            display: block;
+            margin-bottom: 4px;
+        }
     </style>
 
     @php
         CoreComponentRepository::instantiateShopRepository();
         CoreComponentRepository::initializeCache();
+        $categoryById = $categories->keyBy('id');
+        $categoryPath = function ($category) use ($categoryById) {
+            $path = collect();
+            $seen = [];
+
+            while ($category && !in_array((int) $category->id, $seen, true)) {
+                $seen[] = (int) $category->id;
+                $path->prepend($category);
+                $parentId = $category->parent_id ?? null;
+                $category = $parentId ? $categoryById->get($parentId) : null;
+            }
+
+            return $path;
+        };
+        $categoryIsAncestorOfSelected = function ($category, $selectedCategories) use ($categoryById) {
+            foreach ($selectedCategories as $selectedCategory) {
+                if ((int) $selectedCategory->id === (int) $category->id) {
+                    continue;
+                }
+
+                $parentId = $selectedCategory->parent_id ?? null;
+                $seen = [];
+
+                while ($parentId && !in_array((int) $parentId, $seen, true)) {
+                    if ((int) $parentId === (int) $category->id) {
+                        return true;
+                    }
+
+                    $seen[] = (int) $parentId;
+                    $parent = $categoryById->get($parentId);
+                    $parentId = $parent->parent_id ?? null;
+                }
+            }
+
+            return false;
+        };
     @endphp
 
     <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -120,7 +165,7 @@
                             placeholder="{{ translate('Search by Name, Drug, Role, Attribute, SKU, Brand, Category, Attribute or Schedule') }}">
                     </div>
                 </div>
-                <div class="col-md-2 ml-auto">
+                <div class="col-md-2">
                     <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0" name="published_status" id="published_status" onchange="sort_products()">
                         <option value="">{{ translate('Filter By Status') }}</option>
                         <option value="1"
@@ -130,6 +175,14 @@
                             @isset($published_status) @if ($published_status == '0') selected @endif @endisset>
                             {{ translate('Unpublished') }}</option>
                     </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary mb-2 mb-md-0">
+                        {{ translate('Search') }}
+                    </button>
+                    <a href="{{ url()->current() }}" class="btn btn-sm btn-soft-secondary mb-2 mb-md-0">
+                        {{ translate('Reset') }}
+                    </a>
                 </div>
             </div>
 
@@ -266,15 +319,29 @@
                                         if ($product->main_category && !$productCategories->contains('id', $product->main_category->id)) {
                                             $productCategories = $productCategories->prepend($product->main_category);
                                         }
+                                        $productCategories = $productCategories->unique('id')->values();
+                                        $leafCategories = $productCategories->reject(function ($category) use ($productCategories, $categoryIsAncestorOfSelected) {
+                                            return $categoryIsAncestorOfSelected($category, $productCategories);
+                                        })->values();
+
+                                        if ($leafCategories->isEmpty()) {
+                                            $leafCategories = $productCategories;
+                                        }
                                     @endphp
-                                    @forelse ($productCategories->unique('id') as $category)
-                                        <span class="badge badge-inline mb-1 {{ (int) $category->id === (int) $product->category_id ? 'badge-primary' : 'badge-soft-secondary' }}"
-                                            @if ((int) $category->id === (int) $product->category_id) title="{{ translate('Main Category') }}" @endif>
-                                            {{ $category->getTranslation('name') }}
-                                            @if ((int) $category->id === (int) $product->category_id)
-                                                ({{ translate('Main') }})
-                                            @endif
-                                        </span>
+                                    @forelse ($leafCategories as $category)
+                                        <div class="product-category-hierarchy">
+                                            @foreach ($categoryPath($category) as $pathCategory)
+                                                <span class="product-category-item">
+                                                    <span class="badge badge-inline {{ (int) $pathCategory->id === (int) $product->category_id ? 'badge-primary' : 'badge-soft-secondary' }}"
+                                                        @if ((int) $pathCategory->id === (int) $product->category_id) title="{{ translate('Main Category') }}" @endif>
+                                                        {{ $pathCategory->getTranslation('name') }}
+                                                        @if ((int) $pathCategory->id === (int) $product->category_id)
+                                                            ({{ translate('Main') }})
+                                                        @endif
+                                                    </span>
+                                                </span>
+                                            @endforeach
+                                        </div>
                                     @empty
                                         -
                                     @endforelse

@@ -22,7 +22,7 @@ class LeadController extends Controller
 {
     protected array $activityTypes = ['call', 'email', 'meeting', 'whatsapp', 'note'];
     protected array $activitySubStatuses = [
-        'call' => ['callback', 'busy', 'out_of_network', 'blocked', 'switched_off', 'ringing', 'not_responding'],
+        'call' => ['connected', 'callback', 'busy', 'out_of_network', 'blocked', 'switched_off', 'ringing', 'not_responding'],
         'email' => ['sent', 'delivered', 'opened', 'replied', 'bounced'],
         'meeting' => ['scheduled', 'completed', 'rescheduled', 'cancelled', 'no_show'],
         'whatsapp' => ['sent', 'delivered', 'read', 'replied', 'not_on_whatsapp'],
@@ -53,7 +53,7 @@ class LeadController extends Controller
             'activity_type',
         ]);
 
-        $leads = Lead::with(['source', 'status', 'assignedUser', 'creator', 'activities' => function ($query) {
+        $leads = Lead::with(['source', 'status', 'assignedUser', 'creator', 'country', 'state', 'city', 'activities' => function ($query) {
             $query->latest();
         }])->latest();
 
@@ -149,7 +149,6 @@ class LeadController extends Controller
             'lead' => $lead,
             'activityTypes' => $this->activityTypes,
             'activitySubStatuses' => $this->activitySubStatuses,
-            'activityUploads' => $this->activityUploads(),
         ]);
     }
 
@@ -169,7 +168,7 @@ class LeadController extends Controller
     {
         $this->authorizeLeadAccess($lead);
 
-        $lead->update($this->validatedLeadData($request));
+        $lead->update($this->validatedLeadData($request, $lead));
 
         flash(translate('Lead has been updated successfully'))->success();
         return redirect()->route('leads.show', $lead->id);
@@ -196,10 +195,10 @@ class LeadController extends Controller
             'description' => 'nullable|string',
             'next_followup' => 'nullable|date',
             'attachments' => 'nullable|array',
-            'attachments.*' => 'integer|exists:uploads,id',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,gif,webp,bmp,svg,pdf,doc,docx,xls,xlsx,csv,txt,xml,zip,rar,7z|max:20480',
         ]);
 
-        $data['attachments'] = $this->normalizeAttachmentIds($data['attachments'] ?? []);
+        $data['attachments'] = $this->storeActivityAttachments($request);
         $data['lead_id'] = $lead->id;
         $data['created_by'] = auth()->id();
 
@@ -233,14 +232,31 @@ class LeadController extends Controller
         return back();
     }
 
-    protected function validatedLeadData(Request $request): array
+    protected function validatedLeadData(Request $request, ?Lead $lead = null): array
     {
+        $request->merge([
+            'email' => $this->nullableTrimmedInput($request->input('email')),
+            'phone' => $this->nullableTrimmedInput($request->input('phone')),
+            'whatsapp_number' => $this->nullableTrimmedInput($request->input('whatsapp_number')),
+        ]);
+
+        $phoneRules = ['nullable', 'string', 'max:50', 'regex:/^\+?[0-9\s().-]{7,20}$/'];
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'whatsapp_number' => 'nullable|string|max:50',
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('leads', 'email')->ignore($lead?->id),
+            ],
+            'phone' => array_merge($phoneRules, [
+                Rule::unique('leads', 'phone')->ignore($lead?->id),
+            ]),
+            'whatsapp_number' => array_merge($phoneRules, [
+                Rule::unique('leads', 'whatsapp_number')->ignore($lead?->id),
+            ]),
             'source_id' => 'nullable|integer|exists:lead_sources,id',
             'source_name' => 'nullable|string|max:100',
             'status_id' => 'nullable|exists:lead_statuses,id',
@@ -252,6 +268,12 @@ class LeadController extends Controller
             'city_id' => 'nullable|integer|exists:cities,id',
             'pincode' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
+        ], [
+            'email.unique' => translate('Already Exist'),
+            'phone.unique' => translate('Already Exist'),
+            'whatsapp_number.unique' => translate('Already Exist'),
+            'phone.regex' => translate('Please enter a valid phone number'),
+            'whatsapp_number.regex' => translate('Please enter a valid WhatsApp number'),
         ]);
 
         $sourceName = trim((string) ($data['source_name'] ?? ''));
@@ -267,6 +289,13 @@ class LeadController extends Controller
         $data['expected_value'] = $data['expected_value'] ?? 0;
 
         return $data;
+    }
+
+    protected function nullableTrimmedInput($value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 
     protected function formData(?Lead $lead = null): array
@@ -286,26 +315,61 @@ class LeadController extends Controller
                 ? City::where('state_id', $lead->state_id)->orderBy('name')->get(['id', 'name'])
                 : collect(),
             'activitySubStatuses' => $this->activitySubStatuses,
-            'activityUploads' => $this->activityUploads(),
         ];
     }
 
-    protected function activityUploads()
+    protected function storeActivityAttachments(Request $request): ?string
     {
-        return Upload::latest()
-            ->get(['id', 'file_original_name', 'extension', 'type']);
-    }
+        if (!$request->hasFile('attachments')) {
+            return null;
+        }
 
-    protected function normalizeAttachmentIds(array $attachments): ?string
-    {
-        $ids = collect($attachments)
-            ->filter(fn ($id) => $id !== null && $id !== '')
-            ->map(fn ($id) => (int) $id)
+        $ids = collect($request->file('attachments'))
             ->filter()
-            ->unique()
+            ->map(fn ($file) => $this->storeFileToUploads($file))
+            ->filter()
             ->values();
 
         return $ids->isEmpty() ? null : $ids->implode(',');
+    }
+
+    protected function storeFileToUploads($file): int
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        $storedPath = $file->store('uploads/all/' . date('Y/m'), 'local');
+
+        $upload = new Upload();
+        $upload->file_original_name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $upload->extension = $extension;
+        $upload->file_size = $file->getSize();
+        $upload->user_id = auth()->id();
+        $upload->type = $this->uploadTypeFromExtension($extension);
+        $upload->file_name = $storedPath;
+        $upload->disk = 'local';
+        $upload->save();
+
+        return $upload->id;
+    }
+
+    protected function uploadTypeFromExtension(string $extension): string
+    {
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'svg', 'webp', 'gif', 'bmp'], true)) {
+            return 'image';
+        }
+
+        if (in_array($extension, ['mp4', 'mpg', 'mpeg', 'webm', 'ogg', 'avi', 'mov', 'flv', 'swf', 'mkv', 'wmv'], true)) {
+            return 'video';
+        }
+
+        if (in_array($extension, ['wma', 'aac', 'wav', 'mp3'], true)) {
+            return 'audio';
+        }
+
+        if (in_array($extension, ['zip', 'rar', '7z'], true)) {
+            return 'archive';
+        }
+
+        return 'document';
     }
 
     protected function uploadInUse(int $uploadId): bool

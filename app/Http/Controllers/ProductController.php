@@ -229,7 +229,7 @@ class ProductController extends Controller
 
     private function backendProductCategories()
     {
-        return Category::where('digital', 0)->orderBy('name')->get(['id', 'name']);
+        return Category::where('digital', 0)->orderBy('name')->get(['id', 'name', 'parent_id']);
     }
 
     private function applyBackendSearchFilters($products, string $search)
@@ -255,6 +255,9 @@ class ProductController extends Controller
 
         return $products->where(function ($query) use ($search, $matchingAttributeIds, $matchingAttributeValues) {
             $query->where('name', 'like', '%' . $search . '%')
+                ->orWhereHas('product_translations', function ($productTranslationQuery) use ($search) {
+                    $productTranslationQuery->where('name', 'like', '%' . $search . '%');
+                })
                 ->orWhere('drug_name', 'like', '%' . $search . '%')
                 ->orWhere('role_label', 'like', '%' . $search . '%')
                 ->orWhere('schedule', 'like', '%' . $search . '%')
@@ -269,6 +272,12 @@ class ProductController extends Controller
                         });
                 })
                 ->orWhereHas('categories', function ($categoryQuery) use ($search) {
+                    $categoryQuery->where('name', 'like', '%' . $search . '%')
+                        ->orWhereHas('category_translations', function ($categoryTranslationQuery) use ($search) {
+                            $categoryTranslationQuery->where('name', 'like', '%' . $search . '%');
+                        });
+                })
+                ->orWhereHas('main_category', function ($categoryQuery) use ($search) {
                     $categoryQuery->where('name', 'like', '%' . $search . '%')
                         ->orWhereHas('category_translations', function ($categoryTranslationQuery) use ($search) {
                             $categoryTranslationQuery->where('name', 'like', '%' . $search . '%');
