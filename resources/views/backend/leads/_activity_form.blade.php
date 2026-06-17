@@ -2,24 +2,26 @@
     @csrf
     <div class="form-group">
         <label>{{ translate('Activity Type') }} <span class="text-danger">*</span></label>
-        <select name="activity_type" class="form-control js-lead-activity-type" required>
+        <select name="activity_type_id" class="form-control aiz-selectpicker" data-live-search="true" required>
             @foreach ($activityTypes as $type)
-                <option value="{{ $type }}" @if(old('activity_type') == $type) selected @endif>{{ translate(ucfirst($type)) }}</option>
+                <option value="{{ $type->id }}" @selected((string) old('activity_type_id') === (string) $type->id)>{{ $type->title }}</option>
             @endforeach
         </select>
-        @error('activity_type') <span class="text-danger small">{{ $message }}</span> @enderror
+        @error('activity_type_id') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
     <div class="form-group">
         <label>{{ translate('Sub-status') }} <span class="text-danger">*</span></label>
-        @php $selectedActivityType = old('activity_type', $activityTypes[0] ?? 'call'); @endphp
-        <select name="activity_sub_status" class="form-control js-lead-activity-sub-status" required>
-            @foreach (($activitySubStatuses[$selectedActivityType] ?? []) as $subStatus)
-                <option value="{{ $subStatus }}" @if(old('activity_sub_status') == $subStatus) selected @endif>
-                    {{ translate(ucwords(str_replace('_', ' ', $subStatus))) }}
-                </option>
+        <select name="sub_status_id" class="form-control aiz-selectpicker" data-live-search="true" required>
+            @foreach ($activitySubStatuses as $subStatus)
+                <option value="{{ $subStatus->id }}" @selected((string) old('sub_status_id') === (string) $subStatus->id)>{{ $subStatus->title }}</option>
             @endforeach
         </select>
-        @error('activity_sub_status') <span class="text-danger small">{{ $message }}</span> @enderror
+        @error('sub_status_id') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+    <div class="form-group">
+        <label>{{ translate('Expected Value') }}</label>
+        <input type="number" name="expected_value" class="form-control" step="0.01" min="0" value="{{ old('expected_value') }}">
+        @error('expected_value') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
     <div class="form-group">
         <label>{{ translate('Description') }}</label>

@@ -213,5 +213,25 @@
                 $('#lead_source_options').hide();
             }
         });
+
+        $('#lead_add_social_media_row').on('click', function () {
+            $('#lead_social_media_rows').append(
+                '<div class="row gutters-5 lead-social-media-row mb-2">' +
+                    '<div class="col-md-5"><input type="text" name="social_media_keys[]" class="form-control" placeholder="{{ translate('Platform') }}"></div>' +
+                    '<div class="col-md-6"><input type="text" name="social_media_values[]" class="form-control" placeholder="{{ translate('ID / URL') }}"></div>' +
+                    '<div class="col-md-1"><button type="button" class="btn btn-soft-danger btn-icon btn-circle js-remove-social-media-row" title="{{ translate('Remove') }}"><i class="las la-trash"></i></button></div>' +
+                '</div>'
+            );
+        });
+
+        $(document).on('click', '.js-remove-social-media-row', function () {
+            var $rows = $('#lead_social_media_rows .lead-social-media-row');
+            if ($rows.length <= 1) {
+                $(this).closest('.lead-social-media-row').find('input').val('');
+                return;
+            }
+
+            $(this).closest('.lead-social-media-row').remove();
+        });
     });
 </script>

@@ -362,6 +362,21 @@
                                         <span class="aiz-side-nav-text">{{ translate('Lead List') }}</span>
                                     </a>
                                 </li>
+                                <li class="aiz-side-nav-item">
+                                    <a class="aiz-side-nav-link {{ areActiveRoutes(['lead-departments.index','lead-departments.categories.edit','lead-departments.departments.edit']) }}" href="{{ route('lead-departments.index') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Department Master') }}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a class="aiz-side-nav-link {{ areActiveRoutes(['lead-activity-types.index','lead-activity-types.edit']) }}" href="{{ route('lead-activity-types.index') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Activity Type Master') }}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a class="aiz-side-nav-link {{ areActiveRoutes(['lead-activity-sub-statuses.index','lead-activity-sub-statuses.edit']) }}" href="{{ route('lead-activity-sub-statuses.index') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Activity Sub Status Master') }}</span>
+                                    </a>
+                                </li>
                             @endcan
                         </ul>
                     </li>

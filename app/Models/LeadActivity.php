@@ -13,6 +13,7 @@ class LeadActivity extends Model
 
     protected $casts = [
         'next_followup' => 'datetime',
+        'expected_value' => 'decimal:2',
     ];
 
     public function lead()
@@ -23,6 +24,16 @@ class LeadActivity extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function activityType()
+    {
+        return $this->belongsTo(LeadActivityType::class, 'activity_type_id');
+    }
+
+    public function subStatus()
+    {
+        return $this->belongsTo(LeadActivitySubStatus::class, 'sub_status_id');
     }
 
     public function getAttachmentIdsAttribute(): array

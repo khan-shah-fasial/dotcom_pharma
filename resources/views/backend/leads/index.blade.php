@@ -78,10 +78,10 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label" for="lead_activity_type">{{ translate('Activity Type') }}</label>
-                                <select id="lead_activity_type" name="activity_type" class="form-control aiz-selectpicker">
+                                <select id="lead_activity_type" name="activity_type_id" class="form-control aiz-selectpicker" data-live-search="true">
                                     <option value="">{{ translate('All Activity Types') }}</option>
                                     @foreach ($activityTypes as $type)
-                                        <option value="{{ $type }}" @if(($filters['activity_type'] ?? '') == $type) selected @endif>{{ translate(ucfirst($type)) }}</option>
+                                        <option value="{{ $type->id }}" @selected((string) ($filters['activity_type_id'] ?? '') === (string) $type->id)>{{ $type->title }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -160,7 +160,7 @@
             <tbody>
                 @forelse ($leads as $key => $lead)
                     @php
-                        $lastActivity = $lead->activities->first();
+                        $lastActivity = $lead->latestActivity;
                         $phoneHref = $lead->phone ? preg_replace('/\s+/', '', $lead->phone) : null;
                         $whatsappHref = $lead->whatsapp_number ? preg_replace('/\D+/', '', $lead->whatsapp_number) : null;
                     @endphp
@@ -217,14 +217,14 @@
                             <div>{{ optional($lead->creator)->name ?? '-' }}</div>
                             <small class="d-block text-muted">{{ translate('Assign to') }}: {{ optional($lead->assignedUser)->name ?? '-' }}</small>
                         </td>
-                        <td>{{ number_format((float) $lead->expected_value, 2) }}</td>
+                        <td>{{ $lastActivity && $lastActivity->expected_value !== null ? number_format((float) $lastActivity->expected_value, 2) : '-' }}</td>
                         <td>{{ $lastActivity && $lastActivity->next_followup ? $lastActivity->next_followup->format('d-m-Y h:i A') : '-' }}</td>
                         <td>
                             @if($lastActivity)
-                                {{ translate(ucfirst($lastActivity->activity_type)) }}
-                                @if($lastActivity->activity_sub_status)
+                                {{ optional($lastActivity->activityType)->title ?? translate(ucfirst($lastActivity->activity_type)) }}
+                                @if($lastActivity->subStatus || $lastActivity->activity_sub_status)
                                     <small class="d-block text-muted">
-                                        {{ translate(ucwords(str_replace('_', ' ', $lastActivity->activity_sub_status))) }}
+                                        {{ optional($lastActivity->subStatus)->title ?? translate(ucwords(str_replace('_', ' ', $lastActivity->activity_sub_status))) }}
                                     </small>
                                 @endif
                             @else
@@ -284,19 +284,23 @@
                         <div class="alert alert-soft-info" id="quickLeadActivityLead"></div>
                         <div class="form-group">
                             <label for="quick_activity_type">{{ translate('Activity Type') }} <span class="text-danger">*</span></label>
-                            <select id="quick_activity_type" name="activity_type" class="form-control" required>
+                            <select id="quick_activity_type" name="activity_type_id" class="form-control aiz-selectpicker" data-live-search="true" required>
                                 @foreach ($activityTypes as $type)
-                                    <option value="{{ $type }}">{{ translate(ucfirst($type)) }}</option>
+                                    <option value="{{ $type->id }}">{{ $type->title }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_sub_status">{{ translate('Sub-status') }} <span class="text-danger">*</span></label>
-                            <select id="quick_activity_sub_status" name="activity_sub_status" class="form-control" required>
-                                @foreach (($activitySubStatuses['call'] ?? []) as $subStatus)
-                                    <option value="{{ $subStatus }}">{{ translate(ucwords(str_replace('_', ' ', $subStatus))) }}</option>
+                            <select id="quick_activity_sub_status" name="sub_status_id" class="form-control aiz-selectpicker" data-live-search="true" required>
+                                @foreach ($activitySubStatuses as $subStatus)
+                                    <option value="{{ $subStatus->id }}">{{ $subStatus->title }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick_activity_expected_value">{{ translate('Expected Value') }}</label>
+                            <input id="quick_activity_expected_value" type="number" step="0.01" min="0" name="expected_value" class="form-control">
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_description">{{ translate('Description') }}</label>
@@ -330,32 +334,6 @@
 
 @section('script')
     <script>
-        var leadActivitySubStatuses = @json($activitySubStatuses);
-
-        function updateQuickActivitySubStatuses(selected) {
-            var type = ($('#quick_activity_type').val() || 'call').toString().toLowerCase();
-            var $status = $('#quick_activity_sub_status');
-            var options = leadActivitySubStatuses[type] || leadActivitySubStatuses.call || [];
-
-            if (!options.length) {
-                return;
-            }
-
-            $status.empty();
-            options.forEach(function (value) {
-                var label = value.replace(/_/g, ' ').replace(/\b\w/g, function (letter) { return letter.toUpperCase(); });
-                var $option = $('<option>', { value: value, text: label });
-                if (value === selected) {
-                    $option.prop('selected', true);
-                }
-                $status.append($option);
-            });
-
-            if (!$status.val() && options.length) {
-                $status.val(options[0]);
-            }
-        }
-
         $('.btn-apply-lead-filters').on('click', function () {
             $('#leadFilterModal').modal('hide');
             $('#sort_leads').submit();
@@ -371,19 +349,12 @@
             $('#quick_activity_description').val('');
             $('#quick_activity_next_followup').val('');
             $('#quick_activity_attachments').val('');
-            $('#quick_activity_type').val('call');
-
-            updateQuickActivitySubStatuses();
+            $('#quick_activity_expected_value').val('');
+            $('#quick_activity_type').prop('selectedIndex', 0);
+            $('#quick_activity_sub_status').prop('selectedIndex', 0);
+            $('#quick_activity_type, #quick_activity_sub_status').selectpicker('refresh');
 
             $('#quickLeadActivityModal').modal('show');
         });
-
-        $('#quick_activity_type').on('change', function () {
-            updateQuickActivitySubStatuses();
-        });
-
-        updateQuickActivitySubStatuses();
-        setTimeout(function () { updateQuickActivitySubStatuses(); }, 300);
-        setTimeout(function () { updateQuickActivitySubStatuses(); }, 1000);
     </script>
 @endsection

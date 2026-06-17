@@ -1,5 +1,24 @@
 @php
     $lead = $lead ?? null;
+    $photoValue = old('photo', $lead->photo ?? '');
+    $oldSocialKeys = old('social_media_keys');
+    $socialMediaRows = collect();
+
+    if (is_array($oldSocialKeys)) {
+        $oldSocialValues = old('social_media_values', []);
+        $socialMediaRows = collect($oldSocialKeys)->map(function ($key, $index) use ($oldSocialValues) {
+            return [
+                'key' => $key,
+                'value' => $oldSocialValues[$index] ?? '',
+            ];
+        });
+    } else {
+        $socialMediaRows = collect($lead->social_media_ids ?? []);
+    }
+
+    if ($socialMediaRows->isEmpty()) {
+        $socialMediaRows = collect([['key' => '', 'value' => '']]);
+    }
 @endphp
 
 <style>
@@ -24,6 +43,9 @@
     }
     .lead-combo-option:hover {
         background: #f2f3f8;
+    }
+    .lead-social-media-row .btn {
+        height: 38px;
     }
 </style>
 
@@ -54,6 +76,25 @@
     <div class="col-md-9">
         <input type="text" name="company_name" class="form-control" value="{{ old('company_name', $lead->company_name ?? '') }}">
         @error('company_name') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-md-2 col-form-label">{{ translate('Designation') }}</label>
+    <div class="col-md-4">
+        <input type="text" name="designation" class="form-control" value="{{ old('designation', $lead->designation ?? '') }}">
+        @error('designation') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+    <label class="col-md-1 col-form-label">{{ translate('Photo') }}</label>
+    <div class="col-md-4">
+        <div class="input-group" data-toggle="aizuploader" data-type="image">
+            <div class="input-group-prepend">
+                <div class="input-group-text bg-soft-secondary">{{ translate('Browse') }}</div>
+            </div>
+            <div class="form-control file-amount">{{ translate('Choose File') }}</div>
+            <input type="hidden" name="photo" class="selected-files" value="{{ $photoValue }}">
+        </div>
+        <div class="file-preview box sm"></div>
+        @error('photo') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
 </div>
 <div class="form-group row">
@@ -89,6 +130,25 @@
             @endforeach
         </select>
         @error('status_id') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-md-2 col-form-label">{{ translate('Department') }}</label>
+    <div class="col-md-4">
+        <select name="department_id" class="form-control aiz-selectpicker" data-live-search="true">
+            <option value="">{{ translate('Select Department') }}</option>
+            @foreach ($departments as $department)
+                <option value="{{ $department->id }}" @selected((string) old('department_id', $lead->department_id ?? '') === (string) $department->id)>
+                    {{ $department->name }} @if($department->category) ({{ $department->category->name }}) @endif
+                </option>
+            @endforeach
+        </select>
+        @error('department_id') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+    <label class="col-md-1 col-form-label">{{ translate('Work Profile') }}</label>
+    <div class="col-md-4">
+        <textarea name="work_profile" rows="2" class="form-control">{{ old('work_profile', $lead->work_profile ?? '') }}</textarea>
+        @error('work_profile') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
 </div>
 <div class="form-group row">
@@ -139,7 +199,7 @@
 </div>
 <div class="form-group row">
     <label class="col-md-2 col-form-label">{{ translate('Assigned To') }}</label>
-    <div class="col-md-4">
+    <div class="col-md-9">
         <select name="assigned_to" class="form-control aiz-selectpicker" data-live-search="true">
             <option value="">{{ translate('Unassigned') }}</option>
             @foreach ($assignees as $user)
@@ -150,10 +210,32 @@
         </select>
         @error('assigned_to') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
-    <label class="col-md-1 col-form-label">{{ translate('Value') }}</label>
-    <div class="col-md-4">
-        <input type="number" name="expected_value" class="form-control" step="0.01" min="0" value="{{ old('expected_value', $lead->expected_value ?? 0) }}">
-        @error('expected_value') <span class="text-danger small">{{ $message }}</span> @enderror
+</div>
+<div class="form-group row">
+    <label class="col-md-2 col-form-label">{{ translate('Social Media IDs') }}</label>
+    <div class="col-md-9">
+        <div id="lead_social_media_rows">
+            @foreach ($socialMediaRows as $row)
+                <div class="row gutters-5 lead-social-media-row mb-2">
+                    <div class="col-md-5">
+                        <input type="text" name="social_media_keys[]" class="form-control" value="{{ $row['key'] ?? '' }}" placeholder="{{ translate('Platform') }}">
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" name="social_media_values[]" class="form-control" value="{{ $row['value'] ?? '' }}" placeholder="{{ translate('ID / URL') }}">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-soft-danger btn-icon btn-circle js-remove-social-media-row" title="{{ translate('Remove') }}">
+                            <i class="las la-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+        <button type="button" class="btn btn-soft-primary btn-sm" id="lead_add_social_media_row">{{ translate('Add More') }}</button>
+        @error('social_media_keys') <span class="text-danger small d-block">{{ $message }}</span> @enderror
+        @error('social_media_keys.*') <span class="text-danger small d-block">{{ $message }}</span> @enderror
+        @error('social_media_values') <span class="text-danger small d-block">{{ $message }}</span> @enderror
+        @error('social_media_values.*') <span class="text-danger small d-block">{{ $message }}</span> @enderror
     </div>
 </div>
 <div class="form-group row">

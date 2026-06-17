@@ -13,6 +13,7 @@ class Lead extends Model
 
     protected $casts = [
         'expected_value' => 'decimal:2',
+        'social_media_ids' => 'array',
     ];
 
     public function source()
@@ -23,6 +24,16 @@ class Lead extends Model
     public function status()
     {
         return $this->belongsTo(LeadStatus::class, 'status_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function photoUpload()
+    {
+        return $this->belongsTo(Upload::class, 'photo');
     }
 
     public function assignedUser()
@@ -38,6 +49,11 @@ class Lead extends Model
     public function activities()
     {
         return $this->hasMany(LeadActivity::class);
+    }
+
+    public function latestActivity()
+    {
+        return $this->hasOne(LeadActivity::class)->latestOfMany();
     }
 
     public function country()

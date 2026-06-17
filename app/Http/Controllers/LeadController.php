@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Lead;
 use App\Models\LeadActivity;
+use App\Models\LeadActivitySubStatus;
+use App\Models\LeadActivityType;
+use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\LeadStatus;
 use App\Models\Upload;
@@ -20,20 +23,11 @@ use Illuminate\Validation\Rule;
 
 class LeadController extends Controller
 {
-    protected array $activityTypes = ['call', 'email', 'meeting', 'whatsapp', 'note'];
-    protected array $activitySubStatuses = [
-        'call' => ['connected', 'callback', 'busy', 'out_of_network', 'blocked', 'switched_off', 'ringing', 'not_responding'],
-        'email' => ['sent', 'delivered', 'opened', 'replied', 'bounced'],
-        'meeting' => ['scheduled', 'completed', 'rescheduled', 'cancelled', 'no_show'],
-        'whatsapp' => ['sent', 'delivered', 'read', 'replied', 'not_on_whatsapp'],
-        'note' => ['general', 'follow_up', 'internal'],
-    ];
-
     public function __construct()
     {
         $this->middleware(['permission:view_leads'])->only(['index', 'show']);
         $this->middleware(['permission:add_lead'])->only(['create', 'store']);
-        $this->middleware(['permission:edit_lead'])->only(['edit', 'update', 'storeActivity', 'destroyActivity']);
+        $this->middleware(['permission:edit_lead'])->only(['edit', 'update', 'storeActivity', 'updateActivity', 'destroyActivity']);
         $this->middleware(['permission:delete_lead'])->only('destroy');
     }
 
@@ -50,12 +44,31 @@ class LeadController extends Controller
             'created_to',
             'next_followup_from',
             'next_followup_to',
-            'activity_type',
+            'activity_type_id',
         ]);
 
-        $leads = Lead::with(['source', 'status', 'assignedUser', 'creator', 'country', 'state', 'city', 'activities' => function ($query) {
-            $query->latest();
-        }])->latest();
+        $leads = Lead::query()
+            ->select('leads.*')
+            ->addSelect([
+                'latest_activity_expected_value' => LeadActivity::query()
+                    ->select('expected_value')
+                    ->whereColumn('lead_activities.lead_id', 'leads.id')
+                    ->latest('id')
+                    ->limit(1),
+            ])
+            ->with([
+                'source',
+                'status',
+                'department',
+                'assignedUser',
+                'creator',
+                'country',
+                'state',
+                'city',
+                'latestActivity.activityType',
+                'latestActivity.subStatus',
+            ])
+            ->latest();
 
         $this->applyLeadVisibility($leads);
 
@@ -64,10 +77,14 @@ class LeadController extends Controller
             $leads->where(function ($query) use ($search) {
                 $query->where('lead_no', 'like', "%{$search}%")
                     ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhere('designation', 'like', "%{$search}%")
                     ->orWhere('company_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('whatsapp_number', 'like', "%{$search}%");
+                    ->orWhere('whatsapp_number', 'like', "%{$search}%")
+                    ->orWhereHas('department', function ($departmentQuery) use ($search) {
+                        $departmentQuery->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -78,11 +95,11 @@ class LeadController extends Controller
         }
 
         if ($request->filled('expected_value_min')) {
-            $leads->where('expected_value', '>=', (float) $request->expected_value_min);
+            $leads->whereRaw('(' . $this->latestActivityExpectedValueSql() . ') >= ?', [(float) $request->expected_value_min]);
         }
 
         if ($request->filled('expected_value_max')) {
-            $leads->where('expected_value', '<=', (float) $request->expected_value_max);
+            $leads->whereRaw('(' . $this->latestActivityExpectedValueSql() . ') <= ?', [(float) $request->expected_value_max]);
         }
 
         if ($request->filled('created_from')) {
@@ -93,9 +110,9 @@ class LeadController extends Controller
             $leads->whereDate('created_at', '<=', $request->created_to);
         }
 
-        if ($request->filled('activity_type')) {
+        if ($request->filled('activity_type_id')) {
             $leads->whereHas('activities', function ($query) use ($request) {
-                $query->where('activity_type', $request->activity_type);
+                $query->where('activity_type_id', $request->activity_type_id);
             });
         }
 
@@ -115,7 +132,6 @@ class LeadController extends Controller
         return view('backend.leads.index', $this->formData() + [
             'leads' => $leads,
             'filters' => $filters,
-            'activityTypes' => $this->activityTypes,
         ]);
     }
 
@@ -143,24 +159,34 @@ class LeadController extends Controller
     {
         $this->authorizeLeadAccess($lead);
 
-        $lead->load(['source', 'status', 'assignedUser', 'creator', 'country', 'state', 'city', 'activities.creator']);
-
-        return view('backend.leads.show', [
-            'lead' => $lead,
-            'activityTypes' => $this->activityTypes,
-            'activitySubStatuses' => $this->activitySubStatuses,
+        $lead->load([
+            'source',
+            'status',
+            'department',
+            'photoUpload',
+            'assignedUser',
+            'creator',
+            'country',
+            'state',
+            'city',
+            'latestActivity.activityType',
+            'latestActivity.subStatus',
+            'activities.creator',
+            'activities.activityType',
+            'activities.subStatus',
         ]);
+
+        return view('backend.leads.show', $this->formData($lead) + ['lead' => $lead]);
     }
 
     public function edit(Lead $lead)
     {
         $this->authorizeLeadAccess($lead);
 
-        $lead->load(['activities.creator']);
+        $lead->load(['activities.creator', 'department', 'photoUpload']);
 
         return view('backend.leads.edit', $this->formData($lead) + [
             'lead' => $lead,
-            'activityTypes' => $this->activityTypes,
         ]);
     }
 
@@ -188,15 +214,7 @@ class LeadController extends Controller
     {
         $this->authorizeLeadAccess($lead);
 
-        $allowedSubStatuses = $this->activitySubStatuses[$request->activity_type] ?? [];
-        $data = $request->validate([
-            'activity_type' => 'required|in:' . implode(',', $this->activityTypes),
-            'activity_sub_status' => ['required', Rule::in($allowedSubStatuses)],
-            'description' => 'nullable|string',
-            'next_followup' => 'nullable|date',
-            'attachments' => 'nullable|array',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,gif,webp,bmp,svg,pdf,doc,docx,xls,xlsx,csv,txt,xml,zip,rar,7z|max:20480',
-        ]);
+        $data = $this->validatedActivityData($request);
 
         $data['attachments'] = $this->storeActivityAttachments($request);
         $data['lead_id'] = $lead->id;
@@ -210,22 +228,33 @@ class LeadController extends Controller
         return back()->with('lead_activity_message', $message);
     }
 
-    public function destroyActivity(Lead $lead, LeadActivity $activity)
+    public function updateActivity(Request $request, Lead $lead, LeadActivity $activity)
     {
         $this->authorizeLeadAccess($lead);
         abort_unless((int) $activity->lead_id === (int) $lead->id, 404);
 
-        $attachmentIds = $activity->attachment_ids;
-        $activity->delete();
+        $data = $this->validatedActivityData($request);
+        $attachments = $this->storeActivityAttachments($request);
 
-        foreach ($attachmentIds as $uploadId) {
-            if (!$this->uploadInUse($uploadId)) {
-                $upload = Upload::withoutGlobalScope('not_hidden')->find($uploadId);
-                if ($upload) {
-                    $this->deleteUploadFile($upload);
-                }
-            }
+        if ($attachments) {
+            $data['attachments'] = $this->mergeAttachmentIds($activity->attachments, $attachments);
         }
+
+        $activity->update($data);
+
+        $message = translate('Lead activity has been updated successfully');
+        flash($message)->success();
+
+        return back()->with('lead_activity_message', $message);
+    }
+
+    public function destroyActivity(Lead $lead, LeadActivity $activity)
+    {
+        $this->authorizeLeadAccess($lead);
+        abort_unless((int) $activity->lead_id === (int) $lead->id, 404);
+        abort_unless($this->currentUserIsSuperAdmin(), 403);
+
+        $activity->delete();
 
         flash(translate('Lead activity has been deleted successfully'))->success();
 
@@ -238,6 +267,7 @@ class LeadController extends Controller
             'email' => $this->nullableTrimmedInput($request->input('email')),
             'phone' => $this->nullableTrimmedInput($request->input('phone')),
             'whatsapp_number' => $this->nullableTrimmedInput($request->input('whatsapp_number')),
+            'designation' => $this->nullableTrimmedInput($request->input('designation')),
         ]);
 
         $phoneRules = ['nullable', 'string', 'max:50', 'regex:/^\+?[0-9\s().-]{7,20}$/'];
@@ -245,6 +275,18 @@ class LeadController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
+            'designation' => 'nullable|string|max:255',
+            'photo' => 'nullable|integer|exists:uploads,id',
+            'department_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('departments', 'id')->where(fn ($query) => $query->where('status', 1)),
+            ],
+            'work_profile' => 'nullable|string',
+            'social_media_keys' => 'nullable|array',
+            'social_media_keys.*' => 'nullable|string|max:100',
+            'social_media_values' => 'nullable|array',
+            'social_media_values.*' => 'nullable|string|max:500',
             'email' => [
                 'nullable',
                 'email',
@@ -259,9 +301,11 @@ class LeadController extends Controller
             ]),
             'source_id' => 'nullable|integer|exists:lead_sources,id',
             'source_name' => 'nullable|string|max:100',
-            'status_id' => 'nullable|exists:lead_statuses,id',
+            'status_id' => [
+                'nullable',
+                Rule::exists('lead_statuses', 'id')->where(fn ($query) => $query->whereIn('name', ['New', 'Follow-up'])),
+            ],
             'assigned_to' => 'nullable|exists:users,id',
-            'expected_value' => 'nullable|numeric|min:0',
             'address' => 'nullable|string|max:500',
             'country_id' => 'nullable|integer|exists:countries,id',
             'state_id' => 'nullable|integer|exists:states,id',
@@ -286,7 +330,8 @@ class LeadController extends Controller
         }
         unset($data['source_name']);
 
-        $data['expected_value'] = $data['expected_value'] ?? 0;
+        $data['social_media_ids'] = $this->socialMediaRows($request);
+        unset($data['social_media_keys'], $data['social_media_values']);
 
         return $data;
     }
@@ -302,7 +347,8 @@ class LeadController extends Controller
     {
         return [
             'sources' => LeadSource::where('status', 1)->orderBy('name')->get(),
-            'statuses' => LeadStatus::orderBy('sort_order')->orderBy('name')->get(),
+            'statuses' => LeadStatus::whereIn('name', ['New', 'Follow-up'])->orderBy('sort_order')->orderBy('name')->get(),
+            'departments' => Department::active()->with('category')->orderBy('name')->get(),
             'assignees' => User::where(function ($query) {
                 $query->whereIn('user_type', ['admin', 'staff'])
                     ->orWhereHas('staff');
@@ -314,8 +360,107 @@ class LeadController extends Controller
             'cities' => $lead && $lead->state_id
                 ? City::where('state_id', $lead->state_id)->orderBy('name')->get(['id', 'name'])
                 : collect(),
-            'activitySubStatuses' => $this->activitySubStatuses,
+            'activityTypes' => LeadActivityType::active()->orderBy('title')->get(),
+            'activitySubStatuses' => LeadActivitySubStatus::active()->orderBy('title')->get(),
         ];
+    }
+
+    protected function validatedActivityData(Request $request): array
+    {
+        $data = $request->validate([
+            'activity_type_id' => [
+                'required',
+                'integer',
+                Rule::exists('lead_activity_types', 'id')->where(fn ($query) => $query->where('status', 1)),
+            ],
+            'sub_status_id' => [
+                'required',
+                'integer',
+                Rule::exists('lead_activity_sub_statuses', 'id')->where(fn ($query) => $query->where('status', 1)),
+            ],
+            'expected_value' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string',
+            'next_followup' => 'nullable|date',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,gif,webp,bmp,svg,pdf,doc,docx,xls,xlsx,csv,txt,xml,zip,rar,7z|max:20480',
+        ]);
+
+        $activityType = LeadActivityType::find($data['activity_type_id']);
+        $subStatus = LeadActivitySubStatus::find($data['sub_status_id']);
+
+        $data['activity_type'] = $this->legacyActivityTypeValue($activityType?->title);
+        $data['activity_sub_status'] = $this->legacySubStatusValue($subStatus?->title);
+
+        return $data;
+    }
+
+    protected function socialMediaRows(Request $request): ?array
+    {
+        $keys = (array) $request->input('social_media_keys', []);
+        $values = (array) $request->input('social_media_values', []);
+        $rows = [];
+
+        foreach ($keys as $index => $key) {
+            $key = trim((string) $key);
+            $value = trim((string) ($values[$index] ?? ''));
+
+            if ($key === '' && $value === '') {
+                continue;
+            }
+
+            $rows[] = [
+                'key' => $key,
+                'value' => $value,
+            ];
+        }
+
+        return empty($rows) ? null : $rows;
+    }
+
+    protected function mergeAttachmentIds(?string $current, ?string $additional): ?string
+    {
+        $ids = collect(array_merge(
+            $current ? explode(',', $current) : [],
+            $additional ? explode(',', $additional) : []
+        ))
+            ->map(fn ($id) => (int) trim($id))
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $ids->isEmpty() ? null : $ids->implode(',');
+    }
+
+    protected function legacyActivityTypeValue(?string $title): string
+    {
+        $normalized = strtolower(trim((string) $title));
+        $normalized = str_replace(['_', '-'], ' ', $normalized);
+
+        return match ($normalized) {
+            'call' => 'call',
+            'email' => 'email',
+            'meeting' => 'meeting',
+            'whatsapp', 'whats app' => 'whatsapp',
+            default => 'note',
+        };
+    }
+
+    protected function legacySubStatusValue(?string $title): ?string
+    {
+        $title = strtolower(trim((string) $title));
+
+        if ($title === '') {
+            return null;
+        }
+
+        $value = preg_replace('/[^a-z0-9]+/', '_', $title);
+
+        return substr(trim((string) $value, '_'), 0, 50);
+    }
+
+    protected function latestActivityExpectedValueSql(): string
+    {
+        return "select expected_value from lead_activities where lead_activities.lead_id = leads.id order by lead_activities.id desc limit 1";
     }
 
     protected function storeActivityAttachments(Request $request): ?string
@@ -419,6 +564,10 @@ class LeadController extends Controller
             if ($inUsers) {
                 return true;
             }
+        }
+
+        if (Schema::hasTable('leads') && Schema::hasColumn('leads', 'photo') && DB::table('leads')->where('photo', $uploadId)->exists()) {
+            return true;
         }
 
         return DB::table('lead_activities')
@@ -539,5 +688,10 @@ class LeadController extends Controller
     protected function currentUserIsAdmin(): bool
     {
         return auth()->check() && auth()->user()->user_type === 'admin';
+    }
+
+    protected function currentUserIsSuperAdmin(): bool
+    {
+        return auth()->check() && auth()->user()->hasRole('Super Admin');
     }
 }

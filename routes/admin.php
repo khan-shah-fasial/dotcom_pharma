@@ -30,7 +30,10 @@ use App\Http\Controllers\FinancialArchiveController;
 use App\Http\Controllers\FlashDealController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\LeadActivitySubStatusController;
+use App\Http\Controllers\LeadActivityTypeController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LeadDepartmentController;
 use App\Http\Controllers\FormEnquiryController;
 use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\MeasurementPointsController;
@@ -316,6 +319,38 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     });
 
     // Leads
+    Route::controller(LeadDepartmentController::class)->group(function () {
+        Route::get('/lead-departments', 'index')->name('lead-departments.index');
+        Route::post('/lead-departments/categories', 'storeCategory')->name('lead-departments.categories.store');
+        Route::get('/lead-departments/categories/{category}/edit', 'editCategory')->name('lead-departments.categories.edit');
+        Route::post('/lead-departments/categories/{category}/update', 'updateCategory')->name('lead-departments.categories.update');
+        Route::get('/lead-departments/categories/{category}/destroy', 'destroyCategory')->name('lead-departments.categories.destroy');
+        Route::post('/lead-departments/categories/update-status', 'updateCategoryStatus')->name('lead-departments.categories.update_status');
+        Route::post('/lead-departments/departments', 'storeDepartment')->name('lead-departments.departments.store');
+        Route::get('/lead-departments/departments/{department}/edit', 'editDepartment')->name('lead-departments.departments.edit');
+        Route::post('/lead-departments/departments/{department}/update', 'updateDepartment')->name('lead-departments.departments.update');
+        Route::get('/lead-departments/departments/{department}/destroy', 'destroyDepartment')->name('lead-departments.departments.destroy');
+        Route::post('/lead-departments/departments/update-status', 'updateDepartmentStatus')->name('lead-departments.departments.update_status');
+    });
+
+    Route::controller(LeadActivityTypeController::class)->group(function () {
+        Route::get('/lead-activity-types', 'index')->name('lead-activity-types.index');
+        Route::post('/lead-activity-types', 'store')->name('lead-activity-types.store');
+        Route::get('/lead-activity-types/{activityType}/edit', 'edit')->name('lead-activity-types.edit');
+        Route::post('/lead-activity-types/{activityType}/update', 'update')->name('lead-activity-types.update');
+        Route::get('/lead-activity-types/{activityType}/destroy', 'destroy')->name('lead-activity-types.destroy');
+        Route::post('/lead-activity-types/update-status', 'updateStatus')->name('lead-activity-types.update_status');
+    });
+
+    Route::controller(LeadActivitySubStatusController::class)->group(function () {
+        Route::get('/lead-activity-sub-statuses', 'index')->name('lead-activity-sub-statuses.index');
+        Route::post('/lead-activity-sub-statuses', 'store')->name('lead-activity-sub-statuses.store');
+        Route::get('/lead-activity-sub-statuses/{subStatus}/edit', 'edit')->name('lead-activity-sub-statuses.edit');
+        Route::post('/lead-activity-sub-statuses/{subStatus}/update', 'update')->name('lead-activity-sub-statuses.update');
+        Route::get('/lead-activity-sub-statuses/{subStatus}/destroy', 'destroy')->name('lead-activity-sub-statuses.destroy');
+        Route::post('/lead-activity-sub-statuses/update-status', 'updateStatus')->name('lead-activity-sub-statuses.update_status');
+    });
+
     Route::controller(LeadController::class)->group(function () {
         Route::get('/leads', 'index')->name('leads.index');
         Route::get('/leads/create', 'create')->name('leads.create');
@@ -326,6 +361,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/leads/{lead}/edit', 'edit')->name('leads.edit');
         Route::post('/leads/{lead}/update', 'update')->name('leads.update');
         Route::post('/leads/{lead}/activities', 'storeActivity')->name('leads.activities.store');
+        Route::post('/leads/{lead}/activities/{activity}/update', 'updateActivity')->name('leads.activities.update');
         Route::get('/leads/{lead}/activities/{activity}/destroy', 'destroyActivity')->name('leads.activities.destroy');
     });
 
