@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LeadActivitySubStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 class LeadActivitySubStatusController extends Controller
@@ -26,6 +27,7 @@ class LeadActivitySubStatusController extends Controller
     public function store(Request $request)
     {
         LeadActivitySubStatus::create($this->validatedData($request));
+        Cache::forget('lead_options.activity_sub_statuses');
 
         flash(translate('Activity sub status has been added successfully'))->success();
         return redirect()->route('lead-activity-sub-statuses.index');
@@ -39,6 +41,7 @@ class LeadActivitySubStatusController extends Controller
     public function update(Request $request, LeadActivitySubStatus $subStatus)
     {
         $subStatus->update($this->validatedData($request, $subStatus));
+        Cache::forget('lead_options.activity_sub_statuses');
 
         flash(translate('Activity sub status has been updated successfully'))->success();
         return redirect()->route('lead-activity-sub-statuses.index');
@@ -52,6 +55,7 @@ class LeadActivitySubStatusController extends Controller
         }
 
         $subStatus->delete();
+        Cache::forget('lead_options.activity_sub_statuses');
 
         flash(translate('Activity sub status has been deleted successfully'))->success();
         return redirect()->route('lead-activity-sub-statuses.index');
@@ -62,7 +66,12 @@ class LeadActivitySubStatusController extends Controller
         $subStatus = LeadActivitySubStatus::findOrFail($request->id);
         $subStatus->status = (int) $request->status === 1 ? 1 : 0;
 
-        return $subStatus->save() ? 1 : 0;
+        if ($subStatus->save()) {
+            Cache::forget('lead_options.activity_sub_statuses');
+            return 1;
+        }
+
+        return 0;
     }
 
     protected function validatedData(Request $request, ?LeadActivitySubStatus $subStatus = null): array

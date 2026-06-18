@@ -115,8 +115,12 @@
         <div class="d-flex justify-content-around align-items-center align-items-stretch">
             <!-- Notifications -->
             @can('view_notifications')
+                @php
+                    $adminTopbarUser = auth()->user();
+                    $hasAdminUnreadNotifications = $adminTopbarUser->unreadNotifications()->exists();
+                @endphp
                 <div class="aiz-topbar-item mr-3">
-                    <div class="align-items-stretch d-flex dropdown">
+                    <div class="align-items-stretch d-flex dropdown js-admin-notifications-dropdown" data-url="{{ route('admin.notifications.dropdown') }}">
                         <a class="dropdown-toggle no-arrow" data-toggle="dropdown" href="javascript:void(0);" role="button"
                             aria-haspopup="false" aria-expanded="false">
                             <span class="btn btn-topbar btn-circle btn-light p-0 d-flex justify-content-center align-items-center" data-toggle="tooltip" data-title="{{ translate('Notification') }}">
@@ -128,7 +132,7 @@
                                             </g>
                                         </svg>
                                     </div>
-                                    @if (auth()->user()->unreadNotifications->count() > 0)
+                                    @if ($hasAdminUnreadNotifications)
                                         <span class="badge badge-sm badge-dot badge-circle badge-danger position-absolute absolute-top-right"></span>
                                     @endif
                                 </span>
@@ -155,18 +159,9 @@
                                             data-target="#stock-notifications" role="tab" id="stock-tab">{{ translate('Stock') }}</a>
                                     </li>
                                 </ul>
-                                <div class="tab-content c-scrollbar-light overflow-auto" style="height: 75vh; max-height: 400px; overflow-y: auto;">
-                                    <div class="tab-pane active" id="orders-notifications" role="tabpanel">
-                                        <x-unread_notification :notifications="auth()->user()->unreadNotifications()->where('type', 'App\Notifications\OrderNotification')->take(20)->get()" />
-                                    </div>
-                                    <div class="tab-pane" id="sellers-notifications" role="tabpanel">
-                                        <x-unread_notification :notifications="auth()->user()->unreadNotifications()->where('type', 'like', '%shop%')->take(20)->get()" />
-                                    </div>
-                                    <div class="tab-pane" id="payouts-notifications" role="tabpanel">
-                                        <x-unread_notification :notifications="auth()->user()->unreadNotifications()->where('type', 'App\Notifications\PayoutNotification')->take(20)->get()" />
-                                    </div>
-                                    <div class="tab-pane" id="stock-notifications" role="tabpanel">
-                                        <x-unread_notification :notifications="auth()->user()->unreadNotifications()->where('type', 'App\Notifications\LowStockAdminNotification')->take(20)->get()" />
+                                <div class="tab-content c-scrollbar-light overflow-auto js-admin-notifications-content" style="height: 75vh; max-height: 400px; overflow-y: auto;">
+                                    <div class="py-4 text-center fs-14 text-muted">
+                                        {{ translate('Loading') }}...
                                     </div>
                                 </div>
                             </div>
@@ -199,7 +194,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-right dropdown-menu-animated dropdown-menu-xs">
 
-                        @foreach (\App\Models\Language::where('status', 1)->get() as $key => $language)
+                        @foreach (get_all_active_language() as $key => $language)
                             <li>
                                 <a href="javascript:void(0)" data-flag="{{ $language->code }}"
                                     class="dropdown-item @if ($locale == $language->code) active @endif">

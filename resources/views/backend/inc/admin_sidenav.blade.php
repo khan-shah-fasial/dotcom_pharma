@@ -1143,13 +1143,16 @@
 
                             @can('view_all_product_conversations')
                                 @php
-                                    $conversation = \App\Models\Conversation::where('receiver_id', Auth::user()->id)->where('receiver_viewed', '0')->get();
+                                    $conversation = DB::table('conversations')
+                                                ->where('receiver_id', Auth::id())
+                                                ->where('receiver_viewed', '0')
+                                                ->count();
                                 @endphp
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('conversations.admin_index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['conversations.admin_index', 'conversations.admin_show'])}}">
                                         <span class="aiz-side-nav-text">{{translate('Product Conversations')}}</span>
-                                        @if (count($conversation) > 0)
-                                            <span class="badge badge-info">{{ count($conversation) }}</span>
+                                        @if ($conversation > 0)
+                                            <span class="badge badge-info">{{ $conversation }}</span>
                                         @endif
                                     </a>
                                 </li>

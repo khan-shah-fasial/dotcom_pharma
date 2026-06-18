@@ -800,6 +800,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
     Route::controller(NotificationController::class)->group(function () {
         Route::get('/all-notifications', 'adminIndex')->name('admin.all-notifications');
+        Route::get('/notifications/dropdown', 'adminDropdown')->name('admin.notifications.dropdown');
         Route::get('/notification-settings', 'notificationSettings')->name('notification.settings');
 
         Route::post('/notifications/bulk-delete', 'bulkDeleteAdmin')->name('admin.notifications.bulk_delete');

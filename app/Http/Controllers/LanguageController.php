@@ -18,6 +18,17 @@ class LanguageController extends Controller
         $this->middleware(['permission:language_setup'])->only('index','create','edit','destroy');
     }
 
+    private function clearLanguageCache($codes = [])
+    {
+        Cache::forget('app.languages');
+        Cache::forget('all_active_languages');
+
+        foreach (array_filter((array) $codes) as $code) {
+            Cache::forget('system_language_' . $code);
+            Cache::forget('session_language_' . $code);
+        }
+    }
+
     public function changeLanguage(Request $request)
     {
     	$request->session()->put('locale', $request->locale);
@@ -50,7 +61,7 @@ class LanguageController extends Controller
         $language->app_lang_code = $request->app_lang_code;
         $language->save();   
 
-        Cache::forget('app.languages');
+        $this->clearLanguageCache($language->code);
 
         flash(translate('Language has been inserted successfully'))->success();
         return redirect()->route('languages.index');
@@ -84,6 +95,7 @@ class LanguageController extends Controller
             return back();
         }
         $language = Language::findOrFail($id);
+        $oldCode = $language->code;
         if (env('DEFAULT_LANGUAGE') == $language->code && env('DEFAULT_LANGUAGE') != $request->code) {
             flash(translate('Default language code cannot be edited'))->error();
             return back();
@@ -97,7 +109,7 @@ class LanguageController extends Controller
         $language->app_lang_code = $request->app_lang_code; 
         $language->save();
         
-        Cache::forget('app.languages');
+        $this->clearLanguageCache([$oldCode, $language->code]);
 
         $file = base_path("/public/assets/myText.txt");
         $dev_mail = get_dev_mail();
@@ -149,6 +161,7 @@ class LanguageController extends Controller
         }
         $language->status = $request->status;
         if($language->save()){
+            $this->clearLanguageCache($language->code);
             flash(translate('Status updated successfully'))->success();
             return 1;
         }
@@ -160,6 +173,7 @@ class LanguageController extends Controller
         $language = Language::findOrFail($request->id);
         $language->rtl = $request->status;
         if($language->save()){
+            $this->clearLanguageCache($language->code);
             flash(translate('RTL status updated successfully'))->success();
             return 1;
         }
@@ -178,6 +192,7 @@ class LanguageController extends Controller
             if($language->code == Session::get('locale')){
                 Session::put('locale', env('DEFAULT_LANGUAGE'));
             }
+            $this->clearLanguageCache($language->code);
             Language::destroy($id);
             flash(translate('Language has been deleted successfully'))->success();
         }

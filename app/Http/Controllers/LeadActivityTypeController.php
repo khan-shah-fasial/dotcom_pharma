@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LeadActivityType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 class LeadActivityTypeController extends Controller
@@ -26,6 +27,7 @@ class LeadActivityTypeController extends Controller
     public function store(Request $request)
     {
         LeadActivityType::create($this->validatedData($request));
+        Cache::forget('lead_options.activity_types');
 
         flash(translate('Activity type has been added successfully'))->success();
         return redirect()->route('lead-activity-types.index');
@@ -39,6 +41,7 @@ class LeadActivityTypeController extends Controller
     public function update(Request $request, LeadActivityType $activityType)
     {
         $activityType->update($this->validatedData($request, $activityType));
+        Cache::forget('lead_options.activity_types');
 
         flash(translate('Activity type has been updated successfully'))->success();
         return redirect()->route('lead-activity-types.index');
@@ -52,6 +55,7 @@ class LeadActivityTypeController extends Controller
         }
 
         $activityType->delete();
+        Cache::forget('lead_options.activity_types');
 
         flash(translate('Activity type has been deleted successfully'))->success();
         return redirect()->route('lead-activity-types.index');
@@ -62,7 +66,12 @@ class LeadActivityTypeController extends Controller
         $activityType = LeadActivityType::findOrFail($request->id);
         $activityType->status = (int) $request->status === 1 ? 1 : 0;
 
-        return $activityType->save() ? 1 : 0;
+        if ($activityType->save()) {
+            Cache::forget('lead_options.activity_types');
+            return 1;
+        }
+
+        return 0;
     }
 
     protected function validatedData(Request $request, ?LeadActivityType $activityType = null): array

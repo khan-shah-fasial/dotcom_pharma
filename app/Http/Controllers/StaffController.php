@@ -7,6 +7,7 @@ use App\Models\Staff;
 use App\Models\Role;
 use App\Models\User;
 use Hash;
+use Illuminate\Support\Facades\Cache;
 
 class StaffController extends Controller
 {
@@ -68,6 +69,7 @@ class StaffController extends Controller
 
                 $user->assignRole(Role::findOrFail($request->role_id)->name);
                 if ($staff->save()) {
+                    Cache::forget('lead_options.assignees');
                     flash(translate('Staff has been inserted successfully'))->success();
                     return redirect()->route('staffs.index');
                 }
@@ -130,6 +132,7 @@ class StaffController extends Controller
 
             if ($staff->save()) {
                 $user->syncRoles(Role::findOrFail($request->role_id)->name);
+                Cache::forget('lead_options.assignees');
                 flash(translate('Staff has been updated successfully'))->success();
                 return redirect()->route('staffs.index');
             }
@@ -149,6 +152,7 @@ class StaffController extends Controller
     {
         User::destroy(Staff::findOrFail($id)->user->id);
         if (Staff::destroy($id)) {
+            Cache::forget('lead_options.assignees');
             flash(translate('Staff has been deleted successfully'))->success();
             return redirect()->route('staffs.index');
         }

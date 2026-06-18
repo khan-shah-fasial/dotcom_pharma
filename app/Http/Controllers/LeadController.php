@@ -16,6 +16,7 @@ use App\Models\City;
 use App\Models\User;
 use App\Models\UserDetails;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -48,27 +49,49 @@ class LeadController extends Controller
         ]);
 
         $leads = Lead::query()
-            ->select('leads.*')
-            ->addSelect([
-                'latest_activity_expected_value' => LeadActivity::query()
-                    ->select('expected_value')
-                    ->whereColumn('lead_activities.lead_id', 'leads.id')
-                    ->latest('id')
-                    ->limit(1),
+            ->select([
+                'leads.id',
+                'leads.lead_no',
+                'leads.name',
+                'leads.email',
+                'leads.phone',
+                'leads.whatsapp_number',
+                'leads.company_name',
+                'leads.source_id',
+                'leads.status_id',
+                'leads.assigned_to',
+                'leads.created_by',
+                'leads.country_id',
+                'leads.state_id',
+                'leads.city_id',
+                'leads.created_at',
             ])
             ->with([
-                'source',
-                'status',
-                'department',
-                'assignedUser',
-                'creator',
-                'country',
-                'state',
-                'city',
-                'latestActivity.activityType',
-                'latestActivity.subStatus',
+                'source:id,name',
+                'status:id,name,color',
+                'assignedUser:id,name',
+                'creator:id,name',
+                'country:id,name',
+                'state:id,name',
+                'city:id,name',
+                'latestActivity' => function ($query) {
+                    $query->select([
+                        'lead_activities.id',
+                        'lead_activities.lead_id',
+                        'lead_activities.activity_type_id',
+                        'lead_activities.sub_status_id',
+                        'lead_activities.activity_type',
+                        'lead_activities.activity_sub_status',
+                        'lead_activities.expected_value',
+                        'lead_activities.next_followup',
+                        'lead_activities.description',
+                        'lead_activities.created_at',
+                    ]);
+                },
+                'latestActivity.activityType:id,title',
+                'latestActivity.subStatus:id,title',
             ])
-            ->latest();
+            ->latest('leads.created_at');
 
         $this->applyLeadVisibility($leads);
 
@@ -129,7 +152,7 @@ class LeadController extends Controller
 
         $leads = $leads->paginate(20);
 
-        return view('backend.leads.index', $this->formData() + [
+        return view('backend.leads.index', $this->indexData() + [
             'leads' => $leads,
             'filters' => $filters,
         ]);
@@ -176,14 +199,14 @@ class LeadController extends Controller
             'activities.subStatus',
         ]);
 
-        return view('backend.leads.show', $this->formData($lead) + ['lead' => $lead]);
+        return view('backend.leads.show', $this->activityFormData() + ['lead' => $lead]);
     }
 
     public function edit(Lead $lead)
     {
         $this->authorizeLeadAccess($lead);
 
-        $lead->load(['activities.creator', 'department', 'photoUpload']);
+        $lead->load(['source:id,name', 'photoUpload']);
 
         return view('backend.leads.edit', $this->formData($lead) + [
             'lead' => $lead,
@@ -325,6 +348,7 @@ class LeadController extends Controller
             $source = LeadSource::whereRaw('LOWER(TRIM(name)) = ?', [strtolower($sourceName)])->first();
             if (!$source) {
                 $source = LeadSource::create(['name' => $sourceName, 'status' => 1]);
+                Cache::forget('lead_options.sources');
             }
             $data['source_id'] = $source->id;
         }
@@ -346,21 +370,18 @@ class LeadController extends Controller
     protected function formData(?Lead $lead = null): array
     {
         $departments = Department::active()
-            ->with('category')
-            ->get()
+            ->with('category:id,name')
+            ->get(['id', 'category_id', 'name'])
             ->sortBy(function ($department) {
                 return strtolower((optional($department->category)->name ?? '') . '|' . $department->name);
             })
             ->values();
 
         return [
-            'sources' => LeadSource::where('status', 1)->orderBy('name')->get(),
-            'statuses' => LeadStatus::whereIn('name', ['New', 'Follow-up'])->orderBy('sort_order')->orderBy('name')->get(),
+            'sources' => $this->leadSourceOptions(),
+            'statuses' => $this->leadStatusOptions(),
             'departments' => $departments,
-            'assignees' => User::where(function ($query) {
-                $query->whereIn('user_type', ['admin', 'staff'])
-                    ->orWhereHas('staff');
-            })->orderBy('name')->get(['id', 'name', 'email']),
+            'assignees' => $this->leadAssigneeOptions(),
             'countries' => Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']),
             'states' => $lead && $lead->country_id
                 ? State::where('country_id', $lead->country_id)->orderBy('name')->get(['id', 'name'])
@@ -368,9 +389,100 @@ class LeadController extends Controller
             'cities' => $lead && $lead->state_id
                 ? City::where('state_id', $lead->state_id)->orderBy('name')->get(['id', 'name'])
                 : collect(),
-            'activityTypes' => LeadActivityType::active()->orderBy('title')->get(),
-            'activitySubStatuses' => LeadActivitySubStatus::active()->orderBy('title')->get(),
         ];
+    }
+
+    protected function indexData(): array
+    {
+        return $this->activityFormData() + [
+            'sources' => $this->leadSourceOptions(),
+            'statuses' => $this->leadStatusOptions(),
+            'assignees' => $this->leadAssigneeOptions(),
+        ];
+    }
+
+    protected function activityFormData(): array
+    {
+        return [
+            'activityTypes' => $this->leadActivityTypeOptions(),
+            'activitySubStatuses' => auth()->user()?->can('edit_lead')
+                ? $this->leadActivitySubStatusOptions()
+                : collect(),
+        ];
+    }
+
+    protected function cachedLeadOption(string $key, callable $callback)
+    {
+        static $options = [];
+
+        if (!array_key_exists($key, $options)) {
+            $options[$key] = Cache::remember("lead_options.{$key}", now()->addMinutes(5), $callback);
+        }
+
+        return $options[$key];
+    }
+
+    protected function leadSourceOptions()
+    {
+        return $this->cachedLeadOption('sources', function () {
+            return DB::table('lead_sources')
+                ->select(['id', 'name'])
+                ->where('status', 1)
+                ->orderBy('name')
+                ->get();
+        });
+    }
+
+    protected function leadStatusOptions()
+    {
+        return $this->cachedLeadOption('statuses', function () {
+            return DB::table('lead_statuses')
+                ->select(['id', 'name', 'color', 'sort_order'])
+                ->whereIn('name', ['New', 'Follow-up'])
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get();
+        });
+    }
+
+    protected function leadAssigneeOptions()
+    {
+        return $this->cachedLeadOption('assignees', function () {
+            return DB::table('users')
+                ->select(['users.id', 'users.name', 'users.email'])
+                ->where(function ($query) {
+                    $query->whereIn('users.user_type', ['admin', 'staff'])
+                        ->orWhereExists(function ($staffQuery) {
+                            $staffQuery->selectRaw('1')
+                                ->from('staff')
+                                ->whereColumn('staff.user_id', 'users.id');
+                        });
+                })
+                ->orderBy('users.name')
+                ->get();
+        });
+    }
+
+    protected function leadActivityTypeOptions()
+    {
+        return $this->cachedLeadOption('activity_types', function () {
+            return DB::table('lead_activity_types')
+                ->select(['id', 'title'])
+                ->where('status', 1)
+                ->orderBy('title')
+                ->get();
+        });
+    }
+
+    protected function leadActivitySubStatusOptions()
+    {
+        return $this->cachedLeadOption('activity_sub_statuses', function () {
+            return DB::table('lead_activity_sub_statuses')
+                ->select(['id', 'title'])
+                ->where('status', 1)
+                ->orderBy('title')
+                ->get();
+        });
     }
 
     protected function validatedActivityData(Request $request): array

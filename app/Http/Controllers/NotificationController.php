@@ -28,6 +28,38 @@ class NotificationController extends Controller
         return view('backend.notification.index', compact('notifications'));
     }
 
+    public function adminDropdown()
+    {
+        abort_unless(auth()->user()->can('view_notifications'), 403);
+
+        $user = auth()->user();
+        $columns = ['id', 'type', 'data', 'read_at', 'created_at', 'notification_type_id'];
+        $unreadNotifications = function () use ($user, $columns) {
+            return $user->unreadNotifications()
+                ->select($columns)
+                ->latest();
+        };
+
+        return view('backend.notification._admin_dropdown', [
+            'orderNotifications' => $unreadNotifications()
+                ->where('type', 'App\Notifications\OrderNotification')
+                ->limit(20)
+                ->get(),
+            'sellerNotifications' => $unreadNotifications()
+                ->where('type', 'like', '%shop%')
+                ->limit(20)
+                ->get(),
+            'payoutNotifications' => $unreadNotifications()
+                ->where('type', 'App\Notifications\PayoutNotification')
+                ->limit(20)
+                ->get(),
+            'stockNotifications' => $unreadNotifications()
+                ->where('type', 'App\Notifications\LowStockAdminNotification')
+                ->limit(20)
+                ->get(),
+        ]);
+    }
+
     public function customerIndex()
     {
         $notifications = auth()->user()->notifications()->paginate(15);

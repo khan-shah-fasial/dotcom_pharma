@@ -1,5 +1,9 @@
 <!doctype html>
-@if (\App\Models\Language::where('code', Session::get('locale', Config::get('app.locale')))->first()->rtl == 1)
+@php
+    $backendLanguage = get_system_language();
+    $isBackendRtl = optional($backendLanguage)->rtl == 1;
+@endphp
+@if ($isBackendRtl)
     <html dir="rtl" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 @else
     <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -28,7 +32,7 @@
 
     <!-- aiz core css -->
     <link rel="stylesheet" href="{{ static_asset('assets/css/vendors.css') }}">
-    @if (\App\Models\Language::where('code', Session::get('locale', Config::get('app.locale')))->first()->rtl == 1)
+    @if ($isBackendRtl)
         <link rel="stylesheet" href="{{ static_asset('assets/css/bootstrap-rtl.min.css') }}">
     @endif
     <link rel="stylesheet" href="{{ static_asset('assets/css/aiz-core.css?v=') }}{{ rand(1000,9999) }}">
@@ -168,6 +172,30 @@
             e.stopPropagation()
             $(this).tab('show')
         })
+
+        $(document).on('show.bs.dropdown', '.js-admin-notifications-dropdown', function () {
+            var $dropdown = $(this);
+            var notificationLoadError = @json(translate('Could not load notifications'));
+
+            if ($dropdown.data('loaded') || $dropdown.data('loading')) {
+                return;
+            }
+
+            var $content = $dropdown.find('.js-admin-notifications-content');
+            $dropdown.data('loading', true);
+
+            $.get($dropdown.data('url'))
+                .done(function (html) {
+                    $content.html(html);
+                    $dropdown.data('loaded', true);
+                })
+                .fail(function () {
+                    $content.html('<div class="py-4 text-center fs-14 text-danger">' + notificationLoadError + '</div>');
+                })
+                .always(function () {
+                    $dropdown.data('loading', false);
+                });
+        });
 
         if ($('#lang-change').length > 0) {
             $('#lang-change .dropdown-menu a').each(function() {

@@ -4009,14 +4009,20 @@ if (!function_exists('get_active_taxes')) {
 if (!function_exists('get_system_language')) {
     function get_system_language()
     {
+        static $languages = [];
+
         $locale = 'en';
         if (Session::has('locale')) {
             $locale = Session::get('locale', Config::get('app.locale'));
         }
 
+        if (array_key_exists($locale, $languages)) {
+            return $languages[$locale];
+        }
+
         $cacheKey = 'system_language_' . $locale;
 
-        return Cache::remember($cacheKey, now()->addHours(6), function () use ($locale) {
+        return $languages[$locale] = Cache::remember($cacheKey, now()->addHours(6), function () use ($locale) {
             $language_query = Language::query();
             return $language_query->where('code', $locale)->first();
         });
@@ -4026,32 +4032,42 @@ if (!function_exists('get_system_language')) {
 if (!function_exists('get_all_active_language')) {
     function get_all_active_language()
     {
-        $language_query = Language::query();
-        $language_query->where('status', 1)->orderBy('name');
+        static $activeLanguages = null;
 
-        $languages = $language_query->get();
+        if ($activeLanguages !== null) {
+            return $activeLanguages;
+        }
 
-        // Guard: filter out accidentally-created junk rows like a language named "No" (often from bad imports).
-        // Keep legitimate languages even if misnamed (e.g. Hindi sometimes ends up with name="No" but code/app_lang_code indicates otherwise).
-        return $languages
-            ->filter(function ($language) {
-                $name = (string) ($language->name ?? '');
-                // Normalize unicode whitespace (e.g. NBSP) and collapse runs.
-                $name = preg_replace('/\s+/u', ' ', trim($name));
-                if ($name === '') {
-                    return false;
-                }
+        $activeLanguages = Cache::remember('all_active_languages', now()->addHours(6), function () {
+            $language_query = Language::query();
+            $language_query->where('status', 1)->orderBy('name');
 
-                if (mb_strtolower($name) !== 'no') {
-                    return true;
-                }
+            $languages = $language_query->get();
 
-                $code = mb_strtolower(trim((string) ($language->code ?? '')));
-                $app = mb_strtolower(trim((string) ($language->app_lang_code ?? '')));
-                $allow = ['in', 'hi', 'mr', 'gu', 'bn', 'ar'];
-                return in_array($code, $allow, true) || in_array($app, $allow, true);
-            })
-            ->values();
+            // Guard: filter out accidentally-created junk rows like a language named "No" (often from bad imports).
+            // Keep legitimate languages even if misnamed (e.g. Hindi sometimes ends up with name="No" but code/app_lang_code indicates otherwise).
+            return $languages
+                ->filter(function ($language) {
+                    $name = (string) ($language->name ?? '');
+                    // Normalize unicode whitespace (e.g. NBSP) and collapse runs.
+                    $name = preg_replace('/\s+/u', ' ', trim($name));
+                    if ($name === '') {
+                        return false;
+                    }
+
+                    if (mb_strtolower($name) !== 'no') {
+                        return true;
+                    }
+
+                    $code = mb_strtolower(trim((string) ($language->code ?? '')));
+                    $app = mb_strtolower(trim((string) ($language->app_lang_code ?? '')));
+                    $allow = ['in', 'hi', 'mr', 'gu', 'bn', 'ar'];
+                    return in_array($code, $allow, true) || in_array($app, $allow, true);
+                })
+                ->values();
+        });
+
+        return $activeLanguages;
     }
 }
 
@@ -4059,10 +4075,16 @@ if (!function_exists('get_all_active_language')) {
 if (!function_exists('get_session_language')) {
     function get_session_language()
     {
+        static $languages = [];
+
         $locale = Session::get('locale', Config::get('app.locale'));
+        if (array_key_exists($locale, $languages)) {
+            return $languages[$locale];
+        }
+
         $cacheKey = 'session_language_' . $locale;
 
-        return Cache::remember($cacheKey, now()->addHours(6), function () use ($locale) {
+        return $languages[$locale] = Cache::remember($cacheKey, now()->addHours(6), function () use ($locale) {
             $language_query = Language::query();
             return $language_query->where('code', $locale)->first();
         });
@@ -4892,9 +4914,20 @@ if (!function_exists('number_format_short')) {
 if (!function_exists('get_notification_type')) {
     function get_notification_type($value, $columnNamre)
     {
+        static $notificationTypes = [];
+
+        $column = $columnNamre == 'id' ? 'id' : 'type';
+        $cacheKey = $column . ':' . $value;
+        if (array_key_exists($cacheKey, $notificationTypes)) {
+            return $notificationTypes[$cacheKey];
+        }
+
         $notificationType = NotificationType::query();
-        $notificationType = $columnNamre == 'id' ? $notificationType->where('id', $value) : $notificationType->where('type', $value);
-        return $notificationType->first();
+        $notificationType = $column == 'id' ? $notificationType->where('id', $value) : $notificationType->where('type', $value);
+
+        return $notificationTypes[$cacheKey] = $notificationType
+            ->with('notificationTypeTranslations')
+            ->first();
     }
 }
 
