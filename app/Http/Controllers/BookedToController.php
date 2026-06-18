@@ -10,7 +10,7 @@ class BookedToController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['permission:manage_carriers'])->only('index', 'create', 'edit', 'destroy');
+        $this->middleware(['permission:manage_carriers'])->only('index', 'create', 'show', 'edit', 'destroy');
     }
 
     public function index(Request $request)
@@ -20,7 +20,14 @@ class BookedToController extends Controller
 
         if ($sort_search) {
             $booked_to->where(function ($query) use ($sort_search) {
-                $query->where('name', 'like', '%' . $sort_search . '%')
+                $query->where('location', 'like', '%' . $sort_search . '%')
+                    ->orWhere('branch_name', 'like', '%' . $sort_search . '%')
+                    ->orWhere('branch_code', 'like', '%' . $sort_search . '%')
+                    ->orWhere('branch_gst_number', 'like', '%' . $sort_search . '%')
+                    ->orWhere('branch_mobile_number', 'like', '%' . $sort_search . '%')
+                    ->orWhere('branch_alternate_mobile_number', 'like', '%' . $sort_search . '%')
+                    ->orWhere('contact_incharge', 'like', '%' . $sort_search . '%')
+                    ->orWhere('branch_email', 'like', '%' . $sort_search . '%')
                     ->orWhereHas('transport', function ($q) use ($sort_search) {
                         $q->where('name', 'like', '%' . $sort_search . '%');
                     });
@@ -40,21 +47,20 @@ class BookedToController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'transport_id' => 'required|exists:transports,id',
-            'name' => 'required|string|max:255',
-            'status' => 'required|in:active,inactive',
-        ]);
+        $data = $this->validatedData($request);
+        $data['created_by'] = auth()->id();
 
-        BookedTo::create([
-            'transport_id' => $request->transport_id,
-            'name' => trim($request->name),
-            'status' => $request->status,
-            'created_by' => auth()->id(),
-        ]);
+        BookedTo::create($data);
 
         flash(translate('Booked To has been added successfully'))->success();
         return redirect()->route('booked-to.index');
+    }
+
+    public function show($id)
+    {
+        $bookedTo = BookedTo::with(['transport', 'creator'])->findOrFail($id);
+
+        return view('backend.setup_configurations.transport.booked_to.show', compact('bookedTo'));
     }
 
     public function edit($id)
@@ -66,18 +72,8 @@ class BookedToController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'transport_id' => 'required|exists:transports,id',
-            'name' => 'required|string|max:255',
-            'status' => 'required|in:active,inactive',
-        ]);
-
         $bookedTo = BookedTo::findOrFail($id);
-        $bookedTo->update([
-            'transport_id' => $request->transport_id,
-            'name' => trim($request->name),
-            'status' => $request->status,
-        ]);
+        $bookedTo->update($this->validatedData($request));
 
         flash(translate('Booked To has been updated successfully'))->success();
         return redirect()->route('booked-to.index');
@@ -95,5 +91,44 @@ class BookedToController extends Controller
         $bookedTo = BookedTo::findOrFail($request->id);
         $bookedTo->status = (int) $request->status === 1 ? 'active' : 'inactive';
         return $bookedTo->save() ? 1 : 0;
+    }
+
+    protected function validatedData(Request $request): array
+    {
+        foreach ([
+            'location',
+            'branch_name',
+            'branch_code',
+            'branch_gst_number',
+            'branch_mobile_number',
+            'branch_alternate_mobile_number',
+            'contact_incharge',
+            'branch_email',
+        ] as $field) {
+            $value = trim((string) $request->input($field));
+            $request->merge([$field => $value === '' ? null : $value]);
+        }
+
+        $data = $request->validate([
+            'transport_id' => 'required|exists:transports,id',
+            'location' => 'required|string|max:255',
+            'branch_name' => 'nullable|string|max:255',
+            'branch_code' => 'nullable|string|max:255',
+            'branch_gst_number' => 'nullable|string|max:255',
+            'branch_mobile_number' => 'nullable|string|max:50',
+            'branch_alternate_mobile_number' => 'nullable|string|max:50',
+            'contact_incharge' => 'nullable|string|max:255',
+            'branch_email' => 'nullable|email|max:255',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        foreach ($data as $key => $value) {
+            if (is_string($value)) {
+                $value = trim($value);
+                $data[$key] = $value === '' ? null : $value;
+            }
+        }
+
+        return $data;
     }
 }

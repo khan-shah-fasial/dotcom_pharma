@@ -26,10 +26,59 @@
                 </div>
             </div>
             <div class="form-group row">
-                <label class="col-md-2 col-form-label">{{ translate('Name') }} <span class="text-danger">*</span></label>
+                <label class="col-md-2 col-form-label">{{ translate('Location') }} <span class="text-danger">*</span></label>
                 <div class="col-md-9">
-                    <input type="text" name="name" class="form-control" value="{{ old('name', $bookedTo->name) }}" required>
-                    @error('name') <span class="text-danger small">{{ $message }}</span> @enderror
+                    <input type="text" name="location" class="form-control" value="{{ old('location', $bookedTo->location) }}" required>
+                    @error('location') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Branch Name') }}</label>
+                <div class="col-md-9">
+                    <input type="text" name="branch_name" class="form-control" value="{{ old('branch_name', $bookedTo->branch_name) }}">
+                    @error('branch_name') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Branch Code') }}</label>
+                <div class="col-md-9">
+                    <input type="text" name="branch_code" class="form-control" value="{{ old('branch_code', $bookedTo->branch_code) }}">
+                    @error('branch_code') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Branch GST Number') }}</label>
+                <div class="col-md-9">
+                    <input type="text" name="branch_gst_number" class="form-control" value="{{ old('branch_gst_number', $bookedTo->branch_gst_number) }}">
+                    @error('branch_gst_number') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Branch Mobile Number') }}</label>
+                <div class="col-md-9">
+                    <input type="text" name="branch_mobile_number" class="form-control" value="{{ old('branch_mobile_number', $bookedTo->branch_mobile_number) }}">
+                    @error('branch_mobile_number') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Branch Alternate Mobile Number') }}</label>
+                <div class="col-md-9">
+                    <input type="text" name="branch_alternate_mobile_number" class="form-control" value="{{ old('branch_alternate_mobile_number', $bookedTo->branch_alternate_mobile_number) }}">
+                    @error('branch_alternate_mobile_number') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Contact - Incharge') }}</label>
+                <div class="col-md-9">
+                    <input type="text" name="contact_incharge" class="form-control" value="{{ old('contact_incharge', $bookedTo->contact_incharge) }}">
+                    @error('contact_incharge') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Branch Email ID') }}</label>
+                <div class="col-md-9">
+                    <input type="email" name="branch_email" class="form-control" value="{{ old('branch_email', $bookedTo->branch_email) }}">
+                    @error('branch_email') <span class="text-danger small">{{ $message }}</span> @enderror
                 </div>
             </div>
             <div class="form-group row">

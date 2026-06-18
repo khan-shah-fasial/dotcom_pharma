@@ -1,6 +1,22 @@
 @extends('backend.layouts.app')
 
 @section('content')
+<style>
+    .lead-description-clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        max-width: 280px;
+        overflow: hidden;
+        white-space: normal;
+        cursor: help;
+    }
+    .lead-description-popover .popover-body {
+        max-width: 420px;
+        white-space: pre-line;
+    }
+</style>
+
 <div class="aiz-titlebar text-left mt-2 mb-3">
     <div class="row align-items-center">
         <div class="col-md-6"><h1 class="h3">{{ translate('Leads') }}</h1></div>
@@ -154,6 +170,7 @@
                     <th>{{ translate('Value') }}</th>
                     <th>{{ translate('Next Follow-up') }}</th>
                     <th>{{ translate('Last Activity') }}</th>
+                    <th>{{ translate('Description') }}</th>
                     <th class="text-right">{{ translate('Options') }}</th>
                 </tr>
             </thead>
@@ -161,6 +178,7 @@
                 @forelse ($leads as $key => $lead)
                     @php
                         $lastActivity = $lead->latestActivity;
+                        $activityDescription = $lastActivity ? trim((string) $lastActivity->description) : '';
                         $phoneHref = $lead->phone ? preg_replace('/\s+/', '', $lead->phone) : null;
                         $whatsappHref = $lead->whatsapp_number ? preg_replace('/\D+/', '', $lead->whatsapp_number) : null;
                     @endphp
@@ -169,6 +187,7 @@
                         <td class="fw-700">{{ $lead->lead_no }}</td>
                         <td>
                             <div>{{ $lead->name }}</div>
+                            <hr>
                             <small class="text-muted">
                                 @if ($lead->email)
                                     <a href="mailto:{{ $lead->email }}" class="text-muted">{{ $lead->email }}</a>
@@ -192,6 +211,7 @@
                         <td>
                             <div>{{ $lead->company_name ?? '-' }}</div>
                             @if($lead->country || $lead->state || $lead->city)
+                            <hr>
                                 <ul class="list-unstyled mb-0 mt-1 text-muted small">
                                     @if($lead->country)
                                         <li>{{ $lead->country->name }}</li>
@@ -215,7 +235,10 @@
                         <td>{{ optional($lead->source)->name ?? '-' }}</td>
                         <td>
                             <div>{{ optional($lead->creator)->name ?? '-' }}</div>
+                            @if(optional($lead->assignedUser)->name)
+                            <hr>
                             <small class="d-block text-muted">{{ translate('Assign to') }}: {{ optional($lead->assignedUser)->name ?? '-' }}</small>
+                            @endif
                         </td>
                         <td>{{ $lastActivity && $lastActivity->expected_value !== null ? number_format((float) $lastActivity->expected_value, 2) : '-' }}</td>
                         <td>{{ $lastActivity && $lastActivity->next_followup ? $lastActivity->next_followup->format('d-m-Y h:i A') : '-' }}</td>
@@ -227,6 +250,24 @@
                                         {{ optional($lastActivity->subStatus)->title ?? translate(ucwords(str_replace('_', ' ', $lastActivity->activity_sub_status))) }}
                                     </small>
                                 @endif
+                                <small class="d-block text-muted">
+                                    {{ translate('Created') }}: {{ $lastActivity->created_at ? $lastActivity->created_at->format('d-m-Y h:i A') : '-' }}
+                                </small>
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
+                            @if($activityDescription !== '')
+                                <div class="lead-description-clamp js-lead-description-popover"
+                                    tabindex="0"
+                                    data-toggle="popover"
+                                    data-trigger="hover focus"
+                                    data-placement="top"
+                                    title="{{ translate('Description') }}"
+                                    data-content="{{ e($activityDescription) }}">
+                                    {!! nl2br(e($activityDescription)) !!}
+                                </div>
                             @else
                                 -
                             @endif
@@ -256,7 +297,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="11" class="text-center">{{ translate('No leads found') }}</td>
+                        <td colspan="12" class="text-center">{{ translate('No leads found') }}</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -355,6 +396,11 @@
             $('#quick_activity_type, #quick_activity_sub_status').selectpicker('refresh');
 
             $('#quickLeadActivityModal').modal('show');
+        });
+
+        $('.js-lead-description-popover').popover({
+            container: 'body',
+            template: '<div class="popover lead-description-popover" role="tooltip"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>'
         });
     </script>
 @endsection

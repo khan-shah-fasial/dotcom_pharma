@@ -19,6 +19,20 @@
     if ($socialMediaRows->isEmpty()) {
         $socialMediaRows = collect([['key' => '', 'value' => '']]);
     }
+
+    $selectedDepartmentId = old('department_id', $lead->department_id ?? '');
+
+    if ((string) $selectedDepartmentId === '' && !$lead) {
+        $defaultDepartment = collect($departments)->first(function ($department) {
+            return strcasecmp($department->name, 'Sales') === 0
+                && strcasecmp(optional($department->category)->name ?? '', 'Commercial Departments') === 0;
+        });
+        $selectedDepartmentId = optional($defaultDepartment)->id ?: '';
+    }
+
+    $departmentsByCategory = collect($departments)->groupBy(function ($department) {
+        return optional($department->category)->name ?: translate('Other');
+    });
 @endphp
 
 <style>
@@ -137,10 +151,14 @@
     <div class="col-md-4">
         <select name="department_id" class="form-control aiz-selectpicker" data-live-search="true">
             <option value="">{{ translate('Select Department') }}</option>
-            @foreach ($departments as $department)
-                <option value="{{ $department->id }}" @selected((string) old('department_id', $lead->department_id ?? '') === (string) $department->id)>
-                    {{ $department->name }} @if($department->category) ({{ $department->category->name }}) @endif
-                </option>
+            @foreach ($departmentsByCategory as $categoryName => $categoryDepartments)
+                <optgroup label="{{ $categoryName }}">
+                    @foreach ($categoryDepartments as $department)
+                        <option value="{{ $department->id }}" @selected((string) $selectedDepartmentId === (string) $department->id)>
+                            {{ $department->name }}
+                        </option>
+                    @endforeach
+                </optgroup>
             @endforeach
         </select>
         @error('department_id') <span class="text-danger small">{{ $message }}</span> @enderror

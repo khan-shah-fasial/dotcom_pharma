@@ -176,7 +176,7 @@
     $stateBusinessId = $userDetails?->state_id_business ?? null;
     $stateBusiness = $stateBusinessId ? optional(\App\Models\State::find($stateBusinessId))->name : '-';
     $isMaharashtra = $stateBusiness && strcasecmp(trim($stateBusiness), 'maharashtra') === 0;
-    $bookTo = optional($order->bookedTo)->name ?? ($userDetails?->booked_to ?? '-');
+    $bookTo = optional($order->bookedTo)->location ?? ($userDetails?->booked_to ?? '-');
     $transport = optional($order->transport)->name
         ?? optional($order->localDeliveryPartner)->name
         ?? ($order->shipping_by ?: ($userDetails?->transport ?? '-'));

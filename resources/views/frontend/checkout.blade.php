@@ -1144,11 +1144,12 @@
 
                 $.getJSON(bookedToUrl, { transport_id: transportId }).done(function(items) {
                     (items || []).forEach(function(item) {
+                        var label = item.location || item.name || '';
                         var option = document.createElement('div');
                         option.className = 'checkout-combo-option';
-                        option.dataset.name = item.name;
+                        option.dataset.name = label;
                         option.dataset.id = item.id;
-                        option.textContent = item.name;
+                        option.textContent = label;
                         bookedToList.appendChild(option);
                     });
                 });

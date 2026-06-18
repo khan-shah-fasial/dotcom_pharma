@@ -223,7 +223,7 @@
                                     @if($order->shipping_choice === 'transport')
                                         {{ optional($order->transport)->name ?? $order->shipping_by ?? '-' }}
                                         @if($order->bookedTo)
-                                            <br><small>{{ translate('Booked To') }}: {{ $order->bookedTo->name }}</small>
+                                            <br><small>{{ translate('Booked To') }}: {{ $order->bookedTo->location }}</small>
                                         @endif
                                     @elseif($order->shipping_choice === 'local')
                                         {{ optional($order->localDeliveryPartner)->name ?? $order->shipping_by ?? '-' }}

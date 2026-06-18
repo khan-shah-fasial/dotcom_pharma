@@ -188,7 +188,7 @@
                                     @if($order->shipping_choice === 'transport')
                                         {{ translate('Transport') }}: {{ optional($order->transport)->name ?? $order->shipping_by ?? '-' }}
                                         @if($order->bookedTo)
-                                            <br>{{ translate('Booked To') }}: {{ $order->bookedTo->name }}
+                                            <br>{{ translate('Booked To') }}: {{ $order->bookedTo->location }}
                                         @endif
                                         @if($order->transport_mode)
                                             <br>{{ translate('Mode') }}: {{ translate(ucfirst($order->transport_mode)) }}

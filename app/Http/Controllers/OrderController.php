@@ -565,13 +565,13 @@ class OrderController extends Controller
             }
         }
 
-        $name = trim((string) $request->input('booked_to_name'));
-        if ($name === '') {
+        $location = trim((string) $request->input('booked_to_name'));
+        if ($location === '') {
             return null;
         }
 
         $bookedTo = BookedTo::where('transport_id', $transport->id)
-            ->whereRaw('LOWER(name) = ?', [strtolower($name)])
+            ->whereRaw('LOWER(location) = ?', [strtolower($location)])
             ->first();
         if ($bookedTo) {
             return $bookedTo;
@@ -579,7 +579,7 @@ class OrderController extends Controller
 
         return BookedTo::create([
             'transport_id' => $transport->id,
-            'name' => $name,
+            'location' => $location,
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);

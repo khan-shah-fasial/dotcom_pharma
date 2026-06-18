@@ -899,8 +899,15 @@ class CheckoutController extends Controller
 
         $options = BookedTo::active()
             ->where('transport_id', $transportId)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+            ->orderBy('location')
+            ->get(['id', 'location'])
+            ->map(function ($bookedTo) {
+                return [
+                    'id' => $bookedTo->id,
+                    'location' => $bookedTo->location,
+                    'name' => $bookedTo->location,
+                ];
+            });
 
         return response()->json($options);
     }

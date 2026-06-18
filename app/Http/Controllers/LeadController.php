@@ -345,10 +345,18 @@ class LeadController extends Controller
 
     protected function formData(?Lead $lead = null): array
     {
+        $departments = Department::active()
+            ->with('category')
+            ->get()
+            ->sortBy(function ($department) {
+                return strtolower((optional($department->category)->name ?? '') . '|' . $department->name);
+            })
+            ->values();
+
         return [
             'sources' => LeadSource::where('status', 1)->orderBy('name')->get(),
             'statuses' => LeadStatus::whereIn('name', ['New', 'Follow-up'])->orderBy('sort_order')->orderBy('name')->get(),
-            'departments' => Department::active()->with('category')->orderBy('name')->get(),
+            'departments' => $departments,
             'assignees' => User::where(function ($query) {
                 $query->whereIn('user_type', ['admin', 'staff'])
                     ->orWhereHas('staff');
