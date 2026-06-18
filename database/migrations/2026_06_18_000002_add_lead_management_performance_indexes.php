@@ -21,6 +21,7 @@ return new class extends Migration
         if (Schema::hasTable('lead_activities')) {
             Schema::table('lead_activities', function (Blueprint $table) {
                 $this->addIndexIfMissing($table, 'lead_activities', ['lead_id', 'id', 'expected_value'], 'idx_lead_activities_lead_id_expected');
+                $this->addIndexIfMissing($table, 'lead_activities', ['lead_id', 'created_at', 'id'], 'idx_lead_activities_lead_created_id');
                 $this->addIndexIfMissing($table, 'lead_activities', ['lead_id', 'next_followup'], 'idx_lead_activities_lead_followup');
                 $this->addIndexIfMissing($table, 'lead_activities', ['activity_type_id', 'lead_id'], 'idx_lead_activities_type_lead');
             });
@@ -119,6 +120,7 @@ return new class extends Migration
             Schema::table('lead_activities', function (Blueprint $table) {
                 $this->dropIndexIfExists($table, 'lead_activities', 'idx_lead_activities_type_lead');
                 $this->dropIndexIfExists($table, 'lead_activities', 'idx_lead_activities_lead_followup');
+                $this->dropIndexIfExists($table, 'lead_activities', 'idx_lead_activities_lead_created_id');
                 $this->dropIndexIfExists($table, 'lead_activities', 'idx_lead_activities_lead_id_expected');
             });
         }

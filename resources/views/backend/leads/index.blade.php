@@ -157,6 +157,11 @@
         </div>
 
     <div class="card-body">
+        @php
+            $lastActivitySortActive = request('sort_by') === 'last_activity_created_at';
+            $lastActivitySortOrder = strtolower((string) request('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
+            $lastActivityNextSortOrder = $lastActivitySortActive && $lastActivitySortOrder === 'asc' ? 'desc' : 'asc';
+        @endphp
         <table class="table aiz-table mb-0">
             <thead>
                 <tr>
@@ -169,7 +174,14 @@
                     <th>{{ translate('Created By') }}</th>
                     <th>{{ translate('Value') }}</th>
                     <th>{{ translate('Next Follow-up') }}</th>
-                    <th>{{ translate('Last Activity') }}</th>
+                    <th>
+                        <a href="{{ route('leads.index', array_merge(request()->except('page'), ['sort_by' => 'last_activity_created_at', 'sort_order' => $lastActivityNextSortOrder])) }}">
+                            {{ translate('Last Activity') }}
+                            @if ($lastActivitySortActive)
+                                <i class="las la-sort-amount-{{ $lastActivitySortOrder === 'asc' ? 'up' : 'down' }}"></i>
+                            @endif
+                        </a>
+                    </th>
                     <th>{{ translate('Description') }}</th>
                     <th class="text-right">{{ translate('Options') }}</th>
                 </tr>

@@ -90,8 +90,7 @@ class LeadController extends Controller
                 },
                 'latestActivity.activityType:id,title',
                 'latestActivity.subStatus:id,title',
-            ])
-            ->latest('leads.created_at');
+            ]);
 
         $this->applyLeadVisibility($leads);
 
@@ -150,6 +149,16 @@ class LeadController extends Controller
             });
         }
 
+        $sortBy = $request->input('sort_by');
+        $sortOrder = strtolower((string) $request->input('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        if ($sortBy === 'last_activity_created_at') {
+            $leads->orderByRaw('(' . $this->latestActivityCreatedAtSql() . ') ' . $sortOrder)
+                ->orderBy('leads.created_at', 'desc');
+        } else {
+            $leads->latest('leads.created_at');
+        }
+
         $leads = $leads->paginate(20);
 
         return view('backend.leads.index', $this->indexData() + [
@@ -178,9 +187,10 @@ class LeadController extends Controller
         return redirect()->route('leads.show', $lead->id);
     }
 
-    public function show(Lead $lead)
+    public function show(Request $request, Lead $lead)
     {
         $this->authorizeLeadAccess($lead);
+        $activitySortOrder = strtolower((string) $request->input('activity_sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
 
         $lead->load([
             'source',
@@ -194,12 +204,19 @@ class LeadController extends Controller
             'city',
             'latestActivity.activityType',
             'latestActivity.subStatus',
+            'activities' => function ($query) use ($activitySortOrder) {
+                $query->orderBy('created_at', $activitySortOrder)
+                    ->orderBy('id', $activitySortOrder);
+            },
             'activities.creator',
             'activities.activityType',
             'activities.subStatus',
         ]);
 
-        return view('backend.leads.show', $this->activityFormData() + ['lead' => $lead]);
+        return view('backend.leads.show', $this->activityFormData() + [
+            'lead' => $lead,
+            'activitySortOrder' => $activitySortOrder,
+        ]);
     }
 
     public function edit(Lead $lead)
@@ -581,6 +598,11 @@ class LeadController extends Controller
     protected function latestActivityExpectedValueSql(): string
     {
         return "select expected_value from lead_activities where lead_activities.lead_id = leads.id order by lead_activities.id desc limit 1";
+    }
+
+    protected function latestActivityCreatedAtSql(): string
+    {
+        return "select created_at from lead_activities where lead_activities.lead_id = leads.id order by lead_activities.id desc limit 1";
     }
 
     protected function storeActivityAttachments(Request $request): ?string

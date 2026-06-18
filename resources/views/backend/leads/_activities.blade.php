@@ -1,5 +1,7 @@
 @php
-    $activityRows = $lead->activities->sortByDesc('created_at');
+    $activityRows = $lead->activities;
+    $activitySortOrder = strtolower((string) ($activitySortOrder ?? request('activity_sort_order', 'desc'))) === 'asc' ? 'asc' : 'desc';
+    $nextActivitySortOrder = $activitySortOrder === 'asc' ? 'desc' : 'asc';
     $canEditActivity = auth()->user()->can('edit_lead');
     $canDeleteActivity = auth()->user()->hasRole('Super Admin');
     $activityHistoryColspan = $canEditActivity ? 9 : 8;
@@ -13,14 +15,19 @@
         <table class="table aiz-table mb-0">
             <thead>
                 <tr>
-                    <th>{{ translate('Type') }}</th>
-                    <th>{{ translate('Sub-status') }}</th>
-                    <th>{{ translate('Expected Value') }}</th>
-                    <th>{{ translate('Description') }}</th>
+                    <th>
+                        <a href="{{ route('leads.show', $lead->id) . '?' . http_build_query(array_merge(request()->except('page'), ['activity_sort_by' => 'created_at', 'activity_sort_order' => $nextActivitySortOrder])) }}">
+                            {{ translate('Created At') }}
+                            <i class="las la-sort-amount-{{ $activitySortOrder === 'asc' ? 'up' : 'down' }}"></i>
+                        </a>
+                    </th>
                     <th>{{ translate('Next Follow-up') }}</th>
-                    <th>{{ translate('Attachments') }}</th>
+                    <th>{{ translate('Activity Type') }}</th>
+                    <th>{{ translate('Sub-status') }}</th>
                     <th>{{ translate('Created By') }}</th>
-                    <th>{{ translate('Created At') }}</th>
+                    <th>{{ translate('Expected Value') }}</th>
+                    <th>{{ translate('Attachments') }}</th>
+                    <th>{{ translate('Description') }}</th>
                     @if($canEditActivity)
                         <th class="text-right">{{ translate('Actions') }}</th>
                     @endif
@@ -30,11 +37,12 @@
                 @forelse ($activityRows as $activity)
                     @php $attachmentFiles = $activity->attachment_files; @endphp
                     <tr>
+                        <td>{{ $activity->created_at ? $activity->created_at->format('d-m-Y h:i A') : '-' }}</td>
+                        <td>{{ $activity->next_followup ? $activity->next_followup->format('d-m-Y h:i A') : '-' }}</td>
                         <td>{{ optional($activity->activityType)->title ?? translate(ucfirst($activity->activity_type)) }}</td>
                         <td>{{ optional($activity->subStatus)->title ?? ($activity->activity_sub_status ? translate(ucwords(str_replace('_', ' ', $activity->activity_sub_status))) : '-') }}</td>
+                        <td>{{ optional($activity->creator)->name ?? '-' }}</td>
                         <td>{{ $activity->expected_value !== null ? number_format((float) $activity->expected_value, 2) : '-' }}</td>
-                        <td>{{ $activity->description }}</td>
-                        <td>{{ $activity->next_followup ? $activity->next_followup->format('d-m-Y h:i A') : '-' }}</td>
                         <td>
                             @forelse ($attachmentFiles as $upload)
                                 @php
@@ -48,8 +56,7 @@
                                 -
                             @endforelse
                         </td>
-                        <td>{{ optional($activity->creator)->name ?? '-' }}</td>
-                        <td>{{ $activity->created_at ? $activity->created_at->format('d-m-Y h:i A') : '-' }}</td>
+                        <td>{{ $activity->description }}</td>
                         @if($canEditActivity)
                             <td class="text-right">
                                 <button type="button" class="btn btn-soft-primary btn-icon btn-circle btn-sm" data-toggle="modal" data-target="#editActivityModal{{ $activity->id }}" title="{{ translate('Edit') }}">
