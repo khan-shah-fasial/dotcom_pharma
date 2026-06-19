@@ -525,7 +525,7 @@
     @endauth
 
     <!-- Hidden Google widget (must remain renderable for proper init) -->
-    <div id="google_translate_element" style="position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;"></div>
+    <div id="google_translate_element" style="position:absolute;left:-9999px;top:-9999px;"></div>
 
     <!-- ======= Language + Currency Modal ======= -->
     <div class="modal fade" id="languageCurrencyModal" tabindex="-1" role="dialog"
@@ -543,6 +543,9 @@
                 @php
                     $sessionCountryId = session('country_id');
                     $sessionLocale = session('locale', env('DEFAULT_LANGUAGE', 'en'));
+                    $activeLanguageCodesById = get_all_active_language()->pluck('code', 'id');
+                    $shouldLoadGoogleTranslate = $sessionLocale !== 'en'
+                        && get_all_active_language()->contains('code', $sessionLocale);
                 @endphp
 
                 <!-- Country -->
@@ -550,10 +553,19 @@
                     <h6 class="font-weight-bold mb-2">Select Country</h6>
                     <select id="countryDropdown" class="form-control" style="width:100%;">
                         @foreach (get_active_countries() as $country)
+                            @php
+                                $regionalLocaleCodes = collect($country->regional_language ?? [])
+                                    ->map(function ($languageId) use ($activeLanguageCodesById) {
+                                        return $activeLanguageCodesById->get((int) $languageId);
+                                    })
+                                    ->filter()
+                                    ->values();
+                            @endphp
                             <option
                                 value="{{ $country->id }}"
                                 data-default-currency-code="{{ optional($country->defaultCurrency)->code }}"
                                 data-default-locale="{{ optional($country->defaultLanguage)->code }}"
+                                data-regional-locales='@json($regionalLocaleCodes)'
                                 @selected((string) $sessionCountryId === (string) $country->id)
                             >
                                 {{ $country->name }}
@@ -568,34 +580,8 @@
                 <select id="languageDropdown" class="form-control" style="width:100%;">
                     @foreach (get_all_active_language() as $language)
                         @php
-                            // Google Translate uses language codes (e.g. hi, mr, gu, bn, ar). This app's Language codes may be country-like (e.g. in, bd, sa).
                             $codeLower = mb_strtolower(trim((string) ($language->code ?? '')));
                             $appLower = mb_strtolower(trim((string) ($language->app_lang_code ?? '')));
-
-                            $codeToGt = [
-                                'in' => 'hi',     // Hindi (often stored as IN in AIZ language seeds)
-                                'bd' => 'bn',     // Bangla
-                                'sa' => 'ar',     // Arabic
-                                'jp' => 'ja',     // Japanese
-                                'cn' => 'zh-CN',  // Chinese Simplified
-                                'tw' => 'zh-TW',  // Chinese Traditional
-                                'pk' => 'ur',     // Urdu
-                            ];
-
-                            $nameLower = (string) ($language->name ?? '');
-                            $nameLower = preg_replace('/\s+/u', ' ', trim($nameLower));
-                            $nameLower = mb_strtolower($nameLower);
-
-                            $nameToGt = [
-                                'hindi' => 'hi',
-                                'marathi' => 'mr',
-                                'gujarati' => 'gu',
-                                'arabic' => 'ar',
-                                'bangla' => 'bn',
-                                'bengali' => 'bn',
-                            ];
-
-                            $gtCode = $codeToGt[$codeLower] ?? $codeToGt[$appLower] ?? $nameToGt[$nameLower] ?? ($language->app_lang_code ?: $language->code);
 
                             // Display name guard/fix: some installs have broken names like "No" for valid language codes.
                             $displayName = (string) ($language->name ?? '');
@@ -616,12 +602,14 @@
                             if ($displayName === '') {
                                 continue;
                             }
+
+                            $flagCode = $language->app_lang_code ?: $language->code;
                         @endphp
                         <option
                             value="{{ $language->code }}"
-                            data-gt-code="{{ $gtCode }}"
+                            data-gt-code="{{ $language->code }}"
                             data-app-code="{{ $language->app_lang_code }}"
-                            data-flag="{{ static_asset('assets/img/flags/' . $language->code . '.png') }}"
+                            data-flag="{{ static_asset('assets/img/flags/' . $flagCode . '.png') }}"
                             @selected((string) $sessionLocale === (string) $language->code)
                         >
                             {{ $displayName }}
@@ -2392,14 +2380,6 @@ function scrollTabs(direction) {
 @endauth
 
 
-<!-- ===================== GOOGLE TRANSLATE INIT (keep only this one) ===================== -->
-<script>
-  function googleTranslateElementInit() {
-    new google.translate.TranslateElement({ pageLanguage: 'en' }, 'google_translate_element');
-  }
-</script>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
 <!-- ===================== APP LOGIC (full, with cookie-domain fix) ===================== -->
 <script>
 (function($){
@@ -2409,6 +2389,8 @@ function scrollTabs(direction) {
   var initialCountryId = null;
   var initialLocale = null;
   var initialCurrencyCode = null;
+  var savedLocale = @json($sessionLocale);
+  var shouldLoadGoogleTranslate = @json((bool) $shouldLoadGoogleTranslate);
 
   // ==================== COOKIE HELPERS (robust, base-domain only) ====================
   // Get base domain (eTLD+1) for cookies: works for most TLDs; extend two-part list if needed.
@@ -2472,6 +2454,23 @@ function scrollTabs(direction) {
     document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + exp + attrs;
   }
 
+  function setRawCookieBaseDomain(name, value, days) {
+    var base = getBaseDomain();
+    var exp = new Date(Date.now() + days*24*60*60*1000).toUTCString();
+    var attrs = ';path=/' + (location.protocol === 'https:' ? ';Secure' : '');
+    var isLocalhost = (base === 'localhost');
+    var isIp = /^\d+\.\d+\.\d+\.\d+$/.test(base);
+    var domainAttr = (isLocalhost || isIp) ? '' : ';domain=.' + base;
+
+    document.cookie = name + '=' + value + ';expires=' + exp + domainAttr + attrs;
+  }
+
+  function setRawCookieHostOnly(name, value, days) {
+    var exp = new Date(Date.now() + days*24*60*60*1000).toUTCString();
+    var attrs = ';path=/' + (location.protocol === 'https:' ? ';Secure' : '');
+    document.cookie = name + '=' + value + ';expires=' + exp + attrs;
+  }
+
   function getCookie(name) {
     var match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'));
     return match ? decodeURIComponent(match[1]) : null;
@@ -2483,9 +2482,9 @@ function scrollTabs(direction) {
     // Use a fixed source language to match the widget init (pageLanguage: 'en').
     var val = '/en/' + gtLangCode;
     deleteCookieEverywhere('googtrans');
-    // Write both host-only and base-domain cookies for maximum compatibility.
-    setCookieHostOnly('googtrans', val, 365);
-    setCookieBaseDomain('googtrans', val, 365);
+    // Google reads this cookie directly, so keep the slash-delimited value raw.
+    setRawCookieHostOnly('googtrans', val, 365);
+    setRawCookieBaseDomain('googtrans', val, 365);
   }
 
   function getGoogleTranslateLangFromCookie() {
@@ -2495,11 +2494,51 @@ function scrollTabs(direction) {
     return parts.length >= 3 ? parts[2] : null;
   }
 
+  function triggerNativeChange(el) {
+    try {
+      var evt = document.createEvent('HTMLEvents');
+      evt.initEvent('change', true, false);
+      el.dispatchEvent(evt);
+    } catch (e) {
+      try { el.dispatchEvent(new Event('change')); } catch (e2) {}
+      if (el.fireEvent) {
+        try { el.fireEvent('onchange'); } catch (e3) {}
+      }
+    }
+    if (typeof el.onchange === 'function') {
+      try { el.onchange(); } catch (e4) {}
+    }
+    if (window.jQuery) {
+      try { window.jQuery(el).trigger('change'); } catch (e5) {}
+    }
+  }
+
+  function comboHasOption(combo, value) {
+    value = String(value);
+    for (var i = 0; i < combo.options.length; i++) {
+      if (String(combo.options[i].value) === value) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Best-effort: also drive the widget's internal select (some setups won't apply cookie-only reliably).
   function forceGoogleTranslateTo(codes) {
     if (!codes) return;
     if (!Array.isArray(codes)) codes = [codes];
-    codes = codes.filter(function(c){ return !!c; });
+    var seenCodes = {};
+    codes = codes.reduce(function(list, code) {
+      if (code === null || code === undefined) {
+        return list;
+      }
+      code = String(code).trim();
+      if (!seenCodes[code]) {
+        seenCodes[code] = true;
+        list.push(code);
+      }
+      return list;
+    }, []);
     if (!codes.length) return;
 
     var attempts = 0;
@@ -2510,33 +2549,156 @@ function scrollTabs(direction) {
         var picked = null;
         for (var i = 0; i < codes.length; i++) {
           var c = codes[i];
-          if (combo.querySelector('option[value="'+c+'"]')) {
+          if (c === '') {
+            picked = '';
+            break;
+          }
+          if (comboHasOption(combo, c)) {
             picked = c;
             break;
           }
         }
-        picked = picked || codes[0];
-        combo.value = picked;
 
-        // Trigger change in a cross-browser way (some environments ignore `new Event('change')`).
-        try {
-          var evt = document.createEvent('HTMLEvents');
-          evt.initEvent('change', true, false);
-          combo.dispatchEvent(evt);
-        } catch (e) {
-          try { combo.dispatchEvent(new Event('change')); } catch (e2) {}
-          if (combo.fireEvent) {
-            try { combo.fireEvent('onchange'); } catch (e3) {}
+        if (picked !== null) {
+          if (picked === '' || picked === 'en') {
+            deleteCookieEverywhere('googtrans');
+          } else {
+            setGoogleTranslateLang(picked);
           }
+          if (picked !== '' && combo.value === picked) {
+            combo.value = '';
+            triggerNativeChange(combo);
+          }
+          setTimeout(function() {
+            combo.value = picked;
+            triggerNativeChange(combo);
+          }, 50);
+          return;
         }
-        return;
+        if (attempts >= 80) {
+          deleteCookieEverywhere('googtrans');
+          combo.value = '';
+          triggerNativeChange(combo);
+          return;
+        }
       }
-      if (attempts < 40) {
-        setTimeout(trySet, 300);
+      if (attempts < 80) {
+        setTimeout(trySet, 250);
       }
     }
     trySet();
   }
+
+  function getTranslationCodesFromOption($selected) {
+    if (!$selected.length) {
+      return [];
+    }
+
+    return uniqueValues([
+      $selected.attr('data-gt-code'),
+      $selected.attr('data-app-code'),
+      $selected.val()
+    ]);
+  }
+
+  function getSelectedTranslationCodes() {
+    return getTranslationCodesFromOption($('#languageDropdown option:selected'));
+  }
+
+  function getSavedTranslationCodes() {
+    if (!savedLocale) {
+      return [];
+    }
+
+    var $option = $('#languageDropdown option').filter(function() {
+      return String(this.value) === String(savedLocale);
+    }).first();
+
+    if (!$option.length) {
+      var allOptions = $('#languageDropdown').data('all-options');
+      if (allOptions) {
+        $option = allOptions.filter(function() {
+          return String(this.value) === String(savedLocale);
+        }).first();
+      }
+    }
+
+    return getTranslationCodesFromOption($option);
+  }
+
+  function applyGoogleTranslationCodes(codes) {
+    if (!codes.length) {
+      return;
+    }
+
+    var gtLangCode = codes[0];
+    if (gtLangCode === 'en') {
+      deleteCookieEverywhere('googtrans');
+      forceGoogleTranslateTo(['', 'en']);
+      return;
+    }
+
+    forceGoogleTranslateTo(codes);
+  }
+
+  function applySelectedGoogleTranslation() {
+    var codes = getSelectedTranslationCodes();
+    if (!codes.length) {
+      var cookieLang = getGoogleTranslateLangFromCookie();
+      if (cookieLang) {
+        forceGoogleTranslateTo(cookieLang);
+      }
+      return;
+    }
+
+    applyGoogleTranslationCodes(codes);
+  }
+
+  function persistSelectedGoogleCookie() {
+    var codes = getSelectedTranslationCodes();
+    deleteCookieEverywhere('googtrans');
+
+    if (!codes.length || codes[0] === 'en') {
+      return;
+    }
+
+    setGoogleTranslateLang(codes[0]);
+  }
+
+  function applySavedGoogleTranslation() {
+    applyGoogleTranslationCodes(getSavedTranslationCodes());
+  }
+
+  function prepareSavedGoogleCookie() {
+    var codes = getSavedTranslationCodes();
+    deleteCookieEverywhere('googtrans');
+
+    if (!codes.length || codes[0] === 'en') {
+      return;
+    }
+
+    setGoogleTranslateLang(codes[0]);
+  }
+
+  window.applySelectedGoogleTranslation = applySelectedGoogleTranslation;
+  window.googleTranslateElementInit = function() {
+    if (!shouldLoadGoogleTranslate) {
+      return;
+    }
+
+    if (!window.google || !google.translate || !google.translate.TranslateElement) {
+      return;
+    }
+
+    new google.translate.TranslateElement({
+      pageLanguage: 'en',
+      autoDisplay: false
+    }, 'google_translate_element');
+
+    window.googleTranslateReady = true;
+    applySavedGoogleTranslation();
+  };
+  prepareSavedGoogleCookie();
   // ==================== END COOKIE HELPERS ====================
 
   function initSelect2() {
@@ -2607,6 +2769,120 @@ function scrollTabs(direction) {
     enhanceSelect($currency, { width: '100%', dropdownParent: $modal });
   }
 
+  function uniqueValues(values) {
+    var seen = {};
+    var list = [];
+    values.forEach(function(value) {
+      value = value === null || value === undefined ? '' : String(value).trim();
+      if (value && !seen[value]) {
+        seen[value] = true;
+        list.push(value);
+      }
+    });
+    return list;
+  }
+
+  function parseJsonList(value) {
+    if (!value) {
+      return [];
+    }
+    try {
+      var parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function getAllowedLanguageValues($countryOption) {
+    var defaultLocale = $countryOption.attr('data-default-locale');
+    var regionalLocales = parseJsonList($countryOption.attr('data-regional-locales'));
+    var configuredLocales = uniqueValues([defaultLocale].concat(regionalLocales));
+
+    if (!configuredLocales.length) {
+      return null;
+    }
+
+    return uniqueValues(configuredLocales.concat([@json(env('DEFAULT_LANGUAGE', 'en')), 'en']));
+  }
+
+  function getAllowedCurrencyValues($countryOption) {
+    var defaultCurrencyCode = $countryOption.attr('data-default-currency-code');
+
+    if (!defaultCurrencyCode) {
+      return null;
+    }
+
+    return uniqueValues([defaultCurrencyCode, 'USD']);
+  }
+
+  function hasOptionValue($el, value) {
+    value = value === null || value === undefined ? '' : String(value);
+    if (!value) {
+      return false;
+    }
+
+    return $el.find('option').filter(function() {
+      return String(this.value) === value;
+    }).length > 0;
+  }
+
+  function setSelectValue($el, value) {
+    if (!hasOptionValue($el, value)) {
+      return false;
+    }
+
+    $el.val(value).trigger('change');
+    return true;
+  }
+
+  function filterSelectOptions($el, allowedValues) {
+    if (!$el.length) {
+      return;
+    }
+
+    if (!$el.data('all-options')) {
+      $el.data('all-options', $el.find('option').clone());
+    }
+
+    var currentValue = $el.val();
+    var allOptions = $el.data('all-options');
+    var allowedMap = null;
+
+    if (Array.isArray(allowedValues) && allowedValues.length) {
+      allowedMap = {};
+      allowedValues.forEach(function(value) {
+        allowedMap[String(value)] = true;
+      });
+    }
+
+    $el.empty();
+    var added = 0;
+    allOptions.each(function() {
+      if (!allowedMap || allowedMap[String(this.value)]) {
+        $el.append($(this).clone());
+        added++;
+      }
+    });
+
+    if (!added && allowedMap) {
+      allOptions.each(function() {
+        $el.append($(this).clone());
+      });
+    }
+
+    if (currentValue && hasOptionValue($el, currentValue)) {
+      $el.val(currentValue);
+    } else {
+      $el.val('');
+    }
+
+    $el.trigger('change.select2');
+    if ($el.selectpicker && $el.hasClass('selectpicker')) {
+      try { $el.selectpicker('refresh'); } catch (e) {}
+    }
+  }
+
   function updateNavFromSelections() {
     var langText = $('#languageDropdown option:selected').text().trim();
     if (langText) {
@@ -2635,17 +2911,23 @@ function scrollTabs(direction) {
     var $lang = $('#languageDropdown');
     var $cur = $('#currencyDropdown');
 
+    filterSelectOptions($lang, getAllowedLanguageValues($opt));
+    filterSelectOptions($cur, getAllowedCurrencyValues($opt));
+
     var hasLang = $lang.length && $lang.val();
     var hasCur = $cur.length && $cur.val();
 
-    if ((force || !hasLang) && defaultLocale && $lang.find('option[value="'+defaultLocale+'"]').length) {
-      var $lang = $('#languageDropdown');
-      $lang.val(defaultLocale).trigger('change');
+    if ((force || !hasLang) && defaultLocale && setSelectValue($lang, defaultLocale)) {
+      refreshPicker($lang);
+    } else if (!hasLang && setSelectValue($lang, @json(env('DEFAULT_LANGUAGE', 'en')))) {
+      refreshPicker($lang);
+    } else if (!hasLang && setSelectValue($lang, 'en')) {
       refreshPicker($lang);
     }
 
-    if ((force || !hasCur) && defaultCurrencyCode && $cur.find('option[value="'+defaultCurrencyCode+'"]').length) {
-      $cur.val(defaultCurrencyCode).trigger('change');
+    if ((force || !hasCur) && defaultCurrencyCode && setSelectValue($cur, defaultCurrencyCode)) {
+      refreshPicker($cur);
+    } else if (!hasCur && setSelectValue($cur, 'USD')) {
       refreshPicker($cur);
     }
   }
@@ -2658,7 +2940,6 @@ function scrollTabs(direction) {
     });
 
     $('#languageDropdown').on('change select2:select', function() {
-      // Preview only; actual apply happens on Save (like before).
       updateNavFromSelections();
     });
 
@@ -2673,21 +2954,8 @@ function scrollTabs(direction) {
       var countryId = $('#countryDropdown').val();
       var locale = $('#languageDropdown').val();
       var currencyCode = $('#currencyDropdown').val();
-      var gtLangCode = $('#languageDropdown option:selected').attr('data-gt-code');
 
-      var countryChanged = initialCountryId !== null && String(countryId) !== String(initialCountryId);
-      var currencyChanged = initialCurrencyCode !== null && currencyCode && String(currencyCode) !== String(initialCurrencyCode);
-      // Only language change should not need a reload; currency/country changes should reload to refresh server-rendered prices & state.
-    //   var needsReload = countryChanged || currencyChanged;
-
-    //   if (!needsReload) {
-    //     // Language-only: apply immediately without reload.
-    //     setGoogleTranslateLang(gtLangCode);
-    //     forceGoogleTranslateTo([gtLangCode, locale]);
-    //   } else {
-        // Country/currency change: just persist the cookie now; after reload we apply via page init.
-        setGoogleTranslateLang(gtLangCode);
-    //   }
+      persistSelectedGoogleCookie();
 
       $.post(locationChangeUrl, {
         _token: csrfToken,
@@ -2696,17 +2964,7 @@ function scrollTabs(direction) {
         currency_code: currencyCode
       })
       .done(function() {
-        // if (needsReload) {
-          window.location.reload();
-          return;
-        // }
-
-        // Persisted successfully; close modal without reload.
-        // initialCountryId = countryId;
-        // initialLocale = locale;
-        // initialCurrencyCode = currencyCode;
-        // $('#languageCurrencyModal').modal('hide');
-        // $btn.prop('disabled', false).text('Save Changes');
+        window.location.reload();
       })
       .fail(function() {
         $btn.prop('disabled', false).text('Save Changes');
@@ -2746,21 +3004,17 @@ function scrollTabs(direction) {
       });
     });
 
-    // Ensure the current session-selected language is applied through Google Translate on page load.
-    var selectedGt = $('#languageDropdown option:selected').attr('data-gt-code');
-    if (selectedGt) {
-      setGoogleTranslateLang(selectedGt);
-      forceGoogleTranslateTo(selectedGt);
-    } else {
-      var cookieLang = getGoogleTranslateLangFromCookie();
-      if (cookieLang) {
-        forceGoogleTranslateTo(cookieLang);
-      }
+    if (window.googleTranslateReady) {
+      applySavedGoogleTranslation();
     }
   });
 
 })(jQuery);
 </script>
+
+@if ($shouldLoadGoogleTranslate)
+    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
+@endif
 
 <script src="https://hcaptcha.com/1/api.js" async defer></script>
 

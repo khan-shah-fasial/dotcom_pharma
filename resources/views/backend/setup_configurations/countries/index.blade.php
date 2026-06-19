@@ -39,6 +39,7 @@
                         <th data-breakpoints="lg">{{translate('Code')}}</th>
                         <th>{{ translate('Default Currency') }}</th>
                         <th>{{ translate('Default Language') }}</th>
+                        <th>{{ translate('Regional Languages') }}</th>
                         <th>{{translate('Show/Hide')}}</th>
                     </tr>
                 </thead>
@@ -69,6 +70,26 @@
                                     <option value="">{{ translate('Select') }}</option>
                                     @foreach($active_languages as $language)
                                         <option value="{{ $language->id }}" @selected((string)$country->default_language_id === (string)$language->id)>
+                                            {{ $language->name }} ({{ $language->code }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td>
+                                @php
+                                    $selectedRegionalLanguages = collect($country->regional_language ?? [])->map(function ($id) {
+                                        return (string) $id;
+                                    })->all();
+                                @endphp
+                                <select id="regional_language_ids_{{ $country->id }}"
+                                    class="form-control form-control-sm aiz-selectpicker"
+                                    data-live-search="true" data-width="100%"
+                                    data-selected-text-format="count"
+                                    data-placeholder="{{ translate('Select regional languages') }}"
+                                    multiple
+                                    onchange="update_defaults({{ $country->id }}, false, this)">
+                                    @foreach($active_languages as $language)
+                                        <option value="{{ $language->id }}" @selected(in_array((string)$language->id, $selectedRegionalLanguages, true))>
                                             {{ $language->name }} ({{ $language->code }})
                                         </option>
                                     @endforeach
@@ -128,6 +149,7 @@
 
             var currencyId = $('#default_currency_id_' + countryId).val();
             var languageId = $('#default_language_id_' + countryId).val();
+            var regionalLanguageIds = $('#regional_language_ids_' + countryId).val() || [];
 
             // Convenience: if admin selects only one field, auto-fill the other with system defaults
             // to avoid requiring two manual selections.
@@ -153,7 +175,8 @@
                     _token:'{{ csrf_token() }}',
                     id: countryId,
                     default_currency_id: currencyId,
-                    default_language_id: languageId
+                    default_language_id: languageId,
+                    regional_language_ids: regionalLanguageIds
                 }
             }).done(function (data) {
                 if (data == 1) {

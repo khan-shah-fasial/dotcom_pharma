@@ -146,11 +146,14 @@ class CountryController extends Controller
             'id' => 'required|integer|exists:countries,id',
             'default_currency_id' => 'nullable|integer|exists:currencies,id',
             'default_language_id' => 'nullable|integer|exists:languages,id',
+            'regional_language_ids' => 'nullable|array',
+            'regional_language_ids.*' => 'integer|distinct|exists:languages,id',
         ]);
 
         $country = Country::findOrFail($request->id);
         $country->default_currency_id = $request->default_currency_id ?: null;
         $country->default_language_id = $request->default_language_id ?: null;
+        $country->regional_language = array_values(array_map('intval', $request->input('regional_language_ids', []) ?: []));
         $country->save();
 
         Cache::forget('active_countries');

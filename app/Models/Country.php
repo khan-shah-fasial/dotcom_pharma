@@ -9,6 +9,10 @@ class Country extends Model
 {
     use PreventDemoModeChanges;
 
+    protected $casts = [
+        'regional_language' => 'array',
+    ];
+
     /**
      * Get the Zone that owns the Country
      *
