@@ -1,6 +1,5 @@
 <script>
     $(function () {
-        var lookupTimer;
         var pincodeLookupTimer;
         var customerLookupUrl = @json(route('leads.customer_by_phone'));
         var stateUrl = @json(route('get-state'));
@@ -163,33 +162,37 @@
             });
         }
 
-        $('#lead_phone').on('input blur', function () {
-            var phone = this.value.trim();
-            clearTimeout(lookupTimer);
+        $('.js-lead-fetch-customer').on('click', function () {
+            var $button = $(this);
+            var phone = $($button.data('input')).val().trim();
+            var $status = $button.closest('.col-md-4').find('.lead-customer-lookup-status');
+            var originalHtml = $button.html();
 
             if (phone.replace(/\D/g, '').length < 5) {
-                $('#lead_customer_lookup_status').text('');
+                $status.removeClass('text-success text-muted').addClass('text-danger')
+                    .text('{{ translate('Please enter a valid phone number') }}');
                 return;
             }
 
-            lookupTimer = setTimeout(function () {
-                $('#lead_customer_lookup_status').removeClass('text-success text-muted').addClass('text-muted')
-                    .text('{{ translate('Searching business customer...') }}');
+            $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>{{ translate('Fetching') }}');
+            $status.removeClass('text-success text-danger').addClass('text-muted')
+                .text('{{ translate('Searching customer...') }}');
 
-                $.getJSON(customerLookupUrl, { phone: phone }).done(function (response) {
-                    if (response.found && response.customer) {
-                        fillCustomer(response.customer);
-                        $('#lead_customer_lookup_status').removeClass('text-muted').addClass('text-success')
-                            .text('{{ translate('Business customer details loaded') }}');
-                    } else {
-                        $('#lead_customer_lookup_status').removeClass('text-success').addClass('text-muted')
-                            .text('{{ translate('No business customer found') }}');
-                    }
-                }).fail(function () {
-                    $('#lead_customer_lookup_status').removeClass('text-success').addClass('text-danger')
-                        .text('{{ translate('Customer lookup failed') }}');
-                });
-            }, 450);
+            $.getJSON(customerLookupUrl, { phone: phone }).done(function (response) {
+                if (response.found && response.customer) {
+                    fillCustomer(response.customer);
+                    $status.removeClass('text-muted text-danger').addClass('text-success')
+                        .text('{{ translate('customer details loaded') }}');
+                } else {
+                    $status.removeClass('text-success text-danger').addClass('text-muted')
+                        .text('{{ translate('No customer found') }}');
+                }
+            }).fail(function () {
+                $status.removeClass('text-success text-muted').addClass('text-danger')
+                    .text('{{ translate('Customer lookup failed') }}');
+            }).always(function () {
+                $button.prop('disabled', false).html(originalHtml);
+            });
         });
 
         $('#lead_source_name').on('focus click input', function () {

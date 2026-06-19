@@ -758,6 +758,8 @@ class LeadController extends Controller
 
         $userPhone = $normalize('users.phone');
         $businessPhone = $normalize('user_details.prim_mobile_no_business');
+        $businessWhatsApp = $normalize('user_details.prim_whats_app_no_business');
+        $alternateBusinessWhatsApp = $normalize('user_details.alternate_whats_app_no_business');
         $length = strlen($phone);
 
         $customer = User::query()
@@ -765,11 +767,15 @@ class LeadController extends Controller
             ->join('user_details', 'user_details.user_id', '=', 'users.id')
             ->where('users.user_type', 'customer')
             ->whereNotNull('user_details.company_name')
-            ->where(function ($query) use ($userPhone, $businessPhone, $phone, $length) {
+            ->where(function ($query) use ($userPhone, $businessPhone, $businessWhatsApp, $alternateBusinessWhatsApp, $phone, $length) {
                 $query->whereRaw("{$userPhone} = ?", [$phone])
                     ->orWhereRaw("{$businessPhone} = ?", [$phone])
+                    ->orWhereRaw("{$businessWhatsApp} = ?", [$phone])
+                    ->orWhereRaw("{$alternateBusinessWhatsApp} = ?", [$phone])
                     ->orWhereRaw("RIGHT({$userPhone}, ?) = ?", [$length, $phone])
-                    ->orWhereRaw("RIGHT({$businessPhone}, ?) = ?", [$length, $phone]);
+                    ->orWhereRaw("RIGHT({$businessPhone}, ?) = ?", [$length, $phone])
+                    ->orWhereRaw("RIGHT({$businessWhatsApp}, ?) = ?", [$length, $phone])
+                    ->orWhereRaw("RIGHT({$alternateBusinessWhatsApp}, ?) = ?", [$length, $phone]);
             })
             ->with('user_details')
             ->first();

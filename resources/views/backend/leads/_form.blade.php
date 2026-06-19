@@ -67,14 +67,33 @@
 <div class="form-group row">
     <label class="col-md-2 col-form-label">{{ translate('Phone') }}</label>
     <div class="col-md-4">
-        <input type="text" name="phone" id="lead_phone" class="form-control" autocomplete="off"
-            value="{{ old('phone', $lead->phone ?? '') }}">
-        <small id="lead_customer_lookup_status" class="form-text"></small>
+        <div class="input-group">
+            <input type="text" name="phone" id="lead_phone" class="form-control" autocomplete="off"
+                value="{{ old('phone', $lead->phone ?? '') }}">
+            @if(!$lead)
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-soft-primary js-lead-fetch-customer" data-input="#lead_phone">
+                        <i class="las la-search"></i> {{ translate('Fetch') }}
+                    </button>
+                </div>
+            @endif
+        </div>
+        <small id="lead_customer_lookup_status" class="form-text lead-customer-lookup-status"></small>
         @error('phone') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
     <label class="col-md-1 col-form-label">{{ translate('WhatsApp Number') }}</label>
     <div class="col-md-4">
-        <input type="text" name="whatsapp_number" class="form-control" value="{{ old('whatsapp_number', $lead->whatsapp_number ?? '') }}">
+        <div class="input-group">
+            <input type="text" name="whatsapp_number" id="lead_whatsapp_number" class="form-control" value="{{ old('whatsapp_number', $lead->whatsapp_number ?? '') }}">
+            @if(!$lead)
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-soft-primary js-lead-fetch-customer" data-input="#lead_whatsapp_number">
+                        <i class="las la-search"></i> {{ translate('Fetch') }}
+                    </button>
+                </div>
+            @endif
+        </div>
+        <small class="form-text lead-customer-lookup-status"></small>
         @error('whatsapp_number') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
 </div>
