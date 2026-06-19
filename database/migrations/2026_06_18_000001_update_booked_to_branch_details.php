@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -13,15 +12,9 @@ return new class extends Migration
             return;
         }
 
-        if (!Schema::hasColumn('booked_to', 'location')) {
-            Schema::table('booked_to', function (Blueprint $table) {
-                $table->string('location')->nullable()->after('transport_id');
-            });
-        }
-
         Schema::table('booked_to', function (Blueprint $table) {
             if (!Schema::hasColumn('booked_to', 'branch_name')) {
-                $table->string('branch_name')->nullable()->after('location');
+                $table->string('branch_name')->nullable()->after('name');
             }
             if (!Schema::hasColumn('booked_to', 'branch_code')) {
                 $table->string('branch_code')->nullable()->after('branch_name');
@@ -42,34 +35,12 @@ return new class extends Migration
                 $table->string('branch_email')->nullable()->after('contact_incharge');
             }
         });
-
-        if (Schema::hasColumn('booked_to', 'name')) {
-            DB::table('booked_to')
-                ->whereNull('location')
-                ->update(['location' => DB::raw('name')]);
-
-            Schema::table('booked_to', function (Blueprint $table) {
-                $table->dropColumn('name');
-            });
-        }
     }
 
     public function down(): void
     {
         if (!Schema::hasTable('booked_to')) {
             return;
-        }
-
-        if (!Schema::hasColumn('booked_to', 'name')) {
-            Schema::table('booked_to', function (Blueprint $table) {
-                $table->string('name')->nullable()->after('transport_id');
-            });
-        }
-
-        if (Schema::hasColumn('booked_to', 'location')) {
-            DB::table('booked_to')
-                ->whereNull('name')
-                ->update(['name' => DB::raw('location')]);
         }
 
         Schema::table('booked_to', function (Blueprint $table) {
@@ -81,7 +52,6 @@ return new class extends Migration
                 'branch_gst_number',
                 'branch_code',
                 'branch_name',
-                'location',
             ] as $column) {
                 if (Schema::hasColumn('booked_to', $column)) {
                     $table->dropColumn($column);

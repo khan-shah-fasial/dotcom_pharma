@@ -21,7 +21,7 @@
     <div class="card-body">
         <table class="table table-bordered mb-0">
             <tr><th width="30%">{{ translate('Transport') }}</th><td>{{ optional($bookedTo->transport)->name ?? '-' }}</td></tr>
-            <tr><th>{{ translate('Location') }}</th><td>{{ $bookedTo->location ?? '-' }}</td></tr>
+            <tr><th>{{ translate('Location') }}</th><td>{{ $bookedTo->name ?? '-' }}</td></tr>
             <tr><th>{{ translate('Branch Name') }}</th><td>{{ $bookedTo->branch_name ?? '-' }}</td></tr>
             <tr><th>{{ translate('Branch Code') }}</th><td>{{ $bookedTo->branch_code ?? '-' }}</td></tr>
             <tr><th>{{ translate('Branch GST Number') }}</th><td>{{ $bookedTo->branch_gst_number ?? '-' }}</td></tr>

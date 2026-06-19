@@ -28,8 +28,8 @@
             <div class="form-group row">
                 <label class="col-md-2 col-form-label">{{ translate('Location') }} <span class="text-danger">*</span></label>
                 <div class="col-md-9">
-                    <input type="text" name="location" class="form-control" value="{{ old('location') }}" required>
-                    @error('location') <span class="text-danger small">{{ $message }}</span> @enderror
+                    <input type="text" name="name" class="form-control" value="{{ old('name', old('location')) }}" required>
+                    @error('name') <span class="text-danger small">{{ $message }}</span> @enderror
                 </div>
             </div>
             <div class="form-group row">

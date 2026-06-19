@@ -571,7 +571,7 @@ class OrderController extends Controller
         }
 
         $bookedTo = BookedTo::where('transport_id', $transport->id)
-            ->whereRaw('LOWER(location) = ?', [strtolower($location)])
+            ->whereRaw('LOWER(name) = ?', [strtolower($location)])
             ->first();
         if ($bookedTo) {
             return $bookedTo;
@@ -579,7 +579,7 @@ class OrderController extends Controller
 
         return BookedTo::create([
             'transport_id' => $transport->id,
-            'location' => $location,
+            'name' => $location,
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);

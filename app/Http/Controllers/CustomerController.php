@@ -459,7 +459,7 @@ class CustomerController extends Controller
     {
         return Transport::active()
             ->with(['bookedTo' => function ($query) {
-                $query->active()->orderBy('location');
+                $query->active()->orderBy('name');
             }])
             ->orderBy('name')
             ->get();
@@ -483,7 +483,7 @@ class CustomerController extends Controller
             'transport_id' => optional($transport)->id,
             'booked_to_id' => optional($bookedTo)->id,
             'transport' => optional($transport)->name ?? $request->input('transport', $details->transport ?? null),
-            'booked_to' => optional($bookedTo)->location ?? $request->input('booked_to', $details->booked_to ?? null),
+            'booked_to' => optional($bookedTo)->name ?? $request->input('booked_to', $details->booked_to ?? null),
         ];
     }
 

@@ -20,7 +20,7 @@ class BookedToController extends Controller
 
         if ($sort_search) {
             $booked_to->where(function ($query) use ($sort_search) {
-                $query->where('location', 'like', '%' . $sort_search . '%')
+                $query->where('name', 'like', '%' . $sort_search . '%')
                     ->orWhere('branch_name', 'like', '%' . $sort_search . '%')
                     ->orWhere('branch_code', 'like', '%' . $sort_search . '%')
                     ->orWhere('branch_gst_number', 'like', '%' . $sort_search . '%')
@@ -95,8 +95,12 @@ class BookedToController extends Controller
 
     protected function validatedData(Request $request): array
     {
+        if (!$request->filled('name') && $request->filled('location')) {
+            $request->merge(['name' => $request->input('location')]);
+        }
+
         foreach ([
-            'location',
+            'name',
             'branch_name',
             'branch_code',
             'branch_gst_number',
@@ -111,7 +115,7 @@ class BookedToController extends Controller
 
         $data = $request->validate([
             'transport_id' => 'required|exists:transports,id',
-            'location' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'branch_name' => 'nullable|string|max:255',
             'branch_code' => 'nullable|string|max:255',
             'branch_gst_number' => 'nullable|string|max:255',

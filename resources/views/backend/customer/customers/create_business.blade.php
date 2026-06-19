@@ -910,7 +910,7 @@
                     if (!$selectedBookedToId && $selectedTransportId && $details?->booked_to) {
                         $matchedBookedTo = optional($transports->firstWhere('id', (int) $selectedTransportId))->bookedTo
                             ?->first(function ($bookedTo) use ($details) {
-                                return strcasecmp($bookedTo->location, (string) $details->booked_to) === 0;
+                                return strcasecmp($bookedTo->name, (string) $details->booked_to) === 0;
                             });
                         $selectedBookedToId = optional($matchedBookedTo)->id;
                     }
@@ -980,7 +980,7 @@
         const defaultCityText = @json(translate('Select City'));
         const transportBookedToOptions = @json($transports->mapWithKeys(function ($transport) {
             return [(string) $transport->id => $transport->bookedTo->map(function ($bookedTo) {
-                return ['id' => $bookedTo->id, 'name' => $bookedTo->location];
+                return ['id' => $bookedTo->id, 'name' => $bookedTo->name];
             })->values()];
         }));
 

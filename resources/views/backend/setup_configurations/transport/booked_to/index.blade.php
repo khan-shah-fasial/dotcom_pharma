@@ -45,7 +45,7 @@
                     <tr>
                         <td>{{ $booked_to->firstItem() + $key }}</td>
                         <td>{{ optional($item->transport)->name ?? '-' }}</td>
-                        <td>{{ $item->location }}</td>
+                        <td>{{ $item->name }}</td>
                         <td>{{ $item->branch_name ?? '-' }}</td>
                         <td>{{ $item->branch_code ?? '-' }}</td>
                         <td>{{ $item->branch_gst_number ?? '-' }}</td>

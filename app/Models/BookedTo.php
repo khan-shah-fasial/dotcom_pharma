@@ -10,7 +10,6 @@ class BookedTo extends Model
 
     protected $fillable = [
         'transport_id',
-        'location',
         'name',
         'branch_name',
         'branch_code',
@@ -23,14 +22,14 @@ class BookedTo extends Model
         'created_by',
     ];
 
-    public function getNameAttribute($value)
+    public function getLocationAttribute($value)
     {
-        return $value ?? ($this->attributes['location'] ?? null);
+        return $value ?? ($this->attributes['name'] ?? null);
     }
 
-    public function setNameAttribute($value): void
+    public function setLocationAttribute($value): void
     {
-        $this->attributes['location'] = $value;
+        $this->attributes['name'] = $value;
     }
 
     public function transport()
