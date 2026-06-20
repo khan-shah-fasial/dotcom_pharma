@@ -45,6 +45,14 @@
                         </div>
                     </div>
                     <div class="form-group row">
+                        <label class="col-sm-3 col-from-label" for="display_email">{{ translate('Display Mail ID') }}</label>
+                        <div class="col-sm-9">
+                            <input type="email" placeholder="{{ translate('Public email shown on support page') }}" id="display_email"
+                                name="display_email" value="{{ old('display_email', $staff->display_email) }}" class="form-control">
+                            @error('display_email') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                    <div class="form-group row">
                         <label class="col-sm-3 col-from-label" for="designation">{{ translate('Designation') }}</label>
                         <div class="col-sm-9">
                             <input type="text" placeholder="{{ translate('Designation') }}" id="designation" name="designation" value="{{ $staff->designation }}" class="form-control">

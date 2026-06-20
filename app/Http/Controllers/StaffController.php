@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\User;
 use Hash;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 
 class StaffController extends Controller
 {
@@ -50,6 +51,16 @@ class StaffController extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'display_email' => 'nullable|email|max:255',
+            'mobile' => 'required|string|max:50',
+            'password' => 'required|string|min:6',
+            'role_id' => 'required|integer|exists:roles,id',
+            'designation' => 'nullable|string|max:255',
+        ]);
+
         if (User::where('email', $request->email)->first() == null) {
             $user = new User;
             $user->name = $request->name;
@@ -65,6 +76,7 @@ class StaffController extends Controller
                 $staff->user_id = $user->id;
                 $staff->role_id = $request->role_id;
                 $staff->designation = $request->designation;
+                $staff->display_email = $request->filled('display_email') ? trim($request->display_email) : null;
                 $staff->area_assignments = $this->prepareAreaAssignmentsFromRequest($request);
 
                 $user->assignRole(Role::findOrFail($request->role_id)->name);
@@ -116,6 +128,17 @@ class StaffController extends Controller
     {
         $staff = Staff::findOrFail($id);
         $user = $staff->user;
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'display_email' => 'nullable|email|max:255',
+            'mobile' => 'required|string|max:50',
+            'password' => 'nullable|string|min:6',
+            'role_id' => 'required|integer|exists:roles,id',
+            'designation' => 'nullable|string|max:255',
+        ]);
+
         $user->name = $request->name;
         $user->email = $request->email;
         $user->phone = $request->mobile;
@@ -128,6 +151,7 @@ class StaffController extends Controller
         if ($user->save()) {
             $staff->role_id = $request->role_id;
             $staff->designation = $request->designation;
+            $staff->display_email = $request->filled('display_email') ? trim($request->display_email) : null;
             $staff->area_assignments = $this->prepareAreaAssignmentsFromRequest($request);
 
             if ($staff->save()) {

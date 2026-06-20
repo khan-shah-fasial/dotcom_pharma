@@ -105,7 +105,7 @@
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label" for="pincode_business">{{ translate('Pincode') }}</label>
                                                 <input type="text" class="form-control" id="pincode_business"
-                                                    name="pincode_business" value="{{ $pincode_business ?? '' }}"
+                                                    name="pincode_business" value="{{ $businessPincode ?? '' }}"
                                                     placeholder="{{ translate('Pincode') }}">
                                             </div>
                                             <div class="col-md-6 mb-3">
@@ -171,7 +171,7 @@
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label" for="pincode">{{ translate('Pincode') }}</label>
                                                 <input type="text" class="form-control" id="pincode"
-                                                    name="pincode" value="{{ $pincode ?? '' }}"
+                                                    name="pincode" value="{{ $personalPincode ?? '' }}"
                                                     placeholder="{{ translate('Pincode') }}">
                                             </div>
                                             <div class="col-md-6 mb-3">
@@ -676,6 +676,7 @@
 @section('script')
     <script type="text/javascript">
         const defaultLocationOption = @json(translate('All'));
+        const locationLookupTimers = {};
 
         function refreshPicker($el) {
             if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.bootstrapSelect === 'function') {
@@ -713,10 +714,10 @@
                 setLocationOptions(scope, 'city_id', [], '');
                 setLocationOptions(scope, 'post', [], '');
                 setLocationOptions(scope, 'village', [], '');
-                return;
+                return $.Deferred().resolve().promise();
             }
 
-            $.get("{{ route('customers.location.options') }}", { country_id: countryId, scope: scope })
+            return $.get("{{ route('customers.location.options') }}", { country_id: countryId, scope: scope })
                 .done(function (resp) {
                     const selected = preserveSelected ? $('#' + scope + '_state_id').data('selected') : '';
                     setLocationOptions(scope, 'state_id', resp.states || [], selected);
@@ -732,33 +733,15 @@
                 setLocationOptions(scope, 'city_id', [], '');
                 setLocationOptions(scope, 'post', [], '');
                 setLocationOptions(scope, 'village', [], '');
-                return;
+                return $.Deferred().resolve().promise();
             }
 
-            $.get("{{ route('customers.location.options') }}", { country_id: countryId, state: stateId, scope: scope })
+            return $.get("{{ route('customers.location.options') }}", { country_id: countryId, state: stateId, scope: scope })
                 .done(function (resp) {
-                    const selected = preserveSelected ? $('#' + scope + '_district').data('selected') : '';
-                    setLocationOptions(scope, 'district', resp.districts || [], selected);
-                    populateCities(scope, preserveSelected);
-                });
-        }
-
-        function populateCities(scope, preserveSelected = false) {
-            const countryId = $('#' + scope + '_country_id').val();
-            const stateId = $('#' + scope + '_state_id').val();
-            const districtId = $('#' + scope + '_district').val();
-            const cityId = $('#' + scope + '_city_id').val();
-            if (!countryId || !stateId || !districtId) {
-                setLocationOptions(scope, 'city_id', [], '');
-                setLocationOptions(scope, 'post', [], '');
-                setLocationOptions(scope, 'village', [], '');
-                return;
-            }
-
-            $.get("{{ route('customers.location.options') }}", { country_id: countryId, state: stateId, district: districtId, scope: scope })
-                .done(function (resp) {
-                    const selected = preserveSelected ? $('#' + scope + '_city_id').data('selected') : cityId;
-                    setLocationOptions(scope, 'city_id', resp.cities || [], selected);
+                    const selectedDistrict = preserveSelected ? $('#' + scope + '_district').data('selected') : '';
+                    const selectedCity = preserveSelected ? $('#' + scope + '_city_id').data('selected') : '';
+                    setLocationOptions(scope, 'district', resp.districts || [], selectedDistrict);
+                    setLocationOptions(scope, 'city_id', resp.cities || [], selectedCity);
                     populatePosts(scope, preserveSelected);
                 });
         }
@@ -811,6 +794,52 @@
             });
         }
 
+        function applyPincodeLocation(scope, location) {
+            if (!location || !location.country_id) {
+                if (window.AIZ && AIZ.plugins && AIZ.plugins.notify) {
+                    AIZ.plugins.notify('warning', '{{ translate('No customer location found for this pincode') }}');
+                }
+                return;
+            }
+
+            const selectedFields = {
+                state_id: location.state_id,
+                district: location.district,
+                city_id: location.city_id,
+                post: location.post,
+                village: location.village
+            };
+
+            Object.keys(selectedFields).forEach(function (field) {
+                $('#' + scope + '_' + field).data('selected', selectedFields[field] || '');
+            });
+
+            const $country = $('#' + scope + '_country_id');
+            $country.val(String(location.country_id));
+            refreshPicker($country);
+            populateStates(scope, true);
+        }
+
+        function lookupPincode(scope) {
+            const inputSelector = scope === 'business' ? '#pincode_business' : '#pincode';
+            const pincode = $(inputSelector).val().trim();
+            if (pincode.length < 3) {
+                return;
+            }
+
+            $.get("{{ route('customers.location.options') }}", {
+                scope: scope,
+                pincode: pincode,
+                country_id: $('#' + scope + '_country_id').val() || ''
+            }).done(function (resp) {
+                applyPincodeLocation(scope, resp.location || null);
+            }).fail(function (xhr) {
+                if (xhr.status !== 403 && window.AIZ && AIZ.plugins && AIZ.plugins.notify) {
+                    AIZ.plugins.notify('danger', '{{ translate('Unable to fetch location details') }}');
+                }
+            });
+        }
+
         $(function () {
             initLocationFilters();
         });
@@ -828,7 +857,7 @@
                 });
 
                 $('#' + scope + '_district').on('change', function () {
-                    populateCities(scope, false);
+                    populatePosts(scope, false);
                 });
 
                 $('#' + scope + '_city_id').on('change', function () {
@@ -838,6 +867,18 @@
                 $('#' + scope + '_post').on('change', function () {
                     populateVillages(scope, false);
                 });
+
+                const pincodeSelector = scope === 'business' ? '#pincode_business' : '#pincode';
+                $(pincodeSelector).on('input blur', function () {
+                    clearTimeout(locationLookupTimers[scope]);
+                    locationLookupTimers[scope] = setTimeout(function () {
+                        lookupPincode(scope);
+                    }, 350);
+                });
+
+                if ($(pincodeSelector).val().trim() && !$('#' + scope + '_country_id').val()) {
+                    lookupPincode(scope);
+                }
             });
 
             $('.btn-apply-filters').on('click', function () {

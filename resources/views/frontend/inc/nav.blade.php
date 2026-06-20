@@ -591,7 +591,13 @@ body .translater_menu .select2-container {
 
                     <ul class="list-inline d-flex justify-content-end mb-0">
 
-
+                        <li class="list-inline-item d-none d-md-inline">
+                            <button type="button" id="defaultEnglishLanguageBtn"
+                                class="btn b2b_buttons d-grid align-items-center"
+                                title="{{ translate('Switch to English') }}">
+                                <span><i class="fa fa-globe"></i></span> <span>English</span>
+                            </button>
+                        </li>
 
                         <li class="list-inline-item d-none d-md-inline mr-md-3 mr-3">
                             <a class="b2b_buttons d-grid align-items-center" href="{{ route('user.new_registration') }}">

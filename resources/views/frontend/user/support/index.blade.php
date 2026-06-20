@@ -92,7 +92,7 @@ body .mt-15 {
                             $hasHalfStar  = $ratingValue - $fullStars >= 0.5;
                             $emptyStars   = 5 - $fullStars - ($hasHalfStar ? 1 : 0);
 
-                            $staffEmail = $user->email ?? null;
+                            $staffEmail = $staff->display_email ?: null;
                             $staffPhone = $user->phone ?? null;
                         @endphp
 

@@ -151,6 +151,7 @@
             $('[name="company_name"]').val(customer.company_name || '');
             $('[name="email"]').val(customer.email || '');
             if (customer.phone) $('[name="phone"]').val(customer.phone);
+            if (customer.alternate_mobile_number) $('[name="alternate_mobile_number"]').val(customer.alternate_mobile_number);
             if (customer.whatsapp_number) $('[name="whatsapp_number"]').val(customer.whatsapp_number);
             $('#lead_address').val(customer.address || '');
             $('#lead_pincode').val(customer.pincode || '');

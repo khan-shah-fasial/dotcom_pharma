@@ -563,6 +563,7 @@
                             @endphp
                             <option
                                 value="{{ $country->id }}"
+                                data-flag="{{ static_asset('assets/img/flags/' . strtolower($country->code) . '.png') }}"
                                 data-default-currency-code="{{ optional($country->defaultCurrency)->code }}"
                                 data-default-locale="{{ optional($country->defaultLanguage)->code }}"
                                 data-regional-locales='@json($regionalLocaleCodes)'
@@ -2763,7 +2764,12 @@ function scrollTabs(direction) {
     });
 
     var $country = $('#countryDropdown');
-    enhanceSelect($country, { width: '100%', dropdownParent: $modal });
+    enhanceSelect($country, {
+        width: '100%',
+        dropdownParent: $modal,
+        templateResult: tpl,
+        templateSelection: tpl
+    });
 
     var $currency = $('#currencyDropdown');
     enhanceSelect($currency, { width: '100%', dropdownParent: $modal });
@@ -2813,7 +2819,7 @@ function scrollTabs(direction) {
       return null;
     }
 
-    return uniqueValues([defaultCurrencyCode, 'USD']);
+    return uniqueValues([defaultCurrencyCode, 'USD', 'CNY']);
   }
 
   function hasOptionValue($el, value) {
@@ -2934,6 +2940,38 @@ function scrollTabs(direction) {
 
   // ---- Save handler ----
   function wireEvents() {
+    $('#defaultEnglishLanguageBtn').on('click', function(event) {
+      event.preventDefault();
+
+      var $btn = $(this);
+      var originalHtml = $btn.html();
+      var $language = $('#languageDropdown');
+
+      if (!setSelectValue($language, 'en')) {
+        if (window.toastr && toastr.error) {
+          toastr.error('English language is not available.');
+        }
+        return;
+      }
+
+      $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+      persistSelectedGoogleCookie();
+
+      $.post(locationChangeUrl, {
+        _token: csrfToken,
+        country_id: $('#countryDropdown').val(),
+        locale: 'en',
+        currency_code: $('#currencyDropdown').val() || null
+      }).done(function() {
+        window.location.reload();
+      }).fail(function() {
+        $btn.prop('disabled', false).html(originalHtml);
+        if (window.toastr && toastr.error) {
+          toastr.error('Unable to change language. Please try again.');
+        }
+      });
+    });
+
     $('#countryDropdown').on('change select2:select', function() {
       applyCountryDefaultsFromSelection(true);
       updateNavFromSelections();

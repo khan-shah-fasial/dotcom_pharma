@@ -22,7 +22,9 @@ class LocationController extends Controller
             'currency_code' => [
                 'nullable',
                 'string',
-                Rule::exists('currencies', 'code')->where('status', 1),
+                Rule::exists('currencies', 'code')->where(function ($query) {
+                    $query->where('status', 1)->orWhere('code', 'CNY');
+                }),
             ],
             'locale' => [
                 'nullable',
@@ -35,7 +37,11 @@ class LocationController extends Controller
 
         $currency = null;
         if (!empty($validated['currency_code'])) {
-            $currency = Currency::where('code', $validated['currency_code'])->where('status', 1)->first();
+            $currency = Currency::where('code', $validated['currency_code'])
+                ->where(function ($query) {
+                    $query->where('status', 1)->orWhere('code', 'CNY');
+                })
+                ->first();
         }
         $currency = $currency ?: LocationUtility::resolveCurrencyForCountry($country);
 
@@ -51,4 +57,3 @@ class LocationController extends Controller
         return response()->json(['success' => true]);
     }
 }
-

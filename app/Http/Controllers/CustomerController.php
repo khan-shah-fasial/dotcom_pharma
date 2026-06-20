@@ -199,6 +199,7 @@ class CustomerController extends Controller
         $personalVillage   = $request->input('personal_village');
 
         $filter_transport  = $request->transport ?? null;
+        $staffAreaAssignments = $this->currentStaffAreaAssignments();
 
         // Base query
         $users = User::with('details')
@@ -209,6 +210,15 @@ class CustomerController extends Controller
             //         ->whereColumn('user_details.user_id', 'users.id'),
             //     'ASC'
             // );
+
+        if ($staffAreaAssignments !== null) {
+            $this->applyStaffAreaScope($users, $staffAreaAssignments);
+
+            if (!$this->locationSelectionIsAllowed($businessCountryId, $businessStateId, $businessCityId, $staffAreaAssignments)
+                || !$this->locationSelectionIsAllowed($personalCountryId, $personalStateId, $personalCityId, $staffAreaAssignments)) {
+                abort(403, translate('You cannot filter customers outside your assigned area.'));
+            }
+        }
 
         // Approval filter
         if ($verification_status !== null) {
@@ -328,19 +338,15 @@ class CustomerController extends Controller
             ->sort()
             ->values();
 
-        // Grouped location trees for modal dropdowns
-        $businessLocationTree = getUserDetailsLocationTree('business');
-        $personalLocationTree = getUserDetailsLocationTree('personal');
-        $businessCountryOptions = collect($businessLocationTree)
-            ->unique('id')
-            ->sortBy('name')
-            ->values()
-            ->all();
-        $personalCountryOptions = collect($personalLocationTree)
-            ->unique('id')
-            ->sortBy('name')
-            ->values()
-            ->all();
+        // Administrators can filter by every enabled country. Staff only see countries
+        // included in their assigned area records.
+        $countryOptionsQuery = Country::query()->isEnabled()->orderBy('name');
+        if ($staffAreaAssignments !== null) {
+            $countryOptionsQuery->whereIn('id', collect($staffAreaAssignments)->pluck('country_id')->unique()->all());
+        }
+        $countryOptions = $countryOptionsQuery->get(['id', 'name']);
+        $businessCountryOptions = $countryOptions;
+        $personalCountryOptions = $countryOptions;
 
         // Sorting
         $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
@@ -392,20 +398,20 @@ class CustomerController extends Controller
             'sortBy',
             'sortOrder',
             'transportList',
+            'businessPincode',
             'businessCountryId',
             'businessStateId',
             'businessCityId',
             'businessDistrict',
             'businessPost',
             'businessVillage',
+            'personalPincode',
             'personalCountryId',
             'personalStateId',
             'personalCityId',
             'personalDistrict',
             'personalPost',
             'personalVillage',
-            'businessLocationTree',
-            'personalLocationTree',
             'businessCountryOptions',
             'personalCountryOptions',
             'hasBusinessLocationFilters',
@@ -1783,18 +1789,186 @@ class CustomerController extends Controller
         return 'uploads/document/' . $documentName;
     }
 
+    /**
+     * Return null for unrestricted admin access and an array (possibly empty)
+     * for a staff user's configured area assignments.
+     */
+    protected function currentStaffAreaAssignments(): ?array
+    {
+        $user = auth()->user();
+        if (!$user || $user->user_type !== 'staff') {
+            return null;
+        }
+
+        $rawAssignments = optional($user->staff)->area_assignments;
+        $assignments = is_array($rawAssignments)
+            ? $rawAssignments
+            : json_decode((string) $rawAssignments, true);
+
+        if (!is_array($assignments)) {
+            return [];
+        }
+
+        return collect($assignments)
+            ->filter(function ($area) {
+                return is_array($area) && !empty($area['country_id']);
+            })
+            ->map(function ($area) {
+                $districtId = $area['district_id'] ?? null;
+
+                return [
+                    'country_id' => (int) $area['country_id'],
+                    'state_id' => filled($area['state_id'] ?? null) ? (int) $area['state_id'] : null,
+                    'district_id' => filled($districtId) ? (int) $districtId : null,
+                    'all_districts' => !empty($area['all_districts']) || !filled($districtId),
+                ];
+            })
+            ->unique(function ($area) {
+                return implode(':', [
+                    $area['country_id'],
+                    $area['state_id'] ?? '*',
+                    $area['all_districts'] ? '*' : ($area['district_id'] ?? '*'),
+                ]);
+            })
+            ->values()
+            ->all();
+    }
+
+    protected function addAreaAssignmentConditions($query, array $assignments, string $scope, string $boolean = 'and'): void
+    {
+        $isBusiness = $scope === 'business';
+        $countryColumn = $isBusiness ? 'country_id_business' : 'country_id';
+        $stateColumn = $isBusiness ? 'state_id_business' : 'state_id';
+        $cityColumn = $isBusiness ? 'city_id_business' : 'city_id';
+        $method = $boolean === 'or' ? 'orWhere' : 'where';
+
+        $query->{$method}(function ($areaQuery) use ($assignments, $countryColumn, $stateColumn, $cityColumn) {
+            if (empty($assignments)) {
+                $areaQuery->whereRaw('1 = 0');
+                return;
+            }
+
+            foreach ($assignments as $area) {
+                $areaQuery->orWhere(function ($assignmentQuery) use ($area, $countryColumn, $stateColumn, $cityColumn) {
+                    $assignmentQuery->where($countryColumn, $area['country_id']);
+
+                    if ($area['state_id'] !== null) {
+                        $assignmentQuery->where($stateColumn, $area['state_id']);
+                    }
+
+                    if (!$area['all_districts'] && $area['district_id'] !== null) {
+                        $assignmentQuery->where($cityColumn, $area['district_id']);
+                    }
+                });
+            }
+        });
+    }
+
+    protected function applyStaffAreaScope($users, array $assignments): void
+    {
+        $users->whereHas('details', function ($detailsQuery) use ($assignments) {
+            $detailsQuery->where(function ($locationQuery) use ($assignments) {
+                $this->addAreaAssignmentConditions($locationQuery, $assignments, 'business');
+                $this->addAreaAssignmentConditions($locationQuery, $assignments, 'personal', 'or');
+            });
+        });
+    }
+
+    protected function locationSelectionIsAllowed($countryId, $stateId, $cityId, array $assignments): bool
+    {
+        if (!filled($countryId) && !filled($stateId) && !filled($cityId)) {
+            return true;
+        }
+
+        if (!filled($countryId)) {
+            return false;
+        }
+
+        foreach ($assignments as $area) {
+            if ((int) $area['country_id'] !== (int) $countryId) {
+                continue;
+            }
+
+            if (filled($stateId) && $area['state_id'] !== null && (int) $area['state_id'] !== (int) $stateId) {
+                continue;
+            }
+
+            if (filled($cityId) && !$area['all_districts'] && $area['district_id'] !== null
+                && (int) $area['district_id'] !== (int) $cityId) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function allowedStateIdsForArea(?array $assignments, int $countryId): ?array
+    {
+        if ($assignments === null) {
+            return null;
+        }
+
+        $areas = collect($assignments)->where('country_id', $countryId);
+        if ($areas->contains(function ($area) {
+            return $area['state_id'] === null;
+        })) {
+            return null;
+        }
+
+        return $areas->pluck('state_id')->filter()->unique()->values()->all();
+    }
+
+    protected function allowedCityIdsForArea(?array $assignments, int $countryId, int $stateId): ?array
+    {
+        if ($assignments === null) {
+            return null;
+        }
+
+        $areas = collect($assignments)->filter(function ($area) use ($countryId, $stateId) {
+            return (int) $area['country_id'] === $countryId
+                && ($area['state_id'] === null || (int) $area['state_id'] === $stateId);
+        });
+
+        if ($areas->contains(function ($area) {
+            return $area['all_districts'] || $area['district_id'] === null;
+        })) {
+            return null;
+        }
+
+        return $areas->pluck('district_id')->filter()->unique()->values()->all();
+    }
+
 
     /**
      * Ajax: dependent location options based on current selections.
      */
     public function locationOptions(Request $request)
     {
-        $scope     = $request->input('scope', 'business'); // business | personal
-        $countryId = $request->input('country_id');
-        $stateId   = $request->input('state');      // state id
-        $district  = $request->input('district');   // district text
-        $cityId    = $request->input('city');       // city id
-        $postName  = $request->input('post');       // post text
+        $validated = $request->validate([
+            'scope' => 'nullable|in:business,personal',
+            'country_id' => 'nullable|integer|exists:countries,id',
+            'state' => 'nullable|integer|exists:states,id',
+            'district' => 'nullable|string|max:255',
+            'city' => 'nullable|integer|exists:cities,id',
+            'post' => 'nullable|string|max:255',
+            'pincode' => 'nullable|string|max:20',
+        ]);
+
+        $scope = $validated['scope'] ?? 'business';
+        $countryId = $validated['country_id'] ?? null;
+        $stateId = $validated['state'] ?? null;
+        $district = $validated['district'] ?? null;
+        $cityId = $validated['city'] ?? null;
+        $postName = $validated['post'] ?? null;
+        $pincode = isset($validated['pincode']) ? trim($validated['pincode']) : null;
+        $staffAreaAssignments = $this->currentStaffAreaAssignments();
+
+        if ($staffAreaAssignments !== null
+            && !$this->locationSelectionIsAllowed($countryId, $stateId, $cityId, $staffAreaAssignments)) {
+            abort(403, translate('You cannot filter customers outside your assigned area.'));
+        }
 
         $isBusiness = $scope === 'business';
         $countryCol = $isBusiness ? 'country_id_business' : 'country_id';
@@ -1803,23 +1977,99 @@ class CustomerController extends Controller
         $distCol    = $isBusiness ? 'district_business' : 'district';
         $postCol    = $isBusiness ? 'post_business' : 'post';
         $villageCol = $isBusiness ? 'village_business' : 'village';
+        $pincodeCol = $isBusiness ? 'pincode_business' : 'pincode';
+
+        $newDetailsQuery = function () use ($staffAreaAssignments, $scope) {
+            $query = UserDetails::query();
+            if ($staffAreaAssignments !== null) {
+                $this->addAreaAssignmentConditions($query, $staffAreaAssignments, $scope);
+            }
+
+            return $query;
+        };
+
+        $location = null;
+        if (filled($pincode)) {
+            $matchQuery = $newDetailsQuery()
+                ->whereRaw('TRIM(' . $pincodeCol . ') = ?', [$pincode]);
+
+            if ($countryId) {
+                $matchQuery->where($countryCol, $countryId);
+            }
+
+            $match = $matchQuery->orderByDesc('updated_at')->first([
+                $countryCol,
+                $stateCol,
+                $cityCol,
+                $distCol,
+                $postCol,
+                $villageCol,
+            ]);
+
+            if ($match) {
+                $matchedCountryId = (int) $match->{$countryCol};
+                $stateValue = trim((string) $match->{$stateCol});
+                $cityValue = trim((string) $match->{$cityCol});
+
+                $matchedState = null;
+                if ($stateValue !== '') {
+                    $matchedState = State::query()
+                        ->where('country_id', $matchedCountryId)
+                        ->where(function ($query) use ($stateValue) {
+                            if (ctype_digit($stateValue)) {
+                                $query->where('id', (int) $stateValue)
+                                    ->orWhereRaw('LOWER(TRIM(name)) = ?', [strtolower($stateValue)]);
+                            } else {
+                                $query->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($stateValue)]);
+                            }
+                        })
+                        ->first(['id', 'name']);
+                }
+
+                $matchedCity = null;
+                if ($cityValue !== '') {
+                    $matchedCity = City::query()
+                        ->when($matchedState, function ($query) use ($matchedState) {
+                            $query->where('state_id', $matchedState->id);
+                        })
+                        ->where(function ($query) use ($cityValue) {
+                            if (ctype_digit($cityValue)) {
+                                $query->where('id', (int) $cityValue)
+                                    ->orWhereRaw('LOWER(TRIM(name)) = ?', [strtolower($cityValue)]);
+                            } else {
+                                $query->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($cityValue)]);
+                            }
+                        })
+                        ->first(['id', 'name']);
+                }
+
+                $location = [
+                    'country_id' => $matchedCountryId ?: null,
+                    'state_id' => optional($matchedState)->id,
+                    'district' => $match->{$distCol},
+                    'city_id' => optional($matchedCity)->id,
+                    'post' => $match->{$postCol},
+                    'village' => $match->{$villageCol},
+                ];
+
+                $countryId = $countryId ?: $location['country_id'];
+                $stateId = $stateId ?: $location['state_id'];
+                $district = $district ?: $location['district'];
+                $cityId = $cityId ?: $location['city_id'];
+                $postName = $postName ?: $location['post'];
+            }
+        }
 
         $states = collect();
         if ($countryId) {
-            $stateIds = UserDetails::query()
-                ->where($countryCol, $countryId)
-                ->pluck($stateCol)
-                ->filter()
-                ->unique()
-                ->values();
-
-            if ($stateIds->isNotEmpty()) {
-                $states = State::query()
-                    ->where('country_id', $countryId)
-                    ->whereIn('id', $stateIds)
-                    ->orderBy('name')
-                    ->get(['id', 'name']);
+            $stateQuery = State::query()
+                ->where('status', 1)
+                ->where('country_id', $countryId);
+            $allowedStateIds = $this->allowedStateIdsForArea($staffAreaAssignments, (int) $countryId);
+            if ($allowedStateIds !== null) {
+                $stateQuery->whereIn('id', $allowedStateIds);
             }
+            $states = $stateQuery->orderBy('name')->get(['id', 'name']);
         }
 
         $cities = collect();
@@ -1828,7 +2078,7 @@ class CustomerController extends Controller
         $villages = collect();
 
         if ($countryId && $stateId) {
-            $districts = UserDetails::query()
+            $districts = $newDetailsQuery()
                 ->where($countryCol, $countryId)
                 ->where($stateCol, $stateId)
                 ->pluck($distCol)
@@ -1843,27 +2093,24 @@ class CustomerController extends Controller
         }
 
         if ($countryId && $stateId) {
-            $cityIds = UserDetails::query()
-                ->where($countryCol, $countryId)
-                ->where($stateCol, $stateId)
-                ->pluck($cityCol)
-                ->filter()
-                ->unique()
-                ->values();
-
-            if ($cityIds->isNotEmpty()) {
-                $cities = City::query()
-                    ->where('state_id', $stateId)
-                    ->whereIn('id', $cityIds)
-                    ->orderBy('name')
-                    ->get(['id', 'name']);
+            $cityQuery = City::query()
+                ->where('status', 1)
+                ->where('state_id', $stateId);
+            $allowedCityIds = $this->allowedCityIdsForArea(
+                $staffAreaAssignments,
+                (int) $countryId,
+                (int) $stateId
+            );
+            if ($allowedCityIds !== null) {
+                $cityQuery->whereIn('id', $allowedCityIds);
             }
+            $cities = $cityQuery->orderBy('name')->get(['id', 'name']);
         }
 
         if ($countryId && $stateId && $district && $cityId) {
             $district = trim((string) $district);
 
-            $posts = UserDetails::query()
+            $posts = $newDetailsQuery()
                 ->where($countryCol, $countryId)
                 ->where($stateCol, $stateId)
                 ->where($cityCol, $cityId)
@@ -1883,7 +2130,7 @@ class CustomerController extends Controller
             $district = trim((string) $district);
             $postName = trim((string) $postName);
 
-            $villages = UserDetails::query()
+            $villages = $newDetailsQuery()
                 ->where($countryCol, $countryId)
                 ->where($stateCol, $stateId)
                 ->where($cityCol, $cityId)
@@ -1906,6 +2153,7 @@ class CustomerController extends Controller
             'cities'    => $cities,
             'posts'     => $posts,
             'villages'  => $villages,
+            'location'  => $location,
         ]);
     }
 }

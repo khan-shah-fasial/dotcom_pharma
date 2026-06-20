@@ -55,6 +55,7 @@ class LeadController extends Controller
                 'leads.name',
                 'leads.email',
                 'leads.phone',
+                'leads.alternate_mobile_number',
                 'leads.whatsapp_number',
                 'leads.company_name',
                 'leads.source_id',
@@ -103,6 +104,7 @@ class LeadController extends Controller
                     ->orWhere('company_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('alternate_mobile_number', 'like', "%{$search}%")
                     ->orWhere('whatsapp_number', 'like', "%{$search}%")
                     ->orWhereHas('department', function ($departmentQuery) use ($search) {
                         $departmentQuery->where('name', 'like', "%{$search}%");
@@ -306,6 +308,7 @@ class LeadController extends Controller
         $request->merge([
             'email' => $this->nullableTrimmedInput($request->input('email')),
             'phone' => $this->nullableTrimmedInput($request->input('phone')),
+            'alternate_mobile_number' => $this->nullableTrimmedInput($request->input('alternate_mobile_number')),
             'whatsapp_number' => $this->nullableTrimmedInput($request->input('whatsapp_number')),
             'designation' => $this->nullableTrimmedInput($request->input('designation')),
         ]);
@@ -336,6 +339,9 @@ class LeadController extends Controller
             'phone' => array_merge($phoneRules, [
                 Rule::unique('leads', 'phone')->ignore($lead?->id),
             ]),
+            'alternate_mobile_number' => array_merge($phoneRules, [
+                Rule::unique('leads', 'alternate_mobile_number')->ignore($lead?->id),
+            ]),
             'whatsapp_number' => array_merge($phoneRules, [
                 Rule::unique('leads', 'whatsapp_number')->ignore($lead?->id),
             ]),
@@ -355,8 +361,10 @@ class LeadController extends Controller
         ], [
             'email.unique' => translate('Already Exist'),
             'phone.unique' => translate('Already Exist'),
+            'alternate_mobile_number.unique' => translate('Already Exist'),
             'whatsapp_number.unique' => translate('Already Exist'),
             'phone.regex' => translate('Please enter a valid phone number'),
+            'alternate_mobile_number.regex' => translate('Please enter a valid alternate mobile number'),
             'whatsapp_number.regex' => translate('Please enter a valid WhatsApp number'),
         ]);
 
@@ -758,6 +766,7 @@ class LeadController extends Controller
 
         $userPhone = $normalize('users.phone');
         $businessPhone = $normalize('user_details.prim_mobile_no_business');
+        $alternateBusinessPhone = $normalize('user_details.alt_mobile_no_business');
         $businessWhatsApp = $normalize('user_details.prim_whats_app_no_business');
         $alternateBusinessWhatsApp = $normalize('user_details.alternate_whats_app_no_business');
         $length = strlen($phone);
@@ -767,13 +776,15 @@ class LeadController extends Controller
             ->join('user_details', 'user_details.user_id', '=', 'users.id')
             ->where('users.user_type', 'customer')
             ->whereNotNull('user_details.company_name')
-            ->where(function ($query) use ($userPhone, $businessPhone, $businessWhatsApp, $alternateBusinessWhatsApp, $phone, $length) {
+            ->where(function ($query) use ($userPhone, $businessPhone, $alternateBusinessPhone, $businessWhatsApp, $alternateBusinessWhatsApp, $phone, $length) {
                 $query->whereRaw("{$userPhone} = ?", [$phone])
                     ->orWhereRaw("{$businessPhone} = ?", [$phone])
+                    ->orWhereRaw("{$alternateBusinessPhone} = ?", [$phone])
                     ->orWhereRaw("{$businessWhatsApp} = ?", [$phone])
                     ->orWhereRaw("{$alternateBusinessWhatsApp} = ?", [$phone])
                     ->orWhereRaw("RIGHT({$userPhone}, ?) = ?", [$length, $phone])
                     ->orWhereRaw("RIGHT({$businessPhone}, ?) = ?", [$length, $phone])
+                    ->orWhereRaw("RIGHT({$alternateBusinessPhone}, ?) = ?", [$length, $phone])
                     ->orWhereRaw("RIGHT({$businessWhatsApp}, ?) = ?", [$length, $phone])
                     ->orWhereRaw("RIGHT({$alternateBusinessWhatsApp}, ?) = ?", [$length, $phone]);
             })
@@ -800,6 +811,7 @@ class LeadController extends Controller
                 'company_name' => $details->company_name,
                 'email' => $details->prim_email_business ?: $customer->email,
                 'phone' => $details->prim_mobile_no_business ?: $customer->phone,
+                'alternate_mobile_number' => $details->alt_mobile_no_business,
                 'whatsapp_number' => $details->prim_whats_app_no_business,
                 'address' => $address,
                 'country_id' => $details->country_id_business,

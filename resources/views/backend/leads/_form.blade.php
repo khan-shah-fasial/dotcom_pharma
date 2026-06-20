@@ -98,6 +98,14 @@
     </div>
 </div>
 <div class="form-group row">
+    <label class="col-md-2 col-form-label">{{ translate('Alternate Mobile Number') }}</label>
+    <div class="col-md-9">
+        <input type="text" name="alternate_mobile_number" id="lead_alternate_mobile_number" class="form-control"
+            value="{{ old('alternate_mobile_number', $lead->alternate_mobile_number ?? '') }}">
+        @error('alternate_mobile_number') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+</div>
+<div class="form-group row">
     <label class="col-md-2 col-form-label">{{ translate('Name') }} <span class="text-danger">*</span></label>
     <div class="col-md-9">
         <input type="text" name="name" class="form-control" value="{{ old('name', $lead->name ?? '') }}" required>

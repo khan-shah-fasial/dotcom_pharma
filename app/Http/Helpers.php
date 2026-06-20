@@ -4117,8 +4117,10 @@ if (!function_exists('get_all_active_currency')) {
     {
         return Cache::remember('all_active_currency', now()->addHours(6), function () {
             $currency_query = Currency::query();
-            $currency_query->where('status', 1);
-            return $currency_query->get();
+            $currency_query->where(function ($query) {
+                $query->where('status', 1)->orWhere('code', 'CNY');
+            });
+            return $currency_query->orderBy('name')->get();
         });
     }
 }

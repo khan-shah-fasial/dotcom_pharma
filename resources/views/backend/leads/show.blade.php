@@ -60,6 +60,16 @@
                         </td>
                     </tr>
                     <tr>
+                        <th>{{ translate('Alternate Mobile Number') }}</th>
+                        <td>
+                            @if ($lead->alternate_mobile_number)
+                                <a href="tel:{{ preg_replace('/\s+/', '', $lead->alternate_mobile_number) }}">{{ $lead->alternate_mobile_number }}</a>
+                            @else
+                                -
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
                         <th>{{ translate('WhatsApp Number') }}</th>
                         <td>
                             @if ($lead->whatsapp_number && $whatsappHref)
