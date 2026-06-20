@@ -2344,14 +2344,13 @@ function scrollTabs(direction) {
 @auth
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        var prescBtn = document.getElementById('prescription-btn');
-        if (prescBtn) {
+        document.querySelectorAll('.prescription-trigger').forEach(function (prescBtn) {
             prescBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 var prescModal = new bootstrap.Modal(document.getElementById('prescriptionModal'));
                 prescModal.show();
             });
-        }
+        });
     });
 
 

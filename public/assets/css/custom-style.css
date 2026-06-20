@@ -1881,7 +1881,7 @@ body .b2b_buttons_green:hover {
     color: #fff !important;
 }
 
-#prescription-btn {
+.prescription-trigger {
     border: 1px solid #2b56a1;
     color: #2b56a1;
     margin-left: 15px;
@@ -1896,9 +1896,24 @@ body .b2b_buttons_green:hover {
     background-color: white;
 }
 
-#prescription-btn:hover {
+.prescription-trigger:hover {
     background: #2b56a1;
     color: #fff;
+}
+
+.search-form-with-prescription {
+    min-width: 0;
+}
+
+#prescription-btn {
+    align-items: center;
+    display: inline-flex;
+    flex-shrink: 0;
+    height: 40px;
+    margin-left: 8px;
+    padding: 0 10px !important;
+    top: 0;
+    white-space: nowrap;
 }
 
 .delivery_section {

@@ -595,7 +595,7 @@ body .translater_menu .select2-container {
                             <button type="button" id="defaultEnglishLanguageBtn"
                                 class="btn b2b_buttons d-grid align-items-center"
                                 title="{{ translate('Switch to English') }}">
-                                <span><i class="fa fa-globe"></i></span> <span>English</span>
+                                <span class="pr-1"><i class="fa fa-globe"></i></span> <span class="pr-1">English</span>
                             </button>
                         </li>
 
@@ -604,17 +604,6 @@ body .translater_menu .select2-container {
                                 <span><i class="las la-sign-in-alt"></i></span> <span>B2B Registration</span>
                             </a>
                         </li>
-
-                        {{--  --}}
-                        <!-- prescription -->
-                         @auth
-                            <li class="list-inline-item d-none d-md-inline mr-md-3 mr-2">
-                                <a href="javascript:void(0)" id="prescription-btn" class="ml-0" title="Upload Prescription">
-                                    <i class="fa fa-file-prescription"></i> Prescription</a>
-                            </li>
-                        @endauth
-                        {{--  --}}
-
 
                         <li class="list-inline-item mr-md-3 mr-3">
                             {{-- <!-- Hidden Google Translate -->
@@ -804,7 +793,8 @@ body .translater_menu .select2-container {
 
                             <div class="flex-grow-1 front-header-search active d-flex align-items-center bg-white">
                         <div class="position-relative flex-grow-1 px-3 px-lg-0">
-                            <form id="searchForm" action="{{ route('search') }}" method="GET" class="stop-propagation">
+                            <div class="d-flex align-items-center">
+                            <form id="searchForm" action="{{ route('search') }}" method="GET" class="stop-propagation flex-grow-1 search-form-with-prescription">
                                 <div class="d-flex position-relative align-items-center">
                                     <div class="search-toggle-side-nav-bar" data-toggle="class-toggle" data-target=".front-header-search">
                                         <button class="btn px-2" type="button"><i
@@ -853,6 +843,16 @@ body .translater_menu .select2-container {
                                     </div>
                                 </div>
                             </form>
+                            @auth
+                                <a href="javascript:void(0)" id="prescription-btn"
+                                    class="prescription-trigger ml-2"
+                                    title="{{ translate('Upload Prescription') }}"
+                                    aria-label="{{ translate('Upload Prescription') }}">
+                                    <i class="fa fa-file-prescription"></i>
+                                    <span class="d-none d-xl-inline ml-1">{{ translate('Prescription') }}</span>
+                                </a>
+                            @endauth
+                            </div>
                             <div class="typed-search-box stop-propagation document-click-d-none d-none bg-white rounded shadow-lg position-absolute left-0 top-100 w-100"
                                 style="min-height: 200px">
                                 <div class="search-preloader absolute-top-center">
@@ -1837,7 +1837,7 @@ body .translater_menu .select2-container {
 
                     @auth
                         <li class="list-inline-item">
-                            <a href="javascript:void(0)" id="prescription-btn" class="ml-0 prescription-btn_menu" title="Upload Prescription">
+                            <a href="javascript:void(0)" id="prescription-btn-mobile" class="ml-0 prescription-trigger prescription-btn_menu" title="Upload Prescription">
                                 <i class="fa fa-file-prescription"></i> Prescription</a>
                         </li>
                     @endauth
