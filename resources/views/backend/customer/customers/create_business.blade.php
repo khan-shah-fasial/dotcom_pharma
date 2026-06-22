@@ -274,8 +274,6 @@
                     </div>
                 </div>
 
-                </div>
-
                 {{-- Business core --}}
                 <div class="row business-requires-gst">
                     <div class="col-md-3">
@@ -318,6 +316,8 @@
                             @enderror
                         </div>
                     </div>
+                </div>
+
                 </div>
 
                 {{-- Business Address --}}
