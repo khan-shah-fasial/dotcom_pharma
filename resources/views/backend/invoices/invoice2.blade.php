@@ -111,6 +111,18 @@
         }
         .small { font-size: 9px; }
         .grid td { border: 1px solid #000; padding: 6px 5px; font-size: 10px; }
+        .invoice-checkbox {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            margin-left: 4px;
+            border: 1px solid #000;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 10px;
+            text-align: center;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -196,6 +208,7 @@
 
     $subTotal = $order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail));
     $shippingTotal = $order->orderDetails->sum('shipping_cost');
+    $freightPaid = (float) $shippingTotal > 0 && $order->payment_status === 'paid';
     $shippingInvoiceLine = shipping_invoice_line($order->orderDetails, $shippingTotal, $transport, translate('Shipping'));
     $shippingBaseAmount = $shippingInvoiceLine['base_amount'] ?? 0;
     $taxTotal = 0;
@@ -376,7 +389,7 @@
                 <br>
                 {{ translate('Order No.') }}: {{ $orderNo ?? '-' }}
                 <br>
-                {{ translate('Order By') }}: {{ $orderBy ?? '-' }}
+                {{ translate('Order By') }}: {{ $customerName ?: '-' }}
             </td>
         </tr>
         <tr>
@@ -617,7 +630,10 @@
 
     <table class="grid" style="margin-top: 6px;">
         <tr>
-            <td width="16%">{{ translate('Freight Paid') }}</td>
+            <td width="16%">
+                {{ translate('Freight Paid') }}
+                <span class="invoice-checkbox">@if($freightPaid)&#10003;@endif</span>
+            </td>
             <td width="16%">{{ translate('C/C Attached') }}</td>
             <td width="16%">{{ translate('Door Delivery') }}</td>
             <td width="52%" rowspan="2">                

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Brand;
+use App\Models\Group;
 use App\Models\ProductStock;
 use App\Models\ProductBatch;
 use App\Models\CommissionHistory;
@@ -21,7 +23,11 @@ class ReportController extends Controller
         // Staff Permission Check
         $this->middleware(['permission:in_house_product_sale_report'])->only('in_house_sale_report');
         $this->middleware(['permission:seller_products_sale_report'])->only('seller_sale_report');
-        $this->middleware(['permission:products_stock_report'])->only('stock_report');
+        $this->middleware(['permission:products_stock_report'])->only([
+            'stock_report',
+            'product_detail_report',
+            'getProductDetailFilterOptions',
+        ]);
         $this->middleware(['permission:product_wishlist_report'])->only('wish_report');
         $this->middleware(['permission:user_search_report'])->only('user_search_report');
         $this->middleware(['permission:commission_history_report'])->only('commission_history');
@@ -102,6 +108,174 @@ class ReportController extends Controller
             'productId',
             'variantId',
             'batchId'
+        ));
+    }
+
+    public function product_detail_report(Request $request)
+    {
+        $search = trim((string) $request->input('search'));
+        $categoryId = $request->filled('category_id') ? (int) $request->input('category_id') : null;
+        $groupId = $request->filled('group_id') ? (int) $request->input('group_id') : null;
+        $brandId = $request->filled('brand_id') ? (int) $request->input('brand_id') : null;
+        $productId = $request->filled('product_id') ? (int) $request->input('product_id') : null;
+        $variantId = $request->filled('variant_id') ? (int) $request->input('variant_id') : null;
+        $batchId = $request->filled('batch_id') ? (int) $request->input('batch_id') : null;
+        $publishedStatus = $request->filled('published_status') ? (string) $request->input('published_status') : null;
+        $stockStatus = $request->filled('stock_status') ? (string) $request->input('stock_status') : null;
+        $expiryStatus = $request->filled('expiry_status') ? (string) $request->input('expiry_status') : null;
+        $sortBy = (string) $request->input('sort_by', 'product_name');
+        $sortOrder = strtolower((string) $request->input('sort_order', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        $allowedSorts = [
+            'product_name' => 'products.name',
+            'sku' => 'product_stocks.sku',
+            'variant' => 'product_stocks.variant',
+            'batch' => 'product_batches.batch',
+            'mrp_price' => 'product_batches.mrp_price',
+            'qty' => 'product_batches.qty',
+            'expiry' => 'product_batches.product_exp_date',
+        ];
+        if (!array_key_exists($sortBy, $allowedSorts)) {
+            $sortBy = 'product_name';
+        }
+
+        $reportRows = ProductBatch::query()
+            ->join('products', 'products.id', '=', 'product_batches.product_id')
+            ->join('product_stocks', 'product_stocks.id', '=', 'product_batches.product_stock_id')
+            ->select('product_batches.*')
+            ->with([
+                'stock',
+                'product.brand',
+                'product.main_category',
+                'product.main_group',
+                'product.categories',
+                'product.groups',
+                'product.taxes',
+            ])
+            ->when($search !== '', function ($query) use ($search) {
+                $like = '%' . $search . '%';
+
+                $query->where(function ($searchQuery) use ($like) {
+                    $searchQuery
+                        ->where('products.name', 'like', $like)
+                        ->orWhere('products.drug_name', 'like', $like)
+                        ->orWhere('products.role_label', 'like', $like)
+                        ->orWhere('product_stocks.sku', 'like', $like)
+                        ->orWhere('product_stocks.variant', 'like', $like)
+                        ->orWhere('product_batches.batch', 'like', $like)
+                        ->orWhereHas('product.product_translations', function ($translationQuery) use ($like) {
+                            $translationQuery->where('name', 'like', $like);
+                        });
+                });
+            })
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where(function ($categoryQuery) use ($categoryId) {
+                    $categoryQuery
+                        ->where('products.category_id', $categoryId)
+                        ->orWhereHas('product.categories', function ($relationQuery) use ($categoryId) {
+                            $relationQuery->where('categories.id', $categoryId);
+                        });
+                });
+            })
+            ->when($groupId, function ($query) use ($groupId) {
+                $query->where(function ($groupQuery) use ($groupId) {
+                    $groupQuery
+                        ->where('products.group_id', $groupId)
+                        ->orWhereHas('product.groups', function ($relationQuery) use ($groupId) {
+                            $relationQuery->where('groups.id', $groupId);
+                        });
+                });
+            })
+            ->when($brandId, function ($query) use ($brandId) {
+                $query->where('products.brand_id', $brandId);
+            })
+            ->when($productId, function ($query) use ($productId) {
+                $query->where('product_batches.product_id', $productId);
+            })
+            ->when($variantId, function ($query) use ($variantId) {
+                $query->where('product_batches.product_stock_id', $variantId);
+            })
+            ->when($batchId, function ($query) use ($batchId) {
+                $query->where('product_batches.id', $batchId);
+            })
+            ->when(in_array($publishedStatus, ['0', '1'], true), function ($query) use ($publishedStatus) {
+                $query->where('products.published', (int) $publishedStatus);
+            })
+            ->when($stockStatus === 'in_stock', function ($query) {
+                $query->where('product_batches.qty', '>', 0);
+            })
+            ->when($stockStatus === 'out_of_stock', function ($query) {
+                $query->where('product_batches.qty', '<=', 0);
+            })
+            ->when($expiryStatus === 'expired', function ($query) {
+                $query->whereNotNull('product_batches.product_exp_date')
+                    ->whereDate('product_batches.product_exp_date', '<', now()->toDateString());
+            })
+            ->when($expiryStatus === 'expiring_soon', function ($query) {
+                $query->whereBetween('product_batches.product_exp_date', [
+                    now()->toDateString(),
+                    now()->addDays(90)->toDateString(),
+                ]);
+            })
+            ->when($expiryStatus === 'valid', function ($query) {
+                $query->whereDate('product_batches.product_exp_date', '>', now()->addDays(90)->toDateString());
+            })
+            ->when($expiryStatus === 'no_expiry', function ($query) {
+                $query->whereNull('product_batches.product_exp_date');
+            })
+            ->orderBy($allowedSorts[$sortBy], $sortOrder)
+            ->orderBy('product_stocks.variant')
+            ->orderBy('product_batches.batch')
+            ->paginate(25)
+            ->withQueryString();
+
+        $categories = Category::where('digital', 0)->orderBy('name')->get(['id', 'name']);
+        $groups = Group::where('digital', 0)->orderBy('name')->get(['id', 'name']);
+        $brands = Brand::orderBy('name')->get(['id', 'name']);
+
+        $productsForFilter = $this->applyProductDetailProductFilters(
+            Product::query()->whereHas('stocks.batches'),
+            $categoryId,
+            $groupId,
+            $brandId
+        )->orderBy('name')->get(['id', 'name']);
+
+        $variants = collect();
+        $batches = collect();
+        if ($productId) {
+            $variants = ProductStock::where('product_id', $productId)
+                ->whereHas('batches')
+                ->orderBy('variant')
+                ->get(['id', 'variant', 'sku']);
+
+            $batches = ProductBatch::where('product_id', $productId)
+                ->when($variantId, function ($query) use ($variantId) {
+                    $query->where('product_stock_id', $variantId);
+                })
+                ->orderBy('batch')
+                ->get(['id', 'batch', 'product_stock_id']);
+        }
+
+        return view('backend.reports.product_detail_report', compact(
+            'reportRows',
+            'categories',
+            'groups',
+            'brands',
+            'productsForFilter',
+            'variants',
+            'batches',
+            'search',
+            'categoryId',
+            'groupId',
+            'brandId',
+            'productId',
+            'variantId',
+            'batchId',
+            'publishedStatus',
+            'stockStatus',
+            'expiryStatus',
+            'sortBy',
+            'sortOrder'
         ));
     }
 
@@ -234,6 +408,71 @@ class ReportController extends Controller
         ]);
     }
 
+    public function getProductDetailFilterOptions(Request $request)
+    {
+        $categoryId = $request->filled('category_id') ? (int) $request->input('category_id') : null;
+        $groupId = $request->filled('group_id') ? (int) $request->input('group_id') : null;
+        $brandId = $request->filled('brand_id') ? (int) $request->input('brand_id') : null;
+        $productId = $request->filled('product_id') ? (int) $request->input('product_id') : null;
+        $variantId = $request->filled('variant_id') ? (int) $request->input('variant_id') : null;
+
+        $products = $this->applyProductDetailProductFilters(
+            Product::query()->whereHas('stocks.batches'),
+            $categoryId,
+            $groupId,
+            $brandId
+        )
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->getTranslation('name'),
+                ];
+            });
+
+        $variants = collect();
+        $batches = collect();
+
+        if ($productId && $products->contains('id', $productId)) {
+            $variants = ProductStock::where('product_id', $productId)
+                ->whereHas('batches')
+                ->orderBy('variant')
+                ->get(['id', 'variant', 'sku'])
+                ->map(function ($variant) {
+                    $name = trim((string) $variant->variant) ?: translate('Default');
+
+                    if ($variant->sku) {
+                        $name .= ' (' . $variant->sku . ')';
+                    }
+
+                    return [
+                        'id' => $variant->id,
+                        'name' => $name,
+                    ];
+                });
+
+            $batches = ProductBatch::where('product_id', $productId)
+                ->when($variantId, function ($query) use ($variantId) {
+                    $query->where('product_stock_id', $variantId);
+                })
+                ->orderBy('batch')
+                ->get(['id', 'batch'])
+                ->map(function ($batch) {
+                    return [
+                        'id' => $batch->id,
+                        'name' => trim((string) $batch->batch) ?: '-',
+                    ];
+                });
+        }
+
+        return response()->json([
+            'products' => $products->values(),
+            'variants' => $variants->values(),
+            'batches' => $batches->values(),
+        ]);
+    }
+
     public function getStockFilterOptions(Request $request)
     {
         $productId = (int) $request->input('product_id');
@@ -273,6 +512,32 @@ class ReportController extends Controller
             'variants' => $variants,
             'batches' => $batches,
         ]);
+    }
+
+    private function applyProductDetailProductFilters($query, ?int $categoryId, ?int $groupId, ?int $brandId)
+    {
+        return $query
+            ->when($categoryId, function ($productQuery) use ($categoryId) {
+                $productQuery->where(function ($categoryQuery) use ($categoryId) {
+                    $categoryQuery
+                        ->where('category_id', $categoryId)
+                        ->orWhereHas('categories', function ($relationQuery) use ($categoryId) {
+                            $relationQuery->where('categories.id', $categoryId);
+                        });
+                });
+            })
+            ->when($groupId, function ($productQuery) use ($groupId) {
+                $productQuery->where(function ($groupQuery) use ($groupId) {
+                    $groupQuery
+                        ->where('group_id', $groupId)
+                        ->orWhereHas('groups', function ($relationQuery) use ($groupId) {
+                            $relationQuery->where('groups.id', $groupId);
+                        });
+                });
+            })
+            ->when($brandId, function ($productQuery) use ($brandId) {
+                $productQuery->where('brand_id', $brandId);
+            });
     }
 
 }

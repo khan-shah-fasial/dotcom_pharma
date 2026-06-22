@@ -884,6 +884,11 @@
                                         <span class="aiz-side-nav-text">{{ translate('Products Stock') }}</span>
                                     </a>
                                 </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('product_detail_report.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['product_detail_report.index'])}}">
+                                        <span class="aiz-side-nav-text">{{ translate('Product Detail Report') }}</span>
+                                    </a>
+                                </li>
                             @endcan
                             @can('product_wishlist_report')
                                 <li class="aiz-side-nav-item">

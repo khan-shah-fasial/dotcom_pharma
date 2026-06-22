@@ -1,6 +1,41 @@
 @extends('backend.layouts.app')
 
 @section('content')
+    <style>
+        .customer-section-heading {
+            margin-bottom: 1rem;
+        }
+        .customer-section-toggle {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: space-between;
+            padding: .25rem 0 .75rem;
+            border: 0;
+            border-bottom: 1px solid #e2e5ec;
+            background: transparent;
+            color: #1b1b28;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+        }
+        .customer-section-toggle:hover,
+        .customer-section-toggle:focus {
+            color: #377dff;
+            outline: 0;
+        }
+        .customer-section-toggle .customer-section-icon {
+            font-size: 1.25rem;
+        }
+        .customer-collapsible-section.customer-section-collapsed > :not(.customer-section-heading) {
+            display: none !important;
+        }
+        .customer-collapsible-section.customer-section-collapsed > .customer-section-heading {
+            margin-bottom: 0;
+        }
+    </style>
+
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
             <h1 class="h3">{{ translate('Edit Business Customer') }}</h1>
@@ -278,9 +313,12 @@
                 </div>
 
                 {{-- Business Address --}}
-                <div class="row business-requires-gst">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('Business Address') }}</h5>
+                <div class="row business-requires-gst customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('Business Address') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="street_add_first_business">{{ translate('Street Address 1') }} *</label>
@@ -401,9 +439,12 @@
                 @endphp
 
                 {{-- Business Contact --}}
-                <div class="row business-requires-gst">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('Business Contact') }}</h5>
+                <div class="row business-requires-gst customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('Business Contact') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
 
                     <div class="col-md-3 mb-3">
@@ -492,9 +533,12 @@
                 </div>
 
                 {{-- Business Bank --}}
-                <div class="row business-requires-gst">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('Business Bank Details') }}</h5>
+                <div class="row business-requires-gst customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('Business Bank Details') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="bank_name_business">{{ translate('Bank Name') }} *</label>
@@ -564,9 +608,12 @@
                 <hr>
 
                 {{-- Personal Details --}}
-                <div class="row">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('Personal Details') }}</h5>
+                <div class="row customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('Personal Details') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="photo_file">{{ translate('Photo') }} *</label>
@@ -604,9 +651,12 @@
                 </div>
 
                 {{-- Personal Address --}}
-                <div class="row">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('Personal Address') }}</h5>
+                <div class="row customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('Personal Address') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="street_add_first_personal">{{ translate('Street Address 1') }} *</label>
@@ -767,9 +817,12 @@
                 </div>
 
                 {{-- Personal Bank --}}
-                <div class="row">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('Personal Bank Details') }}</h5>
+                <div class="row customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('Personal Bank Details') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="bank_name_personal">{{ translate('Bank Name') }} *</label>
@@ -828,9 +881,12 @@
                 </div>
 
                 {{-- License Details --}}
-                <div class="row">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('License / Registration Details') }}</h5>
+                <div class="row customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('License / Registration Details') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="col-12 mb-3">
                         <div class="card shadow-sm border-0">
@@ -915,9 +971,12 @@
                         $selectedBookedToId = optional($matchedBookedTo)->id;
                     }
                 @endphp
-                <div class="row">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('Transport Details') }}</h5>
+                <div class="row customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('Transport Details') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="transport_id">{{ translate('Transport Name') }} *</label>
@@ -982,6 +1041,29 @@
                 return ['id' => $bookedTo->id, 'name' => $bookedTo->name];
             })->values()];
         }));
+
+        function setCustomerSectionExpanded(section, expanded) {
+            if (!section) return;
+            section.classList.toggle('customer-section-collapsed', !expanded);
+            const button = section.querySelector(':scope > .customer-section-heading .customer-section-toggle');
+            const icon = button?.querySelector('.customer-section-icon');
+            button?.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            icon?.classList.toggle('la-angle-up', expanded);
+            icon?.classList.toggle('la-angle-down', !expanded);
+        }
+
+        function initCustomerSectionAccordions() {
+            document.querySelectorAll('.customer-collapsible-section').forEach(section => {
+                const button = section.querySelector(':scope > .customer-section-heading .customer-section-toggle');
+                button?.addEventListener('click', () => {
+                    setCustomerSectionExpanded(section, section.classList.contains('customer-section-collapsed'));
+                });
+            });
+
+            document.getElementById('edit-customer-form')?.addEventListener('invalid', event => {
+                setCustomerSectionExpanded(event.target.closest('.customer-collapsible-section'), true);
+            }, true);
+        }
 
         function refreshPicker($el) {
             if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.bootstrapSelect === 'function') {
@@ -1650,6 +1732,7 @@
 
         toggleLocalityBlocks();
         toggleIdentityBlocks();
+        initCustomerSectionAccordions();
         initEditLocationDropdowns();
         initTransportDropdowns();
         initIntlInputsEdit();
