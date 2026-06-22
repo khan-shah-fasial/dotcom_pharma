@@ -47,20 +47,23 @@
             @csrf
             <div class="card-body">
                 <div id="form-error-box" class="alert alert-danger d-none"></div>
-                {{-- Type --}}
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label class="form-label" for="crm_id">{{ translate('Account Number') }} *</label>
-                            <input type="text" id="crm_id" name="crm_id" class="form-control" required
-                                   value="{{ old('crm_id', $nextCrmId ?? 1) }}">
-                            @error('crm_id')
-                                <div class="text-danger small">{{ $message }}</div>
-                            @enderror
-                        </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label" for="crm_id">{{ translate('Account Number') }} *</label>
+                        <input type="text" id="crm_id" name="crm_id" class="form-control" required
+                               value="{{ old('crm_id', $nextCrmId ?? 1) }}">
+                        @error('crm_id')
+                            <div class="text-danger small">{{ $message }}</div>
+                        @enderror
                     </div>
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('Type') }}</h5>
+                </div>
+                {{-- Type --}}
+                <div class="row customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('Type') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="col-md-6 mb-3">
                         <div class="form-check form-check-inline">
