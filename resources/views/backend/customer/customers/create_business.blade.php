@@ -727,9 +727,12 @@
                 </div>
 
                 {{-- Personal Contact --}}
-                <div class="row">
-                    <div class="col-md-12">
-                        <h5 class="mb-3">{{ translate('Personal Contact') }}</h5>
+                <div class="row customer-collapsible-section">
+                    <div class="col-md-12 customer-section-heading">
+                        <button type="button" class="customer-section-toggle" aria-expanded="true">
+                            <span>{{ translate('Personal Contact') }}</span>
+                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                        </button>
                     </div>
                     @php
                         $primPersonalDial = old('country_code_phone_code_personal')
