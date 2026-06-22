@@ -58,29 +58,32 @@
                     </div>
                 </div>
                 {{-- Type --}}
-                <div class="row customer-collapsible-section">
-                    <div class="col-md-12 customer-section-heading">
-                        <button type="button" class="customer-section-toggle" aria-expanded="true">
-                            <span>{{ translate('Type') }}</span>
-                            <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_domestic" value="domestic" {{ (old('type_option') ?: ($user->type_option ?: 'domestic')) === 'domestic' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="type_domestic">{{ translate('Domestic') }}</label>
+                <div class="customer-collapsible-section">
+                    <div class="row customer-section-heading">
+                        <div class="col-md-12">
+                            <button type="button" class="customer-section-toggle" aria-expanded="true">
+                                <span>{{ translate('Type') }}</span>
+                                <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
+                            </button>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_international" value="international" {{ (old('type_option') ?: $user->type_option) === 'international' ? 'checked' : '' }}>
-                            <label class="form-check-label" for="type_international">{{ translate('International') }}</label>
-                        </div>
-                        @error('type_option')
-                            <div class="text-danger small">{{ $message }}</div>
-                        @enderror
                     </div>
-                </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_domestic" value="domestic" {{ (old('type_option') ?: ($user->type_option ?: 'domestic')) === 'domestic' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="type_domestic">{{ translate('Domestic') }}</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input locality-toggle" type="radio" name="type_option" id="type_international" value="international" {{ (old('type_option') ?: $user->type_option) === 'international' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="type_international">{{ translate('International') }}</label>
+                            </div>
+                            @error('type_option')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
 
-                <hr>
+                    <hr>
 
                 {{-- Business Identification --}}
                 @php
@@ -269,6 +272,8 @@
                             <div class="text-danger small mt-1">{{ $message }}</div>
                         @enderror
                     </div>
+                </div>
+
                 </div>
 
                 {{-- Business core --}}
