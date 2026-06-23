@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class LeadController extends Controller
@@ -162,6 +163,33 @@ class LeadController extends Controller
         }
 
         $leads = $leads->paginate(20);
+
+        $companyNames = $leads->getCollection()
+            ->pluck('company_name')
+            ->map(fn ($name) => Str::lower(trim((string) $name)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $customerStatuses = $companyNames->isEmpty()
+            ? collect()
+            : UserDetails::query()
+                ->select(['user_details.company_name', 'user_details.current_status'])
+                ->join('users', 'users.id', '=', 'user_details.user_id')
+                ->where('users.user_type', 'customer')
+                ->whereIn(DB::raw('LOWER(TRIM(user_details.company_name))'), $companyNames->all())
+                ->whereNotNull('user_details.current_status')
+                ->get()
+                ->mapWithKeys(fn ($details) => [
+                    Str::lower(trim((string) $details->company_name)) => $details->current_status,
+                ]);
+
+        $leads->getCollection()->each(function ($lead) use ($customerStatuses) {
+            $lead->setAttribute(
+                'customer_current_status',
+                $customerStatuses->get(Str::lower(trim((string) $lead->company_name)))
+            );
+        });
 
         return view('backend.leads.index', $this->indexData() + [
             'leads' => $leads,
@@ -791,6 +819,29 @@ class LeadController extends Controller
             ->with('user_details')
             ->first();
 
+        return $this->customerLookupResponse($customer);
+    }
+
+    public function customerByCompanyName(Request $request)
+    {
+        $data = $request->validate([
+            'company_name' => 'required|string|min:1|max:150',
+        ]);
+        $companyName = trim($data['company_name']);
+
+        $customer = User::query()
+            ->select('users.*')
+            ->join('user_details', 'user_details.user_id', '=', 'users.id')
+            ->where('users.user_type', 'customer')
+            ->whereRaw('LOWER(TRIM(user_details.company_name)) = LOWER(?)', [$companyName])
+            ->with('user_details')
+            ->first();
+
+        return $this->customerLookupResponse($customer);
+    }
+
+    protected function customerLookupResponse(?User $customer)
+    {
         if (!$customer || !$customer->user_details) {
             return response()->json(['found' => false]);
         }

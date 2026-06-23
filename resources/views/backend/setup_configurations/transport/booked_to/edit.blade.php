@@ -40,6 +40,13 @@
                 </div>
             </div>
             <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Branch Address') }}</label>
+                <div class="col-md-9">
+                    <textarea name="branch_address" rows="3" class="form-control">{{ old('branch_address', $bookedTo->branch_address) }}</textarea>
+                    @error('branch_address') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
                 <label class="col-md-2 col-form-label">{{ translate('Branch Code') }}</label>
                 <div class="col-md-9">
                     <input type="text" name="branch_code" class="form-control" value="{{ old('branch_code', $bookedTo->branch_code) }}">

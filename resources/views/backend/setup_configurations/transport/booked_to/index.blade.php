@@ -25,6 +25,7 @@
                     <th>{{ translate('Transport') }}</th>
                     <th>{{ translate('Location') }}</th>
                     <th data-breakpoints="lg">{{ translate('Branch Name') }}</th>
+                    <th data-breakpoints="lg">{{ translate('Branch Address') }}</th>
                     <th data-breakpoints="lg">{{ translate('Branch Code') }}</th>
                     <th data-breakpoints="lg">{{ translate('Branch GST Number') }}</th>
                     <th>{{ translate('Branch Mobile Number') }}</th>
@@ -47,6 +48,7 @@
                         <td>{{ optional($item->transport)->name ?? '-' }}</td>
                         <td>{{ $item->name }}</td>
                         <td>{{ $item->branch_name ?? '-' }}</td>
+                        <td>{{ $item->branch_address ?? '-' }}</td>
                         <td>{{ $item->branch_code ?? '-' }}</td>
                         <td>{{ $item->branch_gst_number ?? '-' }}</td>
                         <td>

@@ -21,77 +21,122 @@
     @endif
 
     <div class="card">
-        <div class="card-header border-0 pb-0">
-            <div class="w-100">
-                <form action="{{ route('admin.purchase_history.index') }}" method="GET">
-                    <div class="row gutters-10">
-                        <div class="col-md-4 mb-3">
-                            <label class="mb-1 text-muted text-uppercase fs-10">{{ translate('Global search') }}</label>
-                            <input type="text" class="form-control" name="search" value="{{ $search }}"
-                                   placeholder="{{ translate('Serial / Order / Invoice / SKU / Salesman / State / City') }}">
+        <form action="{{ route('admin.purchase_history.index') }}" method="GET" id="purchase-history-filters">
+            @php
+                $filtersApplied = collect([
+                    $search,
+                    request('account'),
+                    request('product_sku'),
+                    request('sales_man_name'),
+                    request('order_date_from'),
+                    request('order_date_to'),
+                ])->contains(fn ($value) => $value !== null && $value !== '');
+            @endphp
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                <div class="mb-2">
+                    <h5 class="mb-0 h6">{{ translate('Purchase History Records') }}</h5>
+                    @if($filtersApplied)
+                        <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+                    @endif
+                </div>
+                <div class="d-flex flex-wrap align-items-center">
+                    <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal"
+                            data-target="#purchaseHistoryFilterModal">
+                        {{ translate('Open Filters') }}
+                    </button>
+                    <a href="{{ route('admin.purchase_history.index') }}" class="btn btn-danger mr-2 mb-2">
+                        {{ translate('Reset') }}
+                    </a>
+                    <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal"
+                            data-target="#purchase-history-import-modal">
+                        <i class="las la-file-import mr-1"></i>{{ translate('Import party wise sheets') }}
+                    </button>
+                    <a href="{{ route('admin.purchase_history.export', request()->query()) }}"
+                       class="btn btn-outline-success mb-2">
+                        <i class="las la-file-excel mr-1"></i>{{ translate('Export') }}
+                    </a>
+                </div>
+            </div>
+
+            <div class="modal fade" id="purchaseHistoryFilterModal" tabindex="-1" role="dialog"
+                 aria-labelledby="purchaseHistoryFilterModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="purchaseHistoryFilterModalLabel">
+                                {{ translate('Filter Purchase History') }}
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
                         </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="mb-1 text-muted text-uppercase fs-10">{{ translate('Product SKU') }}</label>
-                            <select class="form-control aiz-selectpicker" name="product_sku" data-live-search="true" data-placeholder="{{ translate('All SKUs') }}">
-                                <option value="">{{ translate('All SKUs') }}</option>
-                                @foreach($skuOptions as $sku)
-                                    <option value="{{ $sku }}" @if(request('product_sku') === $sku) selected @endif>{{ $sku }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="mb-1 text-muted text-uppercase fs-10">{{ translate('Salesman Name') }}</label>
-                            <input type="text" class="form-control" name="sales_man_name" value="{{ request('sales_man_name') }}"
-                                   placeholder="{{ translate('Salesman') }}">
-                        </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="mb-1 text-muted text-uppercase fs-10">{{ translate('Order date range') }}</label>
-                            <input type="text" class="form-control aiz-date-range" name="order_date_range"
-                                   value="{{ request('order_date_from') && request('order_date_to') ? request('order_date_from').' to '.request('order_date_to') : '' }}"
-                                   data-time-picker="false" data-format="YYYY-MM-DD"
-                                   placeholder="{{ translate('YYYY-MM-DD to YYYY-MM-DD') }}">
-                            <input type="hidden" name="order_date_from" id="order_date_from" value="{{ request('order_date_from') }}">
-                            <input type="hidden" name="order_date_to" id="order_date_to" value="{{ request('order_date_to') }}">
-                        </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="mb-1 text-muted text-uppercase fs-10">{{ translate('Sort') }}</label>
-                            <div class="d-flex">
-                                <select class="form-control aiz-selectpicker mr-1" name="sort_by">
-                                    <option value="order_date" @if($sortBy=='order_date') selected @endif>{{ translate('Order Date') }}</option>
-                                    <option value="serial_number" @if($sortBy=='serial_number') selected @endif>{{ translate('Serial Number') }}</option>
-                                    <option value="order_number" @if($sortBy=='order_number') selected @endif>{{ translate('Order Number') }}</option>
-                                    <option value="invoice_number" @if($sortBy=='invoice_number') selected @endif>{{ translate('Invoice Number') }}</option>
-                                    <option value="product_sku" @if($sortBy=='product_sku') selected @endif>{{ translate('Product SKU') }}</option>
-                                    <option value="sales_man_name" @if($sortBy=='sales_man_name') selected @endif>{{ translate('Salesman Name') }}</option>
-                                    <option value="final_amount" @if($sortBy=='final_amount') selected @endif>{{ translate('Final Amount') }}</option>
-                                </select>
-                                <select class="form-control aiz-selectpicker" name="sort_dir">
-                                    <option value="asc" @if($sortDir=='asc') selected @endif>{{ translate('Asc') }}</option>
-                                    <option value="desc" @if($sortDir=='desc') selected @endif>{{ translate('Desc') }}</option>
-                                </select>
+                        <div class="modal-body">
+                            <div class="row gutters-5">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="search">{{ translate('Global Search') }}</label>
+                                    <input type="text" class="form-control" id="search" name="search" value="{{ $search }}"
+                                           placeholder="{{ translate('Serial / Order / Invoice / SKU / Salesman / State / City') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="account">{{ translate('Account') }}</label>
+                                    <input type="text" class="form-control" id="account" name="account"
+                                           value="{{ request('account') }}"
+                                           placeholder="{{ translate('Account ID / Company Name / User Name') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="product_sku">{{ translate('Product SKU') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="product_sku" name="product_sku"
+                                            data-live-search="true" data-placeholder="{{ translate('All SKUs') }}">
+                                        <option value="">{{ translate('All SKUs') }}</option>
+                                        @foreach($skuOptions as $sku)
+                                            <option value="{{ $sku }}" @if(request('product_sku') === $sku) selected @endif>{{ $sku }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="sales_man_name">{{ translate('Salesman Name') }}</label>
+                                    <input type="text" class="form-control" id="sales_man_name" name="sales_man_name"
+                                           value="{{ request('sales_man_name') }}" placeholder="{{ translate('Salesman') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="order_date_range">{{ translate('Order Date Range') }}</label>
+                                    <input type="text" class="form-control aiz-date-range" id="order_date_range"
+                                           name="order_date_range"
+                                           value="{{ request('order_date_from') && request('order_date_to') ? request('order_date_from').' to '.request('order_date_to') : '' }}"
+                                           data-time-picker="false" data-format="YYYY-MM-DD"
+                                           placeholder="{{ translate('YYYY-MM-DD to YYYY-MM-DD') }}">
+                                    <input type="hidden" name="order_date_from" id="order_date_from" value="{{ request('order_date_from') }}">
+                                    <input type="hidden" name="order_date_to" id="order_date_to" value="{{ request('order_date_to') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="sort_by">{{ translate('Sort By') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="sort_by" name="sort_by">
+                                        <option value="order_date" @if($sortBy=='order_date') selected @endif>{{ translate('Order Date') }}</option>
+                                        <option value="serial_number" @if($sortBy=='serial_number') selected @endif>{{ translate('Serial Number') }}</option>
+                                        <option value="order_number" @if($sortBy=='order_number') selected @endif>{{ translate('Order Number') }}</option>
+                                        <option value="invoice_number" @if($sortBy=='invoice_number') selected @endif>{{ translate('Invoice Number') }}</option>
+                                        <option value="product_sku" @if($sortBy=='product_sku') selected @endif>{{ translate('Product SKU') }}</option>
+                                        <option value="sales_man_name" @if($sortBy=='sales_man_name') selected @endif>{{ translate('Salesman Name') }}</option>
+                                        <option value="final_amount" @if($sortBy=='final_amount') selected @endif>{{ translate('Final Amount') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label" for="sort_dir">{{ translate('Direction') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="sort_dir" name="sort_dir">
+                                        <option value="asc" @if($sortDir=='asc') selected @endif>{{ translate('Ascending') }}</option>
+                                        <option value="desc" @if($sortDir=='desc') selected @endif>{{ translate('Descending') }}</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <button class="btn btn-primary" type="submit">
-                            <i class="las la-filter mr-1"></i>{{ translate('Apply Filters') }}
-                        </button>
-                        <div class="d-flex align-items-center">
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-primary mr-2"
-                                    data-toggle="modal"
-                                    data-target="#purchase-history-import-modal">
-                                <i class="las la-file-import mr-1"></i>{{ translate('Import party wise sheets') }}
-                            </button>
-                            <a href="{{ route('admin.purchase_history.export', request()->query()) }}"
-                               class="btn btn-sm btn-outline-success">
-                                <i class="las la-file-excel mr-1"></i>{{ translate('Export') }}
-                            </a>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Close') }}</button>
+                            <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
                         </div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </form>
 
         <div class="card-body">
             <div class="table-responsive">
@@ -99,6 +144,7 @@
                     <thead>
                     <tr>
                         <th>{{ translate('Serial Number') }}</th>
+                        <th>{{ translate('Account') }}</th>
                         <th>{{ translate('Order Date') }}</th>
                         <th>{{ translate('Order Number') }}</th>
                         <th>{{ translate('Invoice Number') }}</th>
@@ -116,6 +162,11 @@
                     @forelse($purchaseHistory as $history)
                         <tr>
                             <td>{{ $history->serial_number }}</td>
+                            <td>
+                                <div><strong>{{ translate('Account ID') }}:</strong> {{ $history->customerDetails?->crm_id ?? $history->ac_number ?? '-' }}</div>
+                                <div><strong>{{ translate('Company Name') }}:</strong> {{ $history->customerDetails?->company_name ?? '-' }}</div>
+                                <div><strong>{{ translate('User Name') }}:</strong> {{ $history->customerDetails?->user?->name ?? '-' }}</div>
+                            </td>
                             <td>{{ $history->order_date }}</td>
                             <td>{{ $history->order_number }}</td>
                             <td>{{ $history->invoice_number }}</td>

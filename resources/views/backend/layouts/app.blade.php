@@ -152,6 +152,7 @@
     <script src="{{ static_asset('assets/js/jquery.validate.min.js') }}"></script>
 
     <script src="{{ static_asset('assets/js/script.js') }}"></script>
+    <script src="{{ static_asset('assets/js/backend-auto-menu-close.js?v=2') }}"></script>
 
 
     @yield('script')

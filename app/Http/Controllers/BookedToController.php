@@ -22,6 +22,7 @@ class BookedToController extends Controller
             $booked_to->where(function ($query) use ($sort_search) {
                 $query->where('name', 'like', '%' . $sort_search . '%')
                     ->orWhere('branch_name', 'like', '%' . $sort_search . '%')
+                    ->orWhere('branch_address', 'like', '%' . $sort_search . '%')
                     ->orWhere('branch_code', 'like', '%' . $sort_search . '%')
                     ->orWhere('branch_gst_number', 'like', '%' . $sort_search . '%')
                     ->orWhere('branch_mobile_number', 'like', '%' . $sort_search . '%')
@@ -102,6 +103,7 @@ class BookedToController extends Controller
         foreach ([
             'name',
             'branch_name',
+            'branch_address',
             'branch_code',
             'branch_gst_number',
             'branch_mobile_number',
@@ -117,6 +119,7 @@ class BookedToController extends Controller
             'transport_id' => 'required|exists:transports,id',
             'name' => 'required|string|max:255',
             'branch_name' => 'nullable|string|max:255',
+            'branch_address' => 'nullable|string|max:2000',
             'branch_code' => 'nullable|string|max:255',
             'branch_gst_number' => 'nullable|string|max:255',
             'branch_mobile_number' => 'nullable|string|max:50',

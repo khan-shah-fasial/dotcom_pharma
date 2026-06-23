@@ -1,6 +1,6 @@
 <div class="aiz-sidebar-wrap">
     <div class="aiz-sidebar left c-scrollbar">
-        <div class="aiz-side-nav-logo-wrap">
+        <div class="aiz-side-nav-logo-wrap position-relative pr-5">
             <a href="{{ route('admin.dashboard') }}" class="d-block text-left">
                 @if(get_setting('system_logo_white') != null)
                     <img class="mw-100" src="{{ uploaded_asset(get_setting('system_logo_white')) }}" class="brand-icon" alt="{{ get_setting('site_name') }}">
@@ -8,6 +8,17 @@
                     <img class="mw-100" src="{{ static_asset('assets/img/logo.png') }}" class="brand-icon" alt="{{ get_setting('site_name') }}">
                 @endif
             </a>
+            <button type="button" id="auto-menu-close-toggle"
+                class="btn btn-xs btn-soft-light position-absolute"
+                style="top: 50%; right: 10px; transform: translateY(-50%); padding: 3px 6px;"
+                data-storage-key="backend_auto_menu_close_{{ auth()->id() }}"
+                data-on-label="{{ translate('ON') }}"
+                data-off-label="{{ translate('OFF') }}"
+                aria-pressed="false"
+                title="{{ translate('Automatically close menu after opening a page') }}">
+                <span class="d-block" style="font-size: 9px; line-height: 1;">{{ translate('Auto Close') }}</span>
+                <strong id="auto-menu-close-state" style="font-size: 10px;">{{ translate('OFF') }}</strong>
+            </button>
         </div>
         <div class="aiz-side-nav-wrap">
             <div class="px-3 mb-3 position-relative">

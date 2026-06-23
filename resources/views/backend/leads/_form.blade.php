@@ -115,7 +115,19 @@
 <div class="form-group row">
     <label class="col-md-2 col-form-label">{{ translate('Company Name') }}</label>
     <div class="col-md-9">
-        <input type="text" name="company_name" class="form-control" value="{{ old('company_name', $lead->company_name ?? '') }}">
+        <div class="input-group">
+            <input type="text" name="company_name" id="lead_company_name" class="form-control"
+                value="{{ old('company_name', $lead->company_name ?? '') }}">
+            @if(!$lead)
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-soft-primary js-lead-fetch-customer"
+                        data-input="#lead_company_name" data-lookup="company_name">
+                        <i class="las la-search"></i> {{ translate('Fetch') }}
+                    </button>
+                </div>
+            @endif
+        </div>
+        <small class="form-text lead-customer-lookup-status"></small>
         @error('company_name') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
 </div>

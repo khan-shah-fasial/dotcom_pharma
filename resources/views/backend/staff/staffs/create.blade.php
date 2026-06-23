@@ -57,6 +57,7 @@
                             <input type="text" placeholder="{{ translate('Designation') }}" id="designation" name="designation" class="form-control">
                         </div>
                     </div>
+                    @include('backend.staff.staffs._additional_fields')
                     <div class="form-group row">
                         <label class="col-sm-3 col-from-label" for="password">{{translate('Password')}}</label>
                         <div class="col-sm-9">

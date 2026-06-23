@@ -6,6 +6,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserDetails extends Model
 {
+    public const CURRENT_STATUSES = [
+        'Black List',
+        'Ban',
+        'Good',
+        'Excellent',
+        'OK',
+        'Credit Allow',
+        'Advance Payment Only',
+        'Do Not Call',
+        'Fruad',
+        'Spam',
+        'Party Not Intersted',
+        'We Are Not Intersted',
+        'On Time Payment',
+        'Delay payment',
+    ];
 
     protected $fillable = [
         'user_id',
@@ -27,6 +43,7 @@ class UserDetails extends Model
         'uin_current_status',
         'con_person_name',
         'company_name',
+        'current_status',
         'street_add_first_business',
         'street_add_sec_business',
         'locality_land_mark_business',
@@ -138,6 +155,11 @@ class UserDetails extends Model
     public function details()
     {
         return $this->hasOne(UserDetails::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function transportMaster()

@@ -23,6 +23,7 @@
             <tr><th width="30%">{{ translate('Transport') }}</th><td>{{ optional($bookedTo->transport)->name ?? '-' }}</td></tr>
             <tr><th>{{ translate('Location') }}</th><td>{{ $bookedTo->name ?? '-' }}</td></tr>
             <tr><th>{{ translate('Branch Name') }}</th><td>{{ $bookedTo->branch_name ?? '-' }}</td></tr>
+            <tr><th>{{ translate('Branch Address') }}</th><td>{!! $bookedTo->branch_address ? nl2br(e($bookedTo->branch_address)) : '-' !!}</td></tr>
             <tr><th>{{ translate('Branch Code') }}</th><td>{{ $bookedTo->branch_code ?? '-' }}</td></tr>
             <tr><th>{{ translate('Branch GST Number') }}</th><td>{{ $bookedTo->branch_gst_number ?? '-' }}</td></tr>
             <tr>

@@ -12,6 +12,7 @@ class BookedTo extends Model
         'transport_id',
         'name',
         'branch_name',
+        'branch_address',
         'branch_code',
         'branch_gst_number',
         'branch_mobile_number',

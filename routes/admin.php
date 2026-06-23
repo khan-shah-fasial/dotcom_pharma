@@ -355,6 +355,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/leads', 'index')->name('leads.index');
         Route::get('/leads/create', 'create')->name('leads.create');
         Route::get('/leads/customer-by-phone', 'customerByPhone')->name('leads.customer_by_phone');
+        Route::get('/leads/customer-by-company-name', 'customerByCompanyName')->name('leads.customer_by_company_name');
         Route::post('/leads', 'store')->name('leads.store');
         Route::get('/leads/destroy/{lead}', 'destroy')->name('leads.destroy');
         Route::get('/leads/{lead}', 'show')->name('leads.show');

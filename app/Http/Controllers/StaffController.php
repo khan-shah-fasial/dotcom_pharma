@@ -59,6 +59,21 @@ class StaffController extends Controller
             'password' => 'required|string|min:6',
             'role_id' => 'required|integer|exists:roles,id',
             'designation' => 'nullable|string|max:255',
+            'aadhaar_card_no' => ['nullable', 'regex:/^[0-9]{12}$/'],
+            'pan_no' => ['nullable', 'regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/'],
+            'bank_account_holder_name' => 'nullable|required_with:bank_name,bank_account_number,bank_ifsc_code|string|max:255',
+            'bank_name' => 'nullable|required_with:bank_account_holder_name,bank_account_number,bank_ifsc_code|string|max:255',
+            'bank_branch_name' => 'nullable|string|max:255',
+            'bank_account_number' => ['nullable', 'required_with:bank_account_holder_name,bank_name,bank_ifsc_code', 'string', 'max:34', 'regex:/^[0-9]+$/'],
+            'bank_account_type' => ['nullable', Rule::in(['savings', 'current', 'salary'])],
+            'bank_ifsc_code' => ['nullable', 'required_with:bank_account_holder_name,bank_name,bank_account_number', 'regex:/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/'],
+            'attendance_id' => 'nullable|string|max:100|unique:staff,attendance_id',
+            'attachments' => 'nullable|string|max:20000',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_number' => ['nullable', 'string', 'max:50', 'regex:/^[0-9+()\-\s]+$/'],
+            'date_of_birth' => 'nullable|date|before_or_equal:today',
+            'religion' => 'nullable|string|max:100',
+            'anniversary_date' => 'nullable|date',
         ]);
 
         if (User::where('email', $request->email)->first() == null) {
@@ -78,6 +93,7 @@ class StaffController extends Controller
                 $staff->designation = $request->designation;
                 $staff->display_email = $request->filled('display_email') ? trim($request->display_email) : null;
                 $staff->area_assignments = $this->prepareAreaAssignmentsFromRequest($request);
+                $this->fillAdditionalDetails($staff, $request);
 
                 $user->assignRole(Role::findOrFail($request->role_id)->name);
                 if ($staff->save()) {
@@ -137,6 +153,21 @@ class StaffController extends Controller
             'password' => 'nullable|string|min:6',
             'role_id' => 'required|integer|exists:roles,id',
             'designation' => 'nullable|string|max:255',
+            'aadhaar_card_no' => ['nullable', 'regex:/^[0-9]{12}$/'],
+            'pan_no' => ['nullable', 'regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/'],
+            'bank_account_holder_name' => 'nullable|required_with:bank_name,bank_account_number,bank_ifsc_code|string|max:255',
+            'bank_name' => 'nullable|required_with:bank_account_holder_name,bank_account_number,bank_ifsc_code|string|max:255',
+            'bank_branch_name' => 'nullable|string|max:255',
+            'bank_account_number' => ['nullable', 'required_with:bank_account_holder_name,bank_name,bank_ifsc_code', 'string', 'max:34', 'regex:/^[0-9]+$/'],
+            'bank_account_type' => ['nullable', Rule::in(['savings', 'current', 'salary'])],
+            'bank_ifsc_code' => ['nullable', 'required_with:bank_account_holder_name,bank_name,bank_account_number', 'regex:/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/'],
+            'attendance_id' => ['nullable', 'string', 'max:100', Rule::unique('staff', 'attendance_id')->ignore($staff->id)],
+            'attachments' => 'nullable|string|max:20000',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_number' => ['nullable', 'string', 'max:50', 'regex:/^[0-9+()\-\s]+$/'],
+            'date_of_birth' => 'nullable|date|before_or_equal:today',
+            'religion' => 'nullable|string|max:100',
+            'anniversary_date' => 'nullable|date',
         ]);
 
         $user->name = $request->name;
@@ -153,6 +184,7 @@ class StaffController extends Controller
             $staff->designation = $request->designation;
             $staff->display_email = $request->filled('display_email') ? trim($request->display_email) : null;
             $staff->area_assignments = $this->prepareAreaAssignmentsFromRequest($request);
+            $this->fillAdditionalDetails($staff, $request);
 
             if ($staff->save()) {
                 $user->syncRoles(Role::findOrFail($request->role_id)->name);
@@ -218,5 +250,33 @@ class StaffController extends Controller
         }
 
         return !empty($areas) ? json_encode($areas) : null;
+    }
+
+    protected function fillAdditionalDetails(Staff $staff, Request $request): void
+    {
+        foreach ([
+            'aadhaar_card_no',
+            'bank_account_holder_name',
+            'bank_name',
+            'bank_branch_name',
+            'bank_account_number',
+            'bank_account_type',
+            'attendance_id',
+            'attachments',
+            'emergency_contact_name',
+            'emergency_contact_number',
+            'date_of_birth',
+            'religion',
+            'anniversary_date',
+        ] as $field) {
+            $value = $request->input($field);
+            $staff->{$field} = is_string($value) ? (trim($value) ?: null) : $value;
+        }
+
+        $panNo = trim((string) $request->input('pan_no'));
+        $staff->pan_no = $panNo === '' ? null : strtoupper($panNo);
+
+        $ifscCode = trim((string) $request->input('bank_ifsc_code'));
+        $staff->bank_ifsc_code = $ifscCode === '' ? null : strtoupper($ifscCode);
     }
 }

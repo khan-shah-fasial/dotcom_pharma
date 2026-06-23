@@ -35,7 +35,7 @@
                 return '-';
             }
 
-            return date('M Y', strtotime($value));
+            return date('F-y', strtotime($value));
         };
 
         $dimensions = function ($length, $width, $height) {
@@ -44,7 +44,49 @@
 
             return $values->isEmpty() ? '-' : $values->implode(' × ');
         };
+
+        $formatUploadDate = function ($value) {
+            if (!$value || strtotime($value) === false) {
+                return '-';
+            }
+
+            return date('d.m.Y', strtotime($value));
+        };
+
+        $decimal = fn ($value, int $precision = 2) => $value === null || $value === ''
+            ? '-'
+            : number_format((float) $value, $precision, '.', '');
     @endphp
+
+    <style>
+        .product-detail-sheet { color: #202124; font-size: 11px; table-layout: auto; }
+        .product-detail-sheet th,
+        .product-detail-sheet td { border-color: #242424 !important; padding: 0 !important; text-align: center; vertical-align: middle !important; }
+        .product-detail-sheet thead th { background: #fff; color: #111; font-size: 11px; line-height: 1.25; min-width: 54px; white-space: normal; }
+        .product-detail-sheet thead th > a { color: inherit; display: block; }
+        .product-detail-sheet .sheet-lines > span,
+        .product-detail-sheet .sheet-lines > strong,
+        .product-detail-sheet .sheet-lines > small { border-bottom: 1px solid #d7d7d7; display: block; line-height: 18px; min-height: 18px; padding: 0 4px; white-space: nowrap; }
+        .product-detail-sheet .sheet-lines > :last-child { border-bottom: 0; }
+        .product-detail-sheet .wrap-line { line-height: 15px !important; min-width: 170px; padding: 5px 7px !important; white-space: normal !important; }
+        .product-detail-sheet .composition-line { min-width: 270px; padding: 6px !important; text-align: left; white-space: normal; }
+        .product-detail-sheet .product-name-line { color: #f01818; font-weight: 700; text-align: left; }
+        .product-detail-sheet .brand-name-line { color: #00a651; font-weight: 700; text-align: left; }
+        .product-detail-sheet .text-left-line { text-align: left; }
+        .product-detail-sheet .price-pts { background: #df9b9b; }
+        .product-detail-sheet .price-ptr { background: #a9dc70; }
+        .product-detail-sheet .price-ptd { background: #f4f817; }
+        .product-detail-sheet .upload-date { background: #91d050; }
+        .product-detail-sheet .minimum-order { background: #fff900; color: #ff1a1a; font-weight: 700; }
+        .product-detail-sheet .header-accent-red { color: #f01818; font-weight: 700; }
+        .product-detail-sheet.footable-details { font-size: 11px; margin: 0; }
+        .product-detail-sheet.footable-details th { background: #f7f7f7; min-width: 230px; padding: 7px !important; text-align: left; white-space: normal; }
+        .product-detail-sheet.footable-details td { padding: 0 !important; }
+        @media (max-width: 767.98px) {
+            .product-detail-sheet .composition-line { min-width: 190px; }
+            .product-detail-sheet .wrap-line { min-width: 140px; }
+        }
+    </style>
 
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
@@ -225,62 +267,85 @@
 
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered aiz-table mb-0">
+                <table id="product-detail-sheet" class="table table-bordered aiz-table product-detail-sheet mb-0"
+                    data-toggle-column="first">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>
-                                <a href="{{ $sortUrl('product_name') }}">
-                                    {{ translate('Product') }} <i class="{{ $sortIcon('product_name') }}"></i>
-                                </a>
-                            </th>
+                            <th>{{ translate('Sr No.') }}</th>
                             <th>
                                 <a href="{{ $sortUrl('sku') }}">
                                     {{ translate('SKU') }} <i class="{{ $sortIcon('sku') }}"></i>
                                 </a>
                             </th>
+                            <th data-breakpoints="xs">
+                                <span>{{ translate('Category') }}</span><br><br>
+                                <span>{{ translate('Group') }}</span>
+                            </th>
+                            <th>
+                                <a href="{{ $sortUrl('product_name') }}">
+                                    <span>{{ translate('Brand Name') }}</span><br>
+                                    <span>{{ translate('Brand/ Mfg') }}</span><br>
+                                    <span>{{ translate('Drug Role') }}</span><br>
+                                    <span>{{ translate('Schedule') }}</span>
+                                    <i class="{{ $sortIcon('product_name') }}"></i>
+                                </a>
+                            </th>
+                            <th data-breakpoints="xs sm">{{ translate('Composition') }}</th>
                             <th>
                                 <a href="{{ $sortUrl('variant') }}">
-                                    {{ translate('Variant / Pack Size') }} <i class="{{ $sortIcon('variant') }}"></i>
+                                    {{ translate('Pack Size') }} <i class="{{ $sortIcon('variant') }}"></i>
                                 </a>
                             </th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Category / Group') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Brand / Regulatory') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Product Specification') }}</th>
+                            <th data-breakpoints="xs sm md lg">
+                                {{ translate('Type') }}<br>
+                                {{ translate('Quality / Material') }}<br>
+                                {{ translate('Size') }}<br>
+                                {{ translate('Country of Origin') }}
+                            </th>
+                            <th>{{ translate('PTS') }}<br>{{ translate('PTR') }}<br>{{ translate('PTD') }}<br>{{ translate('B2C') }}</th>
+                            <th data-breakpoints="xs sm md lg xl">
+                                {{ translate('Gov') }}<br>{{ translate('Expo') }}<br>
+                                <a href="{{ $sortUrl('mrp_price') }}">
+                                    <span class="header-accent-red">{{ translate('M.R.P') }}</span>
+                                    <i class="{{ $sortIcon('mrp_price') }}"></i>
+                                </a>
+                                <span class="header-accent-red">{{ translate('Inclusive Tax') }}</span>
+                            </th>
                             <th>
                                 <a href="{{ $sortUrl('batch') }}">
-                                    {{ translate('Batch') }} <i class="{{ $sortIcon('batch') }}"></i>
+                                    {{ translate('Batch / Lot. No') }} <i class="{{ $sortIcon('batch') }}"></i>
                                 </a>
-                            </th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Mfg Date') }}</th>
-                            <th>
+                                {{ translate('Manufacturing Date') }}<br>
                                 <a href="{{ $sortUrl('expiry') }}">
-                                    {{ translate('Expiry') }} <i class="{{ $sortIcon('expiry') }}"></i>
+                                    {{ translate('Expiry Date') }} <i class="{{ $sortIcon('expiry') }}"></i>
                                 </a>
-                            </th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Base Price') }}</th>
-                            <th>{{ translate('PTS') }}</th>
-                            <th>{{ translate('PTR') }}</th>
-                            <th>{{ translate('PTD') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Gov') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Expo') }}</th>
-                            <th>{{ translate('B2C') }}</th>
-                            <th>
-                                <a href="{{ $sortUrl('mrp_price') }}">
-                                    {{ translate('MRP') }} <i class="{{ $sortIcon('mrp_price') }}"></i>
-                                </a>
-                            </th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Tax / Codes') }}</th>
-                            <th>
                                 <a href="{{ $sortUrl('qty') }}">
-                                    {{ translate('Stock') }} <i class="{{ $sortIcon('qty') }}"></i>
+                                    {{ translate('Stock Available') }} <i class="{{ $sortIcon('qty') }}"></i>
                                 </a>
                             </th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Packaging') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Weights') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Dimensions (cm)') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Offer') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Status') }}</th>
+                            <th data-breakpoints="xs sm md lg xl">
+                                {{ translate('Tax %') }}<br>{{ translate('HSN Code') }}<br>{{ translate('HS Code') }}<br>
+                                <span style="background:#91d050;display:block;">{{ translate('Last Upload Date') }}</span>
+                            </th>
+                            <th data-breakpoints="xs sm md lg xl">
+                                {{ translate('Qty per Piece') }}<br>{{ translate('Weight Of Each Piece (gm)') }}<br>
+                                {{ translate('Per Piece Dimensions (cm)') }}<br>{{ translate('Minimum Pack Size') }}
+                            </th>
+                            <th data-breakpoints="xs sm md lg xl">
+                                {{ translate('Qty per Buffer Box / Shrink Pack') }}<br>
+                                {{ translate('Weight of Buffer Box / Shrink Pack (gm)') }}<br>
+                                {{ translate('Buffer Dimensions (cm)') }}<br>
+                                <span class="header-accent-red">{{ translate('Minimum Order Qty') }}</span>
+                            </th>
+                            <th data-breakpoints="xs sm md lg xl">
+                                {{ translate('Qty Of Buffer Box / Shrink Pack Per Case') }}<br>
+                                {{ translate('Weight Of Buffer Box / Shrink Pack Per Case (gm)') }}<br>
+                                {{ translate('Dimensions Of Buffer Box / Shrink Pack Per Case (cm)') }}
+                            </th>
+                            <th data-breakpoints="xs sm md lg xl">
+                                {{ translate('Total Qty Per Case') }}<br>{{ translate('Total Weight Per Case (gm)') }}<br>
+                                {{ translate('Case Dimensions (cm)') }}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -293,7 +358,7 @@
                                     : json_decode((string) $batch->role_price, true);
                                 $rolePrices = is_array($rolePrices) ? $rolePrices : [];
                                 $rolePrice = fn (string $role) => array_key_exists($role, $rolePrices)
-                                    ? format_price((float) $rolePrices[$role])
+                                    ? $decimal($rolePrices[$role])
                                     : '-';
 
                                 $categoryNames = collect([$product?->main_category])
@@ -314,111 +379,92 @@
                                 $mrpPrice = $batch->mrp_price ?? $stock?->mrp_price ?? $product?->mrp_price;
                                 $isExpired = $batch->product_exp_date
                                     && strtotime($batch->product_exp_date) < strtotime(now()->toDateString());
-                                $discountText = '-';
-                                if ((int) $batch->discount_active === 1 && (float) $batch->discount > 0) {
-                                    $discountText = $batch->discount_type === 'percent'
-                                        ? number_format((float) $batch->discount, 2) . '%'
-                                        : format_price((float) $batch->discount);
-                                }
+                                $contentTabs = json_decode((string) $product?->contents, true);
+                                $compositionTab = collect(is_array($contentTabs) ? $contentTabs : [])
+                                    ->first(fn ($tab) => str_contains(strtolower((string) ($tab['title'] ?? '')), 'composition'));
+                                $composition = trim(strip_tags((string) ($product?->drug_name ?: ($compositionTab['content'] ?? ''))));
+                                $b2cPrice = array_key_exists('customer', $rolePrices)
+                                    ? $rolePrices['customer']
+                                    : ($stock?->price ?? null);
                             @endphp
                             <tr>
                                 <td>{{ $key + 1 + ($reportRows->currentPage() - 1) * $reportRows->perPage() }}</td>
-                                <td style="min-width: 210px;">
-                                    <strong>{{ $product?->getTranslation('name') ?? '-' }}</strong>
-                                    @if ($product?->drug_name)
-                                        <small class="d-block text-muted">{{ $product->drug_name }}</small>
-                                    @endif
-                                </td>
                                 <td><span class="text-nowrap">{{ $stock?->sku ?: '-' }}</span></td>
-                                <td>{{ trim((string) $stock?->variant) ?: translate('Default') }}</td>
-                                <td>
-                                    <strong>{{ translate('Category') }}:</strong> {{ $categoryNames->isNotEmpty() ? $categoryNames->implode(', ') : '-' }}<br>
-                                    <strong>{{ translate('Group') }}:</strong> {{ $groupNames->isNotEmpty() ? $groupNames->implode(', ') : '-' }}
+                                <td class="sheet-lines">
+                                    @forelse ($categoryNames as $categoryName)
+                                        <span>{{ $categoryName }}</span>
+                                    @empty
+                                        <span>-</span>
+                                    @endforelse
                                     @if ($product?->pharma_categories)
-                                        <small class="d-block text-muted">{{ \Illuminate\Support\Str::limit($product->pharma_categories, 100) }}</small>
+                                        <span>{{ \Illuminate\Support\Str::limit($product->pharma_categories, 80) }}</span>
                                     @endif
+                                    <span>{{ $groupNames->isNotEmpty() ? $groupNames->implode(', ') : '-' }}</span>
                                 </td>
-                                <td>
-                                    <strong>{{ translate('Brand') }}:</strong> {{ $product?->brand?->getTranslation('name') ?? '-' }}<br>
-                                    <strong>{{ translate('Role') }}:</strong> {{ $product?->role_label ? \Illuminate\Support\Str::limit($product->role_label, 80) : '-' }}<br>
-                                    <strong>{{ translate('Schedule') }}:</strong> {{ $product?->schedule ?: '-' }}
+                                <td class="sheet-lines">
+                                    <span class="product-name-line">{{ $product?->getTranslation('name') ?? '-' }}</span>
+                                    <span class="brand-name-line">{{ $product?->brand?->getTranslation('name') ?? '-' }}</span>
+                                    <span class="text-left-line">{{ $product?->role_label ?: '-' }}</span>
+                                    <span class="text-left-line">{{ $product?->schedule ?: '-' }}</span>
                                 </td>
-                                <td>
-                                    <strong>{{ translate('Form') }}:</strong> {{ $product?->product_form ? \Illuminate\Support\Str::limit($product->product_form, 70) : '-' }}<br>
-                                    <strong>{{ translate('Type') }}:</strong> {{ $product?->product_type ?: '-' }}<br>
-                                    <strong>{{ translate('Material') }}:</strong> {{ $product?->product_material ? \Illuminate\Support\Str::limit($product->product_material, 70) : '-' }}<br>
-                                    <strong>{{ translate('Origin') }}:</strong> {{ $product?->product_origin ?: '-' }}
+                                <td class="composition-line">{{ $composition !== '' ? $composition : '-' }}</td>
+                                <td>{{ trim((string) $stock?->variant) ?: translate('Default') }}</td>
+                                <td class="sheet-lines">
+                                    <span>{{ $product?->product_type ?: ($product?->product_form ?: '-') }}</span>
+                                    <span>{{ $product?->product_material ?: '-' }}</span>
+                                    <span>{{ trim((string) $stock?->variant) ?: '-' }}</span>
+                                    <span>{{ $product?->product_origin ?: '-' }}</span>
                                 </td>
-                                <td><strong>{{ trim((string) $batch->batch) ?: '-' }}</strong></td>
-                                <td><span class="text-nowrap">{{ $formatMonth($batch->manufacturing_date) }}</span></td>
-                                <td>
-                                    <span class="text-nowrap {{ $isExpired ? 'text-danger fw-600' : '' }}">
-                                        {{ $formatMonth($batch->product_exp_date) }}
-                                    </span>
-                                    @if ($isExpired)
-                                        <small class="d-block text-danger">{{ translate('Expired') }}</small>
-                                    @endif
+                                <td class="sheet-lines">
+                                    <span class="price-pts">{{ $rolePrice('pts') }}</span>
+                                    <span class="price-ptr">{{ $rolePrice('ptr') }}</span>
+                                    <span class="price-ptd">{{ $rolePrice('ptd') }}</span>
+                                    <span>{{ $decimal($b2cPrice) }}</span>
                                 </td>
-                                <td><span class="text-nowrap">{{ format_price((float) ($stock?->price ?? 0)) }}</span></td>
-                                <td><span class="text-nowrap">{{ $rolePrice('pts') }}</span></td>
-                                <td><span class="text-nowrap">{{ $rolePrice('ptr') }}</span></td>
-                                <td><span class="text-nowrap">{{ $rolePrice('ptd') }}</span></td>
-                                <td><span class="text-nowrap">{{ $rolePrice('gov') }}</span></td>
-                                <td><span class="text-nowrap">{{ $rolePrice('expo') }}</span></td>
-                                <td><span class="text-nowrap">{{ $rolePrice('customer') }}</span></td>
-                                <td><strong class="text-nowrap">{{ $mrpPrice !== null ? format_price((float) $mrpPrice) : '-' }}</strong></td>
-                                <td>
-                                    <strong>{{ translate('Tax') }}:</strong> {{ $taxPercent ? number_format((float) $taxPercent, 2) . '%' : '-' }}<br>
-                                    <strong>{{ translate('HSN') }}:</strong> {{ $product?->product_hsn ?: '-' }}<br>
-                                    <strong>{{ translate('HS') }}:</strong> {{ $product?->product_hs ?: '-' }}
+                                <td class="sheet-lines">
+                                    <span>{{ $rolePrice('gov') }}</span>
+                                    <span>{{ $rolePrice('expo') }}</span>
+                                    <strong>{{ $decimal($mrpPrice) }}</strong>
+                                    <span>&nbsp;</span>
                                 </td>
-                                <td>
-                                    <strong>{{ (int) $batch->qty }}</strong>
-                                    @if ((int) $batch->scheme > 0)
-                                        <small class="d-block text-muted">{{ translate('Scheme') }}: {{ (int) $batch->scheme }}</small>
-                                    @endif
+                                <td class="sheet-lines">
+                                    <strong>{{ trim((string) $batch->batch) ?: '-' }}</strong>
+                                    <span>{{ $formatMonth($batch->manufacturing_date) }}</span>
+                                    <span class="{{ $isExpired ? 'text-danger fw-600' : '' }}">{{ $formatMonth($batch->product_exp_date) }}</span>
+                                    <span>{{ (int) $batch->qty }}</span>
                                 </td>
-                                <td>
-                                    <strong>{{ translate('Qty/Piece') }}:</strong> {{ $stock?->qty_per_piece ?? '-' }}<br>
-                                    <strong>{{ translate('Qty/Buffer') }}:</strong> {{ $stock?->qty_per_buffer_box ?? '-' }}<br>
-                                    <strong>{{ translate('Buffers/Case') }}:</strong> {{ $stock?->count ?? '-' }}<br>
-                                    <strong>{{ translate('Total/Case') }}:</strong> {{ $stock?->total_qty_per_case ?? '-' }}<br>
-                                    <strong>{{ translate('Min Pack') }}:</strong> {{ $product?->product_min_pack_size ?: '-' }}<br>
-                                    <strong>{{ translate('Min Order') }}:</strong> {{ $stock?->min_qty ?? '-' }}
+                                <td class="sheet-lines">
+                                    <span>{{ $taxPercent ? $decimal($taxPercent) : '-' }}</span>
+                                    <span>{{ $product?->product_hsn ?: '-' }}</span>
+                                    <span>{{ $product?->product_hs ?: '-' }}</span>
+                                    <span class="upload-date">{{ $formatUploadDate($product?->updated_at) }}</span>
                                 </td>
-                                <td>
-                                    <strong>{{ translate('Piece') }}:</strong> {{ $stock?->weight ?? $product?->product_weight_vol ?? '-' }}<br>
-                                    <strong>{{ translate('Buffer') }}:</strong> {{ $stock?->weight_buffer_box ?? '-' }}<br>
-                                    <strong>{{ translate('Case') }}:</strong> {{ $stock?->weight_case ?? '-' }}
+                                <td class="sheet-lines">
+                                    <span>{{ $stock?->qty_per_piece ?? '-' }}</span>
+                                    <span>{{ $stock?->weight ?? $product?->product_weight_vol ?? '-' }}</span>
+                                    <span class="wrap-line">{{ $dimensions($stock?->length, $stock?->width, $stock?->height) }}</span>
+                                    <span>{{ $product?->product_min_pack_size ?: '-' }}</span>
                                 </td>
-                                <td>
-                                    <strong>{{ translate('Piece') }}:</strong> {{ $dimensions($stock?->length, $stock?->width, $stock?->height) }}<br>
-                                    <strong>{{ translate('Buffer') }}:</strong> {{ $dimensions($stock?->buffer_length, $stock?->buffer_width, $stock?->buffer_height) }}<br>
-                                    <strong>{{ translate('Case') }}:</strong> {{ $dimensions($stock?->case_length, $stock?->case_width, $stock?->case_height) }}
+                                <td class="sheet-lines">
+                                    <span>{{ $stock?->qty_per_buffer_box ?? '-' }}</span>
+                                    <span>{{ $stock?->weight_buffer_box ?? '-' }}</span>
+                                    <span class="wrap-line">{{ $dimensions($stock?->buffer_length, $stock?->buffer_width, $stock?->buffer_height) }}</span>
+                                    <span class="minimum-order">{{ $stock?->min_qty ?? '-' }}</span>
                                 </td>
-                                <td>
-                                    <strong>{{ $discountText }}</strong>
-                                    @if ($discountText !== '-' && $batch->discount_start_date)
-                                        <small class="d-block text-muted">
-                                            {{ date('d M Y', (int) $batch->discount_start_date) }}
-                                            @if ($batch->discount_end_date)
-                                                {{ translate('to') }} {{ date('d M Y', (int) $batch->discount_end_date) }}
-                                            @endif
-                                        </small>
-                                    @endif
+                                <td class="sheet-lines">
+                                    <span>{{ $stock?->count ?? '-' }}</span>
+                                    <span>{{ $stock?->weight_case ?? '-' }}</span>
+                                    <span class="wrap-line">{{ $dimensions($stock?->case_length, $stock?->case_width, $stock?->case_height) }}</span>
                                 </td>
-                                <td>
-                                    <span class="badge badge-inline {{ $product?->published ? 'badge-success' : 'badge-secondary' }}">
-                                        {{ $product?->published ? translate('Published') : translate('Unpublished') }}
-                                    </span>
-                                    @if ($stock?->is_hidden)
-                                        <span class="badge badge-inline badge-warning mt-1">{{ translate('Hidden Variant') }}</span>
-                                    @endif
+                                <td class="sheet-lines">
+                                    <span>{{ $stock?->total_qty_per_case ?? '-' }}</span>
+                                    <span>{{ $stock?->weight_case ?? '-' }}</span>
+                                    <span class="wrap-line">{{ $dimensions($stock?->case_length, $stock?->case_width, $stock?->case_height) }}</span>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="25" class="text-center py-4">{{ translate('No product detail records found') }}</td>
+                                <td colspan="15" class="text-center py-4">{{ translate('No product detail records found') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -435,6 +481,18 @@
 @section('script')
     <script>
         $(document).ready(function () {
+            $('#product-detail-sheet').footable({
+                breakpoints: {
+                    xs: 576,
+                    sm: 768,
+                    md: 992,
+                    lg: 1400,
+                    xl: 2400
+                },
+                cascade: true,
+                empty: '{{ translate('No product detail records found') }}'
+            });
+
             const productSelect = $('#product_select');
             const variantSelect = $('#variant_select');
             const batchSelect = $('#batch_select');

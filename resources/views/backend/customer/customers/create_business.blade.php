@@ -47,14 +47,29 @@
             @csrf
             <div class="card-body">
                 <div id="form-error-box" class="alert alert-danger d-none"></div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label class="form-label" for="crm_id">{{ translate('Account Number') }} *</label>
-                        <input type="text" id="crm_id" name="crm_id" class="form-control" required
-                               value="{{ old('crm_id', $nextCrmId ?? 1) }}">
-                        @error('crm_id')
-                            <div class="text-danger small">{{ $message }}</div>
-                        @enderror
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label" for="crm_id">{{ translate('Account Number') }} *</label>
+                            <input type="text" id="crm_id" name="crm_id" class="form-control" required
+                                   value="{{ old('crm_id', $nextCrmId ?? 1) }}">
+                            @error('crm_id')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label" for="current_status">{{ translate('Current Status') }}</label>
+                            <select id="current_status" name="current_status" class="form-control aiz-selectpicker" data-live-search="true" title="{{ translate('Select Current Status') }}">
+                                @foreach ($currentStatuses as $status)
+                                    <option value="{{ $status }}" {{ old('current_status', $details?->current_status) === $status ? 'selected' : '' }}>{{ translate($status) }}</option>
+                                @endforeach
+                            </select>
+                            @error('current_status')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
                 </div>
                 {{-- Type --}}

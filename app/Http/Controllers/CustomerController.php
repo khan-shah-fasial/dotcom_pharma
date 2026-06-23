@@ -12,6 +12,7 @@ use App\Models\Transport;
 use App\Models\BookedTo;
 use App\Utility\EmailUtility;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
@@ -451,6 +452,7 @@ class CustomerController extends Controller
             return Country::select('id', 'name', 'code')->orderBy('name')->get();
         });
         $transports = $this->activeTransportsWithBookedTo();
+        $currentStatuses = UserDetails::CURRENT_STATUSES;
 
         return view('backend.customer.customers.create_business', compact(
             'user',
@@ -458,6 +460,7 @@ class CustomerController extends Controller
             'countries',
             'nextCrmId',
             'transports',
+            'currentStatuses',
         ));
     }
 
@@ -607,6 +610,7 @@ class CustomerController extends Controller
             'const_of_business' => ['nullable', 'string', 'max:255'],
             'con_person_name' => ['nullable', 'string', 'max:50'],
             'company_name' => ['nullable', 'string', 'max:150'],
+            'current_status' => ['nullable', Rule::in(UserDetails::CURRENT_STATUSES)],
             'street_add_first_business' => ['nullable', 'string', 'max:150'],
             'street_add_sec_business' => ['nullable', 'string', 'max:150'],
             'locality_land_mark_business' => ['nullable', 'string', 'max:150'],
@@ -853,6 +857,7 @@ class CustomerController extends Controller
                 'uin_current_status' => $typeOption === 'international' ? ($validated['uin_current_status'] ?? null) : null,
                 'con_person_name' => $businessRequired ? ($validated['con_person_name'] ?? null) : null,
                 'company_name' => $businessRequired ? ($validated['company_name'] ?? null) : null,
+                'current_status' => $validated['current_status'] ?? null,
                 'street_add_first_business' => $businessRequired ? ($validated['street_add_first_business'] ?? null) : null,
                 'street_add_sec_business' => $businessRequired ? ($validated['street_add_sec_business'] ?? null) : null,
                 'locality_land_mark_business' => $businessRequired ? ($validated['locality_land_mark_business'] ?? null) : null,
@@ -1039,12 +1044,14 @@ class CustomerController extends Controller
             return Country::select('id', 'name', 'code')->orderBy('name')->get();
         });
         $transports = $this->activeTransportsWithBookedTo();
+        $currentStatuses = UserDetails::CURRENT_STATUSES;
 
         return view('backend.customer.customers.edit', compact(
             'user',
             'details',
             'countries',
             'transports',
+            'currentStatuses',
         ));
     }
 
@@ -1075,6 +1082,7 @@ class CustomerController extends Controller
             'const_of_business' => [$businessRequired ? 'required' : 'nullable'],
             'con_person_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'regex:/^[A-Za-z\\s]+$/', 'min:1', 'max:50'],
             'company_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'min:1', 'max:150'],
+            'current_status' => ['nullable', Rule::in(UserDetails::CURRENT_STATUSES)],
             'street_add_first_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'min:1', 'max:150'],
             'street_add_sec_business' => ['nullable', 'string', 'min:1', 'max:150'],
             'locality_land_mark_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'min:1', 'max:150'],
@@ -1338,6 +1346,7 @@ class CustomerController extends Controller
             'uin_current_status' => $typeOption === 'international' ? ($validated['uin_current_status'] ?? $details->uin_current_status) : null,
             'con_person_name' => $businessRequired ? ($validated['con_person_name'] ?? $details->con_person_name) : $details->con_person_name,
             'company_name' => $businessRequired ? ($validated['company_name'] ?? $details->company_name) : $details->company_name,
+            'current_status' => $validated['current_status'] ?? null,
             'street_add_first_business' => $businessRequired ? ($validated['street_add_first_business'] ?? $details->street_add_first_business) : $details->street_add_first_business,
             'street_add_sec_business' => $businessRequired ? ($validated['street_add_sec_business'] ?? $details->street_add_sec_business) : $details->street_add_sec_business,
             'locality_land_mark_business' => $businessRequired ? ($validated['locality_land_mark_business'] ?? $details->locality_land_mark_business) : $details->locality_land_mark_business,

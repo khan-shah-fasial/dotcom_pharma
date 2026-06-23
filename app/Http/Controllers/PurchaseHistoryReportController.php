@@ -23,7 +23,7 @@ class PurchaseHistoryReportController extends Controller
     {
         $query = PurchaseHistory::query()
             ->with([
-                'customerDetails',
+                'customerDetails.user',
                 'productStock.product.brand',
             ]);
 
@@ -37,7 +37,29 @@ class PurchaseHistoryReportController extends Controller
                     ->orWhere('product_sku', 'like', $like)
                     ->orWhere('sales_man_name', 'like', $like)
                     ->orWhere('state', 'like', $like)
-                    ->orWhere('city', 'like', $like);
+                    ->orWhere('city', 'like', $like)
+                    ->orWhere('ac_number', 'like', $like)
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($like) {
+                        $customerQuery->where('company_name', 'like', $like)
+                            ->orWhereHas('user', function ($userQuery) use ($like) {
+                                $userQuery->where('name', 'like', $like);
+                            });
+                    });
+            });
+        }
+
+        $account = trim((string) $request->get('account', ''));
+        if ($account !== '') {
+            $like = '%' . $account . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('ac_number', 'like', $like)
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($like) {
+                        $customerQuery->where('crm_id', 'like', $like)
+                            ->orWhere('company_name', 'like', $like)
+                            ->orWhereHas('user', function ($userQuery) use ($like) {
+                                $userQuery->where('name', 'like', $like);
+                            });
+                    });
             });
         }
 
@@ -107,7 +129,7 @@ class PurchaseHistoryReportController extends Controller
     public function show($id)
     {
         $record = PurchaseHistory::with([
-            'customerDetails',
+            'customerDetails.user',
             'productStock.product.brand',
         ])->findOrFail($id);
 
@@ -122,7 +144,7 @@ class PurchaseHistoryReportController extends Controller
     public function edit($id)
     {
         $record = PurchaseHistory::with([
-            'customerDetails',
+            'customerDetails.user',
             'productStock.product.brand',
         ])->findOrFail($id);
 
@@ -301,7 +323,8 @@ class PurchaseHistoryReportController extends Controller
             $request->get('order_date_from'),
             $request->get('order_date_to'),
             $request->get('product_sku'),
-            $request->get('sales_man_name')
+            $request->get('sales_man_name'),
+            $request->get('account')
         );
 
         return Excel::download($export, 'purchase_history.xlsx');

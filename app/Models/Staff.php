@@ -9,6 +9,11 @@ class Staff extends Model
 {
     use PreventDemoModeChanges;
 
+    protected $casts = [
+        'date_of_birth' => 'date',
+        'anniversary_date' => 'date',
+    ];
+
     public function user()
     {
     return $this->belongsTo(User::class);

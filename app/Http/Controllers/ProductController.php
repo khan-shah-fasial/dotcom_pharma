@@ -102,7 +102,7 @@ class ProductController extends Controller
 
         $products = $this->applyBackendSkuSorting($products, $request)
             ->where('digital', 0)
-            ->with(['categories', 'main_category', 'main_group', 'stocks.batches'])
+            ->with(['categories', 'main_category', 'main_group', 'brand', 'stocks.batches'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         $categories = $this->backendProductCategories();
@@ -141,7 +141,7 @@ class ProductController extends Controller
         }
         $products = $product_type == 'physical' ? $products->where('digital', 0) : $products->where('digital', 1);
         $products = $this->applyBackendSkuSorting($products, $request)
-            ->with(['categories', 'main_category', 'main_group', 'stocks.batches'])
+            ->with(['categories', 'main_category', 'main_group', 'brand', 'stocks.batches'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         $type = 'Seller';
@@ -191,7 +191,7 @@ class ProductController extends Controller
         }
 
         $products = $this->applyBackendSkuSorting($products, $request)
-            ->with(['categories', 'main_category', 'main_group', 'stocks.batches'])
+            ->with(['categories', 'main_category', 'main_group', 'brand', 'stocks.batches'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         $type = 'All';

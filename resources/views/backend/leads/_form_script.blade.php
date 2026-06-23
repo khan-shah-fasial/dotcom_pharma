@@ -2,6 +2,7 @@
     $(function () {
         var pincodeLookupTimer;
         var customerLookupUrl = @json(route('leads.customer_by_phone'));
+        var customerCompanyLookupUrl = @json(route('leads.customer_by_company_name'));
         var stateUrl = @json(route('get-state'));
         var cityUrl = @json(route('get-city'));
         var locationUrl = @json(route('get-location'));
@@ -165,21 +166,32 @@
 
         $('.js-lead-fetch-customer').on('click', function () {
             var $button = $(this);
-            var phone = $($button.data('input')).val().trim();
-            var $status = $button.closest('.col-md-4').find('.lead-customer-lookup-status');
+            var lookupType = $button.data('lookup') || 'phone';
+            var lookupValue = $($button.data('input')).val().trim();
+            var lookupUrl = lookupType === 'company_name' ? customerCompanyLookupUrl : customerLookupUrl;
+            var lookupData = {};
+            var $status = $button.closest('.input-group').siblings('.lead-customer-lookup-status');
             var originalHtml = $button.html();
 
-            if (phone.replace(/\D/g, '').length < 5) {
+            if (lookupType === 'phone' && lookupValue.replace(/\D/g, '').length < 5) {
                 $status.removeClass('text-success text-muted').addClass('text-danger')
                     .text('{{ translate('Please enter a valid phone number') }}');
                 return;
             }
 
+            if (lookupType === 'company_name' && !lookupValue) {
+                $status.removeClass('text-success text-muted').addClass('text-danger')
+                    .text('{{ translate('Please enter a company name') }}');
+                return;
+            }
+
+            lookupData[lookupType] = lookupValue;
+
             $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-1"></span>{{ translate('Fetching') }}');
             $status.removeClass('text-success text-danger').addClass('text-muted')
                 .text('{{ translate('Searching customer...') }}');
 
-            $.getJSON(customerLookupUrl, { phone: phone }).done(function (response) {
+            $.getJSON(lookupUrl, lookupData).done(function (response) {
                 if (response.found && response.customer) {
                     fillCustomer(response.customer);
                     $status.removeClass('text-muted text-danger').addClass('text-success')

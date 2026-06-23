@@ -14,20 +14,22 @@ class PurchaseHistoryExport implements FromCollection, WithHeadings, WithMapping
     protected $orderDateTo;
     protected $productSku;
     protected $salesman;
+    protected $account;
 
-    public function __construct($search = null, $orderDateFrom = null, $orderDateTo = null, $productSku = null, $salesman = null)
+    public function __construct($search = null, $orderDateFrom = null, $orderDateTo = null, $productSku = null, $salesman = null, $account = null)
     {
         $this->search = $search;
         $this->orderDateFrom = $orderDateFrom;
         $this->orderDateTo = $orderDateTo;
         $this->productSku = $productSku;
         $this->salesman = $salesman;
+        $this->account = $account;
     }
 
     public function collection()
     {
         $query = PurchaseHistory::with([
-            'customerDetails',
+            'customerDetails.user',
             'productStock.product.brand',
         ]);
 
@@ -40,7 +42,28 @@ class PurchaseHistoryExport implements FromCollection, WithHeadings, WithMapping
                     ->orWhere('product_sku', 'like', $like)
                     ->orWhere('sales_man_name', 'like', $like)
                     ->orWhere('state', 'like', $like)
-                    ->orWhere('city', 'like', $like);
+                    ->orWhere('city', 'like', $like)
+                    ->orWhere('ac_number', 'like', $like)
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($like) {
+                        $customerQuery->where('company_name', 'like', $like)
+                            ->orWhereHas('user', function ($userQuery) use ($like) {
+                                $userQuery->where('name', 'like', $like);
+                            });
+                    });
+            });
+        }
+
+        if ($this->account !== null && trim((string) $this->account) !== '') {
+            $like = '%' . trim($this->account) . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('ac_number', 'like', $like)
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($like) {
+                        $customerQuery->where('crm_id', 'like', $like)
+                            ->orWhere('company_name', 'like', $like)
+                            ->orWhereHas('user', function ($userQuery) use ($like) {
+                                $userQuery->where('name', 'like', $like);
+                            });
+                    });
             });
         }
 

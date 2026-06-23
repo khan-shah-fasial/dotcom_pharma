@@ -214,13 +214,15 @@
                                     @endif
                                 </a>
                             </th>
-                            <th>{{ translate('Name') }}</th>
+                            <th>{{ translate('Product Name') }}</th>
                             {{-- @if ($type == 'Seller' || $type == 'All')
                                 <th data-breakpoints="lg">{{ translate('Added By') }}</th>
                             @endif
                             <th data-breakpoints="sm">{{ translate('Info') }}</th> --}}
                             <th>{{ translate('Category') }}</th>
                             <th data-breakpoints="md">{{ translate('Total Stock') }}</th>
+                            <th>{{ translate('Brand') }}</th>
+                            <th>{{ translate('Role Prices') }}</th>
                             <th>{{ translate('Group') }}</th>
                             <th>{{ translate('Schedule') }}</th>
                             <th data-breakpoints="xs sm md lg xl">{{ translate('Todays Deal') }}</th>
@@ -276,6 +278,9 @@
                                         <div class="col">
                                             <span
                                                 class="text-muted text-truncate-2">{{ $product->getTranslation('name') }}</span>
+                                            <small class="d-block text-muted mt-1">
+                                                {{ translate('Drug Name') }}: {{ $product->drug_name ?: '-' }}
+                                            </small>
                                         </div>
                                     </div>
                                 </td>
@@ -402,6 +407,60 @@
                                             <span class="badge badge-inline badge-danger">{{ translate('Low') }}</span>
                                         @endif
                                     @endif
+                                </td>
+                                <td>{{ optional($product->brand)->getTranslation('name') ?? '-' }}</td>
+                                <td>
+                                    @php
+                                        $rolePriceValues = collect();
+
+                                        foreach ($product->stocks as $stock) {
+                                            foreach (($stock->batches ?? collect()) as $batch) {
+                                                $batchRolePrices = is_string($batch->role_price)
+                                                    ? json_decode($batch->role_price, true)
+                                                    : $batch->role_price;
+
+                                                if (is_array($batchRolePrices)) {
+                                                    foreach ($batchRolePrices as $role => $price) {
+                                                        if (is_numeric($price)) {
+                                                            $rolePriceValues->push(['role' => $role, 'price' => (float) $price]);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if ($rolePriceValues->isEmpty()) {
+                                            $productRolePrices = is_string($product->role_price)
+                                                ? json_decode($product->role_price, true)
+                                                : $product->role_price;
+
+                                            if (is_array($productRolePrices)) {
+                                                foreach ($productRolePrices as $role => $price) {
+                                                    if (is_numeric($price)) {
+                                                        $rolePriceValues->push(['role' => $role, 'price' => (float) $price]);
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        $rolePriceGroups = $rolePriceValues->groupBy('role');
+                                    @endphp
+
+                                    @forelse ($rolePriceGroups as $role => $prices)
+                                        @php
+                                            $minimumRolePrice = $prices->min('price');
+                                            $maximumRolePrice = $prices->max('price');
+                                        @endphp
+                                        <div class="text-nowrap">
+                                            <strong>{{ strtoupper($role) }}:</strong>
+                                            {{ single_price($minimumRolePrice) }}
+                                            @if ($maximumRolePrice > $minimumRolePrice)
+                                                - {{ single_price($maximumRolePrice) }}
+                                            @endif
+                                        </div>
+                                    @empty
+                                        -
+                                    @endforelse
                                 </td>
                                 <td>{{ optional($product->main_group)->getTranslation('name') ?? '-' }}</td>
                                 <td>{{ $product->schedule ?: '-' }}</td>

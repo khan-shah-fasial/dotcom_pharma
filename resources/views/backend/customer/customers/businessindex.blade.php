@@ -263,6 +263,7 @@
                                     @endif
                                 </a>
                             </th>
+                            <th>{{ translate('Current Status') }}</th>
                             <th>{{ translate('Post') }}</th>
                             <th>{{ translate('District') }}</th>
                             <th>{{ translate('City') }}</th>
@@ -305,6 +306,7 @@
                                             <i class="fa fa-ban text-danger" aria-hidden="true"></i>
                                         @endif {{ $user->details->company_name ?? '-' }}
                                     </td>
+                                    <td>{{ $user->details->current_status ?? '-' }}</td>
                                     <td>{{ $user->details->post_business ?? ($user->details->post ?? '-') }}</td>
                                     <td>{{ $user->details->district_business ?? ($user->details->district ?? '-') }}</td>
                                     @php
