@@ -1,3 +1,54 @@
+<style>
+    #auto-menu-close-toggle {
+        top: 50%;
+        right: 10px;
+        min-width: 58px;
+        padding: 4px 7px;
+        transform: translateY(-50%);
+        color: #ffffff !important;
+        background-color: #4e596e !important;
+        border: 1px solid #7b879c !important;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
+        opacity: 1 !important;
+        line-height: 1.1;
+    }
+
+    #auto-menu-close-toggle:hover,
+    #auto-menu-close-toggle:focus {
+        color: #ffffff !important;
+        background-color: #5c687e !important;
+        border-color: #a3aec0 !important;
+    }
+
+    #auto-menu-close-toggle[aria-pressed="true"] {
+        background-color: #28a745 !important;
+        border-color: #55c66f !important;
+    }
+
+    #auto-menu-close-toggle[aria-pressed="true"]:hover,
+    #auto-menu-close-toggle[aria-pressed="true"]:focus {
+        background-color: #218838 !important;
+        border-color: #55c66f !important;
+    }
+
+    #auto-menu-close-toggle .auto-menu-close-label {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 9px;
+        font-weight: 500;
+        line-height: 1;
+        opacity: .9;
+    }
+
+    #auto-menu-close-state {
+        display: block;
+        font-size: 10px;
+        line-height: 1;
+        letter-spacing: .4px;
+    }
+</style>
+
 <div class="aiz-sidebar-wrap">
     <div class="aiz-sidebar left c-scrollbar">
         <div class="aiz-side-nav-logo-wrap position-relative pr-5">
@@ -10,14 +61,13 @@
             </a>
             <button type="button" id="auto-menu-close-toggle"
                 class="btn btn-xs btn-soft-light position-absolute"
-                style="top: 50%; right: 10px; transform: translateY(-50%); padding: 3px 6px;"
                 data-storage-key="backend_auto_menu_close_{{ auth()->id() }}"
                 data-on-label="{{ translate('ON') }}"
                 data-off-label="{{ translate('OFF') }}"
                 aria-pressed="false"
                 title="{{ translate('Automatically close menu after opening a page') }}">
-                <span class="d-block" style="font-size: 9px; line-height: 1;">{{ translate('Auto Close') }}</span>
-                <strong id="auto-menu-close-state" style="font-size: 10px;">{{ translate('OFF') }}</strong>
+                <span class="auto-menu-close-label">{{ translate('Auto Close') }}</span>
+                <strong id="auto-menu-close-state">{{ translate('OFF') }}</strong>
             </button>
         </div>
         <div class="aiz-side-nav-wrap">
