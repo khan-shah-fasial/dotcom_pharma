@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class PurchaseHistory extends Model
@@ -59,6 +60,42 @@ class PurchaseHistory extends Model
     public function productStock()
     {
         return $this->belongsTo(ProductStock::class, 'product_sku', 'sku');
+    }
+
+    /**
+     * Combine report lines only when their order, bill, batch and pricing match.
+     */
+    public static function mergeReportRows(Collection $records): Collection
+    {
+        return $records->groupBy(function (self $record) {
+            if (! filled($record->order_number) || ! filled($record->invoice_number)) {
+                return 'record:' . $record->getKey();
+            }
+
+            return json_encode([
+                $record->ac_number,
+                $record->order_number,
+                $record->invoice_series,
+                $record->invoice_number,
+                $record->product_sku,
+                $record->batch_number,
+                $record->sale_rate,
+                $record->discount,
+                $record->mrp_rate,
+                $record->tax_code,
+                $record->gst_percentage,
+            ]);
+        })->map(function (Collection $group) {
+            $record = clone $group->first();
+
+            foreach (['quantity', 'free', 'taxable_amount', 'gst_amount', 'final_amount'] as $field) {
+                $record->setAttribute($field, $group->sum(
+                    fn (self $item) => (float) str_replace(',', '', (string) ($item->{$field} ?? 0))
+                ));
+            }
+
+            return $record;
+        })->values();
     }
 }
 

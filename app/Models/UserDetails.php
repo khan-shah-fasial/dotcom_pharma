@@ -171,4 +171,19 @@ class UserDetails extends Model
     {
         return $this->belongsTo(BookedTo::class, 'booked_to_id');
     }
+
+    public function businessCity()
+    {
+        return $this->belongsTo(City::class, 'city_id_business');
+    }
+
+    public function businessState()
+    {
+        return $this->belongsTo(State::class, 'state_id_business');
+    }
+
+    public function businessCountry()
+    {
+        return $this->belongsTo(Country::class, 'country_id_business');
+    }
 }

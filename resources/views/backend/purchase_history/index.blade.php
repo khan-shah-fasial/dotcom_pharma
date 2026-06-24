@@ -1,6 +1,35 @@
 @extends('backend.layouts.app')
 
 @section('content')
+    <style>
+        .purchase-history-sheet {
+            min-width: 1900px;
+            table-layout: fixed;
+            color: #111;
+            font-size: 11px;
+        }
+        .purchase-history-sheet th,
+        .purchase-history-sheet td {
+            border-color: #222 !important;
+            padding: 6px 5px !important;
+            text-align: center;
+            vertical-align: middle !important;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+        .purchase-history-sheet th {
+            font-family: Georgia, serif;
+            font-weight: 700;
+            line-height: 1.15;
+        }
+        .purchase-history-sheet .cell-lines span {
+            display: block;
+            min-height: 16px;
+        }
+        .purchase-history-sheet .party-cell {
+            text-align: left;
+        }
+    </style>
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
             <h1 class="h3">{{ translate('Purchase History') }}</h1>
@@ -140,63 +169,66 @@
 
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table aiz-table mb-0 table-bordered">
+                <table class="table mb-0 table-bordered purchase-history-sheet">
                     <thead>
                     <tr>
-                        <th>{{ translate('Serial Number') }}</th>
-                        <th>{{ translate('Account') }}</th>
-                        <th>{{ translate('Order Date') }}</th>
-                        <th>{{ translate('Order Number') }}</th>
-                        <th>{{ translate('Invoice Number') }}</th>
-                        <th>{{ translate('Product SKU') }}</th>
-                        <th class="text-right">{{ translate('Quantity') }}</th>
-                        <th class="text-right">{{ translate('Sale Rate') }}</th>
-                        <th class="text-right">{{ translate('Final Amount') }}</th>
-                        <th>{{ translate('Salesman Name') }}</th>
-                        <th>{{ translate('State') }}</th>
-                        <th>{{ translate('City') }}</th>
-                        <th class="text-right">{{ translate('Options') }}</th>
+                        <th style="width: 55px">{{ translate('Sr.No') }}</th>
+                        <th style="width: 125px">{{ translate('Ac.No') }}<br>{{ translate('Name') }}</th>
+                        <th style="width: 210px">{{ translate('Party Name') }}<br>{{ translate('Area, Town') }}<br>{{ translate('District') }}</th>
+                        <th style="width: 135px">{{ translate('State') }}<br>{{ translate('Pincode') }}<br>{{ translate('Country') }}</th>
+                        <th style="width: 135px">{{ translate('Order Date') }}<br>{{ translate('Order.No') }}<br>{{ translate('SalesMan') }}</th>
+                        <th style="width: 120px">{{ translate('Date') }}<br>{{ translate('Series') }}<br>{{ translate('Bill') }}</th>
+                        <th style="width: 220px">{{ translate('SKU') }}<br>{{ translate('Product') }}<br>{{ translate('Pack Size') }}</th>
+                        <th style="width: 145px">{{ translate('Batch') }}<br>{{ translate('Expiry') }}<br>{{ translate('Mfd By') }}</th>
+                        <th style="width: 75px">{{ translate('Qty') }}<br>{{ translate('Free') }}<br>{{ translate('Total') }}</th>
+                        <th style="width: 90px">{{ translate('Sale Rate') }}<br>{{ translate('Disc%') }}<br>{{ translate('MRP') }}</th>
+                        <th style="width: 95px">{{ translate('Taxable') }}<br>{{ translate('GST') }}<br>{{ translate('Total') }}</th>
+                        <th style="width: 80px">{{ translate('Tax Code') }}<br>{{ translate('GST%') }}</th>
+                        <th style="width: 160px">{{ translate('Transport') }}<br>{{ translate('Booked To') }}<br>{{ translate('Case') }}</th>
+                        <th style="width: 125px">{{ translate('L.R.No') }}<br>{{ translate('LR Date') }}<br>{{ translate('Late By') }}</th>
                     </tr>
                     </thead>
                     <tbody>
                     @forelse($purchaseHistory as $history)
+                        @php
+                            $customer = $history->customerDetails;
+                            $product = $history->productStock?->product;
+                            $quantity = (float) str_replace(',', '', (string) ($history->quantity ?? 0));
+                            $free = (float) str_replace(',', '', (string) ($history->free ?? 0));
+                        @endphp
                         <tr>
-                            <td>{{ $history->serial_number }}</td>
-                            <td>
-                                <div><strong>{{ translate('Account ID') }}:</strong> {{ $history->customerDetails?->crm_id ?? $history->ac_number ?? '-' }}</div>
-                                <div><strong>{{ translate('Company Name') }}:</strong> {{ $history->customerDetails?->company_name ?? '-' }}</div>
-                                <div><strong>{{ translate('User Name') }}:</strong> {{ $history->customerDetails?->user?->name ?? '-' }}</div>
+                            <td>{{ $purchaseHistory->firstItem() + $loop->index }}</td>
+                            <td class="cell-lines">
+                                <span>{{ $customer?->crm_id ?? $history->ac_number }}</span>
+                                <span>{{ $customer?->user?->name }}</span>
                             </td>
-                            <td>{{ $history->order_date }}</td>
-                            <td>{{ $history->order_number }}</td>
-                            <td>{{ $history->invoice_number }}</td>
-                            <td>{{ $history->product_sku }}</td>
-                            <td class="text-right">{{ $history->quantity }}</td>
-                            <td class="text-right">{{ $history->sale_rate }}</td>
-                            <td class="text-right">{{ $history->final_amount }}</td>
-                            <td>{{ $history->sales_man_name }}</td>
-                            <td>{{ $history->state }}</td>
-                            <td>{{ $history->city }}</td>
-                            <td class="text-right">
-                                <a href="javascript:void(0);"
-                                   class="btn btn-soft-info btn-icon btn-circle btn-sm"
-                                   onclick="show_purchase_history_detail('{{ route('admin.purchase_history.show', $history->id) }}')"
-                                   title="{{ translate('View Details') }}">
-                                    <i class="las la-eye"></i>
-                                </a>
-
-                                {{-- <a href="{{ route('admin.purchase_history.edit', $history->id) }}"
-                                   class="btn btn-soft-primary btn-icon btn-circle btn-sm"
-                                   title="{{ translate('Edit') }}">
-                                    <i class="las la-edit"></i>
-                                </a> --}}
-
-                                {{-- <button type="button"
-                                        class="btn btn-soft-danger btn-icon btn-circle btn-sm"
-                                        onclick="confirm_delete_purchase_history('{{ route('admin.purchase_history.destroy', $history->id) }}', '{{ $history->serial_number }}', '{{ $history->order_number }}', '{{ $history->invoice_number }}', '{{ $history->product_sku }}')"
-                                        title="{{ translate('Delete') }}">
-                                    <i class="las la-trash"></i>
-                                </button> --}}
+                            <td class="cell-lines party-cell">
+                                <span>{{ $customer?->company_name }}</span>
+                                <span>{{ collect([$customer?->post_business, $customer?->businessCity?->name])->filter()->implode(', ') }}</span>
+                                <span>{{ $customer?->district_business }}</span>
+                            </td>
+                            <td class="cell-lines">
+                                <span>{{ $customer?->businessState?->name }}</span>
+                                <span>{{ $customer?->pincode_business }}</span>
+                                <span>{{ $customer?->businessCountry?->name }}</span>
+                            </td>
+                            <td class="cell-lines"><span>{{ $history->order_date }}</span><span>{{ $history->order_number }}</span><span>{{ $history->sales_man_code ?: $history->sales_man_name }}</span></td>
+                            <td class="cell-lines"><span>{{ $history->invoice_date }}</span><span>{{ $history->invoice_series }}</span><span>{{ $history->invoice_number }}</span></td>
+                            <td class="cell-lines"><span>{{ $history->product_sku }}</span><span>{{ $product?->name }}</span><span>{{ $history->packing }}</span></td>
+                            <td class="cell-lines"><span>{{ $history->batch_number }}</span><span>{{ $history->expiry_date }}</span><span>{{ $product?->brand?->name }}</span></td>
+                            <td class="cell-lines"><span>{{ $history->quantity }}</span><span>{{ $history->free }}</span><span>{{ $quantity + $free }}</span></td>
+                            <td class="cell-lines"><span>{{ $history->sale_rate }}</span><span>{{ $history->discount }}</span><span>{{ $history->mrp_rate }}</span></td>
+                            <td class="cell-lines"><span>{{ $history->taxable_amount }}</span><span>{{ $history->gst_amount }}</span><span>{{ $history->final_amount }}</span></td>
+                            <td class="cell-lines"><span>{{ $history->tax_code }}</span><span>{{ $history->gst_percentage }}</span></td>
+                            <td class="cell-lines"><span>{{ $history->transport }}</span><span>{{ $history->book_to }}</span><span>{{ $history->case_value }}</span></td>
+                            <td class="cell-lines">
+                                <span>
+                                    <a href="javascript:void(0);" onclick="show_purchase_history_detail('{{ route('admin.purchase_history.show', $history->id) }}')" title="{{ translate('View Details') }}">
+                                        {{ $history->lr_number }}
+                                    </a>
+                                </span>
+                                <span>{{ $history->lr_date }}</span>
+                                <span>{{ $history->late_by }}</span>
                             </td>
                         </tr>
                     @empty

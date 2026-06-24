@@ -59,7 +59,7 @@
     @endphp
 
     <style>
-        .product-detail-sheet { color: #202124; font-size: 11px; table-layout: auto; }
+        .product-detail-sheet { color: #202124; font-size: 11px; min-width: 1900px; table-layout: auto; }
         .product-detail-sheet th,
         .product-detail-sheet td { border-color: #242424 !important; padding: 0 !important; text-align: center; vertical-align: middle !important; }
         .product-detail-sheet thead th { background: #fff; color: #111; font-size: 11px; line-height: 1.25; min-width: 54px; white-space: normal; }
@@ -267,8 +267,7 @@
 
         <div class="card-body">
             <div class="table-responsive">
-                <table id="product-detail-sheet" class="table table-bordered aiz-table product-detail-sheet mb-0"
-                    data-toggle-column="first">
+                <table id="product-detail-sheet" class="table table-bordered product-detail-sheet mb-0">
                     <thead>
                         <tr>
                             <th>{{ translate('Sr No.') }}</th>
@@ -481,18 +480,6 @@
 @section('script')
     <script>
         $(document).ready(function () {
-            $('#product-detail-sheet').footable({
-                breakpoints: {
-                    xs: 576,
-                    sm: 768,
-                    md: 992,
-                    lg: 1400,
-                    xl: 2400
-                },
-                cascade: true,
-                empty: '{{ translate('No product detail records found') }}'
-            });
-
             const productSelect = $('#product_select');
             const variantSelect = $('#variant_select');
             const batchSelect = $('#batch_select');

@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Validators\ValidationException;
 use App\Models\PurchaseHistoryImport;
 use App\Models\PurchaseHistoryExport;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PurchaseHistoryReportController extends Controller
 {
@@ -24,6 +25,9 @@ class PurchaseHistoryReportController extends Controller
         $query = PurchaseHistory::query()
             ->with([
                 'customerDetails.user',
+                'customerDetails.businessCity',
+                'customerDetails.businessState',
+                'customerDetails.businessCountry',
                 'productStock.product.brand',
             ]);
 
@@ -97,14 +101,30 @@ class PurchaseHistoryReportController extends Controller
         if (! in_array(strtolower($sortDir), ['asc', 'desc'], true)) {
             $sortDir = 'desc';
         }
-        $query->orderBy($sortBy, $sortDir);
+        $query->orderBy($sortBy, $sortDir)
+            ->orderBy('order_number')
+            ->orderBy('invoice_number')
+            ->orderBy('product_sku')
+            ->orderBy('batch_number');
 
         $perPage = (int) $request->get('per_page', 25);
         if ($perPage <= 0 || $perPage > 200) {
             $perPage = 25;
         }
 
-        $purchaseHistory = $query->paginate($perPage)->appends($request->query());
+        // Group before pagination so a matching line can never be split across pages.
+        $mergedRows = PurchaseHistory::mergeReportRows($query->get());
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $purchaseHistory = new LengthAwarePaginator(
+            $mergedRows->forPage($currentPage, $perPage)->values(),
+            $mergedRows->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         // Distinct SKU list for filter dropdown
         $skuOptions = PurchaseHistory::query()
