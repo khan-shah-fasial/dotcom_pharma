@@ -347,6 +347,37 @@ class PurchaseHistoryReportController extends Controller
             $request->get('account')
         );
 
+        $rowCount = DB::query()
+            ->fromSub($export->query()->toBase(), 'purchase_history_export')
+            ->count();
+
+        if ($rowCount > PurchaseHistoryExport::XLSX_SAFE_ROW_LIMIT) {
+            return response()->streamDownload(function () use ($export) {
+                if (function_exists('set_time_limit')) {
+                    set_time_limit(0);
+                }
+
+                $output = fopen('php://output', 'wb');
+
+                // UTF-8 BOM makes Excel display non-English names correctly.
+                fwrite($output, "\xEF\xBB\xBF");
+                fputcsv($output, $export->headings());
+
+                $export->query()->chunk($export->chunkSize(), function ($records) use ($export, $output) {
+                    foreach ($records as $record) {
+                        fputcsv($output, $export->map($record));
+                    }
+
+                    fflush($output);
+                });
+
+                fclose($output);
+            }, 'purchase_history.csv', [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'X-Accel-Buffering' => 'no',
+            ]);
+        }
+
         return Excel::download($export, 'purchase_history.xlsx');
     }
 }
