@@ -42,11 +42,36 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
     public function query()
     {
         $query = PurchaseHistory::with([
-            'customerDetails.user',
-            'customerDetails.businessCity',
-            'customerDetails.businessState',
-            'customerDetails.businessCountry',
-            'productStock.product.brand',
+            'customerDetails' => function ($customerQuery) {
+                $customerQuery
+                    ->select([
+                        'crm_id',
+                        'user_id',
+                        'company_name',
+                        'post_business',
+                        'city_id_business',
+                        'district_business',
+                        'state_id_business',
+                        'pincode_business',
+                        'country_id_business',
+                    ])
+                    ->with([
+                        'user:id,name',
+                        'businessCity:id,name',
+                        'businessState:id,name',
+                        'businessCountry:id,name',
+                    ]);
+            },
+            'productStock' => function ($stockQuery) {
+                $stockQuery
+                    ->select(['id', 'sku', 'product_id'])
+                    ->with(['product' => function ($productQuery) {
+                        $productQuery
+                            ->select(['id', 'name', 'brand_id'])
+                            ->without(['product_translations', 'taxes', 'thumbnail'])
+                            ->with('brand:id,name');
+                    }]);
+            },
         ]);
 
         if ($this->search) {
