@@ -81,12 +81,8 @@
                         <i class="las la-file-import mr-1"></i>{{ translate('Import party wise sheets') }}
                     </button>
                     <a href="{{ route('admin.purchase_history.export', request()->query()) }}"
-                       class="btn btn-outline-success mr-2 mb-2">
-                        <i class="las la-file-excel mr-1"></i>{{ translate('Export Excel') }}
-                    </a>
-                    <a href="{{ route('admin.purchase_history.export', array_merge(request()->query(), ['format' => 'csv'])) }}"
                        class="btn btn-success mb-2">
-                        <i class="las la-download mr-1"></i>{{ translate('Fast Export CSV') }}
+                        <i class="las la-download mr-1"></i>{{ translate('Export') }}
                     </a>
                 </div>
             </div>
