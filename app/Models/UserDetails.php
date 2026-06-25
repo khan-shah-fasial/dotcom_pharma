@@ -23,6 +23,33 @@ class UserDetails extends Model
         'Delay payment',
     ];
 
+    public const CUSTOMER_TYPES = [
+        'Manufacturer',
+        'Third Party Manufacturer',
+        'C & F Agent',
+        'Authorised Distributor',
+        'Distributor',
+        'Wholesaler',
+        'Undercutter',
+        'Retailer',
+        'Hospital',
+        'Clinic',
+        'Doctor',
+        'Practiner',
+        'Govt.Supplier',
+        'Broker',
+        'Mediater',
+        'Supplier/Vendor',
+        'Self User',
+        'Farmer',
+        'Dairy',
+        'NGO',
+        'Milk Federation',
+        'Govt.Institutes',
+        'Medical College',
+        'R & D Center',
+    ];
+
     protected $fillable = [
         'user_id',
         'type_option',
@@ -43,6 +70,7 @@ class UserDetails extends Model
         'uin_current_status',
         'con_person_name',
         'company_name',
+        'customer_type',
         'current_status',
         'street_add_first_business',
         'street_add_sec_business',

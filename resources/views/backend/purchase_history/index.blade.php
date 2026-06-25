@@ -12,7 +12,6 @@
         .purchase-history-sheet td {
             border-color: #222 !important;
             padding: 6px 5px !important;
-            text-align: center;
             vertical-align: middle !important;
             white-space: normal;
             overflow-wrap: anywhere;
@@ -21,6 +20,16 @@
             font-family: Georgia, serif;
             font-weight: 700;
             line-height: 1.15;
+            text-align: center;
+        }
+        .purchase-history-sheet th a {
+            color: #007bff;
+            display: block;
+            min-height: 16px;
+        }
+        .purchase-history-sheet th a:hover {
+            color: #0056b3;
+            text-decoration: underline;
         }
         .purchase-history-sheet .cell-lines span {
             display: block;
@@ -28,6 +37,20 @@
         }
         .purchase-history-sheet .party-cell {
             text-align: left;
+        }
+        .purchase-history-sheet .text-red {
+            color: #ff0000;
+            font-weight: 700;
+        }
+        .purchase-history-sheet .sort-icon {
+            color: #007bff;
+            font-size: 12px;
+            line-height: 1;
+            margin-left: 3px;
+            vertical-align: 1px;
+        }
+        .purchase-history-sheet th a:hover .sort-icon {
+            color: #0056b3;
         }
     </style>
     <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -52,6 +75,24 @@
     <div class="card">
         <form action="{{ route('admin.purchase_history.index') }}" method="GET" id="purchase-history-filters">
             @php
+                $sortLink = function (string $column) use ($sortBy, $sortDir) {
+                    $nextDir = ($sortBy === $column && $sortDir === 'asc') ? 'desc' : 'asc';
+
+                    return route('admin.purchase_history.index', array_merge(request()->except('page'), [
+                        'sort_by' => $column,
+                        'sort_dir' => $nextDir,
+                    ]));
+                };
+                $sortIcon = function (string $column) use ($sortBy, $sortDir) {
+                    if ($sortBy !== $column) {
+                        return '';
+                    }
+
+                    return '<i class="las la-sort-amount-'.($sortDir === 'asc' ? 'up' : 'down').' sort-icon"></i>';
+                };
+                $sortHeading = function (string $column, string $label) use ($sortLink, $sortIcon) {
+                    return '<a href="'.e($sortLink($column)).'">'.e($label).$sortIcon($column).'</a>';
+                };
                 $filtersApplied = collect([
                     $search,
                     request('account'),
@@ -141,12 +182,44 @@
                                     <label class="form-label" for="sort_by">{{ translate('Sort By') }}</label>
                                     <select class="form-control aiz-selectpicker" id="sort_by" name="sort_by">
                                         <option value="order_date" @if($sortBy=='order_date') selected @endif>{{ translate('Order Date') }}</option>
-                                        <option value="serial_number" @if($sortBy=='serial_number') selected @endif>{{ translate('Serial Number') }}</option>
+                                        <option value="sr_no" @if($sortBy=='sr_no') selected @endif>{{ translate('Sr.No') }}</option>
+                                        <option value="ac_number" @if($sortBy=='ac_number') selected @endif>{{ translate('Ac.No') }}</option>
+                                        <option value="account_name" @if($sortBy=='account_name') selected @endif>{{ translate('Name') }}</option>
+                                        <option value="party_name" @if($sortBy=='party_name') selected @endif>{{ translate('Party Name') }}</option>
+                                        <option value="area" @if($sortBy=='area') selected @endif>{{ translate('Area') }}</option>
+                                        <option value="town" @if($sortBy=='town') selected @endif>{{ translate('Town') }}</option>
+                                        <option value="district" @if($sortBy=='district') selected @endif>{{ translate('District') }}</option>
+                                        <option value="state" @if($sortBy=='state') selected @endif>{{ translate('State') }}</option>
+                                        <option value="pincode" @if($sortBy=='pincode') selected @endif>{{ translate('Pincode') }}</option>
+                                        <option value="country" @if($sortBy=='country') selected @endif>{{ translate('Country') }}</option>
                                         <option value="order_number" @if($sortBy=='order_number') selected @endif>{{ translate('Order Number') }}</option>
+                                        <option value="sales_man" @if($sortBy=='sales_man') selected @endif>{{ translate('Salesman') }}</option>
+                                        <option value="invoice_date" @if($sortBy=='invoice_date') selected @endif>{{ translate('Invoice Date') }}</option>
+                                        <option value="invoice_series" @if($sortBy=='invoice_series') selected @endif>{{ translate('Series') }}</option>
                                         <option value="invoice_number" @if($sortBy=='invoice_number') selected @endif>{{ translate('Invoice Number') }}</option>
                                         <option value="product_sku" @if($sortBy=='product_sku') selected @endif>{{ translate('Product SKU') }}</option>
-                                        <option value="sales_man_name" @if($sortBy=='sales_man_name') selected @endif>{{ translate('Salesman Name') }}</option>
+                                        <option value="product_name" @if($sortBy=='product_name') selected @endif>{{ translate('Product Name') }}</option>
+                                        <option value="packing" @if($sortBy=='packing') selected @endif>{{ translate('Pack Size') }}</option>
+                                        <option value="batch_number" @if($sortBy=='batch_number') selected @endif>{{ translate('Batch Number') }}</option>
+                                        <option value="expiry_date" @if($sortBy=='expiry_date') selected @endif>{{ translate('Expiry') }}</option>
+                                        <option value="mfd_by" @if($sortBy=='mfd_by') selected @endif>{{ translate('Mfd By') }}</option>
+                                        <option value="quantity" @if($sortBy=='quantity') selected @endif>{{ translate('Quantity') }}</option>
+                                        <option value="free" @if($sortBy=='free') selected @endif>{{ translate('Free') }}</option>
+                                        <option value="total_quantity" @if($sortBy=='total_quantity') selected @endif>{{ translate('Qty Total') }}</option>
+                                        <option value="sale_rate" @if($sortBy=='sale_rate') selected @endif>{{ translate('Sale Rate') }}</option>
+                                        <option value="discount" @if($sortBy=='discount') selected @endif>{{ translate('Disc%') }}</option>
+                                        <option value="mrp_rate" @if($sortBy=='mrp_rate') selected @endif>{{ translate('MRP') }}</option>
+                                        <option value="taxable_amount" @if($sortBy=='taxable_amount') selected @endif>{{ translate('Taxable Amount') }}</option>
+                                        <option value="gst_amount" @if($sortBy=='gst_amount') selected @endif>{{ translate('GST') }}</option>
                                         <option value="final_amount" @if($sortBy=='final_amount') selected @endif>{{ translate('Final Amount') }}</option>
+                                        <option value="tax_code" @if($sortBy=='tax_code') selected @endif>{{ translate('Tax Code') }}</option>
+                                        <option value="gst_percentage" @if($sortBy=='gst_percentage') selected @endif>{{ translate('GST%') }}</option>
+                                        <option value="transport" @if($sortBy=='transport') selected @endif>{{ translate('Transport') }}</option>
+                                        <option value="book_to" @if($sortBy=='book_to') selected @endif>{{ translate('Booked To') }}</option>
+                                        <option value="case_value" @if($sortBy=='case_value') selected @endif>{{ translate('Case') }}</option>
+                                        <option value="lr_number" @if($sortBy=='lr_number') selected @endif>{{ translate('LR Number') }}</option>
+                                        <option value="lr_date" @if($sortBy=='lr_date') selected @endif>{{ translate('LR Date') }}</option>
+                                        <option value="late_by" @if($sortBy=='late_by') selected @endif>{{ translate('Late By') }}</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2 mb-3">
@@ -172,20 +245,20 @@
                 <table class="table mb-0 table-bordered purchase-history-sheet">
                     <thead>
                     <tr>
-                        <th style="width: 55px">{{ translate('Sr.No') }}</th>
-                        <th style="width: 125px">{{ translate('Ac.No') }}<br>{{ translate('Name') }}</th>
-                        <th style="width: 210px">{{ translate('Party Name') }}<br>{{ translate('Area, Town') }}<br>{{ translate('District') }}</th>
-                        <th style="width: 135px">{{ translate('State') }}<br>{{ translate('Pincode') }}<br>{{ translate('Country') }}</th>
-                        <th style="width: 135px">{{ translate('Order Date') }}<br>{{ translate('Order.No') }}<br>{{ translate('SalesMan') }}</th>
-                        <th style="width: 120px">{{ translate('Date') }}<br>{{ translate('Series') }}<br>{{ translate('Bill') }}</th>
-                        <th style="width: 220px">{{ translate('SKU') }}<br>{{ translate('Product') }}<br>{{ translate('Pack Size') }}</th>
-                        <th style="width: 145px">{{ translate('Batch') }}<br>{{ translate('Expiry') }}<br>{{ translate('Mfd By') }}</th>
-                        <th style="width: 75px">{{ translate('Qty') }}<br>{{ translate('Free') }}<br>{{ translate('Total') }}</th>
-                        <th style="width: 90px">{{ translate('Sale Rate') }}<br>{{ translate('Disc%') }}<br>{{ translate('MRP') }}</th>
-                        <th style="width: 95px">{{ translate('Taxable') }}<br>{{ translate('GST') }}<br>{{ translate('Total') }}</th>
-                        <th style="width: 80px">{{ translate('Tax Code') }}<br>{{ translate('GST%') }}</th>
-                        <th style="width: 160px">{{ translate('Transport') }}<br>{{ translate('Booked To') }}<br>{{ translate('Case') }}</th>
-                        <th style="width: 125px">{{ translate('L.R.No') }}<br>{{ translate('LR Date') }}<br>{{ translate('Late By') }}</th>
+                        <th style="width: 55px">{!! $sortHeading('sr_no', translate('Sr.No')) !!}</th>
+                        <th style="width: 125px">{!! $sortHeading('ac_number', translate('Ac.No')) !!}{!! $sortHeading('account_name', translate('Name')) !!}</th>
+                        <th style="width: 210px">{!! $sortHeading('party_name', translate('Party Name')) !!}{!! $sortHeading('area', translate('Area')) !!}, {!! $sortHeading('town', translate('Town')) !!}{!! $sortHeading('district', translate('District')) !!}</th>
+                        <th style="width: 135px">{!! $sortHeading('state', translate('State')) !!}{!! $sortHeading('pincode', translate('Pincode')) !!}{!! $sortHeading('country', translate('Country')) !!}</th>
+                        <th style="width: 135px">{!! $sortHeading('order_date', translate('Order Date')) !!}{!! $sortHeading('order_number', translate('Order.No')) !!}{!! $sortHeading('sales_man', translate('SalesMan')) !!}</th>
+                        <th style="width: 120px">{!! $sortHeading('invoice_date', translate('Date')) !!}{!! $sortHeading('invoice_series', translate('Series')) !!}{!! $sortHeading('invoice_number', translate('Bill')) !!}</th>
+                        <th style="width: 220px">{!! $sortHeading('product_sku', translate('SKU')) !!}{!! $sortHeading('product_name', translate('Product')) !!}{!! $sortHeading('packing', translate('Pack Size')) !!}</th>
+                        <th style="width: 145px">{!! $sortHeading('batch_number', translate('Batch')) !!}{!! $sortHeading('expiry_date', translate('Expiry')) !!}{!! $sortHeading('mfd_by', translate('Mfd By')) !!}</th>
+                        <th style="width: 75px">{!! $sortHeading('quantity', translate('Qty')) !!}{!! $sortHeading('free', translate('Free')) !!}{!! $sortHeading('total_quantity', translate('Total')) !!}</th>
+                        <th style="width: 90px">{!! $sortHeading('sale_rate', translate('Sale Rate')) !!}{!! $sortHeading('discount', translate('Disc%')) !!}{!! $sortHeading('mrp_rate', translate('MRP')) !!}</th>
+                        <th style="width: 95px">{!! $sortHeading('taxable_amount', translate('Taxable')) !!}{!! $sortHeading('gst_amount', translate('GST')) !!}{!! $sortHeading('final_amount', translate('Total')) !!}</th>
+                        <th style="width: 80px">{!! $sortHeading('tax_code', translate('Tax Code')) !!}{!! $sortHeading('gst_percentage', translate('GST%')) !!}</th>
+                        <th style="width: 160px">{!! $sortHeading('transport', translate('Transport')) !!}{!! $sortHeading('book_to', translate('Booked To')) !!}{!! $sortHeading('case_value', translate('Case')) !!}</th>
+                        <th style="width: 125px">{!! $sortHeading('lr_number', translate('L.R.No')) !!}{!! $sortHeading('lr_date', translate('LR Date')) !!}{!! $sortHeading('late_by', translate('Late By')) !!}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -197,38 +270,38 @@
                             $free = (float) str_replace(',', '', (string) ($history->free ?? 0));
                         @endphp
                         <tr>
-                            <td>{{ $purchaseHistory->firstItem() + $loop->index }}</td>
-                            <td class="cell-lines">
+                            <td class="text-right">{{ $purchaseHistory->firstItem() + $loop->index }}</td>
+                            <td class="cell-lines text-left">
                                 <span>{{ $customer?->crm_id ?? $history->ac_number }}</span>
                                 <span>{{ $customer?->user?->name }}</span>
                             </td>
                             <td class="cell-lines party-cell">
-                                <span>{{ $customer?->company_name }}</span>
+                                <span class="text-red">{{ $customer?->company_name }}</span>
                                 <span>{{ collect([$customer?->post_business, $customer?->businessCity?->name])->filter()->implode(', ') }}</span>
                                 <span>{{ $customer?->district_business }}</span>
                             </td>
-                            <td class="cell-lines">
+                            <td class="cell-lines text-left">
                                 <span>{{ $customer?->businessState?->name }}</span>
                                 <span>{{ $customer?->pincode_business }}</span>
                                 <span>{{ $customer?->businessCountry?->name }}</span>
                             </td>
-                            <td class="cell-lines"><span>{{ $history->order_date }}</span><span>{{ $history->order_number }}</span><span>{{ $history->sales_man_code ?: $history->sales_man_name }}</span></td>
-                            <td class="cell-lines"><span>{{ $history->invoice_date }}</span><span>{{ $history->invoice_series }}</span><span>{{ $history->invoice_number }}</span></td>
-                            <td class="cell-lines"><span>{{ $history->product_sku }}</span><span>{{ $product?->name }}</span><span>{{ $history->packing }}</span></td>
-                            <td class="cell-lines"><span>{{ $history->batch_number }}</span><span>{{ $history->expiry_date }}</span><span>{{ $product?->brand?->name }}</span></td>
-                            <td class="cell-lines"><span>{{ $history->quantity }}</span><span>{{ $history->free }}</span><span>{{ $quantity + $free }}</span></td>
-                            <td class="cell-lines"><span>{{ $history->sale_rate }}</span><span>{{ $history->discount }}</span><span>{{ $history->mrp_rate }}</span></td>
-                            <td class="cell-lines"><span>{{ $history->taxable_amount }}</span><span>{{ $history->gst_amount }}</span><span>{{ $history->final_amount }}</span></td>
-                            <td class="cell-lines"><span>{{ $history->tax_code }}</span><span>{{ $history->gst_percentage }}</span></td>
-                            <td class="cell-lines"><span>{{ $history->transport }}</span><span>{{ $history->book_to }}</span><span>{{ $history->case_value }}</span></td>
-                            <td class="cell-lines">
+                            <td class="cell-lines text-right"><span>{{ $history->order_date }}</span><span>{{ $history->order_number }}</span><span>{{ $history->sales_man_code ?: $history->sales_man_name }}</span></td>
+                            <td class="cell-lines text-right"><span>{{ $history->invoice_date }}</span><span>{{ $history->invoice_series }}</span><span class="text-red">{{ $history->invoice_number }}</span></td>
+                            <td class="cell-lines text-left"><span>{{ $history->product_sku }}</span><span class="text-red">{{ $product?->name }}</span><span>{{ $history->packing }}</span></td>
+                            <td class="cell-lines text-left"><span>{{ $history->batch_number }}</span><span>{{ $history->expiry_date }}</span><span>{{ $product?->brand?->name }}</span></td>
+                            <td class="cell-lines text-right"><span>{{ $history->quantity }}</span><span>{{ $history->free }}</span><span class="text-red">{{ $quantity + $free }}</span></td>
+                            <td class="cell-lines text-right"><span>{{ $history->sale_rate }}</span><span>{{ filled($history->discount) ? $history->discount : 0 }}</span><span>{{ $history->mrp_rate }}</span></td>
+                            <td class="cell-lines text-right"><span>{{ $history->taxable_amount }}</span><span>{{ $history->gst_amount }}</span><span class="text-red">{{ $history->final_amount }}</span></td>
+                            <td class="cell-lines text-center"><span>{{ $history->tax_code }}</span><span>{{ $history->gst_percentage }}</span></td>
+                            <td class="cell-lines text-left"><span>{{ $history->transport }}</span><span>{{ $history->book_to }}</span><span>{{ $history->case_value }}</span></td>
+                            <td class="cell-lines text-right">
                                 <span>
                                     <a href="javascript:void(0);" onclick="show_purchase_history_detail('{{ route('admin.purchase_history.show', $history->id) }}')" title="{{ translate('View Details') }}">
                                         {{ $history->lr_number }}
                                     </a>
                                 </span>
                                 <span>{{ $history->lr_date }}</span>
-                                <span>{{ $history->late_by }}</span>
+                                <span class="text-red">{{ $history->late_by }}</span>
                             </td>
                         </tr>
                     @empty

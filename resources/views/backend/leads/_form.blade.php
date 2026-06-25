@@ -137,8 +137,22 @@
         <input type="text" name="designation" class="form-control" value="{{ old('designation', $lead->designation ?? '') }}">
         @error('designation') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
-    <label class="col-md-1 col-form-label">{{ translate('Photo') }}</label>
-    <div class="col-md-4">
+    <label class="col-md-2 col-form-label">{{ translate('Customer Type') }}</label>
+    <div class="col-md-3">
+        <select name="customer_type" id="lead_customer_type" class="form-control aiz-selectpicker" data-live-search="true">
+            <option value="">{{ translate('Select Customer Type') }}</option>
+            @foreach ($customerTypes as $customerType)
+                <option value="{{ $customerType }}" @selected(old('customer_type', $lead->customer_type ?? '') === $customerType)>
+                    {{ $customerType }}
+                </option>
+            @endforeach
+        </select>
+        @error('customer_type') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+</div>
+<div class="form-group row">
+    <label class="col-md-2 col-form-label">{{ translate('Photo') }}</label>
+    <div class="col-md-9">
         <div class="input-group" data-toggle="aizuploader" data-type="image">
             <div class="input-group-prepend">
                 <div class="input-group-text bg-soft-secondary">{{ translate('Browse') }}</div>

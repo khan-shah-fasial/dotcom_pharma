@@ -38,6 +38,7 @@
                     <tr><th>{{ translate('Name') }}</th><td>{{ $lead->name }}</td></tr>
                     <tr><th>{{ translate('Designation') }}</th><td>{{ $lead->designation ?? '-' }}</td></tr>
                     <tr><th>{{ translate('Company') }}</th><td>{{ $lead->company_name ?? '-' }}</td></tr>
+                    <tr><th>{{ translate('Customer Type') }}</th><td>{{ $lead->customer_type ?? '-' }}</td></tr>
                     <tr><th>{{ translate('Department') }}</th><td>{{ optional($lead->department)->name ?? '-' }}</td></tr>
                     <tr>
                         <th>{{ translate('Email') }}</th>

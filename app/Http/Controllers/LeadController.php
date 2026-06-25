@@ -59,6 +59,7 @@ class LeadController extends Controller
                 'leads.alternate_mobile_number',
                 'leads.whatsapp_number',
                 'leads.company_name',
+                'leads.customer_type',
                 'leads.source_id',
                 'leads.status_id',
                 'leads.assigned_to',
@@ -346,6 +347,7 @@ class LeadController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
+            'customer_type' => ['nullable', Rule::in(UserDetails::CUSTOMER_TYPES)],
             'designation' => 'nullable|string|max:255',
             'photo' => 'nullable|integer|exists:uploads,id',
             'department_id' => [
@@ -434,6 +436,7 @@ class LeadController extends Controller
             'sources' => $this->leadSourceOptions(),
             'statuses' => $this->leadStatusOptions(),
             'departments' => $departments,
+            'customerTypes' => UserDetails::CUSTOMER_TYPES,
             'assignees' => $this->leadAssigneeOptions(),
             'countries' => Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']),
             'states' => $lead && $lead->country_id
@@ -860,6 +863,7 @@ class LeadController extends Controller
             'customer' => [
                 'name' => $details->con_person_name ?: $customer->name,
                 'company_name' => $details->company_name,
+                'customer_type' => $details->customer_type,
                 'email' => $details->prim_email_business ?: $customer->email,
                 'phone' => $details->prim_mobile_no_business ?: $customer->phone,
                 'alternate_mobile_number' => $details->alt_mobile_no_business,

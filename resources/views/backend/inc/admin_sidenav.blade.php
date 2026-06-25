@@ -947,7 +947,7 @@
                                 </li>
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('product_detail_report.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['product_detail_report.index'])}}">
-                                        <span class="aiz-side-nav-text">{{ translate('Product Detail Report') }}</span>
+                                        <span class="aiz-side-nav-text">{{ translate('Product And Price List') }}</span>
                                     </a>
                                 </li>
                             @endcan

@@ -90,7 +90,7 @@
 
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
-            <h1 class="h3">{{ translate('Product Detail Report') }}</h1>
+            <h1 class="h3">{{ translate('Product And Price List') }}</h1>
             <p class="text-muted mb-0">
                 {{ translate('Batch-level product, variant, pricing, stock and packaging details.') }}
             </p>
@@ -136,7 +136,7 @@
                 <div class="modal-dialog modal-xl" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="productDetailFilterModalLabel">{{ translate('Filter Product Detail Report') }}</h5>
+                            <h5 class="modal-title" id="productDetailFilterModalLabel">{{ translate('Filter Product And Price List') }}</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
                                 <span aria-hidden="true">&times;</span>
                             </button>

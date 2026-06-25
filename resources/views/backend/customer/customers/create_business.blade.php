@@ -331,6 +331,22 @@
                             @enderror
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label" for="customer_type">{{ translate('Customer Type') }}</label>
+                            <select id="customer_type" name="customer_type" class="form-control aiz-selectpicker" data-live-search="true">
+                                <option value="">{{ translate('Select Customer Type') }}</option>
+                                @foreach ($customerTypes as $customerType)
+                                    <option value="{{ $customerType }}" @selected(old('customer_type', $details?->customer_type) === $customerType)>
+                                        {{ $customerType }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('customer_type')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
 
                 </div>

@@ -453,6 +453,7 @@ class CustomerController extends Controller
         });
         $transports = $this->activeTransportsWithBookedTo();
         $currentStatuses = UserDetails::CURRENT_STATUSES;
+        $customerTypes = UserDetails::CUSTOMER_TYPES;
 
         return view('backend.customer.customers.create_business', compact(
             'user',
@@ -461,6 +462,7 @@ class CustomerController extends Controller
             'nextCrmId',
             'transports',
             'currentStatuses',
+            'customerTypes',
         ));
     }
 
@@ -610,6 +612,7 @@ class CustomerController extends Controller
             'const_of_business' => ['nullable', 'string', 'max:255'],
             'con_person_name' => ['nullable', 'string', 'max:50'],
             'company_name' => ['nullable', 'string', 'max:150'],
+            'customer_type' => ['nullable', Rule::in(UserDetails::CUSTOMER_TYPES)],
             'current_status' => ['nullable', Rule::in(UserDetails::CURRENT_STATUSES)],
             'street_add_first_business' => ['nullable', 'string', 'max:150'],
             'street_add_sec_business' => ['nullable', 'string', 'max:150'],
@@ -857,6 +860,7 @@ class CustomerController extends Controller
                 'uin_current_status' => $typeOption === 'international' ? ($validated['uin_current_status'] ?? null) : null,
                 'con_person_name' => $businessRequired ? ($validated['con_person_name'] ?? null) : null,
                 'company_name' => $businessRequired ? ($validated['company_name'] ?? null) : null,
+                'customer_type' => $businessRequired ? ($validated['customer_type'] ?? null) : null,
                 'current_status' => $validated['current_status'] ?? null,
                 'street_add_first_business' => $businessRequired ? ($validated['street_add_first_business'] ?? null) : null,
                 'street_add_sec_business' => $businessRequired ? ($validated['street_add_sec_business'] ?? null) : null,
@@ -1045,6 +1049,7 @@ class CustomerController extends Controller
         });
         $transports = $this->activeTransportsWithBookedTo();
         $currentStatuses = UserDetails::CURRENT_STATUSES;
+        $customerTypes = UserDetails::CUSTOMER_TYPES;
 
         return view('backend.customer.customers.edit', compact(
             'user',
@@ -1052,6 +1057,7 @@ class CustomerController extends Controller
             'countries',
             'transports',
             'currentStatuses',
+            'customerTypes',
         ));
     }
 
@@ -1082,6 +1088,7 @@ class CustomerController extends Controller
             'const_of_business' => [$businessRequired ? 'required' : 'nullable'],
             'con_person_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'regex:/^[A-Za-z\\s]+$/', 'min:1', 'max:50'],
             'company_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'min:1', 'max:150'],
+            'customer_type' => ['nullable', Rule::in(UserDetails::CUSTOMER_TYPES)],
             'current_status' => ['nullable', Rule::in(UserDetails::CURRENT_STATUSES)],
             'street_add_first_business' => [$businessRequired ? 'required' : 'nullable', 'string', 'min:1', 'max:150'],
             'street_add_sec_business' => ['nullable', 'string', 'min:1', 'max:150'],
@@ -1198,6 +1205,7 @@ class CustomerController extends Controller
             'prim_email_personal'  => ['required', 'email'],
             'religion'             => ['nullable', 'string', 'max:150'],
             'anniversary'          => ['nullable', 'date'],
+            'customer_type'        => ['nullable', Rule::in(UserDetails::CUSTOMER_TYPES)],
             // 'prim_email_business'  => ['nullable', 'email'],
             'phone_personal'       => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
             // 'phone_business'       => ['nullable'],
@@ -1346,6 +1354,7 @@ class CustomerController extends Controller
             'uin_current_status' => $typeOption === 'international' ? ($validated['uin_current_status'] ?? $details->uin_current_status) : null,
             'con_person_name' => $businessRequired ? ($validated['con_person_name'] ?? $details->con_person_name) : $details->con_person_name,
             'company_name' => $businessRequired ? ($validated['company_name'] ?? $details->company_name) : $details->company_name,
+            'customer_type' => $businessRequired ? ($validated['customer_type'] ?? null) : $details->customer_type,
             'current_status' => $validated['current_status'] ?? null,
             'street_add_first_business' => $businessRequired ? ($validated['street_add_first_business'] ?? $details->street_add_first_business) : $details->street_add_first_business,
             'street_add_sec_business' => $businessRequired ? ($validated['street_add_sec_business'] ?? $details->street_add_sec_business) : $details->street_add_sec_business,
