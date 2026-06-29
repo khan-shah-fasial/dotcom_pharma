@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\BookedTo;
 use App\Models\Transport;
+use App\Models\Upload;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class BookedToController extends Controller
 {
@@ -50,6 +52,9 @@ class BookedToController extends Controller
     {
         $data = $this->validatedData($request);
         $data['created_by'] = auth()->id();
+        if ($request->hasFile('scanner')) {
+            $data['scanner'] = $this->storeScannerUpload($request);
+        }
 
         BookedTo::create($data);
 
@@ -74,7 +79,12 @@ class BookedToController extends Controller
     public function update(Request $request, $id)
     {
         $bookedTo = BookedTo::findOrFail($id);
-        $bookedTo->update($this->validatedData($request));
+        $data = $this->validatedData($request);
+        if ($request->hasFile('scanner')) {
+            $data['scanner'] = $this->storeScannerUpload($request);
+        }
+
+        $bookedTo->update($data);
 
         flash(translate('Booked To has been updated successfully'))->success();
         return redirect()->route('booked-to.index');
@@ -110,7 +120,6 @@ class BookedToController extends Controller
             'branch_alternate_mobile_number',
             'contact_incharge',
             'branch_email',
-            'scanner',
         ] as $field) {
             $value = trim((string) $request->input($field));
             $request->merge([$field => $value === '' ? null : $value]);
@@ -127,7 +136,7 @@ class BookedToController extends Controller
             'branch_alternate_mobile_number' => 'nullable|string|max:50',
             'contact_incharge' => 'nullable|string|max:255',
             'branch_email' => 'nullable|email|max:255',
-            'scanner' => 'nullable|integer|exists:uploads,id',
+            'scanner' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,txt',
             'status' => 'required|in:active,inactive',
         ]);
 
@@ -139,5 +148,45 @@ class BookedToController extends Controller
         }
 
         return $data;
+    }
+
+    protected function storeScannerUpload(Request $request): int
+    {
+        $file = $request->file('scanner');
+        $extension = strtolower($file->getClientOriginalExtension());
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $targetDir = 'uploads/all/' . date('Y/m');
+        $path = $file->store($targetDir, 'local');
+
+        $types = [
+            'jpg' => 'image',
+            'jpeg' => 'image',
+            'png' => 'image',
+            'gif' => 'image',
+            'webp' => 'image',
+            'pdf' => 'document',
+            'doc' => 'document',
+            'docx' => 'document',
+            'xls' => 'document',
+            'xlsx' => 'document',
+            'csv' => 'document',
+            'txt' => 'document',
+        ];
+
+        $upload = new Upload();
+        $upload->file_original_name = $originalName;
+        $upload->file_name = $path;
+        $upload->user_id = auth()->id();
+        $upload->extension = $extension;
+        $upload->type = $types[$extension] ?? 'document';
+        $upload->file_size = $file->getSize();
+
+        if (Schema::hasColumn('uploads', 'disk')) {
+            $upload->disk = 'local';
+        }
+
+        $upload->save();
+
+        return $upload->id;
     }
 }

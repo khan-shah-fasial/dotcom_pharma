@@ -11,7 +11,7 @@
 <div class="card">
     <div class="card-header"><h5 class="mb-0 h6">{{ translate('Booked To Information') }}</h5></div>
     <div class="card-body">
-        <form action="{{ route('booked-to.store') }}" method="POST">
+        <form action="{{ route('booked-to.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="form-group row">
                 <label class="col-md-2 col-form-label">{{ translate('Transport') }} <span class="text-danger">*</span></label>
@@ -91,14 +91,7 @@
             <div class="form-group row">
                 <label class="col-md-2 col-form-label">{{ translate('Upload File') }}</label>
                 <div class="col-md-9">
-                    <div class="input-group" data-toggle="aizuploader" data-type="document">
-                        <div class="input-group-prepend">
-                            <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
-                        </div>
-                        <div class="form-control file-amount">{{ translate('Choose File') }}</div>
-                        <input type="hidden" name="scanner" class="selected-files" value="{{ old('scanner') }}">
-                    </div>
-                    <div class="file-preview box sm"></div>
+                    <input type="file" name="scanner" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
                     @error('scanner') <span class="text-danger small">{{ $message }}</span> @enderror
                 </div>
             </div>
