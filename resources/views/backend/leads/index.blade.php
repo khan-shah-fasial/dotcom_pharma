@@ -363,7 +363,7 @@
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_next_followup">{{ translate('Next Follow-up') }}</label>
-                            <input id="quick_activity_next_followup" type="datetime-local" name="next_followup" class="form-control">
+                            <input id="quick_activity_next_followup" type="datetime-local" name="next_followup" class="form-control" required>
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_attachments">{{ translate('Attachments') }}</label>
