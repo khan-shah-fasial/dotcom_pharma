@@ -23,9 +23,10 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
     protected $productSku;
     protected $salesman;
     protected $account;
+    protected $filters;
     protected $rowNumber = 0;
 
-    public function __construct($search = null, $orderDateFrom = null, $orderDateTo = null, $productSku = null, $salesman = null, $account = null)
+    public function __construct($search = null, $orderDateFrom = null, $orderDateTo = null, $productSku = null, $salesman = null, $account = null, array $filters = [])
     {
         $this->search = $search;
         $this->orderDateFrom = $orderDateFrom;
@@ -33,6 +34,7 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
         $this->productSku = $productSku;
         $this->salesman = $salesman;
         $this->account = $account;
+        $this->filters = $filters;
     }
 
     /**
@@ -96,18 +98,13 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
 
         if ($this->account !== null && trim((string) $this->account) !== '') {
             $account = trim((string) $this->account);
-            $like = '%' . $account . '%';
             $prefixLike = $account . '%';
-            $query->where(function ($q) use ($account, $like, $prefixLike) {
+            $query->where(function ($q) use ($account, $prefixLike) {
                 $q->where('ac_number', $account)
                     ->orWhere('ac_number', 'like', $prefixLike)
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($account, $like, $prefixLike) {
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($account, $prefixLike) {
                         $customerQuery->where('crm_id', $account)
-                            ->orWhere('crm_id', 'like', $prefixLike)
-                            ->orWhere('company_name', 'like', $like)
-                            ->orWhereHas('user', function ($userQuery) use ($like) {
-                                $userQuery->where('name', 'like', $like);
-                            });
+                            ->orWhere('crm_id', 'like', $prefixLike);
                     });
             });
         }
@@ -123,6 +120,37 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
         }
         if ($this->salesman) {
             $query->where('sales_man_name', 'like', '%' . trim($this->salesman) . '%');
+        }
+        if ($serialNumber = $this->filterValue('serial_number')) {
+            $query->where('serial_number', 'like', $serialNumber . '%');
+        }
+        if ($orderNumber = $this->filterValue('order_number')) {
+            $query->where('order_number', 'like', $orderNumber . '%');
+        }
+        if ($invoiceNumber = $this->filterValue('invoice_number')) {
+            $query->where('invoice_number', 'like', $invoiceNumber . '%');
+        }
+        if ($salesmanCode = $this->filterValue('sales_man_code')) {
+            $query->where('sales_man_code', 'like', $salesmanCode . '%');
+        }
+        if ($lrNumber = $this->filterValue('lr_number')) {
+            $query->where('lr_number', 'like', $lrNumber . '%');
+        }
+        if ($state = $this->filterValue('state')) {
+            $query->where('state', 'like', $state . '%');
+        }
+        if ($city = $this->filterValue('city')) {
+            $query->where('city', 'like', $city . '%');
+        }
+        if ($partyName = $this->filterValue('party_name')) {
+            $query->whereHas('customerDetails', function ($customerQuery) use ($partyName) {
+                $customerQuery->where('company_name', 'like', '%' . $partyName . '%');
+            });
+        }
+        if ($userName = $this->filterValue('user_name')) {
+            $query->whereHas('customerDetails.user', function ($userQuery) use ($userName) {
+                $userQuery->where('name', 'like', '%' . $userName . '%');
+            });
         }
 
         return $query
@@ -149,9 +177,9 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
             ->selectRaw('MIN(purchase_history.packing) AS packing')
             ->selectRaw('MIN(purchase_history.transport) AS transport')
             ->selectRaw('MIN(purchase_history.book_to) AS book_to')
-            ->selectRaw('MIN(purchase_history.lr_number) AS lr_number')
-            ->selectRaw('MIN(purchase_history.lr_date) AS lr_date')
-            ->selectRaw("CASE WHEN MIN({$this->parsedDateSql('purchase_history.order_date')}) IS NULL OR MIN({$this->parsedDateSql('purchase_history.lr_date')}) IS NULL THEN MIN(purchase_history.late_by) ELSE DATEDIFF(MIN({$this->parsedDateSql('purchase_history.lr_date')}), MIN({$this->parsedDateSql('purchase_history.order_date')})) END AS late_by")
+            ->selectRaw("MIN(NULLIF(TRIM(purchase_history.lr_number), '')) AS lr_number")
+            ->selectRaw("MIN(NULLIF(TRIM(purchase_history.lr_date), '')) AS lr_date")
+            ->selectRaw("CASE WHEN MIN({$this->parsedDateSql('purchase_history.order_date')}) IS NULL OR MIN({$this->parsedDateSql('purchase_history.lr_date')}) IS NULL THEN NULL ELSE DATEDIFF(MIN({$this->parsedDateSql('purchase_history.lr_date')}), MIN({$this->parsedDateSql('purchase_history.order_date')})) END AS late_by")
             ->selectRaw($this->sumSql('quantity'))
             ->selectRaw($this->sumSql('free'))
             ->selectRaw($this->sumSql('taxable_amount'))
@@ -311,6 +339,11 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
     private function lines(...$values): string
     {
         return implode("\n", array_map(fn ($value) => $this->displayValue($value), $values));
+    }
+
+    private function filterValue(string $key): string
+    {
+        return trim((string) ($this->filters[$key] ?? ''));
     }
 
     private function joinNonEmpty(string $separator, array $values): string

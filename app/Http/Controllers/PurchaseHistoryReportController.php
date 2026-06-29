@@ -76,18 +76,13 @@ class PurchaseHistoryReportController extends Controller
 
         $account = trim((string) $request->get('account', ''));
         if ($account !== '') {
-            $like = '%' . $account . '%';
             $prefixLike = $account . '%';
-            $query->where(function ($q) use ($account, $like, $prefixLike) {
+            $query->where(function ($q) use ($account, $prefixLike) {
                 $q->where('ac_number', $account)
                     ->orWhere('ac_number', 'like', $prefixLike)
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($account, $like, $prefixLike) {
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($account, $prefixLike) {
                         $customerQuery->where('crm_id', $account)
-                            ->orWhere('crm_id', 'like', $prefixLike)
-                            ->orWhere('company_name', 'like', $like)
-                            ->orWhereHas('user', function ($userQuery) use ($like) {
-                                $userQuery->where('name', 'like', $like);
-                            });
+                            ->orWhere('crm_id', 'like', $prefixLike);
                     });
             });
         }
@@ -104,6 +99,37 @@ class PurchaseHistoryReportController extends Controller
         }
         if ($salesman = $request->get('sales_man_name')) {
             $query->where('sales_man_name', 'like', '%' . trim($salesman) . '%');
+        }
+        if ($serialNumber = trim((string) $request->get('serial_number', ''))) {
+            $query->where('serial_number', 'like', $serialNumber . '%');
+        }
+        if ($orderNumber = trim((string) $request->get('order_number', ''))) {
+            $query->where('order_number', 'like', $orderNumber . '%');
+        }
+        if ($invoiceNumber = trim((string) $request->get('invoice_number', ''))) {
+            $query->where('invoice_number', 'like', $invoiceNumber . '%');
+        }
+        if ($salesmanCode = trim((string) $request->get('sales_man_code', ''))) {
+            $query->where('sales_man_code', 'like', $salesmanCode . '%');
+        }
+        if ($lrNumber = trim((string) $request->get('lr_number', ''))) {
+            $query->where('lr_number', 'like', $lrNumber . '%');
+        }
+        if ($state = trim((string) $request->get('state', ''))) {
+            $query->where('state', 'like', $state . '%');
+        }
+        if ($city = trim((string) $request->get('city', ''))) {
+            $query->where('city', 'like', $city . '%');
+        }
+        if ($partyName = trim((string) $request->get('party_name', ''))) {
+            $query->whereHas('customerDetails', function ($customerQuery) use ($partyName) {
+                $customerQuery->where('company_name', 'like', '%' . $partyName . '%');
+            });
+        }
+        if ($userName = trim((string) $request->get('user_name', ''))) {
+            $query->whereHas('customerDetails.user', function ($userQuery) use ($userName) {
+                $userQuery->where('name', 'like', '%' . $userName . '%');
+            });
         }
 
         $sortableColumns = [
@@ -198,8 +224,8 @@ class PurchaseHistoryReportController extends Controller
             ->selectRaw('MIN(purchase_history.packing) AS packing')
             ->selectRaw('MIN(purchase_history.transport) AS transport')
             ->selectRaw('MIN(purchase_history.book_to) AS book_to')
-            ->selectRaw('MIN(purchase_history.lr_number) AS lr_number')
-            ->selectRaw('MIN(purchase_history.lr_date) AS lr_date')
+            ->selectRaw("MIN(NULLIF(TRIM(purchase_history.lr_number), '')) AS lr_number")
+            ->selectRaw("MIN(NULLIF(TRIM(purchase_history.lr_date), '')) AS lr_date")
             ->selectRaw('MIN(user_sort.name) AS account_name_sort')
             ->selectRaw('MIN(customer_sort.company_name) AS party_name_sort')
             ->selectRaw('MIN(customer_sort.post_business) AS area_sort')
@@ -223,7 +249,7 @@ class PurchaseHistoryReportController extends Controller
             ->selectRaw('MIN(purchase_history.transport) AS transport_sort')
             ->selectRaw('MIN(purchase_history.book_to) AS book_to_sort')
             ->selectRaw('MIN(purchase_history.case_value) AS case_sort')
-            ->selectRaw('MIN(purchase_history.lr_number) AS lr_number_sort')
+            ->selectRaw("MIN(NULLIF(TRIM(purchase_history.lr_number), '')) AS lr_number_sort")
             ->selectRaw("MIN({$this->parsedDateSql('purchase_history.lr_date')}) AS lr_date_sort")
             ->selectRaw("CASE WHEN MIN({$orderDateSql}) IS NULL OR MIN({$lrDateSql}) IS NULL THEN NULL ELSE DATEDIFF(MIN({$lrDateSql}), MIN({$orderDateSql})) END AS late_by")
             ->selectRaw($this->sumSql('quantity'))
@@ -463,7 +489,18 @@ class PurchaseHistoryReportController extends Controller
             $request->get('order_date_to'),
             $request->get('product_sku'),
             $request->get('sales_man_name'),
-            $request->get('account')
+            $request->get('account'),
+            $request->only([
+                'serial_number',
+                'order_number',
+                'invoice_number',
+                'sales_man_code',
+                'lr_number',
+                'state',
+                'city',
+                'party_name',
+                'user_name',
+            ])
         );
 
         if ($request->get('format') === 'csv') {
@@ -524,4 +561,3 @@ class PurchaseHistoryReportController extends Controller
         return "COALESCE(SUM(CAST(NULLIF(REPLACE(purchase_history.{$column}, ',', ''), '') AS DECIMAL(20, 4))), 0)";
     }
 }
-

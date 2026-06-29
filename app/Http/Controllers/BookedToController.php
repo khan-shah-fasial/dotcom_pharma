@@ -16,7 +16,7 @@ class BookedToController extends Controller
     public function index(Request $request)
     {
         $sort_search = $request->search;
-        $booked_to = BookedTo::with(['transport', 'creator'])->orderBy('created_at', 'desc');
+        $booked_to = BookedTo::with(['transport', 'creator', 'scannerUpload'])->orderBy('created_at', 'desc');
 
         if ($sort_search) {
             $booked_to->where(function ($query) use ($sort_search) {
@@ -59,7 +59,7 @@ class BookedToController extends Controller
 
     public function show($id)
     {
-        $bookedTo = BookedTo::with(['transport', 'creator'])->findOrFail($id);
+        $bookedTo = BookedTo::with(['transport', 'creator', 'scannerUpload'])->findOrFail($id);
 
         return view('backend.setup_configurations.transport.booked_to.show', compact('bookedTo'));
     }
@@ -110,6 +110,7 @@ class BookedToController extends Controller
             'branch_alternate_mobile_number',
             'contact_incharge',
             'branch_email',
+            'scanner',
         ] as $field) {
             $value = trim((string) $request->input($field));
             $request->merge([$field => $value === '' ? null : $value]);
@@ -126,6 +127,7 @@ class BookedToController extends Controller
             'branch_alternate_mobile_number' => 'nullable|string|max:50',
             'contact_incharge' => 'nullable|string|max:255',
             'branch_email' => 'nullable|email|max:255',
+            'scanner' => 'nullable|integer|exists:uploads,id',
             'status' => 'required|in:active,inactive',
         ]);
 

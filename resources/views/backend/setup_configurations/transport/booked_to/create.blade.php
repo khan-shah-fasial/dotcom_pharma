@@ -89,6 +89,20 @@
                 </div>
             </div>
             <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Upload File') }}</label>
+                <div class="col-md-9">
+                    <div class="input-group" data-toggle="aizuploader" data-type="document">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
+                        </div>
+                        <div class="form-control file-amount">{{ translate('Choose File') }}</div>
+                        <input type="hidden" name="scanner" class="selected-files" value="{{ old('scanner') }}">
+                    </div>
+                    <div class="file-preview box sm"></div>
+                    @error('scanner') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
                 <label class="col-md-2 col-form-label">{{ translate('Status') }}</label>
                 <div class="col-md-9">
                     <select name="status" class="form-control aiz-selectpicker">

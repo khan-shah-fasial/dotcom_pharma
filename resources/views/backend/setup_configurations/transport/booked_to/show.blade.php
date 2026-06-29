@@ -57,6 +57,16 @@
                     @endif
                 </td>
             </tr>
+            <tr>
+                <th>{{ translate('Scanner') }}</th>
+                <td>
+                    @if($bookedTo->scanner)
+                        <a href="{{ uploaded_asset($bookedTo->scanner) }}" target="_blank" rel="noopener">{{ optional($bookedTo->scannerUpload)->file_original_name ?? translate('View File') }}</a>
+                    @else
+                        -
+                    @endif
+                </td>
+            </tr>
             <tr><th>{{ translate('Created By') }}</th><td>{{ optional($bookedTo->creator)->name ?? '-' }}</td></tr>
             <tr>
                 <th>{{ translate('Status') }}</th>

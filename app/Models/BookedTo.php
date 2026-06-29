@@ -19,6 +19,7 @@ class BookedTo extends Model
         'branch_alternate_mobile_number',
         'contact_incharge',
         'branch_email',
+        'scanner',
         'status',
         'created_by',
     ];
@@ -41,6 +42,11 @@ class BookedTo extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function scannerUpload()
+    {
+        return $this->belongsTo(Upload::class, 'scanner');
     }
 
     public function scopeActive($query)

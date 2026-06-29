@@ -122,7 +122,7 @@
                             </div>
                             <div class="form-group">
                                 <label>{{ translate('Next Follow-up') }}</label>
-                                <input type="datetime-local" name="next_followup" class="form-control" value="{{ $activity->next_followup ? $activity->next_followup->format('Y-m-d\TH:i') : '' }}">
+                                <input required type="datetime-local" name="next_followup" class="form-control" value="{{ $activity->next_followup ? $activity->next_followup->format('Y-m-d\TH:i') : '' }}">
                             </div>
                             <div class="form-group">
                                 <label>{{ translate('Add Attachments') }}</label>

@@ -10,16 +10,20 @@ return new class extends Migration
     {
         if (Schema::hasTable('purchase_history')) {
             $this->addIndex('purchase_history', 'ph_order_date_idx', '(`order_date`(20))');
+            $this->addIndex('purchase_history', 'ph_serial_number_idx', '(`serial_number`(64))');
             $this->addIndex('purchase_history', 'ph_invoice_number_idx', '(`invoice_number`(64))');
             $this->addIndex('purchase_history', 'ph_order_number_idx', '(`order_number`(64))');
+            $this->addIndex('purchase_history', 'ph_sales_man_name_idx', '(`sales_man_name`(100))');
             $this->addIndex('purchase_history', 'ph_sales_man_code_idx', '(`sales_man_code`(64))');
+            $this->addIndex('purchase_history', 'ph_lr_number_idx', '(`lr_number`(64))');
+            $this->addIndex('purchase_history', 'ph_state_city_idx', '(`state`(64), `city`(64))');
             $this->addIndex('purchase_history', 'ph_report_filter_idx', '(`order_date`(20), `product_sku`(100), `ac_number`(64))');
             $this->addIndex('purchase_history', 'ph_report_group_idx', '(`ac_number`(64), `order_number`(64), `invoice_series`(32), `invoice_number`(64), `product_sku`(100), `batch_number`(64))');
             $this->addIndex('purchase_history', 'ph_report_sort_idx', '(`order_number`(64), `invoice_number`(64), `product_sku`(100), `batch_number`(64))');
         }
 
         if (Schema::hasTable('user_details')) {
-            $this->addIndex('user_details', 'ud_crm_id_idx', '(`crm_id`(64))');
+            $this->addIndex('user_details', 'ud_crm_id_idx', '(`crm_id`)');
             $this->addIndex('user_details', 'ud_company_name_idx', '(`company_name`(100))');
             $this->addIndex('user_details', 'ud_user_id_idx', '(`user_id`)');
         }
@@ -34,9 +38,13 @@ return new class extends Migration
         foreach ([
             'purchase_history' => [
                 'ph_order_date_idx',
+                'ph_serial_number_idx',
                 'ph_invoice_number_idx',
                 'ph_order_number_idx',
+                'ph_sales_man_name_idx',
                 'ph_sales_man_code_idx',
+                'ph_lr_number_idx',
+                'ph_state_city_idx',
                 'ph_report_filter_idx',
                 'ph_report_group_idx',
                 'ph_report_sort_idx',

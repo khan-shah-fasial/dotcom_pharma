@@ -103,10 +103,18 @@
                 $formatQty = fn ($value) => number_format($numberValue($value), 0, '.', '');
                 $formatAmount = fn ($value) => number_format($numberValue($value), 2, '.', '');
                 $filtersApplied = collect([
-                    $search,
                     request('account'),
+                    request('serial_number'),
+                    request('order_number'),
+                    request('invoice_number'),
                     request('product_sku'),
                     request('sales_man_name'),
+                    request('sales_man_code'),
+                    request('lr_number'),
+                    request('party_name'),
+                    request('user_name'),
+                    request('state'),
+                    request('city'),
                     request('order_date_from'),
                     request('order_date_to'),
                 ])->contains(fn ($value) => $value !== null && $value !== '');
@@ -151,26 +159,66 @@
                         </div>
                         <div class="modal-body">
                             <div class="row gutters-5">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="search">{{ translate('Global Search') }}</label>
-                                    <input type="text" class="form-control" id="search" name="search" value="{{ $search }}"
-                                           placeholder="{{ translate('Serial / Order / Invoice / SKU / Salesman / State / City') }}">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" for="account">{{ translate('Account') }}</label>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="account">{{ translate('Account / CRM No') }}</label>
                                     <input type="text" class="form-control" id="account" name="account"
                                            value="{{ request('account') }}"
-                                           placeholder="{{ translate('Account ID / Company Name / User Name') }}">
+                                           placeholder="{{ translate('Account / CRM No') }}">
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="party_name">{{ translate('Party Name') }}</label>
+                                    <input type="text" class="form-control" id="party_name" name="party_name"
+                                           value="{{ request('party_name') }}" placeholder="{{ translate('Party Name') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="user_name">{{ translate('Name') }}</label>
+                                    <input type="text" class="form-control" id="user_name" name="user_name"
+                                           value="{{ request('user_name') }}" placeholder="{{ translate('User Name') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="serial_number">{{ translate('Serial No') }}</label>
+                                    <input type="text" class="form-control" id="serial_number" name="serial_number"
+                                           value="{{ request('serial_number') }}" placeholder="{{ translate('Serial No') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="order_number">{{ translate('Order Number') }}</label>
+                                    <input type="text" class="form-control" id="order_number" name="order_number"
+                                           value="{{ request('order_number') }}" placeholder="{{ translate('Order Number') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="invoice_number">{{ translate('Bill Number') }}</label>
+                                    <input type="text" class="form-control" id="invoice_number" name="invoice_number"
+                                           value="{{ request('invoice_number') }}" placeholder="{{ translate('Bill Number') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
                                     <label class="form-label" for="product_sku">{{ translate('Product SKU') }}</label>
                                     <input type="text" class="form-control" id="product_sku" name="product_sku"
                                            value="{{ request('product_sku') }}" placeholder="{{ translate('Enter SKU') }}">
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <label class="form-label" for="sales_man_name">{{ translate('Salesman Name') }}</label>
                                     <input type="text" class="form-control" id="sales_man_name" name="sales_man_name"
                                            value="{{ request('sales_man_name') }}" placeholder="{{ translate('Salesman') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="sales_man_code">{{ translate('Sales Man Code') }}</label>
+                                    <input type="text" class="form-control" id="sales_man_code" name="sales_man_code"
+                                           value="{{ request('sales_man_code') }}" placeholder="{{ translate('Sales Man Code') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="lr_number">{{ translate('L.R.No') }}</label>
+                                    <input type="text" class="form-control" id="lr_number" name="lr_number"
+                                           value="{{ request('lr_number') }}" placeholder="{{ translate('L.R.No') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="state">{{ translate('State') }}</label>
+                                    <input type="text" class="form-control" id="state" name="state"
+                                           value="{{ request('state') }}" placeholder="{{ translate('State') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="city">{{ translate('City') }}</label>
+                                    <input type="text" class="form-control" id="city" name="city"
+                                           value="{{ request('city') }}" placeholder="{{ translate('City') }}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="order_date_range">{{ translate('Order Date Range') }}</label>

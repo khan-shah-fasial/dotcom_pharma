@@ -32,6 +32,7 @@
                     <th data-breakpoints="lg">{{ translate('Branch Alternate Mobile Number') }}</th>
                     <th data-breakpoints="lg">{{ translate('Contact - Incharge') }}</th>
                     <th>{{ translate('Branch Email ID') }}</th>
+                    <th data-breakpoints="lg">{{ translate('Scanner') }}</th>
                     <th data-breakpoints="lg">{{ translate('Created By') }}</th>
                     <th>{{ translate('Status') }}</th>
                     <th class="text-right">{{ translate('Options') }}</th>
@@ -69,6 +70,13 @@
                         <td>
                             @if($item->branch_email)
                                 <a href="mailto:{{ $item->branch_email }}">{{ $item->branch_email }}</a>
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
+                            @if($item->scanner)
+                                <a href="{{ uploaded_asset($item->scanner) }}" target="_blank" rel="noopener">{{ translate('View File') }}</a>
                             @else
                                 -
                             @endif
