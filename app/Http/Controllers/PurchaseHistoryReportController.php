@@ -77,10 +77,13 @@ class PurchaseHistoryReportController extends Controller
         $account = trim((string) $request->get('account', ''));
         if ($account !== '') {
             $like = '%' . $account . '%';
-            $query->where(function ($q) use ($like) {
-                $q->where('ac_number', 'like', $like)
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($like) {
-                        $customerQuery->where('crm_id', 'like', $like)
+            $prefixLike = $account . '%';
+            $query->where(function ($q) use ($account, $like, $prefixLike) {
+                $q->where('ac_number', $account)
+                    ->orWhere('ac_number', 'like', $prefixLike)
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($account, $like, $prefixLike) {
+                        $customerQuery->where('crm_id', $account)
+                            ->orWhere('crm_id', 'like', $prefixLike)
                             ->orWhere('company_name', 'like', $like)
                             ->orWhereHas('user', function ($userQuery) use ($like) {
                                 $userQuery->where('name', 'like', $like);
@@ -116,7 +119,8 @@ class PurchaseHistoryReportController extends Controller
             'country' => 'country_sort',
             'order_date' => 'order_date_sort',
             'order_number' => 'order_number',
-            'sales_man' => 'sales_man_sort',
+            'sales_man_name' => 'sales_man_name_sort',
+            'sales_man_code' => 'sales_man_code_sort',
             'invoice_date' => 'invoice_date_sort',
             'invoice_series' => 'invoice_series_sort',
             'invoice_number' => 'invoice_number',
@@ -207,7 +211,8 @@ class PurchaseHistoryReportController extends Controller
             ->selectRaw('MIN(product_sort.name) AS product_name_sort')
             ->selectRaw("MIN({$orderDateSql}) AS order_date_sort")
             ->selectRaw("MIN({$this->parsedDateSql('purchase_history.invoice_date')}) AS invoice_date_sort")
-            ->selectRaw('MIN(COALESCE(NULLIF(purchase_history.sales_man_code, \'\'), purchase_history.sales_man_name)) AS sales_man_sort')
+            ->selectRaw('MIN(purchase_history.sales_man_name) AS sales_man_name_sort')
+            ->selectRaw('MIN(purchase_history.sales_man_code) AS sales_man_code_sort')
             ->selectRaw('MIN(purchase_history.invoice_series) AS invoice_series_sort')
             ->selectRaw('MIN(purchase_history.packing) AS packing_sort')
             ->selectRaw("MIN({$this->parsedDateSql('purchase_history.expiry_date')}) AS expiry_date_sort")
@@ -249,20 +254,11 @@ class PurchaseHistoryReportController extends Controller
             ->paginate($perPage)
             ->appends($request->query());
 
-        // Distinct SKU list for filter dropdown
-        $skuOptions = PurchaseHistory::query()
-            ->select('product_sku')
-            ->whereNotNull('product_sku')
-            ->distinct()
-            ->orderBy('product_sku')
-            ->pluck('product_sku');
-
         return view('backend.purchase_history.index', [
             'purchaseHistory' => $purchaseHistory,
             'search'          => $search ?? null,
             'sortBy'          => $sortBy,
             'sortDir'         => $sortDir,
-            'skuOptions'      => $skuOptions,
         ]);
     }
 
@@ -366,7 +362,7 @@ class PurchaseHistoryReportController extends Controller
      */
     public function import(Request $request)
     {
-        Log::info('PurchaseHistoryReport import party wise sheets called', [
+        Log::info('PurchaseHistoryReport import called', [
             'user_id' => optional($request->user())->id,
             'path'    => $request->path(),
             'method'  => $request->method(),
@@ -390,7 +386,7 @@ class PurchaseHistoryReportController extends Controller
             $rows = method_exists($import, 'getRowCount') ? $import->getRowCount() : null;
             $errorCount = method_exists($import, 'getErrorCount') ? $import->getErrorCount() : null;
 
-            Log::info('PurchaseHistoryReport import party wise sheets completed', [
+            Log::info('PurchaseHistoryReport import completed', [
                 'rows_imported' => $rows,
                 'errors'        => $errorCount,
             ]);
@@ -403,7 +399,7 @@ class PurchaseHistoryReportController extends Controller
 
             if ($rows !== null && $rows > 0) {
                 flash(
-                    translate('Party wise sheets imported successfully. Rows imported: ') . $rows
+                    translate('Purchase History imported successfully. Rows imported: ') . $rows
                 )->success();
             } else {
                 flash(
@@ -424,7 +420,7 @@ class PurchaseHistoryReportController extends Controller
                 'errors' => $messages,
             ]);
 
-            flash(translate('Failed to import party wise sheets. Please correct these issues:') . '<br>' . implode('<br>', $messages))
+            flash(translate('Failed to import Purchase History. Please correct these issues:') . '<br>' . implode('<br>', $messages))
                 ->error();
         } catch (\Throwable $e) {
             $message = $e->getMessage();

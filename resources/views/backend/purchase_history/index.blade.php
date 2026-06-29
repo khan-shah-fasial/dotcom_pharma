@@ -93,6 +93,15 @@
                 $sortHeading = function (string $column, string $label) use ($sortLink, $sortIcon) {
                     return '<a href="'.e($sortLink($column)).'">'.e($label).$sortIcon($column).'</a>';
                 };
+                $numberValue = function ($value) {
+                    if ($value === null || $value === '') {
+                        return 0;
+                    }
+
+                    return (float) str_replace(',', '', (string) $value);
+                };
+                $formatQty = fn ($value) => number_format($numberValue($value), 0, '.', '');
+                $formatAmount = fn ($value) => number_format($numberValue($value), 2, '.', '');
                 $filtersApplied = collect([
                     $search,
                     request('account'),
@@ -119,7 +128,7 @@
                     </a>
                     <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal"
                             data-target="#purchase-history-import-modal">
-                        <i class="las la-file-import mr-1"></i>{{ translate('Import party wise sheets') }}
+                        <i class="las la-file-import mr-1"></i>{{ translate('Import Purchase History') }}
                     </button>
                     <a href="{{ route('admin.purchase_history.export', request()->query()) }}"
                        class="btn btn-success mb-2">
@@ -155,13 +164,8 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="product_sku">{{ translate('Product SKU') }}</label>
-                                    <select class="form-control aiz-selectpicker" id="product_sku" name="product_sku"
-                                            data-live-search="true" data-placeholder="{{ translate('All SKUs') }}">
-                                        <option value="">{{ translate('All SKUs') }}</option>
-                                        @foreach($skuOptions as $sku)
-                                            <option value="{{ $sku }}" @if(request('product_sku') === $sku) selected @endif>{{ $sku }}</option>
-                                        @endforeach
-                                    </select>
+                                    <input type="text" class="form-control" id="product_sku" name="product_sku"
+                                           value="{{ request('product_sku') }}" placeholder="{{ translate('Enter SKU') }}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="sales_man_name">{{ translate('Salesman Name') }}</label>
@@ -193,7 +197,8 @@
                                         <option value="pincode" @if($sortBy=='pincode') selected @endif>{{ translate('Pincode') }}</option>
                                         <option value="country" @if($sortBy=='country') selected @endif>{{ translate('Country') }}</option>
                                         <option value="order_number" @if($sortBy=='order_number') selected @endif>{{ translate('Order Number') }}</option>
-                                        <option value="sales_man" @if($sortBy=='sales_man') selected @endif>{{ translate('Salesman') }}</option>
+                                        <option value="sales_man_name" @if($sortBy=='sales_man_name') selected @endif>{{ translate('Salesman') }}</option>
+                                        <option value="sales_man_code" @if($sortBy=='sales_man_code') selected @endif>{{ translate('Sales Man Code') }}</option>
                                         <option value="invoice_date" @if($sortBy=='invoice_date') selected @endif>{{ translate('Invoice Date') }}</option>
                                         <option value="invoice_series" @if($sortBy=='invoice_series') selected @endif>{{ translate('Series') }}</option>
                                         <option value="invoice_number" @if($sortBy=='invoice_number') selected @endif>{{ translate('Invoice Number') }}</option>
@@ -246,10 +251,10 @@
                     <thead>
                     <tr>
                         <th style="width: 55px">{!! $sortHeading('sr_no', translate('Sr.No')) !!}</th>
-                        <th style="width: 125px">{!! $sortHeading('ac_number', translate('Ac.No')) !!}{!! $sortHeading('account_name', translate('Name')) !!}</th>
+                        <th style="width: 125px">{!! $sortHeading('ac_number', translate('Ac.No')) !!}{!! $sortHeading('account_name', translate('Name')) !!}{!! $sortHeading('sales_man_name', translate('SalesMan')) !!}</th>
                         <th style="width: 210px">{!! $sortHeading('party_name', translate('Party Name')) !!}{!! $sortHeading('area', translate('Area')) !!}, {!! $sortHeading('town', translate('Town')) !!}{!! $sortHeading('district', translate('District')) !!}</th>
                         <th style="width: 135px">{!! $sortHeading('state', translate('State')) !!}{!! $sortHeading('pincode', translate('Pincode')) !!}{!! $sortHeading('country', translate('Country')) !!}</th>
-                        <th style="width: 135px">{!! $sortHeading('order_date', translate('Order Date')) !!}{!! $sortHeading('order_number', translate('Order.No')) !!}{!! $sortHeading('sales_man', translate('SalesMan')) !!}</th>
+                        <th style="width: 135px">{!! $sortHeading('order_date', translate('Order Date')) !!}{!! $sortHeading('order_number', translate('Order.No')) !!}{!! $sortHeading('sales_man_code', translate('Sales Man Code')) !!}</th>
                         <th style="width: 120px">{!! $sortHeading('invoice_date', translate('Date')) !!}{!! $sortHeading('invoice_series', translate('Series')) !!}{!! $sortHeading('invoice_number', translate('Bill')) !!}</th>
                         <th style="width: 220px">{!! $sortHeading('product_sku', translate('SKU')) !!}{!! $sortHeading('product_name', translate('Product')) !!}{!! $sortHeading('packing', translate('Pack Size')) !!}</th>
                         <th style="width: 145px">{!! $sortHeading('batch_number', translate('Batch')) !!}{!! $sortHeading('expiry_date', translate('Expiry')) !!}{!! $sortHeading('mfd_by', translate('Mfd By')) !!}</th>
@@ -266,14 +271,16 @@
                         @php
                             $customer = $history->customerDetails;
                             $product = $history->productStock?->product;
-                            $quantity = (float) str_replace(',', '', (string) ($history->quantity ?? 0));
-                            $free = (float) str_replace(',', '', (string) ($history->free ?? 0));
+                            $quantity = $numberValue($history->quantity);
+                            $free = $numberValue($history->free);
+                            $displayOrderNumber = filled($history->order_number) ? $history->order_number : $history->invoice_number;
                         @endphp
                         <tr>
                             <td class="text-right">{{ $purchaseHistory->firstItem() + $loop->index }}</td>
                             <td class="cell-lines text-left">
                                 <span>{{ $customer?->crm_id ?? $history->ac_number }}</span>
                                 <span>{{ $customer?->user?->name }}</span>
+                                <span>{{ $history->sales_man_name }}</span>
                             </td>
                             <td class="cell-lines party-cell">
                                 <span class="text-red">{{ $customer?->company_name }}</span>
@@ -285,14 +292,14 @@
                                 <span>{{ $customer?->pincode_business }}</span>
                                 <span>{{ $customer?->businessCountry?->name }}</span>
                             </td>
-                            <td class="cell-lines text-right"><span>{{ $history->order_date }}</span><span>{{ $history->order_number }}</span><span>{{ $history->sales_man_code ?: $history->sales_man_name }}</span></td>
+                            <td class="cell-lines text-right"><span>{{ $history->order_date }}</span><span class="{{ filled($history->order_number) ? '' : 'text-red' }}">{{ $displayOrderNumber }}</span><span>{{ $history->sales_man_code }}</span></td>
                             <td class="cell-lines text-right"><span>{{ $history->invoice_date }}</span><span>{{ $history->invoice_series }}</span><span class="text-red">{{ $history->invoice_number }}</span></td>
                             <td class="cell-lines text-left"><span>{{ $history->product_sku }}</span><span class="text-red">{{ $product?->name }}</span><span>{{ $history->packing }}</span></td>
                             <td class="cell-lines text-left"><span>{{ $history->batch_number }}</span><span>{{ $history->expiry_date }}</span><span>{{ $product?->brand?->name }}</span></td>
-                            <td class="cell-lines text-right"><span>{{ $history->quantity }}</span><span>{{ $history->free }}</span><span class="text-red">{{ $quantity + $free }}</span></td>
-                            <td class="cell-lines text-right"><span>{{ $history->sale_rate }}</span><span>{{ filled($history->discount) ? $history->discount : 0 }}</span><span>{{ $history->mrp_rate }}</span></td>
-                            <td class="cell-lines text-right"><span>{{ $history->taxable_amount }}</span><span>{{ $history->gst_amount }}</span><span class="text-red">{{ $history->final_amount }}</span></td>
-                            <td class="cell-lines text-center"><span>{{ $history->tax_code }}</span><span>{{ $history->gst_percentage }}</span></td>
+                            <td class="cell-lines text-right"><span>{{ $formatQty($history->quantity) }}</span><span>{{ $formatQty($history->free) }}</span><span class="text-red">{{ $formatQty($quantity + $free) }}</span></td>
+                            <td class="cell-lines text-right"><span>{{ $formatAmount($history->sale_rate) }}</span><span>{{ $formatAmount($history->discount) }}</span><span>{{ $formatAmount($history->mrp_rate) }}</span></td>
+                            <td class="cell-lines text-right"><span>{{ $formatAmount($history->taxable_amount) }}</span><span>{{ $formatAmount($history->gst_amount) }}</span><span class="text-red">{{ $formatAmount($history->final_amount) }}</span></td>
+                            <td class="cell-lines text-center"><span>{{ $history->tax_code }}</span><span>{{ $formatAmount($history->gst_percentage) }}</span></td>
                             <td class="cell-lines text-left"><span>{{ $history->transport }}</span><span>{{ $history->book_to }}</span><span>{{ $history->case_value }}</span></td>
                             <td class="cell-lines text-right">
                                 <span>
@@ -337,7 +344,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="purchaseHistoryImportLabel">{{ translate('Import party wise sheets') }}</h5>
+                    <h5 class="modal-title" id="purchaseHistoryImportLabel">{{ translate('Import Purchase History') }}</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
                         <span aria-hidden="true">&times;</span>
                     </button>

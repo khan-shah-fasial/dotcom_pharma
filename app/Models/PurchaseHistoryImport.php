@@ -60,7 +60,7 @@ class PurchaseHistoryImport implements ToCollection, WithHeadingRow, WithValidat
         foreach ($rows as $index => $row) {
             $raw = $row->toArray();
             $hasValue = collect($raw)->contains(function ($value) {
-                return !is_null($value) && trim((string) $value) !== '';
+                return $this->hasFilledValue($value);
             });
             if (! $hasValue) {
                 continue;
@@ -69,55 +69,67 @@ class PurchaseHistoryImport implements ToCollection, WithHeadingRow, WithValidat
             // Excel/CSV first data row is row 2 (row 1 is headers)
             $rowNumber = $index + 2;
 
-            // Normalize header keys to be case-insensitive and punctuation/space agnostic
-            // e.g. "Order.No", "Order No", "order-no" -> "order_no"
+            // Normalize header keys to be case-insensitive and punctuation/space agnostic.
+            // e.g. "Order.No", "Order No", "order-no" -> "order_no".
             $normalizedRow = [];
             foreach ($raw as $key => $value) {
                 if ($key === null) {
                     continue;
                 }
-                $normKey = strtolower(trim((string) $key));
-                $normKey = str_replace([' ', '.', '-', '/', "\t"], '_', $normKey);
-                $normalizedRow[$normKey] = $value;
+                $normalizedRow[$this->normalizeKey((string) $key)] = $value;
             }
 
+            $accountLines = $this->splitValue($this->value($normalizedRow, ['ac_no_name_salesman', 'ac_no_name', 'acno_name']));
+            $partyLines = $this->splitValue($this->value($normalizedRow, ['party_name_area_town_district', 'party_name_area_town']));
+            $stateLines = $this->splitValue($this->value($normalizedRow, ['state_pincode_country']));
+            $orderLines = $this->splitValue($this->value($normalizedRow, ['order_date_order_no_salesman', 'order_date_order_number_salesman']));
+            $invoiceLines = $this->splitValue($this->value($normalizedRow, ['date_series_bill', 'invoice_date_series_bill']));
+            $productLines = $this->splitValue($this->value($normalizedRow, ['sku_product_pack_size']));
+            $batchLines = $this->splitValue($this->value($normalizedRow, ['batch_expiry_mfd_by', 'batch_exp_mfd_by']));
+            $qtyLines = $this->splitValue($this->value($normalizedRow, ['qty_free_total', 'quantity_free_total']));
+            $rateLines = $this->splitValue($this->value($normalizedRow, ['sale_rate_disc_mrp', 'sale_rate_discount_mrp']));
+            $amountLines = $this->splitValue($this->value($normalizedRow, ['taxable_gst_total', 'taxable_amount_gst_total']));
+            $taxLines = $this->splitValue($this->value($normalizedRow, ['tax_code_gst', 'tax_code_gst_percentage']));
+            $transportLines = $this->splitValue($this->value($normalizedRow, ['transport_booked_to_case', 'transport_book_to_case']));
+            $lrLines = $this->splitValue($this->value($normalizedRow, ['l_r_no_lr_date_late_by', 'lr_no_lr_date_late_by', 'lr_number_lr_date_late_by']));
+
             // Map incoming columns (party-wise sheet) to variables using normalized keys
-            $serialNumber   = $normalizedRow['sr'] ?? $normalizedRow['sr_no'] ?? null;
-            $orderDate      = $normalizedRow['order_date'] ?? null;
-            $orderNumber    = $normalizedRow['order_no']
-                ?? $normalizedRow['orderno']
-                ?? $normalizedRow['order_number']
-                ?? null;
-            $invoiceDate    = $normalizedRow['date'] ?? $normalizedRow['invoice_date'] ?? null;
-            $invoiceSeries  = $normalizedRow['series'] ?? $normalizedRow['invoice_series'] ?? null;
-            $invoiceNumber  = $normalizedRow['bill'] ?? $normalizedRow['invoice_no'] ?? $normalizedRow['invoice_number'] ?? null;
-            $acNo           = $normalizedRow['ac_no']
-                ?? $normalizedRow['acno']
-                ?? $normalizedRow['ac_number']
-                ?? null;
+            $serialNumber   = $this->value($normalizedRow, ['sr', 'sr_no', 'serial', 'serial_number']);
+            $orderDate      = $this->value($normalizedRow, ['order_date'], $orderLines[0] ?? null);
+            $orderNumber    = $this->value($normalizedRow, ['order_no', 'orderno', 'order_number'], $orderLines[1] ?? null);
+            $invoiceDate    = $this->value($normalizedRow, ['date', 'invoice_date'], $invoiceLines[0] ?? null);
+            $invoiceSeries  = $this->value($normalizedRow, ['series', 'invoice_series'], $invoiceLines[1] ?? null);
+            $invoiceNumber  = $this->value($normalizedRow, ['bill', 'bill_no', 'invoice_no', 'invoice_number'], $invoiceLines[2] ?? null);
+            $acNo           = $this->value($normalizedRow, ['ac_no', 'acno', 'ac_number'], $accountLines[0] ?? null);
             $acNo           = isset($acNo) ? trim((string) $acNo) : null;
-            $sku            = isset($normalizedRow['sku']) ? trim((string) $normalizedRow['sku']) : null;
-            $qty            = $normalizedRow['qty'] ?? null;
-            $free           = $normalizedRow['free'] ?? null;
-            $saleRate       = $normalizedRow['sale_rate'] ?? null;
-            $mrp            = $normalizedRow['mrp'] ?? null;
-            $disc           = $normalizedRow['disc'] ?? null;
-            $taxable        = $normalizedRow['taxable'] ?? null;
-            $taxCode        = $normalizedRow['tax_code'] ?? null;
-            $gst            = $normalizedRow['gst'] ?? null;
-            $gstAmt         = $normalizedRow['gst_amt'] ?? null;
-            $final          = $normalizedRow['final'] ?? null;
-            $caseValue      = $normalizedRow['case'] ?? null;
-            $transport      = $normalizedRow['transport'] ?? null;
-            $bookedTo       = $normalizedRow['booked_to'] ?? null;
-            $lrNo           = $normalizedRow['l_r_no'] ?? $normalizedRow['lr_no'] ?? null;
-            $lrDate         = $normalizedRow['lr_date'] ?? null;
-            $lateBy         = $normalizedRow['late_by'] ?? null;
-            $country        = $normalizedRow['country'] ?? null;
-            $state          = $normalizedRow['state'] ?? null;
-            $city           = $normalizedRow['area'] ?? $normalizedRow['city'] ?? null;
-            $district       = $normalizedRow['district'] ?? null;
-            $pincode        = $normalizedRow['pincode'] ?? null;
+            $sku            = $this->value($normalizedRow, ['sku', 'product_sku'], $productLines[0] ?? null);
+            $sku            = isset($sku) ? trim((string) $sku) : null;
+            $packing        = $this->value($normalizedRow, ['packing', 'pack_size', 'pack'], $productLines[2] ?? null);
+            $batch          = $this->value($normalizedRow, ['batch', 'batch_no', 'batch_number'], $batchLines[0] ?? null);
+            $expiry         = $this->value($normalizedRow, ['exp', 'expiry', 'expiry_date'], $batchLines[1] ?? null);
+            $qty            = $this->value($normalizedRow, ['qty', 'quantity'], $qtyLines[0] ?? null);
+            $free           = $this->value($normalizedRow, ['free'], $qtyLines[1] ?? null);
+            $saleRate       = $this->value($normalizedRow, ['sale_rate'], $rateLines[0] ?? null);
+            $mrp            = $this->value($normalizedRow, ['mrp', 'mrp_rate'], $rateLines[2] ?? null);
+            $disc           = $this->value($normalizedRow, ['disc', 'discount'], $rateLines[1] ?? null);
+            $taxable        = $this->value($normalizedRow, ['taxable', 'taxable_amount'], $amountLines[0] ?? null);
+            $taxCode        = $this->value($normalizedRow, ['tax_code'], $taxLines[0] ?? null);
+            $gst            = $this->value($normalizedRow, ['gst_percentage', 'gst_percent', 'gst'], $taxLines[1] ?? null);
+            $gstAmt         = $this->value($normalizedRow, ['gst_amt', 'gst_amount'], $amountLines[1] ?? null);
+            $final          = $this->value($normalizedRow, ['final', 'final_amount', 'total'], $amountLines[2] ?? null);
+            $salesmanName   = $this->value($normalizedRow, ['salesman', 'sales_man_name', 'salesman_name', 'sales_man'], $accountLines[2] ?? ($orderLines[2] ?? null));
+            $salesmanCode   = $this->value($normalizedRow, ['sales_man_code', 'salesman_code']);
+            $caseValue      = $this->value($normalizedRow, ['case', 'case_value'], $transportLines[2] ?? null);
+            $transport      = $this->value($normalizedRow, ['transport'], $transportLines[0] ?? null);
+            $bookedTo       = $this->value($normalizedRow, ['booked_to', 'book_to'], $transportLines[1] ?? null);
+            $lrNo           = $this->value($normalizedRow, ['l_r_no', 'lr_no', 'lr_number'], $lrLines[0] ?? null);
+            $lrDate         = $this->value($normalizedRow, ['lr_date'], $lrLines[1] ?? null);
+            $lateBy         = $this->value($normalizedRow, ['late_by'], $lrLines[2] ?? null);
+            $country        = $this->value($normalizedRow, ['country'], $stateLines[2] ?? null);
+            $state          = $this->value($normalizedRow, ['state'], $stateLines[0] ?? null);
+            $city           = $this->value($normalizedRow, ['area', 'city'], $partyLines[1] ?? null);
+            $district       = $this->value($normalizedRow, ['district'], $partyLines[2] ?? null);
+            $pincode        = $this->value($normalizedRow, ['pincode', 'pin_code'], $stateLines[1] ?? null);
 
             // Validate required references: AC number and SKU must exist
             $errors = [];
@@ -161,9 +173,9 @@ class PurchaseHistoryImport implements ToCollection, WithHeadingRow, WithValidat
                 'invoice_number'  => $invoiceNumber,
                 'ac_number'       => $acNo,
                 'product_sku'     => $sku,
-                'packing'         => $row['packing'] ?? null,
-                'batch_number'    => $row['batch'] ?? null,
-                'expiry_date'     => $row['exp'] ?? null,
+                'packing'         => $packing,
+                'batch_number'    => $batch,
+                'expiry_date'     => $expiry,
                 'quantity'        => isset($qty) ? (string) $qty : null,
                 'free'            => isset($free) ? (string) $free : null,
                 'sale_rate'       => isset($saleRate) ? (string) $saleRate : null,
@@ -174,8 +186,8 @@ class PurchaseHistoryImport implements ToCollection, WithHeadingRow, WithValidat
                 'gst_percentage'  => isset($gst) ? (string) $gst : null,
                 'gst_amount'      => isset($gstAmt) ? (string) $gstAmt : null,
                 'final_amount'    => isset($final) ? (string) $final : null,
-                'sales_man_name'  => $row['name'] ?? null,
-                'sales_man_code'  => $row['salesman'] ?? null,
+                'sales_man_name'  => $salesmanName,
+                'sales_man_code'  => $salesmanCode,
                 'case_value'      => isset($caseValue) ? (string) $caseValue : null,
                 'transport'       => $transport,
                 'book_to'         => $bookedTo,
@@ -213,6 +225,61 @@ class PurchaseHistoryImport implements ToCollection, WithHeadingRow, WithValidat
         $line = 'Row ' . $rowNumber . ': ' . $message;
         Storage::disk('local')->append($this->errorFilePath, $line . PHP_EOL);
         $this->errorCount++;
+    }
+
+    private function normalizeKey(string $key): string
+    {
+        $key = strtolower(trim($key));
+        $key = preg_replace('/[^a-z0-9]+/', '_', $key);
+
+        return trim((string) $key, '_');
+    }
+
+    private function value(array $row, array $keys, $default = null)
+    {
+        foreach ($keys as $key) {
+            $normalizedKey = $this->normalizeKey($key);
+            if (! array_key_exists($normalizedKey, $row)) {
+                continue;
+            }
+
+            $value = $row[$normalizedKey];
+            if (is_array($value)) {
+                $filledValues = array_values(array_filter($value, fn ($item) => $this->hasFilledValue($item)));
+                if (! empty($filledValues)) {
+                    return end($filledValues);
+                }
+
+                continue;
+            }
+
+            if ($this->hasFilledValue($value)) {
+                return $value;
+            }
+        }
+
+        return $default;
+    }
+
+    private function splitValue($value): array
+    {
+        if ($value === null) {
+            return [];
+        }
+
+        return array_map(
+            fn ($line) => trim((string) $line),
+            preg_split('/\r\n|\r|\n/', (string) $value) ?: []
+        );
+    }
+
+    private function hasFilledValue($value): bool
+    {
+        if (is_array($value)) {
+            return collect($value)->contains(fn ($item) => $this->hasFilledValue($item));
+        }
+
+        return $value !== null && trim((string) $value) !== '';
     }
 
     public function getRowCount(): int

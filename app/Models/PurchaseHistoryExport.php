@@ -95,11 +95,15 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
         }
 
         if ($this->account !== null && trim((string) $this->account) !== '') {
-            $like = '%' . trim($this->account) . '%';
-            $query->where(function ($q) use ($like) {
-                $q->where('ac_number', 'like', $like)
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($like) {
-                        $customerQuery->where('crm_id', 'like', $like)
+            $account = trim((string) $this->account);
+            $like = '%' . $account . '%';
+            $prefixLike = $account . '%';
+            $query->where(function ($q) use ($account, $like, $prefixLike) {
+                $q->where('ac_number', $account)
+                    ->orWhere('ac_number', 'like', $prefixLike)
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($account, $like, $prefixLike) {
+                        $customerQuery->where('crm_id', $account)
+                            ->orWhere('crm_id', 'like', $prefixLike)
                             ->orWhere('company_name', 'like', $like)
                             ->orWhereHas('user', function ($userQuery) use ($like) {
                                 $userQuery->where('name', 'like', $like);
@@ -147,7 +151,7 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
             ->selectRaw('MIN(purchase_history.book_to) AS book_to')
             ->selectRaw('MIN(purchase_history.lr_number) AS lr_number')
             ->selectRaw('MIN(purchase_history.lr_date) AS lr_date')
-            ->selectRaw('MIN(purchase_history.late_by) AS late_by')
+            ->selectRaw("CASE WHEN MIN({$this->parsedDateSql('purchase_history.order_date')}) IS NULL OR MIN({$this->parsedDateSql('purchase_history.lr_date')}) IS NULL THEN MIN(purchase_history.late_by) ELSE DATEDIFF(MIN({$this->parsedDateSql('purchase_history.lr_date')}), MIN({$this->parsedDateSql('purchase_history.order_date')})) END AS late_by")
             ->selectRaw($this->sumSql('quantity'))
             ->selectRaw($this->sumSql('free'))
             ->selectRaw($this->sumSql('taxable_amount'))
@@ -190,10 +194,10 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
     {
         return [
             'Sr.No',
-            "Ac.No\nName",
+            "Ac.No\nName\nSalesMan",
             "Party Name\nArea, Town\nDistrict",
             "State\nPincode\nCountry",
-            "Order Date\nOrder.No\nSalesMan",
+            "Order Date\nOrder.No\nSales Man Code",
             "Date\nSeries\nBill",
             "SKU\nProduct\nPack Size",
             "Batch\nExpiry\nMfd By",
@@ -224,20 +228,21 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
         $userName = $customer?->user?->name ?? '';
 
         $this->rowNumber++;
+        $displayOrderNumber = filled($record->order_number) ? $record->order_number : $record->invoice_number;
 
         return [
             $this->rowNumber,
-            $this->lines($accountNumber, $userName),
+            $this->lines($accountNumber, $userName, $record->sales_man_name),
             $this->lines($partyName, $this->joinNonEmpty(', ', [$area, $town]), $district),
             $this->lines($state, $pincode, $country),
-            $this->lines($record->order_date, $record->order_number, $record->sales_man_code ?: $record->sales_man_name),
+            $this->lines($record->order_date, $displayOrderNumber, $record->sales_man_code),
             $this->lines($record->invoice_date, $record->invoice_series, $record->invoice_number),
             $this->lines($record->product_sku, $product?->name, $record->packing),
             $this->lines($record->batch_number, $record->expiry_date, $brand?->name),
-            $this->lines($record->quantity, $record->free, $this->sum($record->quantity, $record->free)),
-            $this->lines($record->sale_rate, $record->discount, $record->mrp_rate),
-            $this->lines($record->taxable_amount, $record->gst_amount, $record->final_amount),
-            $this->lines($record->tax_code, $record->gst_percentage),
+            $this->lines($this->formatQty($record->quantity), $this->formatQty($record->free), $this->formatQty($this->sum($record->quantity, $record->free))),
+            $this->lines($this->formatAmount($record->sale_rate), $this->formatAmount($record->discount), $this->formatAmount($record->mrp_rate)),
+            $this->lines($this->formatAmount($record->taxable_amount), $this->formatAmount($record->gst_amount), $this->formatAmount($record->final_amount)),
+            $this->lines($record->tax_code, $this->formatAmount($record->gst_percentage)),
             $this->lines($record->transport, $record->book_to, $record->case_value),
             $this->lines($record->lr_number, $record->lr_date, $record->late_by),
         ];
@@ -315,7 +320,7 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
 
     private function sum($first, $second)
     {
-        return (float) ($first ?? 0) + (float) ($second ?? 0);
+        return $this->numberValue($first) + $this->numberValue($second);
     }
 
     private function displayValue($value): string
@@ -329,6 +334,30 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
         }
 
         return (string) $value;
+    }
+
+    private function numberValue($value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        return (float) str_replace(',', '', (string) $value);
+    }
+
+    private function formatQty($value): string
+    {
+        return number_format($this->numberValue($value), 0, '.', '');
+    }
+
+    private function formatAmount($value): string
+    {
+        return number_format($this->numberValue($value), 2, '.', '');
+    }
+
+    private function parsedDateSql(string $column): string
+    {
+        return "COALESCE(STR_TO_DATE(NULLIF(TRIM({$column}), ''), '%Y-%m-%d'), STR_TO_DATE(NULLIF(TRIM({$column}), ''), '%d-%m-%Y'), STR_TO_DATE(NULLIF(TRIM({$column}), ''), '%d/%m/%Y'))";
     }
 
     private function sumSql(string $column): string
