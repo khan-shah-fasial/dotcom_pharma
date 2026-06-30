@@ -62,8 +62,9 @@
         .product-detail-sheet { color: #202124; font-size: 11px; min-width: 1900px; table-layout: auto; }
         .product-detail-sheet th,
         .product-detail-sheet td { border-color: #242424 !important; padding: 0 !important; text-align: center; vertical-align: middle !important; }
-        .product-detail-sheet thead th { background: #fff; color: #111; font-size: 11px; line-height: 1.25; min-width: 54px; white-space: normal; }
-        .product-detail-sheet thead th > a { color: inherit; display: block; }
+        .product-detail-sheet thead th { background: #fff; color: #111; font-size: 11px; line-height: 1.25; min-width: 54px; white-space: nowrap; }
+        .product-detail-sheet thead th > a { color: inherit; display: block; white-space: nowrap; }
+        .product-detail-sheet thead th > span { white-space: nowrap; }
         .product-detail-sheet .sheet-lines > span,
         .product-detail-sheet .sheet-lines > strong,
         .product-detail-sheet .sheet-lines > small { border-bottom: 1px solid #d7d7d7; display: block; line-height: 18px; min-height: 18px; padding: 0 4px; white-space: nowrap; }
@@ -275,6 +276,7 @@
                                 <a href="{{ $sortUrl('sku') }}">
                                     {{ translate('SKU') }} <i class="{{ $sortIcon('sku') }}"></i>
                                 </a>
+                                <span class="header-accent-red">{{ translate('MOQ') }}</span>
                             </th>
                             <th data-breakpoints="xs">
                                 <span>{{ translate('Category') }}</span><br><br>
@@ -304,17 +306,18 @@
                             <th>{{ translate('PTS') }}<br>{{ translate('PTR') }}<br>{{ translate('PTD') }}<br>{{ translate('B2C') }}</th>
                             <th data-breakpoints="xs sm md lg xl">
                                 {{ translate('Gov') }}<br>{{ translate('Expo') }}<br>
+                                <span>&nbsp;</span>
                                 <a href="{{ $sortUrl('mrp_price') }}">
                                     <span class="header-accent-red">{{ translate('M.R.P') }}</span>
                                     <i class="{{ $sortIcon('mrp_price') }}"></i>
                                 </a>
-                                <span class="header-accent-red">{{ translate('Inclusive Tax') }}</span>
+                                
                             </th>
                             <th>
                                 <a href="{{ $sortUrl('batch') }}">
                                     {{ translate('Batch / Lot. No') }} <i class="{{ $sortIcon('batch') }}"></i>
                                 </a>
-                                {{ translate('Manufacturing Date') }}<br>
+                                {{ translate('Mfg. Date') }}<br>
                                 <a href="{{ $sortUrl('expiry') }}">
                                     {{ translate('Expiry Date') }} <i class="{{ $sortIcon('expiry') }}"></i>
                                 </a>
@@ -324,26 +327,31 @@
                             </th>
                             <th data-breakpoints="xs sm md lg xl">
                                 {{ translate('Tax %') }}<br>{{ translate('HSN Code') }}<br>{{ translate('HS Code') }}<br>
-                                <span style="background:#91d050;display:block;">{{ translate('Last Upload Date') }}</span>
+                                <span style="background:#91d050;display:block;">{{ translate('Upload Date') }}</span>
                             </th>
                             <th data-breakpoints="xs sm md lg xl">
-                                {{ translate('Qty per Piece') }}<br>{{ translate('Weight Of Each Piece (gm)') }}<br>
-                                {{ translate('Per Piece Dimensions (cm)') }}<br>{{ translate('Minimum Pack Size') }}
+                                {{ translate('Piece') }}<br>
+                                {{ translate('Qty') }}<br>
+                                {{ translate('Weight (gm)') }}<br>
+                                {{ translate('Dimensions (cm)') }}
                             </th>
                             <th data-breakpoints="xs sm md lg xl">
-                                {{ translate('Qty per Buffer Box / Shrink Pack') }}<br>
-                                {{ translate('Weight of Buffer Box / Shrink Pack (gm)') }}<br>
-                                {{ translate('Buffer Dimensions (cm)') }}<br>
-                                <span class="header-accent-red">{{ translate('Minimum Order Qty') }}</span>
+                                {{ translate('Buffer Box / Shrink Pack') }}<br>
+                                {{ translate('Qty') }}<br>
+                                {{ translate('Weight (gm)') }}<br>
+                                {{ translate('Dimensions (cm)') }}
                             </th>
                             <th data-breakpoints="xs sm md lg xl">
-                                {{ translate('Qty Of Buffer Box / Shrink Pack Per Case') }}<br>
-                                {{ translate('Weight Of Buffer Box / Shrink Pack Per Case (gm)') }}<br>
-                                {{ translate('Dimensions Of Buffer Box / Shrink Pack Per Case (cm)') }}
+                                {{ translate('Buffer Box / Shrink Pack Per Case') }}<br>
+                                {{ translate('Qty') }}<br>
+                                {{ translate('Weight (gm)') }}<br>
+                                {{ translate('Dimensions (cm)') }}
                             </th>
                             <th data-breakpoints="xs sm md lg xl">
-                                {{ translate('Total Qty Per Case') }}<br>{{ translate('Total Weight Per Case (gm)') }}<br>
-                                {{ translate('Case Dimensions (cm)') }}
+                                {{ translate('Per Case') }}<br>
+                                {{ translate('Qty') }}<br>
+                                {{ translate('Weight (gm)') }}<br>
+                                {{ translate('Dimensions (cm)') }}
                             </th>
                         </tr>
                     </thead>
@@ -388,16 +396,16 @@
                             @endphp
                             <tr>
                                 <td>{{ $key + 1 + ($reportRows->currentPage() - 1) * $reportRows->perPage() }}</td>
-                                <td><span class="text-nowrap">{{ $stock?->sku ?: '-' }}</span></td>
+                                <td class="sheet-lines">
+                                    <span class="text-nowrap">{{ $stock?->sku ?: '-' }}</span>
+                                    <span class="minimum-order">{{ $stock?->min_qty ?? '-' }}</span>
+                                </td>
                                 <td class="sheet-lines">
                                     @forelse ($categoryNames as $categoryName)
                                         <span>{{ $categoryName }}</span>
                                     @empty
                                         <span>-</span>
                                     @endforelse
-                                    @if ($product?->pharma_categories)
-                                        <span>{{ \Illuminate\Support\Str::limit($product->pharma_categories, 80) }}</span>
-                                    @endif
                                     <span>{{ $groupNames->isNotEmpty() ? $groupNames->implode(', ') : '-' }}</span>
                                 </td>
                                 <td class="sheet-lines">
@@ -423,8 +431,8 @@
                                 <td class="sheet-lines">
                                     <span>{{ $rolePrice('gov') }}</span>
                                     <span>{{ $rolePrice('expo') }}</span>
-                                    <strong>{{ $decimal($mrpPrice) }}</strong>
                                     <span>&nbsp;</span>
+                                    <strong>{{ $decimal($mrpPrice) }}</strong>
                                 </td>
                                 <td class="sheet-lines">
                                     <strong>{{ trim((string) $batch->batch) ?: '-' }}</strong>
@@ -442,13 +450,11 @@
                                     <span>{{ $stock?->qty_per_piece ?? '-' }}</span>
                                     <span>{{ $stock?->weight ?? $product?->product_weight_vol ?? '-' }}</span>
                                     <span class="wrap-line">{{ $dimensions($stock?->length, $stock?->width, $stock?->height) }}</span>
-                                    <span>{{ $product?->product_min_pack_size ?: '-' }}</span>
                                 </td>
                                 <td class="sheet-lines">
                                     <span>{{ $stock?->qty_per_buffer_box ?? '-' }}</span>
                                     <span>{{ $stock?->weight_buffer_box ?? '-' }}</span>
                                     <span class="wrap-line">{{ $dimensions($stock?->buffer_length, $stock?->buffer_width, $stock?->buffer_height) }}</span>
-                                    <span class="minimum-order">{{ $stock?->min_qty ?? '-' }}</span>
                                 </td>
                                 <td class="sheet-lines">
                                     <span>{{ $stock?->count ?? '-' }}</span>

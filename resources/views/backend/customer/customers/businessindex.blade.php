@@ -240,138 +240,179 @@
     </div>
 
             <div class="card-body">
-                <table class="table aiz-table mb-0">
-                    <thead>
-                        <tr>
-                            <!--<th data-breakpoints="lg">#</th>-->
-                            <th>
-                                Sr No.
-                            </th>
-                            <th>
-                                <a href="{{ route('customers.business', array_merge(request()->all(), ['sort_by' => 'crm_id', 'sort_order' => (request('sort_by') === 'crm_id' && request('sort_order') === 'asc') ? 'desc' : 'asc'])) }}">
-                                    {{ translate('Account Number') }}
-                                    @if (request('sort_by') === 'crm_id')
-                                        <i class="las la-sort-amount-{{ request('sort_order') === 'asc' ? 'up' : 'down' }}"></i>
-                                    @endif
-                                </a>
-                            </th>
-                            <th>
-                                <a href="{{ route('customers.business', array_merge(request()->all(), ['sort_by' => 'company_name', 'sort_order' => (request('sort_by') === 'company_name' && request('sort_order') === 'asc') ? 'desc' : 'asc'])) }}">
-                                    {{ translate('Company Name') }}
-                                    @if (request('sort_by') === 'company_name')
-                                        <i class="las la-sort-amount-{{ request('sort_order') === 'asc' ? 'up' : 'down' }}"></i>
-                                    @endif
-                                </a>
-                            </th>
-                            <th>{{ translate('Current Status') }}</th>
-                            <th>{{ translate('Post') }}</th>
-                            <th>{{ translate('District') }}</th>
-                            <th>{{ translate('City') }}</th>
-                            <th>{{ translate('State') }}</th>
+                @php
+                    $columnGroups = [
+                        [['sr_no', 'Sr.No']],
+                        [['crm_id', 'Account Number']],
+                        [
+                            ['company_name', 'Company Name'],
+                            ['person_name', 'Person Name'],
+                            ['city', 'City'],
+                        ],
+                        [
+                            ['village', 'Village'],
+                            ['post', 'Post'],
+                            ['district', 'District'],
+                        ],
+                        [
+                            ['state', 'State'],
+                            ['pincode', 'Pincode'],
+                            ['country', 'Country'],
+                        ],
+                        [
+                            ['mobile', 'Mobile'],
+                            ['alt_mobile', 'Alt.Mobile'],
+                            ['whatsapp', 'Wahtsup'],
+                        ],
+                        [
+                            ['alt_whatsapp', 'Alt.Whatsup'],
+                            ['email', 'E-mail'],
+                            ['alt_email', 'Alt-Email'],
+                        ],
+                        [
+                            ['gst_no', 'GST.No'],
+                            ['aadhaar_no', 'Adhar.No'],
+                            ['pan_no', 'PAN.No'],
+                        ],
+                        [
+                            ['approval_status', 'Approval Status'],
+                            ['customer_role', 'Customer Role'],
+                            ['current_status', 'Current Status'],
+                        ],
+                        [
+                            ['credit_status', 'Credit Status'],
+                            ['credit_days', 'Number of Days'],
+                            ['credit_limit', 'Credit Limit'],
+                        ],
+                        [
+                            ['transport', 'Transport'],
+                            ['booked_to', 'Booked To'],
+                            ['salesman', 'Salesman Name'],
+                        ],
+                        [
+                            ['iec_no', 'IEC.No'],
+                            ['passport_no', 'Passport.No'],
+                        ],
+                        [
+                            ['dl1', 'Drug / Pharmacy Licence No 1'],
+                            ['dl2', 'Drug / Pharmacy Licence No 2'],
+                            ['dl3', 'Drug / Pharmacy Licence No 3'],
+                        ],
+                        [
+                            ['doctor_hospital_reg_no', 'Doctor / Pharmacist / Hospital Reg. No'],
+                            ['dairy_trust_ngo_reg_no', 'Dairy / Trust / NGO / Other Reg. No'],
+                            ['other_registration_no', 'Other Registration No'],
+                        ],
+                    ];
 
-                            {{-- <th>{{ translate('Country Code') }}</th> --}}
+                    $sortHeading = function ($key, $label) {
+                        $active = request('sort_by', 'crm_id') === $key;
+                        $nextOrder = $active && request('sort_order', 'asc') === 'asc' ? 'desc' : 'asc';
+                        $url = route('customers.business', array_merge(request()->all(), [
+                            'sort_by' => $key,
+                            'sort_order' => $nextOrder,
+                        ]));
+                        $icon = $active
+                            ? '<i class="las la-sort-amount-' . (request('sort_order', 'asc') === 'asc' ? 'up' : 'down') . '"></i>'
+                            : '<i class="las la-sort"></i>';
 
-                            <th>{{ translate('Email Address') }}</th>
-                            <th>{{ translate('Phone') }}</th>
-
-                            {{-- <th data-breakpoints="lg">{{ translate('Package') }}</th>
-                                                        <th data-breakpoints="lg">{{ translate('Wallet Balance') }}</th> --}}
-                            {{-- <th data-breakpoints="lg">{{ translate('Email Verification Status') }}</th> --}}
-                            {{-- <th data-breakpoints="lg">{{ translate('Phone Verification Status') }}</th> --}}
-
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Approval Status') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Credit Status') }}</th>
-                            <th class="">{{ translate('Options') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($users as $key => $user)
-                            @if ($user != null)
-                                <tr>
-                                    <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
-                                    {{-- <td>
-                                                                    <div class="form-group">
-                                                                        <div class="aiz-checkbox-inline">
-                                                                            <label class="aiz-checkbox">
-                                                                                <input type="checkbox" class="check-one" name="id[]"
-                                                                                    value="{{ $user->id }}">
-                                                                                <span class="aiz-square-check"></span>
-                                                                            </label>
-                                                                        </div>
-                                                                    </div>
-                                                                </td> --}}
-                                    <td>{{ $user->details->crm_id ?? '-' }}</td>
-                                    <td>
-                                        @if ($user->banned == 1)
-                                            <i class="fa fa-ban text-danger" aria-hidden="true"></i>
-                                        @endif {{ $user->details->company_name ?? '-' }}
-                                    </td>
-                                    <td>{{ $user->details->current_status ?? '-' }}</td>
-                                    <td>{{ $user->details->post_business ?? ($user->details->post ?? '-') }}</td>
-                                    <td>{{ $user->details->district_business ?? ($user->details->district ?? '-') }}</td>
+                        return '<a href="' . e($url) . '" class="d-block text-primary text-nowrap font-weight-bold">' . e(translate($label)) . ' ' . $icon . '</a>';
+                    };
+                @endphp
+                <div class="table-responsive">
+                    <table class="table table-bordered aiz-table mb-0">
+                        <thead>
+                            <tr>
+                                @foreach ($columnGroups as $group)
+                                    <th class="align-top text-center">
+                                        @foreach ($group as $heading)
+                                            {!! $sortHeading($heading[0], $heading[1]) !!}
+                                        @endforeach
+                                    </th>
+                                @endforeach
+                                <th>{{ translate('Options') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($users as $key => $user)
+                                @if ($user != null)
                                     @php
-                                        $stateName = null;
-                                        $stateId = $user->details?->state_id_business ?? $user->details?->state_id;
-
-                                        if ($stateId) {
-                                            $stateName = $stateNames[$stateId] ?? $stateId;
-                                        }
-
-                                        $cityName = null;
-                                        $cityId = $user->details?->city_id_business ?? $user->details?->city_id;
-
-                                        if ($cityId) {
-                                            $cityName = $cityNames[$cityId] ?? $cityId;
-                                        }
+                                        $details = $user->details;
+                                        $stateId = $details?->state_id_business ?? $details?->state_id;
+                                        $cityId = $details?->city_id_business ?? $details?->city_id;
+                                        $countryId = $details?->country_id_business ?? $details?->country_id;
+                                        $stateName = $stateId ? ($stateNames[$stateId] ?? $stateId) : null;
+                                        $cityName = $cityId ? ($cityNames[$cityId] ?? $cityId) : null;
+                                        $countryName = $countryId ? ($countryNames[$countryId] ?? $countryId) : null;
                                     @endphp
-                                    <td>{{ $cityName ?? '-' }}</td>
-                                    <td>{{ $stateName ?? '-' }}</td>
-                                    {{-- <td>{{ $user->details->country_code_business ?? ($user->details->country_code ?? '-') }}</td> --}}
-                                    <td>{{ $user->email }}</td>
-                                    <td>{{ $user->phone }}</td>
-                                    {{-- <td>
-                                                                    @if ($user->customer_package != null)
-    {{ $user->customer_package->getTranslation('name') }}
-    @endif
-                                                                </td>
-                                                                <td>{{ single_price($user->balance) }}</td> --}}
-                                    {{-- <td>
-                                        @if ($user->email_verified_at != null)
-                                            <span
-                                                class="badge badge-inline badge-success">{{ translate('Verified') }}</span>
-                                        @else
-                                            <span
-                                                class="badge badge-inline badge-warning">{{ translate('Unverified') }}</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if ($user->email_verified_at != null)
-                                            <span
-                                                class="badge badge-inline badge-success">{{ translate('Verified') }}</span>
-                                        @else
-                                            <span
-                                                class="badge badge-inline badge-warning">{{ translate('Unverified') }}</span>
-                                        @endif
-                                    </td> --}}
-                                    <td>
-                                        @if ($user->approval_status == 1)
-                                            <span class="badge badge-inline badge-success">{{ translate('Verified') }}
-                                            </span>
-                                        @else
-                                            <span class="badge badge-inline badge-warning">{{ translate('Unverified') }}
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if ($user->credit_status == 1)
-                                            <span class="badge badge-inline badge-success">{{ translate('Active') }}
-                                            </span>
-                                        @else
-                                            <span class="badge badge-inline badge-warning">{{ translate('Deactive') }}
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="text-right drop-down-text-icon drop-down-text-icon-business">
+                                    <tr>
+                                        <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
+                                        <td>{{ $details->crm_id ?? '-' }}</td>
+                                        <td>
+                                            <div>
+                                                @if ($user->banned == 1)
+                                                    <i class="fa fa-ban text-danger" aria-hidden="true"></i>
+                                                @endif
+                                                {{ $details->company_name ?? '-' }}
+                                            </div>
+                                            <div>{{ $details->name ?? $user->name ?? '-' }}</div>
+                                            <div>{{ $cityName ?? '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $details->village_business ?? ($details->village ?? '-') }}</div>
+                                            <div>{{ $details->post_business ?? ($details->post ?? '-') }}</div>
+                                            <div>{{ $details->district_business ?? ($details->district ?? '-') }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $stateName ?? '-' }}</div>
+                                            <div>{{ $details->pincode_business ?? ($details->pincode ?? '-') }}</div>
+                                            <div>{{ $countryName ?? '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $details->prim_mobile_no_business ?? ($details->prim_mobile_no ?? ($user->phone ?? '-')) }}</div>
+                                            <div>{{ $details->alt_mobile_no_business ?? ($details->alt_mobile_no ?? '-') }}</div>
+                                            <div>{{ $details->prim_whats_app_no_business ?? ($details->prim_whats_app_no ?? '-') }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $details->alternate_whats_app_no_business ?? ($details->alt_whats_app_no ?? '-') }}</div>
+                                            <div>{{ $details->prim_email_business ?? ($details->prim_email_personal ?? ($user->email ?? '-')) }}</div>
+                                            <div>{{ $details->alt_email_business ?? ($details->alt_email_personal ?? '-') }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $details->gst_no ?? '-' }}</div>
+                                            <div>{{ $details->aadhaar_no ?? '-' }}</div>
+                                            <div>{{ $details->pan_no ?? '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $user->approval_status == 1 ? translate('Verified') : translate('Unverified') }}</div>
+                                            <div>{{ $user->user_subtype ?: translate('Customer') }}</div>
+                                            <div>{{ $details->current_status ?? '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $user->credit_status == 1 ? translate('Active') : translate('Deactive') }}</div>
+                                            <div>{{ $user->credit_days ?? '-' }}</div>
+                                            <div>{{ $user->credit_limit ?? '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $details->transport ?? '-' }}</div>
+                                            <div>{{ $details->booked_to ?? '-' }}</div>
+                                            <div>{{ $details->salesman ?? '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $details->iec_no ?? '-' }}</div>
+                                            <div>{{ $details->passport_no ?? '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $details->d_l_no_1 ?? '-' }}</div>
+                                            <div>{{ $details->d_l_no_2 ?? '-' }}</div>
+                                            <div>{{ $details->d_l_no_3 ?? '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ $details->doctor_hospital_reg_no ?? '-' }}</div>
+                                            <div>{{ $details->dairy_trust_ngo_reg_no ?? '-' }}</div>
+                                            <div>{{ $details->cc_mdl_reg_no ?? '-' }}</div>
+                                        </td>
+                                        <td class="text-right drop-down-text-icon drop-down-text-icon-business">
                                         <div class="dropdown">
                                             <button class="btn btn-soft-secondary btn-sm dropdown-toggle" type="button"
                                                 id="customerActionDropdown{{ $user->id }}" data-toggle="dropdown"
@@ -483,12 +524,13 @@
                                         </div>
 
 
-                                    </td>
-                                </tr>
-                            @endif
-                        @endforeach
-                    </tbody>
-                </table>
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
                 <div class="aiz-pagination">
                     {{ $users->appends(request()->input())->links() }}
                 </div>

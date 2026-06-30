@@ -351,21 +351,67 @@ class CustomerController extends Controller
 
         // Sorting
         $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
-        if ($sortBy === 'crm_id') {
-            $users = $users->orderBy(
-                UserDetails::select('crm_id')->whereColumn('user_details.user_id', 'users.id'),
-                $sortOrder
-            );
-        } elseif ($sortBy === 'company_name') {
-            $users = $users->orderBy(
-                UserDetails::select('company_name')->whereColumn('user_details.user_id', 'users.id'),
-                $sortOrder
-            );
+        $sortBy = $sortBy ?: 'crm_id';
+
+        $users
+            ->leftJoin('user_details as sort_details', 'sort_details.user_id', '=', 'users.id')
+            ->leftJoin('cities as sort_business_city', 'sort_business_city.id', '=', 'sort_details.city_id_business')
+            ->leftJoin('cities as sort_personal_city', 'sort_personal_city.id', '=', 'sort_details.city_id')
+            ->leftJoin('states as sort_business_state', 'sort_business_state.id', '=', 'sort_details.state_id_business')
+            ->leftJoin('states as sort_personal_state', 'sort_personal_state.id', '=', 'sort_details.state_id')
+            ->leftJoin('countries as sort_business_country', 'sort_business_country.id', '=', 'sort_details.country_id_business')
+            ->leftJoin('countries as sort_personal_country', 'sort_personal_country.id', '=', 'sort_details.country_id')
+            ->select('users.*');
+
+        $sortMap = [
+            'sr_no' => 'users.id',
+            'crm_id' => 'sort_details.crm_id',
+            'company_name' => 'sort_details.company_name',
+            'person_name' => 'sort_details.name',
+            'village' => DB::raw('COALESCE(sort_details.village_business, sort_details.village)'),
+            'post' => DB::raw('COALESCE(sort_details.post_business, sort_details.post)'),
+            'district' => DB::raw('COALESCE(sort_details.district_business, sort_details.district)'),
+            'pincode' => DB::raw('COALESCE(sort_details.pincode_business, sort_details.pincode)'),
+            'city' => DB::raw('COALESCE(sort_business_city.name, sort_personal_city.name)'),
+            'state' => DB::raw('COALESCE(sort_business_state.name, sort_personal_state.name)'),
+            'country' => DB::raw('COALESCE(sort_business_country.name, sort_personal_country.name)'),
+            'mobile' => DB::raw('COALESCE(sort_details.prim_mobile_no_business, sort_details.prim_mobile_no, users.phone)'),
+            'alt_mobile' => DB::raw('COALESCE(sort_details.alt_mobile_no_business, sort_details.alt_mobile_no)'),
+            'whatsapp' => DB::raw('COALESCE(sort_details.prim_whats_app_no_business, sort_details.prim_whats_app_no)'),
+            'alt_whatsapp' => DB::raw('COALESCE(sort_details.alternate_whats_app_no_business, sort_details.alt_whats_app_no)'),
+            'email' => DB::raw('COALESCE(sort_details.prim_email_business, sort_details.prim_email_personal, users.email)'),
+            'alt_email' => DB::raw('COALESCE(sort_details.alt_email_business, sort_details.alt_email_personal)'),
+            'gst_no' => 'sort_details.gst_no',
+            'aadhaar_no' => 'sort_details.aadhaar_no',
+            'pan_no' => 'sort_details.pan_no',
+            'approval_status' => 'users.approval_status',
+            'customer_role' => 'users.user_subtype',
+            'current_status' => 'sort_details.current_status',
+            'credit_status' => 'users.credit_status',
+            'credit_days' => 'users.credit_days',
+            'credit_limit' => 'users.credit_limit',
+            'transport' => 'sort_details.transport',
+            'booked_to' => 'sort_details.booked_to',
+            'salesman' => 'sort_details.salesman',
+            'iec_no' => 'sort_details.iec_no',
+            'passport_no' => 'sort_details.passport_no',
+            'dl1' => 'sort_details.d_l_no_1',
+            'dl2' => 'sort_details.d_l_no_2',
+            'dl3' => 'sort_details.d_l_no_3',
+            'doctor_hospital_reg_no' => 'sort_details.doctor_hospital_reg_no',
+            'dairy_trust_ngo_reg_no' => 'sort_details.dairy_trust_ngo_reg_no',
+            'other_registration_no' => 'sort_details.cc_mdl_reg_no',
+        ];
+
+        if (!array_key_exists($sortBy, $sortMap)) {
+            $sortBy = 'crm_id';
+        }
+
+        $sortColumn = $sortMap[$sortBy];
+        if ($sortColumn instanceof \Illuminate\Database\Query\Expression) {
+            $users = $users->orderByRaw($sortColumn->getValue(DB::connection()->getQueryGrammar()) . ' ' . $sortOrder);
         } else {
-            $users = $users->orderBy(
-                UserDetails::select('crm_id')->whereColumn('user_details.user_id', 'users.id'),
-                'desc'
-            );
+            $users = $users->orderBy($sortColumn, $sortOrder);
         }
 
         $users = $users->paginate(15)->appends($request->query());
@@ -379,11 +425,18 @@ class CustomerController extends Controller
             return [$detail->city_id_business, $detail->city_id];
         })->filter()->unique()->values();
 
+        $countryIds = collect($users->pluck('details'))->filter()->flatMap(function ($detail) {
+            return [$detail->country_id_business, $detail->country_id];
+        })->filter()->unique()->values();
+
         $stateNames = $stateIds->isNotEmpty()
             ? State::whereIn('id', $stateIds)->pluck('name', 'id')
             : collect();
         $cityNames = $cityIds->isNotEmpty()
             ? City::whereIn('id', $cityIds)->pluck('name', 'id')
+            : collect();
+        $countryNames = $countryIds->isNotEmpty()
+            ? Country::whereIn('id', $countryIds)->pluck('name', 'id')
             : collect();
 
         return view('backend.customer.customers.businessindex', compact(
@@ -418,7 +471,8 @@ class CustomerController extends Controller
             'hasBusinessLocationFilters',
             'hasPersonalLocationFilters',
             'stateNames',
-            'cityNames'
+            'cityNames',
+            'countryNames'
         ));
     }
 
