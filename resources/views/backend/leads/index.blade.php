@@ -169,7 +169,7 @@
                     <th>{{ translate('Lead No') }}</th>
                     <th>{{ translate('Name') }}</th>
                     <th>{{ translate('Company') }}</th>
-                    <th>{{ translate('Current Status') }}</th>
+                    <th>{{ translate('Customer Type') }}</th>
                     <th>{{ translate('Status') }}</th>
                     <th>{{ translate('Source') }}</th>
                     <th>{{ translate('Created By') }}</th>
@@ -238,13 +238,14 @@
                                 </ul>
                             @endif
                         </td>
-                        <td>{{ $lead->customer_current_status ?? '-' }}</td>
+                        <td>{{ $lead->customer_type ?? '-' }}</td>
                         <td>
                             @if($lead->status)
                                 <span class="badge badge-inline text-white" style="background-color: {{ $lead->status->color ?? '#6c757d' }}">{{ $lead->status->name }}</span>
                             @else
                                 -
                             @endif
+                            <small class="d-block text-muted mt-1">{{ translate('Current Status') }}: {{ $lead->customer_current_status ?? '-' }}</small>
                         </td>
                         <td>{{ optional($lead->source)->name ?? '-' }}</td>
                         <td>
