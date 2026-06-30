@@ -139,7 +139,7 @@
     </div>
     <label class="col-md-2 col-form-label">{{ translate('Customer Type') }}</label>
     <div class="col-md-3">
-        <select name="customer_type" id="lead_customer_type" class="form-control aiz-selectpicker" data-live-search="true">
+        <select required name="customer_type" id="lead_customer_type" class="form-control aiz-selectpicker" data-live-search="true">
             <option value="">{{ translate('Select Customer Type') }}</option>
             @foreach ($customerTypes as $customerType)
                 <option value="{{ $customerType }}" @selected(old('customer_type', $lead->customer_type ?? '') === $customerType)>

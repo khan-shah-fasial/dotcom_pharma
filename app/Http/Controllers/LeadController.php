@@ -165,32 +165,7 @@ class LeadController extends Controller
 
         $leads = $leads->paginate(20);
 
-        $companyNames = $leads->getCollection()
-            ->pluck('company_name')
-            ->map(fn ($name) => Str::lower(trim((string) $name)))
-            ->filter()
-            ->unique()
-            ->values();
-
-        $customerStatuses = $companyNames->isEmpty()
-            ? collect()
-            : UserDetails::query()
-                ->select(['user_details.company_name', 'user_details.current_status'])
-                ->join('users', 'users.id', '=', 'user_details.user_id')
-                ->where('users.user_type', 'customer')
-                ->whereIn(DB::raw('LOWER(TRIM(user_details.company_name))'), $companyNames->all())
-                ->whereNotNull('user_details.current_status')
-                ->get()
-                ->mapWithKeys(fn ($details) => [
-                    Str::lower(trim((string) $details->company_name)) => $details->current_status,
-                ]);
-
-        $leads->getCollection()->each(function ($lead) use ($customerStatuses) {
-            $lead->setAttribute(
-                'customer_current_status',
-                $customerStatuses->get(Str::lower(trim((string) $lead->company_name)))
-            );
-        });
+        $this->attachCustomerCurrentStatuses($leads->getCollection());
 
         return view('backend.leads.index', $this->indexData() + [
             'leads' => $leads,
@@ -455,6 +430,130 @@ class LeadController extends Controller
             'statuses' => $this->leadStatusOptions(),
             'assignees' => $this->leadAssigneeOptions(),
         ];
+    }
+
+    protected function attachCustomerCurrentStatuses($leads): void
+    {
+        $companyNames = $leads
+            ->pluck('company_name')
+            ->map(fn ($name) => Str::lower(trim((string) $name)))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $leadPhones = $leads
+            ->flatMap(fn ($lead) => [
+                $lead->phone,
+                $lead->alternate_mobile_number,
+                $lead->whatsapp_number,
+            ])
+            ->map(fn ($phone) => $this->normalizePhoneDigits($phone))
+            ->filter(fn ($phone) => strlen($phone) >= 5)
+            ->unique()
+            ->values();
+
+        if ($companyNames->isEmpty() && $leadPhones->isEmpty()) {
+            $leads->each(fn ($lead) => $lead->setAttribute('customer_current_status', null));
+            return;
+        }
+
+        $phoneColumns = [
+            'users.phone',
+            'user_details.prim_mobile_no_business',
+            'user_details.alt_mobile_no_business',
+            'user_details.prim_whats_app_no_business',
+            'user_details.alternate_whats_app_no_business',
+        ];
+
+        $customers = UserDetails::query()
+            ->select([
+                'user_details.company_name',
+                'user_details.current_status',
+                'users.phone as user_phone',
+                'user_details.prim_mobile_no_business',
+                'user_details.alt_mobile_no_business',
+                'user_details.prim_whats_app_no_business',
+                'user_details.alternate_whats_app_no_business',
+            ])
+            ->join('users', 'users.id', '=', 'user_details.user_id')
+            ->where('users.user_type', 'customer')
+            ->whereNotNull('user_details.current_status')
+            ->where(function ($query) use ($companyNames, $leadPhones, $phoneColumns) {
+                if ($companyNames->isNotEmpty()) {
+                    $query->whereIn(DB::raw('LOWER(TRIM(user_details.company_name))'), $companyNames->all());
+                }
+
+                if ($leadPhones->isNotEmpty()) {
+                    $query->orWhere(function ($phoneQuery) use ($leadPhones, $phoneColumns) {
+                        foreach ($phoneColumns as $column) {
+                            $normalizedColumn = $this->normalizedPhoneColumnSql($column);
+
+                            $phoneQuery->orWhereIn(DB::raw($normalizedColumn), $leadPhones->all());
+
+                            foreach ($leadPhones as $phone) {
+                                $phoneQuery->orWhereRaw("RIGHT({$normalizedColumn}, ?) = ?", [strlen($phone), $phone]);
+                            }
+                        }
+                    });
+                }
+            })
+            ->get();
+
+        $statusesByCompany = $customers
+            ->filter(fn ($details) => trim((string) $details->company_name) !== '')
+            ->mapWithKeys(fn ($details) => [
+                Str::lower(trim((string) $details->company_name)) => $details->current_status,
+            ]);
+
+        $statusesByPhone = collect();
+        foreach ($customers as $details) {
+            foreach ([
+                $details->user_phone,
+                $details->prim_mobile_no_business,
+                $details->alt_mobile_no_business,
+                $details->prim_whats_app_no_business,
+                $details->alternate_whats_app_no_business,
+            ] as $phone) {
+                $normalizedPhone = $this->normalizePhoneDigits($phone);
+                if (strlen($normalizedPhone) >= 5) {
+                    $statusesByPhone->put($normalizedPhone, $details->current_status);
+                }
+            }
+        }
+
+        $leads->each(function ($lead) use ($statusesByCompany, $statusesByPhone) {
+            $companyKey = Str::lower(trim((string) $lead->company_name));
+            $status = $statusesByCompany->get($companyKey);
+
+            if (!$status) {
+                foreach ([$lead->phone, $lead->alternate_mobile_number, $lead->whatsapp_number] as $phone) {
+                    $leadPhone = $this->normalizePhoneDigits($phone);
+
+                    if (strlen($leadPhone) < 5) {
+                        continue;
+                    }
+
+                    foreach ($statusesByPhone as $customerPhone => $customerStatus) {
+                        if ($customerPhone === $leadPhone || Str::endsWith($customerPhone, $leadPhone) || Str::endsWith($leadPhone, $customerPhone)) {
+                            $status = $customerStatus;
+                            break 2;
+                        }
+                    }
+                }
+            }
+
+            $lead->setAttribute('customer_current_status', $status);
+        });
+    }
+
+    protected function normalizePhoneDigits($phone): string
+    {
+        return preg_replace('/\D+/', '', (string) $phone) ?: '';
+    }
+
+    protected function normalizedPhoneColumnSql(string $column): string
+    {
+        return "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE({$column}, '+', ''), '-', ''), ' ', ''), '(', ''), ')', ''), '.', '')";
     }
 
     protected function activityFormData(): array
