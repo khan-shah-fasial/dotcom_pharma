@@ -15,6 +15,19 @@
             max-height: 360px;
             overflow-y: auto;
         }
+
+        .business-customer-company-name {
+            color: #ff0000;
+        }
+
+        .business-customer-mobile-col {
+            min-width: 140px;
+            width: 140px;
+        }
+
+        .business-customer-mobile-col div {
+            white-space: nowrap;
+        }
     </style>
 
     <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -259,11 +272,14 @@
                 @php
                     $columnGroups = [
                         [['sr_no', 'Sr.No']],
-                        [['crm_id', 'Account Number']],
+                        [
+                            ['crm_id', 'Account Number'],
+                            ['city', 'City'],
+                        ],
                         [
                             ['company_name', 'Company Name'],
                             ['person_name', 'Person Name'],
-                            ['city', 'City'],
+                            ['customer_type', 'Customer Type'],
                         ],
                         [
                             ['village', 'Village'],
@@ -331,8 +347,13 @@
                         $icon = $active
                             ? '<i class="las la-sort-amount-' . (request('sort_order', 'asc') === 'asc' ? 'up' : 'down') . '"></i>'
                             : '<i class="las la-sort"></i>';
+                        $displayLabel = match ($key) {
+                            'sr_no' => e(translate('Sr')) . '<br>' . e(translate('No.')),
+                            'crm_id' => e(translate('Account')) . '<br>' . e(translate('Number')),
+                            default => e(translate($label)),
+                        };
 
-                        return '<a href="' . e($url) . '" class="d-block text-primary text-nowrap font-weight-bold">' . e(translate($label)) . ' ' . $icon . '</a>';
+                        return '<a href="' . e($url) . '" class="d-block text-primary font-weight-bold">' . $displayLabel . ' ' . $icon . '</a>';
                     };
                 @endphp
                 <div class="table-responsive business-customer-table-wrap @if ($users->count() <= 2) business-customer-table-wrap-short @endif">
@@ -340,7 +361,10 @@
                         <thead>
                             <tr>
                                 @foreach ($columnGroups as $group)
-                                    <th class="align-top text-center">
+                                    @php
+                                        $groupKeys = collect($group)->pluck(0);
+                                    @endphp
+                                    <th class="align-top text-center @if ($groupKeys->contains('mobile')) business-customer-mobile-col @endif">
                                         @foreach ($group as $heading)
                                             {!! $sortHeading($heading[0], $heading[1]) !!}
                                         @endforeach
@@ -363,16 +387,19 @@
                                     @endphp
                                     <tr>
                                         <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
-                                        <td>{{ $details->crm_id ?? '-' }}</td>
+                                        <td>
+                                            <div>{{ $details->crm_id ?? '-' }}</div>
+                                            <div>{{ $cityName ?? '-' }}</div>
+                                        </td>
                                         <td>
                                             <div>
                                                 @if ($user->banned == 1)
                                                     <i class="fa fa-ban text-danger" aria-hidden="true"></i>
                                                 @endif
-                                                {{ $details->company_name ?? '-' }}
+                                                <span class="business-customer-company-name">{{ $details->company_name ?? '-' }}</span>
                                             </div>
                                             <div>{{ $details->name ?? $user->name ?? '-' }}</div>
-                                            <div>{{ $cityName ?? '-' }}</div>
+                                            <div>{{ $details->customer_type ?? '-' }}</div>
                                         </td>
                                         <td>
                                             <div>{{ $details->village_business ?? ($details->village ?? '-') }}</div>
@@ -384,7 +411,7 @@
                                             <div>{{ $details->pincode_business ?? ($details->pincode ?? '-') }}</div>
                                             <div>{{ $countryName ?? '-' }}</div>
                                         </td>
-                                        <td>
+                                        <td class="business-customer-mobile-col">
                                             <div>{{ $details->prim_mobile_no_business ?? ($details->prim_mobile_no ?? ($user->phone ?? '-')) }}</div>
                                             <div>{{ $details->alt_mobile_no_business ?? ($details->alt_mobile_no ?? '-') }}</div>
                                             <div>{{ $details->prim_whats_app_no_business ?? ($details->prim_whats_app_no ?? '-') }}</div>

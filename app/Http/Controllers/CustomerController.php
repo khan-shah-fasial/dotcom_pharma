@@ -368,6 +368,7 @@ class CustomerController extends Controller
             'crm_id' => 'sort_details.crm_id',
             'company_name' => 'sort_details.company_name',
             'person_name' => 'sort_details.name',
+            'customer_type' => 'sort_details.customer_type',
             'village' => DB::raw('COALESCE(sort_details.village_business, sort_details.village)'),
             'post' => DB::raw('COALESCE(sort_details.post_business, sort_details.post)'),
             'district' => DB::raw('COALESCE(sort_details.district_business, sort_details.district)'),
