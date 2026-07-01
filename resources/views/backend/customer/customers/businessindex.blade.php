@@ -1,6 +1,22 @@
 @extends('backend.layouts.app')
 
 @section('content')
+    <style>
+        .business-customer-table-wrap {
+            overflow-y: hidden;
+        }
+
+        .business-customer-table-wrap.business-customer-table-wrap-short {
+            min-height: 430px;
+            padding-bottom: 230px;
+        }
+
+        .drop-down-text-icon-business .dropdown-menu {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+    </style>
+
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
             <h1 class="h3">{{ translate('All Business Customers') }}</h1>
@@ -319,7 +335,7 @@
                         return '<a href="' . e($url) . '" class="d-block text-primary text-nowrap font-weight-bold">' . e(translate($label)) . ' ' . $icon . '</a>';
                     };
                 @endphp
-                <div class="table-responsive">
+                <div class="table-responsive business-customer-table-wrap @if ($users->count() <= 2) business-customer-table-wrap-short @endif">
                     <table class="table table-bordered aiz-table mb-0">
                         <thead>
                             <tr>

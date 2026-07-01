@@ -109,14 +109,14 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
             });
         }
 
-        if ($this->orderDateFrom) {
-            $query->where('order_date', '>=', $this->orderDateFrom);
-        }
-        if ($this->orderDateTo) {
-            $query->where('order_date', '<=', $this->orderDateTo);
-        }
+        $this->applyParsedDateFilter($query, 'purchase_history.order_date', $this->orderDateFrom, $this->orderDateTo);
         if ($this->productSku) {
             $query->where('product_sku', $this->productSku);
+        }
+        if ($productName = $this->filterValue('product_name')) {
+            $query->whereHas('productStock.product', function ($productQuery) use ($productName) {
+                $productQuery->where('name', 'like', '%' . $productName . '%');
+            });
         }
         if ($this->salesman) {
             $query->where('sales_man_name', 'like', '%' . trim($this->salesman) . '%');
@@ -142,6 +142,23 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
         if ($city = $this->filterValue('city')) {
             $query->where('city', 'like', $city . '%');
         }
+        if ($district = $this->filterValue('district')) {
+            $query->where(function ($districtQuery) use ($district) {
+                $districtQuery->where('district', 'like', $district . '%')
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($district) {
+                        $customerQuery->where('district_business', 'like', $district . '%');
+                    });
+            });
+        }
+        if ($transport = $this->filterValue('transport')) {
+            $query->where('transport', 'like', $transport . '%');
+        }
+        $this->applyParsedDateFilter(
+            $query,
+            'purchase_history.expiry_date',
+            $this->filterValue('expiry_date_from'),
+            $this->filterValue('expiry_date_to')
+        );
         if ($partyName = $this->filterValue('party_name')) {
             $query->whereHas('customerDetails', function ($customerQuery) use ($partyName) {
                 $customerQuery->where('company_name', 'like', '%' . $partyName . '%');
@@ -391,6 +408,36 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
     private function parsedDateSql(string $column): string
     {
         return "COALESCE(STR_TO_DATE(NULLIF(TRIM({$column}), ''), '%Y-%m-%d'), STR_TO_DATE(NULLIF(TRIM({$column}), ''), '%d-%m-%Y'), STR_TO_DATE(NULLIF(TRIM({$column}), ''), '%d/%m/%Y'))";
+    }
+
+    private function applyParsedDateFilter($query, string $column, $from, $to): void
+    {
+        $dateSql = $this->parsedDateSql($column);
+
+        if ($normalizedFrom = $this->normalizeDateInput($from)) {
+            $query->whereRaw("{$dateSql} >= STR_TO_DATE(?, '%Y-%m-%d')", [$normalizedFrom]);
+        }
+
+        if ($normalizedTo = $this->normalizeDateInput($to)) {
+            $query->whereRaw("{$dateSql} <= STR_TO_DATE(?, '%Y-%m-%d')", [$normalizedTo]);
+        }
+    }
+
+    private function normalizeDateInput($value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        foreach (['Y-m-d', 'd-m-Y', 'd/m/Y'] as $format) {
+            $date = \DateTimeImmutable::createFromFormat('!' . $format, $value);
+            if ($date && $date->format($format) === $value) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        return null;
     }
 
     private function sumSql(string $column): string

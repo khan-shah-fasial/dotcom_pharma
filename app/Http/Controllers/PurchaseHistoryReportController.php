@@ -88,14 +88,19 @@ class PurchaseHistoryReportController extends Controller
         }
 
         // Optional filters
-        if ($orderDateFrom = $request->get('order_date_from')) {
-            $query->where('order_date', '>=', $orderDateFrom);
-        }
-        if ($orderDateTo = $request->get('order_date_to')) {
-            $query->where('order_date', '<=', $orderDateTo);
-        }
+        $this->applyParsedDateFilter(
+            $query,
+            'purchase_history.order_date',
+            $request->get('order_date_from'),
+            $request->get('order_date_to')
+        );
         if ($sku = $request->get('product_sku')) {
             $query->where('product_sku', $sku);
+        }
+        if ($productName = trim((string) $request->get('product_name', ''))) {
+            $query->whereHas('productStock.product', function ($productQuery) use ($productName) {
+                $productQuery->where('name', 'like', '%' . $productName . '%');
+            });
         }
         if ($salesman = $request->get('sales_man_name')) {
             $query->where('sales_man_name', 'like', '%' . trim($salesman) . '%');
@@ -121,6 +126,23 @@ class PurchaseHistoryReportController extends Controller
         if ($city = trim((string) $request->get('city', ''))) {
             $query->where('city', 'like', $city . '%');
         }
+        if ($district = trim((string) $request->get('district', ''))) {
+            $query->where(function ($districtQuery) use ($district) {
+                $districtQuery->where('district', 'like', $district . '%')
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($district) {
+                        $customerQuery->where('district_business', 'like', $district . '%');
+                    });
+            });
+        }
+        if ($transport = trim((string) $request->get('transport', ''))) {
+            $query->where('transport', 'like', $transport . '%');
+        }
+        $this->applyParsedDateFilter(
+            $query,
+            'purchase_history.expiry_date',
+            $request->get('expiry_date_from'),
+            $request->get('expiry_date_to')
+        );
         if ($partyName = trim((string) $request->get('party_name', ''))) {
             $query->whereHas('customerDetails', function ($customerQuery) use ($partyName) {
                 $customerQuery->where('company_name', 'like', '%' . $partyName . '%');
@@ -498,6 +520,11 @@ class PurchaseHistoryReportController extends Controller
                 'lr_number',
                 'state',
                 'city',
+                'district',
+                'transport',
+                'product_name',
+                'expiry_date_from',
+                'expiry_date_to',
                 'party_name',
                 'user_name',
             ])
@@ -549,6 +576,36 @@ class PurchaseHistoryReportController extends Controller
     private function parsedDateSql(string $column): string
     {
         return "COALESCE(STR_TO_DATE(NULLIF(TRIM({$column}), ''), '%Y-%m-%d'), STR_TO_DATE(NULLIF(TRIM({$column}), ''), '%d-%m-%Y'), STR_TO_DATE(NULLIF(TRIM({$column}), ''), '%d/%m/%Y'))";
+    }
+
+    private function applyParsedDateFilter($query, string $column, $from, $to): void
+    {
+        $dateSql = $this->parsedDateSql($column);
+
+        if ($normalizedFrom = $this->normalizeDateInput($from)) {
+            $query->whereRaw("{$dateSql} >= STR_TO_DATE(?, '%Y-%m-%d')", [$normalizedFrom]);
+        }
+
+        if ($normalizedTo = $this->normalizeDateInput($to)) {
+            $query->whereRaw("{$dateSql} <= STR_TO_DATE(?, '%Y-%m-%d')", [$normalizedTo]);
+        }
+    }
+
+    private function normalizeDateInput($value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        foreach (['Y-m-d', 'd-m-Y', 'd/m/Y'] as $format) {
+            $date = \DateTimeImmutable::createFromFormat('!' . $format, $value);
+            if ($date && $date->format($format) === $value) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        return null;
     }
 
     private function sumSql(string $column): string

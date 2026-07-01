@@ -70,6 +70,10 @@
         .product-detail-sheet .sheet-lines > small { border-bottom: 1px solid #d7d7d7; display: block; line-height: 18px; min-height: 18px; padding: 0 4px; white-space: nowrap; }
         .product-detail-sheet .sheet-lines > :last-child { border-bottom: 0; }
         .product-detail-sheet .wrap-line { line-height: 15px !important; min-width: 170px; padding: 5px 7px !important; white-space: normal !important; }
+        .product-detail-sheet .packaging-compact { max-width: 92px; min-width: 82px !important; width: 82px; }
+        .product-detail-sheet thead th.packaging-compact,
+        .product-detail-sheet thead th.packaging-compact > span { white-space: normal; }
+        .product-detail-sheet .packaging-compact .wrap-line { max-width: 92px; min-width: 82px; overflow-wrap: anywhere; padding: 3px !important; }
         .product-detail-sheet .composition-line { min-width: 270px; padding: 6px !important; text-align: left; white-space: normal; }
         .product-detail-sheet .product-name-line { color: #f01818; font-weight: 700; text-align: left; }
         .product-detail-sheet .brand-name-line { color: #00a651; font-weight: 700; text-align: left; }
@@ -305,7 +309,7 @@
                             </th>
                             <th>{{ translate('PTS') }}<br>{{ translate('PTR') }}<br>{{ translate('PTD') }}<br>{{ translate('B2C') }}</th>
                             <th data-breakpoints="xs sm md lg xl">
-                                {{ translate('Gov') }}<br>{{ translate('Expo') }}<br>
+                                {{ translate('Govt.') }}<br>{{ translate('Export') }}<br>
                                 <span>&nbsp;</span>
                                 <a href="{{ $sortUrl('mrp_price') }}">
                                     <span class="header-accent-red">{{ translate('M.R.P') }}</span>
@@ -329,7 +333,7 @@
                                 {{ translate('Tax %') }}<br>{{ translate('HSN Code') }}<br>{{ translate('HS Code') }}<br>
                                 <span style="background:#91d050;display:block;">{{ translate('Upload Date') }}</span>
                             </th>
-                            <th data-breakpoints="xs sm md lg xl">
+                            <th class="packaging-compact" data-breakpoints="xs sm md lg xl">
                                 {{ translate('Piece') }}<br>
                                 {{ translate('Qty') }}<br>
                                 {{ translate('Weight (gm)') }}<br>
@@ -347,7 +351,7 @@
                                 {{ translate('Weight (gm)') }}<br>
                                 {{ translate('Dimensions (cm)') }}
                             </th>
-                            <th data-breakpoints="xs sm md lg xl">
+                            <th class="packaging-compact" data-breakpoints="xs sm md lg xl">
                                 {{ translate('Per Case') }}<br>
                                 {{ translate('Qty') }}<br>
                                 {{ translate('Weight (gm)') }}<br>
@@ -446,7 +450,7 @@
                                     <span>{{ $product?->product_hs ?: '-' }}</span>
                                     <span class="upload-date">{{ $formatUploadDate($product?->updated_at) }}</span>
                                 </td>
-                                <td class="sheet-lines">
+                                <td class="sheet-lines packaging-compact">
                                     <span>{{ $stock?->qty_per_piece ?? '-' }}</span>
                                     <span>{{ $stock?->weight ?? $product?->product_weight_vol ?? '-' }}</span>
                                     <span class="wrap-line">{{ $dimensions($stock?->length, $stock?->width, $stock?->height) }}</span>
@@ -461,7 +465,7 @@
                                     <span>{{ $stock?->weight_case ?? '-' }}</span>
                                     <span class="wrap-line">{{ $dimensions($stock?->case_length, $stock?->case_width, $stock?->case_height) }}</span>
                                 </td>
-                                <td class="sheet-lines">
+                                <td class="sheet-lines packaging-compact">
                                     <span>{{ $stock?->total_qty_per_case ?? '-' }}</span>
                                     <span>{{ $stock?->weight_case ?? '-' }}</span>
                                     <span class="wrap-line">{{ $dimensions($stock?->case_length, $stock?->case_width, $stock?->case_height) }}</span>

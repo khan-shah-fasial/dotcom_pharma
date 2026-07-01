@@ -91,7 +91,15 @@ class PurchaseHistoryImport implements ToCollection, WithHeadingRow, WithValidat
             $amountLines = $this->splitValue($this->value($normalizedRow, ['taxable_gst_total', 'taxable_amount_gst_total']));
             $taxLines = $this->splitValue($this->value($normalizedRow, ['tax_code_gst', 'tax_code_gst_percentage']));
             $transportLines = $this->splitValue($this->value($normalizedRow, ['transport_booked_to_case', 'transport_book_to_case']));
-            $lrLines = $this->splitValue($this->value($normalizedRow, ['l_r_no_lr_date_late_by', 'lr_no_lr_date_late_by', 'lr_number_lr_date_late_by']));
+            $lrLines = $this->splitValue($this->value($normalizedRow, [
+                'l_r_no_lr_date_late_by',
+                'lr_no_lr_date_late_by',
+                'lr_number_lr_date_late_by',
+                'lrno_lrdate_lateby',
+                'lrno_lr_date_late_by',
+                'lr_no_lrdate_lateby',
+                'l_r_no_l_r_date_late_by',
+            ]));
 
             // Map incoming columns (party-wise sheet) to variables using normalized keys
             $serialNumber   = $this->value($normalizedRow, ['sr', 'sr_no', 'serial', 'serial_number']);
@@ -122,9 +130,9 @@ class PurchaseHistoryImport implements ToCollection, WithHeadingRow, WithValidat
             $caseValue      = $this->value($normalizedRow, ['case', 'case_value'], $transportLines[2] ?? null);
             $transport      = $this->value($normalizedRow, ['transport'], $transportLines[0] ?? null);
             $bookedTo       = $this->value($normalizedRow, ['booked_to', 'book_to'], $transportLines[1] ?? null);
-            $lrNo           = $this->value($normalizedRow, ['l_r_no', 'lr_no', 'lr_number'], $lrLines[0] ?? null);
-            $lrDate         = $this->value($normalizedRow, ['lr_date'], $lrLines[1] ?? null);
-            $lateBy         = $this->value($normalizedRow, ['late_by'], $lrLines[2] ?? null);
+            $lrNo           = $this->value($normalizedRow, ['l_r_no', 'lr_no', 'lrno', 'lr_number', 'l_r_number'], $lrLines[0] ?? null);
+            $lrDate         = $this->value($normalizedRow, ['lr_date', 'lrdate', 'l_r_date'], $lrLines[1] ?? null);
+            $lateBy         = $this->value($normalizedRow, ['late_by', 'lateby'], $lrLines[2] ?? null);
             $country        = $this->value($normalizedRow, ['country'], $stateLines[2] ?? null);
             $state          = $this->value($normalizedRow, ['state'], $stateLines[0] ?? null);
             $city           = $this->value($normalizedRow, ['area', 'city'], $partyLines[1] ?? null);
@@ -191,9 +199,9 @@ class PurchaseHistoryImport implements ToCollection, WithHeadingRow, WithValidat
                 'case_value'      => isset($caseValue) ? (string) $caseValue : null,
                 'transport'       => $transport,
                 'book_to'         => $bookedTo,
-                'lr_number'       => $lrNo,
-                'lr_date'         => $lrDate,
-                'late_by'         => $lateBy,
+                'lr_number'       => $this->cleanString($lrNo),
+                'lr_date'         => $this->cleanString($lrDate),
+                'late_by'         => $this->cleanString($lateBy),
                 'country'         => $country,
                 'state'           => $state,
                 'city'            => $city,
@@ -280,6 +288,15 @@ class PurchaseHistoryImport implements ToCollection, WithHeadingRow, WithValidat
         }
 
         return $value !== null && trim((string) $value) !== '';
+    }
+
+    private function cleanString($value): ?string
+    {
+        if (! $this->hasFilledValue($value)) {
+            return null;
+        }
+
+        return trim((string) $value);
     }
 
     public function getRowCount(): int

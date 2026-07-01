@@ -102,12 +102,35 @@
                 };
                 $formatQty = fn ($value) => number_format($numberValue($value), 0, '.', '');
                 $formatAmount = fn ($value) => number_format($numberValue($value), 2, '.', '');
+                $formatFilterDate = function ($value) {
+                    $value = trim((string) $value);
+                    if ($value === '') {
+                        return '';
+                    }
+
+                    foreach (['Y-m-d', 'd-m-Y', 'd/m/Y'] as $format) {
+                        $date = DateTimeImmutable::createFromFormat('!' . $format, $value);
+                        if ($date && $date->format($format) === $value) {
+                            return $date->format('d-m-Y');
+                        }
+                    }
+
+                    return $value;
+                };
+                $dateRangeValue = function (string $fromKey, string $toKey) use ($formatFilterDate) {
+                    if (! request($fromKey) || ! request($toKey)) {
+                        return '';
+                    }
+
+                    return $formatFilterDate(request($fromKey)) . ' to ' . $formatFilterDate(request($toKey));
+                };
                 $filtersApplied = collect([
                     request('account'),
                     request('serial_number'),
                     request('order_number'),
                     request('invoice_number'),
                     request('product_sku'),
+                    request('product_name'),
                     request('sales_man_name'),
                     request('sales_man_code'),
                     request('lr_number'),
@@ -115,8 +138,12 @@
                     request('user_name'),
                     request('state'),
                     request('city'),
+                    request('district'),
+                    request('transport'),
                     request('order_date_from'),
                     request('order_date_to'),
+                    request('expiry_date_from'),
+                    request('expiry_date_to'),
                 ])->contains(fn ($value) => $value !== null && $value !== '');
             @endphp
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
@@ -196,6 +223,11 @@
                                            value="{{ request('product_sku') }}" placeholder="{{ translate('Enter SKU') }}">
                                 </div>
                                 <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="product_name">{{ translate('Product Name') }}</label>
+                                    <input type="text" class="form-control" id="product_name" name="product_name"
+                                           value="{{ request('product_name') }}" placeholder="{{ translate('Product Name') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
                                     <label class="form-label" for="sales_man_name">{{ translate('Salesman Name') }}</label>
                                     <input type="text" class="form-control" id="sales_man_name" name="sales_man_name"
                                            value="{{ request('sales_man_name') }}" placeholder="{{ translate('Salesman') }}">
@@ -211,6 +243,11 @@
                                            value="{{ request('lr_number') }}" placeholder="{{ translate('L.R.No') }}">
                                 </div>
                                 <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="transport">{{ translate('Transport') }}</label>
+                                    <input type="text" class="form-control" id="transport" name="transport"
+                                           value="{{ request('transport') }}" placeholder="{{ translate('Transport') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
                                     <label class="form-label" for="state">{{ translate('State') }}</label>
                                     <input type="text" class="form-control" id="state" name="state"
                                            value="{{ request('state') }}" placeholder="{{ translate('State') }}">
@@ -220,15 +257,32 @@
                                     <input type="text" class="form-control" id="city" name="city"
                                            value="{{ request('city') }}" placeholder="{{ translate('City') }}">
                                 </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="district">{{ translate('District') }}</label>
+                                    <input type="text" class="form-control" id="district" name="district"
+                                           value="{{ request('district') }}" placeholder="{{ translate('District') }}">
+                                </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="order_date_range">{{ translate('Order Date Range') }}</label>
                                     <input type="text" class="form-control aiz-date-range" id="order_date_range"
                                            name="order_date_range"
-                                           value="{{ request('order_date_from') && request('order_date_to') ? request('order_date_from').' to '.request('order_date_to') : '' }}"
-                                           data-time-picker="false" data-format="YYYY-MM-DD"
-                                           placeholder="{{ translate('YYYY-MM-DD to YYYY-MM-DD') }}">
+                                           value="{{ $dateRangeValue('order_date_from', 'order_date_to') }}"
+                                           data-time-picker="false" data-format="DD-MM-YYYY"
+                                           data-from-field="#order_date_from" data-to-field="#order_date_to"
+                                           placeholder="{{ translate('DD-MM-YYYY to DD-MM-YYYY') }}">
                                     <input type="hidden" name="order_date_from" id="order_date_from" value="{{ request('order_date_from') }}">
                                     <input type="hidden" name="order_date_to" id="order_date_to" value="{{ request('order_date_to') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="expiry_date_range">{{ translate('Expiry Date') }}</label>
+                                    <input type="text" class="form-control aiz-date-range" id="expiry_date_range"
+                                           name="expiry_date_range"
+                                           value="{{ $dateRangeValue('expiry_date_from', 'expiry_date_to') }}"
+                                           data-time-picker="false" data-format="DD-MM-YYYY"
+                                           data-from-field="#expiry_date_from" data-to-field="#expiry_date_to"
+                                           placeholder="{{ translate('DD-MM-YYYY to DD-MM-YYYY') }}">
+                                    <input type="hidden" name="expiry_date_from" id="expiry_date_from" value="{{ request('expiry_date_from') }}">
+                                    <input type="hidden" name="expiry_date_to" id="expiry_date_to" value="{{ request('expiry_date_to') }}">
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label" for="sort_by">{{ translate('Sort By') }}</label>
@@ -480,8 +534,8 @@
 
         $(document).on('change', '.aiz-date-range', function () {
             var val = $(this).val();
-            var fromField = $('#order_date_from');
-            var toField = $('#order_date_to');
+            var fromField = $($(this).data('from-field'));
+            var toField = $($(this).data('to-field'));
             fromField.val('');
             toField.val('');
             if (val && val.indexOf(' to ') !== -1) {
