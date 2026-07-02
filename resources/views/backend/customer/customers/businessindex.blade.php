@@ -356,11 +356,7 @@
                         $icon = $active
                             ? '<i class="las la-sort-amount-' . (request('sort_order', 'asc') === 'asc' ? 'up' : 'down') . '"></i>'
                             : '<i class="las la-sort"></i>';
-                        $displayLabel = match ($key) {
-                            'sr_no' => e(translate('Sr')) . '<br>' . e(translate('No.')),
-                            'crm_id' => e(translate('Account')) . '<br>' . e(translate('Number')),
-                            default => e(translate($label)),
-                        };
+                        $displayLabel = e(translate($label));
 
                         return '<a href="' . e($url) . '" class="d-block text-primary font-weight-bold">' . $displayLabel . ' ' . $icon . '</a>';
                     };
