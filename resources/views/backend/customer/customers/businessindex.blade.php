@@ -22,7 +22,8 @@
 
         .business-customer-mobile-col {
             min-width: 140px;
-            width: 140px;
+            width: auto;
+            white-space: nowrap;
         }
 
         .business-customer-mobile-col div {
@@ -36,6 +37,32 @@
 
         .business-customer-table-wrap thead th a.d-block {
             white-space: nowrap;
+        }
+
+        .business-customer-table-wrap table {
+            width: auto;
+            min-width: 100%;
+        }
+
+        .business-customer-table-wrap tbody td {
+            vertical-align: top;
+            white-space: nowrap;
+        }
+
+        .business-customer-table-wrap tbody td > div,
+        .business-customer-table-wrap tbody td > div * {
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: normal;
+            overflow-wrap: normal;
+            line-height: 1.35;
+        }
+
+        .business-customer-table-wrap tbody td.text-right,
+        .business-customer-table-wrap tbody td.drop-down-text-icon,
+        .business-customer-table-wrap tbody td.drop-down-text-icon-business {
+            white-space: normal;
         }
     </style>
 
