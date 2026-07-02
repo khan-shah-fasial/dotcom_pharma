@@ -74,7 +74,8 @@
         .product-detail-sheet thead th.packaging-compact,
         .product-detail-sheet thead th.packaging-compact > span { white-space: normal; }
         .product-detail-sheet .packaging-compact .wrap-line { max-width: 92px; min-width: 82px; overflow-wrap: anywhere; padding: 3px !important; }
-        .product-detail-sheet .composition-line { min-width: 270px; padding: 6px !important; text-align: left; white-space: normal; }
+        .product-detail-sheet .composition-line { min-width: 400px; max-width: none; width: 400px; padding: 6px !important; text-align: left; vertical-align: middle !important; }
+        
         .product-detail-sheet .product-name-line { color: #f01818; font-weight: 700; text-align: left; }
         .product-detail-sheet .brand-name-line { color: #00a651; font-weight: 700; text-align: left; }
         .product-detail-sheet .text-left-line { text-align: left; }
@@ -418,7 +419,9 @@
                                     <span class="text-left-line">{{ $product?->role_label ?: '-' }}</span>
                                     <span class="text-left-line">{{ $product?->schedule ?: '-' }}</span>
                                 </td>
-                                <td class="composition-line">{{ $composition !== '' ? $composition : '-' }}</td>
+                                <td class="composition-line">
+                                    <div class="composition-clamp" title="{{ $composition !== '' ? $composition : '-' }}">{{ $composition !== '' ? $composition : '-' }}</div>
+                                </td>
                                 <td>{{ trim((string) $stock?->variant) ?: translate('Default') }}</td>
                                 <td class="sheet-lines">
                                     <span>{{ $product?->product_type ?: ($product?->product_form ?: '-') }}</span>

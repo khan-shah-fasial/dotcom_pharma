@@ -22,7 +22,8 @@
 
         .business-customer-mobile-col {
             min-width: 140px;
-            width: 140px;
+            width: auto;
+            white-space: nowrap;
         }
 
         .business-customer-mobile-col div {
@@ -36,6 +37,32 @@
 
         .business-customer-table-wrap thead th a.d-block {
             white-space: nowrap;
+        }
+
+        .business-customer-table-wrap table {
+            width: auto;
+            min-width: 100%;
+        }
+
+        .business-customer-table-wrap tbody td {
+            vertical-align: top;
+            white-space: nowrap;
+        }
+
+        .business-customer-table-wrap tbody td > div,
+        .business-customer-table-wrap tbody td > div * {
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: normal;
+            overflow-wrap: normal;
+            line-height: 1.35;
+        }
+
+        .business-customer-table-wrap tbody td.text-right,
+        .business-customer-table-wrap tbody td.drop-down-text-icon,
+        .business-customer-table-wrap tbody td.drop-down-text-icon-business {
+            white-space: normal;
         }
     </style>
 
@@ -356,11 +383,7 @@
                         $icon = $active
                             ? '<i class="las la-sort-amount-' . (request('sort_order', 'asc') === 'asc' ? 'up' : 'down') . '"></i>'
                             : '<i class="las la-sort"></i>';
-                        $displayLabel = match ($key) {
-                            'sr_no' => e(translate('Sr')) . '<br>' . e(translate('No.')),
-                            'crm_id' => e(translate('Account')) . '<br>' . e(translate('Number')),
-                            default => e(translate($label)),
-                        };
+                        $displayLabel = e(translate($label));
 
                         return '<a href="' . e($url) . '" class="d-block text-primary font-weight-bold">' . $displayLabel . ' ' . $icon . '</a>';
                     };
