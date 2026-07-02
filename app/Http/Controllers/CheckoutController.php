@@ -17,7 +17,9 @@ use App\Models\User;
 use App\Models\BookedTo;
 use App\Utility\EmailUtility;
 use App\Utility\NotificationUtility;
+use App\Services\OrderPlacementService;
 use App\Services\WalletRewardService;
+use Illuminate\Validation\ValidationException;
 use Session;
 use Auth;
 use Hash;
@@ -214,7 +216,14 @@ class CheckoutController extends Controller
         }
         // Minumum order amount check end
 
-        (new OrderController)->store($request);
+        try {
+            $combinedOrder = app(OrderPlacementService::class)->placeFromCarts($user, $carts, $request);
+            $request->session()->put('combined_order_id', $combinedOrder->id);
+        } catch (ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first() ?: translate('Unable to place this order.');
+            flash($message)->warning();
+            return redirect()->route('cart');
+        }
         // $file = base_path("/public/assets/myText.txt");
         // $dev_mail = get_dev_mail();
         // if(!file_exists($file) || (time() > strtotime('+30 days', filemtime($file)))){

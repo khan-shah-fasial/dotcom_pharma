@@ -122,6 +122,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
 
         Route::get('/purchase-history-report', 'index')->name('admin.purchase_history.index');
+        Route::get('/purchase-history-report/consolidated', 'consolidated')->name('admin.purchase_history.consolidated');
         Route::get('/purchase-history-report/{id}', 'show')->name('admin.purchase_history.show');
         Route::get('/purchase-history-report/{id}/edit', 'edit')->name('admin.purchase_history.edit');
         Route::post('/purchase-history-report/{id}', 'update')->name('admin.purchase_history.update');
@@ -541,6 +542,12 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     // Order
     Route::resource('orders', OrderController::class);
     Route::controller(OrderController::class)->group(function () {
+        Route::get('/order-create/customers', 'backendCustomerSearch')->name('orders.create.customers');
+        Route::get('/order-create/customers/{customer}/addresses', 'backendCustomerAddresses')->name('orders.create.customer_addresses');
+        Route::get('/order-create/products', 'backendProductSearch')->name('orders.create.products');
+        Route::post('/order-create/product-quote', 'backendProductQuote')->name('orders.create.product_quote');
+        Route::post('/order-create/summary', 'backendOrderSummary')->name('orders.create.summary');
+
         // All Orders
         Route::get('/all_orders', 'all_orders')->name('all_orders.index');
         Route::get('/inhouse-orders', 'all_orders')->name('inhouse_orders.index');

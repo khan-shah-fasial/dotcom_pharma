@@ -52,6 +52,11 @@
         .purchase-history-sheet th a:hover .sort-icon {
             color: #0056b3;
         }
+        .purchase-history-sheet .account-report-link {
+            color: #007bff;
+            font-weight: 700;
+            text-decoration: underline;
+        }
     </style>
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
@@ -376,11 +381,27 @@
                             $quantity = $numberValue($history->quantity);
                             $free = $numberValue($history->free);
                             $displayOrderNumber = filled($history->order_number) ? $history->order_number : $history->invoice_number;
+                            $accountNumber = $customer?->crm_id ?? $history->ac_number;
+                            $consolidatedReportUrl = filled($accountNumber)
+                                ? route('admin.purchase_history.consolidated', array_merge(request()->except(['page', 'sort_by', 'sort_dir', 'per_page', 'account']), ['account' => $accountNumber]))
+                                : null;
                         @endphp
                         <tr>
                             <td class="text-right">{{ $purchaseHistory->firstItem() + $loop->index }}</td>
                             <td class="cell-lines text-left">
-                                <span>{{ $customer?->crm_id ?? $history->ac_number }}</span>
+                                <span>
+                                    @if($consolidatedReportUrl)
+                                        <a href="{{ $consolidatedReportUrl }}"
+                                           class="account-report-link"
+                                           target="_blank"
+                                           rel="noopener"
+                                           title="{{ translate('Open consolidated report') }}">
+                                            {{ $accountNumber }}
+                                        </a>
+                                    @else
+                                        {{ $accountNumber }}
+                                    @endif
+                                </span>
                                 <span>{{ $customer?->user?->name }}</span>
                                 <span>{{ $history->sales_man_name }}</span>
                             </td>

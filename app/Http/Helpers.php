@@ -5744,7 +5744,7 @@ if (!function_exists('generateRoleBasedPrices')) {
 if (!function_exists('getCurrentUserRole')) {
     function getCurrentUserRole(): ?string
     {
-        $user = Auth::user();
+        $user = app()->bound('pricing_user') ? app('pricing_user') : Auth::user();
 
         if (!$user) return null;
 

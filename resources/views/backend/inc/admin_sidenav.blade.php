@@ -561,7 +561,7 @@
                 @endif
 
                 <!-- Sale -->
-                @canany(['view_all_orders', 'view_inhouse_orders','view_seller_orders','view_pickup_point_orders', 'view_pending_in_carts'])
+                @canany(['add_order', 'view_all_orders', 'view_inhouse_orders','view_seller_orders','view_pickup_point_orders', 'view_pending_in_carts'])
                     <li class="aiz-side-nav-item">
                         <a href="#" class="aiz-side-nav-link">
                             <div class="aiz-side-nav-icon">
@@ -584,9 +584,16 @@
                                     </a>
                                 </li>
                             @endcan
+                            @can('add_order')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('orders.create') }}" class="aiz-side-nav-link {{ areActiveRoutes(['orders.create'])}}">
+                                        <span class="aiz-side-nav-text">{{translate('Add Order')}}</span>
+                                    </a>
+                                </li>
+                            @endcan
                             @can('view_all_orders')
                                 <li class="aiz-side-nav-item">
-                                    <a href="{{ route('admin.purchase_history.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['admin.purchase_history.index','admin.purchase_history.edit'])}}">
+                                    <a href="{{ route('admin.purchase_history.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['admin.purchase_history.index','admin.purchase_history.edit','admin.purchase_history.consolidated'])}}">
                                         <span class="aiz-side-nav-text">{{ translate('Purchase History') }}</span>
                                     </a>
                                 </li>

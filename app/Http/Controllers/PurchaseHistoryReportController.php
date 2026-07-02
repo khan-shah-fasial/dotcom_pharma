@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseHistory;
+use App\Models\UserDetails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -311,6 +312,119 @@ class PurchaseHistoryReportController extends Controller
     }
 
     /**
+     * Show the party purchase history as a bill-wise, product variant-wise summary.
+     */
+    public function consolidated(Request $request)
+    {
+        $account = trim((string) $request->get('account', ''));
+        abort_if($account === '', 404);
+
+        $customer = UserDetails::query()
+            ->select([
+                'crm_id',
+                'user_id',
+                'company_name',
+                'post_business',
+                'city_id_business',
+                'district_business',
+                'state_id_business',
+                'pincode_business',
+                'country_id_business',
+                'prim_mobile_no_business',
+                'prim_whats_app_no_business',
+                'prim_mobile_no',
+                'prim_whats_app_no',
+            ])
+            ->with([
+                'user:id,name',
+                'businessCity:id,name',
+                'businessState:id,name',
+                'businessCountry:id,name',
+            ])
+            ->where('crm_id', $account)
+            ->first();
+
+        $query = PurchaseHistory::query()
+            ->leftJoin('product_stocks as stock_sort', 'stock_sort.sku', '=', 'purchase_history.product_sku')
+            ->leftJoin('products as product_sort', 'product_sort.id', '=', 'stock_sort.product_id')
+            ->leftJoin('brands as brand_sort', 'brand_sort.id', '=', 'product_sort.brand_id')
+            ->where(function ($accountQuery) use ($account) {
+                $accountQuery->where('purchase_history.ac_number', $account)
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($account) {
+                        $customerQuery->where('crm_id', $account);
+                    });
+            });
+
+        $this->applyConsolidatedFilters($query, $request);
+
+        $billDateSql = "COALESCE({$this->parsedDateSql('purchase_history.invoice_date')}, {$this->parsedDateSql('purchase_history.order_date')})";
+        $dateBounds = (clone $query)
+            ->selectRaw("MIN({$billDateSql}) AS date_from")
+            ->selectRaw("MAX({$billDateSql}) AS date_to")
+            ->first();
+
+        $grossAmountExpression = $this->sumExpression('final_amount');
+
+        $reportRows = $query
+            ->select([
+                'purchase_history.invoice_date',
+                'purchase_history.invoice_series',
+                'purchase_history.invoice_number',
+                'purchase_history.product_sku',
+                'purchase_history.packing',
+                'purchase_history.sale_rate',
+                'purchase_history.tax_code',
+                'purchase_history.gst_percentage',
+                'purchase_history.mrp_rate',
+            ])
+            ->selectRaw('MIN(purchase_history.id) AS id')
+            ->selectRaw("COALESCE(MIN(NULLIF(TRIM(purchase_history.invoice_date), '')), MIN(NULLIF(TRIM(purchase_history.order_date), ''))) AS bill_date")
+            ->selectRaw("MIN({$billDateSql}) AS bill_date_sort")
+            ->selectRaw('MIN(product_sort.name) AS product_name')
+            ->selectRaw('MIN(stock_sort.variant) AS product_variant')
+            ->selectRaw('MIN(stock_sort.id_variant) AS product_variant_id')
+            ->selectRaw($this->sumSql('quantity'))
+            ->selectRaw($this->sumSql('free'))
+            ->selectRaw($this->sumSql('gst_amount'))
+            ->selectRaw('(' . $this->sumExpression('quantity') . ' + ' . $this->sumExpression('free') . ') AS total_quantity')
+            ->selectRaw("{$grossAmountExpression} AS gross_amount")
+            ->groupBy([
+                'purchase_history.invoice_date',
+                'purchase_history.invoice_series',
+                'purchase_history.invoice_number',
+                'purchase_history.product_sku',
+                'purchase_history.packing',
+                'purchase_history.sale_rate',
+                'purchase_history.tax_code',
+                'purchase_history.gst_percentage',
+                'purchase_history.mrp_rate',
+            ])
+            ->groupByRaw("CASE WHEN COALESCE(TRIM(purchase_history.invoice_number), '') = '' THEN purchase_history.id ELSE 0 END")
+            ->orderBy('bill_date_sort')
+            ->orderBy('purchase_history.invoice_series')
+            ->orderBy('purchase_history.invoice_number')
+            ->orderBy('product_name')
+            ->orderBy('purchase_history.product_sku')
+            ->get();
+
+        $contactNumbers = collect([
+            $customer?->prim_mobile_no_business,
+            $customer?->prim_whats_app_no_business,
+            $customer?->prim_mobile_no,
+            $customer?->prim_whats_app_no,
+        ])->filter(fn ($value) => filled($value))->unique()->values();
+
+        return view('backend.purchase_history.consolidated', [
+            'account'        => $account,
+            'customer'       => $customer,
+            'contactNumbers' => $contactNumbers,
+            'dateFrom'       => $this->formatReportDate($request->get('order_date_from')) ?: $this->formatReportDate($dateBounds?->date_from),
+            'dateTo'         => $this->formatReportDate($request->get('order_date_to')) ?: $this->formatReportDate($dateBounds?->date_to),
+            'reportRows'     => $reportRows,
+        ]);
+    }
+
+    /**
      * Show the detail view for a single record (for modal).
      */
     public function show($id)
@@ -589,6 +703,112 @@ class PurchaseHistoryReportController extends Controller
         if ($normalizedTo = $this->normalizeDateInput($to)) {
             $query->whereRaw("{$dateSql} <= STR_TO_DATE(?, '%Y-%m-%d')", [$normalizedTo]);
         }
+    }
+
+    private function applyConsolidatedFilters($query, Request $request): void
+    {
+        if ($search = $request->get('search')) {
+            $like = '%' . trim($search) . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('purchase_history.serial_number', 'like', $like)
+                    ->orWhere('purchase_history.order_number', 'like', $like)
+                    ->orWhere('purchase_history.invoice_number', 'like', $like)
+                    ->orWhere('purchase_history.product_sku', 'like', $like)
+                    ->orWhere('purchase_history.sales_man_name', 'like', $like)
+                    ->orWhere('purchase_history.state', 'like', $like)
+                    ->orWhere('purchase_history.city', 'like', $like)
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($like) {
+                        $customerQuery->where('company_name', 'like', $like)
+                            ->orWhereHas('user', function ($userQuery) use ($like) {
+                                $userQuery->where('name', 'like', $like);
+                            });
+                    });
+            });
+        }
+
+        $this->applyParsedDateFilter(
+            $query,
+            'purchase_history.order_date',
+            $request->get('order_date_from'),
+            $request->get('order_date_to')
+        );
+
+        if ($sku = trim((string) $request->get('product_sku', ''))) {
+            $query->where('purchase_history.product_sku', $sku);
+        }
+        if ($productName = trim((string) $request->get('product_name', ''))) {
+            $query->where('product_sort.name', 'like', '%' . $productName . '%');
+        }
+        if ($salesman = trim((string) $request->get('sales_man_name', ''))) {
+            $query->where('purchase_history.sales_man_name', 'like', '%' . $salesman . '%');
+        }
+        if ($serialNumber = trim((string) $request->get('serial_number', ''))) {
+            $query->where('purchase_history.serial_number', 'like', $serialNumber . '%');
+        }
+        if ($orderNumber = trim((string) $request->get('order_number', ''))) {
+            $query->where('purchase_history.order_number', 'like', $orderNumber . '%');
+        }
+        if ($invoiceNumber = trim((string) $request->get('invoice_number', ''))) {
+            $query->where('purchase_history.invoice_number', 'like', $invoiceNumber . '%');
+        }
+        if ($salesmanCode = trim((string) $request->get('sales_man_code', ''))) {
+            $query->where('purchase_history.sales_man_code', 'like', $salesmanCode . '%');
+        }
+        if ($lrNumber = trim((string) $request->get('lr_number', ''))) {
+            $query->where('purchase_history.lr_number', 'like', $lrNumber . '%');
+        }
+        if ($state = trim((string) $request->get('state', ''))) {
+            $query->where('purchase_history.state', 'like', $state . '%');
+        }
+        if ($city = trim((string) $request->get('city', ''))) {
+            $query->where('purchase_history.city', 'like', $city . '%');
+        }
+        if ($district = trim((string) $request->get('district', ''))) {
+            $query->where(function ($districtQuery) use ($district) {
+                $districtQuery->where('purchase_history.district', 'like', $district . '%')
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($district) {
+                        $customerQuery->where('district_business', 'like', $district . '%');
+                    });
+            });
+        }
+        if ($transport = trim((string) $request->get('transport', ''))) {
+            $query->where('purchase_history.transport', 'like', $transport . '%');
+        }
+
+        $this->applyParsedDateFilter(
+            $query,
+            'purchase_history.expiry_date',
+            $request->get('expiry_date_from'),
+            $request->get('expiry_date_to')
+        );
+
+        if ($partyName = trim((string) $request->get('party_name', ''))) {
+            $query->whereHas('customerDetails', function ($customerQuery) use ($partyName) {
+                $customerQuery->where('company_name', 'like', '%' . $partyName . '%');
+            });
+        }
+        if ($userName = trim((string) $request->get('user_name', ''))) {
+            $query->whereHas('customerDetails.user', function ($userQuery) use ($userName) {
+                $userQuery->where('name', 'like', '%' . $userName . '%');
+            });
+        }
+    }
+
+    private function formatReportDate($value): string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+
+        foreach (['Y-m-d H:i:s', 'Y-m-d', 'd-m-Y', 'd/m/Y'] as $format) {
+            $date = \DateTimeImmutable::createFromFormat('!' . $format, $value);
+            if ($date && $date->format($format) === $value) {
+                return $date->format('d-m-Y');
+            }
+        }
+
+        return $value;
     }
 
     private function normalizeDateInput($value): ?string

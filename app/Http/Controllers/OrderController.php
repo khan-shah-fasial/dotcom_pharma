@@ -12,10 +12,12 @@ use App\Models\CouponUsage;
 use App\Models\Coupon;
 use App\Models\User;
 use App\Models\CombinedOrder;
+use App\Models\Country;
 use App\Models\SmsTemplate;
 use App\Models\ProductBatch;
 use App\Models\BookedTo;
 use App\Models\LocalDeliveryPartner;
+use App\Models\ShippingMethod;
 use App\Models\Transport;
 use Auth;
 use Mail;
@@ -30,7 +32,9 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\OrderNotification;
 use App\Utility\EmailUtility;
 use Illuminate\Support\Facades\Session;
+use App\Services\OrderPlacementService;
 use App\Services\WalletRewardService;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -41,6 +45,7 @@ class OrderController extends Controller
         $this->middleware(['permission:view_all_orders|view_inhouse_orders|view_seller_orders|view_pickup_point_orders|view_all_offline_payment_orders'])->only('all_orders');
         $this->middleware(['permission:view_order_details'])->only('show');
         $this->middleware(['permission:delete_order'])->only('destroy','bulk_order_delete');
+        $this->middleware(['permission:add_order'])->only('create', 'store', 'backendCustomerSearch', 'backendCustomerAddresses', 'backendProductSearch', 'backendProductQuote', 'backendOrderSummary');
     }
 
     // All Orders
@@ -144,7 +149,160 @@ class OrderController extends Controller
      */
     public function create()
     {
-        //
+        $countries = Country::where('status', 1)->orderBy('name')->get(['id', 'name']);
+        $shippingMethods = ShippingMethod::where('is_active', 1)->orderBy('name')->get();
+        $transports = Transport::active()->orderBy('name')->get();
+        $bookedToOptions = BookedTo::active()->orderBy('name')->get();
+        $localDeliveryPartners = LocalDeliveryPartner::active()->orderBy('name')->get();
+
+        return view('backend.sales.create', compact(
+            'countries',
+            'shippingMethods',
+            'transports',
+            'bookedToOptions',
+            'localDeliveryPartners'
+        ));
+    }
+
+    public function backendCustomerSearch(Request $request, OrderPlacementService $orders)
+    {
+        $query = trim((string) $request->input('q'));
+
+        $customers = $orders->approvedCustomerQuery()
+            ->when($query !== '', function ($builder) use ($query) {
+                $builder->where(function ($nested) use ($query) {
+                    $nested->where('name', 'like', '%' . $query . '%')
+                        ->orWhere('email', 'like', '%' . $query . '%')
+                        ->orWhere('phone', 'like', '%' . $query . '%');
+                });
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'email', 'phone', 'user_subtype', 'user_type']);
+
+        return response()->json($customers->map(function ($customer) {
+            return [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'email' => $customer->email,
+                'phone' => $customer->phone,
+                'role' => $customer->user_subtype ?: $customer->user_type,
+            ];
+        })->values());
+    }
+
+    public function backendCustomerAddresses(Request $request, OrderPlacementService $orders, $customerId)
+    {
+        $customer = $orders->resolveApprovedCustomer($customerId);
+
+        $addresses = Address::with(['country', 'state', 'city'])
+            ->where('user_id', $customer->id)
+            ->orderByDesc('set_default')
+            ->orderBy('type')
+            ->get();
+
+        return response()->json($addresses->map(function ($address) {
+            return [
+                'id' => $address->id,
+                'type' => $address->type,
+                'address' => $address->address,
+                'country' => optional($address->country)->name,
+                'state' => optional($address->state)->name,
+                'city' => optional($address->city)->name,
+                'postal_code' => $address->postal_code,
+                'phone' => $address->phone,
+                'set_default' => (bool) $address->set_default,
+            ];
+        })->values());
+    }
+
+    public function backendProductSearch(Request $request)
+    {
+        $query = trim((string) $request->input('q'));
+
+        $products = Product::with(['stocks.batches', 'brand', 'thumbnail', 'user'])
+            ->where('approved', '1')
+            ->where('published', 1)
+            ->where('digital', 0)
+            ->when($query !== '', function ($builder) use ($query) {
+                $builder->where(function ($nested) use ($query) {
+                    $nested->where('name', 'like', '%' . $query . '%')
+                        ->orWhere('barcode', 'like', '%' . $query . '%');
+                });
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
+
+        return response()->json($products->map(function ($product) {
+            $stocks = $product->stocks
+                ->filter(fn ($stock) => !(bool) ($stock->is_hidden ?? false))
+                ->values()
+                ->map(function ($stock) {
+                    $batches = valid_batches_for_stock($stock, true)->map(function ($batch) {
+                        return [
+                            'id' => $batch->id,
+                            'batch' => $batch->batch,
+                            'qty' => (int) $batch->qty,
+                            'mrp_price' => (float) ($batch->mrp_price ?? 0),
+                            'product_exp_date' => $batch->product_exp_date,
+                        ];
+                    })->values();
+
+                    return [
+                        'id' => $stock->id,
+                        'variant' => $stock->variant ?: translate('Default'),
+                        'raw_variant' => $stock->variant,
+                        'id_variant' => $stock->id_variant,
+                        'qty' => (int) ($stock->qty ?? 0),
+                        'min_qty' => (int) ($stock->min_qty ?? 1),
+                        'scheme' => (int) ($stock->scheme ?? 0),
+                        'batches' => $batches,
+                    ];
+                });
+
+            return [
+                'id' => $product->id,
+                'name' => $product->getTranslation('name'),
+                'brand' => optional($product->brand)->name,
+                'owner_id' => $product->user_id,
+                'owner_name' => optional($product->user)->name ?: translate('Inhouse'),
+                'thumbnail' => uploaded_asset($product->thumbnail_img),
+                'stocks' => $stocks,
+            ];
+        })->values());
+    }
+
+    public function backendProductQuote(Request $request, OrderPlacementService $orders)
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => $orders->quoteBackendLine($request),
+            ]);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($exception->errors())->flatten()->first(),
+                'errors' => $exception->errors(),
+            ], 422);
+        }
+    }
+
+    public function backendOrderSummary(Request $request, OrderPlacementService $orders)
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => $orders->summarizeBackendRequest($request),
+            ]);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($exception->errors())->flatten()->first(),
+                'errors' => $exception->errors(),
+            ], 422);
+        }
     }
 
     /**
@@ -155,6 +313,25 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->boolean('backend_add_order')) {
+            try {
+                $combinedOrder = app(OrderPlacementService::class)->placeFromBackendRequest($request);
+                $firstOrder = $combinedOrder->orders()->orderBy('id')->first();
+
+                flash(translate('Order has been created successfully.'))->success();
+
+                if ($firstOrder) {
+                    return redirect()->route('all_orders.show', encrypt($firstOrder->id));
+                }
+
+                return redirect()->route('all_orders.index');
+            } catch (ValidationException $exception) {
+                $message = collect($exception->errors())->flatten()->first() ?: translate('Unable to create order.');
+                flash($message)->warning();
+                return back()->withInput();
+            }
+        }
+
         $carts = Cart::where('user_id', Auth::user()->id)->active()->get();
 
         if ($carts->isEmpty()) {
