@@ -74,17 +74,8 @@
         .product-detail-sheet thead th.packaging-compact,
         .product-detail-sheet thead th.packaging-compact > span { white-space: normal; }
         .product-detail-sheet .packaging-compact .wrap-line { max-width: 92px; min-width: 82px; overflow-wrap: anywhere; padding: 3px !important; }
-        .product-detail-sheet .composition-line { min-width: 270px; max-width: none; width: auto; padding: 6px !important; text-align: left; white-space: nowrap; vertical-align: middle !important; }
-        .product-detail-sheet .composition-line .composition-clamp {
-            display: inline-block;
-            white-space: nowrap;
-            overflow: visible;
-            text-overflow: clip;
-            word-break: normal;
-            overflow-wrap: normal;
-            line-height: 1.35;
-            max-width: none;
-        }
+        .product-detail-sheet .composition-line { min-width: 400px; max-width: none; width: 400px; padding: 6px !important; text-align: left; vertical-align: middle !important; }
+        
         .product-detail-sheet .product-name-line { color: #f01818; font-weight: 700; text-align: left; }
         .product-detail-sheet .brand-name-line { color: #00a651; font-weight: 700; text-align: left; }
         .product-detail-sheet .text-left-line { text-align: left; }
