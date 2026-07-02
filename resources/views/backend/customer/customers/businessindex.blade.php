@@ -28,6 +28,15 @@
         .business-customer-mobile-col div {
             white-space: nowrap;
         }
+
+        .business-customer-table-wrap thead th {
+            white-space: nowrap;
+            vertical-align: top;
+        }
+
+        .business-customer-table-wrap thead th a.d-block {
+            white-space: nowrap;
+        }
     </style>
 
     <div class="aiz-titlebar text-left mt-2 mb-3">
