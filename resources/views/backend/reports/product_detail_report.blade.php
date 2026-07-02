@@ -74,7 +74,17 @@
         .product-detail-sheet thead th.packaging-compact,
         .product-detail-sheet thead th.packaging-compact > span { white-space: normal; }
         .product-detail-sheet .packaging-compact .wrap-line { max-width: 92px; min-width: 82px; overflow-wrap: anywhere; padding: 3px !important; }
-        .product-detail-sheet .composition-line { min-width: 270px; padding: 6px !important; text-align: left; white-space: normal; }
+        .product-detail-sheet .composition-line { min-width: 270px; max-width: none; width: auto; padding: 6px !important; text-align: left; white-space: nowrap; vertical-align: middle !important; }
+        .product-detail-sheet .composition-line .composition-clamp {
+            display: inline-block;
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+            word-break: normal;
+            overflow-wrap: normal;
+            line-height: 1.35;
+            max-width: none;
+        }
         .product-detail-sheet .product-name-line { color: #f01818; font-weight: 700; text-align: left; }
         .product-detail-sheet .brand-name-line { color: #00a651; font-weight: 700; text-align: left; }
         .product-detail-sheet .text-left-line { text-align: left; }
@@ -418,7 +428,9 @@
                                     <span class="text-left-line">{{ $product?->role_label ?: '-' }}</span>
                                     <span class="text-left-line">{{ $product?->schedule ?: '-' }}</span>
                                 </td>
-                                <td class="composition-line">{{ $composition !== '' ? $composition : '-' }}</td>
+                                <td class="composition-line">
+                                    <div class="composition-clamp" title="{{ $composition !== '' ? $composition : '-' }}">{{ $composition !== '' ? $composition : '-' }}</div>
+                                </td>
                                 <td>{{ trim((string) $stock?->variant) ?: translate('Default') }}</td>
                                 <td class="sheet-lines">
                                     <span>{{ $product?->product_type ?: ($product?->product_form ?: '-') }}</span>
