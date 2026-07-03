@@ -18,7 +18,7 @@
             text-align: center;
         }
         .party-consolidated-table {
-            min-width: 980px;
+            min-width: 1080px;
             table-layout: fixed;
         }
         .party-consolidated-table th,
@@ -33,6 +33,16 @@
             font-weight: 700;
             text-align: center;
             white-space: nowrap;
+        }
+        .party-consolidated-table th a {
+            color: #000;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .party-consolidated-table .sort-icon {
+            font-size: 13px;
+            margin-left: 3px;
         }
         .party-consolidated-table td {
             background: #fff;
@@ -102,6 +112,72 @@
 
             return $value;
         };
+        $formatFilterDate = function ($value) {
+            $value = trim((string) $value);
+            if ($value === '') {
+                return '';
+            }
+
+            foreach (['Y-m-d', 'd-m-Y', 'd/m/Y'] as $format) {
+                $date = DateTimeImmutable::createFromFormat('!' . $format, $value);
+                if ($date && $date->format($format) === $value) {
+                    return $date->format('d-m-Y');
+                }
+            }
+
+            return $value;
+        };
+        $dateRangeValue = function ($from, $to) use ($formatFilterDate) {
+            if (! $from || ! $to) {
+                return '';
+            }
+
+            return $formatFilterDate($from) . ' to ' . $formatFilterDate($to);
+        };
+        $billDateFromValue = $filterBillDateFrom ?? (request('bill_date_from') ?: request('order_date_from'));
+        $billDateToValue = $filterBillDateTo ?? (request('bill_date_to') ?: request('order_date_to'));
+        $sortLink = function (string $column) use ($sortBy, $sortDir) {
+            $nextDir = ($sortBy === $column && $sortDir === 'asc') ? 'desc' : 'asc';
+
+            return route('admin.purchase_history.consolidated', array_merge(request()->except('page'), [
+                'sort_by' => $column,
+                'sort_dir' => $nextDir,
+            ]));
+        };
+        $sortIcon = function (string $column) use ($sortBy, $sortDir) {
+            if ($sortBy !== $column) {
+                return '';
+            }
+
+            return '<i class="las la-sort-amount-'.($sortDir === 'asc' ? 'up' : 'down').' sort-icon"></i>';
+        };
+        $sortHeading = function (string $column, string $label) use ($sortLink, $sortIcon) {
+            return '<a href="'.e($sortLink($column)).'">'.e($label).$sortIcon($column).'</a>';
+        };
+        $preservedConsolidatedFilters = [
+            'search',
+            'serial_number',
+            'order_number',
+            'invoice_number',
+            'sales_man_name',
+            'sales_man_code',
+            'lr_number',
+            'party_name',
+            'user_name',
+            'state',
+            'city',
+            'district',
+            'transport',
+            'expiry_date_from',
+            'expiry_date_to',
+        ];
+        $filtersApplied = collect(array_merge([
+            $billDateFromValue,
+            $billDateToValue,
+            request('product_sku'),
+            request('product_name'),
+        ], array_map(fn ($key) => request($key), $preservedConsolidatedFilters)))
+            ->contains(fn ($value) => $value !== null && $value !== '');
         $partyName = $customer?->company_name ?: $account;
         $partyDetails = collect([
             $partyName,
@@ -135,6 +211,78 @@
         </div>
     </div>
 
+    <div class="card d-print-none mb-3">
+        <form action="{{ route('admin.purchase_history.consolidated') }}" method="GET">
+            <input type="hidden" name="account" value="{{ $account }}">
+            @foreach($preservedConsolidatedFilters as $filterKey)
+                @if(request()->filled($filterKey))
+                    <input type="hidden" name="{{ $filterKey }}" value="{{ request($filterKey) }}">
+                @endif
+            @endforeach
+
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                <div class="mb-2">
+                    <h5 class="mb-0 h6">{{ translate('Filters') }}</h5>
+                    @if($filtersApplied)
+                        <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+                    @endif
+                </div>
+                <div class="mb-2">
+                    <a href="{{ route('admin.purchase_history.consolidated', ['account' => $account]) }}"
+                       class="btn btn-outline-danger mr-2">
+                        {{ translate('Reset') }}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        {{ translate('Apply Filters') }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="row gutters-5">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="bill_date_range">{{ translate('Bill Date') }}</label>
+                        <input type="text" class="form-control aiz-date-range" id="bill_date_range"
+                               name="bill_date_range"
+                               value="{{ $dateRangeValue($billDateFromValue, $billDateToValue) }}"
+                               data-time-picker="false" data-format="DD-MM-YYYY"
+                               data-from-field="#bill_date_from" data-to-field="#bill_date_to"
+                               placeholder="{{ translate('DD-MM-YYYY to DD-MM-YYYY') }}">
+                        <input type="hidden" name="bill_date_from" id="bill_date_from" value="{{ $billDateFromValue }}">
+                        <input type="hidden" name="bill_date_to" id="bill_date_to" value="{{ $billDateToValue }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label" for="product_sku">{{ translate('SKU') }}</label>
+                        <input type="text" class="form-control" id="product_sku" name="product_sku"
+                               value="{{ request('product_sku') }}" placeholder="{{ translate('Enter SKU') }}">
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <label class="form-label" for="product_name">{{ translate('Product') }}</label>
+                        <input type="text" class="form-control" id="product_name" name="product_name"
+                               value="{{ request('product_name') }}" placeholder="{{ translate('Product') }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label" for="sort_by">{{ translate('Sort By') }}</label>
+                        <select class="form-control aiz-selectpicker" id="sort_by" name="sort_by">
+                            <option value="bill_date" @if($sortBy === 'bill_date') selected @endif>{{ translate('Bill Date') }}</option>
+                            <option value="bill_series" @if($sortBy === 'bill_series') selected @endif>{{ translate('Bill Series') }}</option>
+                            <option value="product_sku" @if($sortBy === 'product_sku') selected @endif>{{ translate('SKU') }}</option>
+                            <option value="product_name" @if($sortBy === 'product_name') selected @endif>{{ translate('Product') }}</option>
+                            <option value="packing" @if($sortBy === 'packing') selected @endif>{{ translate('Pack') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label" for="sort_dir">{{ translate('Direction') }}</label>
+                        <select class="form-control aiz-selectpicker" id="sort_dir" name="sort_dir">
+                            <option value="asc" @if($sortDir === 'asc') selected @endif>{{ translate('Ascending') }}</option>
+                            <option value="desc" @if($sortDir === 'desc') selected @endif>{{ translate('Descending') }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <div class="party-consolidated-sheet">
@@ -150,11 +298,12 @@
                         <thead>
                         <tr>
                             <th style="width: 45px">{{ translate('Sr no.') }}</th>
-                            <th style="width: 90px">{{ translate('Bill Date') }}</th>
-                            <th style="width: 80px">{{ translate('Bill Series') }}</th>
+                            <th style="width: 90px">{!! $sortHeading('bill_date', translate('Bill Date')) !!}</th>
+                            <th style="width: 80px">{!! $sortHeading('bill_series', translate('Bill Series')) !!}</th>
                             <th style="width: 70px">{{ translate('Bill No') }}</th>
-                            <th>{{ translate('Product Name') }}</th>
-                            <th style="width: 70px">{{ translate('Pack') }}</th>
+                            <th style="width: 95px">{!! $sortHeading('product_sku', translate('SKU')) !!}</th>
+                            <th>{!! $sortHeading('product_name', translate('Product Name')) !!}</th>
+                            <th style="width: 70px">{!! $sortHeading('packing', translate('Pack')) !!}</th>
                             <th style="width: 65px">{{ translate('Qty') }}</th>
                             <th style="width: 80px">{{ translate('S.Rate') }}</th>
                             <th style="width: 65px">{{ translate('Tax') }}</th>
@@ -175,6 +324,7 @@
                                 <td>{{ $formatDate($row->bill_date) }}</td>
                                 <td>{{ $row->invoice_series }}</td>
                                 <td>{{ $row->invoice_number }}</td>
+                                <td>{{ $row->product_sku }}</td>
                                 <td class="product-cell">{{ $productName }}</td>
                                 <td>{{ $row->packing }}</td>
                                 <td class="text-right">{{ $formatQty($row->quantity) }}</td>
@@ -185,13 +335,13 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="text-center">{{ translate('No records found') }}</td>
+                                <td colspan="12" class="text-center">{{ translate('No records found') }}</td>
                             </tr>
                         @endforelse
 
                         @if($reportRows->isNotEmpty())
                             <tr>
-                                <td colspan="10" class="total-label">{{ translate('Total') }}</td>
+                                <td colspan="11" class="total-label">{{ translate('Total') }}</td>
                                 <td class="text-right total-amount">{{ $formatAmount($totalGross) }}</td>
                             </tr>
                         @endif
@@ -201,4 +351,21 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('script')
+    <script>
+        $(document).on('change', '.aiz-date-range', function () {
+            var val = $(this).val();
+            var fromField = $($(this).data('from-field'));
+            var toField = $($(this).data('to-field'));
+            fromField.val('');
+            toField.val('');
+            if (val && val.indexOf(' to ') !== -1) {
+                var parts = val.split(' to ');
+                fromField.val(parts[0]);
+                toField.val(parts[1]);
+            }
+        });
+    </script>
 @endsection

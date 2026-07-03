@@ -347,7 +347,6 @@ class PurchaseHistoryReportController extends Controller
         $query = PurchaseHistory::query()
             ->leftJoin('product_stocks as stock_sort', 'stock_sort.sku', '=', 'purchase_history.product_sku')
             ->leftJoin('products as product_sort', 'product_sort.id', '=', 'stock_sort.product_id')
-            ->leftJoin('brands as brand_sort', 'brand_sort.id', '=', 'product_sort.brand_id')
             ->where(function ($accountQuery) use ($account) {
                 $accountQuery->where('purchase_history.ac_number', $account)
                     ->orWhereHas('customerDetails', function ($customerQuery) use ($account) {
@@ -355,9 +354,41 @@ class PurchaseHistoryReportController extends Controller
                     });
             });
 
-        $this->applyConsolidatedFilters($query, $request);
-
         $billDateSql = "COALESCE({$this->parsedDateSql('purchase_history.invoice_date')}, {$this->parsedDateSql('purchase_history.order_date')})";
+        $billDateFrom = trim((string) $request->get('bill_date_from', ''));
+        if ($billDateFrom === '') {
+            $billDateFrom = trim((string) $request->get('order_date_from', ''));
+        }
+        $billDateTo = trim((string) $request->get('bill_date_to', ''));
+        if ($billDateTo === '') {
+            $billDateTo = trim((string) $request->get('order_date_to', ''));
+        }
+
+        $this->applyConsolidatedFilters($query, $request, $billDateSql, $billDateFrom, $billDateTo);
+
+        $sortableColumns = [
+            'bill_date' => 'bill_date_sort',
+            'bill_series' => 'purchase_history.invoice_series',
+            'product_sku' => 'purchase_history.product_sku',
+            'product_name' => 'product_name',
+            'packing' => 'purchase_history.packing',
+        ];
+        $sortAliases = [
+            'invoice_series' => 'bill_series',
+            'sku' => 'product_sku',
+            'product' => 'product_name',
+            'pack' => 'packing',
+        ];
+        $sortBy = (string) $request->get('sort_by', 'bill_date');
+        $sortBy = $sortAliases[$sortBy] ?? $sortBy;
+        if (! array_key_exists($sortBy, $sortableColumns)) {
+            $sortBy = 'bill_date';
+        }
+        $sortDir = strtolower((string) $request->get('sort_dir', 'asc'));
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'asc';
+        }
+
         $dateBounds = (clone $query)
             ->selectRaw("MIN({$billDateSql}) AS date_from")
             ->selectRaw("MAX({$billDateSql}) AS date_to")
@@ -365,7 +396,7 @@ class PurchaseHistoryReportController extends Controller
 
         $grossAmountExpression = $this->sumExpression('final_amount');
 
-        $reportRows = $query
+        $reportQuery = $query
             ->select([
                 'purchase_history.invoice_date',
                 'purchase_history.invoice_series',
@@ -400,12 +431,22 @@ class PurchaseHistoryReportController extends Controller
                 'purchase_history.mrp_rate',
             ])
             ->groupByRaw("CASE WHEN COALESCE(TRIM(purchase_history.invoice_number), '') = '' THEN purchase_history.id ELSE 0 END")
-            ->orderBy('bill_date_sort')
-            ->orderBy('purchase_history.invoice_series')
-            ->orderBy('purchase_history.invoice_number')
-            ->orderBy('product_name')
-            ->orderBy('purchase_history.product_sku')
-            ->get();
+            ->orderBy($sortableColumns[$sortBy], $sortDir);
+
+        foreach ([
+            'bill_date_sort',
+            'purchase_history.invoice_series',
+            'purchase_history.invoice_number',
+            'product_name',
+            'purchase_history.product_sku',
+            'purchase_history.packing',
+        ] as $tieBreaker) {
+            if ($tieBreaker !== $sortableColumns[$sortBy]) {
+                $reportQuery->orderBy($tieBreaker);
+            }
+        }
+
+        $reportRows = $reportQuery->get();
 
         $contactNumbers = collect([
             $customer?->prim_mobile_no_business,
@@ -418,9 +459,13 @@ class PurchaseHistoryReportController extends Controller
             'account'        => $account,
             'customer'       => $customer,
             'contactNumbers' => $contactNumbers,
-            'dateFrom'       => $this->formatReportDate($request->get('order_date_from')) ?: $this->formatReportDate($dateBounds?->date_from),
-            'dateTo'         => $this->formatReportDate($request->get('order_date_to')) ?: $this->formatReportDate($dateBounds?->date_to),
+            'dateFrom'       => $this->formatReportDate($billDateFrom) ?: $this->formatReportDate($dateBounds?->date_from),
+            'dateTo'         => $this->formatReportDate($billDateTo) ?: $this->formatReportDate($dateBounds?->date_to),
+            'filterBillDateFrom' => $billDateFrom,
+            'filterBillDateTo'   => $billDateTo,
             'reportRows'     => $reportRows,
+            'sortBy'         => $sortBy,
+            'sortDir'        => $sortDir,
         ]);
     }
 
@@ -696,6 +741,11 @@ class PurchaseHistoryReportController extends Controller
     {
         $dateSql = $this->parsedDateSql($column);
 
+        $this->applyParsedDateExpressionFilter($query, $dateSql, $from, $to);
+    }
+
+    private function applyParsedDateExpressionFilter($query, string $dateSql, $from, $to): void
+    {
         if ($normalizedFrom = $this->normalizeDateInput($from)) {
             $query->whereRaw("{$dateSql} >= STR_TO_DATE(?, '%Y-%m-%d')", [$normalizedFrom]);
         }
@@ -705,7 +755,7 @@ class PurchaseHistoryReportController extends Controller
         }
     }
 
-    private function applyConsolidatedFilters($query, Request $request): void
+    private function applyConsolidatedFilters($query, Request $request, string $billDateSql, string $billDateFrom, string $billDateTo): void
     {
         if ($search = $request->get('search')) {
             $like = '%' . trim($search) . '%';
@@ -726,11 +776,11 @@ class PurchaseHistoryReportController extends Controller
             });
         }
 
-        $this->applyParsedDateFilter(
+        $this->applyParsedDateExpressionFilter(
             $query,
-            'purchase_history.order_date',
-            $request->get('order_date_from'),
-            $request->get('order_date_to')
+            $billDateSql,
+            $billDateFrom,
+            $billDateTo
         );
 
         if ($sku = trim((string) $request->get('product_sku', ''))) {

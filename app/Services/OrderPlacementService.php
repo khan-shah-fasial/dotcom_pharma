@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 
@@ -445,7 +446,7 @@ class OrderPlacementService
                 continue;
             }
 
-            $product = Product::with(['stocks.batches', 'stocks.wholesalePrices', 'taxes'])
+            $product = Product::with(['stocks.batches', 'taxes'])
                 ->where('approved', '1')
                 ->where('published', 1)
                 ->find($item['product_id']);
@@ -484,6 +485,7 @@ class OrderPlacementService
                 }
             }
 
+            $this->prepareStockForPricing($stock, $batch);
             $resolvedPrice = resolvePrice($product, $stock, $batch, $quantity);
             $unitPrice = (float) ($resolvedPrice['price'] ?? 0);
             $unitSalePrice = (float) ($resolvedPrice['sale_price'] ?? $unitPrice);
@@ -498,6 +500,7 @@ class OrderPlacementService
             $line->user_id = $customer->id;
             $line->address_id = $addressId;
             $line->product_id = $product->id;
+            $line->stock_id = $stock->id;
             $line->variation = $stock->variant;
             $line->id_variant = $stock->id_variant;
             $line->batch_id = $batch ? $batch->id : null;
@@ -540,22 +543,26 @@ class OrderPlacementService
         $shipping = 0;
         $couponDiscount = 0;
         $productDiscount = 0;
+        $finalTotal = 0;
 
-        $summaryLines = $lines->values()->map(function ($line, $index) use (&$subtotal, &$tax, &$shipping, &$couponDiscount, &$productDiscount, $schemeQtyByGroup) {
+        $summaryLines = $lines->values()->map(function ($line, $index) use (&$subtotal, &$tax, &$shipping, &$couponDiscount, &$productDiscount, &$finalTotal, $schemeQtyByGroup) {
             $product = Product::find($line['product_id']);
             $qty = (int) $line['quantity'];
             $lineSubtotal = (float) $line['sale_price'] * $qty;
-            $lineTax = (float) ($line['tax'] ?? 0) * $qty;
+            $gstAmount = (float) ($line['tax'] ?? 0) * $qty;
             $lineShipping = (float) ($line['shipping_cost'] ?? 0);
             $lineCoupon = (float) ($line['discount'] ?? 0);
             $lineProductDiscount = round(max(0, (float) $line['before_productandbatch_discount'] - (float) $line['sale_price']) * $qty, 2);
+            $grossAmount = $lineSubtotal + $gstAmount;
+            $finalAmount = max(0, $grossAmount + $lineShipping - $lineCoupon);
             $groupKey = (int) $line['product_id'] . '|' . (string) ($line['variation'] ?? '');
 
             $subtotal += $lineSubtotal;
-            $tax += $lineTax;
+            $tax += $gstAmount;
             $shipping += $lineShipping;
             $couponDiscount += $lineCoupon;
             $productDiscount += $lineProductDiscount;
+            $finalTotal += $finalAmount;
 
             return [
                 'index' => $index,
@@ -571,10 +578,13 @@ class OrderPlacementService
                 'before_productandbatch_discount' => round((float) ($line['before_productandbatch_discount'] ?? 0), 2),
                 'sale_price' => round((float) ($line['sale_price'] ?? 0), 2),
                 'discount_amount' => $lineProductDiscount,
-                'tax' => round($lineTax, 2),
+                'tax' => round($gstAmount, 2),
+                'gst_amount' => round($gstAmount, 2),
+                'gross_amount' => round($grossAmount, 2),
                 'coupon_discount' => round($lineCoupon, 2),
                 'shipping_cost' => round($lineShipping, 2),
-                'line_total' => round($lineSubtotal + $lineTax + $lineShipping - $lineCoupon, 2),
+                'final_amount' => round($finalAmount, 2),
+                'line_total' => round($finalAmount, 2),
                 'scheme_quantity' => (int) ($schemeQtyByGroup[$groupKey] ?? 0),
             ];
         })->all();
@@ -587,7 +597,8 @@ class OrderPlacementService
             'product_discount' => round($productDiscount, 2),
             'coupon_discount' => round($couponDiscount, 2),
             'scheme_quantity' => (int) array_sum($schemeQtyByGroup),
-            'grand_total' => round(max(0, $subtotal + $tax + $shipping - $couponDiscount), 2),
+            'grand_total' => round($finalTotal, 2),
+            'total' => round($finalTotal, 2),
         ];
     }
 
@@ -819,7 +830,7 @@ class OrderPlacementService
 
     protected function resolveBackendStock(Product $product, array $item): ?ProductStock
     {
-        $query = $product->stocks()->with(['batches', 'wholesalePrices'])->where('is_hidden', 0);
+        $query = $product->stocks()->with(['batches'])->where('is_hidden', 0);
 
         if (!empty($item['stock_id'])) {
             return (clone $query)->where('id', $item['stock_id'])->first();
@@ -838,8 +849,16 @@ class OrderPlacementService
 
     protected function stockForLine(Product $product, $line): ?ProductStock
     {
-        $query = $product->stocks()->with(['batches', 'wholesalePrices'])->where('is_hidden', 0);
+        $query = $product->stocks()->with(['batches'])->where('is_hidden', 0);
         $hasStockIdentity = false;
+
+        if (!empty($line['stock_id'])) {
+            $hasStockIdentity = true;
+            $stock = (clone $query)->where('id', $line['stock_id'])->first();
+            if ($stock) {
+                return $stock;
+            }
+        }
 
         if (!empty($line['id_variant'])) {
             $hasStockIdentity = true;
@@ -874,6 +893,21 @@ class OrderPlacementService
         if ($stock->batches->isNotEmpty()) {
             $stock->qty = $stock->batches->sum('qty');
             $stock->save();
+        }
+    }
+
+    protected function prepareStockForPricing(?ProductStock $stock, ?ProductBatch $batch = null): void
+    {
+        if (!$stock) {
+            return;
+        }
+
+        if (!Schema::hasTable('wholesale_prices')) {
+            $stock->setRelation('wholesalePrices', collect());
+        }
+
+        if ($batch) {
+            $batch->setRelation('stock', $stock);
         }
     }
 
