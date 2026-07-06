@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseHistory;
+use App\Models\ProductStock;
 use App\Models\UserDetails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -379,14 +380,14 @@ class PurchaseHistoryReportController extends Controller
             'product' => 'product_name',
             'pack' => 'packing',
         ];
-        $sortBy = (string) $request->get('sort_by', 'bill_date');
+        $sortBy = (string) $request->get('sort_by', 'bill_series');
         $sortBy = $sortAliases[$sortBy] ?? $sortBy;
         if (! array_key_exists($sortBy, $sortableColumns)) {
-            $sortBy = 'bill_date';
+            $sortBy = 'bill_series';
         }
-        $sortDir = strtolower((string) $request->get('sort_dir', 'asc'));
+        $sortDir = strtolower((string) $request->get('sort_dir', 'desc'));
         if (! in_array($sortDir, ['asc', 'desc'], true)) {
-            $sortDir = 'asc';
+            $sortDir = 'desc';
         }
 
         $dateBounds = (clone $query)
@@ -414,6 +415,8 @@ class PurchaseHistoryReportController extends Controller
             ->selectRaw('MIN(product_sort.name) AS product_name')
             ->selectRaw('MIN(stock_sort.variant) AS product_variant')
             ->selectRaw('MIN(stock_sort.id_variant) AS product_variant_id')
+            ->selectRaw("MIN(NULLIF(TRIM(purchase_history.batch_number), '')) AS batch_number")
+            ->selectRaw("COUNT(DISTINCT NULLIF(TRIM(purchase_history.batch_number), '')) AS batch_count")
             ->selectRaw($this->sumSql('quantity'))
             ->selectRaw($this->sumSql('free'))
             ->selectRaw($this->sumSql('gst_amount'))
@@ -447,6 +450,7 @@ class PurchaseHistoryReportController extends Controller
         }
 
         $reportRows = $reportQuery->get();
+        $currentPriceMap = $this->buildCurrentPriceMap($reportRows);
 
         $contactNumbers = collect([
             $customer?->prim_mobile_no_business,
@@ -464,6 +468,7 @@ class PurchaseHistoryReportController extends Controller
             'filterBillDateFrom' => $billDateFrom,
             'filterBillDateTo'   => $billDateTo,
             'reportRows'     => $reportRows,
+            'currentPriceMap' => $currentPriceMap,
             'sortBy'         => $sortBy,
             'sortDir'        => $sortDir,
         ]);
@@ -886,5 +891,175 @@ class PurchaseHistoryReportController extends Controller
     private function sumExpression(string $column): string
     {
         return "COALESCE(SUM(CAST(NULLIF(REPLACE(purchase_history.{$column}, ',', ''), '') AS DECIMAL(20, 4))), 0)";
+    }
+
+    private function buildCurrentPriceMap($reportRows): array
+    {
+        $skus = $reportRows
+            ->pluck('product_sku')
+            ->filter(fn ($sku) => filled($sku))
+            ->map(fn ($sku) => (string) $sku)
+            ->unique()
+            ->values();
+
+        if ($skus->isEmpty()) {
+            return [];
+        }
+
+        $stocks = ProductStock::query()
+            ->select(['id', 'product_id', 'sku', 'price', 'mrp_price'])
+            ->with([
+                'product' => function ($productQuery) {
+                    $productQuery
+                        ->select(['id', 'role_price', 'mrp_price', 'unit_price'])
+                        ->without(['product_translations', 'taxes', 'thumbnail']);
+                },
+                'batches' => function ($batchQuery) {
+                    $batchQuery
+                        ->select(['id', 'product_id', 'product_stock_id', 'batch', 'mrp_price', 'role_price', 'qty', 'product_exp_date'])
+                        ->orderByDesc('id');
+                },
+            ])
+            ->whereIn('sku', $skus)
+            ->get();
+
+        $priceMap = [];
+
+        foreach ($stocks as $stock) {
+            $batches = $stock->batches ?? collect();
+            $batchMap = [];
+
+            foreach ($batches->groupBy(fn ($batch) => trim((string) $batch->batch)) as $batchNumber => $batchGroup) {
+                if ($batchNumber === '') {
+                    continue;
+                }
+
+                $batchMap[$batchNumber] = $this->formatCurrentPriceLines($batchGroup, $stock);
+            }
+
+            $priceMap[(string) $stock->sku] = [
+                'default' => $this->formatCurrentPriceLines($batches, $stock),
+                'batches' => $batchMap,
+            ];
+        }
+
+        return $priceMap;
+    }
+
+    private function formatCurrentPriceLines($batches, ProductStock $stock): array
+    {
+        $roles = [
+            'pts' => 'PTS',
+            'ptr' => 'PTR',
+            'ptd' => 'PTD',
+            'gov' => 'Govt.',
+            'expo' => 'Exp',
+        ];
+
+        $roleValues = collect(array_keys($roles))->mapWithKeys(fn ($role) => [$role => collect()]);
+        $mrpValues = collect();
+
+        foreach ($batches as $batch) {
+            foreach ($this->decodeRolePrices($batch->role_price) as $role => $price) {
+                if ($roleValues->has($role) && ($numericPrice = $this->normalizePrice($price)) !== null) {
+                    $roleValues[$role]->push($numericPrice);
+                }
+            }
+
+            if (($mrpPrice = $this->normalizePrice($batch->mrp_price)) !== null) {
+                $mrpValues->push($mrpPrice);
+            }
+        }
+
+        $productRolePrices = $this->decodeRolePrices($stock->product?->role_price);
+        foreach ($roles as $role => $label) {
+            if ($roleValues[$role]->isEmpty()
+                && array_key_exists($role, $productRolePrices)
+                && ($numericPrice = $this->normalizePrice($productRolePrices[$role])) !== null
+            ) {
+                $roleValues[$role]->push($numericPrice);
+            }
+        }
+
+        if ($roleValues['pts']->isEmpty() && ($stockPrice = $this->normalizePrice($stock->price)) !== null) {
+            $roleValues['pts']->push($stockPrice);
+        }
+
+        foreach ([$stock->mrp_price, $stock->product?->mrp_price, $stock->product?->unit_price] as $fallbackMrp) {
+            if ($mrpValues->isEmpty() && ($numericPrice = $this->normalizePrice($fallbackMrp)) !== null) {
+                $mrpValues->push($numericPrice);
+            }
+        }
+
+        $hasAnyPrice = $mrpValues->isNotEmpty()
+            || $roleValues->contains(fn ($values) => $values->isNotEmpty());
+
+        if (! $hasAnyPrice) {
+            return [];
+        }
+
+        $lines = [];
+        foreach ($roles as $role => $label) {
+            $lines[] = [
+                'label' => $label,
+                'value' => $this->formatPriceRange($roleValues[$role]),
+            ];
+        }
+
+        $lines[] = [
+            'label' => 'M.R.P',
+            'value' => $this->formatPriceRange($mrpValues),
+        ];
+
+        return $lines;
+    }
+
+    private function decodeRolePrices($rolePrices): array
+    {
+        if (is_array($rolePrices)) {
+            return $rolePrices;
+        }
+
+        if (! filled($rolePrices)) {
+            return [];
+        }
+
+        $decoded = json_decode((string) $rolePrices, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function normalizePrice($value): ?float
+    {
+        $value = trim(str_replace(',', '', (string) $value));
+
+        if ($value === '' || ! is_numeric($value)) {
+            return null;
+        }
+
+        return (float) $value;
+    }
+
+    private function formatPriceRange($values): string
+    {
+        $prices = collect($values)
+            ->map(fn ($value) => $this->normalizePrice($value))
+            ->filter(fn ($value) => $value !== null)
+            ->unique(fn ($value) => number_format($value, 2, '.', ''))
+            ->sort()
+            ->values();
+
+        if ($prices->isEmpty()) {
+            return '-';
+        }
+
+        $minimum = $prices->first();
+        $maximum = $prices->last();
+
+        if ($minimum === $maximum) {
+            return number_format($minimum, 2, '.', '');
+        }
+
+        return number_format($minimum, 2, '.', '') . ' - ' . number_format($maximum, 2, '.', '');
     }
 }

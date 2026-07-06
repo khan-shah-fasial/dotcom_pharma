@@ -169,24 +169,63 @@ class OrderController extends Controller
         $query = trim((string) $request->input('q'));
 
         $customers = $orders->approvedCustomerQuery()
+            ->with('user_details')
             ->when($query !== '', function ($builder) use ($query) {
-                $builder->where(function ($nested) use ($query) {
-                    $nested->where('name', 'like', '%' . $query . '%')
-                        ->orWhere('email', 'like', '%' . $query . '%')
-                        ->orWhere('phone', 'like', '%' . $query . '%');
-                });
+                $like = '%' . $query . '%';
+                $prefixLike = $query . '%';
+
+                $builder->where(function ($nested) use ($like) {
+                    $nested->whereHas('user_details', function ($details) use ($like) {
+                        $details->where('company_name', 'like', $like)
+                            ->orWhere('con_person_name', 'like', $like)
+                            ->orWhere('crm_id', 'like', $like)
+                            ->orWhere('account_no_business', 'like', $like)
+                            ->orWhere('account_no_personal', 'like', $like);
+                    })
+                        ->orWhere('name', 'like', $like)
+                        ->orWhere('email', 'like', $like)
+                        ->orWhere('phone', 'like', $like);
+                })
+                    ->orderByRaw(
+                        "CASE WHEN EXISTS (SELECT 1 FROM user_details WHERE user_details.user_id = users.id AND user_details.company_name LIKE ?) THEN 0 ELSE 1 END",
+                        [$prefixLike]
+                    );
             })
-            ->orderBy('name')
+            ->orderByRaw("COALESCE((SELECT NULLIF(company_name, '') FROM user_details WHERE user_details.user_id = users.id LIMIT 1), users.name) ASC")
             ->limit(20)
-            ->get(['id', 'name', 'email', 'phone', 'user_subtype', 'user_type']);
+            ->get([
+                'id',
+                'name',
+                'email',
+                'phone',
+                'user_subtype',
+                'user_type',
+                'approval_status',
+                'credit_status',
+                'credit_days',
+                'credit_limit',
+            ]);
 
         return response()->json($customers->map(function ($customer) {
+            $details = $customer->user_details;
+            $approvalStatus = (string) $customer->approval_status === '1'
+                ? translate('Approved')
+                : ((string) $customer->approval_status === '2' ? translate('Rejected') : translate('Pending'));
+
             return [
                 'id' => $customer->id,
                 'name' => $customer->name,
+                'company_name' => optional($details)->company_name,
+                'person_name' => optional($details)->con_person_name ?: $customer->name,
+                'account_no' => optional($details)->crm_id ?: (optional($details)->account_no_business ?: optional($details)->account_no_personal),
                 'email' => $customer->email,
                 'phone' => $customer->phone,
                 'role' => $customer->user_subtype ?: $customer->user_type,
+                'approval_status' => $approvalStatus,
+                'current_status' => optional($details)->current_status,
+                'credit_status' => $customer->credit_status,
+                'credit_days' => $customer->credit_days,
+                'credit_limit' => $customer->credit_limit,
             ];
         })->values());
     }
@@ -197,8 +236,7 @@ class OrderController extends Controller
 
         $addresses = Address::with(['country', 'state', 'city'])
             ->where('user_id', $customer->id)
-            ->orderByDesc('set_default')
-            ->orderBy('type')
+            ->orderByDesc('id')
             ->get();
 
         return response()->json($addresses->map(function ($address) {

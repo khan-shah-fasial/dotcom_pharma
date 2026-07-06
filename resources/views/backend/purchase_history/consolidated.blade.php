@@ -7,18 +7,20 @@
             font-family: Arial, Helvetica, sans-serif;
             font-size: 12px;
         }
-        .party-consolidated-sheet .report-title,
-        .party-consolidated-sheet .report-subtitle {
+        .party-consolidated-summary {
             border: 1px solid #000;
             border-bottom: 0;
             font-size: 14px;
             font-weight: 700;
             line-height: 1.25;
             padding: 3px 6px;
-            text-align: center;
+        }
+        .party-consolidated-summary span {
+            display: inline-block;
+            margin-right: 18px;
         }
         .party-consolidated-table {
-            min-width: 1080px;
+            min-width: 1240px;
             table-layout: fixed;
         }
         .party-consolidated-table th,
@@ -59,6 +61,10 @@
         }
         .party-consolidated-table .product-cell {
             overflow-wrap: anywhere;
+        }
+        .party-consolidated-table .current-price-cell span {
+            display: block;
+            white-space: nowrap;
         }
         @media print {
             .aiz-sidebar-wrap,
@@ -179,17 +185,14 @@
         ], array_map(fn ($key) => request($key), $preservedConsolidatedFilters)))
             ->contains(fn ($value) => $value !== null && $value !== '');
         $partyName = $customer?->company_name ?: $account;
-        $partyDetails = collect([
-            $partyName,
-            $contactNumbers->implode(' / '),
-        ])->filter()->implode(' - ');
-        $periodText = '';
-        if ($dateFrom || $dateTo) {
-            $periodText = trim(
-                ($dateFrom ? ' ' . translate('From') . ' ' . $dateFrom : '') .
-                ($dateTo ? ' ' . translate('To') . ' ' . $dateTo : '')
-            );
-        }
+        $mobileNumbers = collect([
+            $customer?->prim_mobile_no_business,
+            $customer?->prim_mobile_no,
+        ])->filter(fn ($value) => filled($value))->unique()->values();
+        $whatsAppNumbers = collect([
+            $customer?->prim_whats_app_no_business,
+            $customer?->prim_whats_app_no,
+        ])->filter(fn ($value) => filled($value))->unique()->values();
         $totalGross = $reportRows->sum(fn ($row) => $numberValue($row->gross_amount));
     @endphp
 
@@ -197,7 +200,16 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center">
             <div>
                 <h1 class="h3 mb-1">{{ translate('Consolidated Purchase History') }}</h1>
-                <div class="text-muted">{{ translate('Account') }}: {{ $account }}</div>
+                <div class="text-muted">
+                    {{ translate('Account') }}: {{ $account }}
+                    <span class="mx-2">|</span>{{ translate('Party Name') }}: {{ $partyName }}
+                    @if($mobileNumbers->isNotEmpty())
+                        <span class="mx-2">|</span>{{ translate('Mobile') }}: {{ $mobileNumbers->implode(' / ') }}
+                    @endif
+                    @if($whatsAppNumbers->isNotEmpty())
+                        <span class="mx-2">|</span>{{ translate('Whatsup Number') }}: {{ $whatsAppNumbers->implode(' / ') }}
+                    @endif
+                </div>
             </div>
             <div class="mt-2 mt-md-0">
                 <a href="{{ route('admin.purchase_history.index', request()->except(['page'])) }}"
@@ -286,11 +298,15 @@
     <div class="card">
         <div class="card-body">
             <div class="party-consolidated-sheet">
-                <div class="report-title">
-                    {{ translate('Partywise Detail Productwise Sales Report') }}{{ $periodText }}
-                </div>
-                <div class="report-subtitle">
-                    {{ translate('Party Name') }} : {{ $partyDetails }}
+                <div class="party-consolidated-summary">
+                    <span>{{ translate('Account') }}: {{ $account }}</span>
+                    <span>{{ translate('Party Name') }}: {{ $partyName }}</span>
+                    @if($mobileNumbers->isNotEmpty())
+                        <span>{{ translate('Mobile') }}: {{ $mobileNumbers->implode(' / ') }}</span>
+                    @endif
+                    @if($whatsAppNumbers->isNotEmpty())
+                        <span>{{ translate('Whatsup Number') }}: {{ $whatsAppNumbers->implode(' / ') }}</span>
+                    @endif
                 </div>
 
                 <div class="table-responsive">
@@ -309,6 +325,7 @@
                             <th style="width: 65px">{{ translate('Tax') }}</th>
                             <th style="width: 80px">{{ translate('M R P') }}</th>
                             <th style="width: 110px">{{ translate('Gross amount') }}</th>
+                            <th style="width: 170px">{{ translate('Current C(PTS/PTR/PTD/Govt./Exp/M.R.P)') }}</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -317,6 +334,16 @@
                                 $productName = $row->product_name ?: $row->product_sku;
                                 if (filled($row->product_variant) && ! str_contains((string) $productName, (string) $row->product_variant)) {
                                     $productName = trim($productName . ' ' . $row->product_variant);
+                                }
+
+                                $currentSkuPrice = $currentPriceMap[$row->product_sku] ?? null;
+                                $currentPriceLines = [];
+                                if ($currentSkuPrice) {
+                                    $batchNumber = trim((string) ($row->batch_number ?? ''));
+                                    $usesSingleBatch = (int) ($row->batch_count ?? 0) === 1;
+                                    $currentPriceLines = ($usesSingleBatch && $batchNumber !== '')
+                                        ? ($currentSkuPrice['batches'][$batchNumber] ?? $currentSkuPrice['default'])
+                                        : $currentSkuPrice['default'];
                                 }
                             @endphp
                             <tr>
@@ -332,10 +359,17 @@
                                 <td class="text-center">{{ $formatAmount($row->gst_amount) }}</td>
                                 <td class="text-right">{{ $formatAmount($row->mrp_rate) }}</td>
                                 <td class="text-right">{{ $formatAmount($row->gross_amount) }}</td>
+                                <td class="current-price-cell text-right">
+                                    @forelse($currentPriceLines as $priceLine)
+                                        <span><strong>{{ $priceLine['label'] }}:</strong> {{ $priceLine['value'] }}</span>
+                                    @empty
+                                        -
+                                    @endforelse
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="12" class="text-center">{{ translate('No records found') }}</td>
+                                <td colspan="13" class="text-center">{{ translate('No records found') }}</td>
                             </tr>
                         @endforelse
 
@@ -343,6 +377,7 @@
                             <tr>
                                 <td colspan="11" class="total-label">{{ translate('Total') }}</td>
                                 <td class="text-right total-amount">{{ $formatAmount($totalGross) }}</td>
+                                <td></td>
                             </tr>
                         @endif
                         </tbody>

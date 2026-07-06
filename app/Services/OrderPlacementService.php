@@ -50,8 +50,16 @@ class OrderPlacementService
     public function placeFromBackendRequest(Request $request, array $options = []): CombinedOrder
     {
         $customer = $this->resolveApprovedCustomer($request->input('customer_id'));
-        $shippingAddress = $this->resolveBackendAddress($customer, $request, Address::TYPE_SHIPPING, true);
-        $billingAddress = $this->resolveBackendAddress($customer, $request, Address::TYPE_BILLING, false) ?: $shippingAddress;
+
+        if ($request->has('shipping_same_as_billing')) {
+            $billingAddress = $this->resolveBackendAddress($customer, $request, Address::TYPE_BILLING, true);
+            $shippingAddress = $request->boolean('shipping_same_as_billing')
+                ? $billingAddress
+                : $this->resolveBackendAddress($customer, $request, Address::TYPE_SHIPPING, true);
+        } else {
+            $shippingAddress = $this->resolveBackendAddress($customer, $request, Address::TYPE_SHIPPING, true);
+            $billingAddress = $this->resolveBackendAddress($customer, $request, Address::TYPE_BILLING, false) ?: $shippingAddress;
+        }
 
         $lines = $this->withPricingUser($customer, function () use ($customer, $request, $shippingAddress) {
             return $this->buildBackendLines($customer, (array) $request->input('items', []), $request, optional($shippingAddress)->id);
@@ -82,7 +90,7 @@ class OrderPlacementService
         $customer = $this->resolveApprovedCustomer($request->input('customer_id'));
 
         $lines = $this->withPricingUser($customer, function () use ($customer, $request) {
-            return $this->buildBackendLines($customer, (array) $request->input('items', []), $request, $request->input('shipping_address_id'));
+            return $this->buildBackendLines($customer, (array) $request->input('items', []), $request, $this->backendShippingAddressId($request));
         });
 
         $this->assignBackendShippingCosts($lines, $request);
@@ -103,7 +111,8 @@ class OrderPlacementService
                 'id_variant' => $request->input('id_variant'),
                 'batch_id' => $request->input('batch_id'),
                 'quantity' => $request->input('quantity', 1),
-            ]], $request, $request->input('shipping_address_id'));
+                'sale_price' => $request->input('sale_price'),
+            ]], $request, $this->backendShippingAddressId($request));
 
             $summary = $this->summarizeLines($lines);
 
@@ -491,6 +500,14 @@ class OrderPlacementService
             $unitSalePrice = (float) ($resolvedPrice['sale_price'] ?? $unitPrice);
             $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $unitSalePrice);
             $mrpPrice = $batch ? ($batch->mrp_price ?? $stock->mrp_price ?? $product->mrp_price) : ($stock->mrp_price ?? $product->mrp_price);
+
+            if (array_key_exists('sale_price', $item) && $item['sale_price'] !== null && $item['sale_price'] !== '') {
+                if (!is_numeric($item['sale_price']) || (float) $item['sale_price'] < 0) {
+                    $this->fail('sale_price', translate('Sale price must be zero or greater.'));
+                }
+                $unitSalePrice = round((float) $item['sale_price'], 2);
+            }
+
             $tax = CartUtility::tax_calculation($product, $unitSalePrice);
 
             $line = new Cart;
@@ -763,6 +780,13 @@ class OrderPlacementService
                 $firstPaidLine->shipping_cost = max(0, $cost);
             }
         }
+    }
+
+    protected function backendShippingAddressId(Request $request)
+    {
+        return $request->boolean('shipping_same_as_billing')
+            ? $request->input('billing_address_id')
+            : $request->input('shipping_address_id');
     }
 
     protected function resolveBackendAddress(User $customer, Request $request, string $type, bool $required): ?Address

@@ -20,6 +20,11 @@
             color: #ff0000;
         }
 
+        .business-customer-account-link {
+            font-weight: 700;
+            text-decoration: underline;
+        }
+
         .business-customer-mobile-col {
             min-width: 140px;
             width: auto;
@@ -416,11 +421,27 @@
                                         $stateName = $stateId ? ($stateNames[$stateId] ?? $stateId) : null;
                                         $cityName = $cityId ? ($cityNames[$cityId] ?? $cityId) : null;
                                         $countryName = $countryId ? ($countryNames[$countryId] ?? $countryId) : null;
+                                        $accountNumber = $details?->crm_id;
+                                        $consolidatedReportUrl = filled($accountNumber)
+                                            ? route('admin.purchase_history.consolidated', ['account' => $accountNumber])
+                                            : null;
                                     @endphp
                                     <tr>
                                         <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
                                         <td>
-                                            <div>{{ $details->crm_id ?? '-' }}</div>
+                                            <div>
+                                                @if($consolidatedReportUrl)
+                                                    <a href="{{ $consolidatedReportUrl }}"
+                                                       class="business-customer-account-link"
+                                                       target="_blank"
+                                                       rel="noopener"
+                                                       title="{{ translate('Open consolidated report') }}">
+                                                        {{ $accountNumber }}
+                                                    </a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </div>
                                             <div>{{ $cityName ?? '-' }}</div>
                                         </td>
                                         <td>
