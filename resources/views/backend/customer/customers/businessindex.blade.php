@@ -316,6 +316,7 @@
                         [
                             ['crm_id', 'Account Number'],
                             ['city', 'City'],
+                            ['performa_invoice', 'Performa Invoice'],
                         ],
                         [
                             ['company_name', 'Company Name'],
@@ -425,6 +426,11 @@
                                         $consolidatedReportUrl = filled($accountNumber)
                                             ? route('admin.purchase_history.consolidated', ['account' => $accountNumber])
                                             : null;
+                                        $performaInvoiceUrl = route('financial-archives.customer', [
+                                            'user' => $user->id,
+                                            'type' => 'performa_invoice',
+                                            'search' => '',
+                                        ]);
                                     @endphp
                                     <tr>
                                         <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
@@ -443,6 +449,14 @@
                                                 @endif
                                             </div>
                                             <div>{{ $cityName ?? '-' }}</div>
+                                            <div>
+                                                <a href="{{ $performaInvoiceUrl }}"
+                                                   target="_blank"
+                                                   rel="noopener"
+                                                   title="{{ translate('Open Performa Invoice') }}">
+                                                    {{ translate('Performa Invoice') }}
+                                                </a>
+                                            </div>
                                         </td>
                                         <td>
                                             <div>

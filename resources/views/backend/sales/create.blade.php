@@ -252,6 +252,7 @@
                                 <select class="form-control" name="fod_mode">
                                     <option value="surface">{{ translate('Surface') }}</option>
                                     <option value="air">{{ translate('Air') }}</option>
+                                    <option value="sea">{{ translate('Sea') }}</option>
                                 </select>
                             </div>
                             <div class="form-group">

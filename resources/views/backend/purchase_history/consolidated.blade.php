@@ -20,7 +20,7 @@
             margin-right: 18px;
         }
         .party-consolidated-table {
-            min-width: 1240px;
+            min-width: 1580px;
             table-layout: fixed;
         }
         .party-consolidated-table th,
@@ -61,10 +61,6 @@
         }
         .party-consolidated-table .product-cell {
             overflow-wrap: anywhere;
-        }
-        .party-consolidated-table .current-price-cell span {
-            display: block;
-            white-space: nowrap;
         }
         @media print {
             .aiz-sidebar-wrap,
@@ -194,6 +190,15 @@
             $customer?->prim_whats_app_no,
         ])->filter(fn ($value) => filled($value))->unique()->values();
         $totalGross = $reportRows->sum(fn ($row) => $numberValue($row->gross_amount));
+        $currentPriceColumns = [
+            'PTS' => 'PTS',
+            'PTR' => 'PTR',
+            'PTD' => 'PTD',
+            'Govt.' => 'Govt.',
+            'Exp' => 'Exp',
+            'Customer' => 'Customer',
+            'M.R.P' => 'M.R.P',
+        ];
     @endphp
 
     <div class="aiz-titlebar text-left mt-2 mb-3 d-print-none">
@@ -298,17 +303,6 @@
     <div class="card">
         <div class="card-body">
             <div class="party-consolidated-sheet">
-                <div class="party-consolidated-summary">
-                    <span>{{ translate('Account') }}: {{ $account }}</span>
-                    <span>{{ translate('Party Name') }}: {{ $partyName }}</span>
-                    @if($mobileNumbers->isNotEmpty())
-                        <span>{{ translate('Mobile') }}: {{ $mobileNumbers->implode(' / ') }}</span>
-                    @endif
-                    @if($whatsAppNumbers->isNotEmpty())
-                        <span>{{ translate('Whatsup Number') }}: {{ $whatsAppNumbers->implode(' / ') }}</span>
-                    @endif
-                </div>
-
                 <div class="table-responsive">
                     <table class="table table-bordered mb-0 party-consolidated-table">
                         <thead>
@@ -325,7 +319,9 @@
                             <th style="width: 65px">{{ translate('Tax') }}</th>
                             <th style="width: 80px">{{ translate('M R P') }}</th>
                             <th style="width: 110px">{{ translate('Gross amount') }}</th>
-                            <th style="width: 170px">{{ translate('Current C(PTS/PTR/PTD/Govt./Exp/M.R.P)') }}</th>
+                            @foreach($currentPriceColumns as $columnLabel)
+                                <th style="width: 80px">{{ translate($columnLabel) }}</th>
+                            @endforeach
                         </tr>
                         </thead>
                         <tbody>
@@ -345,6 +341,8 @@
                                         ? ($currentSkuPrice['batches'][$batchNumber] ?? $currentSkuPrice['default'])
                                         : $currentSkuPrice['default'];
                                 }
+                                $currentPriceValues = collect($currentPriceLines)
+                                    ->mapWithKeys(fn ($priceLine) => [(string) ($priceLine['label'] ?? '') => $priceLine['value'] ?? '-']);
                             @endphp
                             <tr>
                                 <td class="text-right">{{ $loop->iteration }}</td>
@@ -359,17 +357,13 @@
                                 <td class="text-center">{{ $formatAmount($row->gst_amount) }}</td>
                                 <td class="text-right">{{ $formatAmount($row->mrp_rate) }}</td>
                                 <td class="text-right">{{ $formatAmount($row->gross_amount) }}</td>
-                                <td class="current-price-cell text-right">
-                                    @forelse($currentPriceLines as $priceLine)
-                                        <span><strong>{{ $priceLine['label'] }}:</strong> {{ $priceLine['value'] }}</span>
-                                    @empty
-                                        -
-                                    @endforelse
-                                </td>
+                                @foreach($currentPriceColumns as $priceLabel => $columnLabel)
+                                    <td class="text-right">{{ $currentPriceValues->get($priceLabel, '-') }}</td>
+                                @endforeach
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="13" class="text-center">{{ translate('No records found') }}</td>
+                                <td colspan="19" class="text-center">{{ translate('No records found') }}</td>
                             </tr>
                         @endforelse
 
@@ -377,7 +371,7 @@
                             <tr>
                                 <td colspan="11" class="total-label">{{ translate('Total') }}</td>
                                 <td class="text-right total-amount">{{ $formatAmount($totalGross) }}</td>
-                                <td></td>
+                                <td colspan="7"></td>
                             </tr>
                         @endif
                         </tbody>

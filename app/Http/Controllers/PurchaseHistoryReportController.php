@@ -954,6 +954,7 @@ class PurchaseHistoryReportController extends Controller
             'ptd' => 'PTD',
             'gov' => 'Govt.',
             'expo' => 'Exp',
+            'customer' => 'Customer',
         ];
 
         $roleValues = collect(array_keys($roles))->mapWithKeys(fn ($role) => [$role => collect()]);
