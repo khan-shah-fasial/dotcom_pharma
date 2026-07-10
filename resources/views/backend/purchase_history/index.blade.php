@@ -385,6 +385,9 @@
                             $consolidatedReportUrl = filled($accountNumber)
                                 ? route('admin.purchase_history.consolidated', array_merge(request()->except(['page', 'sort_by', 'sort_dir', 'per_page', 'account']), ['account' => $accountNumber]))
                                 : null;
+                            $productwiseReportUrl = filled($history->product_sku)
+                                ? route('admin.purchase_history.consolidated_productwise', ['product_sku' => $history->product_sku])
+                                : null;
                         @endphp
                         <tr>
                             <td class="text-right">{{ $purchaseHistory->firstItem() + $loop->index }}</td>
@@ -417,7 +420,7 @@
                             </td>
                             <td class="cell-lines text-right"><span>{{ $history->order_date }}</span><span class="{{ filled($history->order_number) ? '' : 'text-red' }}">{{ $displayOrderNumber }}</span><span>{{ $history->sales_man_code }}</span></td>
                             <td class="cell-lines text-right"><span>{{ $history->invoice_date }}</span><span>{{ $history->invoice_series }}</span><span class="text-red">{{ $history->invoice_number }}</span></td>
-                            <td class="cell-lines text-left"><span>{{ $history->product_sku }}</span><span class="text-red">{{ $product?->name }}</span><span>{{ $history->packing }}</span></td>
+                            <td class="cell-lines text-left"><span>@if($productwiseReportUrl)<a href="{{ $productwiseReportUrl }}" class="account-report-link" target="_blank" rel="noopener" title="{{ translate('Open consolidated productwise report') }}">{{ $history->product_sku }}</a>@else{{ $history->product_sku }}@endif</span><span class="text-red">{{ $product?->name }}</span><span>{{ $history->packing }}</span></td>
                             <td class="cell-lines text-left"><span>{{ $history->batch_number }}</span><span>{{ $history->expiry_date }}</span><span>{{ $product?->brand?->name }}</span></td>
                             <td class="cell-lines text-right"><span>{{ $formatQty($history->quantity) }}</span><span>{{ $formatQty($history->free) }}</span><span class="text-red">{{ $formatQty($quantity + $free) }}</span></td>
                             <td class="cell-lines text-right"><span>{{ $formatAmount($history->sale_rate) }}</span><span>{{ $formatAmount($history->discount) }}</span><span>{{ $formatAmount($history->mrp_rate) }}</span></td>

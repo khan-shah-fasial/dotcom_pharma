@@ -475,6 +475,105 @@ class PurchaseHistoryReportController extends Controller
     }
 
     /**
+     * Show all customers and bills for a single product SKU.
+     */
+    public function consolidatedProductwise(Request $request)
+    {
+        $sku = trim((string) $request->get('product_sku', ''));
+        abort_if($sku === '', 404);
+
+        $query = PurchaseHistory::query()
+            ->leftJoin('user_details as customer', 'customer.crm_id', '=', 'purchase_history.ac_number')
+            ->leftJoin('users as customer_user', 'customer_user.id', '=', 'customer.user_id')
+            ->leftJoin('cities as customer_city', 'customer_city.id', '=', 'customer.city_id_business')
+            ->leftJoin('states as customer_state', 'customer_state.id', '=', 'customer.state_id_business')
+            ->leftJoin('countries as customer_country', 'customer_country.id', '=', 'customer.country_id_business')
+            ->leftJoin('product_stocks as stock', 'stock.sku', '=', 'purchase_history.product_sku')
+            ->leftJoin('products as product', 'product.id', '=', 'stock.product_id')
+            ->leftJoin('brands as brand', 'brand.id', '=', 'product.brand_id')
+            ->where('purchase_history.product_sku', $sku);
+
+        $billDateSql = "COALESCE({$this->parsedDateSql('purchase_history.invoice_date')}, {$this->parsedDateSql('purchase_history.order_date')})";
+        $dateFrom = trim((string) $request->get('bill_date_from', ''));
+        $dateTo = trim((string) $request->get('bill_date_to', ''));
+        $this->applyParsedDateExpressionFilter($query, $billDateSql, $dateFrom, $dateTo);
+
+        if ($request->filled('account')) {
+            $query->where('purchase_history.ac_number', 'like', '%' . trim((string) $request->account) . '%');
+        }
+        if ($request->filled('customer')) {
+            $customer = trim((string) $request->customer);
+            $query->where(function ($customerQuery) use ($customer) {
+                $customerQuery->where('customer.company_name', 'like', "%{$customer}%")
+                    ->orWhere('customer_user.name', 'like', "%{$customer}%");
+            });
+        }
+
+        $dateBounds = (clone $query)
+            ->selectRaw("MIN({$billDateSql}) AS date_from")
+            ->selectRaw("MAX({$billDateSql}) AS date_to")
+            ->first();
+
+        $rows = $query
+            ->select([
+                'purchase_history.ac_number',
+                'purchase_history.invoice_date',
+                'purchase_history.invoice_series',
+                'purchase_history.invoice_number',
+                'purchase_history.product_sku',
+                'purchase_history.batch_number',
+                'purchase_history.expiry_date',
+                'purchase_history.sale_rate',
+                'purchase_history.gst_percentage',
+                'purchase_history.mrp_rate',
+            ])
+            ->selectRaw('MIN(purchase_history.id) AS id')
+            ->selectRaw("COALESCE(MIN(NULLIF(TRIM(purchase_history.invoice_date), '')), MIN(NULLIF(TRIM(purchase_history.order_date), ''))) AS bill_date")
+            ->selectRaw('MIN(customer.company_name) AS company_name')
+            ->selectRaw('MIN(customer_user.name) AS customer_name')
+            ->selectRaw('MIN(customer.district_business) AS district')
+            ->selectRaw('MIN(customer_city.name) AS city')
+            ->selectRaw('MIN(customer_state.name) AS state')
+            ->selectRaw('MIN(customer.pincode_business) AS pincode')
+            ->selectRaw('MIN(customer_country.name) AS country')
+            ->selectRaw('MIN(customer.prim_mobile_no_business) AS mobile')
+            ->selectRaw('MIN(customer.alt_mobile_no_business) AS alternate_mobile')
+            ->selectRaw('MIN(customer.prim_whats_app_no_business) AS whatsapp')
+            ->selectRaw('MIN(customer.prim_email_business) AS email')
+            ->selectRaw('MIN(product.name) AS product_name')
+            ->selectRaw('MIN(stock.variant) AS product_variant')
+            ->selectRaw('MIN(brand.name) AS manufacturer')
+            ->selectRaw($this->sumSql('quantity'))
+            ->selectRaw($this->sumSql('gst_amount'))
+            ->selectRaw($this->sumSql('final_amount'))
+            ->groupBy([
+                'purchase_history.ac_number',
+                'purchase_history.invoice_date',
+                'purchase_history.invoice_series',
+                'purchase_history.invoice_number',
+                'purchase_history.product_sku',
+                'purchase_history.batch_number',
+                'purchase_history.expiry_date',
+                'purchase_history.sale_rate',
+                'purchase_history.gst_percentage',
+                'purchase_history.mrp_rate',
+            ])
+            ->groupByRaw("CASE WHEN COALESCE(TRIM(purchase_history.invoice_number), '') = '' THEN purchase_history.id ELSE 0 END")
+            ->orderByRaw("MIN({$billDateSql}) DESC")
+            ->orderBy('purchase_history.invoice_series')
+            ->orderBy('purchase_history.invoice_number')
+            ->get();
+
+        return view('backend.purchase_history.consolidated_productwise', [
+            'sku' => $sku,
+            'rows' => $rows,
+            'currentPriceMap' => $this->buildCurrentPriceMap($rows),
+            'dateFrom' => $this->formatReportDate($dateFrom) ?: $this->formatReportDate($dateBounds?->date_from),
+            'dateTo' => $this->formatReportDate($dateTo) ?: $this->formatReportDate($dateBounds?->date_to),
+        ]);
+    }
+
+    /**
      * Show the detail view for a single record (for modal).
      */
     public function show($id)

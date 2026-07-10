@@ -123,6 +123,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
         Route::get('/purchase-history-report', 'index')->name('admin.purchase_history.index');
         Route::get('/purchase-history-report/consolidated', 'consolidated')->name('admin.purchase_history.consolidated');
+        Route::get('/purchase-history-report/consolidated-productwise', 'consolidatedProductwise')->name('admin.purchase_history.consolidated_productwise');
         Route::get('/purchase-history-report/{id}', 'show')->name('admin.purchase_history.show');
         Route::get('/purchase-history-report/{id}/edit', 'edit')->name('admin.purchase_history.edit');
         Route::post('/purchase-history-report/{id}', 'update')->name('admin.purchase_history.update');

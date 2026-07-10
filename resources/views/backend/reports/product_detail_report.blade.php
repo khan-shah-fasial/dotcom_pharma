@@ -277,6 +277,7 @@
                     <thead>
                         <tr>
                             <th>{{ translate('Sr No.') }}</th>
+                            <th>{{ translate('Action') }}</th>
                             <th>
                                 <a href="{{ $sortUrl('sku') }}">
                                     {{ translate('SKU') }} <i class="{{ $sortIcon('sku') }}"></i>
@@ -401,6 +402,17 @@
                             @endphp
                             <tr>
                                 <td>{{ $key + 1 + ($reportRows->currentPage() - 1) * $reportRows->perPage() }}</td>
+                                <td>
+                                    @if ($product)
+                                        <a href="{{ route('products.admin.edit', $product->id) }}"
+                                            class="btn btn-soft-primary btn-icon btn-circle btn-sm"
+                                            title="{{ translate('Edit Product') }}">
+                                            <i class="las la-edit"></i>
+                                        </a>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
                                 <td class="sheet-lines">
                                     <span class="text-nowrap">{{ $stock?->sku ?: '-' }}</span>
                                     <span class="minimum-order">{{ $stock?->min_qty ?? '-' }}</span>
@@ -476,7 +488,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="15" class="text-center py-4">{{ translate('No product detail records found') }}</td>
+                                <td colspan="16" class="text-center py-4">{{ translate('No product detail records found') }}</td>
                             </tr>
                         @endforelse
                     </tbody>
