@@ -367,12 +367,28 @@ class PurchaseHistoryReportController extends Controller
 
         $this->applyConsolidatedFilters($query, $request, $billDateSql, $billDateFrom, $billDateTo);
 
+        $priceSortLabels = [
+            'pts' => 'PTS',
+            'ptr' => 'PTR',
+            'ptd' => 'PTD',
+            'govt' => 'Govt.',
+            'export' => 'Exp',
+            'customer_price' => 'Customer',
+            'current_mrp' => 'M.R.P',
+        ];
         $sortableColumns = [
+            'sr_no' => 'id',
             'bill_date' => 'bill_date_sort',
             'bill_series' => 'purchase_history.invoice_series',
+            'bill_number' => 'purchase_history.invoice_number',
             'product_sku' => 'purchase_history.product_sku',
             'product_name' => 'product_name',
             'packing' => 'purchase_history.packing',
+            'quantity' => 'quantity',
+            'sale_rate' => 'purchase_history.sale_rate',
+            'gst_amount' => 'gst_amount',
+            'mrp_rate' => 'purchase_history.mrp_rate',
+            'gross_amount' => 'gross_amount',
         ];
         $sortAliases = [
             'invoice_series' => 'bill_series',
@@ -382,7 +398,7 @@ class PurchaseHistoryReportController extends Controller
         ];
         $sortBy = (string) $request->get('sort_by', 'bill_series');
         $sortBy = $sortAliases[$sortBy] ?? $sortBy;
-        if (! array_key_exists($sortBy, $sortableColumns)) {
+        if (! array_key_exists($sortBy, $sortableColumns) && ! array_key_exists($sortBy, $priceSortLabels)) {
             $sortBy = 'bill_series';
         }
         $sortDir = strtolower((string) $request->get('sort_dir', 'desc'));
@@ -433,8 +449,10 @@ class PurchaseHistoryReportController extends Controller
                 'purchase_history.gst_percentage',
                 'purchase_history.mrp_rate',
             ])
-            ->groupByRaw("CASE WHEN COALESCE(TRIM(purchase_history.invoice_number), '') = '' THEN purchase_history.id ELSE 0 END")
-            ->orderBy($sortableColumns[$sortBy], $sortDir);
+            ->groupByRaw("CASE WHEN COALESCE(TRIM(purchase_history.invoice_number), '') = '' THEN purchase_history.id ELSE 0 END");
+
+        $databaseSortColumn = $sortableColumns[$sortBy] ?? 'purchase_history.invoice_series';
+        $reportQuery->orderBy($databaseSortColumn, isset($priceSortLabels[$sortBy]) ? 'desc' : $sortDir);
 
         foreach ([
             'bill_date_sort',
@@ -444,13 +462,32 @@ class PurchaseHistoryReportController extends Controller
             'purchase_history.product_sku',
             'purchase_history.packing',
         ] as $tieBreaker) {
-            if ($tieBreaker !== $sortableColumns[$sortBy]) {
+            if ($tieBreaker !== $databaseSortColumn) {
                 $reportQuery->orderBy($tieBreaker);
             }
         }
 
         $reportRows = $reportQuery->get();
         $currentPriceMap = $this->buildCurrentPriceMap($reportRows);
+
+        if (isset($priceSortLabels[$sortBy])) {
+            $priceLabel = $priceSortLabels[$sortBy];
+            $priceValue = function ($row) use ($currentPriceMap, $priceLabel) {
+                $currentSkuPrice = $currentPriceMap[$row->product_sku] ?? null;
+                $lines = [];
+                if ($currentSkuPrice) {
+                    $batchNumber = trim((string) ($row->batch_number ?? ''));
+                    $usesSingleBatch = (int) ($row->batch_count ?? 0) === 1;
+                    $lines = ($usesSingleBatch && $batchNumber !== '')
+                        ? ($currentSkuPrice['batches'][$batchNumber] ?? $currentSkuPrice['default'])
+                        : $currentSkuPrice['default'];
+                }
+                $line = collect($lines)->firstWhere('label', $priceLabel);
+
+                return (float) preg_replace('/[^0-9.\-]/', '', str_replace(',', '', (string) ($line['value'] ?? 0)));
+            };
+            $reportRows = ($sortDir === 'asc' ? $reportRows->sortBy($priceValue) : $reportRows->sortByDesc($priceValue))->values();
+        }
 
         $contactNumbers = collect([
             $customer?->prim_mobile_no_business,
@@ -514,7 +551,42 @@ class PurchaseHistoryReportController extends Controller
             ->selectRaw("MAX({$billDateSql}) AS date_to")
             ->first();
 
-        $rows = $query
+        $sortableColumns = [
+            'sr_no' => 'id',
+            'bill_date' => 'bill_date_sort',
+            'invoice_series' => 'purchase_history.invoice_series',
+            'invoice_number' => 'purchase_history.invoice_number',
+            'ac_number' => 'purchase_history.ac_number',
+            'company_name' => 'company_name',
+            'customer_name' => 'customer_name',
+            'district' => 'district_sort',
+            'state' => 'state',
+            'pincode' => 'pincode',
+            'country' => 'country',
+            'mobile' => 'mobile',
+            'alternate_mobile' => 'alternate_mobile',
+            'whatsapp' => 'whatsapp',
+            'email' => 'email',
+            'quantity' => 'quantity',
+            'batch_number' => 'purchase_history.batch_number',
+            'expiry_date' => 'expiry_date_sort',
+            'manufacturer' => 'manufacturer',
+            'sale_rate' => 'purchase_history.sale_rate',
+            'gst_percentage' => 'purchase_history.gst_percentage',
+            'gst_amount' => 'gst_amount',
+            'mrp_rate' => 'purchase_history.mrp_rate',
+            'final_amount' => 'final_amount',
+        ];
+        $sortBy = (string) $request->get('sort_by', 'invoice_series');
+        if (! array_key_exists($sortBy, $sortableColumns) && ! array_key_exists($sortBy, $priceSortLabels)) {
+            $sortBy = 'invoice_series';
+        }
+        $sortDir = strtolower((string) $request->get('sort_dir', 'desc'));
+        if (! in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'desc';
+        }
+
+        $rowsQuery = $query
             ->select([
                 'purchase_history.ac_number',
                 'purchase_history.invoice_date',
@@ -529,10 +601,13 @@ class PurchaseHistoryReportController extends Controller
             ])
             ->selectRaw('MIN(purchase_history.id) AS id')
             ->selectRaw("COALESCE(MIN(NULLIF(TRIM(purchase_history.invoice_date), '')), MIN(NULLIF(TRIM(purchase_history.order_date), ''))) AS bill_date")
+            ->selectRaw("MIN({$billDateSql}) AS bill_date_sort")
+            ->selectRaw("MIN({$this->parsedDateSql('purchase_history.expiry_date')}) AS expiry_date_sort")
             ->selectRaw('MIN(customer.company_name) AS company_name')
             ->selectRaw('MIN(customer_user.name) AS customer_name')
             ->selectRaw('MIN(customer.district_business) AS district')
             ->selectRaw('MIN(customer_city.name) AS city')
+            ->selectRaw("MIN(COALESCE(NULLIF(TRIM(customer.district_business), ''), customer_city.name)) AS district_sort")
             ->selectRaw('MIN(customer_state.name) AS state')
             ->selectRaw('MIN(customer.pincode_business) AS pincode')
             ->selectRaw('MIN(customer_country.name) AS country')
@@ -558,18 +633,40 @@ class PurchaseHistoryReportController extends Controller
                 'purchase_history.gst_percentage',
                 'purchase_history.mrp_rate',
             ])
-            ->groupByRaw("CASE WHEN COALESCE(TRIM(purchase_history.invoice_number), '') = '' THEN purchase_history.id ELSE 0 END")
-            ->orderByRaw("MIN({$billDateSql}) DESC")
-            ->orderBy('purchase_history.invoice_series')
-            ->orderBy('purchase_history.invoice_number')
-            ->get();
+            ->groupByRaw("CASE WHEN COALESCE(TRIM(purchase_history.invoice_number), '') = '' THEN purchase_history.id ELSE 0 END");
+
+        $databaseSortColumn = $sortableColumns[$sortBy] ?? 'purchase_history.invoice_series';
+        $rowsQuery->orderBy($databaseSortColumn, isset($priceSortLabels[$sortBy]) ? 'desc' : $sortDir);
+
+        foreach (['bill_date_sort', 'purchase_history.invoice_series', 'purchase_history.invoice_number', 'id'] as $tieBreaker) {
+            if ($tieBreaker !== $databaseSortColumn) {
+                $rowsQuery->orderBy($tieBreaker);
+            }
+        }
+
+        $rows = $rowsQuery->get();
+        $currentPriceMap = $this->buildCurrentPriceMap($rows);
+
+        if (isset($priceSortLabels[$sortBy])) {
+            $priceLabel = $priceSortLabels[$sortBy];
+            $priceValue = function ($row) use ($currentPriceMap, $priceLabel) {
+                $price = $currentPriceMap[$row->product_sku] ?? null;
+                $lines = $price ? ($price['batches'][$row->batch_number] ?? $price['default']) : [];
+                $line = collect($lines)->firstWhere('label', $priceLabel);
+
+                return (float) preg_replace('/[^0-9.\-]/', '', str_replace(',', '', (string) ($line['value'] ?? 0)));
+            };
+            $rows = ($sortDir === 'asc' ? $rows->sortBy($priceValue) : $rows->sortByDesc($priceValue))->values();
+        }
 
         return view('backend.purchase_history.consolidated_productwise', [
             'sku' => $sku,
             'rows' => $rows,
-            'currentPriceMap' => $this->buildCurrentPriceMap($rows),
+            'currentPriceMap' => $currentPriceMap,
             'dateFrom' => $this->formatReportDate($dateFrom) ?: $this->formatReportDate($dateBounds?->date_from),
             'dateTo' => $this->formatReportDate($dateTo) ?: $this->formatReportDate($dateBounds?->date_to),
+            'sortBy' => $sortBy,
+            'sortDir' => $sortDir,
         ]);
     }
 

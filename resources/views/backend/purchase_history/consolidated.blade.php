@@ -37,14 +37,20 @@
             white-space: nowrap;
         }
         .party-consolidated-table th a {
-            color: #000;
+            color: #007bff;
             display: inline-flex;
             align-items: center;
             justify-content: center;
         }
         .party-consolidated-table .sort-icon {
+            color: #007bff;
             font-size: 13px;
             margin-left: 3px;
+        }
+        .party-consolidated-table th a:hover,
+        .party-consolidated-table th a:hover .sort-icon {
+            color: #0056b3;
+            text-decoration: underline;
         }
         .party-consolidated-table td {
             background: #fff;
@@ -191,13 +197,21 @@
         ])->filter(fn ($value) => filled($value))->unique()->values();
         $totalGross = $reportRows->sum(fn ($row) => $numberValue($row->gross_amount));
         $currentPriceColumns = [
-            'PTS' => 'PTS',
-            'PTR' => 'PTR',
-            'PTD' => 'PTD',
-            'Govt.' => 'Govt.',
-            'Exp' => 'Exp',
-            'Customer' => 'Customer',
-            'M.R.P' => 'M.R.P',
+            'PTS' => ['label' => 'PTS', 'sort' => 'pts'],
+            'PTR' => ['label' => 'PTR', 'sort' => 'ptr'],
+            'PTD' => ['label' => 'PTD', 'sort' => 'ptd'],
+            'Govt.' => ['label' => 'Govt.', 'sort' => 'govt'],
+            'Exp' => ['label' => 'Exp', 'sort' => 'export'],
+            'Customer' => ['label' => 'Customer', 'sort' => 'customer_price'],
+            'M.R.P' => ['label' => 'M.R.P', 'sort' => 'current_mrp'],
+        ];
+        $sortOptions = [
+            'sr_no' => 'Sr no.', 'bill_date' => 'Bill Date', 'bill_series' => 'Bill Series',
+            'bill_number' => 'Bill No', 'product_sku' => 'SKU', 'product_name' => 'Product Name',
+            'packing' => 'Pack', 'quantity' => 'Qty', 'sale_rate' => 'S.Rate', 'gst_amount' => 'Tax',
+            'mrp_rate' => 'M R P', 'gross_amount' => 'Gross amount', 'pts' => 'PTS', 'ptr' => 'PTR',
+            'ptd' => 'PTD', 'govt' => 'Govt.', 'export' => 'Exp', 'customer_price' => 'Customer',
+            'current_mrp' => 'Current M.R.P',
         ];
     @endphp
 
@@ -281,11 +295,9 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="sort_by">{{ translate('Sort By') }}</label>
                         <select class="form-control aiz-selectpicker" id="sort_by" name="sort_by">
-                            <option value="bill_date" @if($sortBy === 'bill_date') selected @endif>{{ translate('Bill Date') }}</option>
-                            <option value="bill_series" @if($sortBy === 'bill_series') selected @endif>{{ translate('Bill Series') }}</option>
-                            <option value="product_sku" @if($sortBy === 'product_sku') selected @endif>{{ translate('SKU') }}</option>
-                            <option value="product_name" @if($sortBy === 'product_name') selected @endif>{{ translate('Product') }}</option>
-                            <option value="packing" @if($sortBy === 'packing') selected @endif>{{ translate('Pack') }}</option>
+                            @foreach($sortOptions as $value => $label)
+                                <option value="{{ $value }}" @if($sortBy === $value) selected @endif>{{ translate($label) }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">
@@ -307,20 +319,20 @@
                     <table class="table table-bordered mb-0 party-consolidated-table">
                         <thead>
                         <tr>
-                            <th style="width: 45px">{{ translate('Sr no.') }}</th>
+                            <th style="width: 45px">{!! $sortHeading('sr_no', translate('Sr no.')) !!}</th>
                             <th style="width: 90px">{!! $sortHeading('bill_date', translate('Bill Date')) !!}</th>
                             <th style="width: 80px">{!! $sortHeading('bill_series', translate('Bill Series')) !!}</th>
-                            <th style="width: 70px">{{ translate('Bill No') }}</th>
+                            <th style="width: 70px">{!! $sortHeading('bill_number', translate('Bill No')) !!}</th>
                             <th style="width: 95px">{!! $sortHeading('product_sku', translate('SKU')) !!}</th>
                             <th>{!! $sortHeading('product_name', translate('Product Name')) !!}</th>
                             <th style="width: 70px">{!! $sortHeading('packing', translate('Pack')) !!}</th>
-                            <th style="width: 65px">{{ translate('Qty') }}</th>
-                            <th style="width: 80px">{{ translate('S.Rate') }}</th>
-                            <th style="width: 65px">{{ translate('Tax') }}</th>
-                            <th style="width: 80px">{{ translate('M R P') }}</th>
-                            <th style="width: 110px">{{ translate('Gross amount') }}</th>
-                            @foreach($currentPriceColumns as $columnLabel)
-                                <th style="width: 80px">{{ translate($columnLabel) }}</th>
+                            <th style="width: 65px">{!! $sortHeading('quantity', translate('Qty')) !!}</th>
+                            <th style="width: 80px">{!! $sortHeading('sale_rate', translate('S.Rate')) !!}</th>
+                            <th style="width: 65px">{!! $sortHeading('gst_amount', translate('Tax')) !!}</th>
+                            <th style="width: 80px">{!! $sortHeading('mrp_rate', translate('M R P')) !!}</th>
+                            <th style="width: 110px">{!! $sortHeading('gross_amount', translate('Gross amount')) !!}</th>
+                            @foreach($currentPriceColumns as $priceColumn)
+                                <th style="width: 80px">{!! $sortHeading($priceColumn['sort'], translate($priceColumn['label'])) !!}</th>
                             @endforeach
                         </tr>
                         </thead>
@@ -357,7 +369,7 @@
                                 <td class="text-center">{{ $formatAmount($row->gst_amount) }}</td>
                                 <td class="text-right">{{ $formatAmount($row->mrp_rate) }}</td>
                                 <td class="text-right">{{ $formatAmount($row->gross_amount) }}</td>
-                                @foreach($currentPriceColumns as $priceLabel => $columnLabel)
+                                @foreach($currentPriceColumns as $priceLabel => $priceColumn)
                                     <td class="text-right">{{ $currentPriceValues->get($priceLabel, '-') }}</td>
                                 @endforeach
                             </tr>

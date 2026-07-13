@@ -263,7 +263,12 @@
 
                                     @if ($skus->isNotEmpty())
                                         @foreach ($skus as $sku)
-                                            <div>{{ $sku }}</div>
+                                            <div>
+                                                <a href="{{ route('admin.purchase_history.consolidated_productwise', ['product_sku' => $sku]) }}"
+                                                   class="text-primary" target="_blank" rel="noopener noreferrer">
+                                                    {{ $sku }}
+                                                </a>
+                                            </div>
                                         @endforeach
                                     @else
                                         -
