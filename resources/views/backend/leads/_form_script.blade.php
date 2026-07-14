@@ -152,6 +152,8 @@
             $('[name="company_name"]').val(customer.company_name || '');
             $('#lead_customer_type').val(customer.customer_type || '');
             refreshPicker($('#lead_customer_type'));
+            $('#lead_current_status').val(customer.current_status || '');
+            refreshPicker($('#lead_current_status'));
             $('[name="email"]').val(customer.email || '');
             if (customer.phone) $('[name="phone"]').val(customer.phone);
             if (customer.alternate_mobile_number) $('[name="alternate_mobile_number"]').val(customer.alternate_mobile_number);

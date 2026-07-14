@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Country;
 use App\Models\UserDetails;
+use App\Models\Lead;
 use App\Models\State;
 use App\Models\City;
 use App\Models\Transport;
@@ -1520,6 +1521,9 @@ class CustomerController extends Controller
             'other_reg_no_file' => $licenseFiles['other_reg_no_file'],
         ]);
         $details->save();
+        if ($details->wasChanged('current_status')) {
+            $this->syncLeadCurrentStatus($details);
+        }
         sync_business_addresses_to_address_book($user, $details);
           if ($request->ajax()) {
               return response()->json([
@@ -1533,6 +1537,42 @@ class CustomerController extends Controller
 
           return redirect()->back();
       }
+
+    protected function syncLeadCurrentStatus(UserDetails $details): void
+    {
+        $companyName = trim((string) $details->company_name);
+        $phones = collect([
+            $details->prim_mobile_no_business,
+            $details->alt_mobile_no_business,
+            $details->prim_whats_app_no_business,
+            $details->alternate_whats_app_no_business,
+        ])->map(fn ($phone) => preg_replace('/\D+/', '', (string) $phone))
+            ->filter(fn ($phone) => strlen($phone) >= 5)
+            ->unique()
+            ->values();
+
+        if ($companyName === '' && $phones->isEmpty()) {
+            return;
+        }
+
+        Lead::query()
+            ->where(function ($query) use ($companyName, $phones) {
+                $query->whereRaw('1 = 0');
+
+                if ($companyName !== '') {
+                    $query->orWhereRaw('LOWER(TRIM(company_name)) = LOWER(?)', [$companyName]);
+                }
+
+                foreach (['phone', 'alternate_mobile_number', 'whatsapp_number'] as $column) {
+                    $normalizedColumn = "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE({$column}, '+', ''), '-', ''), ' ', ''), '(', ''), ')', ''), '.', '')";
+
+                    foreach ($phones as $phone) {
+                        $query->orWhereRaw("{$normalizedColumn} = ? OR RIGHT({$normalizedColumn}, ?) = ?", [$phone, strlen($phone), $phone]);
+                    }
+                }
+            })
+            ->update(['current_status' => $details->current_status]);
+    }
 
     /**
      * Remove the specified resource from storage.

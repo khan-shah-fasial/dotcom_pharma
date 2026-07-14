@@ -60,6 +60,7 @@ class LeadController extends Controller
                 'leads.whatsapp_number',
                 'leads.company_name',
                 'leads.customer_type',
+                'leads.current_status',
                 'leads.source_id',
                 'leads.status_id',
                 'leads.assigned_to',
@@ -323,6 +324,7 @@ class LeadController extends Controller
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
             'customer_type' => ['nullable', Rule::in(UserDetails::CUSTOMER_TYPES)],
+            'current_status' => ['nullable', Rule::in(UserDetails::CURRENT_STATUSES)],
             'designation' => 'nullable|string|max:255',
             'photo' => 'nullable|integer|exists:uploads,id',
             'department_id' => [
@@ -412,6 +414,7 @@ class LeadController extends Controller
             'statuses' => $this->leadStatusOptions(),
             'departments' => $departments,
             'customerTypes' => UserDetails::CUSTOMER_TYPES,
+            'currentStatuses' => UserDetails::CURRENT_STATUSES,
             'assignees' => $this->leadAssigneeOptions(),
             'countries' => Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']),
             'states' => $lead && $lead->country_id
@@ -453,7 +456,7 @@ class LeadController extends Controller
             ->values();
 
         if ($companyNames->isEmpty() && $leadPhones->isEmpty()) {
-            $leads->each(fn ($lead) => $lead->setAttribute('customer_current_status', null));
+            $leads->each(fn ($lead) => $lead->setAttribute('customer_current_status', $lead->current_status));
             return;
         }
 
@@ -542,7 +545,7 @@ class LeadController extends Controller
                 }
             }
 
-            $lead->setAttribute('customer_current_status', $status);
+            $lead->setAttribute('customer_current_status', $status ?: $lead->current_status);
         });
     }
 
@@ -963,6 +966,7 @@ class LeadController extends Controller
                 'name' => $details->con_person_name ?: $customer->name,
                 'company_name' => $details->company_name,
                 'customer_type' => $details->customer_type,
+                'current_status' => $details->current_status,
                 'email' => $details->prim_email_business ?: $customer->email,
                 'phone' => $details->prim_mobile_no_business ?: $customer->phone,
                 'alternate_mobile_number' => $details->alt_mobile_no_business,

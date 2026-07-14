@@ -151,6 +151,18 @@
     </div>
 </div>
 <div class="form-group row">
+    <label class="col-md-2 col-form-label" for="lead_current_status">{{ translate('Current Status') }}</label>
+    <div class="col-md-9">
+        <select name="current_status" id="lead_current_status" class="form-control aiz-selectpicker" data-live-search="true" title="{{ translate('Select Current Status') }}">
+            <option value="">{{ translate('Select Current Status') }}</option>
+            @foreach ($currentStatuses as $currentStatus)
+                <option value="{{ $currentStatus }}" @selected(old('current_status', $lead->current_status ?? '') === $currentStatus)>{{ translate($currentStatus) }}</option>
+            @endforeach
+        </select>
+        @error('current_status') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+</div>
+<div class="form-group row">
     <label class="col-md-2 col-form-label">{{ translate('Photo') }}</label>
     <div class="col-md-9">
         <div class="input-group" data-toggle="aizuploader" data-type="image">
