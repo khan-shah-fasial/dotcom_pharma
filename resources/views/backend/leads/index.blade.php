@@ -364,7 +364,9 @@
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_next_followup">{{ translate('Next Follow-up') }}</label>
-                            <input id="quick_activity_next_followup" type="datetime-local" name="next_followup" class="form-control" required>
+                            <input id="quick_activity_next_followup" type="text" name="next_followup"
+                                class="form-control aiz-date-time-picker" data-past-disable="true"
+                                placeholder="{{ translate('Select date and time') }}" autocomplete="off" required>
                         </div>
                         <div class="form-group">
                             <label for="quick_activity_attachments">{{ translate('Attachments') }}</label>

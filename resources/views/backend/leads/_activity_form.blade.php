@@ -30,7 +30,9 @@
     </div>
     <div class="form-group">
         <label>{{ translate('Next Follow-up') }}</label>
-        <input required type="datetime-local" name="next_followup" class="form-control" value="{{ old('next_followup') }}">
+        <input required type="text" name="next_followup" class="form-control aiz-date-time-picker"
+            value="{{ old('next_followup') }}" data-past-disable="true"
+            placeholder="{{ translate('Select date and time') }}" autocomplete="off">
         @error('next_followup') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
     <div class="form-group">

@@ -1561,6 +1561,42 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                 });
             });
         },
+        dateTimePicker: function () {
+            $(".aiz-date-time-picker").each(function () {
+                var $this = $(this);
+
+                if ($this.data("daterangepicker")) {
+                    return;
+                }
+
+                var format = $this.data("format") || "YYYY-MM-DD HH:mm";
+                var minuteStep = parseInt($this.data("minute-step"), 10) || 1;
+                var pastDisable = $this.data("past-disable");
+
+                $this.daterangepicker({
+                    singleDatePicker: true,
+                    showDropdowns: true,
+                    timePicker: true,
+                    timePicker24Hour: false,
+                    timePickerIncrement: minuteStep,
+                    autoUpdateInput: false,
+                    minDate: pastDisable ? moment() : false,
+                    locale: {
+                        format: format,
+                        applyLabel: "Set",
+                        cancelLabel: "Cancel",
+                    },
+                });
+
+                $this.on("apply.daterangepicker", function (ev, picker) {
+                    $this.val(picker.startDate.format(format)).trigger("change");
+                });
+
+                $this.on("cancel.daterangepicker", function () {
+                    $this.val("").trigger("change");
+                });
+            });
+        },
         timePicker: function () {
             $(".aiz-time-picker").each(function () {
                 var $this = $(this);
@@ -2835,6 +2871,7 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
     AIZ.plugins.countDownBox();
     AIZ.plugins.countDownCircle();
     AIZ.plugins.dateRange();
+    AIZ.plugins.dateTimePicker();
     AIZ.plugins.timePicker();
     AIZ.plugins.colorPicker();
     AIZ.plugins.fooTable();
