@@ -547,6 +547,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/order-create/customers/{customer}/addresses', 'backendCustomerAddresses')->name('orders.create.customer_addresses');
         Route::get('/order-create/products', 'backendProductSearch')->name('orders.create.products');
         Route::post('/order-create/product-quote', 'backendProductQuote')->name('orders.create.product_quote');
+        Route::post('/order-create/courier-rates', 'backendCourierRates')->name('orders.create.courier_rates');
         Route::post('/order-create/summary', 'backendOrderSummary')->name('orders.create.summary');
 
         // All Orders

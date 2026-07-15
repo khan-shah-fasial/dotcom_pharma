@@ -105,9 +105,10 @@
                                     <div class="border-top pt-3 mt-2 d-none" id="new-shipping-wrap">
                                         <label class="aiz-checkbox">
                                             <input type="checkbox" name="new_shipping_address" value="1" id="new-shipping-toggle">
-                                            <span>{{ translate('Add new shipping address') }}</span>
+                                            <span>{{ translate('Add additional shipping address') }}</span>
                                             <span class="aiz-square-check"></span>
                                         </label>
+                                        <div class="small text-muted mb-2">{{ translate('The address will be saved to the selected customer when this order is created.') }}</div>
                                         <div id="new-shipping-fields" class="row gutters-10 d-none mt-2">
                                             @include('backend.sales.partials.create_order_address_fields', ['prefix' => 'shipping', 'countries' => $countries])
                                         </div>
@@ -179,7 +180,7 @@
                                         <th class="text-right">{{ translate('Sale') }}</th>
                                         <th class="text-right">{{ translate('GST Amount') }}</th>
                                         <th class="text-right">{{ translate('Gross') }}</th>
-                                        <th class="text-right">{{ translate('Coupon') }}</th>
+                                        <th class="text-right">{{ translate('MRP') }}</th>
                                         <th class="text-right">{{ translate('Final') }}</th>
                                         <th></th>
                                     </tr>
@@ -214,22 +215,26 @@
                         <div id="courier-fields">
                             <div class="form-group">
                                 <label>{{ translate('Courier Provider') }}</label>
-                                <select class="form-control" name="shipping_method_id">
+                                <select class="form-control" name="shipping_method_id" id="courier-provider">
+                                    <option value="">{{ translate('Select Courier Provider') }}</option>
                                     @foreach($shippingMethods as $method)
-                                        <option value="{{ $method->id }}">{{ $method->name }}</option>
+                                        <option value="{{ $method->id }}" data-provider="{{ $method->slug }}">{{ $method->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label>{{ translate('Courier Service') }}</label>
-                                <input type="text" class="form-control" name="courier_service" value="{{ old('courier_service') }}">
+                                <select class="form-control" name="courier_service" id="courier-service" disabled>
+                                    <option value="">{{ translate('Select provider to load services') }}</option>
+                                </select>
+                                <div id="courier-service-message" class="small text-muted mt-1"></div>
                             </div>
                         </div>
 
                         <div id="transport-fields" class="d-none">
                             <div class="form-group">
                                 <label>{{ translate('Transport') }}</label>
-                                <select class="form-control" name="transport_id">
+                                <select class="form-control" name="transport_id" id="transport-id">
                                     <option value="">{{ translate('Select Transport') }}</option>
                                     @foreach($transports as $transport)
                                         <option value="{{ $transport->id }}">{{ $transport->name }}</option>
@@ -239,11 +244,8 @@
                             </div>
                             <div class="form-group">
                                 <label>{{ translate('Booked To') }}</label>
-                                <select class="form-control" name="booked_to_id">
-                                    <option value="">{{ translate('Select Booked To') }}</option>
-                                    @foreach($bookedToOptions as $bookedTo)
-                                        <option value="{{ $bookedTo->id }}">{{ $bookedTo->name }}</option>
-                                    @endforeach
+                                <select class="form-control" name="booked_to_id" id="booked-to-id" disabled>
+                                    <option value="">{{ translate('Select transport first') }}</option>
                                 </select>
                                 <input type="text" class="form-control mt-2" name="booked_to_name" placeholder="{{ translate('Or enter booked to') }}">
                             </div>
@@ -255,9 +257,19 @@
                                     <option value="sea">{{ translate('Sea') }}</option>
                                 </select>
                             </div>
+                            <div class="form-group d-none" id="transport-surface-mode-fields">
+                                <label>{{ translate('Surface Mode') }}</label>
+                                <select class="form-control" name="transport_surface_mode" id="transport-surface-mode">
+                                    <option value="road">{{ translate('Road') }}</option>
+                                    <option value="train">{{ translate('Train') }}</option>
+                                </select>
+                            </div>
                             <div class="form-group">
                                 <label>{{ translate('Delivery Type') }}</label>
-                                <input type="text" class="form-control" name="transport_delivery_type">
+                                <select class="form-control" name="transport_delivery_type">
+                                    <option value="door_delivery">{{ translate('Door Delivery') }}</option>
+                                    <option value="transport_godown">{{ translate('Take from Transport Godown') }}</option>
+                                </select>
                             </div>
                         </div>
 
@@ -277,6 +289,15 @@
                         <div class="border-top pt-3">
                             <label>{{ translate('Shipping Cost By Seller') }}</label>
                             <div id="seller-shipping-costs" class="small text-muted">{{ translate('Add products to enter seller shipping cost.') }}</div>
+                        </div>
+                        <div class="border-top pt-3 mt-3">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="mb-0">{{ translate('Shipping Items') }}</label>
+                                <button type="button" class="btn btn-sm btn-soft-primary" id="add-shipping-item-btn">
+                                    <i class="las la-plus"></i> {{ translate('Add Shipping Item') }}
+                                </button>
+                            </div>
+                            <div id="shipping-items" class="small text-muted">{{ translate('No shipping items added.') }}</div>
                         </div>
                     </div>
                 </div>
@@ -303,8 +324,23 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>{{ translate('Coupon Code') }}</label>
-                            <input type="text" class="form-control" name="coupon_code" id="coupon-code">
+                            <label>{{ translate('Additional Discount') }}</label>
+                            <div class="row gutters-5">
+                                <div class="col-5">
+                                    <label class="small mb-1">{{ translate('Discount') }}</label>
+                                    <input type="number" min="0" step="0.01" class="form-control" name="additional_discount" id="additional-discount" value="{{ old('additional_discount', 0) }}">
+                                </div>
+                                <div class="col-7">
+                                    <label class="small mb-1">{{ translate('Discount Type') }}</label>
+                                    <select class="form-control" name="additional_discount_type" id="additional-discount-type">
+                                        <option value="percent" @selected(old('additional_discount_type', 'percent') === 'percent')>{{ translate('Percentage (%)') }}</option>
+                                        <option value="amount" @selected(old('additional_discount_type') === 'amount')>{{ translate('Fixed Amount') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-block mt-2" id="apply-additional-discount-btn">{{ translate('Apply Discount') }}</button>
+                            <input type="hidden" name="additional_discount_enabled" id="additional-discount-enabled" value="0">
+                            <div id="additional-discount-message" class="small mt-1"></div>
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Additional Info') }}</label>
@@ -351,6 +387,7 @@
             var customerAddressUrlTemplate = @json(route('orders.create.customer_addresses', ['customer' => '__ID__']));
             var productSearchUrl = @json(route('orders.create.products'));
             var productQuoteUrl = @json(route('orders.create.product_quote'));
+            var courierRatesUrl = @json(route('orders.create.courier_rates'));
             var summaryUrl = @json(route('orders.create.summary'));
             var stateUrl = @json(route('get-state'));
             var cityUrl = @json(route('get-city'));
@@ -361,6 +398,12 @@
             var debounceTimer = null;
             var customerAddresses = [];
             var salePriceEdited = false;
+            var bookedToOptions = @json($bookedToOptions->map(function ($option) {
+                return ['id' => $option->id, 'transport_id' => $option->transport_id, 'name' => $option->name];
+            })->values());
+            var courierServices = [];
+            var shippingItems = [];
+            var nextShippingItemId = 1;
 
             function money(value) {
                 return (Number(value || 0)).toFixed(2);
@@ -553,7 +596,7 @@
                             $shippingList.append(addressRadioHtml(address, 'shipping_address_id', '{{ translate('Ship to this address') }}', index === 0));
                         });
                         $('#new-shipping-toggle').prop('checked', false).trigger('change');
-                        $('#new-shipping-wrap').addClass('d-none');
+                        $('#new-shipping-wrap').removeClass('d-none');
                     }
 
                     syncShippingMode();
@@ -713,7 +756,7 @@
                         + ' | {{ translate('Sale') }}: ' + money(currentQuote.sale_price)
                         + ' | {{ translate('Discount') }}: ' + money(currentQuote.discount_amount)
                         + ' | {{ translate('GST Amount') }}: ' + money(currentQuote.gst_amount || currentQuote.tax)
-                        + ' | {{ translate('Final') }}: ' + money(currentQuote.final_amount || currentQuote.line_total)
+                        + ' | {{ translate('Final') }}: ' + money(currentQuote.product_final_amount !== undefined ? currentQuote.product_final_amount : (currentQuote.final_amount || currentQuote.line_total))
                         + ' | {{ translate('Scheme Qty') }}: ' + (currentQuote.scheme_quantity || 0));
                 }).fail(function (xhr) {
                     currentQuote = null;
@@ -728,6 +771,8 @@
                 if (!lines.length) {
                     $body.html('<tr><td colspan="10" class="text-center text-muted">{{ translate('No products added') }}</td></tr>');
                     $('#seller-shipping-costs').html('{{ translate('Add products to enter seller shipping cost.') }}');
+                    shippingItems = [];
+                    renderShippingItems();
                     refreshSummary();
                     return;
                 }
@@ -739,10 +784,10 @@
                         + '<td>' + escapeHtml(line.batch_label || '-') + '</td>'
                         + '<td class="text-right">' + line.quantity + '</td>'
                         + '<td class="text-right">' + money(line.quote.sale_price) + '</td>'
-                        + '<td class="text-right">' + money(line.quote.gst_amount || line.quote.tax) + '</td>'
-                        + '<td class="text-right">' + money(line.quote.gross_amount) + '</td>'
-                        + '<td class="text-right">' + money(line.quote.coupon_discount) + '</td>'
-                        + '<td class="text-right">' + money(line.quote.final_amount || line.quote.line_total) + '</td>'
+                        + '<td class="text-right line-tax" data-index="' + index + '">' + money(line.quote.gst_amount || line.quote.tax) + '</td>'
+                        + '<td class="text-right line-gross" data-index="' + index + '">' + money(line.quote.gross_amount) + '</td>'
+                        + '<td class="text-right">' + money(line.quote.mrp_price) + '</td>'
+                        + '<td class="text-right line-final" data-index="' + index + '">' + money(line.quote.product_final_amount !== undefined ? line.quote.product_final_amount : (line.quote.final_amount || line.quote.line_total)) + '</td>'
                         + '<td class="text-right"><button type="button" class="btn btn-soft-danger btn-icon btn-sm remove-line" data-index="' + index + '"><i class="las la-trash"></i></button></td>'
                         + '</tr>');
 
@@ -752,10 +797,18 @@
                 });
 
                 renderSellerShipping();
+                renderOrderShippingRows();
                 refreshSummary();
+                if ($('#shipping-method').val() === 'courier' && $('#courier-provider').val()) {
+                    loadCourierServices();
+                }
             }
 
             function renderSellerShipping() {
+                var existingCosts = {};
+                $('.seller-shipping-input').each(function () {
+                    existingCosts[$(this).data('seller-id')] = $(this).val();
+                });
                 var sellers = {};
                 lines.forEach(function (line) {
                     sellers[line.owner_id] = line.owner_name || ('{{ translate('Seller') }} #' + line.owner_id);
@@ -764,22 +817,172 @@
                 Object.keys(sellers).forEach(function (sellerId) {
                     $box.append('<div class="form-group mb-2">'
                         + '<label class="mb-1">' + sellers[sellerId] + '</label>'
-                        + '<input type="number" min="0" step="0.01" class="form-control seller-shipping-input" name="shipping_costs[' + sellerId + ']" value="0">'
+                        + '<input type="number" min="0" step="0.01" class="form-control seller-shipping-input" data-seller-id="' + sellerId + '" name="shipping_costs[' + sellerId + ']" value="' + (existingCosts[sellerId] || 0) + '">'
                         + '</div>');
+                });
+                renderShippingItems();
+            }
+
+            function sellerOptions(selectedSellerId) {
+                var sellers = {};
+                lines.forEach(function (line) {
+                    sellers[line.owner_id] = line.owner_name || ('{{ translate('Seller') }} #' + line.owner_id);
+                });
+
+                return Object.keys(sellers).map(function (sellerId) {
+                    return '<option value="' + sellerId + '" ' + (String(sellerId) === String(selectedSellerId) ? 'selected' : '') + '>'
+                        + escapeHtml(sellers[sellerId]) + '</option>';
+                }).join('');
+            }
+
+            function renderShippingItems() {
+                var $box = $('#shipping-items').empty();
+                if (!shippingItems.length) {
+                    $box.addClass('text-muted').text('{{ translate('No shipping items added.') }}');
+                    renderOrderShippingRows();
+                    return;
+                }
+
+                $box.removeClass('text-muted');
+                shippingItems.forEach(function (item, index) {
+                    $box.append('<div class="row gutters-5 align-items-end mb-2 shipping-item-row" data-id="' + item.id + '">'
+                        + '<div class="col-5"><label class="mb-1">{{ translate('Description') }}</label>'
+                        + '<input type="text" class="form-control form-control-sm shipping-item-description" name="shipping_items[' + index + '][description]" value="' + escapeHtml(item.description) + '"></div>'
+                        + '<div class="col-3"><label class="mb-1">{{ translate('Seller') }}</label>'
+                        + '<select class="form-control form-control-sm shipping-item-seller" name="shipping_items[' + index + '][seller_id]">' + sellerOptions(item.seller_id) + '</select></div>'
+                        + '<div class="col-3"><label class="mb-1">{{ translate('Amount') }}</label>'
+                        + '<input type="number" min="0" step="0.01" class="form-control form-control-sm shipping-item-amount" name="shipping_items[' + index + '][amount]" value="' + money(item.amount) + '"></div>'
+                        + '<div class="col-1"><button type="button" class="btn btn-sm btn-soft-danger remove-shipping-item"><i class="las la-trash"></i></button></div>'
+                        + '</div>');
+                });
+                renderOrderShippingRows();
+            }
+
+            function renderOrderShippingRows() {
+                var $body = $('#order-lines-body');
+                $body.find('.order-shipping-line').remove();
+                if (!lines.length) return;
+
+                var sellers = {};
+                lines.forEach(function (line) {
+                    sellers[line.owner_id] = line.owner_name || ('{{ translate('Seller') }} #' + line.owner_id);
+                });
+
+                var rows = [];
+                $('.seller-shipping-input').each(function () {
+                    var amount = Number($(this).val() || 0);
+                    if (amount > 0) {
+                        var sellerId = $(this).data('seller-id');
+                        rows.push({
+                            id: null,
+                            description: '{{ translate('Shipping Cost') }} - ' + (sellers[sellerId] || ''),
+                            amount: amount
+                        });
+                    }
+                });
+                shippingItems.forEach(function (item) {
+                    rows.push({
+                        id: item.id,
+                        description: item.description || '{{ translate('Shipping') }}',
+                        amount: Number(item.amount || 0)
+                    });
+                });
+
+                rows.forEach(function (row) {
+                    var action = row.id === null
+                        ? ''
+                        : '<button type="button" class="btn btn-soft-danger btn-icon btn-sm remove-shipping-item-from-line" data-id="' + row.id + '"><i class="las la-trash"></i></button>';
+                    $body.append('<tr class="order-shipping-line bg-soft-light">'
+                        + '<td colspan="3"><strong>{{ translate('Shipping') }}</strong><br><small>' + escapeHtml(row.description) + '</small></td>'
+                        + '<td class="text-right">-</td>'
+                        + '<td class="text-right">-</td>'
+                        + '<td class="text-right">-</td>'
+                        + '<td class="text-right">' + money(row.amount) + '</td>'
+                        + '<td class="text-right">-</td>'
+                        + '<td class="text-right">' + money(row.amount) + '</td>'
+                        + '<td class="text-right">' + action + '</td>'
+                        + '</tr>');
                 });
             }
 
-            function refreshSummary() {
+            function firstSellerId() {
+                return lines.length ? lines[0].owner_id : '';
+            }
+
+            function upsertCourierShippingItem(service) {
+                var existing = shippingItems.find(function (item) { return item.source === 'courier'; });
+                var description = ($('#courier-provider option:selected').text() + ' - ' + (service.name || '{{ translate('Courier Service') }}')).trim();
+                if (existing) {
+                    existing.description = description;
+                    existing.amount = Number(service.price || 0);
+                    existing.seller_id = existing.seller_id || firstSellerId();
+                } else {
+                    shippingItems.push({
+                        id: nextShippingItemId++,
+                        source: 'courier',
+                        description: description,
+                        amount: Number(service.price || 0),
+                        seller_id: firstSellerId()
+                    });
+                }
+                renderShippingItems();
+                refreshSummary(false);
+            }
+
+            function loadCourierServices() {
+                var providerId = $('#courier-provider').val();
+                var $service = $('#courier-service');
+                courierServices = [];
+                $service.prop('disabled', true).html('<option value="">{{ translate('Loading services...') }}</option>');
+                $('#courier-service-message').removeClass('text-danger').addClass('text-muted').text('');
+
+                if (!providerId) {
+                    $service.html('<option value="">{{ translate('Select provider to load services') }}</option>');
+                    return;
+                }
+                if (!$('#selected-customer-id').val() || !lines.length) {
+                    $service.html('<option value="">{{ translate('Add customer and products first') }}</option>');
+                    $('#courier-service-message').text('{{ translate('Select a customer, address, and at least one product first.') }}');
+                    return;
+                }
+
+                requestJson({
+                    url: courierRatesUrl,
+                    method: 'POST',
+                    data: $('#backend-order-form').serialize()
+                }).done(function (response) {
+                    courierServices = response && response.success && Array.isArray(response.data) ? response.data : [];
+                    $service.empty().append('<option value="">{{ translate('Select Courier Service') }}</option>');
+                    courierServices.forEach(function (service, index) {
+                        var price = service.price === null || service.price === undefined ? '' : ' - ' + money(service.price);
+                        $service.append('<option value="' + escapeHtml(service.carrier_id || service.id || index) + '" data-index="' + index + '">' + escapeHtml(service.name || '{{ translate('Courier Service') }}') + price + '</option>');
+                    });
+                    $service.prop('disabled', !courierServices.length);
+                    if (!courierServices.length) {
+                        $('#courier-service-message').addClass('text-danger').text((response && response.message) || '{{ translate('No courier services are available.') }}');
+                    }
+                }).fail(function (xhr) {
+                    var message = (xhr.responseJSON && xhr.responseJSON.message) || '{{ translate('Unable to load courier services.') }}';
+                    $service.html('<option value="">{{ translate('No services available') }}</option>');
+                    $('#courier-service-message').removeClass('text-muted').addClass('text-danger').text(message);
+                });
+            }
+
+            function refreshSummary(validateDiscount) {
                 $('#summary-message').text('');
                 if (!$('#selected-customer-id').val() || !lines.length) {
                     $('#summary-subtotal,#summary-product-discount,#summary-tax,#summary-coupon,#summary-shipping,#summary-grand-total').text('0.00');
                     $('#summary-scheme').text('0');
                     return;
                 }
+                var requestData = $('#backend-order-form').serialize();
+                if (validateDiscount) {
+                    requestData += '&validate_additional_discount=1';
+                }
                 requestJson({
                     url: summaryUrl,
                     method: 'POST',
-                    data: $('#backend-order-form').serialize()
+                    data: requestData
                 }).done(function (response) {
                     var data = response.data || {};
                     $('#summary-subtotal').text(money(data.subtotal));
@@ -793,11 +996,30 @@
                         data.lines.forEach(function (line, index) {
                             if (lines[index]) {
                                 lines[index].quote = line;
+                                $('.line-tax[data-index="' + index + '"]').text(money(line.gst_amount || line.tax));
+                                $('.line-gross[data-index="' + index + '"]').text(money(line.gross_amount));
+                                $('.line-final[data-index="' + index + '"]').text(money(line.product_final_amount !== undefined ? line.product_final_amount : (line.final_amount || line.line_total)));
                             }
                         });
                     }
+                    if (validateDiscount) {
+                        var discount = data.additional_discount || {};
+                        var typeLabel = discount.discount_type === 'percent'
+                            ? money(discount.discount_value) + '%'
+                            : money(discount.discount_value);
+                        $('#additional-discount-message')
+                            .removeClass('text-danger')
+                            .addClass('text-success')
+                            .text('{{ translate('Applied') }} (' + typeLabel + '): -' + money(data.coupon_discount));
+                        notify('success', '{{ translate('Additional discount applied successfully.') }}');
+                    }
                 }).fail(function (xhr) {
-                    $('#summary-message').text((xhr.responseJSON && xhr.responseJSON.message) || '{{ translate('Unable to calculate order summary.') }}');
+                    var message = (xhr.responseJSON && xhr.responseJSON.message) || '{{ translate('Unable to calculate order summary.') }}';
+                    $('#summary-message').text(message);
+                    if (validateDiscount) {
+                        $('#additional-discount-enabled').val('0');
+                        $('#additional-discount-message').removeClass('text-success').addClass('text-danger').text(message);
+                    }
                 });
             }
 
@@ -884,14 +1106,137 @@
                 renderLines();
             });
 
-            $(document).on('input change', '.seller-shipping-input,#coupon-code', refreshSummary);
+            $(document).on('input change', '.seller-shipping-input', function () {
+                renderOrderShippingRows();
+                refreshSummary(false);
+            });
+
+            $('#add-shipping-item-btn').on('click', function () {
+                if (!lines.length) {
+                    notify('warning', '{{ translate('Please add at least one product first.') }}');
+                    return;
+                }
+                shippingItems.push({
+                    id: nextShippingItemId++,
+                    source: 'manual',
+                    description: '{{ translate('Shipping') }}',
+                    amount: 0,
+                    seller_id: firstSellerId()
+                });
+                renderShippingItems();
+            });
+
+            $(document).on('input change', '.shipping-item-description,.shipping-item-seller,.shipping-item-amount', function () {
+                var $row = $(this).closest('.shipping-item-row');
+                var item = shippingItems.find(function (entry) { return Number(entry.id) === Number($row.data('id')); });
+                if (!item) return;
+                item.description = $row.find('.shipping-item-description').val();
+                item.seller_id = $row.find('.shipping-item-seller').val();
+                item.amount = Number($row.find('.shipping-item-amount').val() || 0);
+                renderOrderShippingRows();
+                refreshSummary(false);
+            });
+
+            $(document).on('click', '.remove-shipping-item', function () {
+                var id = Number($(this).closest('.shipping-item-row').data('id'));
+                shippingItems = shippingItems.filter(function (item) { return Number(item.id) !== id; });
+                renderShippingItems();
+                refreshSummary(false);
+            });
+
+            $(document).on('click', '.remove-shipping-item-from-line', function () {
+                var id = Number($(this).data('id'));
+                shippingItems = shippingItems.filter(function (item) { return Number(item.id) !== id; });
+                renderShippingItems();
+                refreshSummary(false);
+            });
+
+            $('#courier-provider').on('change', function () {
+                shippingItems = shippingItems.filter(function (item) { return item.source !== 'courier'; });
+                renderShippingItems();
+                refreshSummary(false);
+                loadCourierServices();
+            });
+
+            $('#courier-service').on('change', function () {
+                var selectedIndex = Number($(this).find('option:selected').data('index'));
+                if (!Number.isFinite(selectedIndex) || !courierServices[selectedIndex]) return;
+                upsertCourierShippingItem(courierServices[selectedIndex]);
+            });
+
+            $('select[name="payment_type"]').on('change', function () {
+                if ($('#shipping-method').val() !== 'courier' || !$('#courier-provider').val()) return;
+                shippingItems = shippingItems.filter(function (item) { return item.source !== 'courier'; });
+                renderShippingItems();
+                refreshSummary(false);
+                loadCourierServices();
+            });
+
+            $('#additional-discount,#additional-discount-type').on('input change', function () {
+                $('#additional-discount-enabled').val('0');
+                $('#additional-discount-message').removeClass('text-success text-danger').text('');
+                debounce(function () {
+                    refreshSummary(false);
+                });
+            }).on('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    $('#apply-additional-discount-btn').trigger('click');
+                }
+            });
+
+            $('#apply-additional-discount-btn').on('click', function () {
+                var value = Number($('#additional-discount').val());
+                var type = $('#additional-discount-type').val();
+                if (!Number.isFinite(value) || value <= 0) {
+                    $('#additional-discount-message').removeClass('text-success').addClass('text-danger').text('{{ translate('Discount must be greater than zero.') }}');
+                    return;
+                }
+                if (type === 'percent' && value > 100) {
+                    $('#additional-discount-message').removeClass('text-success').addClass('text-danger').text('{{ translate('Percentage discount cannot exceed 100%.') }}');
+                    return;
+                }
+                if (!lines.length) {
+                    $('#additional-discount-message').removeClass('text-success').addClass('text-danger').text('{{ translate('Please add at least one product.') }}');
+                    return;
+                }
+                $('#additional-discount-enabled').val('1');
+                refreshSummary(true);
+            });
 
             $('#shipping-method').on('change', function () {
                 var value = $(this).val();
                 $('#courier-fields').toggleClass('d-none', value !== 'courier');
                 $('#transport-fields').toggleClass('d-none', value !== 'transport');
                 $('#local-fields').toggleClass('d-none', value !== 'local');
+                if (value !== 'courier') {
+                    shippingItems = shippingItems.filter(function (item) { return item.source !== 'courier'; });
+                    renderShippingItems();
+                    refreshSummary(false);
+                }
+                if (value === 'courier' && $('#courier-provider').val()) {
+                    loadCourierServices();
+                }
             });
+
+            $('#transport-id').on('change', function () {
+                var transportId = Number($(this).val());
+                var $bookedTo = $('#booked-to-id').empty();
+                var matches = bookedToOptions.filter(function (option) {
+                    return Number(option.transport_id) === transportId;
+                });
+                $bookedTo.append('<option value="">' + (transportId ? '{{ translate('Select Booked To') }}' : '{{ translate('Select transport first') }}') + '</option>');
+                matches.forEach(function (option) {
+                    $bookedTo.append('<option value="' + option.id + '">' + escapeHtml(option.name) + '</option>');
+                });
+                $bookedTo.prop('disabled', !transportId);
+            });
+
+            $('select[name="fod_mode"]').on('change', function () {
+                var isSurface = $(this).val() === 'surface';
+                $('#transport-surface-mode-fields').toggleClass('d-none', !isSurface);
+                $('#transport-surface-mode').prop('disabled', !isSurface);
+            }).trigger('change');
 
             $('#new-shipping-toggle').on('change', function () {
                 $('#new-shipping-fields').toggleClass('d-none', !this.checked);
@@ -905,11 +1250,17 @@
             $(document).on('change', 'input[name="billing_address_id"]', function () {
                 syncShippingSamePreview();
                 refreshSummary();
+                if ($('#shipping-method').val() === 'courier' && $('#courier-provider').val()) loadCourierServices();
             });
 
             $(document).on('change', 'input[name="shipping_address_id"], input[name="shipping_same_as_billing"]', function () {
+                if ($(this).is('input[name="shipping_address_id"]')) {
+                    $('#new-shipping-toggle').prop('checked', false);
+                    $('#new-shipping-fields').addClass('d-none');
+                }
                 syncShippingMode();
                 refreshSummary();
+                if ($('#shipping-method').val() === 'courier' && $('#courier-provider').val()) loadCourierServices();
             });
 
             $(document).on('change', '.country-select', function () {
@@ -948,6 +1299,27 @@
                 if (!lines.length) {
                     event.preventDefault();
                     notify('warning', '{{ translate('Please add at least one product.') }}');
+                    return;
+                }
+
+                var shippingMethod = $('#shipping-method').val();
+                if (shippingMethod === 'courier' && (!$('#courier-provider').val() || !$('#courier-service').val())) {
+                    event.preventDefault();
+                    notify('warning', '{{ translate('Please select a courier provider and service.') }}');
+                    return;
+                }
+                if (shippingMethod === 'transport') {
+                    var hasTransport = $('#transport-id').val() || $.trim($('input[name="transport_name"]').val());
+                    var hasBookedTo = $('#booked-to-id').val() || $.trim($('input[name="booked_to_name"]').val());
+                    if (!hasTransport || !hasBookedTo) {
+                        event.preventDefault();
+                        notify('warning', '{{ translate('Please select a transport provider and booked-to destination.') }}');
+                        return;
+                    }
+                }
+                if (shippingMethod === 'local' && !$('select[name="local_delivery_partner_id"]').val() && !$.trim($('input[name="local_delivery_partner_name"]').val())) {
+                    event.preventDefault();
+                    notify('warning', '{{ translate('Please select or enter a local delivery partner.') }}');
                 }
             });
         })();

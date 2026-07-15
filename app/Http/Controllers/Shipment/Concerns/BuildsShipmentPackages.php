@@ -98,7 +98,9 @@ trait BuildsShipmentPackages
             return [
                 'to_pincode' => $orderOrRequest->input('to_pincode') ?: ($address->postal_code ?? $address->zip ?? null),
                 'payment_type' => $orderOrRequest->input('payment_type', 'prepaid'),
-                'package' => $this->buildPackageFromCart(),
+                'package' => is_array($orderOrRequest->input('package'))
+                    ? $orderOrRequest->input('package')
+                    : $this->buildPackageFromCart(),
                 'address' => $address ? $address->toArray() : [],
             ];
         }

@@ -14,6 +14,7 @@ use App\Models\OrderDetail;
 use App\Models\Product;
 use App\Models\ProductBatch;
 use App\Models\ProductStock;
+use App\Models\ShippingMethod;
 use App\Models\Transport;
 use App\Models\User;
 use App\Utility\CartUtility;
@@ -66,7 +67,13 @@ class OrderPlacementService
         });
 
         $this->assignBackendShippingCosts($lines, $request);
-        $this->applyBackendCoupon($customer, $lines, trim((string) $request->input('coupon_code')));
+        if ($request->boolean('additional_discount_enabled')) {
+            $this->applyBackendAdditionalDiscount(
+                $lines,
+                $request->input('additional_discount'),
+                (string) $request->input('additional_discount_type', 'percent')
+            );
+        }
 
         $paymentStatus = $request->input('payment_status') === 'paid' ? 'paid' : 'unpaid';
         $sendNotification = $request->has('send_order_notification')
@@ -94,9 +101,26 @@ class OrderPlacementService
         });
 
         $this->assignBackendShippingCosts($lines, $request);
-        $this->applyBackendCoupon($customer, $lines, trim((string) $request->input('coupon_code')), false);
+        $discountType = (string) $request->input('additional_discount_type', 'percent');
+        $discountValue = $request->input('additional_discount');
+        if ($request->boolean('additional_discount_enabled')) {
+            $this->applyBackendAdditionalDiscount(
+                $lines,
+                $discountValue,
+                $discountType,
+                $request->boolean('validate_additional_discount')
+            );
+        }
 
-        return $this->summarizeLines($lines);
+        $summary = $this->summarizeLines($lines);
+        if ($request->boolean('additional_discount_enabled') && $summary['coupon_discount'] > 0) {
+            $summary['additional_discount'] = [
+                'discount_type' => $discountType,
+                'discount_value' => (float) $discountValue,
+            ];
+        }
+
+        return $summary;
     }
 
     public function quoteBackendLine(Request $request): array
@@ -193,12 +217,33 @@ class OrderPlacementService
         $transport = null;
         $bookedTo = null;
         $localDeliveryPartner = null;
+        $courierMethod = null;
 
         if ($shippingChoice === 'transport') {
             $transport = $this->resolveTransport($request);
             $bookedTo = $this->resolveBookedTo($request, $transport);
+            if (!$transport || !$bookedTo) {
+                $this->fail('booked_to_id', translate('Please select a transport provider and its booked-to destination.'));
+            }
+            if (!in_array($request->input('fod_mode'), ['air', 'sea', 'surface'], true)) {
+                $this->fail('fod_mode', translate('Please select a transport mode.'));
+            }
+            if ($request->input('fod_mode') === 'surface' && !in_array($request->input('transport_surface_mode'), ['road', 'train'], true)) {
+                $this->fail('transport_surface_mode', translate('Please select Road or Train for Surface transport.'));
+            }
+            if (!in_array($request->input('transport_delivery_type'), ['door_delivery', 'transport_godown'], true)) {
+                $this->fail('transport_delivery_type', translate('Please select a delivery type.'));
+            }
         } elseif ($shippingChoice === 'local') {
             $localDeliveryPartner = $this->resolveLocalDeliveryPartner($request);
+            if (!$localDeliveryPartner) {
+                $this->fail('local_delivery_partner_id', translate('Please select or enter a local delivery partner.'));
+            }
+        } else {
+            $courierMethod = ShippingMethod::where('is_active', 1)->find($request->input('shipping_method_id'));
+            if (!$courierMethod || !$request->filled('courier_service')) {
+                $this->fail('courier_service', translate('Please select a courier provider and service.'));
+            }
         }
 
         $order = new Order;
@@ -211,7 +256,7 @@ class OrderPlacementService
         $order->payment_status = ($options['payment_status'] ?? 'unpaid') === 'paid' ? 'paid' : 'unpaid';
         $order->shipping_choice = $shippingChoice;
         $order->shipping_by = $shippingChoice === 'courier'
-            ? (get_shipping_method_slug_by_id($request->shipping_method_id) ?? 'shipway')
+            ? $courierMethod->slug
             : ($shippingChoice === 'transport' ? optional($transport)->name : optional($localDeliveryPartner)->name);
         $order->fod_mode = $shippingChoice === 'transport' ? $request->fod_mode : null;
         $order->shipping_courier_id = $shippingChoice === 'courier' ? $request->courier_service : null;
@@ -318,6 +363,7 @@ class OrderPlacementService
             $orderDetail->sale_price = $unitSalePrice;
             $orderDetail->mrp_price = $cartItem['mrp_price'] ?? ($selectedBatch ? $selectedBatch->mrp_price : (optional($productStock)->mrp_price ?? $product->mrp_price));
             $orderDetail->discount_amount = round(max(0, (float) $unitBasePrice - (float) $unitSalePrice) * $quantity, 2);
+            $orderDetail->coupon_discount = round((float) ($cartItem['discount'] ?? 0), 2);
             $orderDetail->tax = $itemTax;
             $orderDetail->shipping_type = $cartItem['shipping_type'] ?? 'home_delivery';
             $orderDetail->product_referral_code = $cartItem['product_referral_code'] ?? null;
@@ -382,16 +428,18 @@ class OrderPlacementService
             ->pluck('coupon_code')
             ->first();
 
-        if ($couponDiscount > 0 && $couponCode != null) {
+        if ($couponDiscount > 0) {
             $order->coupon_discount = $couponDiscount;
             $order->grand_total -= $couponDiscount;
 
-            $coupon = Coupon::where('code', $couponCode)->first();
-            if ($coupon) {
-                $couponUsage = new CouponUsage;
-                $couponUsage->user_id = $customer->id;
-                $couponUsage->coupon_id = $coupon->id;
-                $couponUsage->save();
+            if ($couponCode != null) {
+                $coupon = Coupon::where('code', $couponCode)->first();
+                if ($coupon) {
+                    $couponUsage = new CouponUsage;
+                    $couponUsage->user_id = $customer->id;
+                    $couponUsage->coupon_id = $coupon->id;
+                    $couponUsage->save();
+                }
             }
         }
 
@@ -508,7 +556,9 @@ class OrderPlacementService
                 $unitSalePrice = round((float) $item['sale_price'], 2);
             }
 
-            $tax = CartUtility::tax_calculation($product, $unitSalePrice);
+            // Cart tax is persisted to two decimal places. Round the unit tax
+            // here as well so backend quotes match the storefront exactly.
+            $tax = round(CartUtility::tax_calculation($product, $unitSalePrice), 2);
 
             $line = new Cart;
             $line->id = $lineId++;
@@ -571,7 +621,8 @@ class OrderPlacementService
             $lineCoupon = (float) ($line['discount'] ?? 0);
             $lineProductDiscount = round(max(0, (float) $line['before_productandbatch_discount'] - (float) $line['sale_price']) * $qty, 2);
             $grossAmount = $lineSubtotal + $gstAmount;
-            $finalAmount = max(0, $grossAmount + $lineShipping - $lineCoupon);
+            $productFinalAmount = max(0, $grossAmount - $lineCoupon);
+            $finalAmount = $productFinalAmount + $lineShipping;
             $groupKey = (int) $line['product_id'] . '|' . (string) ($line['variation'] ?? '');
 
             $subtotal += $lineSubtotal;
@@ -600,6 +651,7 @@ class OrderPlacementService
                 'gross_amount' => round($grossAmount, 2),
                 'coupon_discount' => round($lineCoupon, 2),
                 'shipping_cost' => round($lineShipping, 2),
+                'product_final_amount' => round($productFinalAmount, 2),
                 'final_amount' => round($finalAmount, 2),
                 'line_total' => round($finalAmount, 2),
                 'scheme_quantity' => (int) ($schemeQtyByGroup[$groupKey] ?? 0),
@@ -736,7 +788,13 @@ class OrderPlacementService
         }
 
         $ownerLines = $lines->filter(fn ($line) => (int) ($line['owner_id'] ?? 0) === (int) $coupon->user_id)->values();
-        $couponResult = coupon_cart_discount_allocations($coupon, $ownerLines, json_decode($coupon->details), $userCoupon);
+        $couponResult = coupon_cart_discount_allocations(
+            $coupon,
+            $ownerLines,
+            json_decode($coupon->details),
+            $userCoupon,
+            true
+        );
 
         if (($couponResult['discount'] ?? 0) <= 0) {
             if ($throwOnInvalid) {
@@ -759,6 +817,66 @@ class OrderPlacementService
         }
     }
 
+    protected function applyBackendAdditionalDiscount(Collection $lines, $rawValue, string $discountType, bool $throwOnInvalid = true): void
+    {
+        foreach ($lines as $line) {
+            $line->discount = 0;
+            $line->coupon_code = null;
+            $line->coupon_applied = 0;
+        }
+
+        if ($rawValue === null || $rawValue === '') {
+            return;
+        }
+        if (!is_numeric($rawValue) || (float) $rawValue < 0) {
+            if ($throwOnInvalid) {
+                $this->fail('additional_discount', translate('Discount must be zero or greater.'));
+            }
+            return;
+        }
+        if (!in_array($discountType, ['percent', 'amount'], true)) {
+            if ($throwOnInvalid) {
+                $this->fail('additional_discount_type', translate('Please select a valid discount type.'));
+            }
+            return;
+        }
+
+        $discountValue = (float) $rawValue;
+        if ($discountType === 'percent' && $discountValue > 100) {
+            if ($throwOnInvalid) {
+                $this->fail('additional_discount', translate('Percentage discount cannot exceed 100%.'));
+            }
+            return;
+        }
+        if ($discountValue <= 0) {
+            if ($throwOnInvalid) {
+                $this->fail('additional_discount', translate('Discount must be greater than zero.'));
+            }
+            return;
+        }
+
+        $paidLines = $lines->filter(fn ($line) => !(bool) ($line['is_scheme'] ?? false))->values();
+        $productSubtotal = (float) $paidLines->sum(fn ($line) => cart_coupon_line_value($line));
+        if ($productSubtotal <= 0) {
+            return;
+        }
+
+        $discountAmount = $discountType === 'percent'
+            ? ($productSubtotal * $discountValue) / 100
+            : $discountValue;
+        $discountAmount = round(min($productSubtotal, max(0, $discountAmount)), 2);
+        $allocations = allocate_coupon_discount_by_line_value($paidLines, $discountAmount);
+
+        foreach ($paidLines as $line) {
+            $lineDiscount = (float) ($allocations[(int) $line->id] ?? 0);
+            if ($lineDiscount <= 0) {
+                continue;
+            }
+            $line->discount = $lineDiscount;
+            $line->coupon_applied = 1;
+        }
+    }
+
     protected function assignBackendShippingCosts(Collection $lines, Request $request): void
     {
         foreach ($lines as $line) {
@@ -767,6 +885,18 @@ class OrderPlacementService
         }
 
         $shippingCosts = (array) $request->input('shipping_costs', $request->input('seller_shipping_costs', []));
+        foreach ((array) $request->input('shipping_items', []) as $shippingItem) {
+            $amount = max(0, (float) ($shippingItem['amount'] ?? 0));
+            if ($amount <= 0) {
+                continue;
+            }
+
+            $sellerId = (int) ($shippingItem['seller_id'] ?? 0);
+            if (!$lines->contains(fn ($line) => (int) ($line['owner_id'] ?? 0) === $sellerId)) {
+                $sellerId = (int) ($lines->first()['owner_id'] ?? 0);
+            }
+            $shippingCosts[$sellerId] = (float) ($shippingCosts[$sellerId] ?? 0) + $amount;
+        }
         $globalShipping = (float) $request->input('shipping_cost', 0);
         $groups = $lines->groupBy(fn ($line) => (int) ($line['owner_id'] ?? 0));
 

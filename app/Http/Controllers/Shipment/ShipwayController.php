@@ -494,8 +494,11 @@ class ShipwayController extends Controller
                 return ['success' => false, 'data' => [], 'message' => 'to_pincode or address_id required'];
             }
 
-            // Build package from cart
-            $package = $this->buildPackageFromCart();
+            // Backend order creation can provide the staged products as a
+            // precomputed package; checkout continues to use the live cart.
+            $package = is_array($orderOrRequest->input('package'))
+                ? $orderOrRequest->input('package')
+                : $this->buildPackageFromCart();
 
         } else {
             // If called with Order (later flow) — your previous implementation can live here.

@@ -269,7 +269,11 @@
         return max(0, (float) $beforeUnit) * $qty;
     });
     $taxableTotal = $order->orderDetails->sum(function ($row) {
-        return (bool) ($row->is_scheme ?? false) ? 0 : order_detail_line_subtotal($row);
+        if ((bool) ($row->is_scheme ?? false)) {
+            return 0;
+        }
+
+        return max(0, order_detail_line_subtotal($row) - (float) ($row->coupon_discount ?? 0));
     });
     $sgstTotal = 0;
     $cgstTotal = 0;
@@ -474,7 +478,9 @@
                         $unitPrice = $detail->before_productandbatch_discount ?? $saleUnitPrice;
                         $lineGross = $unitPrice * max(0, (int) $qty);
                         $lineTax = $detail->tax;
-                        $discountValue = (float) ($detail->discount_amount ?? 0);
+                        $productDiscountValue = (float) ($detail->discount_amount ?? 0);
+                        $lineCouponDiscount = (float) ($detail->coupon_discount ?? 0);
+                        $discountValue = $productDiscountValue + $lineCouponDiscount;
                         $taxableAmount = max($lineGross - $discountValue, 0);
                         if ($isMaharashtra) {
                             $sgst = $lineTax / 2;

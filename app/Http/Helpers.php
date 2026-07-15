@@ -453,6 +453,18 @@ if (!function_exists('sync_business_addresses_to_address_book')) {
             return;
         }
 
+        // Business address fields are optional during customer creation. The
+        // address book schema still requires a complete country/state/city
+        // hierarchy, so retain partial values in user_details and defer the
+        // address book sync until the location is complete.
+        $hasCompleteLocation = filled($details->country_id_business)
+            && filled($details->state_id_business)
+            && filled($details->city_id_business);
+
+        if (!$hasCompleteLocation) {
+            return;
+        }
+
         $phone = $details->prim_mobile_no_business ?: $user->phone;
         $payload = [
             'address' => $addressText,
@@ -1282,7 +1294,7 @@ if (!function_exists('allocate_coupon_discount_by_line_value')) {
 }
 
 if (!function_exists('coupon_cart_discount_allocations')) {
-    function coupon_cart_discount_allocations($coupon, $cartItems, $couponDetails = null, $userCoupon = null): array
+    function coupon_cart_discount_allocations($coupon, $cartItems, $couponDetails = null, $userCoupon = null, bool $includeDiscountedItems = false): array
     {
         $cartItems = collect($cartItems);
         $paidItems = $cartItems->filter(function ($item) {
@@ -1290,8 +1302,12 @@ if (!function_exists('coupon_cart_discount_allocations')) {
                 ? !(bool) ($item['is_scheme'] ?? false)
                 : !(bool) ($item->is_scheme ?? false);
         })->values();
-        $eligibleItems = $cartItems->filter(fn ($item) => cart_coupon_line_is_eligible($item))->values();
-        $discountExcludedItems = $paidItems->filter(fn ($item) => !cart_coupon_line_is_eligible($item))->values();
+        $eligibleItems = $includeDiscountedItems
+            ? $paidItems
+            : $cartItems->filter(fn ($item) => cart_coupon_line_is_eligible($item))->values();
+        $discountExcludedItems = $includeDiscountedItems
+            ? collect()
+            : $paidItems->filter(fn ($item) => !cart_coupon_line_is_eligible($item))->values();
         $couponDiscount = 0.0;
         $allocations = [];
         $defaultResult = [

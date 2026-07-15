@@ -45,7 +45,7 @@ class OrderController extends Controller
         $this->middleware(['permission:view_all_orders|view_inhouse_orders|view_seller_orders|view_pickup_point_orders|view_all_offline_payment_orders'])->only('all_orders');
         $this->middleware(['permission:view_order_details'])->only('show');
         $this->middleware(['permission:delete_order'])->only('destroy','bulk_order_delete');
-        $this->middleware(['permission:add_order'])->only('create', 'store', 'backendCustomerSearch', 'backendCustomerAddresses', 'backendProductSearch', 'backendProductQuote', 'backendOrderSummary');
+        $this->middleware(['permission:add_order'])->only('create', 'store', 'backendCustomerSearch', 'backendCustomerAddresses', 'backendProductSearch', 'backendProductQuote', 'backendCourierRates', 'backendOrderSummary');
     }
 
     // All Orders
@@ -318,6 +318,92 @@ class OrderController extends Controller
                 'success' => true,
                 'data' => $orders->quoteBackendLine($request),
             ]);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($exception->errors())->flatten()->first(),
+                'errors' => $exception->errors(),
+            ], 422);
+        }
+    }
+
+    public function backendCourierRates(Request $request, OrderPlacementService $orders)
+    {
+        try {
+            $customer = $orders->resolveApprovedCustomer($request->input('customer_id'));
+            $method = ShippingMethod::where('is_active', 1)->find($request->input('shipping_method_id'));
+            if (!$method) {
+                throw ValidationException::withMessages([
+                    'shipping_method_id' => translate('Please select an active courier provider.'),
+                ]);
+            }
+
+            $addressId = $request->boolean('shipping_same_as_billing')
+                ? $request->input('billing_address_id')
+                : $request->input('shipping_address_id');
+            $address = $addressId
+                ? Address::where('user_id', $customer->id)->find($addressId)
+                : null;
+            $toPincode = optional($address)->postal_code
+                ?: $request->input($request->boolean('shipping_same_as_billing') ? 'billing_postal_code' : 'shipping_postal_code');
+
+            if (!$toPincode) {
+                throw ValidationException::withMessages([
+                    'shipping_address_id' => translate('Select a shipping address with a postal code before loading courier services.'),
+                ]);
+            }
+
+            $weight = 0.0;
+            $length = 0.0;
+            $width = 0.0;
+            $height = 0.0;
+            foreach ((array) $request->input('items', []) as $item) {
+                $product = Product::find($item['product_id'] ?? null);
+                if (!$product) {
+                    continue;
+                }
+
+                $stock = !empty($item['stock_id'])
+                    ? $product->stocks()->where('id', $item['stock_id'])->first()
+                    : null;
+                $quantity = max(1, (int) ($item['quantity'] ?? 1));
+                $weight += (float) ($stock->weight ?? $product->weight ?? 0.21) * $quantity;
+                $length += (float) ($stock->length ?? $product->length ?? 10) * $quantity;
+                $width += (float) ($stock->width ?? $product->width ?? 10) * $quantity;
+                $height += (float) ($stock->height ?? $product->height ?? 10) * $quantity;
+            }
+
+            if ($weight <= 0) {
+                throw ValidationException::withMessages([
+                    'items' => translate('Please add at least one product before loading courier services.'),
+                ]);
+            }
+
+            $volumetricWeight = (max(10, $length) * max(10, $width) * max(10, $height)) / 5000;
+            $package = [
+                'total_physical_weight' => number_format($weight, 2, '.', ''),
+                'box_length' => number_format(max(10, $length), 2, '.', ''),
+                'box_breadth' => number_format(max(10, $width), 2, '.', ''),
+                'box_height' => number_format(max(10, $height), 2, '.', ''),
+                'volumetric_weight' => number_format($volumetricWeight, 2, '.', ''),
+                'charged_weight' => number_format(max($weight, $volumetricWeight), 2, '.', ''),
+            ];
+
+            $rateRequest = Request::create('/', 'GET', [
+                'provider' => $method->slug,
+                'address_id' => optional($address)->id,
+                'to_pincode' => $toPincode,
+                'payment_type' => $request->input('payment_type') === 'cash_on_delivery' ? 'cod' : 'prepaid',
+                'package' => $package,
+            ]);
+            $class = 'App\\Http\\Controllers\\Shipment\\' . ucfirst($method->slug) . 'Controller';
+            if (!class_exists($class) || !method_exists($class, 'rates')) {
+                throw ValidationException::withMessages([
+                    'shipping_method_id' => translate('Courier provider is not available.'),
+                ]);
+            }
+
+            return response()->json(app($class)->rates($rateRequest));
         } catch (ValidationException $exception) {
             return response()->json([
                 'success' => false,

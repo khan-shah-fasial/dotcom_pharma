@@ -230,6 +230,8 @@
                                 <th data-breakpoints="lg" class="min-col text-uppercase text-center">
                                     {{ translate('Price') }}</th>
                                 <th data-breakpoints="lg" class="min-col text-uppercase text-right">
+                                    {{ translate('MRP') }}</th>
+                                <th data-breakpoints="lg" class="min-col text-uppercase text-right">
                                     {{ translate('Total') }}</th>
                             </tr>
                         </thead>
@@ -320,8 +322,11 @@
                                     <td class="text-center">
                                         {{ single_price($orderDetail->quantity > 0 ? $orderDetail->price / $orderDetail->quantity : 0) }}
                                     </td>
+                                    <td class="text-right">
+                                        {{ single_price((float) ($orderDetail->mrp_price ?? 0)) }}
+                                    </td>
                                     <td class="text-center">
-                                        {{ single_price($orderDetail->price) }}
+                                        {{ single_price(max(0, $orderDetail->price + $orderDetail->tax - (float) ($orderDetail->coupon_discount ?? 0))) }}
                                     </td>
                                 </tr>
                             @endforeach
