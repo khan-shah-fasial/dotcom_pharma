@@ -61,13 +61,77 @@
             flex: 0 0 auto;
         }
     </style>
-    <form id="backend-order-form" action="{{ route('orders.store') }}" method="POST">
+    <form id="backend-order-form" action="{{ route('orders.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="backend_add_order" value="1">
         <input type="hidden" name="customer_id" id="selected-customer-id" value="{{ old('customer_id') }}">
 
         <div class="row gutters-10">
             <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 h6">{{ translate('Order Details') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row gutters-5">
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('Challan Number') }}</label>
+                                <input type="text" class="form-control" name="challan_number" value="{{ old('challan_number') }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('Cases') }}</label>
+                                <input type="text" class="form-control" name="cases" value="{{ old('cases') }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('Attached File Name') }}</label>
+                                <input type="text" class="form-control" name="attached_file_name" value="{{ old('attached_file_name') }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('PM (Accountant Name)') }}</label>
+                                <input type="text" class="form-control" name="pm_accountant_name" value="{{ old('pm_accountant_name') }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('LR Number') }}</label>
+                                <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number') }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('CC Attached') }}</label>
+                                <input type="file" class="form-control" name="cc_attached" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                <small class="text-muted">{{ translate('One file only. Maximum size: 10 MB.') }}</small>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('Sales Person') }}</label>
+                                <select class="form-control aiz-selectpicker" name="sales_person_id" data-live-search="true" title="{{ translate('Select Sales Person') }}">
+                                    <option value="">{{ translate('Select Sales Person') }}</option>
+                                    @foreach ($salesPeople as $staff)
+                                        <option value="{{ $staff->user_id }}" @selected((string) old('sales_person_id') === (string) $staff->user_id)>
+                                            {{ optional($staff->user)->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('Weight') }}</label>
+                                <input type="text" class="form-control" name="weight" value="{{ old('weight') }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('Dimensions') }}</label>
+                                <input type="text" class="form-control" name="dimensions" value="{{ old('dimensions') }}">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('Transport Details') }}</label>
+                                <input type="text" class="form-control" name="transport_details" value="{{ old('transport_details') }}">
+                            </div>
+                        </div>
+                        <input type="hidden" name="freight_paid" value="0">
+                        <label class="aiz-checkbox mb-0">
+                            <input type="checkbox" name="freight_paid" value="1" @checked(old('freight_paid'))>
+                            <span>{{ translate('Freight Paid') }}</span>
+                            <span class="aiz-square-check"></span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0 h6">{{ translate('Customer') }}</h5>
@@ -159,6 +223,38 @@
                                     <input type="number" min="0" step="0.01" class="form-control" id="picker-sale-price">
                                 </div>
                             </div>
+                            <div class="row gutters-10 mt-3">
+                                <div class="col-md-4">
+                                    <div class="border rounded p-2 h-100">
+                                        <div class="fw-700 mb-2">{{ translate('Inventory') }}</div>
+                                        <div class="row gutters-5 small">
+                                            <div class="col-6 mb-1">{{ translate('Qty') }}: <strong id="picker-info-qty">-</strong></div>
+                                            <div class="col-6 mb-1">{{ translate('Scheme') }}: <strong id="picker-info-scheme">-</strong></div>
+                                            <div class="col-6">{{ translate('MOQ') }}: <strong id="picker-info-moq">-</strong></div>
+                                            <div class="col-6">{{ translate('Current Stock') }}: <strong id="picker-info-stock">-</strong></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-2 h-100 small">
+                                        <div class="fw-700 mb-2">{{ translate('Product Information') }}</div>
+                                        <div>{{ translate('Product Name') }}: <strong id="picker-info-product">-</strong></div>
+                                        <div>{{ translate('SKU') }}: <strong id="picker-info-sku">-</strong></div>
+                                        <div>{{ translate('User') }}: <strong id="picker-info-user">-</strong></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-2 h-100 small">
+                                        <div class="fw-700 mb-2">{{ translate('Variant Information') }}</div>
+                                        <div>{{ translate('Pack Size') }}: <strong id="picker-info-pack">-</strong></div>
+                                        <div>{{ translate('Type') }}: <strong id="picker-info-type">-</strong></div>
+                                        <div>{{ translate('Quality') }}: <strong id="picker-info-quality">-</strong></div>
+                                        <div>{{ translate('Material') }}: <strong id="picker-info-material">-</strong></div>
+                                        <div>{{ translate('Size') }}: <strong id="picker-info-size">-</strong></div>
+                                        <div>{{ translate('Country of Origin') }}: <strong id="picker-info-origin">-</strong></div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="row gutters-10 align-items-center mt-3">
                                 <div class="col-md-9">
                                     <div id="picker-quote" class="small text-muted"></div>
@@ -177,6 +273,7 @@
                                         <th>{{ translate('Variant') }}</th>
                                         <th>{{ translate('Batch') }}</th>
                                         <th class="text-right">{{ translate('Qty') }}</th>
+                                        <th class="text-right">{{ translate('Scheme Qty (Free)') }}</th>
                                         <th class="text-right">{{ translate('Sale') }}</th>
                                         <th class="text-right">{{ translate('GST Amount') }}</th>
                                         <th class="text-right">{{ translate('Gross') }}</th>
@@ -187,11 +284,12 @@
                                 </thead>
                                 <tbody id="order-lines-body">
                                     <tr>
-                                        <td colspan="10" class="text-center text-muted">{{ translate('No products added') }}</td>
+                                        <td colspan="11" class="text-center text-muted">{{ translate('No products added') }}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+                        <div id="scheme-quantity-notice" class="alert alert-success mt-3 mb-0 d-none"></div>
                         <div id="line-hidden-inputs"></div>
                     </div>
                 </div>
@@ -365,7 +463,7 @@
                                 <tr><td>{{ translate('Subtotal') }}</td><td class="text-right" id="summary-subtotal">0.00</td></tr>
                                 <tr><td>{{ translate('Product/Batch Discount') }}</td><td class="text-right" id="summary-product-discount">0.00</td></tr>
                                 <tr><td>{{ translate('GST') }}</td><td class="text-right" id="summary-tax">0.00</td></tr>
-                                <tr><td>{{ translate('Scheme Qty') }}</td><td class="text-right" id="summary-scheme">0</td></tr>
+                                <tr><td>{{ translate('Scheme Qty (Free)') }}</td><td class="text-right" id="summary-scheme">0</td></tr>
                                 <tr><td>{{ translate('Coupon') }}</td><td class="text-right" id="summary-coupon">0.00</td></tr>
                                 <tr><td>{{ translate('Shipping') }}</td><td class="text-right" id="summary-shipping">0.00</td></tr>
                                 <tr class="fw-700"><td>{{ translate('Grand Total') }}</td><td class="text-right" id="summary-grand-total">0.00</td></tr>
@@ -407,6 +505,13 @@
 
             function money(value) {
                 return (Number(value || 0)).toFixed(2);
+            }
+
+            function schemeQuantityBadge(value) {
+                var quantity = Number(value || 0);
+                return quantity > 0
+                    ? '<span class="badge badge-inline badge-success">+' + quantity + ' {{ translate('Free') }}</span>'
+                    : '-';
             }
 
             function escapeHtml(value) {
@@ -461,7 +566,8 @@
                     ['{{ translate('Current Status') }}', customer.current_status],
                     ['{{ translate('Credit Status') }}', customer.credit_status],
                     ['{{ translate('Number of Days') }}', customer.credit_days],
-                    ['{{ translate('Credit Limit') }}', customer.credit_limit]
+                    ['{{ translate('Credit Limit') }}', customer.credit_limit],
+                    ['{{ translate('Default Shipping') }}', customer.default_shipping_method]
                 ];
                 var html = '<div class="fw-700">' + escapeHtml(displayCustomerName(customer)) + '</div>'
                     + '<div>' + escapeHtml(customerSubText(customer)) + '</div>'
@@ -476,6 +582,19 @@
                 });
 
                 return html + '</div>';
+            }
+
+            function applyCustomerShippingDefaults(customer) {
+                var method = customer.default_shipping_method || 'transport';
+                $('#shipping-method').val(method).trigger('change');
+
+                if (method !== 'transport') return;
+
+                $('#transport-id').val(customer.default_transport_id || '').trigger('change');
+                $('#booked-to-id').val(customer.default_booked_to_id || '');
+                $('select[name="fod_mode"]').val(customer.default_transport_mode || 'surface').trigger('change');
+                $('#transport-surface-mode').val(customer.default_transport_surface_mode || 'road');
+                $('select[name="transport_delivery_type"]').val(customer.default_delivery_type || 'door_delivery');
             }
 
             function sortedByDefaultThenLatest(addresses) {
@@ -546,6 +665,7 @@
                             $('#selected-customer-id').val(customer.id);
                             $('#selected-customer-card').removeClass('d-none').html(customerMetaHtml(customer));
                             $box.empty();
+                            applyCustomerShippingDefaults(customer);
                             loadAddresses(customer.id);
                             refreshSummary();
                         })
@@ -611,13 +731,16 @@
                 }
                 var html = '';
                 products.forEach(function (product, index) {
+                    var firstStock = (product.stocks || [])[0] || {};
                     var image = product.thumbnail
                         ? '<img src="' + escapeHtml(product.thumbnail) + '" class="backend-product-result-image rounded border" alt="">'
                         : '<span class="backend-product-result-image rounded border bg-light d-inline-block"></span>';
                     html += '<div class="backend-product-result-row">'
                         + '<div class="backend-product-result-info">'
                         + image
-                        + '<div class="backend-product-result-text"><strong>' + escapeHtml(product.name) + '</strong><small>' + escapeHtml(product.brand || '') + ' | ' + escapeHtml(product.owner_name || '') + '</small></div>'
+                        + '<div class="backend-product-result-text"><strong>' + escapeHtml(product.name) + '</strong>'
+                        + '<small>{{ translate('SKU') }}: ' + escapeHtml(firstStock.sku || product.sku || '-') + ' | {{ translate('User') }}: ' + escapeHtml(product.owner_name || '-') + '</small>'
+                        + '<small>{{ translate('Stock') }}: ' + escapeHtml(firstStock.current_stock ?? 0) + ' | {{ translate('MOQ') }}: ' + escapeHtml(firstStock.min_qty ?? 1) + ' | {{ translate('Scheme') }}: ' + escapeHtml(firstStock.scheme ?? 0) + '</small></div>'
                         + '</div>'
                         + '<button type="button" class="btn btn-soft-primary btn-sm backend-product-result-action product-select" data-index="' + index + '">{{ translate('Select') }}</button>'
                         + '</div>';
@@ -645,6 +768,7 @@
                 $('#product-picker').removeClass('d-none');
                 $('#product-results').empty().removeData('products').removeClass('has-results');
                 syncBatchOptions();
+                syncProductInformation();
                 quoteCurrentProduct();
             }
 
@@ -667,6 +791,31 @@
                 var selectedId = Number($('#picker-batch').val());
                 if (!stock || !selectedId) return null;
                 return (stock.batches || []).find(function (batch) { return Number(batch.id) === selectedId; }) || null;
+            }
+
+            function infoValue(value) {
+                return value === null || value === undefined || value === '' ? '-' : value;
+            }
+
+            function syncProductInformation() {
+                var stock = selectedStock() || {};
+                var batch = selectedBatch();
+                var quantity = Number($('#picker-quantity').val() || 0);
+                var currentStock = batch ? Number(batch.qty || 0) : Number(stock.current_stock ?? stock.qty ?? 0);
+
+                $('#picker-info-qty').text(infoValue(quantity));
+                $('#picker-info-scheme').text(infoValue(stock.scheme));
+                $('#picker-info-moq').text(infoValue(stock.min_qty));
+                $('#picker-info-stock').text(infoValue(currentStock));
+                $('#picker-info-product').text(infoValue(currentProduct && currentProduct.name));
+                $('#picker-info-sku').text(infoValue(stock.sku || (currentProduct && currentProduct.sku)));
+                $('#picker-info-user').text(infoValue(currentProduct && currentProduct.owner_name));
+                $('#picker-info-pack').text(infoValue(stock.pack_size || (currentProduct && currentProduct.pack_size)));
+                $('#picker-info-type').text(infoValue(stock.type || (currentProduct && currentProduct.product_type)));
+                $('#picker-info-quality').text(infoValue(stock.quality || (currentProduct && currentProduct.quality)));
+                $('#picker-info-material').text(infoValue(stock.material || (currentProduct && currentProduct.material)));
+                $('#picker-info-size').text(infoValue(stock.size));
+                $('#picker-info-origin').text(infoValue(currentProduct && currentProduct.country_of_origin));
             }
 
             function syncQuantityBounds() {
@@ -757,7 +906,7 @@
                         + ' | {{ translate('Discount') }}: ' + money(currentQuote.discount_amount)
                         + ' | {{ translate('GST Amount') }}: ' + money(currentQuote.gst_amount || currentQuote.tax)
                         + ' | {{ translate('Final') }}: ' + money(currentQuote.product_final_amount !== undefined ? currentQuote.product_final_amount : (currentQuote.final_amount || currentQuote.line_total))
-                        + ' | {{ translate('Scheme Qty') }}: ' + (currentQuote.scheme_quantity || 0));
+                        + ' | {{ translate('Scheme Qty (Free)') }}: ' + (currentQuote.scheme_quantity || 0));
                 }).fail(function (xhr) {
                     currentQuote = null;
                     $('#add-line-btn').prop('disabled', true);
@@ -769,7 +918,8 @@
                 var $body = $('#order-lines-body').empty();
                 var $hidden = $('#line-hidden-inputs').empty();
                 if (!lines.length) {
-                    $body.html('<tr><td colspan="10" class="text-center text-muted">{{ translate('No products added') }}</td></tr>');
+                    $body.html('<tr><td colspan="11" class="text-center text-muted">{{ translate('No products added') }}</td></tr>');
+                    $('#scheme-quantity-notice').addClass('d-none').text('');
                     $('#seller-shipping-costs').html('{{ translate('Add products to enter seller shipping cost.') }}');
                     shippingItems = [];
                     renderShippingItems();
@@ -783,6 +933,7 @@
                         + '<td>' + escapeHtml(line.stock_label || '-') + '</td>'
                         + '<td>' + escapeHtml(line.batch_label || '-') + '</td>'
                         + '<td class="text-right">' + line.quantity + '</td>'
+                        + '<td class="text-right line-scheme" data-index="' + index + '">' + schemeQuantityBadge(line.quote.scheme_quantity) + '</td>'
                         + '<td class="text-right">' + money(line.quote.sale_price) + '</td>'
                         + '<td class="text-right line-tax" data-index="' + index + '">' + money(line.quote.gst_amount || line.quote.tax) + '</td>'
                         + '<td class="text-right line-gross" data-index="' + index + '">' + money(line.quote.gross_amount) + '</td>'
@@ -897,6 +1048,7 @@
                         + '<td class="text-right">-</td>'
                         + '<td class="text-right">-</td>'
                         + '<td class="text-right">-</td>'
+                        + '<td class="text-right">-</td>'
                         + '<td class="text-right">' + money(row.amount) + '</td>'
                         + '<td class="text-right">-</td>'
                         + '<td class="text-right">' + money(row.amount) + '</td>'
@@ -973,6 +1125,7 @@
                 if (!$('#selected-customer-id').val() || !lines.length) {
                     $('#summary-subtotal,#summary-product-discount,#summary-tax,#summary-coupon,#summary-shipping,#summary-grand-total').text('0.00');
                     $('#summary-scheme').text('0');
+                    $('#scheme-quantity-notice').addClass('d-none').text('');
                     return;
                 }
                 var requestData = $('#backend-order-form').serialize();
@@ -989,6 +1142,13 @@
                     $('#summary-product-discount').text(money(data.product_discount));
                     $('#summary-tax').text(money(data.tax));
                     $('#summary-scheme').text(data.scheme_quantity || 0);
+                    if (Number(data.scheme_quantity || 0) > 0) {
+                        $('#scheme-quantity-notice')
+                            .removeClass('d-none')
+                            .html('<strong>{{ translate('Scheme applied') }}:</strong> ' + Number(data.scheme_quantity) + ' {{ translate('free unit(s) will be added to this order.') }}');
+                    } else {
+                        $('#scheme-quantity-notice').addClass('d-none').text('');
+                    }
                     $('#summary-coupon').text(money(data.coupon_discount));
                     $('#summary-shipping').text(money(data.shipping));
                     $('#summary-grand-total').text(money(data.grand_total));
@@ -996,6 +1156,7 @@
                         data.lines.forEach(function (line, index) {
                             if (lines[index]) {
                                 lines[index].quote = line;
+                                $('.line-scheme[data-index="' + index + '"]').html(schemeQuantityBadge(line.scheme_quantity));
                                 $('.line-tax[data-index="' + index + '"]').text(money(line.gst_amount || line.tax));
                                 $('.line-gross[data-index="' + index + '"]').text(money(line.gross_amount));
                                 $('.line-final[data-index="' + index + '"]').text(money(line.product_final_amount !== undefined ? line.product_final_amount : (line.final_amount || line.line_total)));
@@ -1060,15 +1221,18 @@
                 salePriceEdited = false;
                 $('#picker-sale-price').val('');
                 syncBatchOptions();
+                syncProductInformation();
                 quoteCurrentProduct();
             });
             $('#picker-batch').on('change', function () {
                 salePriceEdited = false;
                 $('#picker-sale-price').val('');
+                syncProductInformation();
                 quoteCurrentProduct();
             });
             $('#picker-quantity').on('input change keyup', function () {
                 syncQuantityBounds();
+                syncProductInformation();
                 quoteCurrentProduct();
             });
             $('#picker-sale-price').on('input change keyup', function () {

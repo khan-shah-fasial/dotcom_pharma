@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Cart;
 use App\Models\Address;
+use App\Models\AttributeValue;
 use App\Models\Product;
 use App\Models\OrderDetail;
 use App\Models\CouponUsage;
@@ -18,6 +19,7 @@ use App\Models\ProductBatch;
 use App\Models\BookedTo;
 use App\Models\LocalDeliveryPartner;
 use App\Models\ShippingMethod;
+use App\Models\Staff;
 use App\Models\Transport;
 use Auth;
 use Mail;
@@ -32,9 +34,11 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\OrderNotification;
 use App\Utility\EmailUtility;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use App\Services\OrderPlacementService;
 use App\Services\WalletRewardService;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
@@ -154,13 +158,19 @@ class OrderController extends Controller
         $transports = Transport::active()->orderBy('name')->get();
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
         $localDeliveryPartners = LocalDeliveryPartner::active()->orderBy('name')->get();
+        $salesPeople = Staff::with('user')
+            ->whereHas('user')
+            ->get()
+            ->sortBy(fn ($staff) => strtolower((string) optional($staff->user)->name))
+            ->values();
 
         return view('backend.sales.create', compact(
             'countries',
             'shippingMethods',
             'transports',
             'bookedToOptions',
-            'localDeliveryPartners'
+            'localDeliveryPartners',
+            'salesPeople'
         ));
     }
 
@@ -226,6 +236,13 @@ class OrderController extends Controller
                 'credit_status' => $customer->credit_status,
                 'credit_days' => $customer->credit_days,
                 'credit_limit' => $customer->credit_limit,
+                'default_shipping_method' => optional($details)->default_shipping_method
+                    ?: 'transport',
+                'default_transport_id' => optional($details)->transport_id,
+                'default_booked_to_id' => optional($details)->booked_to_id,
+                'default_transport_mode' => optional($details)->default_transport_mode ?: 'surface',
+                'default_transport_surface_mode' => optional($details)->default_transport_surface_mode ?: 'road',
+                'default_delivery_type' => optional($details)->default_delivery_type ?: 'door_delivery',
             ];
         })->values());
     }
@@ -265,7 +282,10 @@ class OrderController extends Controller
             ->when($query !== '', function ($builder) use ($query) {
                 $builder->where(function ($nested) use ($query) {
                     $nested->where('name', 'like', '%' . $query . '%')
-                        ->orWhere('barcode', 'like', '%' . $query . '%');
+                        ->orWhere('barcode', 'like', '%' . $query . '%')
+                        ->orWhereHas('stocks', function ($stocks) use ($query) {
+                            $stocks->where('sku', 'like', '%' . $query . '%');
+                        });
                 });
             })
             ->orderBy('name')
@@ -273,10 +293,27 @@ class OrderController extends Controller
             ->get();
 
         return response()->json($products->map(function ($product) {
+            $variantValueIds = $product->stocks
+                ->flatMap(fn ($stock) => array_filter(explode('-', (string) $stock->id_variant), 'is_numeric'))
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+            $variantValueLookup = AttributeValue::with('attribute')
+                ->whereIn('id', $variantValueIds)
+                ->get()
+                ->keyBy('id');
             $stocks = $product->stocks
                 ->filter(fn ($stock) => !(bool) ($stock->is_hidden ?? false))
                 ->values()
-                ->map(function ($stock) {
+                ->map(function ($stock) use ($product, $variantValueLookup) {
+                    $variantAttributes = collect(explode('-', (string) $stock->id_variant))
+                        ->filter(fn ($valueId) => is_numeric($valueId))
+                        ->mapWithKeys(function ($valueId) use ($variantValueLookup) {
+                            $attributeValue = $variantValueLookup->get((int) $valueId);
+                            $attributeName = strtolower(trim((string) optional(optional($attributeValue)->attribute)->name));
+
+                            return $attributeName !== '' ? [$attributeName => optional($attributeValue)->value] : [];
+                        });
                     $batches = valid_batches_for_stock($stock, true)->map(function ($batch) {
                         return [
                             'id' => $batch->id,
@@ -295,6 +332,15 @@ class OrderController extends Controller
                         'qty' => (int) ($stock->qty ?? 0),
                         'min_qty' => (int) ($stock->min_qty ?? 1),
                         'scheme' => (int) ($stock->scheme ?? 0),
+                        'sku' => $stock->sku,
+                        'current_stock' => (int) ($stock->qty ?? 0),
+                        'pack_size' => $variantAttributes->get('pack size') ?: ($stock->variant ?: ($product->product_min_pack_size ?: $product->unit)),
+                        'type' => $variantAttributes->get('type') ?: ($product->product_type ?: $product->product_form),
+                        'quality' => $variantAttributes->get('quality'),
+                        'material' => $variantAttributes->get('material') ?: $product->product_material,
+                        'size' => $variantAttributes->get('size') ?: collect([$stock->length, $stock->width, $stock->height])
+                            ->filter(fn ($value) => $value !== null && $value !== '')
+                            ->implode(' × '),
                         'batches' => $batches,
                     ];
                 });
@@ -305,6 +351,12 @@ class OrderController extends Controller
                 'brand' => optional($product->brand)->name,
                 'owner_id' => $product->user_id,
                 'owner_name' => optional($product->user)->name ?: translate('Inhouse'),
+                'product_type' => $product->product_type ?: $product->product_form,
+                'quality' => null,
+                'material' => $product->product_material,
+                'country_of_origin' => $product->product_origin,
+                'pack_size' => $product->product_min_pack_size ?: $product->unit,
+                'sku' => optional($stocks->first())->sku,
                 'thumbnail' => uploaded_asset($product->thumbnail_img),
                 'stocks' => $stocks,
             ];
@@ -438,6 +490,27 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         if ($request->boolean('backend_add_order')) {
+            $request->validate([
+                'challan_number' => ['nullable', 'string', 'max:255'],
+                'cases' => ['nullable', 'string', 'max:255'],
+                'attached_file_name' => ['nullable', 'string', 'max:255'],
+                'pm_accountant_name' => ['nullable', 'string', 'max:255'],
+                'lr_number' => ['nullable', 'string', 'max:255'],
+                'cc_attached' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:10240'],
+                'transport_details' => ['nullable', 'string', 'max:1000'],
+                'sales_person_id' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+                'weight' => ['nullable', 'string', 'max:255'],
+                'dimensions' => ['nullable', 'string', 'max:255'],
+            ]);
+
+            $ccAttachedPath = null;
+            if ($request->hasFile('cc_attached')) {
+                $ccAttachedPath = $request->file('cc_attached')->store('uploads/order-cc-attachments', 'public');
+                $request->merge([
+                    'cc_attached_path' => $ccAttachedPath,
+                ]);
+            }
+
             try {
                 $combinedOrder = app(OrderPlacementService::class)->placeFromBackendRequest($request);
                 $firstOrder = $combinedOrder->orders()->orderBy('id')->first();
@@ -450,6 +523,9 @@ class OrderController extends Controller
 
                 return redirect()->route('all_orders.index');
             } catch (ValidationException $exception) {
+                if ($ccAttachedPath) {
+                    Storage::disk('public')->delete($ccAttachedPath);
+                }
                 $message = collect($exception->errors())->flatten()->first() ?: translate('Unable to create order.');
                 flash($message)->warning();
                 return back()->withInput();

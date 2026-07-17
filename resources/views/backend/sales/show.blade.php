@@ -210,6 +210,50 @@
                                 <td class="text-main text-bold">{{ translate('Additional Info') }}</td>
                                 <td class="text-right">{{ $order->additional_info }}</td>
                             </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('Challan Number') }}</td>
+                                <td class="text-right">{{ $order->challan_number ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('Cases') }}</td>
+                                <td class="text-right">{{ $order->cases ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('PM (Accountant Name)') }}</td>
+                                <td class="text-right">{{ $order->pm_accountant_name ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('LR Number') }}</td>
+                                <td class="text-right">{{ $order->lr_number ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('Transport Details') }}</td>
+                                <td class="text-right">{{ $order->transport_details ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('Sales Person') }}</td>
+                                <td class="text-right">{{ optional($order->salesPerson)->name ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('Weight / Dimensions') }}</td>
+                                <td class="text-right">{{ $order->weight ?: '-' }} / {{ $order->dimensions ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('Freight Paid') }}</td>
+                                <td class="text-right">{{ $order->freight_paid ? translate('Yes') : translate('No') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('CC Attached') }}</td>
+                                <td class="text-right">
+                                    @if($order->cc_attached_path)
+                                        <a href="{{ asset('storage/' . $order->cc_attached_path) }}" target="_blank" rel="noopener">
+                                            {{ $order->attached_file_name ?: basename($order->cc_attached_path) }}
+                                        </a>
+                                    @else
+                                        {{ $order->attached_file_name ?: '-' }}
+                                    @endif
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -240,6 +284,13 @@
                                 @php
                                     $isSchemeLine = (bool) ($orderDetail->is_scheme ?? false);
                                     $batchName = optional($orderDetail->batch)->batch;
+                                    $detailQuantity = max(0, (int) ($orderDetail->quantity ?? 0));
+                                    $detailSaleUnit = $orderDetail->sale_price !== null
+                                        ? (float) $orderDetail->sale_price
+                                        : ($detailQuantity > 0 ? (float) ($orderDetail->price ?? 0) / $detailQuantity : 0);
+                                    $detailBaseUnit = $orderDetail->before_productandbatch_discount ?? $detailSaleUnit;
+                                    $detailProductDiscount = round(max(0, (float) $detailBaseUnit - $detailSaleUnit) * $detailQuantity, 2);
+                                    $detailCouponDiscount = round(max(0, (float) ($orderDetail->discount_amount ?? 0) - $detailProductDiscount), 2);
                                     $product_stock = $orderDetail->product
                                         ? $orderDetail->product->stocks->where('variant', $orderDetail->variation)->first()
                                         : null;
@@ -326,7 +377,7 @@
                                         {{ single_price((float) ($orderDetail->mrp_price ?? 0)) }}
                                     </td>
                                     <td class="text-center">
-                                        {{ single_price(max(0, $orderDetail->price + $orderDetail->tax - (float) ($orderDetail->coupon_discount ?? 0))) }}
+                                        {{ single_price(max(0, $orderDetail->price + $orderDetail->tax - $detailCouponDiscount)) }}
                                     </td>
                                 </tr>
                             @endforeach

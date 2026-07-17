@@ -1020,6 +1020,37 @@
                             <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
                         </button>
                     </div>
++                    <div class="col-md-3 mb-3">
+                        <label class="form-label" for="default_shipping_method">{{ translate('Default Shipping Method') }}</label>
+                        <select id="default_shipping_method" name="default_shipping_method" class="form-control aiz-selectpicker">
+                            <option value="transport" {{ old('default_shipping_method', $details?->default_shipping_method ?? 'transport') === 'transport' ? 'selected' : '' }}>{{ translate('Transport') }}</option>
+                            <option value="courier" {{ old('default_shipping_method', $details?->default_shipping_method) === 'courier' ? 'selected' : '' }}>{{ translate('Courier') }}</option>
+                            <option value="local" {{ old('default_shipping_method', $details?->default_shipping_method) === 'local' ? 'selected' : '' }}>{{ translate('Local Delivery') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label" for="default_transport_mode">{{ translate('Default Transport Mode') }}</label>
+                        <select id="default_transport_mode" name="default_transport_mode" class="form-control aiz-selectpicker">
+                            <option value="surface" {{ old('default_transport_mode', $details?->default_transport_mode ?? 'surface') === 'surface' ? 'selected' : '' }}>{{ translate('Surface') }}</option>
+                            <option value="air" {{ old('default_transport_mode', $details?->default_transport_mode) === 'air' ? 'selected' : '' }}>{{ translate('Air') }}</option>
+                            <option value="sea" {{ old('default_transport_mode', $details?->default_transport_mode) === 'sea' ? 'selected' : '' }}>{{ translate('Sea') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label" for="default_transport_surface_mode">{{ translate('Default Surface Mode') }}</label>
+                        <select id="default_transport_surface_mode" name="default_transport_surface_mode" class="form-control aiz-selectpicker">
+                            <option value="road" {{ old('default_transport_surface_mode', $details?->default_transport_surface_mode ?? 'road') === 'road' ? 'selected' : '' }}>{{ translate('Road') }}</option>
+                            <option value="train" {{ old('default_transport_surface_mode', $details?->default_transport_surface_mode) === 'train' ? 'selected' : '' }}>{{ translate('Train') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label" for="default_delivery_type">{{ translate('Default Delivery Type') }}</label>
+                        <select id="default_delivery_type" name="default_delivery_type" class="form-control aiz-selectpicker">
+                            <option value="door_delivery" {{ old('default_delivery_type', $details?->default_delivery_type ?? 'door_delivery') === 'door_delivery' ? 'selected' : '' }}>{{ translate('Door Delivery') }}</option>
+                            <option value="transport_godown" {{ old('default_delivery_type', $details?->default_delivery_type) === 'transport_godown' ? 'selected' : '' }}>{{ translate('Take from Transport Godown') }}</option>
+                        </select>
+                    </div>
+
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="transport_id">{{ translate('Transport Name') }} *</label>
                         <input type="hidden" id="transport_name_hidden" name="transport" value="{{ old('transport', $details?->transport) }}">

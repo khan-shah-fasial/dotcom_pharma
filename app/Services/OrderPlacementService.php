@@ -266,6 +266,17 @@ class OrderPlacementService
         $order->transport_mode = $shippingChoice === 'transport' ? $request->fod_mode : null;
         $order->transport_surface_mode = ($shippingChoice === 'transport' && $request->fod_mode === 'surface') ? $request->transport_surface_mode : null;
         $order->transport_delivery_type = $shippingChoice === 'transport' ? $request->transport_delivery_type : null;
+        $order->challan_number = $this->nullableTrimmed($request->input('challan_number'));
+        $order->cases = $this->nullableTrimmed($request->input('cases'));
+        $order->attached_file_name = $this->nullableTrimmed($request->input('attached_file_name'));
+        $order->pm_accountant_name = $this->nullableTrimmed($request->input('pm_accountant_name'));
+        $order->lr_number = $this->nullableTrimmed($request->input('lr_number'));
+        $order->cc_attached_path = $request->input('cc_attached_path');
+        $order->freight_paid = $request->boolean('freight_paid');
+        $order->transport_details = $this->nullableTrimmed($request->input('transport_details'));
+        $order->sales_person_id = $request->input('sales_person_id');
+        $order->weight = $this->nullableTrimmed($request->input('weight'));
+        $order->dimensions = $this->nullableTrimmed($request->input('dimensions'));
         $order->delivery_viewed = '0';
         $order->payment_status_viewed = '0';
         $order->code = generate_financial_year_order_code();
@@ -275,6 +286,13 @@ class OrderPlacementService
         storeIPLocation('orders', $order->id);
 
         return $order;
+    }
+
+    protected function nullableTrimmed($value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 
     protected function writeOrderDetails(Order $order, Collection $sellerProduct, User $customer, array $options): void
@@ -362,8 +380,9 @@ class OrderPlacementService
             $orderDetail->before_productandbatch_discount = $unitBasePrice;
             $orderDetail->sale_price = $unitSalePrice;
             $orderDetail->mrp_price = $cartItem['mrp_price'] ?? ($selectedBatch ? $selectedBatch->mrp_price : (optional($productStock)->mrp_price ?? $product->mrp_price));
-            $orderDetail->discount_amount = round(max(0, (float) $unitBasePrice - (float) $unitSalePrice) * $quantity, 2);
-            $orderDetail->coupon_discount = round((float) ($cartItem['discount'] ?? 0), 2);
+            $productDiscountAmount = round(max(0, (float) $unitBasePrice - (float) $unitSalePrice) * $quantity, 2);
+            $allocatedAdditionalDiscount = round((float) ($cartItem['discount'] ?? 0), 2);
+            $orderDetail->discount_amount = round($productDiscountAmount + $allocatedAdditionalDiscount, 2);
             $orderDetail->tax = $itemTax;
             $orderDetail->shipping_type = $cartItem['shipping_type'] ?? 'home_delivery';
             $orderDetail->product_referral_code = $cartItem['product_referral_code'] ?? null;
@@ -611,8 +630,9 @@ class OrderPlacementService
         $couponDiscount = 0;
         $productDiscount = 0;
         $finalTotal = 0;
+        $shownSchemeGroups = [];
 
-        $summaryLines = $lines->values()->map(function ($line, $index) use (&$subtotal, &$tax, &$shipping, &$couponDiscount, &$productDiscount, &$finalTotal, $schemeQtyByGroup) {
+        $summaryLines = $lines->values()->map(function ($line, $index) use (&$subtotal, &$tax, &$shipping, &$couponDiscount, &$productDiscount, &$finalTotal, &$shownSchemeGroups, $schemeQtyByGroup) {
             $product = Product::find($line['product_id']);
             $qty = (int) $line['quantity'];
             $lineSubtotal = (float) $line['sale_price'] * $qty;
@@ -631,6 +651,10 @@ class OrderPlacementService
             $couponDiscount += $lineCoupon;
             $productDiscount += $lineProductDiscount;
             $finalTotal += $finalAmount;
+            $lineSchemeQuantity = isset($shownSchemeGroups[$groupKey])
+                ? 0
+                : (int) ($schemeQtyByGroup[$groupKey] ?? 0);
+            $shownSchemeGroups[$groupKey] = true;
 
             return [
                 'index' => $index,
@@ -654,7 +678,7 @@ class OrderPlacementService
                 'product_final_amount' => round($productFinalAmount, 2),
                 'final_amount' => round($finalAmount, 2),
                 'line_total' => round($finalAmount, 2),
-                'scheme_quantity' => (int) ($schemeQtyByGroup[$groupKey] ?? 0),
+                'scheme_quantity' => $lineSchemeQuantity,
             ];
         })->all();
 

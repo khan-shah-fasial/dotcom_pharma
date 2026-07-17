@@ -170,7 +170,7 @@
     $shipping_postal_code = $shipping->postal_code ?? "-";
     $shipping_state = $shipping->state ?? "-";
     $invoiceNo = $order->code ?? $order->id;
-    $challanNo = '-';
+    $challanNo = $order->challan_number ?: '-';
     $invoiceDateObj = $order->date
         ? \Carbon\Carbon::createFromTimestamp($order->date)
         : ($order->created_at ? $order->created_at->copy() : null);
@@ -208,13 +208,28 @@
 
     $subTotal = $order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail));
     $shippingTotal = $order->orderDetails->sum('shipping_cost');
-    $freightPaid = (float) $shippingTotal > 0 && $order->payment_status === 'paid';
+    $freightPaid = (bool) $order->freight_paid;
+    $ccAttached = filled($order->cc_attached_path);
     $shippingInvoiceLine = shipping_invoice_line($order->orderDetails, $shippingTotal, $transport, translate('Shipping'));
     $shippingBaseAmount = $shippingInvoiceLine['base_amount'] ?? 0;
     $taxTotal = 0;
-    $productDiscountTotal = $order->orderDetails->sum(function ($detail) {
-        return (bool) ($detail->is_scheme ?? false) ? 0 : (float) ($detail->discount_amount ?? 0);
-    });
+    $detailProductDiscount = function ($detail) {
+        if ((bool) ($detail->is_scheme ?? false)) {
+            return 0.0;
+        }
+
+        $quantity = max(0, (int) ($detail->quantity ?? 0));
+        $saleUnit = $detail->sale_price !== null
+            ? (float) $detail->sale_price
+            : ($quantity > 0 ? (float) ($detail->price ?? 0) / $quantity : 0);
+        $baseUnit = $detail->before_productandbatch_discount ?? $saleUnit;
+
+        return round(max(0, (float) $baseUnit - $saleUnit) * $quantity, 2);
+    };
+    $detailCouponDiscount = function ($detail) use ($detailProductDiscount) {
+        return round(max(0, (float) ($detail->discount_amount ?? 0) - $detailProductDiscount($detail)), 2);
+    };
+    $productDiscountTotal = $order->orderDetails->sum($detailProductDiscount);
     $couponDiscount = $order->coupon_discount ?? 0;
     $grandTotal = $order->grand_total;
     $systemCurrency = get_system_default_currency();
@@ -268,12 +283,12 @@
 
         return max(0, (float) $beforeUnit) * $qty;
     });
-    $taxableTotal = $order->orderDetails->sum(function ($row) {
+    $taxableTotal = $order->orderDetails->sum(function ($row) use ($detailCouponDiscount) {
         if ((bool) ($row->is_scheme ?? false)) {
             return 0;
         }
 
-        return max(0, order_detail_line_subtotal($row) - (float) ($row->coupon_discount ?? 0));
+        return max(0, order_detail_line_subtotal($row) - $detailCouponDiscount($row));
     });
     $sgstTotal = 0;
     $cgstTotal = 0;
@@ -370,8 +385,8 @@
             </td>
             <td class="head">
                 {{ translate('Tax Invoice No.') }}: {{ $invoiceNo }}
-                {{-- <br>
-                {{ translate('Challan No.') }}: {{ $challanNo }} --}}
+                <br>
+                {{ translate('Challan No.') }}: {{ $challanNo }}
                 <br>
                 {{ translate('Dated') }}: {{ $invoiceDate }}
                 <br>
@@ -416,14 +431,14 @@
         </tr>
         <tr>
             <td class="head">{{ translate('Shipped By') }}: {{ $transport }}</td>
-            <td class="head">{{ translate('Cases') }}: -</td>
-            <td class="head">{{ translate('PM') }}: -</td>
+            <td class="head">{{ translate('Cases') }}: {{ $order->cases ?: '-' }}</td>
+            <td class="head">{{ translate('PM') }}: {{ $order->pm_accountant_name ?: '-' }}</td>
             <td class="head">{{ translate('Shipment-GST') }}: -</td>
         </tr>
         <tr>
-            <td class="head">{{ translate('L.R.NO') }}: -</td>
-            <td class="head">{{ translate('Weight') }}: -</td>
-            <td class="head">{{ translate('Dimension') }}: -</td>
+            <td class="head">{{ translate('L.R.NO') }}: {{ $order->lr_number ?: '-' }}</td>
+            <td class="head">{{ translate('Weight') }}: {{ $order->weight ?: '-' }}</td>
+            <td class="head">{{ translate('Dimension') }}: {{ $order->dimensions ?: '-' }}</td>
             <td class="head">{{ translate('EWB') }}: -</td>
         </tr>
         <tr>
@@ -478,8 +493,8 @@
                         $unitPrice = $detail->before_productandbatch_discount ?? $saleUnitPrice;
                         $lineGross = $unitPrice * max(0, (int) $qty);
                         $lineTax = $detail->tax;
-                        $productDiscountValue = (float) ($detail->discount_amount ?? 0);
-                        $lineCouponDiscount = (float) ($detail->coupon_discount ?? 0);
+                        $productDiscountValue = $detailProductDiscount($detail);
+                        $lineCouponDiscount = $detailCouponDiscount($detail);
                         $discountValue = $productDiscountValue + $lineCouponDiscount;
                         $taxableAmount = max($lineGross - $discountValue, 0);
                         if ($isMaharashtra) {
@@ -640,7 +655,11 @@
                 {{ translate('Freight Paid') }}
                 <span class="invoice-checkbox">@if($freightPaid)&#10003;@endif</span>
             </td>
-            <td width="16%">{{ translate('C/C Attached') }}</td>
+            <td width="16%">
+                {{ translate('C/C Attached') }}
+                <span class="invoice-checkbox">@if($ccAttached)&#10003;@endif</span>
+                @if($order->attached_file_name)<br>{{ $order->attached_file_name }}@endif
+            </td>
             <td width="16%">{{ translate('Door Delivery') }}</td>
             <td width="52%" rowspan="2">                
                 <div class="label">{{ translate('Registered Under MSMED Act') }}</div>

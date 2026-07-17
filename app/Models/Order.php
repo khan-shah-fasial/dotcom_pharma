@@ -8,6 +8,11 @@ use App\Traits\PreventDemoModeChanges;
 class Order extends Model
 {
     use PreventDemoModeChanges;
+
+    protected $casts = [
+        'freight_paid' => 'boolean',
+    ];
+
     public function orderDetails()
     {
         return $this->hasMany(OrderDetail::class);
@@ -66,6 +71,11 @@ class Order extends Model
     public function delivery_boy()
     {
         return $this->belongsTo(User::class, 'assign_delivery_boy', 'id');
+    }
+
+    public function salesPerson()
+    {
+        return $this->belongsTo(User::class, 'sales_person_id');
     }
 
     public function proxy_cart_reference_id()
