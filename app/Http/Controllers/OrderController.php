@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\OrderAttachment;
 use App\Models\Cart;
 use App\Models\Address;
 use App\Models\AttributeValue;
@@ -49,7 +50,7 @@ class OrderController extends Controller
         $this->middleware(['permission:view_all_orders|view_inhouse_orders|view_seller_orders|view_pickup_point_orders|view_all_offline_payment_orders'])->only('all_orders');
         $this->middleware(['permission:view_order_details'])->only('show');
         $this->middleware(['permission:delete_order'])->only('destroy','bulk_order_delete');
-        $this->middleware(['permission:add_order'])->only('create', 'store', 'backendCustomerSearch', 'backendCustomerAddresses', 'backendProductSearch', 'backendProductQuote', 'backendCourierRates', 'backendOrderSummary');
+        $this->middleware(['permission:add_order'])->only('create', 'store', 'backendCustomerSearch', 'backendCustomerAddresses', 'backendProductSearch', 'backendProductQuote', 'backendCourierRates', 'backendOrderSummary', 'deleteAttachment');
     }
 
     // All Orders
@@ -131,7 +132,7 @@ class OrderController extends Controller
     public function show($id)
     {
         // $order = Order::findOrFail(decrypt($id));
-        $order = Order::with(['orderDetails', 'shipment', 'transport', 'bookedTo', 'localDeliveryPartner'])->findOrFail(decrypt($id));
+        $order = Order::with(['orderDetails', 'shipment', 'transport', 'bookedTo', 'localDeliveryPartner', 'attachments'])->findOrFail(decrypt($id));
         
         $order_shipping_address = json_decode($order->shipping_address);
         $delivery_boys = User::where('city', $order_shipping_address->city)
@@ -158,11 +159,30 @@ class OrderController extends Controller
         $transports = Transport::active()->orderBy('name')->get();
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
         $localDeliveryPartners = LocalDeliveryPartner::active()->orderBy('name')->get();
-        $salesPeople = Staff::with('user')
+        $staffMaster = Staff::with(['user', 'role'])
             ->whereHas('user')
             ->get()
             ->sortBy(fn ($staff) => strtolower((string) optional($staff->user)->name))
             ->values();
+        $staffFor = function (string $pattern) use ($staffMaster) {
+            $matched = $staffMaster->filter(function ($staff) use ($pattern) {
+                $staffArea = strtolower(trim(implode(' ', [
+                    $staff->designation,
+                    optional($staff->role)->name,
+                ])));
+
+                return (bool) preg_match($pattern, $staffArea);
+            })->values();
+
+            // Staff Master currently has role/designation but no department column.
+            // Keep the selector usable when legacy staff records are not classified.
+            return $matched->isNotEmpty() ? $matched : $staffMaster;
+        };
+        $salesPeople = $staffFor('/sales|business development|marketing/i');
+        $packedStaff = $staffFor('/pack|dispatch|warehouse/i');
+        $checkedStaff = $staffFor('/check|quality|qc|warehouse/i');
+        $billingStaff = $staffFor('/bill|account|finance/i');
+        $generatedOrderNo = generate_financial_year_order_code();
 
         return view('backend.sales.create', compact(
             'countries',
@@ -170,7 +190,11 @@ class OrderController extends Controller
             'transports',
             'bookedToOptions',
             'localDeliveryPartners',
-            'salesPeople'
+            'salesPeople',
+            'packedStaff',
+            'checkedStaff',
+            'billingStaff',
+            'generatedOrderNo'
         ));
     }
 
@@ -179,7 +203,14 @@ class OrderController extends Controller
         $query = trim((string) $request->input('q'));
 
         $customers = $orders->approvedCustomerQuery()
-            ->with('user_details')
+            ->with([
+                'user_details.businessCity',
+                'user_details.businessState',
+                'user_details.businessCountry',
+                'user_details.personalCity',
+                'user_details.personalState',
+                'user_details.personalCountry',
+            ])
             ->when($query !== '', function ($builder) use ($query) {
                 $like = '%' . $query . '%';
                 $prefixLike = $query . '%';
@@ -190,7 +221,24 @@ class OrderController extends Controller
                             ->orWhere('con_person_name', 'like', $like)
                             ->orWhere('crm_id', 'like', $like)
                             ->orWhere('account_no_business', 'like', $like)
-                            ->orWhere('account_no_personal', 'like', $like);
+                            ->orWhere('account_no_personal', 'like', $like)
+                            ->orWhere('village_business', 'like', $like)
+                            ->orWhere('post_business', 'like', $like)
+                            ->orWhere('district_business', 'like', $like)
+                            ->orWhere('pincode_business', 'like', $like)
+                            ->orWhere('village', 'like', $like)
+                            ->orWhere('post', 'like', $like)
+                            ->orWhere('district', 'like', $like)
+                            ->orWhere('pincode', 'like', $like)
+                            ->orWhere('prim_mobile_no_business', 'like', $like)
+                            ->orWhere('alt_mobile_no_business', 'like', $like)
+                            ->orWhere('prim_mobile_no', 'like', $like)
+                            ->orWhere('alt_mobile_no', 'like', $like)
+                            ->orWhere('prim_whats_app_no_business', 'like', $like)
+                            ->orWhere('alternate_whats_app_no_business', 'like', $like)
+                            ->orWhere('prim_whats_app_no', 'like', $like)
+                            ->orWhere('alt_whats_app_no', 'like', $like)
+                            ->orWhere('salesman', 'like', $like);
                     })
                         ->orWhere('name', 'like', $like)
                         ->orWhere('email', 'like', $like)
@@ -218,6 +266,15 @@ class OrderController extends Controller
 
         return response()->json($customers->map(function ($customer) {
             $details = $customer->user_details;
+            $businessAccount = !empty(optional($details)->company_name) || !empty(optional($details)->account_no_business);
+            $mobileNumbers = collect($businessAccount
+                ? [optional($details)->prim_mobile_no_business, optional($details)->alt_mobile_no_business, $customer->phone]
+                : [optional($details)->prim_mobile_no, optional($details)->alt_mobile_no, $customer->phone])
+                ->filter()->unique()->values();
+            $whatsappNumbers = collect($businessAccount
+                ? [optional($details)->prim_whats_app_no_business, optional($details)->alternate_whats_app_no_business]
+                : [optional($details)->prim_whats_app_no, optional($details)->alt_whats_app_no])
+                ->filter()->unique()->values();
             $approvalStatus = (string) $customer->approval_status === '1'
                 ? translate('Approved')
                 : ((string) $customer->approval_status === '2' ? translate('Rejected') : translate('Pending'));
@@ -230,6 +287,16 @@ class OrderController extends Controller
                 'account_no' => optional($details)->crm_id ?: (optional($details)->account_no_business ?: optional($details)->account_no_personal),
                 'email' => $customer->email,
                 'phone' => $customer->phone,
+                'mobile_numbers' => $mobileNumbers,
+                'whatsapp_numbers' => $whatsappNumbers,
+                'village' => $businessAccount ? optional($details)->village_business : optional($details)->village,
+                'post' => $businessAccount ? optional($details)->post_business : optional($details)->post,
+                'city' => $businessAccount ? optional(optional($details)->businessCity)->name : optional(optional($details)->personalCity)->name,
+                'district' => $businessAccount ? optional($details)->district_business : optional($details)->district,
+                'state' => $businessAccount ? optional(optional($details)->businessState)->name : optional(optional($details)->personalState)->name,
+                'pincode' => $businessAccount ? optional($details)->pincode_business : optional($details)->pincode,
+                'country' => $businessAccount ? optional(optional($details)->businessCountry)->name : optional(optional($details)->personalCountry)->name,
+                'sales_man_code' => optional($details)->salesman,
                 'role' => $customer->user_subtype ?: $customer->user_type,
                 'approval_status' => $approvalStatus,
                 'current_status' => optional($details)->current_status,
@@ -261,6 +328,9 @@ class OrderController extends Controller
                 'id' => $address->id,
                 'type' => $address->type,
                 'address' => $address->address,
+                'contact_person' => $address->contact_person,
+                'village' => $address->village,
+                'district' => $address->district,
                 'country' => optional($address->country)->name,
                 'state' => optional($address->state)->name,
                 'city' => optional($address->city)->name,
@@ -481,6 +551,31 @@ class OrderController extends Controller
         }
     }
 
+    public function deleteAttachment(Order $order, OrderAttachment $attachment)
+    {
+        abort_unless((int) $attachment->order_id === (int) $order->id, 404);
+
+        $path = $attachment->path;
+        $attachment->delete();
+
+        if (!OrderAttachment::where('path', $path)->exists()) {
+            Storage::disk('public')->delete($path);
+        }
+
+        if ($order->cc_attached_path === $attachment->path) {
+            $replacement = $order->attachments()
+                ->where('category', 'consignee_copy')
+                ->orderBy('id')
+                ->first();
+            $order->cc_attached_path = optional($replacement)->path;
+            $order->save();
+        }
+
+        flash(translate('Attachment removed successfully.'))->success();
+
+        return back();
+    }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -490,30 +585,80 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         if ($request->boolean('backend_add_order')) {
+            if ($request->hasFile('cc_attachments')) {
+                $request->merge(['consignee_copy_status' => 'attached']);
+            }
+
             $request->validate([
-                'challan_number' => ['nullable', 'string', 'max:255'],
-                'cases' => ['nullable', 'string', 'max:255'],
-                'attached_file_name' => ['nullable', 'string', 'max:255'],
-                'pm_accountant_name' => ['nullable', 'string', 'max:255'],
+                'order_no' => ['required', 'string', 'max:191', Rule::unique('orders', 'code')],
+                'order_date' => ['required', 'date'],
+                'order_time' => ['required', 'date_format:H:i'],
+                'cases' => ['nullable', 'integer', 'min:0'],
                 'lr_number' => ['nullable', 'string', 'max:255'],
-                'cc_attached' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:10240'],
-                'transport_details' => ['nullable', 'string', 'max:1000'],
-                'sales_person_id' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
-                'weight' => ['nullable', 'string', 'max:255'],
-                'dimensions' => ['nullable', 'string', 'max:255'],
+                'lr_date' => ['nullable', 'date'],
+                'consignee_copy_status' => ['required', Rule::in(['attached', 'not_attached'])],
+                'cc_attachments' => ['required_if:consignee_copy_status,attached', 'array', 'max:20'],
+                'cc_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
+                'order_attachments' => ['nullable', 'array', 'max:20'],
+                'order_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
+                'sales_executive_id' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+                'packed_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+                'checked_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+                'billing_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+                'weight_grams' => ['nullable', 'numeric', 'min:0', 'max:99999999999.999'],
+                'length_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:width_cm,height_cm'],
+                'width_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,height_cm'],
+                'height_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,width_cm'],
+                'freight_type' => ['nullable', Rule::in(['pre_paid', 'to_pay', 'fod'])],
+                'free_shipping' => ['nullable', 'boolean'],
+                'transport_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
+                'transport_name' => ['nullable', 'string', 'max:255'],
+                'booked_to_name' => ['nullable', 'string', 'max:255'],
+                'local_delivery_partner_name' => ['nullable', 'string', 'max:255'],
+                'shipping_contact_person' => ['nullable', 'string', 'max:255'],
+                'shipping_address' => ['nullable', 'string', 'max:2000'],
+                'shipping_village' => ['nullable', 'string', 'max:255'],
+                'shipping_district' => ['nullable', 'string', 'max:255'],
+                'shipping_postal_code' => ['nullable', 'string', 'max:20'],
+                'shipping_phone' => ['nullable', 'string', 'max:50'],
+                'shipping_country_id' => ['nullable', 'integer', Rule::exists('countries', 'id')],
+                'shipping_state_id' => ['nullable', 'integer', Rule::exists('states', 'id')],
+                'shipping_city_id' => ['nullable', 'integer', Rule::exists('cities', 'id')],
             ]);
 
-            $ccAttachedPath = null;
-            if ($request->hasFile('cc_attached')) {
-                $ccAttachedPath = $request->file('cc_attached')->store('uploads/order-cc-attachments', 'public');
-                $request->merge([
-                    'cc_attached_path' => $ccAttachedPath,
-                ]);
+            $storedAttachments = [];
+            foreach ([
+                'cc_attachments' => ['category' => 'consignee_copy', 'directory' => 'uploads/order-cc-attachments'],
+                'order_attachments' => ['category' => 'order_attachment', 'directory' => 'uploads/order-attachments'],
+            ] as $input => $config) {
+                foreach ($request->file($input, []) as $file) {
+                    $storedAttachments[] = [
+                        'category' => $config['category'],
+                        'original_name' => $file->getClientOriginalName(),
+                        'path' => $file->store($config['directory'], 'public'),
+                        'mime_type' => $file->getClientMimeType(),
+                        'size' => $file->getSize(),
+                    ];
+                }
             }
+
+            $firstConsigneeCopy = collect($storedAttachments)->firstWhere('category', 'consignee_copy');
+            $firstOrderAttachment = collect($storedAttachments)->firstWhere('category', 'order_attachment');
+            $request->merge([
+                'cc_attached_path' => $firstConsigneeCopy['path'] ?? null,
+                'attached_file_name' => $firstOrderAttachment['original_name'] ?? ($firstConsigneeCopy['original_name'] ?? null),
+            ]);
 
             try {
                 $combinedOrder = app(OrderPlacementService::class)->placeFromBackendRequest($request);
-                $firstOrder = $combinedOrder->orders()->orderBy('id')->first();
+                $createdOrders = $combinedOrder->orders()->orderBy('id')->get();
+                $firstOrder = $createdOrders->first();
+
+                foreach ($createdOrders as $createdOrder) {
+                    foreach ($storedAttachments as $attachment) {
+                        $createdOrder->attachments()->create($attachment);
+                    }
+                }
 
                 flash(translate('Order has been created successfully.'))->success();
 
@@ -523,11 +668,14 @@ class OrderController extends Controller
 
                 return redirect()->route('all_orders.index');
             } catch (ValidationException $exception) {
-                if ($ccAttachedPath) {
-                    Storage::disk('public')->delete($ccAttachedPath);
-                }
+                Storage::disk('public')->delete(collect($storedAttachments)->pluck('path')->all());
                 $message = collect($exception->errors())->flatten()->first() ?: translate('Unable to create order.');
                 flash($message)->warning();
+                return back()->withInput();
+            } catch (\Throwable $exception) {
+                Storage::disk('public')->delete(collect($storedAttachments)->pluck('path')->all());
+                report($exception);
+                flash(translate('Unable to create order. Please verify the form and try again.'))->error();
                 return back()->withInput();
             }
         }

@@ -11,6 +11,11 @@ class Order extends Model
 
     protected $casts = [
         'freight_paid' => 'boolean',
+        'free_shipping' => 'boolean',
+        'lr_date' => 'date',
+        'order_date' => 'date',
+        'weight_grams' => 'decimal:3',
+        'weight_kg' => 'decimal:6',
     ];
 
     public function orderDetails()
@@ -76,6 +81,31 @@ class Order extends Model
     public function salesPerson()
     {
         return $this->belongsTo(User::class, 'sales_person_id');
+    }
+
+    public function salesExecutive()
+    {
+        return $this->belongsTo(User::class, 'sales_executive_id');
+    }
+
+    public function packedByStaff()
+    {
+        return $this->belongsTo(User::class, 'packed_by');
+    }
+
+    public function checkedByStaff()
+    {
+        return $this->belongsTo(User::class, 'checked_by');
+    }
+
+    public function billingByStaff()
+    {
+        return $this->belongsTo(User::class, 'billing_by');
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(OrderAttachment::class);
     }
 
     public function proxy_cart_reference_id()

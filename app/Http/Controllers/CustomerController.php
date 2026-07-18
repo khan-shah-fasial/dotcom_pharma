@@ -768,7 +768,7 @@ class CustomerController extends Controller
             'default_shipping_method' => ['nullable', Rule::in(['courier', 'transport', 'local'])],
             'default_transport_mode' => ['nullable', Rule::in(['air', 'sea', 'surface'])],
             'default_transport_surface_mode' => ['nullable', Rule::in(['road', 'train'])],
-            'default_delivery_type' => ['nullable', Rule::in(['door_delivery', 'transport_godown'])],
+            'default_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
             'salesman' => ['nullable', 'string', 'max:255'],
             'dl_expiry' => ['nullable', 'string', 'max:255'],
             'dl1' => ['nullable', 'string', 'max:255'],
@@ -1275,7 +1275,7 @@ class CustomerController extends Controller
             'default_shipping_method' => ['nullable', Rule::in(['courier', 'transport', 'local'])],
             'default_transport_mode' => ['nullable', Rule::in(['air', 'sea', 'surface'])],
             'default_transport_surface_mode' => ['nullable', Rule::in(['road', 'train'])],
-            'default_delivery_type' => ['nullable', Rule::in(['door_delivery', 'transport_godown'])],
+            'default_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
             // 'phone_business'       => ['nullable'],
         ]);
         if ($validator->fails()) {

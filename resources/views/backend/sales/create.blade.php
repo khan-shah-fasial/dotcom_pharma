@@ -60,6 +60,46 @@
         .backend-product-result-action {
             flex: 0 0 auto;
         }
+        .apple-green-highlight {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 7px 12px;
+            color: #14532d;
+            background: linear-gradient(180deg, #ecfdf3 0%, #dcfce7 100%);
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, .12), inset 0 1px 0 rgba(255, 255, 255, .9);
+            font-weight: 700;
+        }
+        .dimension-inputs {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr auto;
+            align-items: center;
+            gap: 5px;
+        }
+        .dimension-inputs .dimension-separator {
+            color: #74788d;
+            font-weight: 700;
+        }
+        .selected-file-list {
+            min-height: 42px;
+            padding: 7px;
+            border: 1px solid #e2e5ec;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .selected-file-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 4px 7px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            background: #fff;
+        }
+        .selected-file-chip:last-child { margin-bottom: 0; }
     </style>
     <form id="backend-order-form" action="{{ route('orders.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
@@ -69,66 +109,146 @@
         <div class="row gutters-10">
             <div class="col-lg-8">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex align-items-center justify-content-between">
                         <h5 class="mb-0 h6">{{ translate('Order Details') }}</h5>
+                        <span class="apple-green-highlight"><i class="las la-check-circle mr-1"></i>{{ translate('Current Status') }}: {{ translate('Pending') }}</span>
                     </div>
                     <div class="card-body">
                         <div class="row gutters-5">
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('Challan Number') }}</label>
-                                <input type="text" class="form-control" name="challan_number" value="{{ old('challan_number') }}">
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Order No') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="order_no" value="{{ old('order_no', $generatedOrderNo) }}" required>
+                                @error('order_no') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Order Date') }} <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="order_date" value="{{ old('order_date', now()->toDateString()) }}" required>
+                                @error('order_date') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Order Time') }} <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" name="order_time" value="{{ old('order_time', now()->format('H:i')) }}" required>
+                                @error('order_time') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6 form-group">
-                                <label>{{ translate('Cases') }}</label>
-                                <input type="text" class="form-control" name="cases" value="{{ old('cases') }}">
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('Attached File Name') }}</label>
-                                <input type="text" class="form-control" name="attached_file_name" value="{{ old('attached_file_name') }}">
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('PM (Accountant Name)') }}</label>
-                                <input type="text" class="form-control" name="pm_accountant_name" value="{{ old('pm_accountant_name') }}">
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('LR Number') }}</label>
-                                <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number') }}">
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('CC Attached') }}</label>
-                                <input type="file" class="form-control" name="cc_attached" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-                                <small class="text-muted">{{ translate('One file only. Maximum size: 10 MB.') }}</small>
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('Sales Person') }}</label>
-                                <select class="form-control aiz-selectpicker" name="sales_person_id" data-live-search="true" title="{{ translate('Select Sales Person') }}">
-                                    <option value="">{{ translate('Select Sales Person') }}</option>
+                                <label>{{ translate('Sales Executive Name') }}</label>
+                                <select class="form-control aiz-selectpicker" name="sales_executive_id" data-live-search="true" title="{{ translate('Select Sales Executive') }}">
+                                    <option value="">{{ translate('Select Sales Executive') }}</option>
                                     @foreach ($salesPeople as $staff)
-                                        <option value="{{ $staff->user_id }}" @selected((string) old('sales_person_id') === (string) $staff->user_id)>
-                                            {{ optional($staff->user)->name }}
+                                        <option value="{{ $staff->user_id }}" @selected((string) old('sales_executive_id') === (string) $staff->user_id)>
+                                            {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label>{{ translate('Weight') }}</label>
-                                <input type="text" class="form-control" name="weight" value="{{ old('weight') }}">
+                                <label>{{ translate('Sales Man Code') }}</label>
+                                <input type="text" class="form-control" id="sales-man-code" value="{{ old('sales_man_code') }}" readonly>
+                                <small class="text-muted">{{ translate('Fetched automatically from Account Master.') }}</small>
+                            </div>
+
+                            {{-- Row 1: Total Cases / Weight / Dimensions --}}
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Total Cases') }}</label>
+                                <input type="number" min="0" step="1" class="form-control" name="cases" value="{{ old('cases') }}">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Weight (Gram)') }}</label>
+                                <input type="number" min="0" step="0.001" class="form-control" name="weight_grams" id="weight-grams" value="{{ old('weight_grams') }}">
+                                <small class="apple-green-highlight mt-1" id="weight-kg-display">0 KG</small>
+                                @error('weight_grams') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Dimensions (CM)') }}</label>
+                                <div class="dimension-inputs">
+                                    <input type="number" min="0" step="0.01" class="form-control" name="length_cm" value="{{ old('length_cm') }}" placeholder="{{ translate('Length') }}">
+                                    <span class="dimension-separator">×</span>
+                                    <input type="number" min="0" step="0.01" class="form-control" name="width_cm" value="{{ old('width_cm') }}" placeholder="{{ translate('Width') }}">
+                                    <span class="dimension-separator">×</span>
+                                    <input type="number" min="0" step="0.01" class="form-control" name="height_cm" value="{{ old('height_cm') }}" placeholder="{{ translate('Height') }}">
+                                    <span class="dimension-separator">CM</span>
+                                </div>
+                                @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                                @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                                @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+
+                            {{-- Row 2: LR reference / LR date --}}
+                            <div class="col-md-8 form-group">
+                                <label>{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</label>
+                                <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number') }}">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('LR Date') }}</label>
+                                <input type="date" class="form-control" name="lr_date" value="{{ old('lr_date') }}">
+                            </div>
+
+                            {{-- Row 3: Staff Master operational roles --}}
+                            @foreach ([
+                                ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
+                                ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
+                                ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff],
+                            ] as $staffField)
+                                <div class="col-md-4 form-group">
+                                    <label>{{ translate($staffField['label']) }}</label>
+                                    <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
+                                        <option value="">{{ translate('Select Staff') }}</option>
+                                        @foreach ($staffField['staff'] as $staff)
+                                            <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name']) === (string) $staff->user_id)>
+                                                {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endforeach
+
+                            {{-- Row 4: general order attachments --}}
+                            <div class="col-md-6 form-group">
+                                <label>{{ translate('Attached File Name') }}</label>
+                                <div class="selected-file-list" id="order-attachment-names"><span class="text-muted">{{ translate('No files selected') }}</span></div>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label>{{ translate('Dimensions') }}</label>
-                                <input type="text" class="form-control" name="dimensions" value="{{ old('dimensions') }}">
+                                <label>{{ translate('Attachment Option') }}</label>
+                                <input type="file" class="form-control multi-file-input" name="order_attachments[]" id="order-attachments" multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#order-attachment-names">
+                                <small class="text-muted">{{ translate('Select multiple files; maximum 10 MB per file.') }}</small>
                             </div>
+
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Consignee Copy') }}</label>
+                                <select class="form-control" name="consignee_copy_status" id="consignee-copy-status">
+                                    <option value="attached" @selected(old('consignee_copy_status') === 'attached')>{{ translate('Attached') }}</option>
+                                    <option value="not_attached" @selected(old('consignee_copy_status', 'not_attached') === 'not_attached')>{{ translate('Not Attached') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8 form-group" id="consignee-copy-files-wrap">
+                                <label>{{ translate('LR / Consignee Copy Files') }}</label>
+                                <input type="file" class="form-control multi-file-input" name="cc_attachments[]" id="cc-attachments" multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#cc-attachment-names">
+                                <div class="selected-file-list mt-1" id="cc-attachment-names"><span class="text-muted">{{ translate('No files selected') }}</span></div>
+                                @error('cc_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+
                             <div class="col-md-6 form-group">
-                                <label>{{ translate('Transport Details') }}</label>
-                                <input type="text" class="form-control" name="transport_details" value="{{ old('transport_details') }}">
+                                <label>{{ translate('Freight Type') }}</label>
+                                <select class="form-control" name="freight_type">
+                                    <option value="">{{ translate('Select Freight Type') }}</option>
+                                    <option value="pre_paid" @selected(old('freight_type') === 'pre_paid')>{{ translate('Pre-Paid') }}</option>
+                                    <option value="to_pay" @selected(old('freight_type') === 'to_pay')>{{ translate('To Pay') }}</option>
+                                    <option value="fod" @selected(old('freight_type') === 'fod')>{{ translate('FOD') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group d-flex align-items-end">
+                                <div class="border rounded p-3 w-100">
+                                    <input type="hidden" name="free_shipping" value="0">
+                                    <label class="aiz-checkbox mb-0">
+                                        <input type="checkbox" name="free_shipping" id="free-shipping" value="1" @checked(old('free_shipping'))>
+                                        <span>{{ translate('Free Shipping') }}</span>
+                                        <span class="aiz-square-check"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
-                        <input type="hidden" name="freight_paid" value="0">
-                        <label class="aiz-checkbox mb-0">
-                            <input type="checkbox" name="freight_paid" value="1" @checked(old('freight_paid'))>
-                            <span>{{ translate('Freight Paid') }}</span>
-                            <span class="aiz-square-check"></span>
-                        </label>
                     </div>
                 </div>
 
@@ -139,7 +259,7 @@
                     <div class="card-body">
                         <div class="form-group mb-3">
                             <label>{{ translate('Search Approved Customer') }}</label>
-                            <input type="text" class="form-control" id="customer-search" placeholder="{{ translate('Company name, account no, person name, email or phone') }}" autocomplete="off">
+                            <input type="text" class="form-control" id="customer-search" placeholder="{{ translate('Company, person, location, mobile, WhatsApp, pincode or salesman code') }}" autocomplete="off">
                             <div id="customer-results" class="list-group mt-2"></div>
                         </div>
                         <div id="selected-customer-card" class="alert alert-info d-none mb-3"></div>
@@ -338,14 +458,14 @@
                                         <option value="{{ $transport->id }}">{{ $transport->name }}</option>
                                     @endforeach
                                 </select>
-                                <input type="text" class="form-control mt-2" name="transport_name" placeholder="{{ translate('Or enter transport name') }}">
+                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="transport_name" placeholder="{{ translate('Or enter transport name') }}">
                             </div>
                             <div class="form-group">
                                 <label>{{ translate('Booked To') }}</label>
                                 <select class="form-control" name="booked_to_id" id="booked-to-id" disabled>
                                     <option value="">{{ translate('Select transport first') }}</option>
                                 </select>
-                                <input type="text" class="form-control mt-2" name="booked_to_name" placeholder="{{ translate('Or enter booked to') }}">
+                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="booked_to_name" placeholder="{{ translate('Or enter booked to') }}">
                             </div>
                             <div class="form-group">
                                 <label>{{ translate('Transport Mode') }}</label>
@@ -366,7 +486,9 @@
                                 <label>{{ translate('Delivery Type') }}</label>
                                 <select class="form-control" name="transport_delivery_type">
                                     <option value="door_delivery">{{ translate('Door Delivery') }}</option>
-                                    <option value="transport_godown">{{ translate('Take from Transport Godown') }}</option>
+                                    <option value="our_warehouse_delivery">{{ translate('Our Warehouse Delivery') }}</option>
+                                    <option value="hand_delivery">{{ translate('Hand Delivery') }}</option>
+                                    <option value="transport_warehouse">{{ translate('Transport Warehouse') }}</option>
                                 </select>
                             </div>
                         </div>
@@ -380,7 +502,7 @@
                                         <option value="{{ $partner->id }}">{{ $partner->name }}</option>
                                     @endforeach
                                 </select>
-                                <input type="text" class="form-control mt-2" name="local_delivery_partner_name" placeholder="{{ translate('Or enter partner name') }}">
+                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="local_delivery_partner_name" placeholder="{{ translate('Or enter partner name') }}">
                             </div>
                         </div>
 
@@ -442,7 +564,7 @@
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Additional Info') }}</label>
-                            <textarea class="form-control" name="additional_info" rows="3">{{ old('additional_info') }}</textarea>
+                            <textarea class="form-control auto-capitalize-first" name="additional_info" rows="3">{{ old('additional_info') }}</textarea>
                         </div>
                         <input type="hidden" name="send_order_notification" value="0">
                         <label class="aiz-checkbox">
@@ -489,6 +611,7 @@
             var summaryUrl = @json(route('orders.create.summary'));
             var stateUrl = @json(route('get-state'));
             var cityUrl = @json(route('get-city'));
+            var locationUrl = @json(route('get-location'));
             var csrf = @json(csrf_token());
             var lines = [];
             var currentProduct = null;
@@ -546,16 +669,105 @@
                 }, options));
             }
 
+            function capitalizeFirst(value) {
+                return String(value || '').replace(/^(\s*)([a-z])/i, function (_, spaces, letter) {
+                    return spaces + letter.toUpperCase();
+                });
+            }
+
+            function updateWeightDisplay() {
+                var grams = Number($('#weight-grams').val());
+                var kilograms = Number.isFinite(grams) && grams >= 0 ? grams / 1000 : 0;
+                $('#weight-kg-display').text((Math.round(kilograms * 1000000) / 1000000) + ' KG');
+            }
+
+            function renderSelectedFiles(input) {
+                var $input = $(input);
+                var $list = $($input.data('list')).empty();
+                var files = Array.prototype.slice.call(input.files || []);
+                if (!files.length) {
+                    $list.html('<span class="text-muted">{{ translate('No files selected') }}</span>');
+                    return;
+                }
+                files.forEach(function (file, index) {
+                    $list.append('<div class="selected-file-chip"><span class="text-truncate">' + escapeHtml(file.name) + '</span>'
+                        + '<button type="button" class="btn btn-xs btn-soft-danger remove-selected-file" data-input="' + input.id + '" data-index="' + index + '" aria-label="{{ translate('Remove file') }}">&times;</button></div>');
+                });
+            }
+
+            function normalizeOptionsHtml(response) {
+                if (typeof response !== 'string') return response;
+                try { return JSON.parse(response); } catch (error) { return response; }
+            }
+
+            function lookupPincode(input) {
+                var $input = $(input);
+                var prefix = $input.data('prefix');
+                var postalCode = $.trim($input.val());
+                var $status = $('#' + prefix + '-pincode-status');
+                if (postalCode.length < 4) {
+                    $status.text('');
+                    return;
+                }
+
+                $status.removeClass('text-danger text-success').addClass('text-muted').html('<i class="las la-spinner la-spin"></i> {{ translate('Loading location...') }}');
+                requestJson({
+                    url: locationUrl,
+                    method: 'POST',
+                    data: {
+                        _token: csrf,
+                        postal_code: postalCode,
+                        country_id: $('#' + prefix + '-country-id').val()
+                    }
+                }).done(function (location) {
+                    if (location.village) $('#' + prefix + '-village').val(capitalizeFirst(location.village));
+                    if (location.district) $('#' + prefix + '-district').val(capitalizeFirst(location.district));
+                    if (location.country_id) $('#' + prefix + '-country-id').val(String(location.country_id));
+
+                    if (!location.country_id && !location.state_id && !location.city_id && !location.village) {
+                        $status.removeClass('text-muted text-success').addClass('text-danger').text('{{ translate('No location found for this pincode.') }}');
+                        return;
+                    }
+
+                    var finish = function () {
+                        $status.removeClass('text-muted text-danger').addClass('text-success').text('{{ translate('Location loaded.') }}');
+                    };
+                    if (!location.country_id || !location.state_id) {
+                        finish();
+                        return;
+                    }
+
+                    $.post(stateUrl, {_token: csrf, country_id: location.country_id}, function (stateOptions) {
+                        $('#' + prefix + '-state-id').html(normalizeOptionsHtml(stateOptions)).val(String(location.state_id));
+                        if (!location.city_id) {
+                            finish();
+                            return;
+                        }
+                        $.post(cityUrl, {_token: csrf, state_id: location.state_id}, function (cityOptions) {
+                            $('#' + prefix + '-city-id').html(normalizeOptionsHtml(cityOptions)).val(String(location.city_id));
+                            finish();
+                        }).fail(function () {
+                            $status.removeClass('text-muted text-success').addClass('text-danger').text('{{ translate('City list could not be loaded.') }}');
+                        });
+                    }).fail(function () {
+                        $status.removeClass('text-muted text-success').addClass('text-danger').text('{{ translate('State list could not be loaded.') }}');
+                    });
+                }).fail(function () {
+                    $status.removeClass('text-muted text-success').addClass('text-danger').text('{{ translate('Unable to fetch location. Please enter it manually.') }}');
+                });
+            }
+
             function displayCustomerName(customer) {
-                return customer.company_name || customer.name || '-';
+                return capitalizeFirst(customer.company_name || customer.name || '-');
             }
 
             function customerSubText(customer) {
                 return [
                     customer.account_no ? '{{ translate('Account No') }}: ' + customer.account_no : '',
-                    customer.person_name ? '{{ translate('Person Name') }}: ' + customer.person_name : '',
+                    customer.person_name ? '{{ translate('Person Name') }}: ' + capitalizeFirst(customer.person_name) : '',
                     customer.email || '',
-                    customer.phone || ''
+                    (customer.mobile_numbers || []).join(', '),
+                    customer.pincode ? '{{ translate('Pincode') }}: ' + customer.pincode : ''
                 ].filter(Boolean).join(' | ');
             }
 
@@ -563,14 +775,25 @@
                 var rows = [
                     ['{{ translate('Approval Status') }}', customer.approval_status],
                     ['{{ translate('Customer Role') }}', customer.role],
-                    ['{{ translate('Current Status') }}', customer.current_status],
-                    ['{{ translate('Credit Status') }}', customer.credit_status],
-                    ['{{ translate('Number of Days') }}', customer.credit_days],
+                    ['{{ translate('Village / Post') }}', [customer.village, customer.post].filter(Boolean).join(' / ')],
+                    ['{{ translate('City') }}', customer.city],
+                    ['{{ translate('District') }}', customer.district],
+                    ['{{ translate('State') }}', customer.state],
+                    ['{{ translate('Pincode') }}', customer.pincode],
+                    ['{{ translate('Country') }}', customer.country],
+                    ['{{ translate('Mobile Number(s)') }}', (customer.mobile_numbers || []).join(', ')],
+                    ['{{ translate('WhatsApp Number(s)') }}', (customer.whatsapp_numbers || []).join(', ')],
+                    ['{{ translate('Sales Man Code') }}', customer.sales_man_code],
+                    ['{{ translate('Credit Days') }}', customer.credit_days],
                     ['{{ translate('Credit Limit') }}', customer.credit_limit],
                     ['{{ translate('Default Shipping') }}', customer.default_shipping_method]
                 ];
                 var html = '<div class="fw-700">' + escapeHtml(displayCustomerName(customer)) + '</div>'
                     + '<div>' + escapeHtml(customerSubText(customer)) + '</div>'
+                    + '<div class="d-flex flex-wrap mt-2" style="gap:8px">'
+                    + '<span class="apple-green-highlight">{{ translate('Current Status') }}: ' + escapeHtml(customer.current_status || '-') + '</span>'
+                    + '<span class="apple-green-highlight">{{ translate('Credit / Balance Amount') }}: {{ single_price(0) }}</span>'
+                    + '</div>'
                     + '<div class="row gutters-5 mt-2">';
 
                 rows.forEach(function (row) {
@@ -594,7 +817,10 @@
                 $('#booked-to-id').val(customer.default_booked_to_id || '');
                 $('select[name="fod_mode"]').val(customer.default_transport_mode || 'surface').trigger('change');
                 $('#transport-surface-mode').val(customer.default_transport_surface_mode || 'road');
-                $('select[name="transport_delivery_type"]').val(customer.default_delivery_type || 'door_delivery');
+                var deliveryType = customer.default_delivery_type === 'transport_godown'
+                    ? 'transport_warehouse'
+                    : (customer.default_delivery_type || 'door_delivery');
+                $('select[name="transport_delivery_type"]').val(deliveryType);
             }
 
             function sortedByDefaultThenLatest(addresses) {
@@ -614,8 +840,9 @@
 
             function addressText(address) {
                 return '<div class="fw-600 text-capitalize">' + escapeHtml(address.type || '') + '</div>'
+                    + (address.contact_person ? '<div>{{ translate('Contact Person') }}: ' + escapeHtml(address.contact_person) + '</div>' : '')
                     + '<div>' + escapeHtml(address.address || '') + '</div>'
-                    + '<small>' + escapeHtml([address.city, address.state, address.country, address.postal_code].filter(Boolean).join(', '))
+                    + '<small>' + escapeHtml([address.village, address.city, address.district, address.state, address.country, address.postal_code].filter(Boolean).join(', '))
                     + '<br>' + escapeHtml(address.phone || '') + '</small>';
             }
 
@@ -663,6 +890,7 @@
                         .html('<strong>' + escapeHtml(displayCustomerName(customer)) + '</strong><br><small>' + escapeHtml(customerSubText(customer)) + '</small>')
                         .on('click', function () {
                             $('#selected-customer-id').val(customer.id);
+                            $('#sales-man-code').val(customer.sales_man_code || '');
                             $('#selected-customer-card').removeClass('d-none').html(customerMetaHtml(customer));
                             $box.empty();
                             applyCustomerShippingDefaults(customer);
@@ -859,11 +1087,22 @@
             function syncBatchOptions() {
                 var stock = selectedStock();
                 var $batch = $('#picker-batch').empty();
-                $batch.append('<option value="">{{ translate('No batch') }}</option>');
-                if (!stock) return;
-                (stock.batches || []).forEach(function (batch) {
+                if (!stock) {
+                    $batch.append('<option value="">{{ translate('No batch') }}</option>').prop('disabled', true);
+                    return;
+                }
+                var batches = stock.batches || [];
+                if (!batches.length) {
+                    $batch.append('<option value="">{{ translate('No batch') }}</option>').prop('disabled', true);
+                } else if (batches.length > 1) {
+                    $batch.append('<option value="">{{ translate('Select Batch') }}</option>').prop('disabled', false);
+                }
+                batches.forEach(function (batch) {
                     $batch.append('<option value="' + batch.id + '">' + escapeHtml(batchOptionLabel(batch)) + '</option>');
                 });
+                if (batches.length === 1) {
+                    $batch.val(String(batches[0].id)).prop('disabled', true);
+                }
                 $('#picker-quantity').attr('min', stock.min_qty || 1);
                 if (Number($('#picker-quantity').val()) < Number(stock.min_qty || 1)) {
                     $('#picker-quantity').val(stock.min_qty || 1);
@@ -972,6 +1211,13 @@
                         + '</div>');
                 });
                 renderShippingItems();
+                syncFreeShippingControls();
+            }
+
+            function syncFreeShippingControls() {
+                var isFree = $('#free-shipping').is(':checked');
+                $('.seller-shipping-input,.shipping-item-description,.shipping-item-seller,.shipping-item-amount').prop('disabled', isFree);
+                $('#add-shipping-item-btn').prop('disabled', isFree);
             }
 
             function sellerOptions(selectedSellerId) {
@@ -1007,12 +1253,13 @@
                         + '</div>');
                 });
                 renderOrderShippingRows();
+                syncFreeShippingControls();
             }
 
             function renderOrderShippingRows() {
                 var $body = $('#order-lines-body');
                 $body.find('.order-shipping-line').remove();
-                if (!lines.length) return;
+                if (!lines.length || $('#free-shipping').is(':checked')) return;
 
                 var sellers = {};
                 lines.forEach(function (line) {
@@ -1183,6 +1430,57 @@
                     }
                 });
             }
+
+            $('#weight-grams').on('input change', updateWeightDisplay);
+            updateWeightDisplay();
+
+            $(document).on('blur', '.auto-capitalize-first', function () {
+                $(this).val(capitalizeFirst($(this).val()));
+            });
+
+            $('.multi-file-input').on('change', function () {
+                renderSelectedFiles(this);
+                if (this.id === 'cc-attachments' && this.files.length) {
+                    $('#consignee-copy-status').val('attached').trigger('change');
+                }
+            });
+
+            $(document).on('click', '.remove-selected-file', function () {
+                var input = document.getElementById($(this).data('input'));
+                var removeIndex = Number($(this).data('index'));
+                if (!input || typeof DataTransfer === 'undefined') return;
+                var transfer = new DataTransfer();
+                Array.prototype.slice.call(input.files || []).forEach(function (file, index) {
+                    if (index !== removeIndex) transfer.items.add(file);
+                });
+                input.files = transfer.files;
+                renderSelectedFiles(input);
+                if (input.id === 'cc-attachments' && !input.files.length) {
+                    $('#consignee-copy-status').val('not_attached').trigger('change');
+                }
+            });
+
+            $('#consignee-copy-status').on('change', function () {
+                var attached = $(this).val() === 'attached';
+                $('#consignee-copy-files-wrap').toggleClass('d-none', !attached);
+                $('#cc-attachments').prop('required', attached);
+                if (!attached && document.getElementById('cc-attachments').files.length) {
+                    document.getElementById('cc-attachments').value = '';
+                    renderSelectedFiles(document.getElementById('cc-attachments'));
+                }
+            }).trigger('change');
+
+            $(document).on('input', '.pincode-lookup', function () {
+                var input = this;
+                clearTimeout($(input).data('lookup-timer'));
+                $(input).data('lookup-timer', setTimeout(function () { lookupPincode(input); }, 450));
+            });
+
+            $('#free-shipping').on('change', function () {
+                syncFreeShippingControls();
+                renderOrderShippingRows();
+                refreshSummary(false);
+            });
 
             $('#customer-search').on('input', function () {
                 var q = $(this).val();

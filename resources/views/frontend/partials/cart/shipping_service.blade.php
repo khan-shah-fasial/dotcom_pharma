@@ -129,7 +129,9 @@
                 <h4 class="fs-15 fw-600 mb-2">{{ translate('Delivery Type') }}</h4>
                 <select name="transport_delivery_type" class="form-control aiz-selectpicker">
                     <option value="door_delivery">{{ translate('Door Delivery') }}</option>
-                    <option value="transport_godown">{{ translate('Take from Transport Godown') }}</option>
+                    <option value="our_warehouse_delivery">{{ translate('Our Warehouse Delivery') }}</option>
+                    <option value="hand_delivery">{{ translate('Hand Delivery') }}</option>
+                    <option value="transport_godown">{{ translate('Transport Warehouse') }}</option>
                 </select>
             </div>
         </div>

@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 class OrderPlacementService
 {
@@ -195,9 +196,11 @@ class OrderPlacementService
                 $sellerProducts[$product->user_id][] = $cartItem;
             }
 
+            $sellerOrderIndex = 0;
             foreach ($sellerProducts as $sellerProduct) {
-                $order = $this->createSellerOrder($combinedOrder, $customer, $request, $options, $shippingAddress, $billingAddress);
-                $this->writeOrderDetails($order, collect($sellerProduct), $customer, $options);
+                $sellerOptions = array_merge($options, ['seller_order_index' => $sellerOrderIndex++]);
+                $order = $this->createSellerOrder($combinedOrder, $customer, $request, $sellerOptions, $shippingAddress, $billingAddress);
+                $this->writeOrderDetails($order, collect($sellerProduct), $customer, $sellerOptions);
 
                 $combinedOrder->grand_total += $order->grand_total;
                 $combinedOrder->save();
@@ -221,8 +224,9 @@ class OrderPlacementService
 
         if ($shippingChoice === 'transport') {
             $transport = $this->resolveTransport($request);
-            $bookedTo = $this->resolveBookedTo($request, $transport);
-            if (!$transport || !$bookedTo) {
+            $transportAndBookedToAreSame = $this->transportAndBookedToAreSame($request, $transport);
+            $bookedTo = $transportAndBookedToAreSame ? null : $this->resolveBookedTo($request, $transport);
+            if (!$transport || (!$bookedTo && !$transportAndBookedToAreSame)) {
                 $this->fail('booked_to_id', translate('Please select a transport provider and its booked-to destination.'));
             }
             if (!in_array($request->input('fod_mode'), ['air', 'sea', 'surface'], true)) {
@@ -231,7 +235,7 @@ class OrderPlacementService
             if ($request->input('fod_mode') === 'surface' && !in_array($request->input('transport_surface_mode'), ['road', 'train'], true)) {
                 $this->fail('transport_surface_mode', translate('Please select Road or Train for Surface transport.'));
             }
-            if (!in_array($request->input('transport_delivery_type'), ['door_delivery', 'transport_godown'], true)) {
+            if (!in_array($request->input('transport_delivery_type'), ['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'], true)) {
                 $this->fail('transport_delivery_type', translate('Please select a delivery type.'));
             }
         } elseif ($shippingChoice === 'local') {
@@ -251,7 +255,9 @@ class OrderPlacementService
         $order->user_id = $customer->id;
         $order->shipping_address = $combinedOrder->shipping_address;
         $order->billing_address = json_encode(!empty($billingAddress) ? $billingAddress : $shippingAddress);
-        $order->additional_info = $request->additional_info;
+        $order->additional_info = ($options['source'] ?? null) === 'backend'
+            ? $this->capitalizeFirst($request->input('additional_info'))
+            : $request->additional_info;
         $order->payment_type = $options['payment_type'] ?? $request->input('payment_option');
         $order->payment_status = ($options['payment_status'] ?? 'unpaid') === 'paid' ? 'paid' : 'unpaid';
         $order->shipping_choice = $shippingChoice;
@@ -265,22 +271,56 @@ class OrderPlacementService
         $order->local_delivery_partner_id = optional($localDeliveryPartner)->id;
         $order->transport_mode = $shippingChoice === 'transport' ? $request->fod_mode : null;
         $order->transport_surface_mode = ($shippingChoice === 'transport' && $request->fod_mode === 'surface') ? $request->transport_surface_mode : null;
-        $order->transport_delivery_type = $shippingChoice === 'transport' ? $request->transport_delivery_type : null;
-        $order->challan_number = $this->nullableTrimmed($request->input('challan_number'));
+        $deliveryType = $request->input('transport_delivery_type') === 'transport_godown'
+            ? 'transport_warehouse'
+            : $request->input('transport_delivery_type');
+        $order->transport_delivery_type = $shippingChoice === 'transport' ? $deliveryType : null;
         $order->cases = $this->nullableTrimmed($request->input('cases'));
         $order->attached_file_name = $this->nullableTrimmed($request->input('attached_file_name'));
-        $order->pm_accountant_name = $this->nullableTrimmed($request->input('pm_accountant_name'));
         $order->lr_number = $this->nullableTrimmed($request->input('lr_number'));
+        $order->lr_date = $request->input('lr_date');
         $order->cc_attached_path = $request->input('cc_attached_path');
-        $order->freight_paid = $request->boolean('freight_paid');
-        $order->transport_details = $this->nullableTrimmed($request->input('transport_details'));
-        $order->sales_person_id = $request->input('sales_person_id');
-        $order->weight = $this->nullableTrimmed($request->input('weight'));
-        $order->dimensions = $this->nullableTrimmed($request->input('dimensions'));
+        $order->consignee_copy_status = $request->input('consignee_copy_status');
+        $freightType = in_array($request->input('freight_type'), ['pre_paid', 'to_pay', 'fod'], true)
+            ? $request->input('freight_type')
+            : ($request->boolean('freight_paid') ? 'pre_paid' : null);
+        $order->freight_type = $freightType;
+        $order->freight_paid = $freightType === 'pre_paid';
+        $order->free_shipping = $request->boolean('free_shipping');
+        $order->sales_person_id = $request->input('sales_executive_id') ?: $request->input('sales_person_id');
+        $order->sales_executive_id = $order->sales_person_id;
+        $order->sales_man_code = $this->nullableTrimmed(optional($customer->user_details)->salesman);
+        $order->packed_by = $request->input('packed_by');
+        $order->checked_by = $request->input('checked_by');
+        $order->billing_by = $request->input('billing_by');
+
+        $weightGrams = $request->filled('weight_grams') ? (float) $request->input('weight_grams') : null;
+        $weightKg = $weightGrams !== null ? $weightGrams / 1000 : null;
+        $order->weight_grams = $weightGrams;
+        $order->weight_kg = $weightKg;
+        $order->weight = $weightKg !== null ? rtrim(rtrim(number_format($weightKg, 6, '.', ''), '0'), '.') : null;
+
+        $length = $request->filled('length_cm') ? (float) $request->input('length_cm') : null;
+        $width = $request->filled('width_cm') ? (float) $request->input('width_cm') : null;
+        $height = $request->filled('height_cm') ? (float) $request->input('height_cm') : null;
+        $order->length_cm = $length;
+        $order->width_cm = $width;
+        $order->height_cm = $height;
+        $order->dimensions = $length !== null && $width !== null && $height !== null
+            ? implode(' × ', [$length, $width, $height]) . ' CM'
+            : null;
         $order->delivery_viewed = '0';
         $order->payment_status_viewed = '0';
-        $order->code = generate_financial_year_order_code();
-        $order->date = strtotime('now');
+        $requestedOrderNo = $this->nullableTrimmed($request->input('order_no'));
+        $order->code = $requestedOrderNo && (int) ($options['seller_order_index'] ?? 0) === 0
+            ? $requestedOrderNo
+            : generate_financial_year_order_code();
+        $orderMoment = $request->filled('order_date') && $request->filled('order_time')
+            ? Carbon::createFromFormat('Y-m-d H:i', $request->input('order_date') . ' ' . $request->input('order_time'), config('app.timezone'))
+            : Carbon::now();
+        $order->order_date = $orderMoment->toDateString();
+        $order->order_time = $orderMoment->format('H:i:s');
+        $order->date = $orderMoment->timestamp;
         $order->save();
 
         storeIPLocation('orders', $order->id);
@@ -293,6 +333,18 @@ class OrderPlacementService
         $value = trim((string) $value);
 
         return $value === '' ? null : $value;
+    }
+
+    protected function capitalizeFirst($value): ?string
+    {
+        $value = $this->nullableTrimmed($value);
+        if ($value === null) {
+            return null;
+        }
+
+        return preg_replace_callback('/^(\s*)(\p{L})/u', function ($matches) {
+            return $matches[1] . mb_strtoupper($matches[2], 'UTF-8');
+        }, $value) ?: $value;
     }
 
     protected function writeOrderDetails(Order $order, Collection $sellerProduct, User $customer, array $options): void
@@ -555,6 +607,9 @@ class OrderPlacementService
             } else {
                 $stock->load('batches');
                 $validBatches = valid_batches_for_stock($stock, true);
+                if ($validBatches->isNotEmpty()) {
+                    $this->fail('items', translate('Please select a batch for ') . $product->getTranslation('name'));
+                }
                 $availableQty = $stock->batches->isNotEmpty() ? (int) $validBatches->sum('qty') : (int) ($stock->qty ?? 0);
                 if ($quantity > $availableQty) {
                     $this->fail('items', translate('The requested quantity is not available for ') . $product->getTranslation('name'));
@@ -921,6 +976,10 @@ class OrderPlacementService
             }
             $shippingCosts[$sellerId] = (float) ($shippingCosts[$sellerId] ?? 0) + $amount;
         }
+
+        if ($request->boolean('free_shipping')) {
+            return;
+        }
         $globalShipping = (float) $request->input('shipping_cost', 0);
         $groups = $lines->groupBy(fn ($line) => (int) ($line['owner_id'] ?? 0));
 
@@ -972,7 +1031,10 @@ class OrderPlacementService
         return Address::create([
             'user_id' => $customer->id,
             'type' => $type,
-            'address' => $request->input($prefix . '_address'),
+            'contact_person' => $this->capitalizeFirst($request->input($prefix . '_contact_person')),
+            'address' => $this->capitalizeFirst($request->input($prefix . '_address')),
+            'village' => $this->capitalizeFirst($request->input($prefix . '_village')),
+            'district' => $this->capitalizeFirst($request->input($prefix . '_district')),
             'country_id' => $request->input($prefix . '_country_id'),
             'state_id' => $request->input($prefix . '_state_id'),
             'city_id' => $request->input($prefix . '_city_id'),
@@ -990,8 +1052,11 @@ class OrderPlacementService
 
         $payload = [
             'name' => $customer->name,
+            'contact_person' => $address->contact_person,
             'email' => $customer->email,
             'address' => $address->address,
+            'village' => $address->village,
+            'district' => $address->district,
             'country' => optional($address->country)->name,
             'state' => optional($address->state)->name,
             'city' => optional($address->city)->name,
@@ -1110,7 +1175,7 @@ class OrderPlacementService
         }
 
         return Transport::create([
-            'name' => $name,
+            'name' => $this->capitalizeFirst($name),
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);
@@ -1144,10 +1209,25 @@ class OrderPlacementService
 
         return BookedTo::create([
             'transport_id' => $transport->id,
-            'name' => $location,
+            'name' => $this->capitalizeFirst($location),
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);
+    }
+
+    protected function transportAndBookedToAreSame(Request $request, ?Transport $transport): bool
+    {
+        if (!$transport) {
+            return false;
+        }
+
+        $bookedToName = trim((string) $request->input('booked_to_name'));
+        if ($request->filled('booked_to_id')) {
+            $bookedToName = (string) optional(BookedTo::find($request->input('booked_to_id')))->name;
+        }
+
+        return $bookedToName !== ''
+            && mb_strtolower(trim($bookedToName), 'UTF-8') === mb_strtolower(trim((string) $transport->name), 'UTF-8');
     }
 
     protected function resolveLocalDeliveryPartner(Request $request): ?LocalDeliveryPartner
@@ -1171,7 +1251,7 @@ class OrderPlacementService
         }
 
         return LocalDeliveryPartner::create([
-            'name' => $name,
+            'name' => $this->capitalizeFirst($name),
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);

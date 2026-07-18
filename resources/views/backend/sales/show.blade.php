@@ -2,6 +2,20 @@
 
 @section('content')
 
+    <style>
+        .apple-green-highlight {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 12px;
+            color: #14532d;
+            background: linear-gradient(180deg, #ecfdf3 0%, #dcfce7 100%);
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, .12), inset 0 1px 0 rgba(255, 255, 255, .9);
+            font-weight: 700;
+        }
+    </style>
+
     <div class="card">
         <div class="card-header">
             <h1 class="h2 fs-16 mb-0">{{ translate('Order Details') }}</h1>
@@ -154,20 +168,21 @@
                             <tr>
                                 <td class="text-main text-bold">{{ translate('Order Status') }}</td>
                                 <td class="text-right">
-                                    @if ($delivery_status == 'delivered')
-                                        <span class="badge badge-inline badge-success">
-                                            {{ translate(ucfirst(str_replace('_', ' ', $delivery_status))) }}
-                                        </span>
-                                    @else
-                                        <span class="badge badge-inline badge-info">
-                                            {{ translate(ucfirst(str_replace('_', ' ', $delivery_status))) }}
-                                        </span>
-                                    @endif
+                                    <span class="apple-green-highlight">
+                                        {{ translate(ucfirst(str_replace('_', ' ', $delivery_status))) }}
+                                    </span>
                                 </td>
                             </tr>
                             <tr>
+                                <td class="text-main text-bold">{{ translate('Credit / Balance Amount') }}</td>
+                                <td class="text-right"><span class="apple-green-highlight">{{ single_price(0) }}</span></td>
+                            </tr>
+                            <tr>
                                 <td class="text-main text-bold">{{ translate('Order Date') }} </td>
-                                <td class="text-right">{{ date('d-m-Y h:i A', $order->date) }}</td>
+                                <td class="text-right">
+                                    {{ $order->order_date ? $order->order_date->format('d-m-Y') : date('d-m-Y', $order->date) }}
+                                    {{ $order->order_time ? \Carbon\Carbon::parse($order->order_time)->format('h:i A') : date('h:i A', $order->date) }}
+                                </td>
                             </tr>
                             <tr>
                                 <td class="text-main text-bold">
@@ -197,7 +212,13 @@
                                             @endif
                                         @endif
                                         @if($order->transport_delivery_type)
-                                            <br>{{ translate(ucfirst(str_replace('_', ' ', $order->transport_delivery_type))) }}
+                                            <br>{{ translate([
+                                                'transport_godown' => 'Transport Warehouse',
+                                                'transport_warehouse' => 'Transport Warehouse',
+                                                'our_warehouse_delivery' => 'Our Warehouse Delivery',
+                                                'hand_delivery' => 'Hand Delivery',
+                                                'door_delivery' => 'Door Delivery',
+                                            ][$order->transport_delivery_type] ?? ucfirst(str_replace('_', ' ', $order->transport_delivery_type))) }}
                                         @endif
                                     @elseif($order->shipping_choice === 'local')
                                         {{ translate('Local') }}: {{ optional($order->localDeliveryPartner)->name ?? $order->shipping_by ?? '-' }}
@@ -211,47 +232,59 @@
                                 <td class="text-right">{{ $order->additional_info }}</td>
                             </tr>
                             <tr>
-                                <td class="text-main text-bold">{{ translate('Challan Number') }}</td>
-                                <td class="text-right">{{ $order->challan_number ?: '-' }}</td>
+                                <td class="text-main text-bold">{{ translate('Total Cases') }}</td>
+                                <td class="text-right">{{ $order->cases !== null && $order->cases !== '' ? $order->cases : '-' }}</td>
                             </tr>
                             <tr>
-                                <td class="text-main text-bold">{{ translate('Cases') }}</td>
-                                <td class="text-right">{{ $order->cases ?: '-' }}</td>
+                                <td class="text-main text-bold">{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</td>
+                                <td class="text-right">{{ $order->lr_number ?: '-' }} @if($order->lr_date)<br>{{ $order->lr_date->format('d-m-Y') }}@endif</td>
                             </tr>
                             <tr>
-                                <td class="text-main text-bold">{{ translate('PM (Accountant Name)') }}</td>
-                                <td class="text-right">{{ $order->pm_accountant_name ?: '-' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-main text-bold">{{ translate('LR Number') }}</td>
-                                <td class="text-right">{{ $order->lr_number ?: '-' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-main text-bold">{{ translate('Transport Details') }}</td>
-                                <td class="text-right">{{ $order->transport_details ?: '-' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-main text-bold">{{ translate('Sales Person') }}</td>
-                                <td class="text-right">{{ optional($order->salesPerson)->name ?: '-' }}</td>
+                                <td class="text-main text-bold">{{ translate('Sales Executive / Sales Man Code') }}</td>
+                                <td class="text-right">{{ optional($order->salesExecutive ?: $order->salesPerson)->name ?: '-' }} / {{ $order->sales_man_code ?: '-' }}</td>
                             </tr>
                             <tr>
                                 <td class="text-main text-bold">{{ translate('Weight / Dimensions') }}</td>
-                                <td class="text-right">{{ $order->weight ?: '-' }} / {{ $order->dimensions ?: '-' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-main text-bold">{{ translate('Freight Paid') }}</td>
-                                <td class="text-right">{{ $order->freight_paid ? translate('Yes') : translate('No') }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-main text-bold">{{ translate('CC Attached') }}</td>
                                 <td class="text-right">
-                                    @if($order->cc_attached_path)
-                                        <a href="{{ asset('storage/' . $order->cc_attached_path) }}" target="_blank" rel="noopener">
-                                            {{ $order->attached_file_name ?: basename($order->cc_attached_path) }}
-                                        </a>
+                                    @if($order->weight_grams !== null)
+                                        {{ (float) $order->weight_grams }} Gram = {{ (float) $order->weight_kg }} KG
                                     @else
-                                        {{ $order->attached_file_name ?: '-' }}
+                                        {{ $order->weight ?: '-' }}
                                     @endif
+                                    / {{ $order->dimensions ?: '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('Freight Type / Free Shipping') }}</td>
+                                <td class="text-right">{{ $order->freight_type ? translate(ucwords(str_replace('_', ' ', $order->freight_type))) : '-' }} / {{ $order->free_shipping ? translate('Yes') : translate('No') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('Packed By / Checked By / Billing By') }}</td>
+                                <td class="text-right">{{ optional($order->packedByStaff)->name ?: '-' }} / {{ optional($order->checkedByStaff)->name ?: '-' }} / {{ optional($order->billingByStaff)->name ?: '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-main text-bold">{{ translate('Consignee Copy / Attachments') }}</td>
+                                <td class="text-right">
+                                    <div class="mb-1">{{ $order->consignee_copy_status === 'attached' || $order->cc_attached_path || $order->attachments->where('category', 'consignee_copy')->isNotEmpty() ? translate('Attached') : translate('Not Attached') }}</div>
+                                    @forelse($order->attachments as $attachment)
+                                        <div class="d-flex align-items-center justify-content-end mb-1">
+                                            <span class="badge badge-inline badge-soft-secondary mr-1">{{ $attachment->category === 'consignee_copy' ? translate('Consignee Copy') : translate('Order') }}</span>
+                                            <a href="{{ asset('storage/' . $attachment->path) }}" target="_blank" rel="noopener" class="text-break">
+                                                {{ $attachment->original_name }}
+                                            </a>
+                                            <form method="POST" action="{{ route('orders.attachments.destroy', [$order, $attachment]) }}" class="ml-2" onsubmit="return confirm('{{ translate('Remove this attachment?') }}')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-xs btn-soft-danger" title="{{ translate('Remove') }}">&times;</button>
+                                            </form>
+                                        </div>
+                                    @empty
+                                        @if($order->cc_attached_path)
+                                            <a href="{{ asset('storage/' . $order->cc_attached_path) }}" target="_blank" rel="noopener">{{ $order->attached_file_name ?: basename($order->cc_attached_path) }}</a>
+                                        @else
+                                            {{ $order->attached_file_name ?: '-' }}
+                                        @endif
+                                    @endforelse
                                 </td>
                             </tr>
                         </tbody>

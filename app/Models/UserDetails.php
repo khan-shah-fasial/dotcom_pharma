@@ -218,4 +218,19 @@ class UserDetails extends Model
     {
         return $this->belongsTo(Country::class, 'country_id_business');
     }
+
+    public function personalCity()
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
+
+    public function personalState()
+    {
+        return $this->belongsTo(State::class, 'state_id');
+    }
+
+    public function personalCountry()
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
 }

@@ -92,6 +92,8 @@ if (!function_exists('get_location_by_postalcode')) {
                     $entry = $data['postalCodes'][0];
                     return [
                         'city'         => $entry['adminName2'] ?? $entry['placeName'] ?? null,
+                        'district'     => $entry['adminName2'] ?? null,
+                        'village'      => $entry['placeName'] ?? null,
                         'state'        => $entry['adminName1'] ?? null,
                         'state_code'   => $entry['ISO3166-2'] ?? null,
                         'country_code' => $entry['countryCode'] ?? null,

@@ -1047,7 +1047,9 @@
                         <label class="form-label" for="default_delivery_type">{{ translate('Default Delivery Type') }}</label>
                         <select id="default_delivery_type" name="default_delivery_type" class="form-control aiz-selectpicker">
                             <option value="door_delivery" {{ old('default_delivery_type', $details?->default_delivery_type ?? 'door_delivery') === 'door_delivery' ? 'selected' : '' }}>{{ translate('Door Delivery') }}</option>
-                            <option value="transport_godown" {{ old('default_delivery_type', $details?->default_delivery_type) === 'transport_godown' ? 'selected' : '' }}>{{ translate('Take from Transport Godown') }}</option>
+                            <option value="our_warehouse_delivery" {{ old('default_delivery_type', $details?->default_delivery_type) === 'our_warehouse_delivery' ? 'selected' : '' }}>{{ translate('Our Warehouse Delivery') }}</option>
+                            <option value="hand_delivery" {{ old('default_delivery_type', $details?->default_delivery_type) === 'hand_delivery' ? 'selected' : '' }}>{{ translate('Hand Delivery') }}</option>
+                            <option value="transport_godown" {{ old('default_delivery_type', $details?->default_delivery_type) === 'transport_godown' ? 'selected' : '' }}>{{ translate('Transport Warehouse') }}</option>
                         </select>
                     </div>
 
