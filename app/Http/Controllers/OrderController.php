@@ -36,6 +36,7 @@ use App\Notifications\OrderNotification;
 use App\Utility\EmailUtility;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Services\OrderPlacementService;
 use App\Services\WalletRewardService;
 use Illuminate\Validation\ValidationException;
@@ -50,7 +51,7 @@ class OrderController extends Controller
         $this->middleware(['permission:view_all_orders|view_inhouse_orders|view_seller_orders|view_pickup_point_orders|view_all_offline_payment_orders'])->only('all_orders');
         $this->middleware(['permission:view_order_details'])->only('show');
         $this->middleware(['permission:delete_order'])->only('destroy','bulk_order_delete');
-        $this->middleware(['permission:add_order'])->only('create', 'store', 'backendCustomerSearch', 'backendCustomerAddresses', 'backendProductSearch', 'backendProductQuote', 'backendCourierRates', 'backendOrderSummary', 'deleteAttachment');
+        $this->middleware(['permission:add_order'])->only('create', 'store', 'edit', 'update', 'backendOrderNumberPreview', 'backendCustomerSearch', 'backendCustomerAddresses', 'backendProductSearch', 'backendProductQuote', 'backendCourierRates', 'backendOrderSummary', 'deleteAttachment');
     }
 
     // All Orders
@@ -159,30 +160,9 @@ class OrderController extends Controller
         $transports = Transport::active()->orderBy('name')->get();
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
         $localDeliveryPartners = LocalDeliveryPartner::active()->orderBy('name')->get();
-        $staffMaster = Staff::with(['user', 'role'])
-            ->whereHas('user')
-            ->get()
-            ->sortBy(fn ($staff) => strtolower((string) optional($staff->user)->name))
-            ->values();
-        $staffFor = function (string $pattern) use ($staffMaster) {
-            $matched = $staffMaster->filter(function ($staff) use ($pattern) {
-                $staffArea = strtolower(trim(implode(' ', [
-                    $staff->designation,
-                    optional($staff->role)->name,
-                ])));
-
-                return (bool) preg_match($pattern, $staffArea);
-            })->values();
-
-            // Staff Master currently has role/designation but no department column.
-            // Keep the selector usable when legacy staff records are not classified.
-            return $matched->isNotEmpty() ? $matched : $staffMaster;
-        };
-        $salesPeople = $staffFor('/sales|business development|marketing/i');
-        $packedStaff = $staffFor('/pack|dispatch|warehouse/i');
-        $checkedStaff = $staffFor('/check|quality|qc|warehouse/i');
-        $billingStaff = $staffFor('/bill|account|finance/i');
-        $generatedOrderNo = generate_financial_year_order_code();
+        extract($this->orderFormStaffOptions());
+        $defaultOrderCodeLetter = financial_year_order_code_parts()['document'];
+        $generatedOrderNo = preview_financial_year_order_code(null, $defaultOrderCodeLetter);
 
         return view('backend.sales.create', compact(
             'countries',
@@ -194,6 +174,7 @@ class OrderController extends Controller
             'packedStaff',
             'checkedStaff',
             'billingStaff',
+            'defaultOrderCodeLetter',
             'generatedOrderNo'
         ));
     }
@@ -449,6 +430,21 @@ class OrderController extends Controller
         }
     }
 
+    public function backendOrderNumberPreview(Request $request)
+    {
+        $validated = $request->validate([
+            'order_date' => ['required', 'date'],
+            'order_code_letter' => ['required', 'string', 'size:1', 'regex:/^[A-Za-z]$/'],
+        ]);
+
+        return response()->json([
+            'code' => preview_financial_year_order_code(
+                $validated['order_date'],
+                strtoupper($validated['order_code_letter'])
+            ),
+        ]);
+    }
+
     public function backendCourierRates(Request $request, OrderPlacementService $orders)
     {
         try {
@@ -589,8 +585,21 @@ class OrderController extends Controller
                 $request->merge(['consignee_copy_status' => 'attached']);
             }
 
+            $shippingCostType = $request->input('shipping_cost_type');
+            if (!in_array($shippingCostType, ['by_seller', 'free_shipping'], true)) {
+                $shippingCostType = $request->boolean('free_shipping') ? 'free_shipping' : 'by_seller';
+            }
+            $request->merge([
+                'shipping_cost_type' => $shippingCostType,
+                'free_shipping' => $shippingCostType === 'free_shipping' ? 1 : 0,
+            ]);
+            if ($shippingCostType === 'free_shipping') {
+                $request->merge(['shipping_costs' => [], 'shipping_items' => []]);
+            }
+
             $request->validate([
-                'order_no' => ['required', 'string', 'max:191', Rule::unique('orders', 'code')],
+                'order_no_preview' => ['nullable', 'string', 'max:191'],
+                'order_code_letter' => ['required', 'string', 'size:1', 'regex:/^[A-Za-z]$/'],
                 'order_date' => ['required', 'date'],
                 'order_time' => ['required', 'date_format:H:i'],
                 'cases' => ['nullable', 'integer', 'min:0'],
@@ -610,7 +619,14 @@ class OrderController extends Controller
                 'width_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,height_cm'],
                 'height_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,width_cm'],
                 'freight_type' => ['nullable', Rule::in(['pre_paid', 'to_pay', 'fod'])],
+                'shipping_cost_type' => ['required', Rule::in(['by_seller', 'free_shipping'])],
                 'free_shipping' => ['nullable', 'boolean'],
+                'shipping_costs' => ['required_if:shipping_cost_type,by_seller', 'array'],
+                'shipping_costs.*' => ['numeric', 'min:0', 'max:99999999999.99'],
+                'shipping_items' => ['nullable', 'array'],
+                'shipping_items.*.description' => ['nullable', 'string', 'max:255'],
+                'shipping_items.*.seller_id' => ['nullable', 'integer'],
+                'shipping_items.*.amount' => ['nullable', 'numeric', 'min:0', 'max:99999999999.99'],
                 'transport_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
                 'transport_name' => ['nullable', 'string', 'max:255'],
                 'booked_to_name' => ['nullable', 'string', 'max:255'],
@@ -1186,7 +1202,22 @@ class OrderController extends Controller
      */
     public function edit($id)
     {
-        //
+        $order = Order::with(['orderDetails', 'transport', 'bookedTo', 'attachments'])->findOrFail($id);
+        $transports = Transport::active()->orderBy('name')->get();
+        $bookedToOptions = BookedTo::active()->orderBy('name')->get();
+        extract($this->orderFormStaffOptions());
+        $sellAmount = (float) $order->orderDetails->sum('shipping_cost');
+
+        return view('backend.sales.edit', compact(
+            'order',
+            'transports',
+            'bookedToOptions',
+            'salesPeople',
+            'packedStaff',
+            'checkedStaff',
+            'billingStaff',
+            'sellAmount'
+        ));
     }
 
     /**
@@ -1198,7 +1229,122 @@ class OrderController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $order = Order::with(['orderDetails', 'attachments'])->findOrFail($id);
+
+        if ($request->hasFile('cc_attachments')) {
+            $request->merge(['consignee_copy_status' => 'attached']);
+        }
+
+        $validated = $request->validate([
+            'transport_id' => ['nullable', 'integer', Rule::exists('transports', 'id')],
+            'transport_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
+            'booked_to_id' => ['nullable', 'integer', Rule::exists('booked_to', 'id')],
+            'consignee_copy_status' => ['required', Rule::in(['attached', 'not_attached'])],
+            'cc_attachments' => ['nullable', 'array', 'max:20'],
+            'cc_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
+            'freight_type' => ['nullable', Rule::in(['pre_paid', 'to_pay', 'fod'])],
+            'shipping_cost_type' => ['required', Rule::in(['by_seller', 'free_shipping'])],
+            'sell_amount' => ['required_if:shipping_cost_type,by_seller', 'nullable', 'numeric', 'min:0', 'max:99999999999.99'],
+            'sales_executive_id' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+            'packed_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+            'checked_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+            'billing_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+        ]);
+
+        if (!empty($validated['booked_to_id']) && !empty($validated['transport_id'])) {
+            $bookedToMatchesTransport = BookedTo::whereKey($validated['booked_to_id'])
+                ->where('transport_id', $validated['transport_id'])
+                ->exists();
+            if (!$bookedToMatchesTransport) {
+                throw ValidationException::withMessages([
+                    'booked_to_id' => translate('The booked-to destination does not belong to the selected transport.'),
+                ]);
+            }
+        }
+
+        $hasConsigneeCopy = $order->attachments->where('category', 'consignee_copy')->isNotEmpty()
+            || filled($order->cc_attached_path)
+            || $request->hasFile('cc_attachments');
+        if ($validated['consignee_copy_status'] === 'attached' && !$hasConsigneeCopy) {
+            throw ValidationException::withMessages([
+                'cc_attachments' => translate('Please attach at least one consignee copy file.'),
+            ]);
+        }
+
+        $storedAttachments = [];
+        foreach ($request->file('cc_attachments', []) as $file) {
+            $storedAttachments[] = [
+                'category' => 'consignee_copy',
+                'original_name' => $file->getClientOriginalName(),
+                'path' => $file->store('uploads/order-cc-attachments', 'public'),
+                'mime_type' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+            ];
+        }
+
+        try {
+            DB::transaction(function () use ($order, $validated, $storedAttachments) {
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                $details = OrderDetail::where('order_id', $lockedOrder->id)->lockForUpdate()->get();
+                $oldShipping = (float) $details->sum('shipping_cost');
+                $newShipping = $validated['shipping_cost_type'] === 'free_shipping'
+                    ? 0.0
+                    : (float) ($validated['sell_amount'] ?? 0);
+
+                foreach ($details as $detail) {
+                    $detail->shipping_cost = 0;
+                    $detail->save();
+                }
+                $paidDetail = $details->first(fn ($detail) => !(bool) ($detail->is_scheme ?? false));
+                if ($paidDetail) {
+                    $paidDetail->shipping_cost = $newShipping;
+                    $paidDetail->save();
+                }
+
+                $lockedOrder->transport_id = $validated['transport_id'] ?? null;
+                $lockedOrder->booked_to_id = $validated['booked_to_id'] ?? null;
+                $deliveryType = ($validated['transport_delivery_type'] ?? null) === 'transport_godown'
+                    ? 'transport_warehouse'
+                    : ($validated['transport_delivery_type'] ?? null);
+                $lockedOrder->transport_delivery_type = $deliveryType;
+                $lockedOrder->consignee_copy_status = $validated['consignee_copy_status'];
+                $lockedOrder->freight_type = $validated['freight_type'] ?? null;
+                $lockedOrder->freight_paid = ($validated['freight_type'] ?? null) === 'pre_paid';
+                $lockedOrder->free_shipping = $validated['shipping_cost_type'] === 'free_shipping';
+                $lockedOrder->sales_person_id = $validated['sales_executive_id'] ?? null;
+                $lockedOrder->sales_executive_id = $validated['sales_executive_id'] ?? null;
+                $lockedOrder->packed_by = $validated['packed_by'] ?? null;
+                $lockedOrder->checked_by = $validated['checked_by'] ?? null;
+                $lockedOrder->billing_by = $validated['billing_by'] ?? null;
+                $lockedOrder->grand_total = max(0, (float) $lockedOrder->grand_total - $oldShipping + $newShipping);
+
+                if ($validated['consignee_copy_status'] === 'not_attached') {
+                    $lockedOrder->cc_attached_path = null;
+                } elseif (!$lockedOrder->cc_attached_path && !empty($storedAttachments)) {
+                    $lockedOrder->cc_attached_path = $storedAttachments[0]['path'];
+                }
+                $lockedOrder->save();
+
+                if ($lockedOrder->combined_order_id) {
+                    $combinedOrder = CombinedOrder::whereKey($lockedOrder->combined_order_id)->lockForUpdate()->first();
+                    if ($combinedOrder) {
+                        $combinedOrder->grand_total = max(0, (float) $combinedOrder->grand_total - $oldShipping + $newShipping);
+                        $combinedOrder->save();
+                    }
+                }
+
+                foreach ($storedAttachments as $attachment) {
+                    $lockedOrder->attachments()->create($attachment);
+                }
+            });
+        } catch (\Throwable $exception) {
+            Storage::disk('public')->delete(collect($storedAttachments)->pluck('path')->all());
+            throw $exception;
+        }
+
+        flash(translate('Order has been updated successfully.'))->success();
+
+        return redirect()->route('all_orders.show', encrypt($order->id));
     }
 
     /**
@@ -1515,5 +1661,45 @@ class OrderController extends Controller
             flash(translate('Something went wrong!.'))->warning();
         }
         return back();
+    }
+
+    /**
+     * Use Staff Master role/designation data for all order staff selectors.
+     * Legacy unclassified staff remain available so existing assignments can be edited.
+     *
+     * @return array<string, \Illuminate\Support\Collection>
+     */
+    protected function orderFormStaffOptions(): array
+    {
+        $staffMaster = Staff::with(['user', 'role'])
+            ->whereHas('user')
+            ->get()
+            ->sortBy(fn ($staff) => strtolower((string) optional($staff->user)->name))
+            ->values();
+        $staffFor = function (string $pattern) use ($staffMaster) {
+            $matched = $staffMaster->filter(function ($staff) use ($pattern) {
+                $staffArea = strtolower(trim(implode(' ', [
+                    $staff->designation,
+                    optional($staff->role)->name,
+                ])));
+
+                return (bool) preg_match($pattern, $staffArea);
+            })->values();
+
+            if ($matched->isEmpty()) {
+                return $staffMaster;
+            }
+
+            return $matched
+                ->concat($staffMaster->whereNotIn('user_id', $matched->pluck('user_id')))
+                ->values();
+        };
+
+        return [
+            'salesPeople' => $staffFor('/sales|business development|marketing/i'),
+            'packedStaff' => $staffFor('/pack|dispatch|warehouse/i'),
+            'checkedStaff' => $staffFor('/check|quality|qc|warehouse/i'),
+            'billingStaff' => $staffFor('/bill|account|finance/i'),
+        ];
     }
 }

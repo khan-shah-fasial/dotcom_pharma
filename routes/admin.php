@@ -543,6 +543,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     // Order
     Route::resource('orders', OrderController::class);
     Route::controller(OrderController::class)->group(function () {
+        Route::get('/order-create/number-preview', 'backendOrderNumberPreview')->name('orders.create.number_preview');
         Route::get('/order-create/customers', 'backendCustomerSearch')->name('orders.create.customers');
         Route::get('/order-create/customers/{customer}/addresses', 'backendCustomerAddresses')->name('orders.create.customer_addresses');
         Route::get('/order-create/products', 'backendProductSearch')->name('orders.create.products');

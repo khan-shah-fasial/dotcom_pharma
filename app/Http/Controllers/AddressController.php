@@ -168,15 +168,33 @@ class AddressController extends Controller
 
     public function getLocation(Request $request)
     {
+        $validated = $request->validate([
+            'postal_code' => ['required', 'string', 'max:12', 'regex:/^[A-Za-z0-9 -]+$/'],
+            'country_id' => ['nullable', 'integer', 'exists:countries,id'],
+        ]);
+
         $country = null;
         if ($request->filled('country_id')) {
             $country = Country::find($request->country_id);
         }
 
         $countryCode = $country ? $country->code : null;
+        $postalCode = strtoupper(trim($validated['postal_code']));
+
+        if ($countryCode === 'IN' && !preg_match('/^\d{6}$/', $postalCode)) {
+            return response()->json([
+                'message' => translate('Please enter a valid 6-digit Indian pincode.'),
+            ], 422);
+        }
 
         // Fetch location data (will include country_code from response)
-        $locationData = get_location_by_postalcode($countryCode, $request->postal_code);
+        $locationData = get_location_by_postalcode($countryCode, $postalCode) ?: [];
+
+        if (empty($locationData)) {
+            return response()->json([
+                'message' => translate('No location was found for this pincode.'),
+            ], 404);
+        }
 
         // If country not provided, attempt to resolve from lookup
         if (!$country && !empty($locationData['country_code'])) {
@@ -219,13 +237,13 @@ class AddressController extends Controller
         return response()->json([
             'state_id' => $state ? $state->id : null,
             'city_id' => $city ? $city->id : null,
-            'state_name' => $state ? $state->name : null,
-            'city_name' => $city ? $city->name : null,
+            'state_name' => $state ? $state->name : $stateName,
+            'city_name' => $city ? $city->name : $cityName,
             'country_id' => $country ? $country->id : null,
             'country_code' => $country ? $country->code : ($locationData['country_code'] ?? null),
             'village' => $locationData['village'] ?? $locationData['placename'] ?? null,
             'district' => $locationData['district'] ?? null,
-            'postal_code' => $locationData['postal_code'] ?? $request->postal_code,
+            'postal_code' => $locationData['postal_code'] ?? $postalCode,
         ]);        
     }  
 

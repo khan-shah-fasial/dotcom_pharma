@@ -265,6 +265,12 @@
                                             <i class="las la-eye"></i>
                                         </a>
                                     @endcan
+                                    @can('add_order')
+                                        <a class="btn btn-soft-secondary btn-icon btn-circle btn-sm"
+                                            href="{{ route('orders.edit', $order->id) }}" title="{{ translate('Edit Order') }}">
+                                            <i class="las la-edit"></i>
+                                        </a>
+                                    @endcan
                                     <a class="btn btn-soft-info btn-icon btn-circle btn-sm"
                                         href="{{ route('invoice.download', $order->id) }}"
                                         title="{{ translate('Download Invoice') }}">

@@ -17,8 +17,13 @@
     </style>
 
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex align-items-center justify-content-between">
             <h1 class="h2 fs-16 mb-0">{{ translate('Order Details') }}</h1>
+            @can('add_order')
+                <a href="{{ route('orders.edit', $order->id) }}" class="btn btn-sm btn-soft-primary">
+                    <i class="las la-edit mr-1"></i>{{ translate('Edit Order') }}
+                </a>
+            @endcan
         </div>
         <div class="card-body">
             <div class="row gutters-5">
@@ -255,8 +260,8 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="text-main text-bold">{{ translate('Freight Type / Free Shipping') }}</td>
-                                <td class="text-right">{{ $order->freight_type ? translate(ucwords(str_replace('_', ' ', $order->freight_type))) : '-' }} / {{ $order->free_shipping ? translate('Yes') : translate('No') }}</td>
+                                <td class="text-main text-bold">{{ translate('Freight / Shipping Cost') }}</td>
+                                <td class="text-right">{{ $order->freight_type ? translate(ucwords(str_replace('_', ' ', $order->freight_type))) : '-' }} / {{ $order->free_shipping ? translate('Free Shipping') : translate('By Seller') }}</td>
                             </tr>
                             <tr>
                                 <td class="text-main text-bold">{{ translate('Packed By / Checked By / Billing By') }}</td>
@@ -265,7 +270,7 @@
                             <tr>
                                 <td class="text-main text-bold">{{ translate('Consignee Copy / Attachments') }}</td>
                                 <td class="text-right">
-                                    <div class="mb-1">{{ $order->consignee_copy_status === 'attached' || $order->cc_attached_path || $order->attachments->where('category', 'consignee_copy')->isNotEmpty() ? translate('Attached') : translate('Not Attached') }}</div>
+                                    <div class="mb-1">{{ $order->consignee_copy_status === 'attached' || ($order->consignee_copy_status === null && ($order->cc_attached_path || $order->attachments->where('category', 'consignee_copy')->isNotEmpty())) ? translate('Attached') : translate('Not Attached') }}</div>
                                     @forelse($order->attachments as $attachment)
                                         <div class="d-flex align-items-center justify-content-end mb-1">
                                             <span class="badge badge-inline badge-soft-secondary mr-1">{{ $attachment->category === 'consignee_copy' ? translate('Consignee Copy') : translate('Order') }}</span>

@@ -286,7 +286,9 @@ class OrderPlacementService
             : ($request->boolean('freight_paid') ? 'pre_paid' : null);
         $order->freight_type = $freightType;
         $order->freight_paid = $freightType === 'pre_paid';
-        $order->free_shipping = $request->boolean('free_shipping');
+        $shippingCostType = $request->input('shipping_cost_type');
+        $order->free_shipping = $shippingCostType === 'free_shipping'
+            || ($shippingCostType === null && $request->boolean('free_shipping'));
         $order->sales_person_id = $request->input('sales_executive_id') ?: $request->input('sales_person_id');
         $order->sales_executive_id = $order->sales_person_id;
         $order->sales_man_code = $this->nullableTrimmed(optional($customer->user_details)->salesman);
@@ -311,13 +313,10 @@ class OrderPlacementService
             : null;
         $order->delivery_viewed = '0';
         $order->payment_status_viewed = '0';
-        $requestedOrderNo = $this->nullableTrimmed($request->input('order_no'));
-        $order->code = $requestedOrderNo && (int) ($options['seller_order_index'] ?? 0) === 0
-            ? $requestedOrderNo
-            : generate_financial_year_order_code();
         $orderMoment = $request->filled('order_date') && $request->filled('order_time')
             ? Carbon::createFromFormat('Y-m-d H:i', $request->input('order_date') . ' ' . $request->input('order_time'), config('app.timezone'))
             : Carbon::now();
+        $order->code = generate_financial_year_order_code($orderMoment, $request->input('order_code_letter'));
         $order->order_date = $orderMoment->toDateString();
         $order->order_time = $orderMoment->format('H:i:s');
         $order->date = $orderMoment->timestamp;
@@ -964,6 +963,20 @@ class OrderPlacementService
         }
 
         $shippingCosts = (array) $request->input('shipping_costs', $request->input('seller_shipping_costs', []));
+        $sellerIds = $lines
+            ->map(fn ($line) => (int) ($line['owner_id'] ?? 0))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($request->input('shipping_cost_type') === 'by_seller') {
+            foreach ($sellerIds as $sellerId) {
+                if (!array_key_exists($sellerId, $shippingCosts)) {
+                    $this->fail('shipping_costs', translate('Please enter the sell amount for every seller.'));
+                }
+            }
+        }
+
         foreach ((array) $request->input('shipping_items', []) as $shippingItem) {
             $amount = max(0, (float) ($shippingItem['amount'] ?? 0));
             if ($amount <= 0) {
@@ -972,12 +985,13 @@ class OrderPlacementService
 
             $sellerId = (int) ($shippingItem['seller_id'] ?? 0);
             if (!$lines->contains(fn ($line) => (int) ($line['owner_id'] ?? 0) === $sellerId)) {
-                $sellerId = (int) ($lines->first()['owner_id'] ?? 0);
+                $this->fail('shipping_items', translate('A shipping item is assigned to an invalid seller.'));
             }
             $shippingCosts[$sellerId] = (float) ($shippingCosts[$sellerId] ?? 0) + $amount;
         }
 
-        if ($request->boolean('free_shipping')) {
+        if ($request->input('shipping_cost_type') === 'free_shipping'
+            || ($request->input('shipping_cost_type') === null && $request->boolean('free_shipping'))) {
             return;
         }
         $globalShipping = (float) $request->input('shipping_cost', 0);

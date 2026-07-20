@@ -80,7 +80,7 @@ if (!function_exists('get_location_by_postalcode')) {
     function get_location_by_postalcode($countryCode, $postalCode)
     {
         try {
-            $response = Http::get("https://secure.geonames.org/postalCodeSearchJSON", [
+            $response = Http::timeout(8)->retry(2, 150)->get("https://secure.geonames.org/postalCodeSearchJSON", [
                 'postalcode' => $postalCode,
                 'country' => $countryCode ?: '',
                 'username' => 'umair.makent', // You need to register for a free GeoNames account to get a username
@@ -91,7 +91,9 @@ if (!function_exists('get_location_by_postalcode')) {
                 if (!empty($data['postalCodes'])) {
                     $entry = $data['postalCodes'][0];
                     return [
-                        'city'         => $entry['adminName2'] ?? $entry['placeName'] ?? null,
+                        // GeoNames documents placeName as the locality/city and
+                        // adminName2 as the second-level administrative district.
+                        'city'         => $entry['placeName'] ?? null,
                         'district'     => $entry['adminName2'] ?? null,
                         'village'      => $entry['placeName'] ?? null,
                         'state'        => $entry['adminName1'] ?? null,
@@ -6253,33 +6255,121 @@ if (!function_exists('format_dd_mm_yy')) {
     }
 }
 
-if (!function_exists('generate_financial_year_order_code')) {
+if (!function_exists('financial_year_order_code_parts')) {
     /**
-     * Build an order code like 786-DP-S-25-26-626 based on the current financial year (Apr-Mar).
+     * @return array{brand:string,document:string,start:int,end:int,segment:string,prefix:string}
      */
-    function generate_financial_year_order_code(): string
+    function financial_year_order_code_parts($moment = null, $documentCode = null): array
     {
-        $today = Carbon::now();
-        $financialYearStart = $today->month >= 4 ? $today->year : $today->year - 1;
-        $financialYearEnd = $financialYearStart + 1;
+        $date = $moment instanceof Carbon ? $moment->copy() : Carbon::parse($moment ?: 'now');
+        $start = $date->month >= 4 ? $date->year : $date->year - 1;
+        $end = $start + 1;
+        $configuredBrand = strtoupper(trim((string) get_setting('order_brand_short_code', 'DP')));
+        $brand = preg_replace('/[^A-Z0-9]/', '', $configuredBrand) ?: 'DP';
+        $configuredDocument = strtoupper(trim((string) ($documentCode ?: get_setting('order_document_code', 'O'))));
+        $document = substr(preg_replace('/[^A-Z]/', '', $configuredDocument) ?: 'O', 0, 1);
+        $segment = substr((string) $start, -2) . '-' . substr((string) $end, -2);
 
-        $fySegment = substr((string) $financialYearStart, -2) . '-' . substr((string) $financialYearEnd, -2);
-        $prefix = '786-DP-S-' . $fySegment . '-';
+        return [
+            'brand' => $brand,
+            'document' => $document,
+            'start' => $start,
+            'end' => $end,
+            'segment' => $segment,
+            'prefix' => '786-' . $brand . '-' . $document . '-' . $segment . '-',
+        ];
+    }
+}
 
-        // Limit the lookup to the current financial year so a new year always starts at 1.
-        $fyStartDate = Carbon::create($financialYearStart, 4, 1, 0, 0, 0);
-        $fyEndDate = Carbon::create($financialYearEnd, 4, 1, 0, 0, 0)->subSecond();
+if (!function_exists('current_order_sequence_for_prefix')) {
+    function current_order_sequence_for_prefix(string $prefix): int
+    {
+        return Order::where('code', 'like', $prefix . '%')
+            ->pluck('code')
+            ->reduce(function (int $highest, $code) use ($prefix) {
+                if (preg_match('/^' . preg_quote($prefix, '/') . '(\d+)$/', trim((string) $code), $matches)) {
+                    return max($highest, (int) $matches[1]);
+                }
 
-        $lastOrder = Order::whereBetween('created_at', [$fyStartDate, $fyEndDate])
-            ->where('code', 'like', $prefix . '%')
-            ->orderBy('id', 'desc')
-            ->first();
+                return $highest;
+            }, 0);
+    }
+}
 
-        $nextSequence = 1;
-        if ($lastOrder && preg_match('/' . preg_quote($prefix, '/') . '\\s*(\\d+)/', $lastOrder->code, $matches)) {
-            $nextSequence = ((int) $matches[1]) + 1;
+if (!function_exists('preview_financial_year_order_code')) {
+    /**
+     * Preview only. The final number is allocated atomically when the order is saved.
+     */
+    function preview_financial_year_order_code($moment = null, $documentCode = null): string
+    {
+        $parts = financial_year_order_code_parts($moment, $documentCode);
+        $lastSequence = 0;
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('order_number_sequences')) {
+            $sequenceQuery = DB::table('order_number_sequences')
+                ->where('brand_short_code', $parts['brand'])
+                ->where('financial_year_start', $parts['start']);
+            if (\Illuminate\Support\Facades\Schema::hasColumn('order_number_sequences', 'document_code')) {
+                $sequenceQuery->where('document_code', $parts['document']);
+            }
+            $lastSequence = (int) $sequenceQuery->value('last_sequence');
         }
 
-        return $prefix . $nextSequence;
+        if ($lastSequence === 0) {
+            $lastSequence = current_order_sequence_for_prefix($parts['prefix']);
+        }
+
+        return $parts['prefix'] . ($lastSequence + 1);
+    }
+}
+
+if (!function_exists('generate_financial_year_order_code')) {
+    /**
+     * Allocate a concurrency-safe order code such as 786-DP-O-26-27-2.
+     */
+    function generate_financial_year_order_code($moment = null, $documentCode = null): string
+    {
+        $parts = financial_year_order_code_parts($moment, $documentCode);
+
+        if (!\Illuminate\Support\Facades\Schema::hasTable('order_number_sequences')) {
+            return $parts['prefix'] . (current_order_sequence_for_prefix($parts['prefix']) + 1);
+        }
+
+        return DB::transaction(function () use ($parts) {
+            $hasDocumentCode = \Illuminate\Support\Facades\Schema::hasColumn('order_number_sequences', 'document_code');
+            $insert = [
+                'brand_short_code' => $parts['brand'],
+                'financial_year_start' => $parts['start'],
+                'last_sequence' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            if ($hasDocumentCode) {
+                $insert['document_code'] = $parts['document'];
+            }
+            DB::table('order_number_sequences')->insertOrIgnore($insert);
+
+            $sequenceRow = DB::table('order_number_sequences')
+                ->where('brand_short_code', $parts['brand'])
+                ->where('financial_year_start', $parts['start'])
+                ->when($hasDocumentCode, fn ($query) => $query->where('document_code', $parts['document']))
+                ->lockForUpdate()
+                ->first();
+
+            $lastSequence = (int) $sequenceRow->last_sequence;
+            if ($lastSequence === 0) {
+                $lastSequence = current_order_sequence_for_prefix($parts['prefix']);
+            }
+            $nextSequence = $lastSequence + 1;
+
+            DB::table('order_number_sequences')
+                ->where('id', $sequenceRow->id)
+                ->update([
+                    'last_sequence' => $nextSequence,
+                    'updated_at' => now(),
+                ]);
+
+            return $parts['prefix'] . $nextSequence;
+        });
     }
 }

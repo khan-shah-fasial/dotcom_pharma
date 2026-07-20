@@ -117,15 +117,22 @@
                         <div class="row gutters-5">
                             <div class="col-md-4 form-group">
                                 <label>{{ translate('Order No') }} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="order_no" value="{{ old('order_no', $generatedOrderNo) }}" required>
-                                @error('order_no') <div class="text-danger small">{{ $message }}</div> @enderror
+                                <input type="text" class="form-control" name="order_no_preview" id="order-no-preview" value="{{ old('order_no_preview', $generatedOrderNo) }}" readonly>
+                                <small class="text-muted">{{ translate('Preview only. The final sequential number is reserved when the order is saved.') }}</small>
                             </div>
-                            <div class="col-md-4 form-group">
+                            <div class="col-md-2 form-group">
+                                <label>{{ translate('Code') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control text-uppercase" name="order_code_letter" id="order-code-letter"
+                                    maxlength="1" pattern="[A-Za-z]" value="{{ old('order_code_letter', $defaultOrderCodeLetter) }}" required>
+                                <small class="text-muted">{{ translate('O, S, P, etc.') }}</small>
+                                @error('order_code_letter') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-3 form-group">
                                 <label>{{ translate('Order Date') }} <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="order_date" value="{{ old('order_date', now()->toDateString()) }}" required>
                                 @error('order_date') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
-                            <div class="col-md-4 form-group">
+                            <div class="col-md-3 form-group">
                                 <label>{{ translate('Order Time') }} <span class="text-danger">*</span></label>
                                 <input type="time" class="form-control" name="order_time" value="{{ old('order_time', now()->format('H:i')) }}" required>
                                 @error('order_time') <div class="text-danger small">{{ $message }}</div> @enderror
@@ -141,6 +148,24 @@
                                     @endforeach
                                 </select>
                             </div>
+                            @foreach ([
+                                ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
+                                ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
+                                ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff],
+                            ] as $staffField)
+                                <div class="col-md-4 form-group">
+                                    <label>{{ translate($staffField['label']) }}</label>
+                                    <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
+                                        <option value="">{{ translate('Select Staff') }}</option>
+                                        @foreach ($staffField['staff'] as $staff)
+                                            <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], $staffField['staff']->contains('user_id', auth()->id()) ? auth()->id() : null) === (string) $staff->user_id)>
+                                                {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error($staffField['name']) <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                            @endforeach
                             <div class="col-md-6 form-group">
                                 <label>{{ translate('Sales Man Code') }}</label>
                                 <input type="text" class="form-control" id="sales-man-code" value="{{ old('sales_man_code') }}" readonly>
@@ -183,25 +208,6 @@
                                 <input type="date" class="form-control" name="lr_date" value="{{ old('lr_date') }}">
                             </div>
 
-                            {{-- Row 3: Staff Master operational roles --}}
-                            @foreach ([
-                                ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
-                                ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
-                                ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff],
-                            ] as $staffField)
-                                <div class="col-md-4 form-group">
-                                    <label>{{ translate($staffField['label']) }}</label>
-                                    <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
-                                        <option value="">{{ translate('Select Staff') }}</option>
-                                        @foreach ($staffField['staff'] as $staff)
-                                            <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name']) === (string) $staff->user_id)>
-                                                {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endforeach
-
                             {{-- Row 4: general order attachments --}}
                             <div class="col-md-6 form-group">
                                 <label>{{ translate('Attached File Name') }}</label>
@@ -214,40 +220,6 @@
                                 <small class="text-muted">{{ translate('Select multiple files; maximum 10 MB per file.') }}</small>
                             </div>
 
-                            <div class="col-md-4 form-group">
-                                <label>{{ translate('Consignee Copy') }}</label>
-                                <select class="form-control" name="consignee_copy_status" id="consignee-copy-status">
-                                    <option value="attached" @selected(old('consignee_copy_status') === 'attached')>{{ translate('Attached') }}</option>
-                                    <option value="not_attached" @selected(old('consignee_copy_status', 'not_attached') === 'not_attached')>{{ translate('Not Attached') }}</option>
-                                </select>
-                            </div>
-                            <div class="col-md-8 form-group" id="consignee-copy-files-wrap">
-                                <label>{{ translate('LR / Consignee Copy Files') }}</label>
-                                <input type="file" class="form-control multi-file-input" name="cc_attachments[]" id="cc-attachments" multiple
-                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#cc-attachment-names">
-                                <div class="selected-file-list mt-1" id="cc-attachment-names"><span class="text-muted">{{ translate('No files selected') }}</span></div>
-                                @error('cc_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('Freight Type') }}</label>
-                                <select class="form-control" name="freight_type">
-                                    <option value="">{{ translate('Select Freight Type') }}</option>
-                                    <option value="pre_paid" @selected(old('freight_type') === 'pre_paid')>{{ translate('Pre-Paid') }}</option>
-                                    <option value="to_pay" @selected(old('freight_type') === 'to_pay')>{{ translate('To Pay') }}</option>
-                                    <option value="fod" @selected(old('freight_type') === 'fod')>{{ translate('FOD') }}</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 form-group d-flex align-items-end">
-                                <div class="border rounded p-3 w-100">
-                                    <input type="hidden" name="free_shipping" value="0">
-                                    <label class="aiz-checkbox mb-0">
-                                        <input type="checkbox" name="free_shipping" id="free-shipping" value="1" @checked(old('free_shipping'))>
-                                        <span>{{ translate('Free Shipping') }}</span>
-                                        <span class="aiz-square-check"></span>
-                                    </label>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -461,13 +433,6 @@
                                 <input type="text" class="form-control mt-2 auto-capitalize-first" name="transport_name" placeholder="{{ translate('Or enter transport name') }}">
                             </div>
                             <div class="form-group">
-                                <label>{{ translate('Booked To') }}</label>
-                                <select class="form-control" name="booked_to_id" id="booked-to-id" disabled>
-                                    <option value="">{{ translate('Select transport first') }}</option>
-                                </select>
-                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="booked_to_name" placeholder="{{ translate('Or enter booked to') }}">
-                            </div>
-                            <div class="form-group">
                                 <label>{{ translate('Transport Mode') }}</label>
                                 <select class="form-control" name="fod_mode">
                                     <option value="surface">{{ translate('Surface') }}</option>
@@ -491,6 +456,38 @@
                                     <option value="transport_warehouse">{{ translate('Transport Warehouse') }}</option>
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label>{{ translate('Consignee Copy') }}</label>
+                                <select class="form-control" name="consignee_copy_status" id="consignee-copy-status">
+                                    <option value="attached" @selected(old('consignee_copy_status') === 'attached')>{{ translate('Attached') }}</option>
+                                    <option value="not_attached" @selected(old('consignee_copy_status', 'not_attached') === 'not_attached')>{{ translate('Not Attached') }}</option>
+                                </select>
+                                @error('consignee_copy_status') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="form-group" id="consignee-copy-files-wrap">
+                                <label>{{ translate('LR / Consignee Copy Files') }}</label>
+                                <input type="file" class="form-control multi-file-input" name="cc_attachments[]" id="cc-attachments" multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#cc-attachment-names">
+                                <div class="selected-file-list mt-1" id="cc-attachment-names"><span class="text-muted">{{ translate('No files selected') }}</span></div>
+                                @error('cc_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Booked To') }}</label>
+                                <select class="form-control" name="booked_to_id" id="booked-to-id" disabled>
+                                    <option value="">{{ translate('Select transport first') }}</option>
+                                </select>
+                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="booked_to_name" placeholder="{{ translate('Or enter booked to') }}">
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Freight') }}</label>
+                                <select class="form-control" name="freight_type">
+                                    <option value="">{{ translate('Select Freight') }}</option>
+                                    <option value="pre_paid" @selected(old('freight_type') === 'pre_paid')>{{ translate('Pre-Paid') }}</option>
+                                    <option value="to_pay" @selected(old('freight_type') === 'to_pay')>{{ translate('To Pay') }}</option>
+                                    <option value="fod" @selected(old('freight_type') === 'fod')>{{ translate('FOD') }}</option>
+                                </select>
+                                @error('freight_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
                         </div>
 
                         <div id="local-fields" class="d-none">
@@ -507,17 +504,28 @@
                         </div>
 
                         <div class="border-top pt-3">
-                            <label>{{ translate('Shipping Cost By Seller') }}</label>
-                            <div id="seller-shipping-costs" class="small text-muted">{{ translate('Add products to enter seller shipping cost.') }}</div>
-                        </div>
-                        <div class="border-top pt-3 mt-3">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <label class="mb-0">{{ translate('Shipping Items') }}</label>
-                                <button type="button" class="btn btn-sm btn-soft-primary" id="add-shipping-item-btn">
-                                    <i class="las la-plus"></i> {{ translate('Add Shipping Item') }}
-                                </button>
+                            <div class="form-group">
+                                <label>{{ translate('Shipping Cost') }}</label>
+                                <select class="form-control" name="shipping_cost_type" id="shipping-cost-type">
+                                    <option value="by_seller" @selected(old('shipping_cost_type', old('free_shipping') ? 'free_shipping' : 'by_seller') === 'by_seller')>{{ translate('By Seller') }}</option>
+                                    <option value="free_shipping" @selected(old('shipping_cost_type', old('free_shipping') ? 'free_shipping' : 'by_seller') === 'free_shipping')>{{ translate('Free Shipping') }}</option>
+                                </select>
+                                @error('shipping_cost_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                                <input type="hidden" name="free_shipping" id="free-shipping" value="{{ old('shipping_cost_type', old('free_shipping') ? 'free_shipping' : 'by_seller') === 'free_shipping' ? 1 : 0 }}">
                             </div>
-                            <div id="shipping-items" class="small text-muted">{{ translate('No shipping items added.') }}</div>
+                            <div id="sell-amount-wrap">
+                                <label>{{ translate('Sell Amount') }}</label>
+                                <div id="seller-shipping-costs" class="small text-muted">{{ translate('Add products to enter seller shipping cost.') }}</div>
+                                <div class="border-top pt-3 mt-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <label class="mb-0">{{ translate('Shipping Items') }}</label>
+                                        <button type="button" class="btn btn-sm btn-soft-primary" id="add-shipping-item-btn">
+                                            <i class="las la-plus"></i> {{ translate('Add Shipping Item') }}
+                                        </button>
+                                    </div>
+                                    <div id="shipping-items" class="small text-muted">{{ translate('No shipping items added.') }}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -604,6 +612,7 @@
     <script>
         (function () {
             var customerSearchUrl = @json(route('orders.create.customers'));
+            var orderNumberPreviewUrl = @json(route('orders.create.number_preview'));
             var customerAddressUrlTemplate = @json(route('orders.create.customer_addresses', ['customer' => '__ID__']));
             var productSearchUrl = @json(route('orders.create.products'));
             var productQuoteUrl = @json(route('orders.create.product_quote'));
@@ -625,6 +634,7 @@
             var courierServices = [];
             var shippingItems = [];
             var nextShippingItemId = 1;
+            var orderNumberPreviewTimer = null;
 
             function money(value) {
                 return (Number(value || 0)).toFixed(2);
@@ -681,6 +691,30 @@
                 $('#weight-kg-display').text((Math.round(kilograms * 1000000) / 1000000) + ' KG');
             }
 
+            function updateOrderCodePreview() {
+                var $code = $('#order-code-letter');
+                var letter = String($code.val() || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 1);
+                $code.val(letter);
+                if (!letter) return;
+                $('#order-no-preview').val(function (_, current) {
+                    return String(current || '').replace(/^(786-[A-Z0-9]+-)[A-Z](-\d{2}-\d{2}-\d+)$/, '$1' + letter + '$2');
+                });
+
+                clearTimeout(orderNumberPreviewTimer);
+                orderNumberPreviewTimer = setTimeout(function () {
+                    requestJson({
+                        url: orderNumberPreviewUrl,
+                        method: 'GET',
+                        data: {
+                            order_date: $('input[name="order_date"]').val(),
+                            order_code_letter: letter
+                        }
+                    }).done(function (response) {
+                        if (response.code) $('#order-no-preview').val(response.code);
+                    });
+                }, 250);
+            }
+
             function renderSelectedFiles(input) {
                 var $input = $(input);
                 var $list = $($input.data('list')).empty();
@@ -698,6 +732,21 @@
             function normalizeOptionsHtml(response) {
                 if (typeof response !== 'string') return response;
                 try { return JSON.parse(response); } catch (error) { return response; }
+            }
+
+            function canApplyPincodeValue($field) {
+                var current = $.trim(String($field.val() || ''));
+                var previousLookupValue = $.trim(String($field.data('pincode-value') || ''));
+                return current === '' || current === previousLookupValue;
+            }
+
+            function applyPincodeValue($field, value) {
+                if (value === null || value === undefined || value === '' || !canApplyPincodeValue($field)) {
+                    return false;
+                }
+                var normalizedValue = capitalizeFirst(value);
+                $field.val(normalizedValue).data('pincode-value', normalizedValue);
+                return true;
             }
 
             function lookupPincode(input) {
@@ -720,11 +769,13 @@
                         country_id: $('#' + prefix + '-country-id').val()
                     }
                 }).done(function (location) {
-                    if (location.village) $('#' + prefix + '-village').val(capitalizeFirst(location.village));
-                    if (location.district) $('#' + prefix + '-district').val(capitalizeFirst(location.district));
-                    if (location.country_id) $('#' + prefix + '-country-id').val(String(location.country_id));
+                    applyPincodeValue($('#' + prefix + '-village'), location.village || location.city_name);
+                    applyPincodeValue($('#' + prefix + '-district'), location.district);
+                    if (location.country_id) {
+                        applyPincodeValue($('#' + prefix + '-country-id'), String(location.country_id));
+                    }
 
-                    if (!location.country_id && !location.state_id && !location.city_id && !location.village) {
+                    if (!location.country_id && !location.state_id && !location.city_id && !location.village && !location.city_name) {
                         $status.removeClass('text-muted text-success').addClass('text-danger').text('{{ translate('No location found for this pincode.') }}');
                         return;
                     }
@@ -732,19 +783,25 @@
                     var finish = function () {
                         $status.removeClass('text-muted text-danger').addClass('text-success').text('{{ translate('Location loaded.') }}');
                     };
-                    if (!location.country_id || !location.state_id) {
+                    if (!location.country_id || !location.state_id || !canApplyPincodeValue($('#' + prefix + '-state-id'))) {
                         finish();
                         return;
                     }
 
                     $.post(stateUrl, {_token: csrf, country_id: location.country_id}, function (stateOptions) {
-                        $('#' + prefix + '-state-id').html(normalizeOptionsHtml(stateOptions)).val(String(location.state_id));
+                        var $state = $('#' + prefix + '-state-id');
+                        $state.html(normalizeOptionsHtml(stateOptions));
+                        applyPincodeValue($state, String(location.state_id));
                         if (!location.city_id) {
                             finish();
                             return;
                         }
                         $.post(cityUrl, {_token: csrf, state_id: location.state_id}, function (cityOptions) {
-                            $('#' + prefix + '-city-id').html(normalizeOptionsHtml(cityOptions)).val(String(location.city_id));
+                            var $city = $('#' + prefix + '-city-id');
+                            if (canApplyPincodeValue($city)) {
+                                $city.html(normalizeOptionsHtml(cityOptions));
+                                applyPincodeValue($city, String(location.city_id));
+                            }
                             finish();
                         }).fail(function () {
                             $status.removeClass('text-muted text-success').addClass('text-danger').text('{{ translate('City list could not be loaded.') }}');
@@ -752,8 +809,9 @@
                     }).fail(function () {
                         $status.removeClass('text-muted text-success').addClass('text-danger').text('{{ translate('State list could not be loaded.') }}');
                     });
-                }).fail(function () {
-                    $status.removeClass('text-muted text-success').addClass('text-danger').text('{{ translate('Unable to fetch location. Please enter it manually.') }}');
+                }).fail(function (xhr) {
+                    var message = xhr.responseJSON && (xhr.responseJSON.message || Object.values(xhr.responseJSON.errors || {})[0]);
+                    $status.removeClass('text-muted text-success').addClass('text-danger').text(message || '{{ translate('Unable to fetch location. Please enter it manually.') }}');
                 });
             }
 
@@ -1207,7 +1265,7 @@
                 Object.keys(sellers).forEach(function (sellerId) {
                     $box.append('<div class="form-group mb-2">'
                         + '<label class="mb-1">' + sellers[sellerId] + '</label>'
-                        + '<input type="number" min="0" step="0.01" class="form-control seller-shipping-input" data-seller-id="' + sellerId + '" name="shipping_costs[' + sellerId + ']" value="' + (existingCosts[sellerId] || 0) + '">'
+                        + '<input type="number" min="0" step="0.01" class="form-control seller-shipping-input" data-seller-id="' + sellerId + '" name="shipping_costs[' + sellerId + ']" value="' + (existingCosts[sellerId] || 0) + '" required>'
                         + '</div>');
                 });
                 renderShippingItems();
@@ -1215,8 +1273,11 @@
             }
 
             function syncFreeShippingControls() {
-                var isFree = $('#free-shipping').is(':checked');
+                var isFree = $('#shipping-cost-type').val() === 'free_shipping';
+                $('#free-shipping').val(isFree ? '1' : '0');
+                $('#sell-amount-wrap').toggleClass('d-none', isFree);
                 $('.seller-shipping-input,.shipping-item-description,.shipping-item-seller,.shipping-item-amount').prop('disabled', isFree);
+                $('.seller-shipping-input').prop('required', !isFree);
                 $('#add-shipping-item-btn').prop('disabled', isFree);
             }
 
@@ -1259,7 +1320,7 @@
             function renderOrderShippingRows() {
                 var $body = $('#order-lines-body');
                 $body.find('.order-shipping-line').remove();
-                if (!lines.length || $('#free-shipping').is(':checked')) return;
+                if (!lines.length || $('#shipping-cost-type').val() === 'free_shipping') return;
 
                 var sellers = {};
                 lines.forEach(function (line) {
@@ -1433,6 +1494,8 @@
 
             $('#weight-grams').on('input change', updateWeightDisplay);
             updateWeightDisplay();
+            $('#order-code-letter,input[name="order_date"]').on('input change', updateOrderCodePreview);
+            updateOrderCodePreview();
 
             $(document).on('blur', '.auto-capitalize-first', function () {
                 $(this).val(capitalizeFirst($(this).val()));
@@ -1476,11 +1539,12 @@
                 $(input).data('lookup-timer', setTimeout(function () { lookupPincode(input); }, 450));
             });
 
-            $('#free-shipping').on('change', function () {
+            $('#shipping-cost-type').on('change', function () {
                 syncFreeShippingControls();
                 renderOrderShippingRows();
                 refreshSummary(false);
             });
+            syncFreeShippingControls();
 
             $('#customer-search').on('input', function () {
                 var q = $(this).val();
