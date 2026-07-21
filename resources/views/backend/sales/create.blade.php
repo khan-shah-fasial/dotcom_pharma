@@ -100,6 +100,109 @@
             background: #fff;
         }
         .selected-file-chip:last-child { margin-bottom: 0; }
+        .product-picker-shell {
+            overflow: hidden;
+            border: 1px solid #dfe5ee;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 6px 20px rgba(20, 40, 80, .06);
+        }
+        .product-picker-toolbar {
+            padding: 15px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5eaf1;
+        }
+        .product-picker-identity {
+            min-height: 42px;
+        }
+        .product-picker-identity img {
+            width: 54px;
+            height: 54px;
+            object-fit: cover;
+            background: #fff;
+        }
+        .product-info-section {
+            height: 100%;
+            border: 1px solid #dfe5ee;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .product-info-section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            color: #1f2937;
+            background: #edf6ff;
+            border-bottom: 1px solid #d7e6f5;
+            border-radius: 8px 8px 0 0;
+            font-weight: 700;
+        }
+        .product-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .product-info-item {
+            display: grid;
+            grid-template-columns: minmax(105px, 42%) minmax(0, 1fr);
+            min-height: 35px;
+            border-bottom: 1px solid #edf0f4;
+        }
+        .product-info-item:nth-child(odd) {
+            border-right: 1px solid #edf0f4;
+        }
+        .product-info-label,
+        .product-info-value {
+            padding: 8px 9px;
+            overflow-wrap: anywhere;
+        }
+        .product-info-label {
+            color: #64748b;
+            background: #f8fafc;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+        .product-info-value {
+            color: #172033;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .product-info-value.is-accent {
+            color: #dc2626;
+        }
+        .product-composition-item {
+            grid-column: 1 / -1;
+            grid-template-columns: minmax(105px, 21%) minmax(0, 1fr);
+            border-right: 0 !important;
+        }
+        .product-picker-quote {
+            min-height: 44px;
+            padding: 12px 15px;
+            color: #475569;
+            background: #f8fafc;
+            border-top: 1px solid #e5eaf1;
+        }
+        .product-picker-quote strong {
+            color: #172033;
+        }
+        .packing-details-table th {
+            color: #475569;
+            background: #f1f5f9;
+            border-color: #dfe5ee !important;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .packing-details-table td {
+            border-color: #e8edf3 !important;
+            font-size: 12px;
+        }
+        @media (max-width: 767.98px) {
+            .product-info-grid { grid-template-columns: 1fr; }
+            .product-info-item:nth-child(odd) { border-right: 0; }
+            .product-composition-item { grid-column: auto; grid-template-columns: minmax(105px, 42%) minmax(0, 1fr); }
+        }
     </style>
     <form id="backend-order-form" action="{{ route('orders.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
@@ -286,73 +389,122 @@
                             <div id="product-results" class="backend-product-results"></div>
                         </div>
 
-                        <div id="product-picker" class="border rounded p-3 d-none">
+                        <div id="product-picker" class="product-picker-shell d-none">
+                            <div class="product-picker-toolbar">
                             <div class="row gutters-10 align-items-end">
-                                <div class="col-md-3">
+                                <div class="col-lg-4 col-md-6">
                                     <label>{{ translate('Product') }}</label>
-                                    <div class="d-flex align-items-center">
-                                        <img src="" class="size-50px img-fit rounded border mr-2 d-none" id="picker-product-image" alt="">
-                                        <div>
+                                    <div class="product-picker-identity d-flex align-items-center">
+                                        <img src="" class="rounded border mr-2 d-none" id="picker-product-image" alt="">
+                                        <div class="min-w-0">
                                             <div class="fw-600" id="picker-product-name"></div>
                                             <small class="text-muted" id="picker-product-seller"></small>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-lg-2 col-md-3">
                                     <label>{{ translate('Variant') }}</label>
                                     <select class="form-control" id="picker-stock"></select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-lg-2 col-md-3">
                                     <label>{{ translate('Batch') }}</label>
                                     <select class="form-control" id="picker-batch"></select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-lg-2 col-md-3 mt-3 mt-lg-0">
                                     <label>{{ translate('Quantity') }}</label>
                                     <input type="number" min="1" step="1" class="form-control" id="picker-quantity" value="1">
                                 </div>
-                                <div class="col-md-2">
-                                    <label>{{ translate('Sale') }}</label>
+                                <div class="col-lg-2 col-md-3 mt-3 mt-lg-0">
+                                    <label>{{ translate('Sale Rate (PTS)') }}</label>
                                     <input type="number" min="0" step="0.01" class="form-control" id="picker-sale-price">
                                 </div>
                             </div>
-                            <div class="row gutters-10 mt-3">
-                                <div class="col-md-4">
-                                    <div class="border rounded p-2 h-100">
-                                        <div class="fw-700 mb-2">{{ translate('Inventory') }}</div>
-                                        <div class="row gutters-5 small">
-                                            <div class="col-6 mb-1">{{ translate('Qty') }}: <strong id="picker-info-qty">-</strong></div>
-                                            <div class="col-6 mb-1">{{ translate('Scheme') }}: <strong id="picker-info-scheme">-</strong></div>
-                                            <div class="col-6">{{ translate('MOQ') }}: <strong id="picker-info-moq">-</strong></div>
-                                            <div class="col-6">{{ translate('Current Stock') }}: <strong id="picker-info-stock">-</strong></div>
+                            </div>
+
+                            <div class="p-3">
+                                <div class="row gutters-10">
+                                    <div class="col-xl-7 mb-3 mb-xl-0">
+                                        <div class="product-info-section">
+                                            <div class="product-info-section-title">
+                                                <span><i class="las la-capsules mr-1"></i>{{ translate('Product & Variant Information') }}</span>
+                                                <span class="badge badge-soft-primary" id="picker-info-variant">-</span>
+                                            </div>
+                                            <div class="product-info-grid">
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('SKU') }}</span><span class="product-info-value" id="picker-info-sku">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Group') }}</span><span class="product-info-value" id="picker-info-group">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Product / Brand Name') }}</span><span class="product-info-value" id="picker-info-product-brand">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Schedule') }}</span><span class="product-info-value" id="picker-info-schedule">-</span></div>
+                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Composition') }}</span><span class="product-info-value" id="picker-info-composition">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Pack Size') }}</span><span class="product-info-value" id="picker-info-pack">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Material') }}</span><span class="product-info-value" id="picker-info-material">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Drug Role') }}</span><span class="product-info-value" id="picker-info-role">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Size') }}</span><span class="product-info-value" id="picker-info-size">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Shape') }}</span><span class="product-info-value" id="picker-info-shape">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Type / Form') }}</span><span class="product-info-value" id="picker-info-type">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Quality') }}</span><span class="product-info-value" id="picker-info-quality">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Unit') }}</span><span class="product-info-value" id="picker-info-unit">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Category') }}</span><span class="product-info-value" id="picker-info-category">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Country of Origin') }}</span><span class="product-info-value" id="picker-info-origin">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Brand / Mfg') }}</span><span class="product-info-value" id="picker-info-brand">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('HSN Code') }}</span><span class="product-info-value" id="picker-info-hsn">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Drug Name') }}</span><span class="product-info-value" id="picker-info-drug">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('HS Code') }}</span><span class="product-info-value" id="picker-info-hs">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Supplier / User') }}</span><span class="product-info-value" id="picker-info-user">-</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-5">
+                                        <div class="product-info-section">
+                                            <div class="product-info-section-title">
+                                                <span><i class="las la-boxes mr-1"></i>{{ translate('Batch, Stock & Pricing') }}</span>
+                                                <span class="badge badge-soft-success" id="picker-info-stock-badge">-</span>
+                                            </div>
+                                            <div class="product-info-grid">
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Batch / Lot No.') }}</span><span class="product-info-value" id="picker-info-batch">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Mfg. Date') }}</span><span class="product-info-value" id="picker-info-mfg-date">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Expiry Date') }}</span><span class="product-info-value is-accent" id="picker-info-expiry">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Stock Available') }}</span><span class="product-info-value is-accent" id="picker-info-stock">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Stock Upload Date') }}</span><span class="product-info-value" id="picker-info-stock-date">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('MOQ') }}</span><span class="product-info-value is-accent" id="picker-info-moq">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Qty Ordered') }}</span><span class="product-info-value" id="picker-info-qty">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Scheme (Free)') }}</span><span class="product-info-value" id="picker-info-scheme">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('MRP') }}</span><span class="product-info-value is-accent" id="picker-info-mrp">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Sale Rate (PTS)') }}</span><span class="product-info-value" id="picker-info-sale">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Discount') }}</span><span class="product-info-value" id="picker-info-discount">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Other Discount') }}</span><span class="product-info-value" id="picker-info-other-discount">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Tax %') }}</span><span class="product-info-value" id="picker-info-tax-rate">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Freight / Shipping') }}</span><span class="product-info-value" id="picker-info-freight">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('GST Amount') }}</span><span class="product-info-value" id="picker-info-gst">-</span></div>
+                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Final Amount') }}</span><span class="product-info-value is-accent" id="picker-info-final">-</span></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="border rounded p-2 h-100 small">
-                                        <div class="fw-700 mb-2">{{ translate('Product Information') }}</div>
-                                        <div>{{ translate('Product Name') }}: <strong id="picker-info-product">-</strong></div>
-                                        <div>{{ translate('SKU') }}: <strong id="picker-info-sku">-</strong></div>
-                                        <div>{{ translate('User') }}: <strong id="picker-info-user">-</strong></div>
+
+                                <div class="product-info-section mt-3">
+                                    <div class="product-info-section-title">
+                                        <span><i class="las la-ruler-combined mr-1"></i>{{ translate('Packing Details') }}</span>
                                     </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="border rounded p-2 h-100 small">
-                                        <div class="fw-700 mb-2">{{ translate('Variant Information') }}</div>
-                                        <div>{{ translate('Pack Size') }}: <strong id="picker-info-pack">-</strong></div>
-                                        <div>{{ translate('Type') }}: <strong id="picker-info-type">-</strong></div>
-                                        <div>{{ translate('Quality') }}: <strong id="picker-info-quality">-</strong></div>
-                                        <div>{{ translate('Material') }}: <strong id="picker-info-material">-</strong></div>
-                                        <div>{{ translate('Size') }}: <strong id="picker-info-size">-</strong></div>
-                                        <div>{{ translate('Country of Origin') }}: <strong id="picker-info-origin">-</strong></div>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered mb-0 packing-details-table">
+                                            <thead><tr><th>{{ translate('Packing Level') }}</th><th class="text-right">{{ translate('Qty') }}</th><th class="text-right">{{ translate('Weight (gm)') }}</th><th class="text-right">{{ translate('Dimensions (cm)') }}</th></tr></thead>
+                                            <tbody>
+                                                <tr><td>{{ translate('Piece') }}</td><td class="text-right" id="picker-pack-piece-qty">1</td><td class="text-right" id="picker-pack-piece-weight">-</td><td class="text-right" id="picker-pack-piece-dimensions">-</td></tr>
+                                                <tr><td>{{ translate('Buffer Box / Shrink Pack') }}</td><td class="text-right" id="picker-pack-buffer-qty">-</td><td class="text-right" id="picker-pack-buffer-weight">-</td><td class="text-right" id="picker-pack-buffer-dimensions">-</td></tr>
+                                                <tr><td>{{ translate('Buffer Boxes Per Case') }}</td><td class="text-right" id="picker-pack-buffer-case-qty">-</td><td class="text-right" id="picker-pack-buffer-case-weight">-</td><td class="text-right" id="picker-pack-buffer-case-dimensions">-</td></tr>
+                                                <tr><td>{{ translate('Per Case') }}</td><td class="text-right" id="picker-pack-case-qty">-</td><td class="text-right" id="picker-pack-case-weight">-</td><td class="text-right" id="picker-pack-case-dimensions">-</td></tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
-                            <div class="row gutters-10 align-items-center mt-3">
-                                <div class="col-md-9">
-                                    <div id="picker-quote" class="small text-muted"></div>
-                                </div>
-                                <div class="col-md-3 text-md-right">
-                                    <button type="button" class="btn btn-primary" id="add-line-btn" disabled>{{ translate('Add Product') }}</button>
+
+                            <div class="product-picker-quote">
+                                <div class="row gutters-10 align-items-center">
+                                    <div class="col-md-9"><div id="picker-quote" class="small"></div></div>
+                                    <div class="col-md-3 text-md-right mt-2 mt-md-0">
+                                        <button type="button" class="btn btn-primary px-4" id="add-line-btn" disabled><i class="las la-plus mr-1"></i>{{ translate('Add Product') }}</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1094,25 +1246,110 @@
                 return value === null || value === undefined || value === '' ? '-' : value;
             }
 
+            function formatInfoDate(value, monthOnly) {
+                if (!value) return '-';
+                var parts = String(value).slice(0, 10).split('-');
+                if (parts.length !== 3) return value;
+                if (monthOnly) {
+                    var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    return (monthNames[Number(parts[1]) - 1] || parts[1]) + '-' + parts[0].slice(-2);
+                }
+                return parts[2] + '.' + parts[1] + '.' + parts[0];
+            }
+
+            function formatDimensions(length, width, height) {
+                var values = [length, width, height];
+                return values.every(function (value) { return value !== null && value !== undefined && value !== ''; })
+                    ? values.join(' × ')
+                    : '-';
+            }
+
+            function setPickerQuoteInformation(quote) {
+                $('#picker-info-mrp').text(quote ? money(quote.mrp_price) : '-');
+                $('#picker-info-sale').text(quote ? money(quote.sale_price) : '-');
+                $('#picker-info-discount').text(quote ? money(quote.discount_amount) : '-');
+                $('#picker-info-other-discount').text(quote ? money(quote.coupon_discount) : '-');
+                $('#picker-info-gst').text(quote ? money(quote.gst_amount || quote.tax) : '-');
+                $('#picker-info-final').text(quote
+                    ? money(quote.product_final_amount !== undefined ? quote.product_final_amount : (quote.final_amount || quote.line_total))
+                    : '-');
+                if (quote) $('#picker-info-scheme').text(infoValue(quote.scheme_quantity));
+            }
+
+            function setPickerBasePricingInformation() {
+                var stock = selectedStock() || {};
+                var batch = selectedBatch();
+                var mrp = batch && batch.mrp_price ? batch.mrp_price : stock.mrp_price;
+                var sale = batch && batch.role_price ? batch.role_price : (stock.role_price || stock.variant_price);
+                var discount = batch && batch.discount_active ? Number(batch.discount || 0) : 0;
+                var discountLabel = money(discount);
+                if (batch && batch.discount_active && batch.discount_type === 'percent') discountLabel += '%';
+
+                $('#picker-info-mrp').text(mrp !== null && mrp !== undefined ? money(mrp) : '-');
+                $('#picker-info-sale').text(sale !== null && sale !== undefined ? money(sale) : '-');
+                $('#picker-info-discount').text(discountLabel);
+                $('#picker-info-other-discount').text(money(0));
+            }
+
             function syncProductInformation() {
                 var stock = selectedStock() || {};
                 var batch = selectedBatch();
                 var quantity = Number($('#picker-quantity').val() || 0);
                 var currentStock = batch ? Number(batch.qty || 0) : Number(stock.current_stock ?? stock.qty ?? 0);
+                var product = currentProduct || {};
+                var categories = (product.categories || []).join(', ') || product.category;
+                var groups = (product.groups || []).join(', ') || product.group;
+                var totalCaseQty = Number(stock.total_qty_per_case || 0);
+                var bufferQty = Number(stock.qty_per_buffer_box || 0);
+                var bufferBoxesPerCase = totalCaseQty > 0 && bufferQty > 0 ? totalCaseQty / bufferQty : null;
 
                 $('#picker-info-qty').text(infoValue(quantity));
-                $('#picker-info-scheme').text(infoValue(stock.scheme));
+                $('#picker-info-scheme').text(infoValue(batch && batch.scheme !== null ? batch.scheme : stock.scheme));
                 $('#picker-info-moq').text(infoValue(stock.min_qty));
                 $('#picker-info-stock').text(infoValue(currentStock));
-                $('#picker-info-product').text(infoValue(currentProduct && currentProduct.name));
-                $('#picker-info-sku').text(infoValue(stock.sku || (currentProduct && currentProduct.sku)));
-                $('#picker-info-user').text(infoValue(currentProduct && currentProduct.owner_name));
-                $('#picker-info-pack').text(infoValue(stock.pack_size || (currentProduct && currentProduct.pack_size)));
-                $('#picker-info-type').text(infoValue(stock.type || (currentProduct && currentProduct.product_type)));
-                $('#picker-info-quality').text(infoValue(stock.quality || (currentProduct && currentProduct.quality)));
-                $('#picker-info-material').text(infoValue(stock.material || (currentProduct && currentProduct.material)));
+                $('#picker-info-stock-badge').text('{{ translate('Stock') }}: ' + infoValue(currentStock));
+                $('#picker-info-variant').text(infoValue(stock.variant));
+                $('#picker-info-sku').text(infoValue(stock.sku || product.sku));
+                $('#picker-info-product-brand').text(infoValue([product.name, product.brand].filter(Boolean).join(' / ')));
+                $('#picker-info-group').text(infoValue(groups));
+                $('#picker-info-schedule').text(infoValue(product.schedule));
+                $('#picker-info-composition').text(infoValue(product.composition || product.contents));
+                $('#picker-info-pack').text(infoValue(stock.pack_size || product.pack_size));
+                $('#picker-info-role').text(infoValue(product.drug_role));
+                $('#picker-info-type').text(infoValue(stock.type || product.product_type));
+                $('#picker-info-quality').text(infoValue(stock.quality || product.quality));
+                $('#picker-info-material').text(infoValue(stock.material || product.material));
                 $('#picker-info-size').text(infoValue(stock.size));
-                $('#picker-info-origin').text(infoValue(currentProduct && currentProduct.country_of_origin));
+                $('#picker-info-shape').text(infoValue(stock.shape));
+                $('#picker-info-unit').text(infoValue(product.unit));
+                $('#picker-info-category').text(infoValue(categories));
+                $('#picker-info-origin').text(infoValue(product.country_of_origin));
+                $('#picker-info-brand').text(infoValue(product.brand));
+                $('#picker-info-hsn').text(infoValue(product.hsn_code));
+                $('#picker-info-hs').text(infoValue(product.hs_code));
+                $('#picker-info-drug').text(infoValue(product.drug_name));
+                $('#picker-info-user').text(infoValue(product.owner_name));
+                $('#picker-info-batch').text(infoValue(batch && batch.batch));
+                $('#picker-info-mfg-date').text(formatInfoDate(batch && batch.manufacturing_date, false));
+                $('#picker-info-expiry').text(formatInfoDate(batch ? batch.product_exp_date : stock.product_exp_date, true));
+                $('#picker-info-stock-date').text(formatInfoDate(batch ? batch.stock_upload_date : stock.stock_upload_date, false));
+                $('#picker-info-tax-rate').text(product.tax_percentage !== null && product.tax_percentage !== undefined ? money(product.tax_percentage) + '%' : '-');
+                $('#picker-info-freight').text(product.shipping_type === 'free'
+                    ? '{{ translate('Free') }}'
+                    : (product.shipping_cost ? money(product.shipping_cost) : infoValue(product.shipping_type)));
+
+                $('#picker-pack-piece-qty').text(infoValue(stock.qty_per_piece || 1));
+                $('#picker-pack-piece-weight').text(infoValue(stock.piece_weight));
+                $('#picker-pack-piece-dimensions').text(formatDimensions(stock.piece_length, stock.piece_width, stock.piece_height));
+                $('#picker-pack-buffer-qty').text(infoValue(stock.qty_per_buffer_box));
+                $('#picker-pack-buffer-weight').text(infoValue(stock.weight_buffer_box));
+                $('#picker-pack-buffer-dimensions').text(formatDimensions(stock.buffer_length, stock.buffer_width, stock.buffer_height));
+                $('#picker-pack-buffer-case-qty').text(infoValue(bufferBoxesPerCase));
+                $('#picker-pack-buffer-case-weight').text(infoValue(stock.weight_case));
+                $('#picker-pack-buffer-case-dimensions').text(formatDimensions(stock.case_length, stock.case_width, stock.case_height));
+                $('#picker-pack-case-qty').text(infoValue(stock.total_qty_per_case));
+                $('#picker-pack-case-weight').text(infoValue(stock.weight_case));
+                $('#picker-pack-case-dimensions').text(formatDimensions(stock.case_length, stock.case_width, stock.case_height));
             }
 
             function syncQuantityBounds() {
@@ -1181,6 +1418,8 @@
 
             function quoteCurrentProduct() {
                 currentQuote = null;
+                setPickerQuoteInformation(null);
+                setPickerBasePricingInformation();
                 $('#add-line-btn').prop('disabled', true);
                 if (!currentProduct || !$('#selected-customer-id').val()) {
                     $('#picker-quote').text('{{ translate('Select customer before quoting product.') }}');
@@ -1205,6 +1444,7 @@
                     data: quoteData
                 }).done(function (response) {
                     currentQuote = response.data;
+                    setPickerQuoteInformation(currentQuote);
                     if (!salePriceEdited) {
                         $('#picker-sale-price').val(money(currentQuote.sale_price));
                     }

@@ -337,7 +337,17 @@ class OrderController extends Controller
     {
         $query = trim((string) $request->input('q'));
 
-        $products = Product::with(['stocks.batches', 'brand', 'thumbnail', 'user'])
+        $products = Product::with([
+            'stocks.batches',
+            'brand',
+            'thumbnail',
+            'user',
+            'main_category',
+            'main_group',
+            'categories',
+            'groups',
+            'taxes',
+        ])
             ->where('approved', '1')
             ->where('published', 1)
             ->where('digital', 0)
@@ -382,7 +392,14 @@ class OrderController extends Controller
                             'batch' => $batch->batch,
                             'qty' => (int) $batch->qty,
                             'mrp_price' => (float) ($batch->mrp_price ?? 0),
+                            'role_price' => (float) ($batch->role_price ?? 0),
+                            'scheme' => (int) ($batch->scheme ?? 0),
+                            'manufacturing_date' => $batch->manufacturing_date,
                             'product_exp_date' => $batch->product_exp_date,
+                            'stock_upload_date' => optional($batch->created_at)->toDateString(),
+                            'discount' => (float) ($batch->discount ?? 0),
+                            'discount_type' => $batch->discount_type,
+                            'discount_active' => (bool) ($batch->discount_active ?? false),
                         ];
                     })->values();
 
@@ -395,22 +412,70 @@ class OrderController extends Controller
                         'min_qty' => (int) ($stock->min_qty ?? 1),
                         'scheme' => (int) ($stock->scheme ?? 0),
                         'sku' => $stock->sku,
+                        'variant_price' => (float) ($stock->price ?? 0),
+                        'mrp_price' => (float) ($stock->mrp_price ?? 0),
+                        'role_price' => (float) ($stock->role_price ?? 0),
+                        'stock_upload_date' => optional($stock->created_at)->toDateString(),
+                        'product_exp_date' => $stock->product_exp_date,
                         'current_stock' => (int) ($stock->qty ?? 0),
                         'pack_size' => $variantAttributes->get('pack size') ?: ($stock->variant ?: ($product->product_min_pack_size ?: $product->unit)),
                         'type' => $variantAttributes->get('type') ?: ($product->product_type ?: $product->product_form),
                         'quality' => $variantAttributes->get('quality'),
                         'material' => $variantAttributes->get('material') ?: $product->product_material,
+                        'shape' => $variantAttributes->get('shape'),
                         'size' => $variantAttributes->get('size') ?: collect([$stock->length, $stock->width, $stock->height])
                             ->filter(fn ($value) => $value !== null && $value !== '')
                             ->implode(' × '),
+                        'piece_weight' => $stock->weight,
+                        'piece_length' => $stock->length,
+                        'piece_width' => $stock->width,
+                        'piece_height' => $stock->height,
+                        'qty_per_piece' => $stock->qty_per_piece,
+                        'qty_per_buffer_box' => $stock->qty_per_buffer_box,
+                        'total_qty_per_case' => $stock->total_qty_per_case,
+                        'weight_buffer_box' => $stock->weight_buffer_box,
+                        'weight_case' => $stock->weight_case,
+                        'buffer_length' => $stock->buffer_length,
+                        'buffer_width' => $stock->buffer_width,
+                        'buffer_height' => $stock->buffer_height,
+                        'case_length' => $stock->case_length,
+                        'case_width' => $stock->case_width,
+                        'case_height' => $stock->case_height,
                         'batches' => $batches,
                     ];
                 });
+
+            $composition = trim(preg_replace(
+                '/\s+/u',
+                ' ',
+                strip_tags(html_entity_decode((string) $product->getTranslation('description')))
+            ));
+            $percentageTax = $product->taxes
+                ->where('tax_type', 'percent')
+                ->sum(fn ($tax) => (float) $tax->tax);
+            if ($percentageTax <= 0 && $product->tax_type === 'percent') {
+                $percentageTax = (float) $product->tax;
+            }
 
             return [
                 'id' => $product->id,
                 'name' => $product->getTranslation('name'),
                 'brand' => optional($product->brand)->name,
+                'drug_name' => $product->drug_name,
+                'drug_role' => $product->role_label,
+                'composition' => \Illuminate\Support\Str::limit($composition, 600),
+                'category' => optional($product->main_category)->getTranslation('name'),
+                'categories' => $product->categories->map(fn ($category) => $category->getTranslation('name'))->filter()->values(),
+                'group' => optional($product->main_group)->getTranslation('name'),
+                'groups' => $product->groups->map(fn ($group) => $group->getTranslation('name'))->filter()->values(),
+                'schedule' => $product->schedule,
+                'unit' => $product->unit,
+                'contents' => $product->contents,
+                'hsn_code' => $product->product_hsn,
+                'hs_code' => $product->product_hs,
+                'tax_percentage' => round($percentageTax, 2),
+                'shipping_type' => $product->shipping_type,
+                'shipping_cost' => (float) ($product->shipping_cost ?? 0),
                 'owner_id' => $product->user_id,
                 'owner_name' => optional($product->user)->name ?: translate('Inhouse'),
                 'product_type' => $product->product_type ?: $product->product_form,
