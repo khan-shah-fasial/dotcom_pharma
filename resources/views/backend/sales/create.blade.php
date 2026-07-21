@@ -697,7 +697,7 @@
                 $code.val(letter);
                 if (!letter) return;
                 $('#order-no-preview').val(function (_, current) {
-                    return String(current || '').replace(/^(786-[A-Z0-9]+-)[A-Z](-\d{2}-\d{2}-\d+)$/, '$1' + letter + '$2');
+                    return String(current || '').replace(/^([A-Z0-9]+-)[A-Z](-\d{2}-\d{2}-\d+)$/, '$1' + letter + '$2');
                 });
 
                 clearTimeout(orderNumberPreviewTimer);
@@ -822,17 +822,17 @@
             function customerSubText(customer) {
                 return [
                     customer.account_no ? '{{ translate('Account No') }}: ' + customer.account_no : '',
-                    customer.person_name ? '{{ translate('Person Name') }}: ' + capitalizeFirst(customer.person_name) : '',
-                    customer.email || '',
-                    (customer.mobile_numbers || []).join(', '),
-                    customer.pincode ? '{{ translate('Pincode') }}: ' + customer.pincode : ''
+                    '{{ translate('GST') }}: ' + (customer.gst_no || '-'),
+                    '{{ translate('Aadhar') }}: ' + (customer.aadhaar_no || '-'),
+                    '{{ translate('PAN') }}: ' + (customer.pan_no || '-'),
+                    '{{ translate('DL 1') }}: ' + (customer.dl1 || '-'),
+                    '{{ translate('DL 2') }}: ' + (customer.dl2 || '-'),
+                    '{{ translate('DL Expiry') }}: ' + (customer.dl_expiry || '-')
                 ].filter(Boolean).join(' | ');
             }
 
             function customerMetaHtml(customer) {
                 var rows = [
-                    ['{{ translate('Approval Status') }}', customer.approval_status],
-                    ['{{ translate('Customer Role') }}', customer.role],
                     ['{{ translate('Village / Post') }}', [customer.village, customer.post].filter(Boolean).join(' / ')],
                     ['{{ translate('City') }}', customer.city],
                     ['{{ translate('District') }}', customer.district],
@@ -841,18 +841,29 @@
                     ['{{ translate('Country') }}', customer.country],
                     ['{{ translate('Mobile Number(s)') }}', (customer.mobile_numbers || []).join(', ')],
                     ['{{ translate('WhatsApp Number(s)') }}', (customer.whatsapp_numbers || []).join(', ')],
+                    ['{{ translate('Email') }}', customer.email],
+                    ['{{ translate('Person Name') }}', customer.person_name ? capitalizeFirst(customer.person_name) : ''],
                     ['{{ translate('Sales Man Code') }}', customer.sales_man_code],
-                    ['{{ translate('Credit Days') }}', customer.credit_days],
-                    ['{{ translate('Credit Limit') }}', customer.credit_limit],
                     ['{{ translate('Default Shipping') }}', customer.default_shipping_method]
+                ];
+                var highlights = [
+                    ['{{ translate('Approval Status') }}', customer.approval_status],
+                    ['{{ translate('Current Status') }}', customer.current_status],
+                    ['{{ translate('Customer Role') }}', customer.role],
+                    ['{{ translate('Credit / Balance Amount') }}', customer.credit_balance_amount],
+                    ['{{ translate('Credit Days') }}', customer.credit_days],
+                    ['{{ translate('Credit Limit') }}', customer.credit_limit]
                 ];
                 var html = '<div class="fw-700">' + escapeHtml(displayCustomerName(customer)) + '</div>'
                     + '<div>' + escapeHtml(customerSubText(customer)) + '</div>'
-                    + '<div class="d-flex flex-wrap mt-2" style="gap:8px">'
-                    + '<span class="apple-green-highlight">{{ translate('Current Status') }}: ' + escapeHtml(customer.current_status || '-') + '</span>'
-                    + '<span class="apple-green-highlight">{{ translate('Credit / Balance Amount') }}: {{ single_price(0) }}</span>'
-                    + '</div>'
-                    + '<div class="row gutters-5 mt-2">';
+                    + '<div class="d-flex flex-wrap mt-2" style="gap:8px">';
+
+                highlights.forEach(function (highlight) {
+                    var value = highlight[1] === null || highlight[1] === undefined || highlight[1] === '' ? '-' : highlight[1];
+                    html += '<span class="apple-green-highlight">' + escapeHtml(highlight[0]) + ': ' + escapeHtml(value) + '</span>';
+                });
+
+                html += '</div><div class="row gutters-5 mt-2">';
 
                 rows.forEach(function (row) {
                     html += '<div class="col-md-4 col-sm-6 mb-1"><small class="d-block text-muted">'

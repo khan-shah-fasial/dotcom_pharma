@@ -240,9 +240,13 @@ class OrderController extends Controller
                 'user_subtype',
                 'user_type',
                 'approval_status',
+                'gst_no',
+                'aadhaar_no',
+                'pan_no',
                 'credit_status',
                 'credit_days',
                 'credit_limit',
+                'balance',
             ]);
 
         return response()->json($customers->map(function ($customer) {
@@ -266,6 +270,12 @@ class OrderController extends Controller
                 'company_name' => optional($details)->company_name,
                 'person_name' => optional($details)->con_person_name ?: $customer->name,
                 'account_no' => optional($details)->crm_id ?: (optional($details)->account_no_business ?: optional($details)->account_no_personal),
+                'gst_no' => optional($details)->gst_no ?: $customer->gst_no,
+                'aadhaar_no' => optional($details)->aadhaar_no ?: $customer->aadhaar_no,
+                'pan_no' => optional($details)->pan_no ?: $customer->pan_no,
+                'dl1' => optional($details)->dl1,
+                'dl2' => optional($details)->dl2,
+                'dl_expiry' => optional($details)->dl_expiry,
                 'email' => $customer->email,
                 'phone' => $customer->phone,
                 'mobile_numbers' => $mobileNumbers,
@@ -284,6 +294,7 @@ class OrderController extends Controller
                 'credit_status' => $customer->credit_status,
                 'credit_days' => $customer->credit_days,
                 'credit_limit' => $customer->credit_limit,
+                'credit_balance_amount' => single_price((float) $customer->balance),
                 'default_shipping_method' => optional($details)->default_shipping_method
                     ?: 'transport',
                 'default_transport_id' => optional($details)->transport_id,

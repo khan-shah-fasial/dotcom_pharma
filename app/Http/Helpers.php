@@ -6276,7 +6276,7 @@ if (!function_exists('financial_year_order_code_parts')) {
             'start' => $start,
             'end' => $end,
             'segment' => $segment,
-            'prefix' => '786-' . $brand . '-' . $document . '-' . $segment . '-',
+            'prefix' => $brand . '-' . $document . '-' . $segment . '-',
         ];
     }
 }
@@ -6325,7 +6325,7 @@ if (!function_exists('preview_financial_year_order_code')) {
 
 if (!function_exists('generate_financial_year_order_code')) {
     /**
-     * Allocate a concurrency-safe order code such as 786-DP-O-26-27-2.
+     * Allocate a concurrency-safe order code such as DP-O-26-27-2.
      */
     function generate_financial_year_order_code($moment = null, $documentCode = null): string
     {
