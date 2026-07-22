@@ -161,8 +161,7 @@ class OrderController extends Controller
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
         $localDeliveryPartners = LocalDeliveryPartner::active()->orderBy('name')->get();
         extract($this->orderFormStaffOptions());
-        $defaultOrderCodeLetter = financial_year_order_code_parts()['document'];
-        $generatedOrderNo = preview_financial_year_order_code(null, $defaultOrderCodeLetter);
+        $generatedOrderNo = preview_financial_year_order_code(null, 'S');
 
         return view('backend.sales.create', compact(
             'countries',
@@ -174,7 +173,6 @@ class OrderController extends Controller
             'packedStaff',
             'checkedStaff',
             'billingStaff',
-            'defaultOrderCodeLetter',
             'generatedOrderNo'
         ));
     }
@@ -445,11 +443,22 @@ class OrderController extends Controller
                     ];
                 });
 
-            $composition = trim(preg_replace(
-                '/\s+/u',
-                ' ',
-                strip_tags(html_entity_decode((string) $product->getTranslation('description')))
-            ));
+            $contentSections = is_array($product->contents)
+                ? $product->contents
+                : json_decode((string) $product->contents, true);
+            $composition = collect(is_array($contentSections) ? $contentSections : [])
+                ->filter(function ($section) {
+                    return is_array($section)
+                        && strcasecmp(trim((string) ($section['title'] ?? '')), 'Composition') === 0;
+                })
+                ->map(function ($section) {
+                    $html = html_entity_decode((string) ($section['content'] ?? ''));
+                    $html = preg_replace('/<br\s*\/?\s*>|<\/p\s*>|<\/li\s*>/iu', ' ', $html);
+
+                    return trim(preg_replace('/\s+/u', ' ', strip_tags($html)));
+                })
+                ->filter()
+                ->implode(' ');
             $percentageTax = $product->taxes
                 ->where('tax_type', 'percent')
                 ->sum(fn ($tax) => (float) $tax->tax);
@@ -470,7 +479,6 @@ class OrderController extends Controller
                 'groups' => $product->groups->map(fn ($group) => $group->getTranslation('name'))->filter()->values(),
                 'schedule' => $product->schedule,
                 'unit' => $product->unit,
-                'contents' => $product->contents,
                 'hsn_code' => $product->product_hsn,
                 'hs_code' => $product->product_hs,
                 'tax_percentage' => round($percentageTax, 2),
@@ -510,13 +518,12 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'order_date' => ['required', 'date'],
-            'order_code_letter' => ['required', 'string', 'size:1', 'regex:/^[A-Za-z]$/'],
         ]);
 
         return response()->json([
             'code' => preview_financial_year_order_code(
                 $validated['order_date'],
-                strtoupper($validated['order_code_letter'])
+                'S'
             ),
         ]);
     }
@@ -657,6 +664,8 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         if ($request->boolean('backend_add_order')) {
+            $request->merge(['order_code_letter' => 'S']);
+
             if ($request->hasFile('cc_attachments')) {
                 $request->merge(['consignee_copy_status' => 'attached']);
             }
@@ -679,6 +688,7 @@ class OrderController extends Controller
                 'order_date' => ['required', 'date'],
                 'order_time' => ['required', 'date_format:H:i'],
                 'cases' => ['nullable', 'integer', 'min:0'],
+                'attached_file_name' => ['nullable', 'string', 'max:255'],
                 'lr_number' => ['nullable', 'string', 'max:255'],
                 'lr_date' => ['nullable', 'date'],
                 'consignee_copy_status' => ['required', Rule::in(['attached', 'not_attached'])],
@@ -735,10 +745,8 @@ class OrderController extends Controller
             }
 
             $firstConsigneeCopy = collect($storedAttachments)->firstWhere('category', 'consignee_copy');
-            $firstOrderAttachment = collect($storedAttachments)->firstWhere('category', 'order_attachment');
             $request->merge([
                 'cc_attached_path' => $firstConsigneeCopy['path'] ?? null,
-                'attached_file_name' => $firstOrderAttachment['original_name'] ?? ($firstConsigneeCopy['original_name'] ?? null),
             ]);
 
             try {
@@ -1741,7 +1749,7 @@ class OrderController extends Controller
 
     /**
      * Use Staff Master role/designation data for all order staff selectors.
-     * Legacy unclassified staff remain available so existing assignments can be edited.
+     * Operational selectors are restricted to their exact configured role.
      *
      * @return array<string, \Illuminate\Support\Collection>
      */
@@ -1770,12 +1778,19 @@ class OrderController extends Controller
                 ->concat($staffMaster->whereNotIn('user_id', $matched->pluck('user_id')))
                 ->values();
         };
+        $staffForRole = function (string $roleName) use ($staffMaster) {
+            return $staffMaster
+                ->filter(function ($staff) use ($roleName) {
+                    return strcasecmp(trim((string) optional($staff->role)->name), $roleName) === 0;
+                })
+                ->values();
+        };
 
         return [
             'salesPeople' => $staffFor('/sales|business development|marketing/i'),
-            'packedStaff' => $staffFor('/pack|dispatch|warehouse/i'),
-            'checkedStaff' => $staffFor('/check|quality|qc|warehouse/i'),
-            'billingStaff' => $staffFor('/bill|account|finance/i'),
+            'packedStaff' => $staffForRole('Packing'),
+            'checkedStaff' => $staffForRole('Checking'),
+            'billingStaff' => $staffForRole('Billing'),
         ];
     }
 }

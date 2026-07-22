@@ -218,17 +218,11 @@
                     </div>
                     <div class="card-body">
                         <div class="row gutters-5">
-                            <div class="col-md-4 form-group">
+                            <input type="hidden" name="order_code_letter" id="order-code-letter" value="S">
+                            <div class="col-md-6 form-group">
                                 <label>{{ translate('Order No') }} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="order_no_preview" id="order-no-preview" value="{{ old('order_no_preview', $generatedOrderNo) }}" readonly>
+                                <input type="text" class="form-control" name="order_no_preview" id="order-no-preview" value="{{ $generatedOrderNo }}" readonly>
                                 <small class="text-muted">{{ translate('Preview only. The final sequential number is reserved when the order is saved.') }}</small>
-                            </div>
-                            <div class="col-md-2 form-group">
-                                <label>{{ translate('Code') }} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control text-uppercase" name="order_code_letter" id="order-code-letter"
-                                    maxlength="1" pattern="[A-Za-z]" value="{{ old('order_code_letter', $defaultOrderCodeLetter) }}" required>
-                                <small class="text-muted">{{ translate('O, S, P, etc.') }}</small>
-                                @error('order_code_letter') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-3 form-group">
                                 <label>{{ translate('Order Date') }} <span class="text-danger">*</span></label>
@@ -240,89 +234,6 @@
                                 <input type="time" class="form-control" name="order_time" value="{{ old('order_time', now()->format('H:i')) }}" required>
                                 @error('order_time') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('Sales Executive Name') }}</label>
-                                <select class="form-control aiz-selectpicker" name="sales_executive_id" data-live-search="true" title="{{ translate('Select Sales Executive') }}">
-                                    <option value="">{{ translate('Select Sales Executive') }}</option>
-                                    @foreach ($salesPeople as $staff)
-                                        <option value="{{ $staff->user_id }}" @selected((string) old('sales_executive_id') === (string) $staff->user_id)>
-                                            {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            @foreach ([
-                                ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
-                                ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
-                                ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff],
-                            ] as $staffField)
-                                <div class="col-md-4 form-group">
-                                    <label>{{ translate($staffField['label']) }}</label>
-                                    <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
-                                        <option value="">{{ translate('Select Staff') }}</option>
-                                        @foreach ($staffField['staff'] as $staff)
-                                            <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], $staffField['staff']->contains('user_id', auth()->id()) ? auth()->id() : null) === (string) $staff->user_id)>
-                                                {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error($staffField['name']) <div class="text-danger small">{{ $message }}</div> @enderror
-                                </div>
-                            @endforeach
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('Sales Man Code') }}</label>
-                                <input type="text" class="form-control" id="sales-man-code" value="{{ old('sales_man_code') }}" readonly>
-                                <small class="text-muted">{{ translate('Fetched automatically from Account Master.') }}</small>
-                            </div>
-
-                            {{-- Row 1: Total Cases / Weight / Dimensions --}}
-                            <div class="col-md-4 form-group">
-                                <label>{{ translate('Total Cases') }}</label>
-                                <input type="number" min="0" step="1" class="form-control" name="cases" value="{{ old('cases') }}">
-                            </div>
-                            <div class="col-md-4 form-group">
-                                <label>{{ translate('Weight (Gram)') }}</label>
-                                <input type="number" min="0" step="0.001" class="form-control" name="weight_grams" id="weight-grams" value="{{ old('weight_grams') }}">
-                                <small class="apple-green-highlight mt-1" id="weight-kg-display">0 KG</small>
-                                @error('weight_grams') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-4 form-group">
-                                <label>{{ translate('Dimensions (CM)') }}</label>
-                                <div class="dimension-inputs">
-                                    <input type="number" min="0" step="0.01" class="form-control" name="length_cm" value="{{ old('length_cm') }}" placeholder="{{ translate('Length') }}">
-                                    <span class="dimension-separator">×</span>
-                                    <input type="number" min="0" step="0.01" class="form-control" name="width_cm" value="{{ old('width_cm') }}" placeholder="{{ translate('Width') }}">
-                                    <span class="dimension-separator">×</span>
-                                    <input type="number" min="0" step="0.01" class="form-control" name="height_cm" value="{{ old('height_cm') }}" placeholder="{{ translate('Height') }}">
-                                    <span class="dimension-separator">CM</span>
-                                </div>
-                                @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                                @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                                @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-
-                            {{-- Row 2: LR reference / LR date --}}
-                            <div class="col-md-8 form-group">
-                                <label>{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</label>
-                                <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number') }}">
-                            </div>
-                            <div class="col-md-4 form-group">
-                                <label>{{ translate('LR Date') }}</label>
-                                <input type="date" class="form-control" name="lr_date" value="{{ old('lr_date') }}">
-                            </div>
-
-                            {{-- Row 4: general order attachments --}}
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('Attached File Name') }}</label>
-                                <div class="selected-file-list" id="order-attachment-names"><span class="text-muted">{{ translate('No files selected') }}</span></div>
-                            </div>
-                            <div class="col-md-6 form-group">
-                                <label>{{ translate('Attachment Option') }}</label>
-                                <input type="file" class="form-control multi-file-input" name="order_attachments[]" id="order-attachments" multiple
-                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#order-attachment-names">
-                                <small class="text-muted">{{ translate('Select multiple files; maximum 10 MB per file.') }}</small>
-                            </div>
-
                         </div>
                     </div>
                 </div>
@@ -432,7 +343,7 @@
                                             <div class="product-info-grid">
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('SKU') }}</span><span class="product-info-value" id="picker-info-sku">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Group') }}</span><span class="product-info-value" id="picker-info-group">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Product / Brand Name') }}</span><span class="product-info-value" id="picker-info-product-brand">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Product') }}</span><span class="product-info-value" id="picker-info-product">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Schedule') }}</span><span class="product-info-value" id="picker-info-schedule">-</span></div>
                                                 <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Composition') }}</span><span class="product-info-value" id="picker-info-composition">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Pack Size') }}</span><span class="product-info-value" id="picker-info-pack">-</span></div>
@@ -442,14 +353,12 @@
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Shape') }}</span><span class="product-info-value" id="picker-info-shape">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Type / Form') }}</span><span class="product-info-value" id="picker-info-type">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Quality') }}</span><span class="product-info-value" id="picker-info-quality">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Unit') }}</span><span class="product-info-value" id="picker-info-unit">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Category') }}</span><span class="product-info-value" id="picker-info-category">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Country of Origin') }}</span><span class="product-info-value" id="picker-info-origin">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Brand / Mfg') }}</span><span class="product-info-value" id="picker-info-brand">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('HSN Code') }}</span><span class="product-info-value" id="picker-info-hsn">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Drug Name') }}</span><span class="product-info-value" id="picker-info-drug">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('HS Code') }}</span><span class="product-info-value" id="picker-info-hs">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Supplier / User') }}</span><span class="product-info-value" id="picker-info-user">-</span></div>
                                             </div>
                                         </div>
                                     </div>
@@ -540,6 +449,94 @@
             </div>
 
             <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 h6">{{ translate('Additional Details') }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>{{ translate('Sales Executive Name') }}</label>
+                            <select class="form-control aiz-selectpicker" name="sales_executive_id" data-live-search="true" title="{{ translate('Select Sales Executive') }}">
+                                <option value="">{{ translate('Select Sales Executive') }}</option>
+                                @foreach ($salesPeople as $staff)
+                                    <option value="{{ $staff->user_id }}" @selected((string) old('sales_executive_id') === (string) $staff->user_id)>
+                                        {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        @foreach ([
+                            ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
+                            ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
+                            ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff],
+                        ] as $staffField)
+                            <div class="form-group">
+                                <label>{{ translate($staffField['label']) }}</label>
+                                <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
+                                    <option value="">{{ translate('Select Staff') }}</option>
+                                    @foreach ($staffField['staff'] as $staff)
+                                        <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], optional($staffField['staff']->first())->user_id) === (string) $staff->user_id)>
+                                            {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error($staffField['name']) <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                        @endforeach
+
+                        <div class="form-group">
+                            <label>{{ translate('Sales Man Code') }}</label>
+                            <input type="text" class="form-control" id="sales-man-code" value="{{ old('sales_man_code') }}" readonly>
+                            <small class="text-muted">{{ translate('Fetched automatically from Account Master.') }}</small>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Total Cases') }}</label>
+                            <input type="number" min="0" step="1" class="form-control" name="cases" value="{{ old('cases') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Weight (Gram)') }}</label>
+                            <input type="number" min="0" step="0.001" class="form-control" name="weight_grams" id="weight-grams" value="{{ old('weight_grams') }}">
+                            <small class="apple-green-highlight mt-1" id="weight-kg-display">0 KG</small>
+                            @error('weight_grams') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Dimensions (CM)') }}</label>
+                            <div class="dimension-inputs">
+                                <input type="number" min="0" step="0.01" class="form-control" name="length_cm" value="{{ old('length_cm') }}" placeholder="{{ translate('Length') }}">
+                                <span class="dimension-separator">×</span>
+                                <input type="number" min="0" step="0.01" class="form-control" name="width_cm" value="{{ old('width_cm') }}" placeholder="{{ translate('Width') }}">
+                                <span class="dimension-separator">×</span>
+                                <input type="number" min="0" step="0.01" class="form-control" name="height_cm" value="{{ old('height_cm') }}" placeholder="{{ translate('Height') }}">
+                                <span class="dimension-separator">CM</span>
+                            </div>
+                            @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                            @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                            @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</label>
+                            <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('LR Date') }}</label>
+                            <input type="date" class="form-control" name="lr_date" value="{{ old('lr_date') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Attached File Name') }}</label>
+                            <input type="text" class="form-control" name="attached_file_name" value="{{ old('attached_file_name') }}">
+                            @error('attached_file_name') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group mb-0">
+                            <label>{{ translate('Attachment Option') }}</label>
+                            <input type="file" class="form-control" name="order_attachments[]" id="order-attachments" multiple
+                                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv">
+                            <small class="text-muted">{{ translate('Select multiple files; maximum 10 MB per file.') }}</small>
+                            @error('order_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0 h6">{{ translate('Shipping') }}</h5>
@@ -694,6 +691,7 @@
                                 <option value="manual">{{ translate('Manual') }}</option>
                                 <option value="bank_payment">{{ translate('Bank Payment') }}</option>
                                 <option value="wallet">{{ translate('Wallet') }}</option>
+                                <option value="credit">{{ translate('Credit') }}</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1310,10 +1308,10 @@
                 $('#picker-info-stock-badge').text('{{ translate('Stock') }}: ' + infoValue(currentStock));
                 $('#picker-info-variant').text(infoValue(stock.variant));
                 $('#picker-info-sku').text(infoValue(stock.sku || product.sku));
-                $('#picker-info-product-brand').text(infoValue([product.name, product.brand].filter(Boolean).join(' / ')));
+                $('#picker-info-product').text(infoValue(product.name));
                 $('#picker-info-group').text(infoValue(groups));
                 $('#picker-info-schedule').text(infoValue(product.schedule));
-                $('#picker-info-composition').text(infoValue(product.composition || product.contents));
+                $('#picker-info-composition').text(infoValue(product.composition));
                 $('#picker-info-pack').text(infoValue(stock.pack_size || product.pack_size));
                 $('#picker-info-role').text(infoValue(product.drug_role));
                 $('#picker-info-type').text(infoValue(stock.type || product.product_type));
@@ -1321,14 +1319,12 @@
                 $('#picker-info-material').text(infoValue(stock.material || product.material));
                 $('#picker-info-size').text(infoValue(stock.size));
                 $('#picker-info-shape').text(infoValue(stock.shape));
-                $('#picker-info-unit').text(infoValue(product.unit));
                 $('#picker-info-category').text(infoValue(categories));
                 $('#picker-info-origin').text(infoValue(product.country_of_origin));
                 $('#picker-info-brand').text(infoValue(product.brand));
                 $('#picker-info-hsn').text(infoValue(product.hsn_code));
                 $('#picker-info-hs').text(infoValue(product.hs_code));
                 $('#picker-info-drug').text(infoValue(product.drug_name));
-                $('#picker-info-user').text(infoValue(product.owner_name));
                 $('#picker-info-batch').text(infoValue(batch && batch.batch));
                 $('#picker-info-mfg-date').text(formatInfoDate(batch && batch.manufacturing_date, false));
                 $('#picker-info-expiry').text(formatInfoDate(batch ? batch.product_exp_date : stock.product_exp_date, true));
