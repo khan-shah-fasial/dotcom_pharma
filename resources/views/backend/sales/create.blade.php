@@ -884,18 +884,50 @@ span#picker-info-stock-badge {
                     <div class="card-body">
                         <table class="table table-sm mb-3">
                             <tbody>
-                                <tr><td>{{ translate('Product Subtotal (Before Discount)') }}</td><td class="text-right" id="summary-subtotal">0.00</td></tr>
-                                <tr><td>{{ translate('Product/Batch Discount') }}</td><td class="text-right text-danger" id="summary-product-discount">0.00</td></tr>
-                                <tr><td>{{ translate('Coupon / Additional Discount') }}</td><td class="text-right text-danger" id="summary-coupon">0.00</td></tr>
-                                <tr><td>{{ translate('Shipping (Excl. GST)') }}</td><td class="text-right" id="summary-shipping">0.00</td></tr>
                                 <tr>
-                                    <td>
-                                        {{ translate('GST') }}
-                                        <small class="d-block text-muted" id="summary-shipping-tax-note"></small>
-                                    </td>
-                                    <td class="text-right" id="summary-tax">0.00</td>
+                                    <td>{{ translate('Product Subtotal (Before Discount)') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-subtotal">0.00</td>
                                 </tr>
-                                <tr class="fw-700"><td>{{ translate('Grand Total') }}</td><td class="text-right" id="summary-grand-total">0.00</td></tr>
+                                <tr class="text-danger">
+                                    <td>{{ translate('Less: Product/Batch Discount') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-product-discount">0.00</td>
+                                </tr>
+                                <tr class="bg-soft-light fw-600">
+                                    <td>{{ translate('Net Product Value (Excl. GST)') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-net-product">0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ translate('Add: Shipping (Excl. GST)') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-shipping">0.00</td>
+                                </tr>
+                                <tr class="fw-600 border-top">
+                                    <td>{{ translate('Total Before GST') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-before-gst">0.00</td>
+                                </tr>
+                                <tr>
+                                    <td class="pl-3 text-muted">{{ translate('Add: Product GST') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-product-tax">0.00</td>
+                                </tr>
+                                <tr>
+                                    <td class="pl-3 text-muted">{{ translate('Add: Shipping GST') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-shipping-tax">0.00</td>
+                                </tr>
+                                <tr class="fw-600">
+                                    <td>{{ translate('Total GST') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-tax">0.00</td>
+                                </tr>
+                                <tr class="bg-soft-light fw-600">
+                                    <td>{{ translate('Total Including GST') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-including-gst">0.00</td>
+                                </tr>
+                                <tr class="text-danger">
+                                    <td>{{ translate('Less: Coupon / Additional Discount') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-coupon">0.00</td>
+                                </tr>
+                                <tr class="fw-700 border-top">
+                                    <td>{{ translate('Grand Total') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-grand-total">0.00</td>
+                                </tr>
                             </tbody>
                         </table>
                         <div id="summary-message" class="small text-danger mb-2"></div>
@@ -1645,11 +1677,12 @@ span#picker-info-stock-badge {
                 }
 
                 lines.forEach(function (line, index) {
+                    var isManualScheme = Boolean(line.quote && line.quote.is_manual_scheme);
                     $body.append('<tr>'
                         + '<td>' + escapeHtml(line.product_name) + '<br><small>' + escapeHtml(line.owner_name || '') + '</small></td>'
                         + '<td>' + escapeHtml(line.stock_label || '-') + '</td>'
                         + '<td>' + escapeHtml(line.batch_label || '-') + '</td>'
-                        + '<td class="text-right">' + line.quantity + '</td>'
+                        + '<td class="text-right">' + (isManualScheme ? '-' : line.quantity) + '</td>'
                         + '<td class="text-right line-scheme" data-index="' + index + '">' + schemeQuantityBadge(line.quote.scheme_quantity) + '</td>'
                         + '<td class="text-right">' + money(line.quote.sale_price) + '</td>'
                         + '<td class="text-right line-tax" data-index="' + index + '">' + money(line.quote.gst_amount || line.quote.tax) + '</td>'
@@ -1660,7 +1693,8 @@ span#picker-info-stock-badge {
                         + '</tr>');
 
                     ['product_id', 'stock_id', 'variation', 'id_variant', 'batch_id', 'quantity', 'sale_price'].forEach(function (field) {
-                        $hidden.append('<input type="hidden" name="items[' + index + '][' + field + ']" value="' + (line[field] || '') + '">');
+                        var fieldValue = line[field] === undefined || line[field] === null ? '' : line[field];
+                        $hidden.append('<input type="hidden" name="items[' + index + '][' + field + ']" value="' + fieldValue + '">');
                     });
                 });
 
@@ -1869,8 +1903,7 @@ span#picker-info-stock-badge {
             function refreshSummary(validateDiscount) {
                 $('#summary-message').text('');
                 if (!$('#selected-customer-id').val() || !lines.length) {
-                    $('#summary-subtotal,#summary-product-discount,#summary-tax,#summary-coupon,#summary-shipping,#summary-grand-total').text('0.00');
-                    $('#summary-shipping-tax-note').text('');
+                    $('.order-summary-value').text('0.00');
                     $('#scheme-quantity-notice').addClass('d-none').text('');
                     return;
                 }
@@ -1884,14 +1917,29 @@ span#picker-info-stock-badge {
                     data: requestData
                 }).done(function (response) {
                     var data = response.data || {};
+                    var productDiscount = Number(data.product_discount || 0);
+                    var couponDiscount = Number(data.coupon_discount || 0);
+                    var shippingBase = Number(data.shipping || 0);
+                    var productTax = Number(data.product_tax || 0);
+                    var shippingTax = Number(data.shipping_tax || 0);
+                    var totalTax = Number(data.tax || 0);
+                    var netProduct = data.net_product_subtotal !== undefined
+                        ? Number(data.net_product_subtotal || 0)
+                        : Math.max(0, Number(data.subtotal || 0) - productDiscount);
+                    var totalBeforeGst = netProduct + shippingBase;
+                    var totalIncludingGst = totalBeforeGst + totalTax;
+
                     $('#summary-subtotal').text(money(data.subtotal));
-                    $('#summary-product-discount').text(Number(data.product_discount || 0) > 0
-                        ? '-' + money(data.product_discount)
+                    $('#summary-product-discount').text(productDiscount > 0
+                        ? '-' + money(productDiscount)
                         : money(0));
-                    $('#summary-tax').text(money(data.tax));
-                    $('#summary-shipping-tax-note').text(Number(data.shipping_tax || 0) > 0
-                        ? '{{ translate('Includes shipping GST') }}: ' + money(data.shipping_tax)
-                        : '');
+                    $('#summary-net-product').text(money(netProduct));
+                    $('#summary-shipping').text(shippingBase > 0 ? '+' + money(shippingBase) : money(0));
+                    $('#summary-before-gst').text(money(totalBeforeGst));
+                    $('#summary-product-tax').text(productTax > 0 ? '+' + money(productTax) : money(0));
+                    $('#summary-shipping-tax').text(shippingTax > 0 ? '+' + money(shippingTax) : money(0));
+                    $('#summary-tax').text(money(totalTax));
+                    $('#summary-including-gst').text(money(totalIncludingGst));
                     if (Number(data.scheme_quantity || 0) > 0) {
                         $('#scheme-quantity-notice')
                             .removeClass('d-none')
@@ -1899,10 +1947,9 @@ span#picker-info-stock-badge {
                     } else {
                         $('#scheme-quantity-notice').addClass('d-none').text('');
                     }
-                    $('#summary-coupon').text(Number(data.coupon_discount || 0) > 0
-                        ? '-' + money(data.coupon_discount)
+                    $('#summary-coupon').text(couponDiscount > 0
+                        ? '-' + money(couponDiscount)
                         : money(0));
-                    $('#summary-shipping').text(money(data.shipping));
                     $('#summary-grand-total').text(money(data.grand_total));
                     renderOrderShippingRows(data.shipping_lines || []);
                     if (data.lines) {
