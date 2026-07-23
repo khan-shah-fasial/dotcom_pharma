@@ -802,8 +802,14 @@
                                 <tr><td>{{ translate('Subtotal') }}</td><td class="text-right" id="summary-subtotal">0.00</td></tr>
                                 <tr><td>{{ translate('Product/Batch Discount') }}</td><td class="text-right" id="summary-product-discount">0.00</td></tr>
                                 <tr><td>{{ translate('Coupon') }}</td><td class="text-right" id="summary-coupon">0.00</td></tr>
-                                <tr><td>{{ translate('Shipping') }}</td><td class="text-right" id="summary-shipping">0.00</td></tr>
-                                <tr><td>{{ translate('GST') }}</td><td class="text-right" id="summary-tax">0.00</td></tr>
+                                <tr><td>{{ translate('Shipping (Excl. GST)') }}</td><td class="text-right" id="summary-shipping">0.00</td></tr>
+                                <tr>
+                                    <td>
+                                        {{ translate('GST') }}
+                                        <small class="d-block text-muted" id="summary-shipping-tax-note"></small>
+                                    </td>
+                                    <td class="text-right" id="summary-tax">0.00</td>
+                                </tr>
                                 <tr class="fw-700"><td>{{ translate('Grand Total') }}</td><td class="text-right" id="summary-grand-total">0.00</td></tr>
                             </tbody>
                         </table>
@@ -1639,7 +1645,7 @@
                 syncFreeShippingControls();
             }
 
-            function renderOrderShippingRows() {
+            function renderOrderShippingRows(serverRows) {
                 var $body = $('#order-lines-body');
                 $body.find('.order-shipping-line').remove();
                 if (!lines.length || $('#shipping-cost-type').val() === 'free_shipping') return;
@@ -1650,35 +1656,53 @@
                 });
 
                 var rows = [];
-                $('.seller-shipping-input').each(function () {
-                    var amount = Number($(this).val() || 0);
-                    if (amount > 0) {
-                        var sellerId = $(this).data('seller-id');
+                if (Array.isArray(serverRows)) {
+                    serverRows.forEach(function (shippingLine) {
                         rows.push({
                             id: null,
-                            description: '{{ translate('Shipping Cost') }} - ' + (sellers[sellerId] || ''),
-                            amount: amount
+                            description: '{{ translate('Shipping Cost') }} - ' + (sellers[shippingLine.seller_id] || ''),
+                            base_amount: Number(shippingLine.base_amount || 0),
+                            gst_amount: Number(shippingLine.gst_amount || 0),
+                            gst_percent: Number(shippingLine.gst_percent || 0),
+                            amount: Number(shippingLine.total_amount || 0),
+                            is_calculated: true
                         });
-                    }
-                });
-                shippingItems.forEach(function (item) {
-                    rows.push({
-                        id: item.id,
-                        description: item.description || '{{ translate('Shipping') }}',
-                        amount: Number(item.amount || 0)
                     });
-                });
+                } else {
+                    $('.seller-shipping-input').each(function () {
+                        var amount = Number($(this).val() || 0);
+                        if (amount > 0) {
+                            var sellerId = $(this).data('seller-id');
+                            rows.push({
+                                id: null,
+                                description: '{{ translate('Shipping Cost') }} - ' + (sellers[sellerId] || ''),
+                                amount: amount
+                            });
+                        }
+                    });
+                    shippingItems.forEach(function (item) {
+                        rows.push({
+                            id: item.id,
+                            description: item.description || '{{ translate('Shipping') }}',
+                            amount: Number(item.amount || 0)
+                        });
+                    });
+                }
 
                 rows.forEach(function (row) {
                     var action = row.id === null
                         ? ''
                         : '<button type="button" class="btn btn-soft-danger btn-icon btn-sm remove-shipping-item-from-line" data-id="' + row.id + '"><i class="las la-trash"></i></button>';
+                    var saleAmount = row.is_calculated ? money(row.base_amount) : '-';
+                    var gstAmount = row.is_calculated
+                        ? money(row.gst_amount) + '<br><small class="text-muted">' + money(row.gst_percent) + '%</small>'
+                        : '-';
                     $body.append('<tr class="order-shipping-line bg-soft-light">'
                         + '<td colspan="3"><strong>{{ translate('Shipping') }}</strong><br><small>' + escapeHtml(row.description) + '</small></td>'
                         + '<td class="text-right">-</td>'
                         + '<td class="text-right">-</td>'
-                        + '<td class="text-right">-</td>'
-                        + '<td class="text-right">-</td>'
+                        + '<td class="text-right">' + saleAmount + '</td>'
+                        + '<td class="text-right">' + gstAmount + '</td>'
                         + '<td class="text-right">' + money(row.amount) + '</td>'
                         + '<td class="text-right">-</td>'
                         + '<td class="text-right">' + money(row.amount) + '</td>'
@@ -1754,6 +1778,7 @@
                 $('#summary-message').text('');
                 if (!$('#selected-customer-id').val() || !lines.length) {
                     $('#summary-subtotal,#summary-product-discount,#summary-tax,#summary-coupon,#summary-shipping,#summary-grand-total').text('0.00');
+                    $('#summary-shipping-tax-note').text('');
                     $('#scheme-quantity-notice').addClass('d-none').text('');
                     return;
                 }
@@ -1770,6 +1795,9 @@
                     $('#summary-subtotal').text(money(data.subtotal));
                     $('#summary-product-discount').text(money(data.product_discount));
                     $('#summary-tax').text(money(data.tax));
+                    $('#summary-shipping-tax-note').text(Number(data.shipping_tax || 0) > 0
+                        ? '{{ translate('Includes shipping GST') }}: ' + money(data.shipping_tax)
+                        : '');
                     if (Number(data.scheme_quantity || 0) > 0) {
                         $('#scheme-quantity-notice')
                             .removeClass('d-none')
@@ -1780,6 +1808,7 @@
                     $('#summary-coupon').text(money(data.coupon_discount));
                     $('#summary-shipping').text(money(data.shipping));
                     $('#summary-grand-total').text(money(data.grand_total));
+                    renderOrderShippingRows(data.shipping_lines || []);
                     if (data.lines) {
                         data.lines.forEach(function (line, index) {
                             if (lines[index]) {
