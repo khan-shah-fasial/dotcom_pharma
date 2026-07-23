@@ -740,7 +740,10 @@ class OrderPlacementService
 
         return [
             'lines' => $summaryLines,
-            'subtotal' => round($subtotal, 2),
+            // The displayed subtotal is the value before product/batch discount
+            // so every Summary row participates in the visible reconciliation.
+            'subtotal' => round($subtotal + $productDiscount, 2),
+            'net_product_subtotal' => round($subtotal, 2),
             'tax' => round($tax + $shippingSummary['gst_amount'], 2),
             'product_tax' => round($tax, 2),
             'shipping_tax' => $shippingSummary['gst_amount'],

@@ -799,9 +799,9 @@
                     <div class="card-body">
                         <table class="table table-sm mb-3">
                             <tbody>
-                                <tr><td>{{ translate('Subtotal') }}</td><td class="text-right" id="summary-subtotal">0.00</td></tr>
-                                <tr><td>{{ translate('Product/Batch Discount') }}</td><td class="text-right" id="summary-product-discount">0.00</td></tr>
-                                <tr><td>{{ translate('Coupon') }}</td><td class="text-right" id="summary-coupon">0.00</td></tr>
+                                <tr><td>{{ translate('Product Subtotal (Before Discount)') }}</td><td class="text-right" id="summary-subtotal">0.00</td></tr>
+                                <tr><td>{{ translate('Product/Batch Discount') }}</td><td class="text-right text-danger" id="summary-product-discount">0.00</td></tr>
+                                <tr><td>{{ translate('Coupon / Additional Discount') }}</td><td class="text-right text-danger" id="summary-coupon">0.00</td></tr>
                                 <tr><td>{{ translate('Shipping (Excl. GST)') }}</td><td class="text-right" id="summary-shipping">0.00</td></tr>
                                 <tr>
                                     <td>
@@ -1793,7 +1793,9 @@
                 }).done(function (response) {
                     var data = response.data || {};
                     $('#summary-subtotal').text(money(data.subtotal));
-                    $('#summary-product-discount').text(money(data.product_discount));
+                    $('#summary-product-discount').text(Number(data.product_discount || 0) > 0
+                        ? '-' + money(data.product_discount)
+                        : money(0));
                     $('#summary-tax').text(money(data.tax));
                     $('#summary-shipping-tax-note').text(Number(data.shipping_tax || 0) > 0
                         ? '{{ translate('Includes shipping GST') }}: ' + money(data.shipping_tax)
@@ -1805,7 +1807,9 @@
                     } else {
                         $('#scheme-quantity-notice').addClass('d-none').text('');
                     }
-                    $('#summary-coupon').text(money(data.coupon_discount));
+                    $('#summary-coupon').text(Number(data.coupon_discount || 0) > 0
+                        ? '-' + money(data.coupon_discount)
+                        : money(0));
                     $('#summary-shipping').text(money(data.shipping));
                     $('#summary-grand-total').text(money(data.grand_total));
                     renderOrderShippingRows(data.shipping_lines || []);
