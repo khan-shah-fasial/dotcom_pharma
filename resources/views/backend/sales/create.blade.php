@@ -200,37 +200,53 @@ span#picker-info-stock-badge {
             font-weight: 600;
         }
        
+        .product-pricing-section .product-info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            border-bottom: 0;
+        }
+        .product-pricing-section .product-info-item {
+            display: grid;
+            grid-template-columns: minmax(120px, 52%) minmax(0, 1fr);
+            align-items: stretch;
+            min-height: 22px;
+            margin: 0;
+            border: 0 !important;
+            border-bottom: 1px solid #edf0f4  !important;
+            
+        }
+        
+        .product-pricing-section .product-info-label,
         .product-pricing-section .product-info-value {
-            text-align: right;
+            display: flex;
+            align-items: center;
+            padding: 2px 5px;
+            margin: 0;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .product-pricing-section .product-info-item:nth-child(odd) {
-            background: #fbfdff;
+        .product-pricing-section .product-info-label {
+            color: #64748b;
+            font-weight: 700;
+            border-right: 1px solid #edf0f4;
         }
-        .product-pricing-freight-item {
-            grid-column: 1 / -1;
-            border-right: 0 !important;
-            background: #f8fafc !important;
+        .product-pricing-section .product-info-value {
+            color: #111827;
+            text-align: left;
+            font-weight: 600;
+            background: transparent;
         }
-        .product-final-amount-item {
-            grid-column: 1 / -1 !important;
-            grid-template-columns: auto minmax(0, 1fr) !important;
-            border-right: 0 !important;
-            border-bottom: 0 !important;
-            background: linear-gradient(90deg, #ecfdf5 0%, #d1fae5 100%) !important;
-            border-top: 1px solid #6ee7b7;
+        .product-pricing-section .product-info-item.is-accent-row .product-info-label,
+        .product-pricing-section .product-info-item.is-accent-row .product-info-value,
+        .product-pricing-section .product-info-value.is-accent {
+            color: #dc2626;
+            font-weight: 700;
         }
-        .product-final-amount-item .product-info-label {
-            color: #065f46;
-            font-weight: 800;
-        }
+        .product-final-amount-item .product-info-label,
         .product-final-amount-item .product-info-value {
-            color: #047857;
-            font-size: 12px;
+            color: #dc2626;
             font-weight: 800;
-            letter-spacing: .01em;
         }
         .product-picker-quote {
             min-height: 44px;
@@ -286,12 +302,19 @@ span#picker-info-stock-badge {
         .order-accordion-toggle[aria-expanded="true"] .order-accordion-icon {
             transform: rotate(180deg);
         }
+
+        .product-info-item.product-final-amount-item span {
+    color: #047857;
+}
+
+.product-info-item.product-final-amount-item {
+    background: linear-gradient(90deg, #ecfdf5 0%, #d1fae5 100%) !important;
+    border-top: 1px solid #6ee7b7;
+}
         @media (max-width: 767.98px) {
             .product-info-grid { grid-template-columns: 1fr; }
             .product-info-item:nth-child(odd) { border-right: 0; }
             .product-composition-item { grid-column: auto; grid-template-columns: minmax(105px, 42%) minmax(0, 1fr); }
-            .product-pricing-freight-item,
-            .product-final-amount-item { grid-column: 1 / -1 !important; }
         }
     </style>
     <form id="backend-order-form" action="{{ route('orders.store') }}" method="POST" enctype="multipart/form-data">
@@ -424,7 +447,7 @@ span#picker-info-stock-badge {
 
                             <div class="p-3">
                                 <div class="row gutters-10">
-                                    <div class="col-xl-7 mb-3 mb-xl-0">
+                                    <div class="col-xl-8 mb-3 mb-xl-0">
                                         <div class="product-info-section product-variant-section">
                                             <div class="product-info-section-title">
                                                 <span><i class="las la-capsules mr-1"></i>{{ translate('Product & Variant Information') }}</span>
@@ -457,7 +480,7 @@ span#picker-info-stock-badge {
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-xl-5">
+                                    <div class="col-xl-4">
                                         <div class="product-info-section product-pricing-section">
                                             <div class="product-info-section-title">
                                                 <span><i class="las la-boxes mr-1"></i>{{ translate('Batch, Stock & Pricing') }}</span>
@@ -465,19 +488,19 @@ span#picker-info-stock-badge {
                                             </div>
                                             <div class="product-info-grid">
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Batch / Lot No.') }}</span><span class="product-info-value" id="picker-info-batch">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('MOQ') }}</span><span class="product-info-value is-accent" id="picker-info-moq">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Mfg. Date') }}</span><span class="product-info-value" id="picker-info-mfg-date">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Expiry Date') }}</span><span class="product-info-value is-accent" id="picker-info-expiry">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Stock Available') }}</span><span class="product-info-value is-accent" id="picker-info-stock">-</span></div>
+                                                <div class="product-info-item is-accent-row"><span class="product-info-label">{{ translate('Expiry Date') }}</span><span class="product-info-value" id="picker-info-expiry">-</span></div>
+                                                <div class="product-info-item is-accent-row"><span class="product-info-label">{{ translate('Stock Available') }}</span><span class="product-info-value" id="picker-info-stock">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Stock Upload Date') }}</span><span class="product-info-value" id="picker-info-stock-date">-</span></div>
+                                                <div class="product-info-item is-accent-row"><span class="product-info-label">{{ translate('MOQ') }}</span><span class="product-info-value" id="picker-info-moq">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Qty Ordered') }}</span><span class="product-info-value" id="picker-info-qty">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Scheme (Free)') }}</span><span class="product-info-value" id="picker-info-scheme">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('MRP') }}</span><span class="product-info-value is-accent" id="picker-info-mrp">-</span></div>
+                                                <div class="product-info-item is-accent-row"><span class="product-info-label">{{ translate('MRP') }}</span><span class="product-info-value" id="picker-info-mrp">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Sale Rate (PTS)') }}</span><span class="product-info-value" id="picker-info-sale">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Discount') }}</span><span class="product-info-value" id="picker-info-discount">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Other Discount') }}</span><span class="product-info-value" id="picker-info-other-discount">-</span></div>
-                                                <div class="product-info-item product-pricing-freight-item"><span class="product-info-label">{{ translate('Freight / Shipping') }}</span><span class="product-info-value" id="picker-info-freight">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Tax %') }}</span><span class="product-info-value" id="picker-info-tax-rate">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Freight / Shipping') }}</span><span class="product-info-value" id="picker-info-freight">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label" id="picker-info-tax-label">{{ translate('Tax %') }}</span><span class="product-info-value" id="picker-info-tax-rate">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('GST Amount') }}</span><span class="product-info-value" id="picker-info-gst">-</span></div>
                                                 <div class="product-info-item product-final-amount-item"><span class="product-info-label">{{ translate('Final Amount') }}</span><span class="product-info-value" id="picker-info-final">-</span></div>
                                             </div>
@@ -1457,7 +1480,13 @@ span#picker-info-stock-badge {
                 $('#picker-info-mfg-date').text(formatInfoDate(batch && batch.manufacturing_date, false));
                 $('#picker-info-expiry').text(formatInfoDate(batch ? batch.product_exp_date : stock.product_exp_date, true));
                 $('#picker-info-stock-date').text(formatInfoDate(batch ? batch.stock_upload_date : stock.stock_upload_date, false));
-                $('#picker-info-tax-rate').text(product.tax_percentage !== null && product.tax_percentage !== undefined ? money(product.tax_percentage) + '%' : '-');
+                if (product.tax_percentage !== null && product.tax_percentage !== undefined) {
+                    $('#picker-info-tax-label').text('{{ translate('Tax %') }} ( ' + Number(product.tax_percentage) + ' )');
+                    $('#picker-info-tax-rate').text('');
+                } else {
+                    $('#picker-info-tax-label').text('{{ translate('Tax %') }}');
+                    $('#picker-info-tax-rate').text('-');
+                }
                 $('#picker-info-freight').text(product.shipping_type === 'free'
                     ? '{{ translate('Free') }}'
                     : (product.shipping_cost ? money(product.shipping_cost) : infoValue(product.shipping_type)));
