@@ -6243,15 +6243,29 @@ if (! function_exists('getStoredIPLocation')) {
 if (!function_exists('format_dd_mm_yy')) {
     function format_dd_mm_yy($date)
     {
-        if (empty($date)) {
+        if ($date instanceof \DateTimeInterface) {
+            return \Carbon\Carbon::instance($date)->format('d-m-Y');
+        }
+
+        if (!is_string($date) && !is_numeric($date)) {
             return '-';
         }
 
-        if ($date == '0000-00-00' || $date == '1970-01-01') {
+        $date = trim((string) $date);
+
+        if ($date === '' || in_array(strtoupper($date), ['NA', 'N/A', 'NULL', '-'], true)) {
             return '-';
         }
 
-        return \Carbon\Carbon::parse($date)->format('d-m-Y');
+        if ($date === '0000-00-00' || $date === '1970-01-01') {
+            return '-';
+        }
+
+        try {
+            return \Carbon\Carbon::parse($date)->format('d-m-Y');
+        } catch (\Throwable $exception) {
+            return '-';
+        }
     }
 }
 

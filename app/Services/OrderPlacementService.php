@@ -350,7 +350,6 @@ class OrderPlacementService
     {
         $subtotal = 0;
         $tax = 0;
-        $shipping = 0;
         $couponDiscount = 0;
         $affectedProductIds = [];
         $schemeGroupsWritten = [];
@@ -617,9 +616,12 @@ class OrderPlacementService
 
             $this->prepareStockForPricing($stock, $batch);
             $resolvedPrice = resolvePrice($product, $stock, $batch, $quantity);
-            $unitPrice = (float) ($resolvedPrice['price'] ?? 0);
-            $unitSalePrice = (float) ($resolvedPrice['sale_price'] ?? $unitPrice);
-            $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $unitSalePrice);
+            // Frontend cart prices are persisted in DECIMAL(20, 2) columns before
+            // totals are calculated. Backend lines are in-memory Cart instances,
+            // so apply the same precision boundary to keep both totals identical.
+            $unitPrice = round((float) ($resolvedPrice['price'] ?? 0), 2);
+            $unitSalePrice = round((float) ($resolvedPrice['sale_price'] ?? $unitPrice), 2);
+            $beforeProductAndBatchDiscount = round((float) ($resolvedPrice['before_productandbatch_discount'] ?? $unitSalePrice), 2);
             $mrpPrice = $batch ? ($batch->mrp_price ?? $stock->mrp_price ?? $product->mrp_price) : ($stock->mrp_price ?? $product->mrp_price);
 
             if (array_key_exists('sale_price', $item) && $item['sale_price'] !== null && $item['sale_price'] !== '') {
@@ -686,7 +688,7 @@ class OrderPlacementService
         $finalTotal = 0;
         $shownSchemeGroups = [];
 
-        $summaryLines = $lines->values()->map(function ($line, $index) use (&$subtotal, &$tax, &$shipping, &$couponDiscount, &$productDiscount, &$finalTotal, &$shownSchemeGroups, $schemeQtyByGroup) {
+        $summaryLines = $lines->values()->map(function ($line, $index) use (&$subtotal, &$tax, &$couponDiscount, &$productDiscount, &$finalTotal, &$shownSchemeGroups, $schemeQtyByGroup) {
             $product = Product::find($line['product_id']);
             $qty = (int) $line['quantity'];
             $lineSubtotal = (float) $line['sale_price'] * $qty;
@@ -701,7 +703,6 @@ class OrderPlacementService
 
             $subtotal += $lineSubtotal;
             $tax += $gstAmount;
-            $shipping += $lineShipping;
             $couponDiscount += $lineCoupon;
             $productDiscount += $lineProductDiscount;
             $finalTotal += $finalAmount;
@@ -735,17 +736,76 @@ class OrderPlacementService
                 'scheme_quantity' => $lineSchemeQuantity,
             ];
         })->all();
+        $shippingSummary = $this->summarizeInclusiveShipping($lines);
 
         return [
             'lines' => $summaryLines,
-            'subtotal' => round($subtotal, 2),
-            'tax' => round($tax, 2),
-            'shipping' => round($shipping, 2),
+            // The displayed subtotal is the value before product/batch discount
+            // so every Summary row participates in the visible reconciliation.
+            'subtotal' => round($subtotal + $productDiscount, 2),
+            'net_product_subtotal' => round($subtotal, 2),
+            'tax' => round($tax + $shippingSummary['gst_amount'], 2),
+            'product_tax' => round($tax, 2),
+            'shipping_tax' => $shippingSummary['gst_amount'],
+            'shipping' => $shippingSummary['base_amount'],
+            'shipping_inclusive' => $shippingSummary['total_amount'],
+            'shipping_lines' => $shippingSummary['lines'],
             'product_discount' => round($productDiscount, 2),
             'coupon_discount' => round($couponDiscount, 2),
             'scheme_quantity' => (int) array_sum($schemeQtyByGroup),
             'grand_total' => round($finalTotal, 2),
             'total' => round($finalTotal, 2),
+        ];
+    }
+
+    protected function summarizeInclusiveShipping(Collection $lines): array
+    {
+        $shippingLines = $lines
+            ->groupBy(fn ($line) => (int) ($line['owner_id'] ?? 0))
+            ->map(function (Collection $sellerLines, $sellerId) {
+                $shippingInclusive = round((float) $sellerLines->sum(
+                    fn ($line) => (float) ($line['shipping_cost'] ?? 0)
+                ), 2);
+
+                if ($shippingInclusive <= 0) {
+                    return null;
+                }
+
+                // shipping_invoice_line() uses the GST rate that occurs on the
+                // highest number of paid product lines, matching invoice logic.
+                $productLines = $sellerLines->map(function ($line) {
+                    $quantity = max(0, (int) ($line['quantity'] ?? 0));
+
+                    return [
+                        'is_scheme' => (bool) ($line['is_scheme'] ?? false),
+                        'price' => round((float) ($line['sale_price'] ?? 0) * $quantity, 2),
+                        'tax' => round((float) ($line['tax'] ?? 0) * $quantity, 2),
+                    ];
+                });
+
+                $shippingLine = shipping_invoice_line(
+                    $productLines,
+                    $shippingInclusive,
+                    '',
+                    translate('Shipping')
+                );
+
+                if (!$shippingLine) {
+                    return null;
+                }
+
+                return array_merge($shippingLine, [
+                    'seller_id' => (int) $sellerId,
+                ]);
+            })
+            ->filter()
+            ->values();
+
+        return [
+            'base_amount' => round((float) $shippingLines->sum('base_amount'), 2),
+            'gst_amount' => round((float) $shippingLines->sum('gst_amount'), 2),
+            'total_amount' => round((float) $shippingLines->sum('total_amount'), 2),
+            'lines' => $shippingLines->all(),
         ];
     }
 
