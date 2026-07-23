@@ -419,6 +419,7 @@ class OrderController extends Controller
                         'pack_size' => $variantAttributes->get('pack size') ?: ($stock->variant ?: ($product->product_min_pack_size ?: $product->unit)),
                         'type' => $variantAttributes->get('type') ?: ($product->product_type ?: $product->product_form),
                         'quality' => $variantAttributes->get('quality'),
+                        'no' => $variantAttributes->get('no') ?: $variantAttributes->get('no.'),
                         'material' => $variantAttributes->get('material') ?: $product->product_material,
                         'shape' => $variantAttributes->get('shape'),
                         'size' => $variantAttributes->get('size') ?: collect([$stock->length, $stock->width, $stock->height])

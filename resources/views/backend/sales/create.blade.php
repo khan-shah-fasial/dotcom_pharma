@@ -139,13 +139,23 @@
                 font-weight: 700;
                 font-size: 11px;
         }
+
+        span#picker-info-variant {
+    width: 67px;
+    background: transparent;
+}
+
+span#picker-info-stock-badge {
+    width: 83px;
+    background: transparent !important;
+}
         .product-info-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .product-info-item {
             display: grid;
-            grid-template-columns: minmax(105px, 42%) minmax(0, 1fr);
+            grid-template-columns: minmax(88px, 42%) minmax(0, 1fr);
             min-height: 26px;
             border-bottom: 1px solid #edf0f4;
         }
@@ -173,8 +183,54 @@
         }
         .product-composition-item {
             grid-column: 1 / -1;
-            grid-template-columns: minmax(105px, 21%) minmax(0, 1fr);
+            grid-template-columns: minmax(88px, 21%) minmax(0, 1fr);
             border-right: 0 !important;
+        }
+       
+        .product-variant-section .product-composition-item .product-info-value {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+        .product-variant-section .product-info-placeholder {
+            background: #fafbfc;
+        }
+        .product-variant-section .product-info-placeholder .product-info-label,
+        .product-variant-section .product-info-placeholder .product-info-value {
+            color: #94a3b8;
+            font-weight: 600;
+        }
+       
+        .product-pricing-section .product-info-value {
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .product-pricing-section .product-info-item:nth-child(odd) {
+            background: #fbfdff;
+        }
+        .product-pricing-freight-item {
+            grid-column: 1 / -1;
+            border-right: 0 !important;
+            background: #f8fafc !important;
+        }
+        .product-final-amount-item {
+            grid-column: 1 / -1 !important;
+            grid-template-columns: auto minmax(0, 1fr) !important;
+            border-right: 0 !important;
+            border-bottom: 0 !important;
+            background: linear-gradient(90deg, #ecfdf5 0%, #d1fae5 100%) !important;
+            border-top: 1px solid #6ee7b7;
+        }
+        .product-final-amount-item .product-info-label {
+            color: #065f46;
+            font-weight: 800;
+        }
+        .product-final-amount-item .product-info-value {
+            color: #047857;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .01em;
         }
         .product-picker-quote {
             min-height: 44px;
@@ -234,6 +290,8 @@
             .product-info-grid { grid-template-columns: 1fr; }
             .product-info-item:nth-child(odd) { border-right: 0; }
             .product-composition-item { grid-column: auto; grid-template-columns: minmax(105px, 42%) minmax(0, 1fr); }
+            .product-pricing-freight-item,
+            .product-final-amount-item { grid-column: 1 / -1 !important; }
         }
     </style>
     <form id="backend-order-form" action="{{ route('orders.store') }}" method="POST" enctype="multipart/form-data">
@@ -367,36 +425,40 @@
                             <div class="p-3">
                                 <div class="row gutters-10">
                                     <div class="col-xl-7 mb-3 mb-xl-0">
-                                        <div class="product-info-section">
+                                        <div class="product-info-section product-variant-section">
                                             <div class="product-info-section-title">
                                                 <span><i class="las la-capsules mr-1"></i>{{ translate('Product & Variant Information') }}</span>
                                                 <span class="badge badge-soft-primary" id="picker-info-variant">-</span>
                                             </div>
                                             <div class="product-info-grid">
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('SKU') }}</span><span class="product-info-value" id="picker-info-sku">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Group') }}</span><span class="product-info-value" id="picker-info-group">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Brand / Mfg') }}</span><span class="product-info-value" id="picker-info-brand">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Product') }}</span><span class="product-info-value" id="picker-info-product">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Schedule') }}</span><span class="product-info-value" id="picker-info-schedule">-</span></div>
-                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Drug Role') }}</span><span class="product-info-value" id="picker-info-role">-</span></div>
-                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Drug Name') }}</span><span class="product-info-value" id="picker-info-drug">-</span></div>
-                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Composition / Description') }}</span><span class="product-info-value" id="picker-info-composition">-</span></div>
-                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Type / Form') }}</span><span class="product-info-value" id="picker-info-type">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Pack Size') }}</span><span class="product-info-value" id="picker-info-pack">-</span></div>
+                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Drug Name') }}</span><span class="product-info-value" id="picker-info-drug">-</span></div>
+                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Drug Role') }}</span><span class="product-info-value" id="picker-info-role">-</span></div>
+                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Composition / Description') }}</span><span class="product-info-value" id="picker-info-composition">-</span></div>
+                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Category') }}</span><span class="product-info-value" id="picker-info-category">-</span></div>
+                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Type / Form') }}</span><span class="product-info-value" id="picker-info-type">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Material') }}</span><span class="product-info-value" id="picker-info-material">-</span></div>
-                                                
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Size') }}</span><span class="product-info-value" id="picker-info-size">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Schedule') }}</span><span class="product-info-value" id="picker-info-schedule">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Shape') }}</span><span class="product-info-value" id="picker-info-shape">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Quality') }}</span><span class="product-info-value" id="picker-info-quality">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Category') }}</span><span class="product-info-value" id="picker-info-category">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Country of Origin') }}</span><span class="product-info-value" id="picker-info-origin">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Brand / Mfg') }}</span><span class="product-info-value" id="picker-info-brand">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('No') }}</span><span class="product-info-value" id="picker-info-no">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Group') }}</span><span class="product-info-value" id="picker-info-group">-</span></div>
+                                                <div class="product-info-item product-info-placeholder"><span class="product-info-label">-</span><span class="product-info-value">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Origin') }}</span><span class="product-info-value" id="picker-info-origin">-</span></div>
+                                                <div class="product-info-item product-info-placeholder"><span class="product-info-label">-</span><span class="product-info-value">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('HSN Code') }}</span><span class="product-info-value" id="picker-info-hsn">-</span></div>
+                                                <div class="product-info-item product-info-placeholder"><span class="product-info-label">-</span><span class="product-info-value">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('HS Code') }}</span><span class="product-info-value" id="picker-info-hs">-</span></div>
+                                                <div class="product-info-item product-info-placeholder"><span class="product-info-label">-</span><span class="product-info-value">-</span></div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-xl-5">
-                                        <div class="product-info-section">
+                                        <div class="product-info-section product-pricing-section">
                                             <div class="product-info-section-title">
                                                 <span><i class="las la-boxes mr-1"></i>{{ translate('Batch, Stock & Pricing') }}</span>
                                                 <span class="badge badge-soft-success" id="picker-info-stock-badge">-</span>
@@ -414,10 +476,10 @@
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Sale Rate (PTS)') }}</span><span class="product-info-value" id="picker-info-sale">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Discount') }}</span><span class="product-info-value" id="picker-info-discount">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Other Discount') }}</span><span class="product-info-value" id="picker-info-other-discount">-</span></div>
-                                                <div class="product-info-item product-composition-item"><span class="product-info-label">{{ translate('Freight / Shipping') }}</span><span class="product-info-value" id="picker-info-freight">-</span></div>
+                                                <div class="product-info-item product-pricing-freight-item"><span class="product-info-label">{{ translate('Freight / Shipping') }}</span><span class="product-info-value" id="picker-info-freight">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Tax %') }}</span><span class="product-info-value" id="picker-info-tax-rate">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('GST Amount') }}</span><span class="product-info-value" id="picker-info-gst">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Final Amount') }}</span><span class="product-info-value is-accent" id="picker-info-final">-</span></div>
+                                                <div class="product-info-item product-final-amount-item"><span class="product-info-label">{{ translate('Final Amount') }}</span><span class="product-info-value" id="picker-info-final">-</span></div>
                                             </div>
                                         </div>
                                     </div>
@@ -1413,6 +1475,7 @@
                 $('#picker-info-role').text(infoValue(product.drug_role));
                 $('#picker-info-type').text(infoValue(stock.type || product.product_type));
                 $('#picker-info-quality').text(infoValue(stock.quality || product.quality));
+                $('#picker-info-no').text(infoValue(stock.no || product.no));
                 $('#picker-info-material').text(infoValue(stock.material || product.material));
                 $('#picker-info-size').text(infoValue(stock.size));
                 $('#picker-info-shape').text(infoValue(stock.shape));
