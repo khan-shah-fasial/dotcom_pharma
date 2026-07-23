@@ -617,9 +617,12 @@ class OrderPlacementService
 
             $this->prepareStockForPricing($stock, $batch);
             $resolvedPrice = resolvePrice($product, $stock, $batch, $quantity);
-            $unitPrice = (float) ($resolvedPrice['price'] ?? 0);
-            $unitSalePrice = (float) ($resolvedPrice['sale_price'] ?? $unitPrice);
-            $beforeProductAndBatchDiscount = (float) ($resolvedPrice['before_productandbatch_discount'] ?? $unitSalePrice);
+            // Frontend cart prices are persisted in DECIMAL(20, 2) columns before
+            // totals are calculated. Backend lines are in-memory Cart instances,
+            // so apply the same precision boundary to keep both totals identical.
+            $unitPrice = round((float) ($resolvedPrice['price'] ?? 0), 2);
+            $unitSalePrice = round((float) ($resolvedPrice['sale_price'] ?? $unitPrice), 2);
+            $beforeProductAndBatchDiscount = round((float) ($resolvedPrice['before_productandbatch_discount'] ?? $unitSalePrice), 2);
             $mrpPrice = $batch ? ($batch->mrp_price ?? $stock->mrp_price ?? $product->mrp_price) : ($stock->mrp_price ?? $product->mrp_price);
 
             if (array_key_exists('sale_price', $item) && $item['sale_price'] !== null && $item['sale_price'] !== '') {

@@ -198,6 +198,33 @@
             border-color: #e8edf3 !important;
             font-size: 12px;
         }
+        .order-sidebar-accordion .card {
+            margin-bottom: 10px;
+        }
+        .order-accordion-toggle {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            color: #1f2937;
+            background: transparent;
+            border: 0;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+        }
+        .order-accordion-toggle:hover,
+        .order-accordion-toggle:focus {
+            color: var(--primary);
+            outline: 0;
+        }
+        .order-accordion-toggle .order-accordion-icon {
+            transition: transform .2s ease;
+        }
+        .order-accordion-toggle[aria-expanded="true"] .order-accordion-icon {
+            transform: rotate(180deg);
+        }
         @media (max-width: 767.98px) {
             .product-info-grid { grid-template-columns: 1fr; }
             .product-info-item:nth-child(odd) { border-right: 0; }
@@ -449,10 +476,18 @@
             </div>
 
             <div class="col-lg-4">
+                <div class="order-sidebar-accordion" id="order-sidebar-accordion">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0 h6">{{ translate('Additional Details') }}</h5>
+                    <div class="card-header p-0" id="additional-details-heading">
+                        <button type="button" class="order-accordion-toggle" data-toggle="collapse"
+                            data-target="#additional-details-collapse" aria-expanded="true"
+                            aria-controls="additional-details-collapse">
+                            <span>{{ translate('Additional Details') }}</span>
+                            <i class="las la-angle-down order-accordion-icon"></i>
+                        </button>
                     </div>
+                    <div id="additional-details-collapse" class="collapse show"
+                        aria-labelledby="additional-details-heading" data-parent="#order-sidebar-accordion">
                     <div class="card-body">
                         <div class="form-group">
                             <label>{{ translate('Sales Executive Name') }}</label>
@@ -535,12 +570,20 @@
                             @error('order_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0 h6">{{ translate('Shipping') }}</h5>
+                    <div class="card-header p-0" id="shipping-heading">
+                        <button type="button" class="order-accordion-toggle collapsed" data-toggle="collapse"
+                            data-target="#shipping-collapse" aria-expanded="false"
+                            aria-controls="shipping-collapse">
+                            <span>{{ translate('Shipping') }}</span>
+                            <i class="las la-angle-down order-accordion-icon"></i>
+                        </button>
                     </div>
+                    <div id="shipping-collapse" class="collapse"
+                        aria-labelledby="shipping-heading" data-parent="#order-sidebar-accordion">
                     <div class="card-body">
                         <div class="form-group">
                             <label>{{ translate('Shipping Method') }}</label>
@@ -677,12 +720,20 @@
                             </div>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0 h6">{{ translate('Payment') }}</h5>
+                    <div class="card-header p-0" id="payment-heading">
+                        <button type="button" class="order-accordion-toggle collapsed" data-toggle="collapse"
+                            data-target="#payment-collapse" aria-expanded="false"
+                            aria-controls="payment-collapse">
+                            <span>{{ translate('Payment') }}</span>
+                            <i class="las la-angle-down order-accordion-icon"></i>
+                        </button>
                     </div>
+                    <div id="payment-collapse" class="collapse"
+                        aria-labelledby="payment-heading" data-parent="#order-sidebar-accordion">
                     <div class="card-body">
                         <div class="form-group">
                             <label>{{ translate('Payment Type') }}</label>
@@ -731,6 +782,8 @@
                             <span class="aiz-square-check"></span>
                         </label>
                     </div>
+                    </div>
+                </div>
                 </div>
 
                 <div class="card">
@@ -742,10 +795,9 @@
                             <tbody>
                                 <tr><td>{{ translate('Subtotal') }}</td><td class="text-right" id="summary-subtotal">0.00</td></tr>
                                 <tr><td>{{ translate('Product/Batch Discount') }}</td><td class="text-right" id="summary-product-discount">0.00</td></tr>
-                                <tr><td>{{ translate('GST') }}</td><td class="text-right" id="summary-tax">0.00</td></tr>
-                                <tr><td>{{ translate('Scheme Qty (Free)') }}</td><td class="text-right" id="summary-scheme">0</td></tr>
                                 <tr><td>{{ translate('Coupon') }}</td><td class="text-right" id="summary-coupon">0.00</td></tr>
                                 <tr><td>{{ translate('Shipping') }}</td><td class="text-right" id="summary-shipping">0.00</td></tr>
+                                <tr><td>{{ translate('GST') }}</td><td class="text-right" id="summary-tax">0.00</td></tr>
                                 <tr class="fw-700"><td>{{ translate('Grand Total') }}</td><td class="text-right" id="summary-grand-total">0.00</td></tr>
                             </tbody>
                         </table>
@@ -775,6 +827,7 @@
             var lines = [];
             var currentProduct = null;
             var currentQuote = null;
+            var quoteRequestSequence = 0;
             var debounceTimer = null;
             var customerAddresses = [];
             var salePriceEdited = false;
@@ -1348,41 +1401,58 @@
                 $('#picker-pack-case-dimensions').text(formatDimensions(stock.case_length, stock.case_width, stock.case_height));
             }
 
-            function syncQuantityBounds() {
+            function syncQuantityBounds(normalizeValue) {
                 var stock = selectedStock();
                 if (!stock) return false;
 
                 var batch = selectedBatch();
-                var minQty = Math.max(1, Number(stock.min_qty || 1));
-                var availableQty = batch ? Number(batch.qty || 0) : Number(stock.qty || 0);
+                var minQty = Math.max(1, Math.ceil(Number(stock.min_qty || 1)));
+                var availableQty = Math.max(0, Math.floor(batch ? Number(batch.qty || 0) : Number(stock.qty || 0)));
                 var $quantity = $('#picker-quantity');
-                var currentQty = Number($quantity.val());
+                var rawQty = $.trim($quantity.val());
+                var currentQty = rawQty === '' ? NaN : Number(rawQty);
 
                 $quantity.attr('min', minQty);
                 $quantity.attr('max', availableQty);
 
-                if (!Number.isFinite(currentQty)) {
-                    currentQty = minQty;
-                }
-                currentQty = Math.floor(currentQty);
-                if (currentQty < minQty) {
-                    currentQty = minQty;
-                }
-                $quantity.val(currentQty);
-
                 if (availableQty <= 0 || availableQty < minQty) {
                     currentQuote = null;
+                    $quantity.addClass('is-invalid').attr('aria-invalid', 'true');
                     $('#add-line-btn').prop('disabled', true);
                     $('#picker-quote').text('{{ translate('Available stock is below minimum quantity.') }}');
                     return false;
                 }
 
-                if (currentQty > availableQty) {
-                    $quantity.val(availableQty);
-                } else if (currentQty < minQty) {
-                    $quantity.val(minQty);
+                // Variant and batch changes may require the previous quantity to be
+                // brought within the new stock limits. Do not normalize while the
+                // user is typing because intermediate values can be below the MOQ.
+                if (normalizeValue) {
+                    currentQty = Number.isFinite(currentQty) ? Math.floor(currentQty) : minQty;
+                    currentQty = Math.max(minQty, Math.min(currentQty, availableQty));
+                    $quantity.val(currentQty);
+                } else if (Number.isFinite(currentQty) && currentQty > availableQty) {
+                    currentQty = availableQty;
+                    $quantity.val(currentQty);
                 }
 
+                var errorMessage = '';
+                if (!Number.isFinite(currentQty)) {
+                    errorMessage = '{{ translate('Enter a quantity.') }}';
+                } else if (!Number.isInteger(currentQty)) {
+                    errorMessage = '{{ translate('Quantity must be a whole number.') }}';
+                } else if (currentQty < minQty) {
+                    errorMessage = '{{ translate('Minimum order quantity is') }} ' + minQty + '.';
+                }
+
+                if (errorMessage) {
+                    currentQuote = null;
+                    $quantity.addClass('is-invalid').attr('aria-invalid', 'true');
+                    $('#add-line-btn').prop('disabled', true);
+                    $('#picker-quote').text(errorMessage);
+                    return false;
+                }
+
+                $quantity.removeClass('is-invalid').removeAttr('aria-invalid');
                 return true;
             }
 
@@ -1405,14 +1475,11 @@
                 if (batches.length === 1) {
                     $batch.val(String(batches[0].id)).prop('disabled', true);
                 }
-                $('#picker-quantity').attr('min', stock.min_qty || 1);
-                if (Number($('#picker-quantity').val()) < Number(stock.min_qty || 1)) {
-                    $('#picker-quantity').val(stock.min_qty || 1);
-                }
-                syncQuantityBounds();
+                syncQuantityBounds(true);
             }
 
             function quoteCurrentProduct() {
+                var requestSequence = ++quoteRequestSequence;
                 currentQuote = null;
                 setPickerQuoteInformation(null);
                 setPickerBasePricingInformation();
@@ -1439,6 +1506,7 @@
                     method: 'POST',
                     data: quoteData
                 }).done(function (response) {
+                    if (requestSequence !== quoteRequestSequence) return;
                     currentQuote = response.data;
                     setPickerQuoteInformation(currentQuote);
                     if (!salePriceEdited) {
@@ -1452,6 +1520,7 @@
                         + ' | {{ translate('Final') }}: ' + money(currentQuote.product_final_amount !== undefined ? currentQuote.product_final_amount : (currentQuote.final_amount || currentQuote.line_total))
                         + ' | {{ translate('Scheme Qty (Free)') }}: ' + (currentQuote.scheme_quantity || 0));
                 }).fail(function (xhr) {
+                    if (requestSequence !== quoteRequestSequence) return;
                     currentQuote = null;
                     $('#add-line-btn').prop('disabled', true);
                     $('#picker-quote').text((xhr.responseJSON && xhr.responseJSON.message) || '{{ translate('Unable to quote product.') }}');
@@ -1679,7 +1748,6 @@
                 $('#summary-message').text('');
                 if (!$('#selected-customer-id').val() || !lines.length) {
                     $('#summary-subtotal,#summary-product-discount,#summary-tax,#summary-coupon,#summary-shipping,#summary-grand-total').text('0.00');
-                    $('#summary-scheme').text('0');
                     $('#scheme-quantity-notice').addClass('d-none').text('');
                     return;
                 }
@@ -1696,7 +1764,6 @@
                     $('#summary-subtotal').text(money(data.subtotal));
                     $('#summary-product-discount').text(money(data.product_discount));
                     $('#summary-tax').text(money(data.tax));
-                    $('#summary-scheme').text(data.scheme_quantity || 0);
                     if (Number(data.scheme_quantity || 0) > 0) {
                         $('#scheme-quantity-notice')
                             .removeClass('d-none')
@@ -1839,10 +1906,9 @@
                 syncProductInformation();
                 quoteCurrentProduct();
             });
-            $('#picker-quantity').on('input change keyup', function () {
-                syncQuantityBounds();
-                syncProductInformation();
+            $('#picker-quantity').on('input', function () {
                 quoteCurrentProduct();
+                syncProductInformation();
             });
             $('#picker-sale-price').on('input change keyup', function () {
                 salePriceEdited = $(this).val() !== '';
@@ -1850,6 +1916,10 @@
             });
 
             $('#add-line-btn').on('click', function () {
+                if (!syncQuantityBounds()) {
+                    notify('warning', $('#picker-quote').text());
+                    return;
+                }
                 if (!currentProduct || !currentQuote) {
                     notify('warning', '{{ translate('Please select a valid product quote.') }}');
                     return;
