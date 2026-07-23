@@ -165,7 +165,10 @@ class OrderPlacementService
 
     protected function placeFromLines(User $customer, Collection $lines, Request $request, array $options = []): CombinedOrder
     {
-        $lines = $lines->filter(fn ($line) => !(bool) ($line['is_scheme'] ?? false))->values();
+        // Ignore storefront-generated scheme rows because they are recalculated
+        // server-side, but retain trusted manual free lines created by backend.
+        $lines = $lines->filter(fn ($line) => !(bool) ($line['is_scheme'] ?? false)
+            || (bool) ($line['is_manual_scheme'] ?? false))->values();
 
         if ($lines->isEmpty()) {
             $this->fail('items', translate('Your cart is empty'));
@@ -359,6 +362,15 @@ class OrderPlacementService
             $product = Product::find($cartItem['product_id']);
             if (!$product) {
                 $this->fail('items', translate('Invalid product selected.'));
+            }
+
+            if ((bool) ($cartItem['is_manual_scheme'] ?? false)) {
+                $manualSchemeDetail = $this->writeManualSchemeDetail($order, $cartItem, $product, $options);
+                $shipping += (float) $manualSchemeDetail->shipping_cost;
+                $affectedProductIds[] = (int) $product->id;
+                $order->seller_id = $product->user_id;
+                $order->shipping_type = $cartItem['shipping_type'] ?? 'home_delivery';
+                continue;
             }
 
             if ((bool) ($cartItem['is_scheme'] ?? false)) {
@@ -562,6 +574,68 @@ class OrderPlacementService
         }
     }
 
+    protected function writeManualSchemeDetail(Order $order, $cartItem, Product $product, array $options): OrderDetail
+    {
+        $quantity = max(1, (int) ($cartItem['quantity'] ?? 1));
+        $productStock = $this->stockForLine($product, $cartItem);
+        if (!$productStock) {
+            $this->fail('items', translate('Selected product stock is not available for ') . $product->getTranslation('name'));
+        }
+
+        $batchId = (int) ($cartItem['batch_id'] ?? 0);
+        $batch = null;
+        if ($batchId > 0) {
+            $batch = ProductBatch::where('id', $batchId)
+                ->where('product_stock_id', $productStock->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$batch || is_batch_expired($batch) || $quantity > (int) $batch->qty) {
+                $this->fail('items', translate('The requested scheme quantity is not available for ') . $product->getTranslation('name'));
+            }
+
+            $batch->qty -= $quantity;
+            $batch->save();
+            $this->syncStockQuantityFromBatches($productStock);
+        } else {
+            $lockedStock = ProductStock::where('id', $productStock->id)
+                ->where('is_hidden', 0)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$lockedStock || $quantity > (int) $lockedStock->qty) {
+                $this->fail('items', translate('The requested scheme quantity is not available for ') . $product->getTranslation('name'));
+            }
+
+            $lockedStock->qty -= $quantity;
+            $lockedStock->save();
+        }
+
+        $orderDetail = new OrderDetail;
+        $orderDetail->order_id = $order->id;
+        $orderDetail->seller_id = $product->user_id;
+        $orderDetail->product_id = $product->id;
+        $orderDetail->variation = $cartItem['variation'] ?? null;
+        $orderDetail->batch_id = $batchId ?: null;
+        $orderDetail->price = 0;
+        $orderDetail->before_productandbatch_discount = 0;
+        $orderDetail->sale_price = 0;
+        $orderDetail->mrp_price = $cartItem['mrp_price'] ?? ($batch->mrp_price ?? $productStock->mrp_price ?? $product->mrp_price);
+        $orderDetail->discount_amount = 0;
+        $orderDetail->tax = 0;
+        $orderDetail->shipping_type = $cartItem['shipping_type'] ?? 'home_delivery';
+        $orderDetail->product_referral_code = null;
+        $orderDetail->shipping_cost = (float) ($cartItem['shipping_cost'] ?? 0);
+        $orderDetail->is_scheme = 1;
+        $orderDetail->quantity = $quantity;
+        if (($options['payment_status'] ?? 'unpaid') === 'paid') {
+            $orderDetail->payment_status = 'paid';
+        }
+        $orderDetail->save();
+
+        return $orderDetail;
+    }
+
     protected function buildBackendLines(User $customer, array $items, Request $request, $addressId = null): Collection
     {
         $lines = collect();
@@ -624,11 +698,19 @@ class OrderPlacementService
             $beforeProductAndBatchDiscount = round((float) ($resolvedPrice['before_productandbatch_discount'] ?? $unitSalePrice), 2);
             $mrpPrice = $batch ? ($batch->mrp_price ?? $stock->mrp_price ?? $product->mrp_price) : ($stock->mrp_price ?? $product->mrp_price);
 
-            if (array_key_exists('sale_price', $item) && $item['sale_price'] !== null && $item['sale_price'] !== '') {
+            $hasManualSalePrice = array_key_exists('sale_price', $item)
+                && $item['sale_price'] !== null
+                && $item['sale_price'] !== '';
+            if ($hasManualSalePrice) {
                 if (!is_numeric($item['sale_price']) || (float) $item['sale_price'] < 0) {
                     $this->fail('sale_price', translate('Sale price must be zero or greater.'));
                 }
                 $unitSalePrice = round((float) $item['sale_price'], 2);
+            }
+            $isManualScheme = $hasManualSalePrice && $unitSalePrice === 0.0;
+            if ($isManualScheme) {
+                $unitPrice = 0.0;
+                $beforeProductAndBatchDiscount = 0.0;
             }
 
             // Cart tax is persisted to two decimal places. Round the unit tax
@@ -647,7 +729,8 @@ class OrderPlacementService
             $line->id_variant = $stock->id_variant;
             $line->batch_id = $batch ? $batch->id : null;
             $line->quantity = $quantity;
-            $line->is_scheme = 0;
+            $line->is_scheme = $isManualScheme ? 1 : 0;
+            $line->is_manual_scheme = $isManualScheme ? 1 : 0;
             $line->price = $unitPrice;
             $line->before_productandbatch_discount = $beforeProductAndBatchDiscount;
             $line->mrp_price = $mrpPrice;
@@ -686,11 +769,13 @@ class OrderPlacementService
         $couponDiscount = 0;
         $productDiscount = 0;
         $finalTotal = 0;
+        $manualSchemeQuantity = 0;
         $shownSchemeGroups = [];
 
-        $summaryLines = $lines->values()->map(function ($line, $index) use (&$subtotal, &$tax, &$couponDiscount, &$productDiscount, &$finalTotal, &$shownSchemeGroups, $schemeQtyByGroup) {
+        $summaryLines = $lines->values()->map(function ($line, $index) use (&$subtotal, &$tax, &$couponDiscount, &$productDiscount, &$finalTotal, &$manualSchemeQuantity, &$shownSchemeGroups, $schemeQtyByGroup) {
             $product = Product::find($line['product_id']);
             $qty = (int) $line['quantity'];
+            $isManualScheme = (bool) ($line['is_manual_scheme'] ?? false);
             $lineSubtotal = (float) $line['sale_price'] * $qty;
             $gstAmount = (float) ($line['tax'] ?? 0) * $qty;
             $lineShipping = (float) ($line['shipping_cost'] ?? 0);
@@ -706,10 +791,15 @@ class OrderPlacementService
             $couponDiscount += $lineCoupon;
             $productDiscount += $lineProductDiscount;
             $finalTotal += $finalAmount;
-            $lineSchemeQuantity = isset($shownSchemeGroups[$groupKey])
-                ? 0
-                : (int) ($schemeQtyByGroup[$groupKey] ?? 0);
-            $shownSchemeGroups[$groupKey] = true;
+            if ($isManualScheme) {
+                $lineSchemeQuantity = $qty;
+                $manualSchemeQuantity += $qty;
+            } else {
+                $lineSchemeQuantity = isset($shownSchemeGroups[$groupKey])
+                    ? 0
+                    : (int) ($schemeQtyByGroup[$groupKey] ?? 0);
+                $shownSchemeGroups[$groupKey] = true;
+            }
 
             return [
                 'index' => $index,
@@ -734,6 +824,7 @@ class OrderPlacementService
                 'final_amount' => round($finalAmount, 2),
                 'line_total' => round($finalAmount, 2),
                 'scheme_quantity' => $lineSchemeQuantity,
+                'is_manual_scheme' => $isManualScheme,
             ];
         })->all();
         $shippingSummary = $this->summarizeInclusiveShipping($lines);
@@ -752,7 +843,7 @@ class OrderPlacementService
             'shipping_lines' => $shippingSummary['lines'],
             'product_discount' => round($productDiscount, 2),
             'coupon_discount' => round($couponDiscount, 2),
-            'scheme_quantity' => (int) array_sum($schemeQtyByGroup),
+            'scheme_quantity' => (int) array_sum($schemeQtyByGroup) + $manualSchemeQuantity,
             'grand_total' => round($finalTotal, 2),
             'total' => round($finalTotal, 2),
         ];
@@ -812,14 +903,16 @@ class OrderPlacementService
     protected function prepareSchemeAllocations(Collection $sellerProduct): array
     {
         $schemeAllocationsByGroup = [];
-        $paidSellerItems = $sellerProduct->filter(function ($item) {
-            return !(bool) ($item['is_scheme'] ?? false);
+        $reservableItems = $sellerProduct->filter(function ($item) {
+            return !(bool) ($item['is_scheme'] ?? false)
+                || (bool) ($item['is_manual_scheme'] ?? false);
         });
 
-        foreach ($paidSellerItems->groupBy(function ($item) {
+        foreach ($reservableItems->groupBy(function ($item) {
             return (int) $item['product_id'] . '|' . (string) ($item['variation'] ?? '');
         }) as $groupKey => $groupItems) {
             $firstItem = $groupItems->first();
+            $paidGroupItems = $groupItems->filter(fn ($item) => !(bool) ($item['is_scheme'] ?? false));
             $groupProduct = Product::find($firstItem['product_id']);
             $groupStock = $groupProduct ? $this->stockForLine($groupProduct, $firstItem) : null;
 
@@ -862,7 +955,7 @@ class OrderPlacementService
             }
 
             $minQty = $groupStock->min_qty ?? $groupProduct->min_qty ?? 1;
-            $schemeQty = calculate_scheme_qty($groupItems->sum('quantity'), $minQty, (int) ($groupStock->scheme ?? 0));
+            $schemeQty = calculate_scheme_qty($paidGroupItems->sum('quantity'), $minQty, (int) ($groupStock->scheme ?? 0));
             $schemePreview = allocate_scheme_free_batches($groupStock, $schemeQty, $reservations);
             if (!$schemePreview['success']) {
                 $this->fail('items', translate('The requested scheme quantity is not available for ') . $groupProduct->getTranslation('name'));
@@ -1062,9 +1155,10 @@ class OrderPlacementService
                 ? (float) $shippingCosts[$sellerId]
                 : ($groups->count() === 1 ? $globalShipping : 0);
 
-            $firstPaidLine = $sellerLines->first(fn ($line) => !(bool) ($line['is_scheme'] ?? false));
-            if ($firstPaidLine) {
-                $firstPaidLine->shipping_cost = max(0, $cost);
+            $firstChargeableLine = $sellerLines->first(fn ($line) => !(bool) ($line['is_scheme'] ?? false)
+                || (bool) ($line['is_manual_scheme'] ?? false));
+            if ($firstChargeableLine) {
+                $firstChargeableLine->shipping_cost = max(0, $cost);
             }
         }
     }
