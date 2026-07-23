@@ -484,7 +484,7 @@ span#picker-info-stock-badge {
                                         <div class="product-info-section product-pricing-section">
                                             <div class="product-info-section-title">
                                                 <span><i class="las la-boxes mr-1"></i>{{ translate('Batch, Stock & Pricing') }}</span>
-                                                <span class="badge badge-soft-success" id="picker-info-stock-badge">-</span>
+                                                <span class="d-none badge badge-soft-success" id="picker-info-stock-badge">-</span>
                                             </div>
                                             <div class="product-info-grid">
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Batch / Lot No.') }}</span><span class="product-info-value" id="picker-info-batch">-</span></div>
@@ -500,8 +500,8 @@ span#picker-info-stock-badge {
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Discount') }}</span><span class="product-info-value" id="picker-info-discount">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Other Discount') }}</span><span class="product-info-value" id="picker-info-other-discount">-</span></div>
                                                 <div class="product-info-item"><span class="product-info-label">{{ translate('Freight / Shipping') }}</span><span class="product-info-value" id="picker-info-freight">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label" id="picker-info-tax-label">{{ translate('Tax %') }}</span><span class="product-info-value" id="picker-info-tax-rate">-</span></div>
-                                                <div class="product-info-item"><span class="product-info-label">{{ translate('GST Amount') }}</span><span class="product-info-value" id="picker-info-gst">-</span></div>
+                                                <div class="product-info-item d-none"><span class="product-info-label" id="picker-info-tax-label">{{ translate('') }}</span><span class="product-info-value" id="picker-info-tax-rate">-</span></div>
+                                                <div class="product-info-item"><span class="product-info-label">{{ translate('Tax %') }}</span><span class="product-info-value" id="picker-info-gst">-</span></div>
                                                 <div class="product-info-item product-final-amount-item"><span class="product-info-label">{{ translate('Final Amount') }}</span><span class="product-info-value" id="picker-info-final">-</span></div>
                                             </div>
                                         </div>
