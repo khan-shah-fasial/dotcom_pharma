@@ -416,8 +416,8 @@ span#picker-info-stock-badge {
                                     <input type="number" min="1" step="1" class="form-control" id="picker-quantity" value="1">
                                 </div>
                                 <div class="col-lg-2 col-md-3 mt-3 mt-lg-0">
-                                    <label>{{ translate('Sale Rate (PTS)') }}</label>
-                                    <input type="number" min="0" step="0.01" class="form-control" id="picker-sale-price">
+                                    <label>{{ translate('Rate (PTS Before Discount)') }}</label>
+                                    <input type="number" min="0" step="0.001" class="form-control" id="picker-sale-price">
                                 </div>
                             </div>
                             </div>
@@ -825,7 +825,7 @@ span#picker-info-stock-badge {
                             <div class="row gutters-5">
                                 <div class="col-5">
                                     <label class="small mb-1">{{ translate('Discount') }}</label>
-                                    <input type="number" min="0" step="0.01" class="form-control" name="additional_discount" id="additional-discount" value="{{ old('additional_discount', 0) }}">
+                                    <input type="number" min="0" step="0.001" class="form-control" name="additional_discount" id="additional-discount" value="{{ old('additional_discount', 0) }}">
                                 </div>
                                 <div class="col-7">
                                     <label class="small mb-1">{{ translate('Discount Type') }}</label>
@@ -873,13 +873,17 @@ span#picker-info-stock-badge {
                                     <td>{{ translate('Net Product Value (Excl. GST)') }}</td>
                                     <td class="text-right order-summary-value" id="summary-net-product">0.00</td>
                                 </tr>
+                                <tr class="text-danger">
+                                    <td>{{ translate('Less: Coupon / Additional Discount') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-coupon">0.00</td>
+                                </tr>
                                 <tr>
                                     <td>{{ translate('Add: Shipping (Excl. GST)') }}</td>
                                     <td class="text-right order-summary-value" id="summary-shipping">0.00</td>
                                 </tr>
                                 <tr class="fw-600 border-top">
-                                    <td>{{ translate('Total Before GST') }}</td>
-                                    <td class="text-right order-summary-value" id="summary-before-gst">0.00</td>
+                                    <td>{{ translate('Taxable Value') }}</td>
+                                    <td class="text-right order-summary-value" id="summary-taxable-value">0.00</td>
                                 </tr>
                                 <tr>
                                     <td class="pl-3 text-muted">{{ translate('Add: Product GST') }}</td>
@@ -892,14 +896,6 @@ span#picker-info-stock-badge {
                                 <tr class="fw-600">
                                     <td>{{ translate('Total GST') }}</td>
                                     <td class="text-right order-summary-value" id="summary-tax">0.00</td>
-                                </tr>
-                                <tr class="bg-soft-light fw-600">
-                                    <td>{{ translate('Total Including GST') }}</td>
-                                    <td class="text-right order-summary-value" id="summary-including-gst">0.00</td>
-                                </tr>
-                                <tr class="text-danger">
-                                    <td>{{ translate('Less: Coupon / Additional Discount') }}</td>
-                                    <td class="text-right order-summary-value" id="summary-coupon">0.00</td>
                                 </tr>
                                 <tr class="fw-700 border-top">
                                     <td>{{ translate('Grand Total') }}</td>
@@ -946,7 +942,7 @@ span#picker-info-stock-badge {
             var orderNumberPreviewTimer = null;
 
             function money(value) {
-                return (Number(value || 0)).toFixed(2);
+                return (Number(value || 0)).toFixed(3);
             }
 
             function schemeQuantityBadge(value) {
@@ -1606,7 +1602,7 @@ span#picker-info-stock-badge {
                     quantity: $('#picker-quantity').val()
                 };
                 if (salePriceEdited && $('#picker-sale-price').val() !== '') {
-                    quoteData.sale_price = $('#picker-sale-price').val();
+                    quoteData.base_sale_price = $('#picker-sale-price').val();
                 }
                 requestJson({
                     url: productQuoteUrl,
@@ -1617,7 +1613,11 @@ span#picker-info-stock-badge {
                     currentQuote = response.data;
                     setPickerQuoteInformation(currentQuote);
                     if (!salePriceEdited) {
-                        $('#picker-sale-price').val(money(currentQuote.sale_price));
+                        $('#picker-sale-price').val(money(
+                            currentQuote.before_productandbatch_discount !== undefined
+                                ? currentQuote.before_productandbatch_discount
+                                : currentQuote.sale_price
+                        ));
                     }
                     $('#add-line-btn').prop('disabled', false);
                     $('#picker-quote').html('{{ translate('MRP') }}: ' + money(currentQuote.mrp_price)
@@ -1663,7 +1663,7 @@ span#picker-info-stock-badge {
                         + '<td class="text-right"><button type="button" class="btn btn-soft-danger btn-icon btn-sm remove-line" data-index="' + index + '"><i class="las la-trash"></i></button></td>'
                         + '</tr>');
 
-                    ['product_id', 'stock_id', 'variation', 'id_variant', 'batch_id', 'quantity', 'sale_price'].forEach(function (field) {
+                    ['product_id', 'stock_id', 'variation', 'id_variant', 'batch_id', 'quantity', 'base_sale_price'].forEach(function (field) {
                         var fieldValue = line[field] === undefined || line[field] === null ? '' : line[field];
                         $hidden.append('<input type="hidden" name="items[' + index + '][' + field + ']" value="' + fieldValue + '">');
                     });
@@ -1689,8 +1689,8 @@ span#picker-info-stock-badge {
                 var $box = $('#seller-shipping-costs').empty();
                 Object.keys(sellers).forEach(function (sellerId) {
                     $box.append('<div class="form-group mb-2">'
-                        + '<label class="mb-1">' + sellers[sellerId] + '</label>'
-                        + '<input type="number" min="0" step="0.01" class="form-control seller-shipping-input" data-seller-id="' + sellerId + '" name="shipping_costs[' + sellerId + ']" value="' + (existingCosts[sellerId] || 0) + '" required>'
+                        + '<label class="mb-1">' + sellers[sellerId] + ' - {{ translate('Shipping Cost (Excl. GST)') }}</label>'
+                        + '<input type="number" min="0" step="0.001" class="form-control seller-shipping-input" data-seller-id="' + sellerId + '" name="shipping_costs[' + sellerId + ']" value="' + (existingCosts[sellerId] || 0) + '" required>'
                         + '</div>');
                 });
                 renderShippingItems();
@@ -1734,7 +1734,7 @@ span#picker-info-stock-badge {
                         + '<div class="col-3"><label class="mb-1">{{ translate('Seller') }}</label>'
                         + '<select class="form-control form-control-sm shipping-item-seller" name="shipping_items[' + index + '][seller_id]">' + sellerOptions(item.seller_id) + '</select></div>'
                         + '<div class="col-3"><label class="mb-1">{{ translate('Amount') }}</label>'
-                        + '<input type="number" min="0" step="0.01" class="form-control form-control-sm shipping-item-amount" name="shipping_items[' + index + '][amount]" value="' + money(item.amount) + '"></div>'
+                        + '<input type="number" min="0" step="0.001" class="form-control form-control-sm shipping-item-amount" name="shipping_items[' + index + '][amount]" value="' + money(item.amount) + '"></div>'
                         + '<div class="col-1"><button type="button" class="btn btn-sm btn-soft-danger remove-shipping-item"><i class="las la-trash"></i></button></div>'
                         + '</div>');
                 });
@@ -1897,20 +1897,23 @@ span#picker-info-stock-badge {
                     var netProduct = data.net_product_subtotal !== undefined
                         ? Number(data.net_product_subtotal || 0)
                         : Math.max(0, Number(data.subtotal || 0) - productDiscount);
-                    var totalBeforeGst = netProduct + shippingBase;
-                    var totalIncludingGst = totalBeforeGst + totalTax;
+                    var taxableValue = data.taxable_value !== undefined
+                        ? Number(data.taxable_value || 0)
+                        : Math.max(0, netProduct - couponDiscount) + shippingBase;
 
                     $('#summary-subtotal').text(money(data.subtotal));
                     $('#summary-product-discount').text(productDiscount > 0
                         ? '-' + money(productDiscount)
                         : money(0));
                     $('#summary-net-product').text(money(netProduct));
+                    $('#summary-coupon').text(couponDiscount > 0
+                        ? '-' + money(couponDiscount)
+                        : money(0));
                     $('#summary-shipping').text(shippingBase > 0 ? '+' + money(shippingBase) : money(0));
-                    $('#summary-before-gst').text(money(totalBeforeGst));
+                    $('#summary-taxable-value').text(money(taxableValue));
                     $('#summary-product-tax').text(productTax > 0 ? '+' + money(productTax) : money(0));
                     $('#summary-shipping-tax').text(shippingTax > 0 ? '+' + money(shippingTax) : money(0));
                     $('#summary-tax').text(money(totalTax));
-                    $('#summary-including-gst').text(money(totalIncludingGst));
                     if (Number(data.scheme_quantity || 0) > 0) {
                         $('#scheme-quantity-notice')
                             .removeClass('d-none')
@@ -1918,9 +1921,6 @@ span#picker-info-stock-badge {
                     } else {
                         $('#scheme-quantity-notice').addClass('d-none').text('');
                     }
-                    $('#summary-coupon').text(couponDiscount > 0
-                        ? '-' + money(couponDiscount)
-                        : money(0));
                     $('#summary-grand-total').text(money(data.grand_total));
                     renderOrderShippingRows(data.shipping_lines || []);
                     if (data.lines) {
@@ -2087,7 +2087,7 @@ span#picker-info-stock-badge {
                     batch_id: $('#picker-batch').val(),
                     batch_label: $('#picker-batch').val() ? batchText : '',
                     quantity: $('#picker-quantity').val(),
-                    sale_price: salePriceEdited ? $('#picker-sale-price').val() : '',
+                    base_sale_price: salePriceEdited ? $('#picker-sale-price').val() : '',
                     quote: currentQuote
                 });
                 renderLines();

@@ -1165,39 +1165,32 @@ if (!function_exists('resolvePrice')) {
             }
         }
 
-        $isPercentProductDiscount = $productDiscountApplicable
-            && (($product->discount_type ?? null) === 'percent')
-            && $productDiscountPercent > 0;
-
         if ($batch && isBatchDiscountValid($batch, $qty)) {
             $discountValue = (float) ($batch->discount ?? 0);
             if (($batch->discount_type ?? null) === 'percent') {
                 $batchDiscountPercent = max(0, $discountValue);
-
-                // If product discount is also percent, merge both percentages and apply once
-                // on the pre-product-discount resolved base price.
-                if ($isPercentProductDiscount) {
-                    $safeProductPercent = min(99.99, $productDiscountPercent);
-                    $productRatio = $safeProductPercent / 100;
-                    $resolvedBaseBeforeProductDiscount = $productRatio < 1
-                        ? ($existingPrice / (1 - $productRatio))
-                        : $existingPrice;
-                    $totalDiscountPercent = min(100, $safeProductPercent + $batchDiscountPercent);
-                    $finalPrice = $resolvedBaseBeforeProductDiscount - (($resolvedBaseBeforeProductDiscount * $totalDiscountPercent) / 100);
-                } else {
-                    $finalPrice = $existingPrice - (($existingPrice * $discountValue) / 100);
-                }
+                // Product and batch discounts are alternatives. An active batch
+                // offer replaces the product-level discount and is applied to
+                // the original role rate.
+                $finalPrice = $beforeProductAndBatchDiscount
+                    - (($beforeProductAndBatchDiscount * min(100, $batchDiscountPercent)) / 100);
             } else {
-                $batchDiscountAmount = max(0, min($existingPrice, $discountValue));
-                $batchDiscountPercent = $existingPrice > 0 ? (($batchDiscountAmount / $existingPrice) * 100) : 0.0;
-                $finalPrice = max(0, $existingPrice - $discountValue);
+                $batchDiscountAmount = max(0, min($beforeProductAndBatchDiscount, $discountValue));
+                $batchDiscountPercent = $beforeProductAndBatchDiscount > 0
+                    ? (($batchDiscountAmount / $beforeProductAndBatchDiscount) * 100)
+                    : 0.0;
+                $finalPrice = max(0, $beforeProductAndBatchDiscount - $batchDiscountAmount);
             }
             $finalPrice = max(0, (float) $finalPrice);
-            $hasBatchOffer = $finalPrice < $existingPrice;
+            $hasBatchOffer = $finalPrice < $beforeProductAndBatchDiscount;
         }
 
-        $discountAmount = max(0, $existingPrice - $finalPrice);
-        $discountPercent = $hasBatchOffer ? ($productDiscountPercent + $batchDiscountPercent) : 0.0;
+        $discountAmount = max(0, $beforeProductAndBatchDiscount - $finalPrice);
+        $discountPercent = $hasBatchOffer
+            ? $batchDiscountPercent
+            : ($beforeProductAndBatchDiscount > 0
+                ? ($discountAmount / $beforeProductAndBatchDiscount) * 100
+                : 0.0);
 
         return [
             'price' => (float) $existingPrice,
@@ -1267,10 +1260,11 @@ if (!function_exists('cart_coupon_line_value')) {
 }
 
 if (!function_exists('allocate_coupon_discount_by_line_value')) {
-    function allocate_coupon_discount_by_line_value($cartItems, float $couponDiscount): array
+    function allocate_coupon_discount_by_line_value($cartItems, float $couponDiscount, int $precision = 2): array
     {
         $items = collect($cartItems)->values();
-        $couponDiscount = round(max(0, $couponDiscount), 2);
+        $precision = max(0, min(6, $precision));
+        $couponDiscount = round(max(0, $couponDiscount), $precision);
         $totalValue = $items->sum(fn ($item) => cart_coupon_line_value($item));
         $allocations = [];
         $allocated = 0.0;
@@ -1282,10 +1276,10 @@ if (!function_exists('allocate_coupon_discount_by_line_value')) {
             }
 
             if ($index === $items->count() - 1) {
-                $lineDiscount = round($couponDiscount - $allocated, 2);
+                $lineDiscount = round($couponDiscount - $allocated, $precision);
             } else {
                 $lineDiscount = $totalValue > 0
-                    ? round($couponDiscount * (cart_coupon_line_value($item) / $totalValue), 2)
+                    ? round($couponDiscount * (cart_coupon_line_value($item) / $totalValue), $precision)
                     : 0.0;
                 $allocated += $lineDiscount;
             }
@@ -1706,9 +1700,10 @@ if (!function_exists('order_detail_line_subtotal')) {
 }
 
 if (!function_exists('shipping_invoice_line')) {
-    function shipping_invoice_line($orderItems, $shippingInclusivePrice, $courierName, $shippingLabel = null)
+    function shipping_invoice_line($orderItems, $shippingInclusivePrice, $courierName, $shippingLabel = null, int $precision = 2)
     {
-        $shippingInclusivePrice = round((float) $shippingInclusivePrice, 2);
+        $precision = max(0, min(6, $precision));
+        $shippingInclusivePrice = round((float) $shippingInclusivePrice, $precision);
         if ($shippingInclusivePrice <= 0) {
             return null;
         }
@@ -1746,8 +1741,8 @@ if (!function_exists('shipping_invoice_line')) {
             }
         }
 
-        $baseAmount = round($shippingInclusivePrice / (1 + ($selectedGstRate / 100)), 2);
-        $gstAmount = round($shippingInclusivePrice - $baseAmount, 2);
+        $baseAmount = round($shippingInclusivePrice / (1 + ($selectedGstRate / 100)), $precision);
+        $gstAmount = round($shippingInclusivePrice - $baseAmount, $precision);
         $description = trim((string) $courierName);
         $shippingLabel = trim((string) $shippingLabel);
         if ($shippingLabel !== '' && strcasecmp($description, $shippingLabel) !== 0) {

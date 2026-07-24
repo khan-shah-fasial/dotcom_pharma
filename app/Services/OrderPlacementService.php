@@ -136,6 +136,7 @@ class OrderPlacementService
                 'id_variant' => $request->input('id_variant'),
                 'batch_id' => $request->input('batch_id'),
                 'quantity' => $request->input('quantity', 1),
+                'base_sale_price' => $request->input('base_sale_price'),
                 'sale_price' => $request->input('sale_price'),
             ]], $request, $this->backendShippingAddressId($request));
 
@@ -382,7 +383,7 @@ class OrderPlacementService
             $quantity = (int) $cartItem['quantity'];
 
             $subtotal += $unitSalePrice * $quantity;
-            $itemTax = ($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $quantity;
+            $itemTax = round(($cartItem['tax'] ?? cart_product_tax($cartItem, $product, false)) * $quantity, 3);
             $tax += $itemTax;
             $couponDiscount += (float) ($cartItem['discount'] ?? 0);
 
@@ -442,9 +443,9 @@ class OrderPlacementService
             $orderDetail->before_productandbatch_discount = $unitBasePrice;
             $orderDetail->sale_price = $unitSalePrice;
             $orderDetail->mrp_price = $cartItem['mrp_price'] ?? ($selectedBatch ? $selectedBatch->mrp_price : (optional($productStock)->mrp_price ?? $product->mrp_price));
-            $productDiscountAmount = round(max(0, (float) $unitBasePrice - (float) $unitSalePrice) * $quantity, 2);
-            $allocatedAdditionalDiscount = round((float) ($cartItem['discount'] ?? 0), 2);
-            $orderDetail->discount_amount = round($productDiscountAmount + $allocatedAdditionalDiscount, 2);
+            $productDiscountAmount = round(max(0, (float) $unitBasePrice - (float) $unitSalePrice) * $quantity, 3);
+            $allocatedAdditionalDiscount = round((float) ($cartItem['discount'] ?? 0), 3);
+            $orderDetail->discount_amount = round($productDiscountAmount + $allocatedAdditionalDiscount, 3);
             $orderDetail->tax = $itemTax;
             $orderDetail->shipping_type = $cartItem['shipping_type'] ?? 'home_delivery';
             $orderDetail->product_referral_code = $cartItem['product_referral_code'] ?? null;
@@ -503,7 +504,7 @@ class OrderPlacementService
             }
         }
 
-        $order->grand_total = $subtotal + $tax + $shipping;
+        $order->grand_total = round($subtotal + $tax + $shipping, 3);
         $couponCode = $sellerProduct
             ->filter(fn ($item) => (float) ($item['discount'] ?? 0) > 0 && !empty($item['coupon_code']))
             ->pluck('coupon_code')
@@ -511,7 +512,7 @@ class OrderPlacementService
 
         if ($couponDiscount > 0) {
             $order->coupon_discount = $couponDiscount;
-            $order->grand_total -= $couponDiscount;
+            $order->grand_total = round($order->grand_total - $couponDiscount, 3);
 
             if ($couponCode != null) {
                 $coupon = Coupon::where('code', $couponCode)->first();
@@ -690,32 +691,52 @@ class OrderPlacementService
 
             $this->prepareStockForPricing($stock, $batch);
             $resolvedPrice = resolvePrice($product, $stock, $batch, $quantity);
-            // Frontend cart prices are persisted in DECIMAL(20, 2) columns before
-            // totals are calculated. Backend lines are in-memory Cart instances,
-            // so apply the same precision boundary to keep both totals identical.
-            $unitPrice = round((float) ($resolvedPrice['price'] ?? 0), 2);
-            $unitSalePrice = round((float) ($resolvedPrice['sale_price'] ?? $unitPrice), 2);
-            $beforeProductAndBatchDiscount = round((float) ($resolvedPrice['before_productandbatch_discount'] ?? $unitSalePrice), 2);
+            // Pharmaceutical invoices require three-decimal rates. Keep that
+            // precision through the line calculation so a percentage discount
+            // is applied to the full line value (for example 29.700 - 2% =
+            // 29.106) instead of a prematurely rounded two-decimal unit rate.
+            $unitPrice = round((float) ($resolvedPrice['price'] ?? 0), 3);
+            $unitSalePrice = round((float) ($resolvedPrice['sale_price'] ?? $unitPrice), 3);
+            $beforeProductAndBatchDiscount = round((float) ($resolvedPrice['before_productandbatch_discount'] ?? $unitSalePrice), 3);
             $mrpPrice = $batch ? ($batch->mrp_price ?? $stock->mrp_price ?? $product->mrp_price) : ($stock->mrp_price ?? $product->mrp_price);
 
+            $hasManualBasePrice = array_key_exists('base_sale_price', $item)
+                && $item['base_sale_price'] !== null
+                && $item['base_sale_price'] !== '';
             $hasManualSalePrice = array_key_exists('sale_price', $item)
                 && $item['sale_price'] !== null
                 && $item['sale_price'] !== '';
-            if ($hasManualSalePrice) {
+
+            if ($hasManualBasePrice) {
+                if (!is_numeric($item['base_sale_price']) || (float) $item['base_sale_price'] < 0) {
+                    $this->fail('base_sale_price', translate('Sale rate must be zero or greater.'));
+                }
+
+                $manualBasePrice = round((float) $item['base_sale_price'], 3);
+                $unitPrice = $manualBasePrice;
+                $beforeProductAndBatchDiscount = $manualBasePrice;
+                $unitSalePrice = $this->discountBackendBasePrice(
+                    $product,
+                    $batch,
+                    $quantity,
+                    $manualBasePrice,
+                    $resolvedPrice
+                );
+            } elseif ($hasManualSalePrice) {
                 if (!is_numeric($item['sale_price']) || (float) $item['sale_price'] < 0) {
                     $this->fail('sale_price', translate('Sale price must be zero or greater.'));
                 }
-                $unitSalePrice = round((float) $item['sale_price'], 2);
+                $unitSalePrice = round((float) $item['sale_price'], 3);
             }
-            $isManualScheme = $hasManualSalePrice && $unitSalePrice === 0.0;
+            $isManualScheme = ($hasManualBasePrice || $hasManualSalePrice) && $unitSalePrice === 0.0;
             if ($isManualScheme) {
                 $unitPrice = 0.0;
                 $beforeProductAndBatchDiscount = 0.0;
             }
 
-            // Cart tax is persisted to two decimal places. Round the unit tax
-            // here as well so backend quotes match the storefront exactly.
-            $tax = round(CartUtility::tax_calculation($product, $unitSalePrice), 2);
+            // Tax is accumulated from the taxable line value. Six-decimal unit
+            // precision prevents quantity multiplication from changing the GST.
+            $tax = round(CartUtility::tax_calculation($product, $unitSalePrice), 6);
 
             $line = new Cart;
             $line->id = $lineId++;
@@ -756,6 +777,45 @@ class OrderPlacementService
         return $lines;
     }
 
+    /**
+     * Apply the configured product and batch discounts to a manually entered
+     * backend rate. The Create Order field represents the pre-discount PTS
+     * rate, matching the invoice calculation sheet.
+     */
+    protected function discountBackendBasePrice(
+        Product $product,
+        ?ProductBatch $batch,
+        int $quantity,
+        float $basePrice,
+        array $resolvedPrice
+    ): float {
+        if ($basePrice <= 0) {
+            return 0.0;
+        }
+
+        // A valid batch discount takes precedence over the product discount.
+        if ($batch && isBatchDiscountValid($batch, $quantity)) {
+            $batchDiscount = max(0, (float) ($batch->discount ?? 0));
+            $discountedPrice = $batch->discount_type === 'percent'
+                ? $basePrice - (($basePrice * min(100, $batchDiscount)) / 100)
+                : $basePrice - $batchDiscount;
+
+            return round(max(0, $discountedPrice), 3);
+        }
+
+        $discountedPrice = $basePrice;
+        $productDiscountIsActive = (float) ($resolvedPrice['product_discount_percent'] ?? 0) > 0;
+
+        if ($productDiscountIsActive && $product->discount_type === 'percent') {
+            $productPercent = min(99.99, max(0, (float) ($product->discount ?? 0)));
+            $discountedPrice = $basePrice - (($basePrice * $productPercent) / 100);
+        } elseif ($productDiscountIsActive && $product->discount_type === 'amount') {
+            $discountedPrice = max(0, $basePrice - max(0, (float) ($product->discount ?? 0)));
+        }
+
+        return round(max(0, $discountedPrice), 3);
+    }
+
     protected function summarizeLines(Collection $lines): array
     {
         $schemeAllocationsByGroup = $this->prepareSchemeAllocations($lines);
@@ -776,14 +836,14 @@ class OrderPlacementService
             $product = Product::find($line['product_id']);
             $qty = (int) $line['quantity'];
             $isManualScheme = (bool) ($line['is_manual_scheme'] ?? false);
-            $lineSubtotal = (float) $line['sale_price'] * $qty;
-            $gstAmount = (float) ($line['tax'] ?? 0) * $qty;
+            $lineSubtotal = round((float) $line['sale_price'] * $qty, 3);
+            $gstAmount = round((float) ($line['tax'] ?? 0) * $qty, 3);
             $lineShipping = (float) ($line['shipping_cost'] ?? 0);
             $lineCoupon = (float) ($line['discount'] ?? 0);
-            $lineProductDiscount = round(max(0, (float) $line['before_productandbatch_discount'] - (float) $line['sale_price']) * $qty, 2);
-            $grossAmount = $lineSubtotal + $gstAmount;
-            $productFinalAmount = max(0, $grossAmount - $lineCoupon);
-            $finalAmount = $productFinalAmount + $lineShipping;
+            $lineProductDiscount = round(max(0, (float) $line['before_productandbatch_discount'] - (float) $line['sale_price']) * $qty, 3);
+            $grossAmount = round($lineSubtotal + $gstAmount, 3);
+            $productFinalAmount = round(max(0, $grossAmount - $lineCoupon), 3);
+            $finalAmount = round($productFinalAmount + $lineShipping, 3);
             $groupKey = (int) $line['product_id'] . '|' . (string) ($line['variation'] ?? '');
 
             $subtotal += $lineSubtotal;
@@ -810,42 +870,47 @@ class OrderPlacementService
                 'batch_id' => $line['batch_id'],
                 'batch_name' => optional(ProductBatch::find($line['batch_id']))->batch,
                 'quantity' => $qty,
-                'mrp_price' => round((float) ($line['mrp_price'] ?? 0), 2),
-                'price' => round((float) ($line['price'] ?? 0), 2),
-                'before_productandbatch_discount' => round((float) ($line['before_productandbatch_discount'] ?? 0), 2),
-                'sale_price' => round((float) ($line['sale_price'] ?? 0), 2),
+                'mrp_price' => round((float) ($line['mrp_price'] ?? 0), 3),
+                'price' => round((float) ($line['price'] ?? 0), 3),
+                'before_productandbatch_discount' => round((float) ($line['before_productandbatch_discount'] ?? 0), 3),
+                'sale_price' => round((float) ($line['sale_price'] ?? 0), 3),
                 'discount_amount' => $lineProductDiscount,
-                'tax' => round($gstAmount, 2),
-                'gst_amount' => round($gstAmount, 2),
-                'gross_amount' => round($grossAmount, 2),
-                'coupon_discount' => round($lineCoupon, 2),
-                'shipping_cost' => round($lineShipping, 2),
-                'product_final_amount' => round($productFinalAmount, 2),
-                'final_amount' => round($finalAmount, 2),
-                'line_total' => round($finalAmount, 2),
+                'tax' => round($gstAmount, 3),
+                'gst_amount' => round($gstAmount, 3),
+                'gross_amount' => round($grossAmount, 3),
+                'coupon_discount' => round($lineCoupon, 3),
+                'shipping_cost' => round($lineShipping, 3),
+                'product_final_amount' => round($productFinalAmount, 3),
+                'final_amount' => round($finalAmount, 3),
+                'line_total' => round($finalAmount, 3),
                 'scheme_quantity' => $lineSchemeQuantity,
                 'is_manual_scheme' => $isManualScheme,
             ];
         })->all();
         $shippingSummary = $this->summarizeInclusiveShipping($lines);
+        $taxableValue = round(
+            max(0, $subtotal - $couponDiscount) + $shippingSummary['base_amount'],
+            3
+        );
 
         return [
             'lines' => $summaryLines,
             // The displayed subtotal is the value before product/batch discount
             // so every Summary row participates in the visible reconciliation.
-            'subtotal' => round($subtotal + $productDiscount, 2),
-            'net_product_subtotal' => round($subtotal, 2),
-            'tax' => round($tax + $shippingSummary['gst_amount'], 2),
-            'product_tax' => round($tax, 2),
+            'subtotal' => round($subtotal + $productDiscount, 3),
+            'net_product_subtotal' => round($subtotal, 3),
+            'tax' => round($tax + $shippingSummary['gst_amount'], 3),
+            'product_tax' => round($tax, 3),
             'shipping_tax' => $shippingSummary['gst_amount'],
             'shipping' => $shippingSummary['base_amount'],
             'shipping_inclusive' => $shippingSummary['total_amount'],
             'shipping_lines' => $shippingSummary['lines'],
-            'product_discount' => round($productDiscount, 2),
-            'coupon_discount' => round($couponDiscount, 2),
+            'product_discount' => round($productDiscount, 3),
+            'coupon_discount' => round($couponDiscount, 3),
+            'taxable_value' => $taxableValue,
             'scheme_quantity' => (int) array_sum($schemeQtyByGroup) + $manualSchemeQuantity,
-            'grand_total' => round($finalTotal, 2),
-            'total' => round($finalTotal, 2),
+            'grand_total' => round($finalTotal, 3),
+            'total' => round($finalTotal, 3),
         ];
     }
 
@@ -856,7 +921,7 @@ class OrderPlacementService
             ->map(function (Collection $sellerLines, $sellerId) {
                 $shippingInclusive = round((float) $sellerLines->sum(
                     fn ($line) => (float) ($line['shipping_cost'] ?? 0)
-                ), 2);
+                ), 3);
 
                 if ($shippingInclusive <= 0) {
                     return null;
@@ -869,8 +934,8 @@ class OrderPlacementService
 
                     return [
                         'is_scheme' => (bool) ($line['is_scheme'] ?? false),
-                        'price' => round((float) ($line['sale_price'] ?? 0) * $quantity, 2),
-                        'tax' => round((float) ($line['tax'] ?? 0) * $quantity, 2),
+                        'price' => round((float) ($line['sale_price'] ?? 0) * $quantity, 3),
+                        'tax' => round((float) ($line['tax'] ?? 0) * $quantity, 3),
                     ];
                 });
 
@@ -878,7 +943,8 @@ class OrderPlacementService
                     $productLines,
                     $shippingInclusive,
                     '',
-                    translate('Shipping')
+                    translate('Shipping'),
+                    3
                 );
 
                 if (!$shippingLine) {
@@ -893,9 +959,9 @@ class OrderPlacementService
             ->values();
 
         return [
-            'base_amount' => round((float) $shippingLines->sum('base_amount'), 2),
-            'gst_amount' => round((float) $shippingLines->sum('gst_amount'), 2),
-            'total_amount' => round((float) $shippingLines->sum('total_amount'), 2),
+            'base_amount' => round((float) $shippingLines->sum('base_amount'), 3),
+            'gst_amount' => round((float) $shippingLines->sum('gst_amount'), 3),
+            'total_amount' => round((float) $shippingLines->sum('total_amount'), 3),
             'lines' => $shippingLines->all(),
         ];
     }
@@ -1095,11 +1161,11 @@ class OrderPlacementService
         $discountAmount = $discountType === 'percent'
             ? ($productSubtotal * $discountValue) / 100
             : $discountValue;
-        $discountAmount = round(min($productSubtotal, max(0, $discountAmount)), 2);
-        $allocations = allocate_coupon_discount_by_line_value($paidLines, $discountAmount);
+        $discountAmount = round(min($productSubtotal, max(0, $discountAmount)), 3);
+        $allocations = allocate_coupon_discount_by_line_value($paidLines, $discountAmount, 3);
 
         foreach ($paidLines as $line) {
-            $lineDiscount = (float) ($allocations[(int) $line->id] ?? 0);
+            $lineDiscount = round((float) ($allocations[(int) $line->id] ?? 0), 3);
             if ($lineDiscount <= 0) {
                 continue;
             }
@@ -1158,9 +1224,38 @@ class OrderPlacementService
             $firstChargeableLine = $sellerLines->first(fn ($line) => !(bool) ($line['is_scheme'] ?? false)
                 || (bool) ($line['is_manual_scheme'] ?? false));
             if ($firstChargeableLine) {
-                $firstChargeableLine->shipping_cost = max(0, $cost);
+                $firstChargeableLine->shipping_cost = $this->shippingInclusiveFromBase($sellerLines, max(0, $cost));
             }
         }
+    }
+
+    /**
+     * Backend shipping inputs are taxable values (exclusive of GST). Orders
+     * continue storing the inclusive shipping charge because invoice rendering
+     * and the rest of the checkout flow already use that representation.
+     */
+    protected function shippingInclusiveFromBase(Collection $sellerLines, float $baseAmount): float
+    {
+        if ($baseAmount <= 0) {
+            return 0.0;
+        }
+
+        $productLines = $sellerLines->map(function ($line) {
+            $quantity = max(0, (int) ($line['quantity'] ?? 0));
+
+            return [
+                'is_scheme' => (bool) ($line['is_scheme'] ?? false),
+                'price' => round((float) ($line['sale_price'] ?? 0) * $quantity, 3),
+                'tax' => round((float) ($line['tax'] ?? 0) * $quantity, 3),
+            ];
+        });
+
+        // The helper resolves the applicable GST rate from the product lines.
+        // The probe amount does not affect the selected rate.
+        $rateProbe = shipping_invoice_line($productLines, 100, '', translate('Shipping'), 3);
+        $gstPercent = (float) ($rateProbe['gst_percent'] ?? 0);
+
+        return round($baseAmount + (($baseAmount * $gstPercent) / 100), 3);
     }
 
     protected function backendShippingAddressId(Request $request)
