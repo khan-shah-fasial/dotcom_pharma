@@ -525,6 +525,15 @@
                             </div>
 
                         </div>
+                        <div class="col-md-3 mb-md-2 mb-2">
+
+                            <div class="form-group">
+                                <label class="form-label" for="record_file_no">Record File.No</label>
+                                <input type="text" id="record_file_no" name="record_file_no"
+                                    class="form-control form-control-lg" value="{{ $data['record_file_no'] ?? $session_data_user['record_file_no'] ?? '' }}" maxlength="255" placeholder="Enter Record File.No"/>
+                            </div>
+
+                        </div>
 
                         <div class="col-md-12 mb-3 text-left">
                             <hr>

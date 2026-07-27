@@ -60,6 +60,16 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
+                            <label class="form-label" for="record_file_no">{{ translate('Record File.No') }}</label>
+                            <input type="text" id="record_file_no" name="record_file_no" class="form-control"
+                                   value="{{ old('record_file_no', $details?->record_file_no) }}" maxlength="255">
+                            @error('record_file_no')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
                             <label class="form-label" for="current_status">{{ translate('Current Status') }}</label>
                             <select id="current_status" name="current_status" class="form-control aiz-selectpicker" data-live-search="true" title="{{ translate('Select Current Status') }}">
                                 @foreach ($currentStatuses as $status)

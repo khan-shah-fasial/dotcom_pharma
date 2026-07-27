@@ -661,28 +661,19 @@ span#picker-info-stock-badge {
                             <small class="text-muted">{{ translate('Fetched automatically from Account Master.') }}</small>
                         </div>
                         <div class="form-group">
-                            <label>{{ translate('Total Cases') }}</label>
-                            <input type="number" min="0" step="1" class="form-control" name="cases" value="{{ old('cases') }}">
+                            <label>{{ translate('Record File.No') }}</label>
+                            <input type="text" class="form-control" id="record-file-no" value="" readonly>
+                            <small class="text-muted">{{ translate('Fetched automatically from the selected customer.') }}</small>
                         </div>
                         <div class="form-group">
-                            <label>{{ translate('Weight (Gram)') }}</label>
-                            <input type="number" min="0" step="0.001" class="form-control" name="weight_grams" id="weight-grams" value="{{ old('weight_grams') }}">
-                            <small class="apple-green-highlight mt-1" id="weight-kg-display">0 KG</small>
-                            @error('weight_grams') <div class="text-danger small">{{ $message }}</div> @enderror
+                            <label>{{ translate('P.O. No.') }}</label>
+                            <input type="text" class="form-control" name="po_number" value="{{ old('po_number') }}">
+                            @error('po_number') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                         <div class="form-group">
-                            <label>{{ translate('Dimensions (CM)') }}</label>
-                            <div class="dimension-inputs">
-                                <input type="number" min="0" step="0.01" class="form-control" name="length_cm" value="{{ old('length_cm') }}" placeholder="{{ translate('Length') }}">
-                                <span class="dimension-separator">×</span>
-                                <input type="number" min="0" step="0.01" class="form-control" name="width_cm" value="{{ old('width_cm') }}" placeholder="{{ translate('Width') }}">
-                                <span class="dimension-separator">×</span>
-                                <input type="number" min="0" step="0.01" class="form-control" name="height_cm" value="{{ old('height_cm') }}" placeholder="{{ translate('Height') }}">
-                                <span class="dimension-separator">CM</span>
-                            </div>
-                            @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                            @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                            @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                            <label>{{ translate('P.O. Date') }}</label>
+                            <input type="date" class="form-control" name="po_date" value="{{ old('po_date') }}">
+                            @error('po_date') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                         <div class="form-group">
                             <label>{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</label>
@@ -720,6 +711,31 @@ span#picker-info-stock-badge {
                     <div id="shipping-collapse" class="collapse"
                         aria-labelledby="shipping-heading" data-parent="#order-sidebar-accordion">
                     <div class="card-body">
+                        <div class="form-group">
+                            <label>{{ translate('Total Cases') }}</label>
+                            <input type="number" min="0" step="1" class="form-control" name="cases" value="{{ old('cases') }}">
+                            @error('cases') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Weight (Gram)') }}</label>
+                            <input type="number" min="0" step="0.001" class="form-control" name="weight_grams" id="weight-grams" value="{{ old('weight_grams') }}">
+                            <small class="apple-green-highlight mt-1" id="weight-kg-display">0 KG</small>
+                            @error('weight_grams') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Dimensions (CM)') }}</label>
+                            <div class="dimension-inputs">
+                                <input type="number" min="0" step="0.01" class="form-control" name="length_cm" value="{{ old('length_cm') }}" placeholder="{{ translate('Length') }}">
+                                <span class="dimension-separator">×</span>
+                                <input type="number" min="0" step="0.01" class="form-control" name="width_cm" value="{{ old('width_cm') }}" placeholder="{{ translate('Width') }}">
+                                <span class="dimension-separator">×</span>
+                                <input type="number" min="0" step="0.01" class="form-control" name="height_cm" value="{{ old('height_cm') }}" placeholder="{{ translate('Height') }}">
+                                <span class="dimension-separator">CM</span>
+                            </div>
+                            @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                            @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                            @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
                         <div class="form-group">
                             <label>{{ translate('Shipping Method') }}</label>
                             <select class="form-control" name="shipping_method" id="shipping-method">
@@ -775,7 +791,7 @@ span#picker-info-stock-badge {
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>{{ translate('Delivery Type') }}</label>
+                                <label>{{ translate('Terms of Delivery') }}</label>
                                 <select class="form-control" name="transport_delivery_type">
                                     <option value="door_delivery">{{ translate('Door Delivery') }}</option>
                                     <option value="our_warehouse_delivery">{{ translate('Our Warehouse Delivery') }}</option>
@@ -871,7 +887,7 @@ span#picker-info-stock-badge {
                         aria-labelledby="payment-heading" data-parent="#order-sidebar-accordion">
                     <div class="card-body">
                         <div class="form-group">
-                            <label>{{ translate('Payment Type') }}</label>
+                            <label>{{ translate('Payment Terms') }}</label>
                             <select class="form-control" name="payment_type">
                                 <option value="cash_on_delivery">{{ translate('Cash On Delivery') }}</option>
                                 <option value="manual">{{ translate('Manual') }}</option>
@@ -1226,6 +1242,7 @@ span#picker-info-stock-badge {
                     ['{{ translate('WhatsApp Number(s)') }}', (customer.whatsapp_numbers || []).join(', ')],
                     ['{{ translate('Email') }}', customer.email],
                     ['{{ translate('Person Name') }}', customer.person_name ? capitalizeFirst(customer.person_name) : ''],
+                    ['{{ translate('Record File.No') }}', customer.record_file_no],
                     ['{{ translate('Sales Man Code') }}', customer.sales_man_code],
                     ['{{ translate('Default Shipping') }}', customer.default_shipping_method]
                 ];
@@ -1343,6 +1360,7 @@ span#picker-info-stock-badge {
                         .on('click', function () {
                             $('#selected-customer-id').val(customer.id);
                             $('#sales-man-code').val(customer.sales_man_code || '');
+                            $('#record-file-no').val(customer.record_file_no || '');
                             $('#selected-customer-card').removeClass('d-none').html(customerMetaHtml(customer));
                             $box.empty();
                             applyCustomerShippingDefaults(customer);
@@ -1763,8 +1781,12 @@ span#picker-info-stock-badge {
 
             function renderSellerShipping() {
                 var existingCosts = {};
+                var existingTaxModes = {};
                 $('.seller-shipping-input').each(function () {
                     existingCosts[$(this).data('seller-id')] = $(this).val();
+                });
+                $('.seller-shipping-tax-inclusive').each(function () {
+                    existingTaxModes[$(this).data('seller-id')] = $(this).is(':checked');
                 });
                 var sellers = {};
                 lines.forEach(function (line) {
@@ -1773,8 +1795,16 @@ span#picker-info-stock-badge {
                 var $box = $('#seller-shipping-costs').empty();
                 Object.keys(sellers).forEach(function (sellerId) {
                     $box.append('<div class="form-group mb-2">'
-                        + '<label class="mb-1">' + sellers[sellerId] + ' - {{ translate('Shipping Cost (Excl. GST)') }}</label>'
+                        + '<label class="mb-1">' + sellers[sellerId] + ' - {{ translate('Shipping Cost') }}</label>'
+                        + '<div class="input-group">'
+                        + '<div class="input-group-prepend"><div class="input-group-text">'
+                        + '<label class="aiz-checkbox mb-0" title="{{ translate('Check when the entered amount already includes GST.') }}">'
+                        + '<input type="checkbox" class="seller-shipping-tax-inclusive" data-seller-id="' + sellerId + '" name="shipping_costs_tax_inclusive[' + sellerId + ']" value="1" ' + (existingTaxModes[sellerId] ? 'checked' : '') + '>'
+                        + '<span class="mr-1">{{ translate('GST Inclusive') }}</span><span class="aiz-square-check"></span>'
+                        + '</label></div></div>'
                         + '<input type="number" min="0" step="0.001" class="form-control seller-shipping-input" data-seller-id="' + sellerId + '" name="shipping_costs[' + sellerId + ']" value="' + (existingCosts[sellerId] || 0) + '" required>'
+                        + '</div>'
+                        + '<small class="text-muted">{{ translate('Leave unchecked when GST must be added to the amount.') }}</small>'
                         + '</div>');
                 });
                 renderShippingItems();
@@ -1785,7 +1815,10 @@ span#picker-info-stock-badge {
                 var isFree = $('#shipping-cost-type').val() === 'free_shipping';
                 $('#free-shipping').val(isFree ? '1' : '0');
                 $('#sell-amount-wrap').toggleClass('d-none', isFree);
-                $('.seller-shipping-input,.shipping-item-description,.shipping-item-seller,.shipping-item-amount').prop('disabled', isFree);
+                $('.seller-shipping-input,.seller-shipping-tax-inclusive,.shipping-item-description,.shipping-item-seller,.shipping-item-amount').prop('disabled', isFree);
+                $('.shipping-item-tax-inclusive').each(function () {
+                    $(this).prop('disabled', isFree || $(this).data('locked') === true);
+                });
                 $('.seller-shipping-input').prop('required', !isFree);
                 $('#add-shipping-item-btn').prop('disabled', isFree);
             }
@@ -1812,13 +1845,26 @@ span#picker-info-stock-badge {
 
                 $box.removeClass('text-muted');
                 shippingItems.forEach(function (item, index) {
+                    var isCourier = item.source === 'courier';
+                    var taxInclusive = isCourier || Boolean(item.tax_inclusive);
+                    var taxModeControl = isCourier
+                        ? '<input type="hidden" name="shipping_items[' + index + '][tax_inclusive]" value="1">'
+                            + '<label class="aiz-checkbox mb-0" title="{{ translate('Courier amount includes GST.') }}">'
+                            + '<input type="checkbox" class="shipping-item-tax-inclusive" data-locked="true" checked disabled>'
+                        : '<label class="aiz-checkbox mb-0" title="{{ translate('Check when the entered amount already includes GST.') }}">'
+                            + '<input type="checkbox" class="shipping-item-tax-inclusive" name="shipping_items[' + index + '][tax_inclusive]" value="1" ' + (taxInclusive ? 'checked' : '') + '>';
                     $box.append('<div class="row gutters-5 align-items-end mb-2 shipping-item-row" data-id="' + item.id + '">'
-                        + '<div class="col-5"><label class="mb-1">{{ translate('Description') }}</label>'
+                        + '<input type="hidden" name="shipping_items[' + index + '][source]" value="' + (isCourier ? 'courier' : 'manual') + '">'
+                        + '<div class="col-4"><label class="mb-1">{{ translate('Description') }}</label>'
                         + '<input type="text" class="form-control form-control-sm shipping-item-description" name="shipping_items[' + index + '][description]" value="' + escapeHtml(item.description) + '"></div>'
                         + '<div class="col-3"><label class="mb-1">{{ translate('Seller') }}</label>'
                         + '<select class="form-control form-control-sm shipping-item-seller" name="shipping_items[' + index + '][seller_id]">' + sellerOptions(item.seller_id) + '</select></div>'
-                        + '<div class="col-3"><label class="mb-1">{{ translate('Amount') }}</label>'
-                        + '<input type="number" min="0" step="0.001" class="form-control form-control-sm shipping-item-amount" name="shipping_items[' + index + '][amount]" value="' + money(item.amount) + '"></div>'
+                        + '<div class="col-4"><label class="mb-1">{{ translate('Amount') }}</label>'
+                        + '<div class="input-group input-group-sm"><div class="input-group-prepend"><div class="input-group-text">'
+                        + taxModeControl
+                        + '<span class="mr-1">{{ translate('GST Inclusive') }}</span><span class="aiz-square-check"></span></label>'
+                        + '</div></div>'
+                        + '<input type="number" min="0" step="0.001" class="form-control form-control-sm shipping-item-amount" name="shipping_items[' + index + '][amount]" value="' + money(item.amount) + '"></div></div>'
                         + '<div class="col-1"><button type="button" class="btn btn-sm btn-soft-danger remove-shipping-item"><i class="las la-trash"></i></button></div>'
                         + '</div>');
                 });
@@ -1865,7 +1911,8 @@ span#picker-info-stock-badge {
                         rows.push({
                             id: item.id,
                             description: item.description || '{{ translate('Shipping') }}',
-                            amount: Number(item.amount || 0)
+                            amount: Number(item.amount || 0),
+                            tax_inclusive: item.source === 'courier' || Boolean(item.tax_inclusive)
                         });
                     });
                 }
@@ -1903,13 +1950,15 @@ span#picker-info-stock-badge {
                     existing.description = description;
                     existing.amount = Number(service.price || 0);
                     existing.seller_id = existing.seller_id || firstSellerId();
+                    existing.tax_inclusive = true;
                 } else {
                     shippingItems.push({
                         id: nextShippingItemId++,
                         source: 'courier',
                         description: description,
                         amount: Number(service.price || 0),
-                        seller_id: firstSellerId()
+                        seller_id: firstSellerId(),
+                        tax_inclusive: true
                     });
                 }
                 renderShippingItems();
@@ -2178,7 +2227,7 @@ span#picker-info-stock-badge {
                 renderLines();
             });
 
-            $(document).on('input change', '.seller-shipping-input', function () {
+            $(document).on('input change', '.seller-shipping-input,.seller-shipping-tax-inclusive', function () {
                 renderOrderShippingRows();
                 refreshSummary(false);
             });
@@ -2193,18 +2242,20 @@ span#picker-info-stock-badge {
                     source: 'manual',
                     description: '{{ translate('Shipping') }}',
                     amount: 0,
-                    seller_id: firstSellerId()
+                    seller_id: firstSellerId(),
+                    tax_inclusive: false
                 });
                 renderShippingItems();
             });
 
-            $(document).on('input change', '.shipping-item-description,.shipping-item-seller,.shipping-item-amount', function () {
+            $(document).on('input change', '.shipping-item-description,.shipping-item-seller,.shipping-item-amount,.shipping-item-tax-inclusive', function () {
                 var $row = $(this).closest('.shipping-item-row');
                 var item = shippingItems.find(function (entry) { return Number(entry.id) === Number($row.data('id')); });
                 if (!item) return;
                 item.description = $row.find('.shipping-item-description').val();
                 item.seller_id = $row.find('.shipping-item-seller').val();
                 item.amount = Number($row.find('.shipping-item-amount').val() || 0);
+                item.tax_inclusive = item.source === 'courier' || $row.find('.shipping-item-tax-inclusive').is(':checked');
                 renderOrderShippingRows();
                 refreshSummary(false);
             });

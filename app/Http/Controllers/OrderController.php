@@ -199,6 +199,7 @@ class OrderController extends Controller
                         $details->where('company_name', 'like', $like)
                             ->orWhere('con_person_name', 'like', $like)
                             ->orWhere('crm_id', 'like', $like)
+                            ->orWhere('record_file_no', 'like', $like)
                             ->orWhere('account_no_business', 'like', $like)
                             ->orWhere('account_no_personal', 'like', $like)
                             ->orWhere('village_business', 'like', $like)
@@ -268,6 +269,7 @@ class OrderController extends Controller
                 'company_name' => optional($details)->company_name,
                 'person_name' => optional($details)->con_person_name ?: $customer->name,
                 'account_no' => optional($details)->crm_id ?: (optional($details)->account_no_business ?: optional($details)->account_no_personal),
+                'record_file_no' => optional($details)->record_file_no,
                 'gst_no' => optional($details)->gst_no ?: $customer->gst_no,
                 'aadhaar_no' => optional($details)->aadhaar_no ?: $customer->aadhaar_no,
                 'pan_no' => optional($details)->pan_no ?: $customer->pan_no,
@@ -690,6 +692,8 @@ class OrderController extends Controller
                 'order_time' => ['required', 'date_format:H:i'],
                 'cases' => ['nullable', 'integer', 'min:0'],
                 'attached_file_name' => ['nullable', 'string', 'max:255'],
+                'po_number' => ['nullable', 'string', 'max:255'],
+                'po_date' => ['nullable', 'date'],
                 'lr_number' => ['nullable', 'string', 'max:255'],
                 'lr_date' => ['nullable', 'date'],
                 'consignee_copy_status' => ['required', Rule::in(['attached', 'not_attached'])],
@@ -710,10 +714,14 @@ class OrderController extends Controller
                 'free_shipping' => ['nullable', 'boolean'],
                 'shipping_costs' => ['required_if:shipping_cost_type,by_seller', 'array'],
                 'shipping_costs.*' => ['numeric', 'min:0', 'max:99999999999.99'],
+                'shipping_costs_tax_inclusive' => ['nullable', 'array'],
+                'shipping_costs_tax_inclusive.*' => ['boolean'],
                 'shipping_items' => ['nullable', 'array'],
                 'shipping_items.*.description' => ['nullable', 'string', 'max:255'],
                 'shipping_items.*.seller_id' => ['nullable', 'integer'],
                 'shipping_items.*.amount' => ['nullable', 'numeric', 'min:0', 'max:99999999999.99'],
+                'shipping_items.*.source' => ['nullable', Rule::in(['manual', 'courier'])],
+                'shipping_items.*.tax_inclusive' => ['nullable', 'boolean'],
                 'transport_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
                 'transport_name' => ['nullable', 'string', 'max:255'],
                 'booked_to_name' => ['nullable', 'string', 'max:255'],

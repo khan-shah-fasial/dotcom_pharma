@@ -993,6 +993,7 @@ class RegisterController extends Controller
 
             'con_person_name' => ['required', 'string', 'regex:/^[A-Za-z\s]+$/', 'min:1', 'max:50'],
             'company_name' => ['required', 'string', 'min:1', 'max:150'],
+            'record_file_no' => ['nullable', 'string', 'max:255'],
             'street_add_first_business' => ['required', 'string', 'min:1', 'max:150'],
             'street_add_sec_business' => ['nullable', 'string', 'min:1', 'max:150'],
             'locality_land_mark_business' => ['required', 'string', 'min:1', 'max:150'],
@@ -1215,6 +1216,7 @@ class RegisterController extends Controller
             'uin_current_status' => $request->uin_current_status,
             'con_person_name' => $request->con_person_name,
             'company_name' => $request->company_name,
+            'record_file_no' => $request->record_file_no,
 
             'street_add_first_business' => $request->street_add_first_business,
             'street_add_sec_business' => $request->street_add_sec_business,
@@ -1784,6 +1786,7 @@ class RegisterController extends Controller
                         'uin_current_status' => $data_business['uin_current_status'] ?? Null,
                         'con_person_name' => $data_business['con_person_name'] ?? Null,
                         'company_name' => $data_business['company_name'] ?? Null,
+                        'record_file_no' => $data_business['record_file_no'] ?? Null,
                         'street_add_first_business' => $data_business['street_add_first_business'] ?? Null,
                         'street_add_sec_business' => $data_business['street_add_sec_business'] ?? Null,
                         'locality_land_mark_business' => $data_business['locality_land_mark_business'] ?? Null,
@@ -1950,6 +1953,7 @@ class RegisterController extends Controller
                 'uin_current_status' => $data_business['uin_current_status'] ?? Null,
                 'con_person_name' => $data_business['con_person_name'] ?? Null,
                 'company_name' => $data_business['company_name'] ?? Null,
+                'record_file_no' => $data_business['record_file_no'] ?? Null,
                 'street_add_first_business' => $data_business['street_add_first_business'] ?? Null,
                 'street_add_sec_business' => $data_business['street_add_sec_business'] ?? Null,
                 'locality_land_mark_business' => $data_business['locality_land_mark_business'] ?? Null,

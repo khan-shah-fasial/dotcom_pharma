@@ -281,6 +281,8 @@ class OrderPlacementService
         $order->transport_delivery_type = $shippingChoice === 'transport' ? $deliveryType : null;
         $order->cases = $this->nullableTrimmed($request->input('cases'));
         $order->attached_file_name = $this->nullableTrimmed($request->input('attached_file_name'));
+        $order->po_number = $this->nullableTrimmed($request->input('po_number'));
+        $order->po_date = $request->input('po_date');
         $order->lr_number = $this->nullableTrimmed($request->input('lr_number'));
         $order->lr_date = $request->input('lr_date');
         $order->cc_attached_path = $request->input('cc_attached_path');
@@ -1182,6 +1184,8 @@ class OrderPlacementService
         }
 
         $shippingCosts = (array) $request->input('shipping_costs', $request->input('seller_shipping_costs', []));
+        $shippingCostTaxModes = (array) $request->input('shipping_costs_tax_inclusive', []);
+        $shippingItemsBySeller = [];
         $sellerIds = $lines
             ->map(fn ($line) => (int) ($line['owner_id'] ?? 0))
             ->filter()
@@ -1206,7 +1210,14 @@ class OrderPlacementService
             if (!$lines->contains(fn ($line) => (int) ($line['owner_id'] ?? 0) === $sellerId)) {
                 $this->fail('shipping_items', translate('A shipping item is assigned to an invalid seller.'));
             }
-            $shippingCosts[$sellerId] = (float) ($shippingCosts[$sellerId] ?? 0) + $amount;
+
+            $shippingItemsBySeller[$sellerId][] = [
+                'amount' => $amount,
+                // Courier APIs return a final charge inclusive of all GST.
+                // Manual rows use the explicit checkbox selected by the user.
+                'tax_inclusive' => ($shippingItem['source'] ?? null) === 'courier'
+                    || filter_var($shippingItem['tax_inclusive'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            ];
         }
 
         if ($request->input('shipping_cost_type') === 'free_shipping'
@@ -1217,22 +1228,49 @@ class OrderPlacementService
         $groups = $lines->groupBy(fn ($line) => (int) ($line['owner_id'] ?? 0));
 
         foreach ($groups as $sellerId => $sellerLines) {
-            $cost = array_key_exists($sellerId, $shippingCosts)
-                ? (float) $shippingCosts[$sellerId]
-                : ($groups->count() === 1 ? $globalShipping : 0);
+            $exclusiveCost = 0.0;
+            $inclusiveCost = 0.0;
+
+            if (array_key_exists($sellerId, $shippingCosts)) {
+                $sellerCost = max(0, (float) $shippingCosts[$sellerId]);
+                $sellerCostIsInclusive = filter_var(
+                    $shippingCostTaxModes[$sellerId] ?? false,
+                    FILTER_VALIDATE_BOOLEAN
+                );
+                if ($sellerCostIsInclusive) {
+                    $inclusiveCost += $sellerCost;
+                } else {
+                    $exclusiveCost += $sellerCost;
+                }
+            } elseif ($groups->count() === 1) {
+                // Preserve the legacy global shipping field as GST-exclusive.
+                $exclusiveCost += max(0, $globalShipping);
+            }
+
+            foreach ($shippingItemsBySeller[$sellerId] ?? [] as $shippingItem) {
+                if ($shippingItem['tax_inclusive']) {
+                    $inclusiveCost += $shippingItem['amount'];
+                } else {
+                    $exclusiveCost += $shippingItem['amount'];
+                }
+            }
+
+            $cost = round(
+                $inclusiveCost + $this->shippingInclusiveFromBase($sellerLines, $exclusiveCost),
+                3
+            );
 
             $firstChargeableLine = $sellerLines->first(fn ($line) => !(bool) ($line['is_scheme'] ?? false)
                 || (bool) ($line['is_manual_scheme'] ?? false));
             if ($firstChargeableLine) {
-                $firstChargeableLine->shipping_cost = $this->shippingInclusiveFromBase($sellerLines, max(0, $cost));
+                $firstChargeableLine->shipping_cost = $cost;
             }
         }
     }
 
     /**
-     * Backend shipping inputs are taxable values (exclusive of GST). Orders
-     * continue storing the inclusive shipping charge because invoice rendering
-     * and the rest of the checkout flow already use that representation.
+     * Convert a GST-exclusive shipping amount to its inclusive value. The GST
+     * rate is selected automatically from the seller's paid product lines.
      */
     protected function shippingInclusiveFromBase(Collection $sellerLines, float $baseAmount): float
     {

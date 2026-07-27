@@ -13,6 +13,7 @@ class Order extends Model
         'freight_paid' => 'boolean',
         'free_shipping' => 'boolean',
         'lr_date' => 'date',
+        'po_date' => 'date',
         'order_date' => 'date',
         'weight_grams' => 'decimal:3',
         'weight_kg' => 'decimal:6',

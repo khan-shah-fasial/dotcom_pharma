@@ -1148,6 +1148,7 @@ class CustomerController extends Controller
         $businessRules = [
             'type_option' => 'required|in:domestic,international',
             'crm_id' => ['nullable', 'string', 'max:255', 'unique:user_details,crm_id,' . $details->id],
+            'record_file_no' => ['nullable', 'string', 'max:255'],
             'registration_date' => [$businessRequired ? 'required' : 'nullable'],
             'const_of_business' => [$businessRequired ? 'required' : 'nullable'],
             'con_person_name' => [$businessRequired ? 'required' : 'nullable', 'string', 'regex:/^[A-Za-z\\s]+$/', 'min:1', 'max:50'],
@@ -1267,6 +1268,7 @@ class CustomerController extends Controller
         // $validator->after(function ($v) use ($request, $details, $typeOption, $domesticChoice, $internationalChoice) { ... });
         $validator = \Validator::make($request->all(), [
             'prim_email_personal'  => ['required', 'email'],
+            'record_file_no'       => ['nullable', 'string', 'max:255'],
             'religion'             => ['nullable', 'string', 'max:150'],
             'anniversary'          => ['nullable', 'date'],
             'customer_type'        => ['nullable', Rule::in(UserDetails::CUSTOMER_TYPES)],
@@ -1401,6 +1403,9 @@ class CustomerController extends Controller
         $details->fill([
             'type_option' => $typeOption,
             'crm_id' => $request->input('crm_id', $details->crm_id ?? null),
+            'record_file_no' => $request->filled('record_file_no')
+                ? trim((string) $request->input('record_file_no'))
+                : null,
 
             'transport_id' => $transportSelection['transport_id'],
             'booked_to_id' => $transportSelection['booked_to_id'],

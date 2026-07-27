@@ -241,6 +241,13 @@
                                 <td class="text-right">{{ $order->cases !== null && $order->cases !== '' ? $order->cases : '-' }}</td>
                             </tr>
                             <tr>
+                                <td class="text-main text-bold">{{ translate('P.O. No. / P.O. Date') }}</td>
+                                <td class="text-right">
+                                    {{ $order->po_number ?: '-' }}
+                                    @if($order->po_date)<br>{{ $order->po_date->format('d-m-Y') }}@endif
+                                </td>
+                            </tr>
+                            <tr>
                                 <td class="text-main text-bold">{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</td>
                                 <td class="text-right">{{ $order->lr_number ?: '-' }} @if($order->lr_date)<br>{{ $order->lr_date->format('d-m-Y') }}@endif</td>
                             </tr>

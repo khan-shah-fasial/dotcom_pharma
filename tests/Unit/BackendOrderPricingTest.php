@@ -2,11 +2,13 @@
 
 namespace Tests\Unit;
 
+use App\Models\Cart;
 use App\Models\Product;
 use App\Models\ProductBatch;
 use App\Models\ProductStock;
 use App\Models\User;
 use App\Services\OrderPlacementService;
+use Illuminate\Http\Request;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -72,5 +74,92 @@ class BackendOrderPricingTest extends TestCase
         } finally {
             app()->forgetInstance('pricing_user');
         }
+    }
+
+    public function test_courier_shipping_amount_remains_gst_inclusive(): void
+    {
+        $line = $this->shippingProductLine();
+        $request = Request::create('/', 'POST', [
+            'shipping_cost_type' => 'by_seller',
+            'shipping_costs' => [1 => 0],
+            'shipping_items' => [[
+                'seller_id' => 1,
+                'amount' => 105,
+                'source' => 'courier',
+            ]],
+        ]);
+
+        $this->assignShipping(collect([$line]), $request);
+
+        $this->assertEqualsWithDelta(105.000, $line->shipping_cost, 0.0001);
+    }
+
+    public function test_manual_shipping_amount_respects_gst_inclusive_checkbox(): void
+    {
+        $exclusiveLine = $this->shippingProductLine();
+        $exclusiveRequest = Request::create('/', 'POST', [
+            'shipping_cost_type' => 'by_seller',
+            'shipping_costs' => [1 => 0],
+            'shipping_items' => [[
+                'seller_id' => 1,
+                'amount' => 100,
+                'source' => 'manual',
+            ]],
+        ]);
+        $this->assignShipping(collect([$exclusiveLine]), $exclusiveRequest);
+
+        $inclusiveLine = $this->shippingProductLine();
+        $inclusiveRequest = Request::create('/', 'POST', [
+            'shipping_cost_type' => 'by_seller',
+            'shipping_costs' => [1 => 0],
+            'shipping_items' => [[
+                'seller_id' => 1,
+                'amount' => 105,
+                'source' => 'manual',
+                'tax_inclusive' => 1,
+            ]],
+        ]);
+        $this->assignShipping(collect([$inclusiveLine]), $inclusiveRequest);
+
+        $this->assertEqualsWithDelta(105.000, $exclusiveLine->shipping_cost, 0.0001);
+        $this->assertEqualsWithDelta(105.000, $inclusiveLine->shipping_cost, 0.0001);
+    }
+
+    public function test_seller_shipping_amount_respects_gst_inclusive_checkbox(): void
+    {
+        $exclusiveLine = $this->shippingProductLine();
+        $this->assignShipping(collect([$exclusiveLine]), Request::create('/', 'POST', [
+            'shipping_cost_type' => 'by_seller',
+            'shipping_costs' => [1 => 100],
+        ]));
+
+        $inclusiveLine = $this->shippingProductLine();
+        $this->assignShipping(collect([$inclusiveLine]), Request::create('/', 'POST', [
+            'shipping_cost_type' => 'by_seller',
+            'shipping_costs' => [1 => 105],
+            'shipping_costs_tax_inclusive' => [1 => 1],
+        ]));
+
+        $this->assertEqualsWithDelta(105.000, $exclusiveLine->shipping_cost, 0.0001);
+        $this->assertEqualsWithDelta(105.000, $inclusiveLine->shipping_cost, 0.0001);
+    }
+
+    private function shippingProductLine(): Cart
+    {
+        return new Cart([
+            'owner_id' => 1,
+            'quantity' => 1,
+            'sale_price' => 100,
+            'tax' => 5,
+            'shipping_cost' => 0,
+            'is_scheme' => 0,
+        ]);
+    }
+
+    private function assignShipping($lines, Request $request): void
+    {
+        $method = new ReflectionMethod(OrderPlacementService::class, 'assignBackendShippingCosts');
+        $method->setAccessible(true);
+        $method->invoke(app(OrderPlacementService::class), $lines, $request);
     }
 }
