@@ -363,6 +363,16 @@ span#picker-info-stock-badge {
     </style>
     <form id="backend-order-form" action="{{ route('orders.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <div class="fw-600 mb-1">{{ translate('The order could not be created. Please correct the following fields:') }}</div>
+                <ul class="mb-0 pl-3">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <input type="hidden" name="backend_add_order" value="1">
         <input type="hidden" name="customer_id" id="selected-customer-id" value="{{ old('customer_id') }}">
 
@@ -997,6 +1007,8 @@ span#picker-info-stock-badge {
                                 </tr>
                             </tbody>
                         </table>
+                        <div class="alert alert-soft-success py-2 d-none" id="wallet-reward-earned"></div>
+                        <div class="alert alert-soft-info py-2 d-none" id="wallet-reward-next"></div>
                         <div id="summary-message" class="small text-danger mb-2"></div>
                         <button type="submit" class="btn btn-primary btn-block" id="submit-order-btn">{{ translate('Create Order') }}</button>
                     </div>
@@ -1034,9 +1046,45 @@ span#picker-info-stock-badge {
             var shippingItems = [];
             var nextShippingItemId = 1;
             var orderNumberPreviewTimer = null;
+            var walletRewardEarnedTemplate = @json(translate('Customer will earn :amount wallet point reward on this order after payment.'));
+            var walletRewardNextTemplate = @json(translate('Add :amount more to earn :reward wallet reward.'));
 
             function money(value) {
                 return (Number(value || 0)).toFixed(3);
+            }
+
+            function points(value) {
+                var amount = Number(value || 0);
+                return Number.isInteger(amount)
+                    ? String(amount)
+                    : amount.toFixed(2).replace(/\.?0+$/, '');
+            }
+
+            function renderWalletRewardPreview(preview) {
+                preview = preview || {};
+                var $earned = $('#wallet-reward-earned').addClass('d-none').text('');
+                var $next = $('#wallet-reward-next').addClass('d-none').text('');
+
+                if (!preview.enabled) {
+                    return;
+                }
+
+                if (Number(preview.matched_reward || 0) > 0) {
+                    $earned
+                        .removeClass('d-none')
+                        .text(walletRewardEarnedTemplate.replace(':amount', points(preview.matched_reward)));
+                }
+
+                if (Number(preview.next_min || 0) > 0
+                    && Number(preview.delta_to_next || 0) > 0
+                    && (!Number(preview.matched_reward || 0)
+                        || Number(preview.next_min) > Number(preview.matched_min || 0))) {
+                    $next
+                        .removeClass('d-none')
+                        .text(walletRewardNextTemplate
+                            .replace(':amount', money(preview.delta_to_next))
+                            .replace(':reward', points(preview.next_reward)));
+                }
             }
 
             function schemeQuantityBadge(value) {
@@ -2010,6 +2058,7 @@ span#picker-info-stock-badge {
                     $('.order-summary-value').text('0.000');
                     $('#summary-product-tax, #summary-shipping-tax').text('0.000');
                     $('#scheme-quantity-notice').addClass('d-none').text('');
+                    renderWalletRewardPreview(null);
                     return;
                 }
                 var requestData = $('#backend-order-form').serialize();
@@ -2051,6 +2100,7 @@ span#picker-info-stock-badge {
                         $('#scheme-quantity-notice').addClass('d-none').text('');
                     }
                     $('#summary-grand-total').text(money(data.grand_total));
+                    renderWalletRewardPreview(data.wallet_reward_preview);
                     renderOrderShippingRows(data.shipping_lines || []);
                     if (data.lines) {
                         data.lines.forEach(function (line, index) {
@@ -2077,6 +2127,7 @@ span#picker-info-stock-badge {
                 }).fail(function (xhr) {
                     var message = (xhr.responseJSON && xhr.responseJSON.message) || '{{ translate('Unable to calculate order summary.') }}';
                     $('#summary-message').text(message);
+                    renderWalletRewardPreview(null);
                     if (validateDiscount) {
                         $('#additional-discount-enabled').val('0');
                         $('#additional-discount-message').removeClass('text-success').addClass('text-danger').text(message);

@@ -3646,7 +3646,9 @@ if (!function_exists('get_gift_reward_preview')) {
                 $nextTier = $tiers[$currentIndex - 1];
             }
         } else {
-            $nextTier = $tiers[0];
+            // Tiers are sorted highest-minimum first. Before the customer
+            // reaches any tier, point them to the nearest (lowest) threshold.
+            $nextTier = $tiers[array_key_last($tiers)];
         }
 
         $deltaToNext = null;

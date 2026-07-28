@@ -120,6 +120,7 @@ class OrderPlacementService
                 'discount_value' => (float) $discountValue,
             ];
         }
+        $summary['wallet_reward_preview'] = get_gift_reward_preview((float) $summary['grand_total']);
 
         return $summary;
     }
@@ -356,6 +357,7 @@ class OrderPlacementService
     {
         $subtotal = 0;
         $tax = 0;
+        $shipping = 0;
         $couponDiscount = 0;
         $affectedProductIds = [];
         $schemeGroupsWritten = [];

@@ -32,6 +32,10 @@ class WalletRewardService
             return;
         }
 
+        if ((int) (get_setting('gift_reward_enabled') ?? 0) !== 1) {
+            return;
+        }
+
         $tiers = get_gift_reward_tiers();
         if (empty($tiers)) {
             return;
