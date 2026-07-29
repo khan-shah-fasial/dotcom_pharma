@@ -20,7 +20,14 @@
     <div class="card-header"><h5 class="mb-0 h6">{{ translate('Port Identification') }}</h5></div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('Port ID') }} <span class="text-danger">*</span></label>
+                    <input type="text" name="port_id" class="form-control text-uppercase" value="{{ old('port_id', $seaPort?->port_id) }}" required maxlength="50">
+                    @error('port_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
                 <div class="form-group">
                     <label>{{ translate('Country') }} <span class="text-danger">*</span></label>
                     <select name="country_id" class="form-control aiz-selectpicker" data-live-search="true" required>
@@ -34,7 +41,7 @@
                     @error('country_id') <div class="text-danger small">{{ $message }}</div> @enderror
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="form-group">
                     <label>{{ translate('Port Name') }} <span class="text-danger">*</span></label>
                     <input type="text" name="name" class="form-control" value="{{ old('name', $seaPort?->name) }}" required maxlength="255">
@@ -124,19 +131,100 @@
 </div>
 
 <div class="card">
-    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Authority and Status') }}</h5></div>
+    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Port Authority Contact') }}</h5></div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="form-group">
-                    <label>{{ translate('Port Authority') }}</label>
+                    <label>{{ translate('Name') }}</label>
                     <input type="text" name="authority_name" class="form-control" value="{{ old('authority_name', $seaPort?->authority_name) }}" maxlength="255">
+                    @error('authority_name') <div class="text-danger small">{{ $message }}</div> @enderror
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="form-group">
-                    <label>{{ translate('Authority Contact') }}</label>
+                    <label>{{ translate('Designation') }}</label>
+                    <input type="text" name="authority_designation" class="form-control" value="{{ old('authority_designation', $seaPort?->authority_designation) }}" maxlength="255">
+                    @error('authority_designation') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('Mobile') }}</label>
+                    <input type="tel" name="authority_mobile" class="form-control" value="{{ old('authority_mobile', $seaPort?->authority_mobile) }}" maxlength="30">
+                    @error('authority_mobile') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('WhatsApp') }}</label>
+                    <input type="tel" name="authority_whatsapp" class="form-control" value="{{ old('authority_whatsapp', $seaPort?->authority_whatsapp) }}" maxlength="30">
+                    @error('authority_whatsapp') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('E-mail') }}</label>
+                    <input type="email" name="authority_email" class="form-control" value="{{ old('authority_email', $seaPort?->authority_email) }}" maxlength="191">
+                    @error('authority_email') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Coordinator Contact') }}</h5></div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('Name') }}</label>
+                    <input type="text" name="coordinator_name" class="form-control" value="{{ old('coordinator_name', $seaPort?->coordinator_name) }}" maxlength="255">
+                    @error('coordinator_name') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('Designation') }}</label>
+                    <input type="text" name="coordinator_designation" class="form-control" value="{{ old('coordinator_designation', $seaPort?->coordinator_designation) }}" maxlength="255">
+                    @error('coordinator_designation') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('Mobile') }}</label>
+                    <input type="tel" name="coordinator_mobile" class="form-control" value="{{ old('coordinator_mobile', $seaPort?->coordinator_mobile) }}" maxlength="30">
+                    @error('coordinator_mobile') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('WhatsApp') }}</label>
+                    <input type="tel" name="coordinator_whatsapp" class="form-control" value="{{ old('coordinator_whatsapp', $seaPort?->coordinator_whatsapp) }}" maxlength="30">
+                    @error('coordinator_whatsapp') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('E-mail') }}</label>
+                    <input type="email" name="coordinator_email" class="form-control" value="{{ old('coordinator_email', $seaPort?->coordinator_email) }}" maxlength="191">
+                    @error('coordinator_email') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Additional Contact Notes and Status') }}</h5></div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label>{{ translate('Authority Contact Notes') }}</label>
                     <textarea name="authority_contact" class="form-control" rows="3">{{ old('authority_contact', $seaPort?->authority_contact) }}</textarea>
+                    @error('authority_contact') <div class="text-danger small">{{ $message }}</div> @enderror
                 </div>
             </div>
             <div class="col-md-4">

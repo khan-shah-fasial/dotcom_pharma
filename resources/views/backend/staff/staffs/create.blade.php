@@ -74,6 +74,15 @@
                             </select>
                         </div>
                     </div>
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-from-label" for="status">{{ translate('Status') }}</label>
+                        <div class="col-sm-9">
+                            <select id="status" name="status" class="form-control aiz-selectpicker" required>
+                                <option value="1" @selected((string) old('status', '1') === '1')>{{ translate('Active') }}</option>
+                                <option value="0" @selected((string) old('status') === '0')>{{ translate('Inactive') }}</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <div class="form-group row">
                         <label class="col-sm-3 col-from-label">{{ translate('Area Assign') }}</label>

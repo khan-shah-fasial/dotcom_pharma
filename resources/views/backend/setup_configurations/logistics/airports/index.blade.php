@@ -29,7 +29,7 @@
                     <label>{{ translate('Excel File') }} <span class="text-danger">*</span></label>
                     <input type="file" name="bulk_file" class="form-control" accept=".xlsx,.xls,.csv" required>
                     <small class="text-muted">
-                        {{ translate('Use the sample headings exactly. Existing rows with the same IATA or ICAO code will be updated. Maximum file size: 10 MB.') }}
+                        {{ translate('Use the sample headings exactly. Existing rows with the same Port ID, IATA, or ICAO code will be updated. Maximum file size: 10 MB.') }}
                     </small>
                     @foreach($errors->get('bulk_file') as $message)
                         <div class="text-danger small">{{ $message }}</div>
@@ -53,7 +53,7 @@
         <form method="GET" action="{{ route('airports.index') }}" class="mb-3">
             <div class="row gutters-5">
                 <div class="col-md-5">
-                    <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="{{ translate('Search name, IATA, ICAO, city or authority') }}">
+                    <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="{{ translate('Search Port ID, name, IATA, ICAO, city or contact') }}">
                 </div>
                 <div class="col-md-3">
                     <select name="country_id" class="form-control aiz-selectpicker" data-live-search="true" data-placeholder="{{ translate('All Countries') }}">
@@ -81,11 +81,13 @@
                 <thead>
                     <tr>
                         <th>#</th>
+                        <th>{{ translate('Port ID') }}</th>
                         <th>{{ translate('Airport') }}</th>
                         <th>{{ translate('IATA / ICAO') }}</th>
                         <th>{{ translate('Country / City') }}</th>
                         <th>{{ translate('Terminal Type') }}</th>
                         <th>{{ translate('Cargo / Cold Chain') }}</th>
+                        <th>{{ translate('Authority / Coordinator') }}</th>
                         <th>{{ translate('Status') }}</th>
                         <th class="text-right">{{ translate('Options') }}</th>
                     </tr>
@@ -94,11 +96,9 @@
                     @forelse($airports as $key => $airport)
                         <tr>
                             <td>{{ $airports->firstItem() + $key }}</td>
+                            <td><strong>{{ $airport->port_id ?: '-' }}</strong></td>
                             <td>
                                 <strong>{{ $airport->name }}</strong>
-                                @if($airport->authority_name)
-                                    <div class="small text-muted">{{ $airport->authority_name }}</div>
-                                @endif
                             </td>
                             <td>{{ $airport->iata ?: '-' }} / {{ $airport->icao ?: '-' }}</td>
                             <td>
@@ -109,6 +109,29 @@
                             </td>
                             <td>{{ $airport->terminal_type ?: '-' }}</td>
                             <td>{{ $airport->cargo_airport ?: '-' }} / {{ $airport->cold_chain_facility ?: '-' }}</td>
+                            <td>
+                                @if($airport->authority_name)
+                                    <strong>{{ translate('Authority') }}:</strong> {{ $airport->authority_name }}
+                                    @if($airport->authority_mobile || $airport->authority_email)
+                                        <div class="small text-muted">
+                                            {{ collect([$airport->authority_mobile, $airport->authority_email])->filter()->implode(' | ') }}
+                                        </div>
+                                    @endif
+                                @endif
+                                @if($airport->coordinator_name)
+                                    <div @class(['mt-1' => $airport->authority_name])>
+                                        <strong>{{ translate('Coordinator') }}:</strong> {{ $airport->coordinator_name }}
+                                    </div>
+                                    @if($airport->coordinator_mobile || $airport->coordinator_email)
+                                        <div class="small text-muted">
+                                            {{ collect([$airport->coordinator_mobile, $airport->coordinator_email])->filter()->implode(' | ') }}
+                                        </div>
+                                    @endif
+                                @endif
+                                @if(!$airport->authority_name && !$airport->coordinator_name)
+                                    -
+                                @endif
+                            </td>
                             <td>
                                 <label class="aiz-switch aiz-switch-success mb-0">
                                     <input onchange="updateAirportStatus(this)" value="{{ $airport->id }}" type="checkbox" @checked($airport->status)>
@@ -126,7 +149,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center">{{ translate('No airports found') }}</td>
+                            <td colspan="10" class="text-center">{{ translate('No airports found') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

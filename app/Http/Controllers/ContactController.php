@@ -380,7 +380,7 @@ class ContactController extends Controller
         }
 
         $staffUser = User::whereHas('staff', function ($q) use ($request) {
-            $q->where('id', $request->staff_id);
+            $q->where('id', $request->staff_id)->where('status', 1);
         })->first();
 
         if (!$staffUser) {

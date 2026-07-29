@@ -17,6 +17,7 @@ class AirportImportSampleExport implements FromArray, WithHeadings, WithStyles, 
     public function headings(): array
     {
         return [
+            'port_id',
             'country',
             'iso2',
             'iso3',
@@ -29,6 +30,15 @@ class AirportImportSampleExport implements FromArray, WithHeadings, WithStyles, 
             'customs_airport',
             'cold_chain_facility',
             'authority_name',
+            'authority_designation',
+            'authority_mobile',
+            'authority_whatsapp',
+            'authority_email',
+            'coordinator_name',
+            'coordinator_designation',
+            'coordinator_mobile',
+            'coordinator_whatsapp',
+            'coordinator_email',
             'authority_contact',
             'latitude',
             'longitude',
@@ -39,6 +49,7 @@ class AirportImportSampleExport implements FromArray, WithHeadings, WithStyles, 
     public function array(): array
     {
         return [[
+            'AIR-BOM',
             'India',
             'IN',
             'IND',
@@ -51,7 +62,16 @@ class AirportImportSampleExport implements FromArray, WithHeadings, WithStyles, 
             'Yes',
             'Yes',
             'Airports Authority of India',
-            'cargo@example.com',
+            'Cargo Operations Manager',
+            '+91 22 6685 1010',
+            '+91 98765 43210',
+            'authority@example.com',
+            'International Cargo Desk',
+            'Export Coordinator',
+            '+91 22 6685 2020',
+            '+91 91234 56789',
+            'coordinator@example.com',
+            'Available Monday to Friday, 09:00-18:00',
             19.0896,
             72.8656,
             'Active',
@@ -66,9 +86,11 @@ class AirportImportSampleExport implements FromArray, WithHeadings, WithStyles, 
     public function columnWidths(): array
     {
         return [
-            'A' => 18, 'B' => 8, 'C' => 8, 'D' => 10, 'E' => 10, 'F' => 36,
-            'G' => 18, 'H' => 20, 'I' => 16, 'J' => 18, 'K' => 20, 'L' => 30,
-            'M' => 28, 'N' => 12, 'O' => 12, 'P' => 12,
+            'A' => 16, 'B' => 18, 'C' => 8, 'D' => 8, 'E' => 10, 'F' => 10,
+            'G' => 36, 'H' => 18, 'I' => 20, 'J' => 16, 'K' => 18, 'L' => 20,
+            'M' => 30, 'N' => 24, 'O' => 18, 'P' => 18, 'Q' => 28, 'R' => 28,
+            'S' => 24, 'T' => 18, 'U' => 18, 'V' => 28, 'W' => 32, 'X' => 12,
+            'Y' => 12, 'Z' => 12,
         ];
     }
 
@@ -103,7 +125,7 @@ class AirportImportSampleExport implements FromArray, WithHeadings, WithStyles, 
                 $sheet->getStyle("A1:{$lastColumn}2")->getAlignment()
                     ->setVertical('center')
                     ->setWrapText(true);
-                $sheet->getStyle('N2:O2')->getNumberFormat()->setFormatCode('0.000000');
+                $sheet->getStyle('X2:Y2')->getNumberFormat()->setFormatCode('0.000000');
             },
         ];
     }

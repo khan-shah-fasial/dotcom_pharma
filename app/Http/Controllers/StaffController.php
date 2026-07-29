@@ -8,6 +8,9 @@ use App\Models\Role;
 use App\Models\User;
 use Hash;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\QueryException;
 use Illuminate\Validation\Rule;
 
 class StaffController extends Controller
@@ -16,7 +19,7 @@ class StaffController extends Controller
         // Staff Permission Check
         $this->middleware(['permission:view_all_staffs'])->only('index');
         $this->middleware(['permission:add_staff'])->only('create');
-        $this->middleware(['permission:edit_staff'])->only('edit');
+        $this->middleware(['permission:edit_staff'])->only(['edit', 'update', 'updateStatus']);
         $this->middleware(['permission:delete_staff'])->only('destroy');
     }
 
@@ -58,6 +61,7 @@ class StaffController extends Controller
             'mobile' => 'required|string|max:50',
             'password' => 'required|string|min:6',
             'role_id' => 'required|integer|exists:roles,id',
+            'status' => 'required|boolean',
             'designation' => 'nullable|string|max:255',
             'aadhaar_card_no' => ['nullable', 'regex:/^[0-9]{12}$/'],
             'pan_no' => ['nullable', 'regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/'],
@@ -90,6 +94,7 @@ class StaffController extends Controller
                 $staff = new Staff;
                 $staff->user_id = $user->id;
                 $staff->role_id = $request->role_id;
+                $staff->status = $request->boolean('status');
                 $staff->designation = $request->designation;
                 $staff->display_email = $request->filled('display_email') ? trim($request->display_email) : null;
                 $staff->area_assignments = $this->prepareAreaAssignmentsFromRequest($request);
@@ -152,6 +157,7 @@ class StaffController extends Controller
             'mobile' => 'required|string|max:50',
             'password' => 'nullable|string|min:6',
             'role_id' => 'required|integer|exists:roles,id',
+            'status' => 'required|boolean',
             'designation' => 'nullable|string|max:255',
             'aadhaar_card_no' => ['nullable', 'regex:/^[0-9]{12}$/'],
             'pan_no' => ['nullable', 'regex:/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/'],
@@ -181,6 +187,7 @@ class StaffController extends Controller
         }
         if ($user->save()) {
             $staff->role_id = $request->role_id;
+            $staff->status = $request->boolean('status');
             $staff->designation = $request->designation;
             $staff->display_email = $request->filled('display_email') ? trim($request->display_email) : null;
             $staff->area_assignments = $this->prepareAreaAssignmentsFromRequest($request);
@@ -206,15 +213,121 @@ class StaffController extends Controller
      */
     public function destroy($id)
     {
-        User::destroy(Staff::findOrFail($id)->user->id);
-        if (Staff::destroy($id)) {
+        $staff = Staff::with('user')->findOrFail($id);
+        $linkedTables = $this->linkedStaffTables($staff);
+
+        if (!empty($linkedTables)) {
+            flash(translate('Staff cannot be deleted because linked records exist') . ': ' . implode(', ', $linkedTables))->warning();
+            return back();
+        }
+
+        try {
+            DB::transaction(function () use ($staff) {
+                $user = $staff->user;
+                $staff->delete();
+
+                if ($user) {
+                    $user->delete();
+                }
+            });
+
             Cache::forget('lead_options.assignees');
             flash(translate('Staff has been deleted successfully'))->success();
             return redirect()->route('staffs.index');
+        } catch (QueryException $exception) {
+            report($exception);
+            flash(translate('Staff cannot be deleted because linked records exist'))->warning();
+            return back();
+        }
+    }
+
+    public function updateStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => ['required', 'integer', 'exists:staff,id'],
+            'status' => ['required', 'boolean'],
+        ]);
+
+        $staff = Staff::findOrFail($validated['id']);
+        $staff->status = (bool) $validated['status'];
+
+        if ($staff->save()) {
+            Cache::forget('lead_options.assignees');
+            return 1;
         }
 
-        flash(translate('Something went wrong'))->error();
-        return back();
+        return 0;
+    }
+
+    protected function linkedStaffTables(Staff $staff): array
+    {
+        $checks = [
+            ['pickup_points', 'staff_id', $staff->id],
+            ['leads', 'assigned_to', $staff->user_id],
+            ['leads', 'created_by', $staff->user_id],
+            ['lead_activities', 'created_by', $staff->user_id],
+            ['orders', 'sales_person_id', $staff->user_id],
+            ['orders', 'sales_executive_id', $staff->user_id],
+            ['orders', 'packed_by', $staff->user_id],
+            ['orders', 'checked_by', $staff->user_id],
+            ['orders', 'billing_by', $staff->user_id],
+            ['uploads', 'user_id', $staff->user_id],
+            ['tickets', 'user_id', $staff->user_id],
+            ['ticket_replies', 'user_id', $staff->user_id],
+            ['conversations', 'sender_id', $staff->user_id],
+            ['conversations', 'receiver_id', $staff->user_id],
+            ['messages', 'user_id', $staff->user_id],
+            ['transports', 'created_by', $staff->user_id],
+            ['booked_to', 'created_by', $staff->user_id],
+            ['local_delivery_partners', 'created_by', $staff->user_id],
+        ];
+
+        $linkedTables = collect($checks)
+            ->filter(function ($check) {
+                return Schema::hasTable($check[0])
+                    && Schema::hasColumn($check[0], $check[1])
+                    && DB::table($check[0])->where($check[1], $check[2])->exists();
+            })
+            ->pluck(0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (
+            Schema::hasTable('contacts')
+            && Schema::hasColumn('contacts', 'data')
+            && DB::table('contacts')->where('data->staff->staff_id', $staff->id)->exists()
+        ) {
+            $linkedTables[] = 'contacts';
+        }
+
+        if (DB::connection()->getDriverName() === 'mysql') {
+            try {
+                $foreignKeys = DB::table('information_schema.KEY_COLUMN_USAGE')
+                    ->where('REFERENCED_TABLE_SCHEMA', DB::connection()->getDatabaseName())
+                    ->whereIn('REFERENCED_TABLE_NAME', ['staff', 'users'])
+                    ->whereNotNull('REFERENCED_COLUMN_NAME')
+                    ->get(['TABLE_NAME', 'COLUMN_NAME', 'REFERENCED_TABLE_NAME']);
+
+                foreach ($foreignKeys as $foreignKey) {
+                    if ($foreignKey->TABLE_NAME === 'staff' && $foreignKey->COLUMN_NAME === 'user_id') {
+                        continue;
+                    }
+
+                    $linkedId = $foreignKey->REFERENCED_TABLE_NAME === 'staff'
+                        ? $staff->id
+                        : $staff->user_id;
+
+                    if (DB::table($foreignKey->TABLE_NAME)->where($foreignKey->COLUMN_NAME, $linkedId)->exists()) {
+                        $linkedTables[] = $foreignKey->TABLE_NAME;
+                    }
+                }
+            } catch (QueryException $exception) {
+                report($exception);
+            }
+        }
+
+        return array_values(array_unique($linkedTables));
     }
 
     /**

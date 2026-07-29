@@ -57,9 +57,11 @@
                         <label class="col-sm-3 col-from-label" for="name">{{translate('Pick-up Point Manager')}}</label>
                         <div class="col-sm-9">
                             <select name="staff_id" required class="form-control aiz-selectpicker">
-                                @foreach(\App\Models\Staff::all() as $staff)
+                                @foreach($staffs as $staff)
                                     @if ($staff->user!=null )
-                                        <option value="{{$staff->id}}" @if ($pickup_point->staff_id == $staff->id) selected @endif>{{$staff->user->name}}</option>
+                                        <option value="{{$staff->id}}" @if ($pickup_point->staff_id == $staff->id) selected @endif>
+                                            {{$staff->user->name}}{{ !$staff->status ? ' (' . translate('Inactive') . ')' : '' }}
+                                        </option>
                                     @endif
                                 @endforeach
                             </select>

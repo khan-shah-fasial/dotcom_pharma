@@ -288,6 +288,7 @@
             @foreach ($assignees as $user)
                 <option value="{{ $user->id }}" @if(old('assigned_to', $lead->assigned_to ?? '') == $user->id) selected @endif>
                     {{ $user->name }} @if($user->email) ({{ $user->email }}) @endif
+                    @if(isset($user->staff_status) && (int) $user->staff_status === 0) ({{ translate('Inactive') }}) @endif
                 </option>
             @endforeach
         </select>

@@ -28,12 +28,18 @@ class AirportController extends Controller
             ->with('country')
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($filter) use ($search) {
-                    $filter->where('name', 'like', "%{$search}%")
+                    $filter->where('port_id', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
                         ->orWhere('iata', 'like', "%{$search}%")
                         ->orWhere('icao', 'like', "%{$search}%")
                         ->orWhere('country', 'like', "%{$search}%")
                         ->orWhere('city', 'like', "%{$search}%")
-                        ->orWhere('authority_name', 'like', "%{$search}%");
+                        ->orWhere('authority_name', 'like', "%{$search}%")
+                        ->orWhere('authority_mobile', 'like', "%{$search}%")
+                        ->orWhere('authority_email', 'like', "%{$search}%")
+                        ->orWhere('coordinator_name', 'like', "%{$search}%")
+                        ->orWhere('coordinator_mobile', 'like', "%{$search}%")
+                        ->orWhere('coordinator_email', 'like', "%{$search}%");
                 });
             })
             ->when($countryId, fn ($query) => $query->where('country_id', $countryId))
@@ -141,11 +147,19 @@ class AirportController extends Controller
     private function validatedData(Request $request, ?Airport $airport = null): array
     {
         $request->merge([
+            'port_id' => strtoupper(trim((string) $request->input('port_id'))),
             'iata' => strtoupper(trim((string) $request->input('iata'))),
             'icao' => strtoupper(trim((string) $request->input('icao'))),
         ]);
 
         $validated = $request->validate([
+            'port_id' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[A-Z0-9._-]+$/',
+                Rule::unique('airports', 'port_id')->ignore($airport?->id),
+            ],
             'country_id' => ['required', 'integer', 'exists:countries,id'],
             'iata' => [
                 'nullable',
@@ -170,6 +184,15 @@ class AirportController extends Controller
             'customs_airport' => ['nullable', 'string', 'max:20'],
             'cold_chain_facility' => ['nullable', 'string', 'max:20'],
             'authority_name' => ['nullable', 'string', 'max:255'],
+            'authority_designation' => ['nullable', 'string', 'max:255'],
+            'authority_mobile' => ['nullable', 'string', 'max:30'],
+            'authority_whatsapp' => ['nullable', 'string', 'max:30'],
+            'authority_email' => ['nullable', 'email', 'max:191'],
+            'coordinator_name' => ['nullable', 'string', 'max:255'],
+            'coordinator_designation' => ['nullable', 'string', 'max:255'],
+            'coordinator_mobile' => ['nullable', 'string', 'max:30'],
+            'coordinator_whatsapp' => ['nullable', 'string', 'max:30'],
+            'coordinator_email' => ['nullable', 'email', 'max:191'],
             'authority_contact' => ['nullable', 'string', 'max:65535'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],

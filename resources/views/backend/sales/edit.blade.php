@@ -121,7 +121,7 @@
                                     <option value="">{{ translate('Select Sales Executive') }}</option>
                                     @foreach($salesPeople as $staff)
                                         <option value="{{ $staff->user_id }}" @selected((string) old('sales_executive_id', $order->sales_executive_id ?: $order->sales_person_id) === (string) $staff->user_id)>
-                                            {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
+                                            {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}{{ !$staff->status ? ' (' . translate('Inactive') . ')' : '' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -138,7 +138,7 @@
                                         <option value="">{{ translate('Select Staff') }}</option>
                                         @foreach($staffField['staff'] as $staff)
                                             <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], $order->{$staffField['name']}) === (string) $staff->user_id)>
-                                                {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
+                                                {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}{{ !$staff->status ? ' (' . translate('Inactive') . ')' : '' }}
                                             </option>
                                         @endforeach
                                     </select>

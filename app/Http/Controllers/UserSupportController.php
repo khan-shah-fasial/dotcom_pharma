@@ -77,6 +77,7 @@ class UserSupportController extends Controller
         }
 
         $staffs = Staff::with('user', 'role')
+            ->active()
             ->whereNotNull('area_assignments')
             ->get()
             ->filter(function (Staff $staff) use ($countryIds, $stateIds) {

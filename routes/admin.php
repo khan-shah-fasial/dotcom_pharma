@@ -360,6 +360,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/leads/create', 'create')->name('leads.create');
         Route::get('/leads/customer-by-phone', 'customerByPhone')->name('leads.customer_by_phone');
         Route::get('/leads/customer-by-company-name', 'customerByCompanyName')->name('leads.customer_by_company_name');
+        Route::get('/leads/transfer-options', 'transferOptions')->name('leads.transfer_options');
+        Route::post('/leads/transfer-staff', 'transferStaffLeads')->name('leads.transfer_staff');
         Route::post('/leads', 'store')->name('leads.store');
         Route::get('/leads/destroy/{lead}', 'destroy')->name('leads.destroy');
         Route::get('/leads/{lead}', 'show')->name('leads.show');
@@ -523,6 +525,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
     // Staff
     Route::resource('staffs', StaffController::class);
+    Route::post('/staffs/update-status', [StaffController::class, 'updateStatus'])->name('staffs.update_status');
     Route::get('/staffs/destroy/{id}', [StaffController::class, 'destroy'])->name('staffs.destroy');
 
     // Flash Deal

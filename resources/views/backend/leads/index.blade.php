@@ -20,11 +20,16 @@
 <div class="aiz-titlebar text-left mt-2 mb-3">
     <div class="row align-items-center">
         <div class="col-md-6"><h1 class="h3">{{ translate('Leads') }}</h1></div>
-        @can('add_lead')
-            <div class="col-md-6 text-md-right">
+        <div class="col-md-6 text-md-right">
+            @can('edit_lead')
+                <button type="button" class="btn btn-circle btn-soft-primary mr-2" data-toggle="modal" data-target="#transferStaffLeadsModal">
+                    {{ translate('Transfer Staff Leads') }}
+                </button>
+            @endcan
+            @can('add_lead')
                 <a href="{{ route('leads.create') }}" class="btn btn-circle btn-info">{{ translate('Add New Lead') }}</a>
-            </div>
-        @endcan
+            @endcan
+        </div>
     </div>
 </div>
 
@@ -325,6 +330,76 @@
 </div>
 
 @can('edit_lead')
+    <div class="modal fade" id="transferStaffLeadsModal" tabindex="-1" role="dialog" aria-labelledby="transferStaffLeadsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <form id="transferStaffLeadsForm" action="{{ route('leads.transfer_staff') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="_transfer_staff_form" value="1">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="transferStaffLeadsModalLabel">{{ translate('Transfer Staff Leads') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="transfer_from_staff">From<span class="text-danger">*</span></label>
+                                    <select id="transfer_from_staff" name="from_staff" class="form-control aiz-selectpicker"
+                                        data-live-search="true" data-container="#transferStaffLeadsModal" required>
+                                        <option value="">{{ translate('Select Staff') }}</option>
+                                        @foreach ($transferFromStaff as $staff)
+                                            <option value="{{ $staff->id }}" @selected((string) old('from_staff') === (string) $staff->id)>
+                                                {{ $staff->name }}{{ $staff->status ? '' : ' (' . translate('Inactive') . ')' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('from_staff') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="transfer_to_staff">{{ translate('To') }} <span class="text-danger">*</span></label>
+                                    <select id="transfer_to_staff" name="to_staff" class="form-control aiz-selectpicker"
+                                        data-live-search="true" data-container="#transferStaffLeadsModal" required>
+                                        <option value="">{{ translate('Select Active Staff') }}</option>
+                                        @foreach ($transferToStaff as $staff)
+                                            <option value="{{ $staff->id }}" @selected((string) old('to_staff') === (string) $staff->id)>{{ $staff->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('to_staff') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <input id="transfer_countries" type="hidden">
+
+                        <div class="form-group mb-0">
+                            <label>{{ translate('States and Lead Count') }} <span class="text-danger">*</span></label>
+                            <div id="transfer_state_loading" class="text-muted d-none">
+                                <i class="las la-spinner la-spin"></i> {{ translate('Loading leads') }}...
+                            </div>
+                            <div id="transfer_state_message" class="alert alert-soft-info mb-0">
+                                {{ translate('Select From staff to load states') }}
+                            </div>
+                            <div id="transfer_state_options" class="border rounded p-3 d-none"></div>
+                            @error('state_ids') <div class="text-danger small">{{ $message }}</div> @enderror
+                            @error('state_ids.*') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Close') }}</button>
+                        <button id="transfer_staff_submit" type="submit" class="btn btn-primary" disabled>
+                            {{ translate('Transfer Leads') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="quickLeadActivityModal" tabindex="-1" role="dialog" aria-labelledby="quickLeadActivityModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -419,5 +494,127 @@
             container: 'body',
             template: '<div class="popover lead-description-popover" role="tooltip"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>'
         });
+
+        (function () {
+            var transferOptionsUrl = @json(route('leads.transfer_options'));
+            var oldStateIds = @json(array_map('strval', (array) old('state_ids', [])));
+            var $from = $('#transfer_from_staff');
+            var $to = $('#transfer_to_staff');
+            var $countries = $('#transfer_countries');
+            var $stateOptions = $('#transfer_state_options');
+            var $stateMessage = $('#transfer_state_message');
+            var $loading = $('#transfer_state_loading');
+            var $submit = $('#transfer_staff_submit');
+
+            function refreshSubmitState() {
+                var hasState = $stateOptions.find('input[name="state_ids[]"]:checked').length > 0;
+                $submit.prop('disabled', !hasState || !$from.val() || !$to.val() || $from.val() === $to.val());
+            }
+
+            function excludeSourceFromDestination() {
+                var fromId = String($from.val() || '');
+                $to.find('option').each(function () {
+                    var isSource = fromId !== '' && String($(this).val()) === fromId;
+                    $(this).prop('disabled', isSource);
+                    if (isSource && $(this).is(':selected')) {
+                        $to.val('');
+                    }
+                });
+                $to.selectpicker('refresh');
+                refreshSubmitState();
+            }
+
+            function renderStates(states) {
+                $stateOptions.empty();
+
+                if (!states.length) {
+                    $stateOptions.addClass('d-none');
+                    $stateMessage.removeClass('d-none').text(@json(translate('No leads with a state were found for this staff member')));
+                    refreshSubmitState();
+                    return;
+                }
+
+                $.each(states, function (index, state) {
+                    var stateId = String(state.id);
+                    var checkboxId = 'transfer_state_' + stateId;
+                    var label = state.country_name ? state.country_name + ' - ' + state.name : state.name;
+                    var $wrapper = $('<div>', { class: 'custom-control custom-checkbox mb-2' });
+                    var $checkbox = $('<input>', {
+                        type: 'checkbox',
+                        class: 'custom-control-input',
+                        id: checkboxId,
+                        name: 'state_ids[]',
+                        value: stateId
+                    }).prop('checked', oldStateIds.indexOf(stateId) !== -1);
+                    var $label = $('<label>', {
+                        class: 'custom-control-label',
+                        for: checkboxId
+                    }).text(label + ' (' + state.lead_count + ' ' + @json(translate('leads')) + ')');
+
+                    $wrapper.append($checkbox, $label);
+                    $stateOptions.append($wrapper);
+                });
+
+                oldStateIds = [];
+                $stateMessage.addClass('d-none');
+                $stateOptions.removeClass('d-none');
+                refreshSubmitState();
+            }
+
+            function loadTransferOptions() {
+                var fromId = $from.val();
+
+                excludeSourceFromDestination();
+                $countries.val('');
+                $stateOptions.empty().addClass('d-none');
+                $stateMessage.addClass('d-none');
+
+                if (!fromId) {
+                    $stateMessage.removeClass('d-none').text(@json(translate('Select From staff to load states')));
+                    refreshSubmitState();
+                    return;
+                }
+
+                $loading.removeClass('d-none');
+                $submit.prop('disabled', true);
+
+                $.ajax({
+                    url: transferOptionsUrl,
+                    type: 'GET',
+                    data: { from_staff: fromId },
+                    success: function (response) {
+                        $countries.val((response.countries || []).join(', '));
+                        renderStates(response.states || []);
+                    },
+                    error: function () {
+                        $stateMessage.removeClass('d-none').text(@json(translate('Unable to load lead states. Please try again.')));
+                    },
+                    complete: function () {
+                        $loading.addClass('d-none');
+                        refreshSubmitState();
+                    }
+                });
+            }
+
+            $from.on('change', loadTransferOptions);
+            $to.on('change', refreshSubmitState);
+            $stateOptions.on('change', 'input[name="state_ids[]"]', refreshSubmitState);
+
+            $('#transferStaffLeadsModal').on('shown.bs.modal', function () {
+                $from.add($to).selectpicker('refresh');
+
+                if ($from.val() && $stateOptions.children().length === 0) {
+                    loadTransferOptions();
+                }
+            });
+
+            $('#transferStaffLeadsModal').on('hide.bs.modal', function () {
+                $from.add($to).selectpicker('close');
+            });
+
+            @if ($errors->any() && old('_transfer_staff_form'))
+                $('#transferStaffLeadsModal').modal('show');
+            @endif
+        })();
     </script>
 @endsection

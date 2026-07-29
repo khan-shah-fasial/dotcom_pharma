@@ -29,7 +29,15 @@ class LeadController extends Controller
     {
         $this->middleware(['permission:view_leads'])->only(['index', 'show']);
         $this->middleware(['permission:add_lead'])->only(['create', 'store']);
-        $this->middleware(['permission:edit_lead'])->only(['edit', 'update', 'storeActivity', 'updateActivity', 'destroyActivity']);
+        $this->middleware(['permission:edit_lead'])->only([
+            'edit',
+            'update',
+            'storeActivity',
+            'updateActivity',
+            'destroyActivity',
+            'transferOptions',
+            'transferStaffLeads',
+        ]);
         $this->middleware(['permission:delete_lead'])->only('destroy');
     }
 
@@ -257,6 +265,77 @@ class LeadController extends Controller
         return redirect()->route('leads.index');
     }
 
+    public function transferOptions(Request $request)
+    {
+        $validated = $request->validate([
+            'from_staff' => ['required', 'integer', Rule::exists('staff', 'user_id')],
+        ]);
+
+        $leadQuery = Lead::query()
+            ->where('assigned_to', $validated['from_staff']);
+        $this->applyLeadVisibility($leadQuery);
+
+        $countries = (clone $leadQuery)
+            ->join('countries', 'countries.id', '=', 'leads.country_id')
+            ->distinct()
+            ->orderBy('countries.name')
+            ->pluck('countries.name');
+
+        $states = (clone $leadQuery)
+            ->join('states', 'states.id', '=', 'leads.state_id')
+            ->leftJoin('countries', 'countries.id', '=', 'leads.country_id')
+            ->select([
+                'states.id',
+                'states.name',
+                'countries.name as country_name',
+                DB::raw('COUNT(leads.id) as lead_count'),
+            ])
+            ->groupBy('states.id', 'states.name', 'countries.name')
+            ->orderBy('countries.name')
+            ->orderBy('states.name')
+            ->get();
+
+        return response()->json([
+            'countries' => $countries->values(),
+            'states' => $states,
+        ]);
+    }
+
+    public function transferStaffLeads(Request $request)
+    {
+        $validated = $request->validate([
+            'from_staff' => ['required', 'integer', Rule::exists('staff', 'user_id')],
+            'to_staff' => [
+                'required',
+                'integer',
+                'different:from_staff',
+                Rule::exists('staff', 'user_id')->where(fn ($query) => $query->where('status', 1)),
+            ],
+            'state_ids' => ['required', 'array', 'min:1'],
+            'state_ids.*' => ['required', 'integer', 'distinct', 'exists:states,id'],
+        ]);
+
+        $leadQuery = Lead::query()
+            ->where('assigned_to', $validated['from_staff'])
+            ->whereIn('state_id', $validated['state_ids']);
+        $this->applyLeadVisibility($leadQuery);
+
+        $transferredCount = DB::transaction(function () use ($leadQuery, $validated) {
+            return $leadQuery->update([
+                'assigned_to' => $validated['to_staff'],
+                'updated_at' => now(),
+            ]);
+        });
+
+        if ($transferredCount === 0) {
+            flash(translate('No leads matched the selected staff and states'))->warning();
+        } else {
+            flash($transferredCount . ' ' . translate('lead(s) transferred successfully'))->success();
+        }
+
+        return redirect()->route('leads.index');
+    }
+
     public function storeActivity(Request $request, Lead $lead)
     {
         $this->authorizeLeadAccess($lead);
@@ -358,7 +437,22 @@ class LeadController extends Controller
                 'nullable',
                 Rule::exists('lead_statuses', 'id')->where(fn ($query) => $query->whereIn('name', ['New', 'Follow-up'])),
             ],
-            'assigned_to' => 'nullable|exists:users,id',
+            'assigned_to' => [
+                'nullable',
+                Rule::exists('users', 'id')->where(function ($query) use ($lead) {
+                    $query->where('users.user_type', 'admin')
+                        ->orWhereExists(function ($staffQuery) {
+                            $staffQuery->selectRaw('1')
+                                ->from('staff')
+                                ->whereColumn('staff.user_id', 'users.id')
+                                ->where('staff.status', 1);
+                        });
+
+                    if ($lead && $lead->assigned_to) {
+                        $query->orWhere('users.id', $lead->assigned_to);
+                    }
+                }),
+            ],
             'address' => 'nullable|string|max:500',
             'country_id' => 'nullable|integer|exists:countries,id',
             'state_id' => 'nullable|integer|exists:states,id',
@@ -415,7 +509,7 @@ class LeadController extends Controller
             'departments' => $departments,
             'customerTypes' => UserDetails::CUSTOMER_TYPES,
             'currentStatuses' => UserDetails::CURRENT_STATUSES,
-            'assignees' => $this->leadAssigneeOptions(),
+            'assignees' => $this->leadAssigneeOptions($lead?->assigned_to),
             'countries' => Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']),
             'states' => $lead && $lead->country_id
                 ? State::where('country_id', $lead->country_id)->orderBy('name')->get(['id', 'name'])
@@ -432,6 +526,8 @@ class LeadController extends Controller
             'sources' => $this->leadSourceOptions(),
             'statuses' => $this->leadStatusOptions(),
             'assignees' => $this->leadAssigneeOptions(),
+            'transferFromStaff' => $this->transferFromStaffOptions(),
+            'transferToStaff' => $this->transferToStaffOptions(),
         ];
     }
 
@@ -603,22 +699,78 @@ class LeadController extends Controller
         });
     }
 
-    protected function leadAssigneeOptions()
+    protected function leadAssigneeOptions(?int $selectedUserId = null)
     {
-        return $this->cachedLeadOption('assignees', function () {
+        $assignees = $this->cachedLeadOption('assignees', function () {
             return DB::table('users')
-                ->select(['users.id', 'users.name', 'users.email'])
+                ->select([
+                    'users.id',
+                    'users.name',
+                    'users.email',
+                    DB::raw('(select status from staff where staff.user_id = users.id limit 1) as staff_status'),
+                ])
                 ->where(function ($query) {
-                    $query->whereIn('users.user_type', ['admin', 'staff'])
+                    $query->where('users.user_type', 'admin')
                         ->orWhereExists(function ($staffQuery) {
                             $staffQuery->selectRaw('1')
                                 ->from('staff')
-                                ->whereColumn('staff.user_id', 'users.id');
+                                ->whereColumn('staff.user_id', 'users.id')
+                                ->where('staff.status', 1);
                         });
                 })
                 ->orderBy('users.name')
                 ->get();
         });
+
+        if (!$selectedUserId || $assignees->contains('id', $selectedUserId)) {
+            return $assignees;
+        }
+
+        $selected = DB::table('users')
+            ->select([
+                'users.id',
+                'users.name',
+                'users.email',
+                DB::raw('(select status from staff where staff.user_id = users.id limit 1) as staff_status'),
+            ])
+            ->where('users.id', $selectedUserId)
+            ->where(function ($query) {
+                $query->where('users.user_type', 'admin')
+                    ->orWhereExists(function ($staffQuery) {
+                        $staffQuery->selectRaw('1')
+                            ->from('staff')
+                            ->whereColumn('staff.user_id', 'users.id');
+                    });
+            })
+            ->first();
+
+        return $selected
+            ? collect($assignees->all())->push($selected)->sortBy('name')->values()
+            : $assignees;
+    }
+
+    protected function transferFromStaffOptions()
+    {
+        return DB::table('staff')
+            ->join('users', 'users.id', '=', 'staff.user_id')
+            ->select(['users.id', 'users.name', 'staff.status'])
+            ->whereExists(function ($query) {
+                $query->selectRaw('1')
+                    ->from('leads')
+                    ->whereColumn('leads.assigned_to', 'users.id');
+            })
+            ->orderBy('users.name')
+            ->get();
+    }
+
+    protected function transferToStaffOptions()
+    {
+        return DB::table('staff')
+            ->join('users', 'users.id', '=', 'staff.user_id')
+            ->select(['users.id', 'users.name'])
+            ->where('staff.status', 1)
+            ->orderBy('users.name')
+            ->get();
     }
 
     protected function leadActivityTypeOptions()
@@ -988,8 +1140,8 @@ class LeadController extends Controller
 
         $userId = auth()->id();
         $query->where(function ($query) use ($userId) {
-            $query->where('created_by', $userId)
-                ->orWhere('assigned_to', $userId);
+            $query->where('leads.created_by', $userId)
+                ->orWhere('leads.assigned_to', $userId);
         });
     }
 

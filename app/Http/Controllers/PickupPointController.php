@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PickupPoint;
 use App\Models\PickupPointTranslation;
+use App\Models\Staff;
+use Illuminate\Validation\Rule;
 
 class PickupPointController extends Controller
 {
@@ -37,7 +39,8 @@ class PickupPointController extends Controller
      */
     public function create()
     {
-        return view('backend.setup_configurations.pickup_point.create');
+        $staffs = Staff::active()->with('user')->whereHas('user')->orderBy('id')->get();
+        return view('backend.setup_configurations.pickup_point.create', compact('staffs'));
     }
 
     /**
@@ -48,6 +51,14 @@ class PickupPointController extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'staff_id' => [
+                'required',
+                'integer',
+                Rule::exists('staff', 'id')->where(fn ($query) => $query->where('status', 1)),
+            ],
+        ]);
+
         $pickup_point = new PickupPoint;
         $pickup_point->name = $request->name;
         $pickup_point->address = $request->address;
@@ -92,7 +103,14 @@ class PickupPointController extends Controller
     {
         $lang           = $request->lang;
         $pickup_point   = PickupPoint::findOrFail($id);
-        return view('backend.setup_configurations.pickup_point.edit', compact('pickup_point','lang'));
+        $staffs = Staff::with('user')
+            ->whereHas('user')
+            ->where(function ($query) use ($pickup_point) {
+                $query->where('status', 1)->orWhere('id', $pickup_point->staff_id);
+            })
+            ->orderBy('id')
+            ->get();
+        return view('backend.setup_configurations.pickup_point.edit', compact('pickup_point', 'lang', 'staffs'));
     }
 
     /**
@@ -105,6 +123,15 @@ class PickupPointController extends Controller
     public function update(Request $request, $id)
     {
         $pickup_point = PickupPoint::findOrFail($id);
+        $request->validate([
+            'staff_id' => [
+                'required',
+                'integer',
+                Rule::exists('staff', 'id')->where(function ($query) use ($pickup_point) {
+                    $query->where('status', 1)->orWhere('id', $pickup_point->staff_id);
+                }),
+            ],
+        ]);
         if($request->lang == env("DEFAULT_LANGUAGE")){
             $pickup_point->name = $request->name;
             $pickup_point->address = $request->address;

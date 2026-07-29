@@ -12,7 +12,14 @@
     <div class="card-header"><h5 class="mb-0 h6">{{ translate('Airport Identification') }}</h5></div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>{{ translate('Port ID') }} <span class="text-danger">*</span></label>
+                    <input type="text" name="port_id" class="form-control text-uppercase" value="{{ old('port_id', $airport?->port_id) }}" required maxlength="50">
+                    @error('port_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="col-md-4">
                 <div class="form-group">
                     <label>{{ translate('Country') }} <span class="text-danger">*</span></label>
                     <select name="country_id" class="form-control aiz-selectpicker" data-live-search="true" required>
@@ -26,7 +33,7 @@
                     @error('country_id') <div class="text-danger small">{{ $message }}</div> @enderror
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="form-group">
                     <label>{{ translate('Airport Name') }} <span class="text-danger">*</span></label>
                     <input type="text" name="name" class="form-control" value="{{ old('name', $airport?->name) }}" required maxlength="255">
@@ -99,19 +106,60 @@
 </div>
 
 <div class="card">
-    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Authority and Status') }}</h5></div>
+    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Airport Authority Contact') }}</h5></div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>{{ translate('Airport Authority') }}</label>
-                    <input type="text" name="authority_name" class="form-control" value="{{ old('authority_name', $airport?->authority_name) }}" maxlength="255">
+            @foreach([
+                'authority_name' => ['Name', 'text', 255],
+                'authority_designation' => ['Designation', 'text', 255],
+                'authority_mobile' => ['Mobile', 'tel', 30],
+                'authority_whatsapp' => ['WhatsApp', 'tel', 30],
+                'authority_email' => ['E-mail', 'email', 191],
+            ] as $field => [$label, $type, $maxLength])
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>{{ translate($label) }}</label>
+                        <input type="{{ $type }}" name="{{ $field }}" class="form-control" value="{{ old($field, $airport?->{$field}) }}" maxlength="{{ $maxLength }}">
+                        @error($field) <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-6">
+            @endforeach
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Coordinator Contact') }}</h5></div>
+    <div class="card-body">
+        <div class="row">
+            @foreach([
+                'coordinator_name' => ['Name', 'text', 255],
+                'coordinator_designation' => ['Designation', 'text', 255],
+                'coordinator_mobile' => ['Mobile', 'tel', 30],
+                'coordinator_whatsapp' => ['WhatsApp', 'tel', 30],
+                'coordinator_email' => ['E-mail', 'email', 191],
+            ] as $field => [$label, $type, $maxLength])
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>{{ translate($label) }}</label>
+                        <input type="{{ $type }}" name="{{ $field }}" class="form-control" value="{{ old($field, $airport?->{$field}) }}" maxlength="{{ $maxLength }}">
+                        @error($field) <div class="text-danger small">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Additional Contact Notes and Status') }}</h5></div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
                 <div class="form-group">
-                    <label>{{ translate('Authority Contact') }}</label>
+                    <label>{{ translate('Additional Contact Notes') }}</label>
                     <textarea name="authority_contact" class="form-control" rows="3">{{ old('authority_contact', $airport?->authority_contact) }}</textarea>
+                    @error('authority_contact') <div class="text-danger small">{{ $message }}</div> @enderror
                 </div>
             </div>
             <div class="col-md-4">

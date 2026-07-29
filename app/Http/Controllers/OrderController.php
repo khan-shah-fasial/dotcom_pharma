@@ -719,10 +719,10 @@ class OrderController extends Controller
                 'cc_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
                 'order_attachments' => ['nullable', 'array', 'max:20'],
                 'order_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
-                'sales_executive_id' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
-                'packed_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
-                'checked_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
-                'billing_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+                'sales_executive_id' => ['nullable', 'integer', Rule::exists('staff', 'user_id')->where(fn ($query) => $query->where('status', 1))],
+                'packed_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')->where(fn ($query) => $query->where('status', 1))],
+                'checked_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')->where(fn ($query) => $query->where('status', 1))],
+                'billing_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')->where(fn ($query) => $query->where('status', 1))],
                 'weight_grams' => ['nullable', 'numeric', 'min:0', 'max:99999999999.999'],
                 'length_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:width_cm,height_cm'],
                 'width_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,height_cm'],
@@ -1328,7 +1328,12 @@ class OrderController extends Controller
         $order = Order::with(['orderDetails', 'transport', 'bookedTo', 'attachments'])->findOrFail($id);
         $transports = Transport::active()->orderBy('name')->get();
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
-        extract($this->orderFormStaffOptions());
+        extract($this->orderFormStaffOptions([
+            $order->sales_executive_id ?: $order->sales_person_id,
+            $order->packed_by,
+            $order->checked_by,
+            $order->billing_by,
+        ]));
         $sellAmount = (float) $order->orderDetails->sum('shipping_cost');
 
         return view('backend.sales.edit', compact(
@@ -1368,10 +1373,35 @@ class OrderController extends Controller
             'freight_type' => ['nullable', Rule::in(['pre_paid', 'to_pay', 'fod'])],
             'shipping_cost_type' => ['required', Rule::in(['by_seller', 'free_shipping'])],
             'sell_amount' => ['required_if:shipping_cost_type,by_seller', 'nullable', 'numeric', 'min:0', 'max:99999999999.99'],
-            'sales_executive_id' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
-            'packed_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
-            'checked_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
-            'billing_by' => ['nullable', 'integer', Rule::exists('staff', 'user_id')],
+            'sales_executive_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('staff', 'user_id')->where(function ($query) use ($order) {
+                    $query->where('status', 1)
+                        ->orWhere('user_id', $order->sales_executive_id ?: $order->sales_person_id);
+                }),
+            ],
+            'packed_by' => [
+                'nullable',
+                'integer',
+                Rule::exists('staff', 'user_id')->where(function ($query) use ($order) {
+                    $query->where('status', 1)->orWhere('user_id', $order->packed_by);
+                }),
+            ],
+            'checked_by' => [
+                'nullable',
+                'integer',
+                Rule::exists('staff', 'user_id')->where(function ($query) use ($order) {
+                    $query->where('status', 1)->orWhere('user_id', $order->checked_by);
+                }),
+            ],
+            'billing_by' => [
+                'nullable',
+                'integer',
+                Rule::exists('staff', 'user_id')->where(function ($query) use ($order) {
+                    $query->where('status', 1)->orWhere('user_id', $order->billing_by);
+                }),
+            ],
         ]);
 
         if (!empty($validated['booked_to_id']) && !empty($validated['transport_id'])) {
@@ -1792,10 +1822,18 @@ class OrderController extends Controller
      *
      * @return array<string, \Illuminate\Support\Collection>
      */
-    protected function orderFormStaffOptions(): array
+    protected function orderFormStaffOptions(array $selectedUserIds = []): array
     {
+        $selectedUserIds = array_values(array_filter(array_map('intval', $selectedUserIds)));
         $staffMaster = Staff::with(['user', 'role'])
             ->whereHas('user')
+            ->where(function ($query) use ($selectedUserIds) {
+                $query->where('status', 1);
+
+                if (!empty($selectedUserIds)) {
+                    $query->orWhereIn('user_id', $selectedUserIds);
+                }
+            })
             ->get()
             ->sortBy(fn ($staff) => strtolower((string) optional($staff->user)->name))
             ->values();

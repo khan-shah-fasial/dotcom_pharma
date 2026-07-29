@@ -32,6 +32,7 @@
                     <th data-breakpoints="lg">{{translate('Phone')}}</th>
                     <th data-breakpoints="lg">{{translate('Role')}}</th>
                     <th data-breakpoints="lg">{{translate('Designation')}}</th>
+                    <th data-breakpoints="lg">{{translate('Status')}}</th>
                     <th data-breakpoints="lg">{{translate('Area Assign')}}</th>
                     <th width="10%" class="text-right">{{translate('Options')}}</th>
                 </tr>
@@ -62,6 +63,17 @@
 							</td>
                             <td>
                                 {{ $staff->designation ?? '-' }}
+                            </td>
+                            <td>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox"
+                                        @can('edit_staff') onchange="change_staff_status(this)" @endcan
+                                        value="{{ $staff->id }}"
+                                        @checked($staff->status)
+                                        @cannot('edit_staff') disabled @endcan
+                                    >
+                                    <span></span>
+                                </label>
                             </td>
                             <td>
                                 @php
@@ -123,4 +135,34 @@
 
 @section('modal')
     @include('modals.delete_modal')
+@endsection
+
+@section('script')
+    <script type="text/javascript">
+        function change_staff_status(el) {
+            if ('{{ env('DEMO_MODE') }}' === 'On') {
+                el.checked = !el.checked;
+                AIZ.plugins.notify('info', '{{ translate('Data can not change in demo mode.') }}');
+                return;
+            }
+
+            var status = el.checked ? 1 : 0;
+
+            $.post('{{ route('staffs.update_status') }}', {
+                _token: '{{ csrf_token() }}',
+                id: el.value,
+                status: status
+            }, function (data) {
+                if (data == 1) {
+                    AIZ.plugins.notify('success', '{{ translate('Change staff status successfully') }}');
+                } else {
+                    el.checked = !el.checked;
+                    AIZ.plugins.notify('danger', '{{ translate('Something went wrong') }}');
+                }
+            }).fail(function () {
+                el.checked = !el.checked;
+                AIZ.plugins.notify('danger', '{{ translate('Something went wrong') }}');
+            });
+        }
+    </script>
 @endsection

@@ -28,11 +28,17 @@ class SeaPortController extends Controller
             ->with('country')
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($filter) use ($search) {
-                    $filter->where('name', 'like', "%{$search}%")
+                    $filter->where('port_id', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
                         ->orWhere('un_locode', 'like', "%{$search}%")
                         ->orWhere('country', 'like', "%{$search}%")
                         ->orWhere('state_region', 'like', "%{$search}%")
-                        ->orWhere('authority_name', 'like', "%{$search}%");
+                        ->orWhere('authority_name', 'like', "%{$search}%")
+                        ->orWhere('authority_mobile', 'like', "%{$search}%")
+                        ->orWhere('authority_email', 'like', "%{$search}%")
+                        ->orWhere('coordinator_name', 'like', "%{$search}%")
+                        ->orWhere('coordinator_mobile', 'like', "%{$search}%")
+                        ->orWhere('coordinator_email', 'like', "%{$search}%");
                 });
             })
             ->when($countryId, fn ($query) => $query->where('country_id', $countryId))
@@ -140,10 +146,18 @@ class SeaPortController extends Controller
     private function validatedData(Request $request, ?SeaPort $seaPort = null): array
     {
         $request->merge([
+            'port_id' => strtoupper(trim((string) $request->input('port_id'))),
             'un_locode' => strtoupper(trim((string) $request->input('un_locode'))),
         ]);
 
         $validated = $request->validate([
+            'port_id' => [
+                'required',
+                'string',
+                'max:50',
+                'regex:/^[A-Z0-9._-]+$/',
+                Rule::unique('sea_ports', 'port_id')->ignore($seaPort?->id),
+            ],
             'country_id' => ['required', 'integer', 'exists:countries,id'],
             'name' => ['required', 'string', 'max:255'],
             'un_locode' => [
@@ -175,6 +189,15 @@ class SeaPortController extends Controller
             'fishing_supported' => ['nullable', 'string', 'max:20'],
             'ship_repair_supported' => ['nullable', 'string', 'max:20'],
             'authority_name' => ['nullable', 'string', 'max:255'],
+            'authority_designation' => ['nullable', 'string', 'max:255'],
+            'authority_mobile' => ['nullable', 'string', 'max:30'],
+            'authority_whatsapp' => ['nullable', 'string', 'max:30'],
+            'authority_email' => ['nullable', 'email', 'max:191'],
+            'coordinator_name' => ['nullable', 'string', 'max:255'],
+            'coordinator_designation' => ['nullable', 'string', 'max:255'],
+            'coordinator_mobile' => ['nullable', 'string', 'max:30'],
+            'coordinator_whatsapp' => ['nullable', 'string', 'max:30'],
+            'coordinator_email' => ['nullable', 'email', 'max:191'],
             'authority_contact' => ['nullable', 'string', 'max:65535'],
             'status' => ['required', 'boolean'],
         ]);

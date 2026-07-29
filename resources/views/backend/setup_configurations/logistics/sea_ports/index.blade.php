@@ -29,7 +29,7 @@
                     <label>{{ translate('Excel File') }} <span class="text-danger">*</span></label>
                     <input type="file" name="bulk_file" class="form-control" accept=".xlsx,.xls,.csv" required>
                     <small class="text-muted">
-                        {{ translate('Use the sample headings exactly. Existing rows with the same UN/LOCODE will be updated. Maximum file size: 10 MB.') }}
+                        {{ translate('Use the sample headings exactly. Existing rows with the same Port ID or UN/LOCODE will be updated. Maximum file size: 10 MB.') }}
                     </small>
                     @foreach($errors->get('bulk_file') as $message)
                         <div class="text-danger small">{{ $message }}</div>
@@ -53,7 +53,7 @@
         <form method="GET" action="{{ route('sea-ports.index') }}" class="mb-3">
             <div class="row gutters-5">
                 <div class="col-md-5">
-                    <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="{{ translate('Search name, UN/LOCODE, state or authority') }}">
+                    <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="{{ translate('Search Port ID, name, UN/LOCODE, state or contact') }}">
                 </div>
                 <div class="col-md-3">
                     <select name="country_id" class="form-control aiz-selectpicker" data-live-search="true" data-placeholder="{{ translate('All Countries') }}">
@@ -81,10 +81,12 @@
                 <thead>
                     <tr>
                         <th>#</th>
+                        <th>{{ translate('Port ID') }}</th>
                         <th>{{ translate('Port') }}</th>
                         <th>{{ translate('UN/LOCODE') }}</th>
                         <th>{{ translate('Country / State') }}</th>
                         <th>{{ translate('Terminal / Class') }}</th>
+                        <th>{{ translate('Authority / Coordinator') }}</th>
                         <th>{{ translate('Status') }}</th>
                         <th class="text-right">{{ translate('Options') }}</th>
                     </tr>
@@ -93,11 +95,9 @@
                     @forelse($ports as $key => $port)
                         <tr>
                             <td>{{ $ports->firstItem() + $key }}</td>
+                            <td><strong>{{ $port->port_id ?: '-' }}</strong></td>
                             <td>
                                 <strong>{{ $port->name }}</strong>
-                                @if($port->authority_name)
-                                    <div class="small text-muted">{{ $port->authority_name }}</div>
-                                @endif
                             </td>
                             <td>{{ $port->un_locode ?: '-' }}</td>
                             <td>
@@ -110,6 +110,29 @@
                                 {{ $port->terminal_type ?: '-' }}
                                 @if($port->classification)
                                     <div class="small text-muted">{{ $port->classification }}</div>
+                                @endif
+                            </td>
+                            <td>
+                                @if($port->authority_name)
+                                    <strong>{{ translate('Authority') }}:</strong> {{ $port->authority_name }}
+                                    @if($port->authority_mobile || $port->authority_email)
+                                        <div class="small text-muted">
+                                            {{ collect([$port->authority_mobile, $port->authority_email])->filter()->implode(' | ') }}
+                                        </div>
+                                    @endif
+                                @endif
+                                @if($port->coordinator_name)
+                                    <div @class(['mt-1' => $port->authority_name])>
+                                        <strong>{{ translate('Coordinator') }}:</strong> {{ $port->coordinator_name }}
+                                    </div>
+                                    @if($port->coordinator_mobile || $port->coordinator_email)
+                                        <div class="small text-muted">
+                                            {{ collect([$port->coordinator_mobile, $port->coordinator_email])->filter()->implode(' | ') }}
+                                        </div>
+                                    @endif
+                                @endif
+                                @if(!$port->authority_name && !$port->coordinator_name)
+                                    -
                                 @endif
                             </td>
                             <td>
@@ -129,7 +152,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center">{{ translate('No sea ports found') }}</td>
+                            <td colspan="9" class="text-center">{{ translate('No sea ports found') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -17,6 +17,7 @@ class SeaPortImportSampleExport implements FromArray, WithHeadings, WithStyles, 
     public function headings(): array
     {
         return [
+            'port_id',
             'country',
             'iso2',
             'iso3',
@@ -44,6 +45,15 @@ class SeaPortImportSampleExport implements FromArray, WithHeadings, WithStyles, 
             'fishing_supported',
             'ship_repair_supported',
             'authority_name',
+            'authority_designation',
+            'authority_mobile',
+            'authority_whatsapp',
+            'authority_email',
+            'coordinator_name',
+            'coordinator_designation',
+            'coordinator_mobile',
+            'coordinator_whatsapp',
+            'coordinator_email',
             'authority_contact',
             'status',
         ];
@@ -52,6 +62,7 @@ class SeaPortImportSampleExport implements FromArray, WithHeadings, WithStyles, 
     public function array(): array
     {
         return [[
+            'SEA-INNSA',
             'India',
             'IN',
             'IND',
@@ -79,7 +90,16 @@ class SeaPortImportSampleExport implements FromArray, WithHeadings, WithStyles, 
             'No',
             'Yes',
             'Jawaharlal Nehru Port Authority',
-            'operations@example.com',
+            'Port Operations Manager',
+            '+91 22 1234 5678',
+            '+91 98765 43210',
+            'authority@example.com',
+            'Cargo Coordination Desk',
+            'Export Coordinator',
+            '+91 22 8765 4321',
+            '+91 91234 56789',
+            'coordinator@example.com',
+            'Available Monday to Friday, 09:00–18:00',
             'Active',
         ]];
     }
@@ -92,11 +112,13 @@ class SeaPortImportSampleExport implements FromArray, WithHeadings, WithStyles, 
     public function columnWidths(): array
     {
         return [
-            'A' => 18, 'B' => 8, 'C' => 8, 'D' => 14, 'E' => 32, 'F' => 14,
-            'G' => 14, 'H' => 18, 'I' => 16, 'J' => 18, 'K' => 18, 'L' => 18,
-            'M' => 12, 'N' => 12, 'O' => 30, 'P' => 15, 'Q' => 16, 'R' => 16,
-            'S' => 18, 'T' => 20, 'U' => 22, 'V' => 18, 'W' => 18, 'X' => 18,
-            'Y' => 18, 'Z' => 20, 'AA' => 30, 'AB' => 28, 'AC' => 12,
+            'A' => 16, 'B' => 18, 'C' => 8, 'D' => 8, 'E' => 14, 'F' => 32,
+            'G' => 14, 'H' => 14, 'I' => 18, 'J' => 16, 'K' => 18, 'L' => 18,
+            'M' => 18, 'N' => 12, 'O' => 12, 'P' => 30, 'Q' => 15, 'R' => 16,
+            'S' => 16, 'T' => 18, 'U' => 20, 'V' => 22, 'W' => 18, 'X' => 18,
+            'Y' => 18, 'Z' => 18, 'AA' => 20, 'AB' => 30, 'AC' => 24, 'AD' => 18,
+            'AE' => 18, 'AF' => 28, 'AG' => 28, 'AH' => 24, 'AI' => 18, 'AJ' => 18,
+            'AK' => 28, 'AL' => 32, 'AM' => 12,
         ];
     }
 
@@ -131,7 +153,7 @@ class SeaPortImportSampleExport implements FromArray, WithHeadings, WithStyles, 
                 $sheet->getStyle("A1:{$lastColumn}2")->getAlignment()
                     ->setVertical('center')
                     ->setWrapText(true);
-                $sheet->getStyle('M2:N2')->getNumberFormat()->setFormatCode('0.000000');
+                $sheet->getStyle('N2:O2')->getNumberFormat()->setFormatCode('0.000000');
             },
         ];
     }

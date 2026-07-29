@@ -13,10 +13,25 @@ class LogisticsMasterSampleExportTest extends TestCase
     {
         $export = new SeaPortImportSampleExport();
 
-        $this->assertCount(29, $export->headings());
+        $this->assertCount(39, $export->headings());
         $this->assertSame(
-            ['country', 'iso2', 'iso3', 'continent', 'name', 'un_locode'],
+            ['port_id', 'country', 'iso2', 'iso3', 'continent', 'name'],
             array_slice($export->headings(), 0, 6)
+        );
+        $this->assertSame(
+            [
+                'authority_name',
+                'authority_designation',
+                'authority_mobile',
+                'authority_whatsapp',
+                'authority_email',
+                'coordinator_name',
+                'coordinator_designation',
+                'coordinator_mobile',
+                'coordinator_whatsapp',
+                'coordinator_email',
+            ],
+            array_slice($export->headings(), 27, 10)
         );
         $this->assertCount(count($export->headings()), $export->array()[0]);
     }
@@ -25,10 +40,25 @@ class LogisticsMasterSampleExportTest extends TestCase
     {
         $export = new AirportImportSampleExport();
 
-        $this->assertCount(16, $export->headings());
+        $this->assertCount(26, $export->headings());
         $this->assertSame(
-            ['country', 'iso2', 'iso3', 'iata', 'icao', 'name'],
+            ['port_id', 'country', 'iso2', 'iso3', 'iata', 'icao'],
             array_slice($export->headings(), 0, 6)
+        );
+        $this->assertSame(
+            [
+                'authority_name',
+                'authority_designation',
+                'authority_mobile',
+                'authority_whatsapp',
+                'authority_email',
+                'coordinator_name',
+                'coordinator_designation',
+                'coordinator_mobile',
+                'coordinator_whatsapp',
+                'coordinator_email',
+            ],
+            array_slice($export->headings(), 12, 10)
         );
         $this->assertCount(count($export->headings()), $export->array()[0]);
     }
