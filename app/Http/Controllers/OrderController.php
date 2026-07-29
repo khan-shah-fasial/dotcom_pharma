@@ -15,6 +15,8 @@ use App\Models\Coupon;
 use App\Models\User;
 use App\Models\CombinedOrder;
 use App\Models\Country;
+use App\Models\Airport;
+use App\Models\SeaPort;
 use App\Models\SmsTemplate;
 use App\Models\ProductBatch;
 use App\Models\BookedTo;
@@ -37,6 +39,7 @@ use App\Utility\EmailUtility;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Support\InvoiceType;
 use App\Services\OrderPlacementService;
 use App\Services\WalletRewardService;
 use Illuminate\Validation\ValidationException;
@@ -156,6 +159,8 @@ class OrderController extends Controller
     public function create()
     {
         $countries = Country::where('status', 1)->orderBy('name')->get(['id', 'name']);
+        $seaPorts = SeaPort::where('status', 1)->orderBy('country')->orderBy('name')->get();
+        $airports = Airport::where('status', 1)->orderBy('country')->orderBy('name')->get();
         $shippingMethods = ShippingMethod::where('is_active', 1)->orderBy('name')->get();
         $transports = Transport::active()->orderBy('name')->get();
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
@@ -165,6 +170,8 @@ class OrderController extends Controller
 
         return view('backend.sales.create', compact(
             'countries',
+            'seaPorts',
+            'airports',
             'shippingMethods',
             'transports',
             'bookedToOptions',
@@ -233,6 +240,7 @@ class OrderController extends Controller
             ->limit(20)
             ->get([
                 'id',
+                'type_option',
                 'name',
                 'email',
                 'phone',
@@ -240,8 +248,10 @@ class OrderController extends Controller
                 'user_type',
                 'approval_status',
                 'gst_no',
+                'iec_no',
                 'aadhaar_no',
                 'pan_no',
+                'passport_no',
                 'credit_status',
                 'credit_days',
                 'credit_limit',
@@ -271,8 +281,10 @@ class OrderController extends Controller
                 'account_no' => optional($details)->crm_id ?: (optional($details)->account_no_business ?: optional($details)->account_no_personal),
                 'record_file_no' => optional($details)->record_file_no,
                 'gst_no' => optional($details)->gst_no ?: $customer->gst_no,
+                'iec_no' => optional($details)->iec_no ?: $customer->iec_no,
                 'aadhaar_no' => optional($details)->aadhaar_no ?: $customer->aadhaar_no,
                 'pan_no' => optional($details)->pan_no ?: $customer->pan_no,
+                'passport_no' => optional($details)->passport_no ?: $customer->passport_no,
                 'dl1' => optional($details)->dl1,
                 'dl2' => optional($details)->dl2,
                 'dl_expiry' => optional($details)->dl_expiry,
@@ -302,6 +314,7 @@ class OrderController extends Controller
                 'default_transport_mode' => optional($details)->default_transport_mode ?: 'surface',
                 'default_transport_surface_mode' => optional($details)->default_transport_surface_mode ?: 'road',
                 'default_delivery_type' => optional($details)->default_delivery_type ?: 'door_delivery',
+                'type_option' => InvoiceType::forUser($customer),
             ];
         })->values());
     }
@@ -667,6 +680,9 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         if ($request->boolean('backend_add_order')) {
+            $customer = app(OrderPlacementService::class)->resolveApprovedCustomer($request->input('customer_id'));
+            $invoiceType = InvoiceType::forUser($customer);
+            $isInternational = $invoiceType === InvoiceType::INTERNATIONAL;
             $request->merge(['order_code_letter' => 'S']);
 
             if ($request->hasFile('cc_attachments')) {
@@ -686,6 +702,8 @@ class OrderController extends Controller
             }
 
             $request->validate([
+                'customer_id' => ['required', 'integer'],
+                'payment_type' => ['required', Rule::in(array_keys(InvoiceType::paymentTerms($invoiceType)))],
                 'order_no_preview' => ['nullable', 'string', 'max:191'],
                 'order_code_letter' => ['required', 'string', 'size:1', 'regex:/^[A-Za-z]$/'],
                 'order_date' => ['required', 'date'],
@@ -722,7 +740,19 @@ class OrderController extends Controller
                 'shipping_items.*.amount' => ['nullable', 'numeric', 'min:0', 'max:99999999999.99'],
                 'shipping_items.*.source' => ['nullable', Rule::in(['manual', 'courier'])],
                 'shipping_items.*.tax_inclusive' => ['nullable', 'boolean'],
-                'transport_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
+                'transport_delivery_type' => ['required', Rule::in(array_keys(InvoiceType::deliveryTerms($invoiceType)))],
+                'reverse_charge' => [$isInternational ? 'prohibited' : 'nullable', 'boolean'],
+                'loading_location_type' => [$isInternational ? 'required' : 'prohibited', Rule::in(['sea', 'air'])],
+                'loading_sea_port_id' => [$isInternational && $request->input('loading_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],
+                'loading_airport_id' => [$isInternational && $request->input('loading_location_type') === 'air' ? 'required' : 'nullable', 'integer', Rule::exists('airports', 'id')],
+                'discharge_location_type' => [$isInternational ? 'required' : 'prohibited', Rule::in(['sea', 'air'])],
+                'discharge_sea_port_id' => [$isInternational && $request->input('discharge_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],
+                'discharge_airport_id' => [$isInternational && $request->input('discharge_location_type') === 'air' ? 'required' : 'nullable', 'integer', Rule::exists('airports', 'id')],
+                'final_destination' => ['nullable', 'string', 'max:255'],
+                'carrier_tax_number' => ['nullable', 'string', 'max:100'],
+                'net_weight_kg' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
+                'gross_weight_kg' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
+                'total_volume_cbm' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
                 'transport_name' => ['nullable', 'string', 'max:255'],
                 'booked_to_name' => ['nullable', 'string', 'max:255'],
                 'local_delivery_partner_name' => ['nullable', 'string', 'max:255'],

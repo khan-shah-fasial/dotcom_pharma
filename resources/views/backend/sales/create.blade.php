@@ -801,15 +801,6 @@ span#picker-info-stock-badge {
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>{{ translate('Terms of Delivery') }}</label>
-                                <select class="form-control" name="transport_delivery_type">
-                                    <option value="door_delivery">{{ translate('Door Delivery') }}</option>
-                                    <option value="our_warehouse_delivery">{{ translate('Our Warehouse Delivery') }}</option>
-                                    <option value="hand_delivery">{{ translate('Hand Delivery') }}</option>
-                                    <option value="transport_warehouse">{{ translate('Transport Warehouse') }}</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
                                 <label>{{ translate('Consignee Copy') }}</label>
                                 <select class="form-control" name="consignee_copy_status" id="consignee-copy-status">
                                     <option value="attached" @selected(old('consignee_copy_status') === 'attached')>{{ translate('Attached') }}</option>
@@ -856,6 +847,113 @@ span#picker-info-stock-badge {
                             </div>
                         </div>
 
+                        <div class="form-group">
+                            <label id="terms-of-delivery-label">{{ translate('Terms Of Delivery') }}</label>
+                            <select class="form-control" name="transport_delivery_type" id="terms-of-delivery">
+                                @foreach(\App\Support\InvoiceType::DOMESTIC_DELIVERY_TERMS as $value => $label)
+                                    <option value="{{ $value }}" data-invoice-type="domestic" @selected(old('transport_delivery_type') === $value)>{{ translate($label) }}</option>
+                                @endforeach
+                                @foreach(\App\Support\InvoiceType::INTERNATIONAL_DELIVERY_TERMS as $value => $label)
+                                    <option value="{{ $value }}" data-invoice-type="international" @selected(old('transport_delivery_type') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div id="domestic-invoice-fields">
+                            <div class="form-group">
+                                <label>{{ translate('Reverse Charges') }}</label>
+                                <select class="form-control" name="reverse_charge">
+                                    <option value="0" @selected(old('reverse_charge', '0') === '0')>{{ translate('No') }}</option>
+                                    <option value="1" @selected(old('reverse_charge') === '1')>{{ translate('Yes') }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="international-logistics-fields" class="d-none">
+                            <div class="form-group">
+                                <label>{{ translate('Loading Location Type') }}</label>
+                                <select class="form-control international-logistics-input" name="loading_location_type" id="loading-location-type">
+                                    <option value="sea" @selected(old('loading_location_type', 'sea') === 'sea')>{{ translate('Sea Port') }}</option>
+                                    <option value="air" @selected(old('loading_location_type') === 'air')>{{ translate('Airport') }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="loading-sea-port-wrap">
+                                <label>{{ translate('Sea Port Of Loading') }}</label>
+                                <select class="form-control international-logistics-input" name="loading_sea_port_id">
+                                    <option value="">{{ translate('Select Sea Port') }}</option>
+                                    @foreach($seaPorts as $port)
+                                        <option value="{{ $port->id }}" @selected((string) old('loading_sea_port_id') === (string) $port->id)>
+                                            {{ $port->country }} - {{ $port->name }}{{ $port->un_locode ? ' (' . $port->un_locode . ')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group d-none" id="loading-airport-wrap">
+                                <label>{{ translate('Airport Of Loading') }}</label>
+                                <select class="form-control international-logistics-input" name="loading_airport_id">
+                                    <option value="">{{ translate('Select Airport') }}</option>
+                                    @foreach($airports as $airport)
+                                        <option value="{{ $airport->id }}" @selected((string) old('loading_airport_id') === (string) $airport->id)>
+                                            {{ $airport->country }} - {{ $airport->name }}{{ $airport->iata ? ' (' . $airport->iata . ')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Discharge Location Type') }}</label>
+                                <select class="form-control international-logistics-input" name="discharge_location_type" id="discharge-location-type">
+                                    <option value="sea" @selected(old('discharge_location_type', 'sea') === 'sea')>{{ translate('Sea Port') }}</option>
+                                    <option value="air" @selected(old('discharge_location_type') === 'air')>{{ translate('Airport') }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="discharge-sea-port-wrap">
+                                <label>{{ translate('Port Of Discharge') }}</label>
+                                <select class="form-control international-logistics-input" name="discharge_sea_port_id">
+                                    <option value="">{{ translate('Select Sea Port') }}</option>
+                                    @foreach($seaPorts as $port)
+                                        <option value="{{ $port->id }}" @selected((string) old('discharge_sea_port_id') === (string) $port->id)>
+                                            {{ $port->country }} - {{ $port->name }}{{ $port->un_locode ? ' (' . $port->un_locode . ')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group d-none" id="discharge-airport-wrap">
+                                <label>{{ translate('Airport Of Discharge') }}</label>
+                                <select class="form-control international-logistics-input" name="discharge_airport_id">
+                                    <option value="">{{ translate('Select Airport') }}</option>
+                                    @foreach($airports as $airport)
+                                        <option value="{{ $airport->id }}" @selected((string) old('discharge_airport_id') === (string) $airport->id)>
+                                            {{ $airport->country }} - {{ $airport->name }}{{ $airport->iata ? ' (' . $airport->iata . ')' : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Final Destination') }}</label>
+                                <input type="text" class="form-control international-logistics-input auto-capitalize-first" name="final_destination" value="{{ old('final_destination') }}">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label id="carrier-tax-number-label">{{ translate('Carrier GST No.') }}</label>
+                            <input type="text" class="form-control" name="carrier_tax_number" value="{{ old('carrier_tax_number') }}">
+                        </div>
+                        <div class="row gutters-5">
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Net Weight (KG)') }}</label>
+                                <input type="number" min="0" step="0.000001" class="form-control" name="net_weight_kg" value="{{ old('net_weight_kg') }}">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Gross Weight (KG)') }}</label>
+                                <input type="number" min="0" step="0.000001" class="form-control" name="gross_weight_kg" value="{{ old('gross_weight_kg') }}">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label>{{ translate('Total Volume / CBM') }}</label>
+                                <input type="number" min="0" step="0.000001" class="form-control" name="total_volume_cbm" value="{{ old('total_volume_cbm') }}">
+                            </div>
+                        </div>
+
                         <div class="border-top pt-3">
                             <div class="form-group">
                                 <label>{{ translate('Shipping Cost') }}</label>
@@ -898,13 +996,15 @@ span#picker-info-stock-badge {
                     <div class="card-body">
                         <div class="form-group">
                             <label>{{ translate('Payment Terms') }}</label>
-                            <select class="form-control" name="payment_type">
-                                <option value="cash_on_delivery">{{ translate('Cash On Delivery') }}</option>
-                                <option value="manual">{{ translate('Manual') }}</option>
-                                <option value="bank_payment">{{ translate('Bank Payment') }}</option>
-                                <option value="wallet">{{ translate('Wallet') }}</option>
-                                <option value="credit">{{ translate('Credit') }}</option>
+                            <select class="form-control" name="payment_type" id="payment-terms">
+                                @foreach(\App\Support\InvoiceType::DOMESTIC_PAYMENT_TERMS as $value => $label)
+                                    <option value="{{ $value }}" data-invoice-type="domestic" @selected(old('payment_type') === $value)>{{ translate($label) }}</option>
+                                @endforeach
+                                @foreach(\App\Support\InvoiceType::INTERNATIONAL_PAYMENT_TERMS as $value => $label)
+                                    <option value="{{ $value }}" data-invoice-type="international" @selected(old('payment_type') === $value)>{{ $label }}</option>
+                                @endforeach
                             </select>
+                            @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Payment Status') }}</label>
@@ -1267,14 +1367,15 @@ span#picker-info-stock-badge {
             }
 
             function customerSubText(customer) {
+                var international = customer.type_option === 'international';
                 return [
                     customer.account_no ? '{{ translate('Account No') }}: ' + customer.account_no : '',
-                    '{{ translate('GST') }}: ' + (customer.gst_no || '-'),
-                    '{{ translate('Aadhar') }}: ' + (customer.aadhaar_no || '-'),
-                    '{{ translate('PAN') }}: ' + (customer.pan_no || '-'),
-                    '{{ translate('DL 1') }}: ' + (customer.dl1 || '-'),
-                    '{{ translate('DL 2') }}: ' + (customer.dl2 || '-'),
-                    '{{ translate('DL Expiry') }}: ' + (customer.dl_expiry || '-')
+                    (international ? '{{ translate('IEC') }}' : '{{ translate('GST') }}') + ': ' + ((international ? customer.iec_no : customer.gst_no) || '-'),
+                    (international ? '{{ translate('Passport') }}' : '{{ translate('Aadhaar') }}') + ': ' + ((international ? customer.passport_no : customer.aadhaar_no) || '-'),
+                    (international ? '{{ translate('Income Tax ID') }}' : '{{ translate('PAN') }}') + ': ' + (customer.pan_no || '-'),
+                    (international ? '{{ translate('Pharmacy Licence 1') }}' : '{{ translate('Drug Licence 1') }}') + ': ' + (customer.dl1 || '-'),
+                    (international ? '{{ translate('Pharmacy Licence 2') }}' : '{{ translate('Drug Licence 2') }}') + ': ' + (customer.dl2 || '-'),
+                    (international ? '{{ translate('Pharmacy Licence Expiry') }}' : '{{ translate('Drug Licence Expiry') }}') + ': ' + (customer.dl_expiry || '-')
                 ].filter(Boolean).join(' | ');
             }
 
@@ -1295,6 +1396,7 @@ span#picker-info-stock-badge {
                     ['{{ translate('Default Shipping') }}', customer.default_shipping_method]
                 ];
                 var highlights = [
+                    ['{{ translate('Invoice Type') }}', customer.type_option || 'domestic'],
                     ['{{ translate('Approval Status') }}', customer.approval_status],
                     ['{{ translate('Current Status') }}', customer.current_status],
                     ['{{ translate('Customer Role') }}', customer.role],
@@ -1337,7 +1439,53 @@ span#picker-info-stock-badge {
                 var deliveryType = customer.default_delivery_type === 'transport_godown'
                     ? 'transport_warehouse'
                     : (customer.default_delivery_type || 'door_delivery');
-                $('select[name="transport_delivery_type"]').val(deliveryType);
+                if ((customer.type_option || 'domestic') === 'domestic') {
+                    $('select[name="transport_delivery_type"]').val(deliveryType);
+                }
+            }
+
+            function filterInvoiceOptions($select, invoiceType) {
+                var $allowed = $select.find('option').each(function () {
+                    var allowed = $(this).data('invoice-type') === invoiceType;
+                    $(this).prop('disabled', !allowed).toggle(allowed);
+                }).filter(function () {
+                    return !this.disabled;
+                });
+
+                if (!$select.find('option:selected').length || $select.find('option:selected').prop('disabled')) {
+                    $select.val($allowed.first().val());
+                }
+            }
+
+            function toggleInternationalLocation(prefix) {
+                var type = $('#' + prefix + '-location-type').val() || 'sea';
+                $('#' + prefix + '-sea-port-wrap').toggleClass('d-none', type !== 'sea')
+                    .find('select').prop('disabled', type !== 'sea');
+                $('#' + prefix + '-airport-wrap').toggleClass('d-none', type !== 'air')
+                    .find('select').prop('disabled', type !== 'air');
+            }
+
+            function applyCustomerInvoiceType(customer) {
+                var invoiceType = customer && customer.type_option === 'international' ? 'international' : 'domestic';
+                var international = invoiceType === 'international';
+
+                filterInvoiceOptions($('#payment-terms'), invoiceType);
+                filterInvoiceOptions($('#terms-of-delivery'), invoiceType);
+                $('#terms-of-delivery-label').text(international
+                    ? '{{ translate('Incoterm / Terms Of Delivery') }}'
+                    : '{{ translate('Terms Of Delivery') }}');
+                $('#carrier-tax-number-label').text(international
+                    ? '{{ translate('Carrier Tax No.') }}'
+                    : '{{ translate('Carrier GST No.') }}');
+                $('#domestic-invoice-fields').toggleClass('d-none', international)
+                    .find(':input').prop('disabled', international);
+                $('#international-logistics-fields').toggleClass('d-none', !international);
+                $('.international-logistics-input').prop('disabled', !international);
+
+                if (international) {
+                    toggleInternationalLocation('loading');
+                    toggleInternationalLocation('discharge');
+                }
             }
 
             function sortedByDefaultThenLatest(addresses) {
@@ -1411,6 +1559,7 @@ span#picker-info-stock-badge {
                             $('#record-file-no').val(customer.record_file_no || '');
                             $('#selected-customer-card').removeClass('d-none').html(customerMetaHtml(customer));
                             $box.empty();
+                            applyCustomerInvoiceType(customer);
                             applyCustomerShippingDefaults(customer);
                             loadAddresses(customer.id);
                             refreshSummary();
@@ -2346,6 +2495,14 @@ span#picker-info-stock-badge {
                 loadCourierServices();
             });
 
+            $('#loading-location-type').on('change', function () {
+                toggleInternationalLocation('loading');
+            });
+
+            $('#discharge-location-type').on('change', function () {
+                toggleInternationalLocation('discharge');
+            });
+
             $('#additional-discount,#additional-discount-type').on('input change', function () {
                 $('#additional-discount-enabled').val('0');
                 $('#additional-discount-message').removeClass('text-success text-danger').text('');
@@ -2496,6 +2653,8 @@ span#picker-info-stock-badge {
                     notify('warning', '{{ translate('Please select or enter a local delivery partner.') }}');
                 }
             });
+
+            applyCustomerInvoiceType({type_option: 'domestic'});
         })();
     </script>
 @endsection

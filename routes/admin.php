@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AddonController;
+use App\Http\Controllers\AirportController;
 use App\Http\Controllers\Admin\Report\EarningReportController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AizUploadController;
@@ -54,6 +55,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\SellerWithdrawRequestController;
+use App\Http\Controllers\SeaPortController;
 use App\Http\Controllers\SizeChartController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StateController;
@@ -753,6 +755,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     Route::post('/countries/status', [CountryController::class, 'updateStatus'])->name('countries.status');
     Route::post('/countries/defaults', [CountryController::class, 'updateDefaults'])->name('countries.defaults');
     Route::post('/countries/system-default', [CountryController::class, 'updateSystemDefaultCountry'])->name('countries.system_default');
+    Route::post('/countries/refresh-forex', [CountryController::class, 'refreshForexRates'])->name('countries.refresh_forex');
 
     // States
     Route::resource('states', StateController::class);
@@ -783,6 +786,23 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/local-delivery-partners/destroy/{id}', 'destroy')->name('local-delivery-partners.destroy');
         Route::post('/local-delivery-partners/update_status', 'updateStatus')->name('local-delivery-partners.update_status');
     });
+
+    // International logistics masters
+    Route::controller(SeaPortController::class)->group(function () {
+        Route::post('/sea-ports/import', 'import')->name('sea-ports.import');
+        Route::get('/sea-ports/import-sample', 'downloadSample')->name('sea-ports.import-sample');
+        Route::post('/sea-ports/update-status', 'updateStatus')->name('sea-ports.update-status');
+        Route::get('/sea-ports/destroy/{seaPort}', 'destroy')->name('sea-ports.destroy');
+    });
+    Route::resource('sea-ports', SeaPortController::class)->except(['show', 'destroy']);
+
+    Route::controller(AirportController::class)->group(function () {
+        Route::post('/airports/import', 'import')->name('airports.import');
+        Route::get('/airports/import-sample', 'downloadSample')->name('airports.import-sample');
+        Route::post('/airports/update-status', 'updateStatus')->name('airports.update-status');
+        Route::get('/airports/destroy/{airport}', 'destroy')->name('airports.destroy');
+    });
+    Route::resource('airports', AirportController::class)->except(['show', 'destroy']);
 
 
     // Zones

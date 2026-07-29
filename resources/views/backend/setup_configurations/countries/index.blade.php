@@ -8,7 +8,12 @@
                 <div class="col text-center text-md-left">
                     <h5 class="mb-md-0 h6">{{ translate('Countries') }}</h5>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
+                    <button type="submit" form="refresh-forex-form" class="btn btn-soft-success btn-block">
+                        <i class="las la-sync"></i> {{ translate('Refresh Forex') }}
+                    </button>
+                </div>
+                <div class="col-md-3">
                     <div class="form-group mb-0">
                         <label class="mb-0">{{ translate('System Default Country') }}</label>
                         <select id="system_default_country" class="form-control" onchange="update_system_default_country(this)">
@@ -29,6 +34,9 @@
                 </div>
             </div>
         </form>
+        <form id="refresh-forex-form" action="{{ route('countries.refresh_forex') }}" method="POST" class="d-none">
+            @csrf
+        </form>
         <div class="card-body">
             <div class="table-responsive">
             <table class="table table-striped table-bordered" cellspacing="0" width="100%">
@@ -36,7 +44,12 @@
                     <tr>
                         <th width="10%">#</th>
                         <th>{{translate('Name')}}</th>
-                        <th data-breakpoints="lg">{{translate('Code')}}</th>
+                        <th data-breakpoints="lg">{{ translate('ISO2') }}</th>
+                        <th data-breakpoints="lg">{{ translate('ISO3') }}</th>
+                        <th data-breakpoints="lg">{{ translate('Capital Of Country') }}</th>
+                        <th class="d-none" data-breakpoints="lg">{{ translate('Timezone') }}</th>
+                        <th>{{ translate('Live Current Date / Day & Time') }}</th>
+                        <th>{{ translate('Live Forex Rate') }}</th>
                         <th>{{ translate('Default Currency') }}</th>
                         <th>{{ translate('Default Language') }}</th>
                         <th>{{ translate('Regional Languages') }}</th>
@@ -49,6 +62,46 @@
                             <td>{{ ($key+1) + ($countries->currentPage() - 1)*$countries->perPage() }}</td>
                             <td>{{ $country->name }}</td>
                             <td>{{ $country->code }}</td>
+                            <td>
+                                <input id="iso3_{{ $country->id }}" class="form-control form-control-sm text-uppercase"
+                                    maxlength="3" value="{{ $country->iso3 }}"
+                                    onchange="update_defaults({{ $country->id }}, false, this)">
+                            </td>
+                            <td>
+                                <input id="capital_{{ $country->id }}" class="form-control form-control-sm"
+                                    maxlength="191" value="{{ $country->capital }}"
+                                    onchange="update_defaults({{ $country->id }}, false, this)">
+                            </td>
+                            <td class="d-none">
+                                <span class="text-nowrap">{{ $country->timezone ?: translate('Not available') }}</span>
+                            </td>
+                            <td>
+                                @php($localDateTime = $country->localDateTime())
+                                <span class="country-live-time"
+                                    data-country-id="{{ $country->id }}"
+                                    data-timezone="{{ $country->timezone }}">
+                                    {{ $localDateTime ? $localDateTime->format('d M Y, l, h:i A') : translate('Timezone not set') }}
+                                </span>
+                            </td>
+                            <td>
+                                @if($country->forex_rate && $country->defaultCurrency)
+                                    <strong>
+                                        1 {{ $country->defaultCurrency->code }}
+                                        = {{ rtrim(rtrim(number_format((float) $country->forex_rate, 8, '.', ''), '0'), '.') }}
+                                        {{ $country->forex_base_currency_code }}
+                                    </strong>
+                                    @if($country->forex_rate_updated_at)
+                                        <div class="small text-muted">
+                                            {{ translate('Updated') }}:
+                                            {{ $country->forex_rate_updated_at->timezone($display_timezone)->format('d M Y, h:i A') }}
+                                        </div>
+                                    @endif
+                                @elseif(!$country->defaultCurrency)
+                                    <span class="text-muted">{{ translate('Set default currency') }}</span>
+                                @else
+                                    <span class="text-muted">{{ translate('Not refreshed') }}</span>
+                                @endif
+                            </td>
                             <td>
                                 <select id="default_currency_id_{{ $country->id }}"
                                     class="form-control form-control-sm aiz-selectpicker"
@@ -76,11 +129,6 @@
                                 </select>
                             </td>
                             <td>
-                                @php
-                                    $selectedRegionalLanguages = collect($country->regional_language ?? [])->map(function ($id) {
-                                        return (string) $id;
-                                    })->all();
-                                @endphp
                                 <select id="regional_language_ids_{{ $country->id }}"
                                     class="form-control form-control-sm aiz-selectpicker"
                                     data-live-search="true" data-width="100%"
@@ -89,7 +137,7 @@
                                     multiple
                                     onchange="update_defaults({{ $country->id }}, false, this)">
                                     @foreach($active_languages as $language)
-                                        <option value="{{ $language->id }}" @selected(in_array((string)$language->id, $selectedRegionalLanguages, true))>
+                                        <option value="{{ $language->id }}" @selected(collect($country->regional_language ?? [])->map(fn ($id) => (string) $id)->contains((string) $language->id, true))>
                                             {{ $language->name }} ({{ $language->code }})
                                         </option>
                                     @endforeach
@@ -150,6 +198,8 @@
             var currencyId = $('#default_currency_id_' + countryId).val();
             var languageId = $('#default_language_id_' + countryId).val();
             var regionalLanguageIds = $('#regional_language_ids_' + countryId).val() || [];
+            var iso3 = ($('#iso3_' + countryId).val() || '').toUpperCase();
+            var capital = $('#capital_' + countryId).val() || '';
 
             // Convenience: if admin selects only one field, auto-fill the other with system defaults
             // to avoid requiring two manual selections.
@@ -174,6 +224,8 @@
                 data: {
                     _token:'{{ csrf_token() }}',
                     id: countryId,
+                    iso3: iso3,
+                    capital: capital,
                     default_currency_id: currencyId,
                     default_language_id: languageId,
                     regional_language_ids: regionalLanguageIds
@@ -243,6 +295,37 @@
                 }
             });
         }
+
+        function updateCountryClocks() {
+            var now = new Date();
+
+            $('.country-live-time').each(function () {
+                var timezone = $(this).attr('data-timezone');
+                if (!timezone) {
+                    $(this).text('{{ translate('Timezone not set') }}');
+                    return;
+                }
+
+                try {
+                    var formatted = new Intl.DateTimeFormat('en-GB', {
+                        timeZone: timezone,
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        weekday: 'long',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    }).format(now);
+                    $(this).text(formatted);
+                } catch (error) {
+                    $(this).text('{{ translate('Invalid timezone') }}');
+                }
+            });
+        }
+
+        updateCountryClocks();
+        setInterval(updateCountryClocks, 60000);
 
     </script>
 @endsection

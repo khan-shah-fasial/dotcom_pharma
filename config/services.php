@@ -68,6 +68,11 @@ return [
         'base' => 'https://v6.exchangerate-api.com/v6',
     ],
 
+    'exchangeratesapi' => [
+        'key' => env('EXCHANGERATES_API_KEY2'),
+        'base' => env('EXCHANGERATESAPI_BASE_URL', 'https://api.exchangeratesapi.io/v1'),
+    ],
+
     'cron' => [
         'secret' => env('CRON_TOKEN'),
     ],

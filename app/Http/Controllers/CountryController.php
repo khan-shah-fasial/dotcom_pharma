@@ -8,12 +8,20 @@ use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Language;
 use App\Models\BusinessSetting;
+use App\Services\ExchangeRatesApiService;
+use Throwable;
 
 class CountryController extends Controller
 {
     public function __construct() {
         // Staff Permission Check
-        $this->middleware(['permission:shipping_country_setting'])->only('index', 'updateStatus', 'updateDefaults', 'updateSystemDefaultCountry');
+        $this->middleware(['permission:shipping_country_setting'])->only(
+            'index',
+            'updateStatus',
+            'updateDefaults',
+            'updateSystemDefaultCountry',
+            'refreshForexRates'
+        );
     }
 
     /**
@@ -49,6 +57,10 @@ class CountryController extends Controller
         $system_default_country_id = $system_default_country && is_numeric($system_default_country->value)
             ? (int) $system_default_country->value
             : null;
+        $display_timezone = $system_default_country_id
+            ? Country::whereKey($system_default_country_id)->value('timezone')
+            : null;
+        $display_timezone = $display_timezone ?: config('app.timezone', 'Asia/Kolkata');
 
         $enabled_countries = Country::query()->isEnabled()->orderBy('name')->get();
 
@@ -60,6 +72,7 @@ class CountryController extends Controller
             'system_default_currency_id',
             'default_language_id',
             'system_default_country_id',
+            'display_timezone',
             'enabled_countries'
         ));
     }
@@ -144,6 +157,8 @@ class CountryController extends Controller
     {
         $request->validate([
             'id' => 'required|integer|exists:countries,id',
+            'iso3' => ['nullable', 'string', 'size:3', 'regex:/^[A-Za-z]{3}$/'],
+            'capital' => ['nullable', 'string', 'max:191'],
             'default_currency_id' => 'nullable|integer|exists:currencies,id',
             'default_language_id' => 'nullable|integer|exists:languages,id',
             'regional_language_ids' => 'nullable|array',
@@ -151,6 +166,8 @@ class CountryController extends Controller
         ]);
 
         $country = Country::findOrFail($request->id);
+        $country->iso3 = $request->filled('iso3') ? strtoupper($request->iso3) : null;
+        $country->capital = $request->filled('capital') ? trim($request->capital) : null;
         $country->default_currency_id = $request->default_currency_id ?: null;
         $country->default_language_id = $request->default_language_id ?: null;
         $country->regional_language = array_values(array_map('intval', $request->input('regional_language_ids', []) ?: []));
@@ -160,6 +177,22 @@ class CountryController extends Controller
         Cache::forget('business_settings');
 
         return 1;
+    }
+
+    public function refreshForexRates(ExchangeRatesApiService $service)
+    {
+        try {
+            $result = $service->refresh();
+            flash(
+                translate('Forex rates refreshed successfully') . ': '
+                . $result['countries_updated'] . ' ' . translate('countries updated')
+            )->success();
+        } catch (Throwable $exception) {
+            report($exception);
+            flash(translate('Forex refresh failed') . ': ' . $exception->getMessage())->error();
+        }
+
+        return redirect()->route('countries.index');
     }
 
     public function updateSystemDefaultCountry(Request $request)

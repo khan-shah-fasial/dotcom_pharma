@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta charset="UTF-8">
     <style media="all">
-        @page { margin: 8px 10px; }
+        @page { margin: 4px 7px; }
         body {
             margin: 0;
             padding: 0;
@@ -18,21 +18,21 @@
         }
         table { width: 100%; border-collapse: collapse; }
         td, th { vertical-align: top; }
-        .invoice-wrap { padding: 8px 6px 14px; background: #fff; }
+        .invoice-wrap { padding: 3px 4px 5px; background: #fff; }
         .band td {
             border: 1px solid #000;
-            padding: 5px 6px;
+            padding: 3px 5px;
             font-weight: 700;
             text-align: center;
             font-size: 10px;
         }
         .title {
             text-align: center;
-            font-size: 24px;
+            font-size: 21px;
             font-weight: 800;
             letter-spacing: 0.8px;
             color: #c00;
-            padding: 6px 0 4px;
+            padding: 3px 0 2px;
         }
         .subtitle {
             text-align: center;
@@ -42,25 +42,25 @@
         .contact {
             text-align: center;
             font-size: 10px;
-            line-height: 1.45;
-            margin-bottom: 6px;
+            line-height: 1.25;
+            margin-bottom: 3px;
         }
         .meta td {
             border: 1px solid #000;
-            padding: 6px 7px;
+            padding: 3px 5px;
             font-size: 10px;
         }
         .meta .head { font-weight: 700; width: 25%; }
         .section-title {
             background: #dfe6f3;
             border: 1px solid #000;
-            padding: 6px 7px;
+            padding: 3px 5px;
             font-weight: 700;
             font-size: 11px;
         }
         .box {
             border: 1px solid #000;
-            padding: 7px;
+            padding: 4px;
             font-size: 10px;
             min-height: 70px;
         }
@@ -68,7 +68,7 @@
         .items th,
         .items td {
             border: 1px solid #000;
-            padding: 3px 4px;
+            padding: 2px 3px;
             font-size: 10px;
         }
         .items th {
@@ -91,26 +91,26 @@
         .note-band {
             border: 1px solid #c00;
             color: #c00;
-            padding: 6px 8px;
+            padding: 3px 6px;
             font-weight: 700;
             text-align: center;
             font-size: 11px;
-            margin-top: 6px;
+            margin-top: 4px;
         }
         .red-color { color: #c00; }
         .terms {
             border: 1px solid #000;
-            padding: 7px;
+            padding: 4px;
             font-size: 10px;
-            line-height: 1.45;
+            line-height: 1.25;
         }
         .footer-box td {
             border: 1px solid #000;
-            padding: 6px 7px;
+            padding: 3px 5px;
             font-size: 10px;
         }
         .small { font-size: 9px; }
-        .grid td { border: 1px solid #000; padding: 6px 5px; font-size: 10px; }
+        .grid td { border: 1px solid #000; padding: 3px 4px; font-size: 10px; }
         .invoice-checkbox {
             display: inline-block;
             width: 11px;
@@ -133,21 +133,24 @@
     $contactSalesPhone = get_setting('contact_sales_phone');
     $contactAccountPhone = get_setting('contact_account_phone');
     $contactEmail = get_setting('contact_email');
-    // $contactWebsite = get_setting('website_name') ?: url('/');
-    $contactWebsite = get_setting('website_url') ?: url('/');
+    $contactWebsite = get_setting('website_url') ?: get_setting('website_name');
     $drugLicenceNumbers = array_filter(array_map('trim', explode(',', get_setting('drug_licence_numbers') ?? '')));
 
     $shipping = json_decode($order->shipping_address ?? '{}');
     $billing = json_decode($order->billing_address ?? '{}') ?: $shipping;
     $user = $order->user ?? null;
-    $userID = $user->id ?? '-' ;
-
-    $userDetails = $user->user_details;
+    $invoiceType = $invoiceType ?? \App\Support\InvoiceType::forUser($user);
+    $isDomestic = $invoiceType === \App\Support\InvoiceType::DOMESTIC;
+    $isInternational = !$isDomestic;
+    $userDetails = $user?->user_details;
     $customerName = $billing->name ?? optional($order->user)->name ?? translate('Customer');
     $customerEmail = $billing->email ?? optional($order->user)->email;
     $customerPhone = $billing->phone ?? optional($order->user)->phone;
-    $customerGst = optional($order->user)->gst_no ?? ($billing->gst_no ?? null);
-    $customerPan = optional($order->user)->pan_no ?? ($billing->pan_no ?? null);
+    $customerGst = $userDetails?->gst_no ?: (optional($order->user)->gst_no ?? ($billing->gst_no ?? null));
+    $customerIec = $userDetails?->iec_no ?: optional($order->user)->iec_no;
+    $customerAadhaar = $userDetails?->aadhaar_no ?: optional($order->user)->aadhaar_no;
+    $customerPan = $userDetails?->pan_no ?: (optional($order->user)->pan_no ?? ($billing->pan_no ?? null));
+    $customerPassport = $userDetails?->passport_no ?: optional($order->user)->passport_no;
     $pinCode = $billing->postal_code ?? null;
 
     $billingAddressParts = array_filter([
@@ -175,38 +178,66 @@
         ? \Carbon\Carbon::createFromTimestamp($order->date)
         : ($order->created_at ? $order->created_at->copy() : null);
     $invoiceDate = $invoiceDateObj ? $invoiceDateObj->format('d-m-Y') : '-';
+    $invoiceDay = $invoiceDateObj ? $invoiceDateObj->format('l') : null;
     $invoiceTime = $invoiceDateObj ? $invoiceDateObj->format('H:i:s') : '-';
     $creditDays = (int) ($user?->credit_days ?? 0);
     $dueDate = '-';
     if ($invoiceDateObj && $creditDays > 0) {
         $dueDate = $invoiceDateObj->copy()->addDays($creditDays)->format('d-m-Y');
     }
-    $companyName = $userDetails?->company_name ?? null;
-    $countryBusinessID = $userDetails?->country_id_business ?? null;
-    $countryBusiness = $countryBusinessID ? optional(\App\Models\Country::find($countryBusinessID))->name : '-';
-    $postBusiness = $userDetails?->post_business ?? '-';
-    $stateBusinessId = $userDetails?->state_id_business ?? null;
-    $stateBusiness = $stateBusinessId ? optional(\App\Models\State::find($stateBusinessId))->name : '-';
+    $companyName = $userDetails?->company_name ?: $customerName;
+    $stateBusiness = optional($userDetails?->businessState)->name
+        ?: ($billing->state ?? optional($userDetails?->personalState)->name);
     $isMaharashtra = $stateBusiness && strcasecmp(trim($stateBusiness), 'maharashtra') === 0;
     $bookTo = optional($order->bookedTo)->name ?? ($userDetails?->booked_to ?? '-');
     $transport = optional($order->transport)->name
         ?? optional($order->localDeliveryPartner)->name
         ?? ($order->shipping_by ?: ($userDetails?->transport ?? '-'));
-    $orderNo = $userDetails?->salesman ?? '-';
-    $dl1 = $userDetails?->dl1 ?? '-';
-    $dl2 = $userDetails?->dl2 ?? '-';
-    $dlExpiry = $userDetails?->dl_expiry ?? '-';
+    $salesExecutiveName = optional($order->salesExecutive)->name;
+    $salesExecutiveCode = $order->sales_man_code ?: $userDetails?->salesman;
+    $dl1 = $userDetails?->d_l_no_1 ?: $userDetails?->dl1;
+    $dl2 = $userDetails?->d_l_no_2 ?: $userDetails?->dl2;
+    $dl3 = $userDetails?->d_l_no_3;
+    $dlExpiry = $userDetails?->dl_expiry;
+    $otherRegistration = $userDetails?->other_reg_no;
     // $dlExpiry = format_dd_mm_yy($userDetails?->dl_expiry);
-    $paymentMethod = $order->payment_type ? translate(ucwords(str_replace('_', ' ', $order->payment_type))) : translate('Not provided');
+    $paymentMethod = \App\Support\InvoiceType::paymentTermLabel($order->payment_type, $invoiceType)
+        ?: ($order->payment_type ? translate(ucwords(str_replace('_', ' ', $order->payment_type))) : null);
     $paymentStatus = $order->payment_status ? translate(ucwords($order->payment_status)) : translate('Unpaid');
-    $deliveryType = translate('Home Delivery');
-    if ($order->shipping_type === 'pickup_point' && $order->pickup_point) {
-        $deliveryType = $order->pickup_point->getTranslation('name');
-    } elseif ($order->shipping_type === 'carrier' && $order->carrier) {
-        $deliveryType = $order->carrier->name;
-    }
+    $deliveryType = \App\Support\InvoiceType::deliveryTermLabel($order->transport_delivery_type, $invoiceType);
+    $documentHasTax = (float) $order->orderDetails->sum('tax') > 0;
+    $documentTitle = $isInternational
+        ? 'Commercial Invoice'
+        : ($documentHasTax ? 'GST Invoice' : 'Bill Of Supply');
+    $invoiceNumberLabel = $isInternational
+        ? 'Commercial Invoice No.'
+        : ($documentHasTax ? 'Tax Invoice No.' : 'BOS Invoice No.');
+    $addressHeading = $isDomestic ? 'Billing Address' : 'Buyer (Importer)';
+    $shippingAddressHeading = $isDomestic ? 'Shipping Address' : 'Consignee';
+    $licenceLabel = $isDomestic ? 'Drug Licence' : 'Pharmacy Licence';
+    $transportDocumentLabel = $isDomestic
+        ? 'LR / GR / Doc / Vehicle No. & Date'
+        : 'B/L / AWB No. & Date';
+    $destinationLabel = $isDomestic ? 'Booked To / Location' : 'Port Of Discharge';
+    $carrierTaxLabel = $isDomestic ? 'Carrier GST No.' : 'Carrier Tax No.';
+    $termsDeliveryLabel = $isInternational ? 'Incoterm / Terms Of Delivery' : 'Terms Of Delivery';
+    $transportMode = $order->transport_mode
+        ? translate(ucfirst($order->transport_mode) . ($order->transport_surface_mode ? ' / ' . ucfirst($order->transport_surface_mode) : ''))
+        : null;
+    $loadingLocation = $order->loading_location_type === 'sea'
+        ? optional($order->loadingSeaPort)->name
+        : optional($order->loadingAirport)->name;
+    $dischargeLocation = $order->discharge_location_type === 'sea'
+        ? optional($order->dischargeSeaPort)->name
+        : optional($order->dischargeAirport)->name;
+    $carrierTaxNumber = $order->carrier_tax_number;
+    $recordFileNo = $userDetails?->record_file_no;
+    $customerTypeStatus = implode(' / ', array_filter([$userDetails?->customer_type, $userDetails?->current_status]));
+    $billingBy = optional($order->billingByStaff)->name;
+    $countryOfOrigin = $order->orderDetails
+        ->map(fn ($detail) => optional($detail->product)->product_origin)
+        ->filter()->unique()->implode(', ');
 
-    $subTotal = $order->orderDetails->sum(fn ($detail) => order_detail_line_subtotal($detail));
     $shippingTotal = $order->orderDetails->sum('shipping_cost');
     $freightPaid = (bool) $order->freight_paid;
     $ccAttached = filled($order->cc_attached_path);
@@ -262,7 +293,6 @@
 
         return $formattedPrice . $invoiceCurrencySymbol;
     };
-    $ewbNumber = $grandTotal >= 50000 ? ($order->eway_bill ?? '-') : '-';
     $paidQtyTotal = $order->orderDetails->sum(function ($row) {
         return (bool) ($row->is_scheme ?? false) ? 0 : ($row->quantity ?? 0);
     });
@@ -293,8 +323,11 @@
     $sgstTotal = 0;
     $cgstTotal = 0;
     $igstTotal = 0;
-    $exemptedValue = 0;
-    $roundOff = 0;
+    $pointsEarned = $order->orderDetails->sum(function ($row) {
+        return (bool) ($row->is_scheme ?? false)
+            ? 0
+            : ((float) ($row->earn_point ?? 0) * (int) ($row->quantity ?? 0));
+    });
 
     $paidDetails = $order->orderDetails
         ->filter(function ($detail) {
@@ -358,9 +391,12 @@
 <div class="invoice-wrap">
     <table class="band">
         <tr>
-            {{-- <td>{{ translate('Original For Buyers') }}<br>{{ translate('Duplicate For Records') }}</td> --}}
-            <td>{{ translate('Reverse Charges') }} : {{ translate('Yes') }} / {{ translate('No') }}<br>{{ translate('GST Invoice / Bill of Supply') }}</td>
-            {{-- <td>{{ translate('Triplicate For Transporter') }}<br>{{ translate('For GST & FDA Record') }}</td> --}}
+            <td>
+                @if($isDomestic)
+                    {{ translate('Reverse Charges') }}: {{ $order->reverse_charge ? translate('Yes') : translate('No') }}<br>
+                @endif
+                {{ $documentTitle }}
+            </td>
         </tr>
     </table>
 
@@ -370,83 +406,126 @@
         @if($contactPhone) {{ translate('Customer Care') }}: {{ $contactPhone }} | @endif
         @if($contactSalesPhone) {{ translate('Sales') }}: {{ $contactSalesPhone }} | @endif
         @if($contactAccountPhone) {{ translate('Account') }}: {{ $contactAccountPhone }} | @endif
-        @if($contactEmail) {{ translate('E-mail') }}: {{ $contactEmail }} | @endif
-        {{ translate('Website') }}: {{ $contactWebsite }}
+        @if($contactEmail) {{ translate('E-mail') }}: {{ $contactEmail }}@if($contactWebsite) | @endif @endif
+        @if($contactWebsite){{ translate('Website') }}: {{ $contactWebsite }}@endif
     </div>
 
     <table class="meta">
         <tr>
             <td colspan="3">
-                {{ translate('Billing Address') }}:
+                {{ $addressHeading }}:
                 <span class="label">{{ $companyName }}</span>
                 @if($billingAddress)<br>{{ $billingAddress }}@endif
-                <br>
-                {{ translate('Pin Code') }}: {{ $pinCode ?: '-' }} {{ $billing_state !== '-' ? '| ' . translate('State') . ': ' . $billing_state : '' }}
+                @if($pinCode)<br>{{ translate('Pin Code') }}: {{ $pinCode }}@endif
+                @if($billing_state && $billing_state !== '-') | {{ translate('State') }}: {{ $billing_state }}@endif
             </td>
             <td class="head">
-                {{ translate('Tax Invoice No.') }}: {{ $invoiceNo }}
-                <br>
-                {{ translate('Challan No.') }}: {{ $challanNo }}
-                <br>
-                {{ translate('Dated') }}: {{ $invoiceDate }}
+                {{ $invoiceNumberLabel }}: {{ $invoiceNo }}
+                @if($order->challan_number)<br>{{ translate('Challan No.') }}: {{ $challanNo }}@endif
+                <br>{{ translate('Date') }}: {{ $invoiceDate }}@if($invoiceDay) ({{ $invoiceDay }})@endif
                 <br>
                 {{ translate('Time') }}: {{ $invoiceTime }}
             </td>
         </tr>
         <tr>
             <td colspan="3">
-                {{ translate('Shipping Address') }}:
+                {{ $shippingAddressHeading }}:
                 <span class="label">{{ $companyName }}</span>
                 @if($shippingAddress)<br>{{ $shippingAddress }}@endif
-                <br>
-                {{ translate('Pin Code') }}: {{ $shipping_postal_code ?: '-' }} {{ $shipping_state !== '-' ? '| ' . translate('State') . ': ' . $shipping_state : '' }}
+                @if($shipping_postal_code && $shipping_postal_code !== '-')<br>{{ translate('Pin Code') }}: {{ $shipping_postal_code }}@endif
+                @if($shipping_state && $shipping_state !== '-') | {{ translate('State') }}: {{ $shipping_state }}@endif
             </td>
             <td class="head">
-                {{ translate('Terms') }}: {{ $creditDays }} 
-                <br>
-                {{ translate('Due Date') }}: {{ $dueDate }}
-                <br>
-                {{ translate('Order No.') }}: {{ $orderNo ?? '-' }}
-                <br>
-                {{ translate('Order By') }}: {{ $customerName ?: '-' }}
+                @if($isDomestic)
+                    {{ translate('Credit Days') }}: {{ $creditDays }}
+                    <br>{{ translate('Due Date') }}: {{ $dueDate }}
+                @endif
+                @if($customerName)
+                    @if($isDomestic)<br>@endif{{ translate('Order By') }}: {{ $customerName }}
+                @endif
             </td>
         </tr>
         <tr>
-            <td class="head">{{ translate('Phone') }}: {{ $customerPhone ?: '-' }}</td>
-            <td class="head">{{ translate('E-mail') }}: {{ $customerEmail ?: '-' }}</td>
-            <td class="head">{{ translate('GST No') }}: {{ $customerGst ?: '-' }}</td>
-            <td class="head">{{ translate('PAN No') }}: {{ $customerPan ?: '-' }}</td>
+            @if($customerPhone)<td class="head">{{ translate('Phone') }}: {{ $customerPhone }}</td>@endif
+            @if($customerEmail)<td class="head">{{ translate('E-mail') }}: {{ $customerEmail }}</td>@endif
         </tr>
-        {{-- <tr>
-            <td class="head">{{ translate('Payment') }}: {{ $paymentMethod }}</td>
-            <td class="head">{{ translate('Delivery Type') }}: {{ $deliveryType }}</td>
-            <td class="head">{{ translate('Status') }}: {{ $paymentStatus }}</td>
-            <td class="head">{{ translate('Customer ID') }}: {{ $userID }}</td>
-            <td class="head">{{ translate('Customer ID') }}: {{ $userID }}</td>
-        </tr> --}}
+        @if(($isDomestic && ($customerGst || $customerAadhaar || $customerPan)) || ($isInternational && ($customerIec || $customerPassport || $customerPan)))
         <tr>
-            <td class="head">{{ translate('DL 1') }}: {{ $dl1 ?: '-' }}</td>
-            <td class="head">{{ translate('DL 2') }}: {{ $dl2 ?: '-' }}</td>
-            <td class="head">{{ translate('DL Expiry') }}: {{ $dlExpiry }}</td>
+            @if($isDomestic && $customerGst)<td class="head">{{ translate('GST No.') }}: {{ $customerGst }}</td>@endif
+            @if($isInternational && $customerIec)<td class="head">{{ translate('IEC No.') }}: {{ $customerIec }}</td>@endif
+            @if($isDomestic && $customerAadhaar)<td class="head">{{ translate('Aadhaar No.') }}: {{ $customerAadhaar }}</td>@endif
+            @if($isInternational && $customerPassport)<td class="head">{{ translate('Passport No.') }}: {{ $customerPassport }}</td>@endif
+            @if($customerPan)<td class="head">{{ $isDomestic ? translate('PAN No.') : translate('Income Tax ID') }}: {{ $customerPan }}</td>@endif
         </tr>
+        @endif
+        @if($dl1 || $dl2 || $dl3 || $dlExpiry || $otherRegistration)
         <tr>
-            <td class="head">{{ translate('Shipped By') }}: {{ $transport }}</td>
-            <td class="head">{{ translate('Cases') }}: {{ $order->cases ?: '-' }}</td>
-            <td class="head">{{ translate('PM') }}: {{ $order->pm_accountant_name ?: '-' }}</td>
-            <td class="head">{{ translate('Shipment-GST') }}: -</td>
+            @if($dl1)<td class="head">{{ $licenceLabel }} {{ translate('No. 1') }}: {{ $dl1 }}</td>@endif
+            @if($dl2)<td class="head">{{ $licenceLabel }} {{ translate('No. 2') }}: {{ $dl2 }}</td>@endif
+            @if($dl3)<td class="head">{{ $licenceLabel }} {{ translate('No. 3') }}: {{ $dl3 }}</td>@endif
+            @if($dlExpiry)<td class="head">{{ $licenceLabel }} {{ translate('Expiry') }}: {{ $dlExpiry }}</td>@endif
+            @if($otherRegistration)<td class="head">{{ translate('Other Registration') }}: {{ $otherRegistration }}</td>@endif
         </tr>
+        @endif
+        @if($paymentMethod || $paymentStatus || $deliveryType || $order->po_number)
         <tr>
-            <td class="head">{{ translate('L.R.NO') }}: {{ $order->lr_number ?: '-' }}</td>
-            <td class="head">{{ translate('Weight') }}: {{ $order->weight ?: '-' }}</td>
-            <td class="head">{{ translate('Dimension') }}: {{ $order->dimensions ?: '-' }}</td>
-            <td class="head">{{ translate('EWB') }}: -</td>
+            @if($paymentMethod)<td class="head">Payment Terms: {{ $paymentMethod }}</td>@endif
+            @if($paymentStatus)<td class="head">{{ translate('Status') }}: {{ $paymentStatus }}</td>@endif
+            @if($deliveryType)<td class="head">{{ $termsDeliveryLabel }}: {{ $deliveryType }}</td>@endif
+            @if($order->po_number)
+                <td class="head">{{ translate('P.O. No. & Date') }}: {{ $order->po_number }}@if($order->po_date) / {{ $order->po_date->format('d-m-Y') }}@endif</td>
+            @endif
         </tr>
+        @endif
+        @if($transportMode || ($transport && $transport !== '-') || $order->cases || $shippingTotal > 0)
         <tr>
-            <td class="head">{{ translate('Book to') }}: {{ $bookTo ? $bookTo : '-' }}</td>
-            <td class="head">{{ translate('State') }}: {{ $stateBusiness ? $stateBusiness : '-' }}</td>
-            <td class="head">{{ translate('Post') }}: {{ $postBusiness ? $postBusiness : '-' }}</td>
-            <td class="head">{{ translate('Country') }}: {{ $countryBusiness ? $countryBusiness : '-' }}</td>
+            @if($transportMode)<td class="head">{{ translate('Mode Of Transport') }}: {{ $transportMode }}</td>@endif
+            @if($transport && $transport !== '-')<td class="head">{{ translate('Carrier By') }}: {{ $transport }}</td>@endif
+            @if($order->cases)<td class="head">{{ translate('Cases') }}: {{ $order->cases }}</td>@endif
+            @if($shippingTotal > 0)<td class="head">{{ translate('Shipping / Freight') }}: {{ $invoicePrice($shippingTotal) }}</td>@endif
         </tr>
+        @endif
+        @if($order->lr_number || ($isDomestic && $bookTo && $bookTo !== '-') || ($isInternational && ($dischargeLocation || ($bookTo && $bookTo !== '-'))) || $loadingLocation)
+        <tr>
+            @if($order->lr_number)
+                <td class="head">{{ $transportDocumentLabel }}: {{ $order->lr_number }}@if($order->lr_date) / {{ $order->lr_date->format('d-m-Y') }}@endif</td>
+            @endif
+            @if($isDomestic && $bookTo && $bookTo !== '-')
+                <td class="head">{{ $destinationLabel }}: {{ $bookTo }}</td>
+            @elseif($isInternational && ($dischargeLocation || ($bookTo && $bookTo !== '-')))
+                <td class="head">{{ $destinationLabel }}: {{ $dischargeLocation ?: $bookTo }}</td>
+            @endif
+            @if($isInternational && $loadingLocation)
+                <td class="head">Sea / Air Port Of Loading: {{ $loadingLocation }}</td>
+            @endif
+            @if($order->final_destination)<td class="head">{{ translate('Final Destination') }}: {{ $order->final_destination }}</td>@endif
+        </tr>
+        @endif
+        @if($order->net_weight_kg || $order->gross_weight_kg || $order->total_volume_cbm || $carrierTaxNumber)
+        <tr>
+            @if($order->net_weight_kg)<td class="head">{{ translate('Net Weight') }}: {{ $order->net_weight_kg }} KG</td>@endif
+            @if($order->gross_weight_kg)<td class="head">{{ translate('Gross Weight') }}: {{ $order->gross_weight_kg }} KG</td>@endif
+            @if($order->total_volume_cbm)<td class="head">{{ translate('Total Volume / CBM') }}: {{ $order->total_volume_cbm }}</td>@endif
+            @if($carrierTaxNumber)<td class="head">{{ $carrierTaxLabel }}: {{ $carrierTaxNumber }}</td>@endif
+        </tr>
+        @endif
+        @if($recordFileNo || $customerTypeStatus || $billingBy || $salesExecutiveName || $salesExecutiveCode)
+        <tr>
+            @if($recordFileNo)<td class="head">{{ translate('Record File No.') }}: {{ $recordFileNo }}</td>@endif
+            @if($customerTypeStatus)<td class="head">{{ translate('Customer Type / Status') }}: {{ $customerTypeStatus }}</td>@endif
+            @if($billingBy)<td class="head">{{ translate('Billing By') }}: {{ $billingBy }}</td>@endif
+            @if($salesExecutiveName || $salesExecutiveCode)
+                <td class="head">{{ translate('Sales Executive Name & Code') }}: {{ implode(' / ', array_filter([$salesExecutiveName, $salesExecutiveCode])) }}</td>
+            @endif
+        </tr>
+        @endif
+        @if($countryOfOrigin || $invoiceCurrencyCode || $order->consignee_copy_status)
+        <tr>
+            @if($countryOfOrigin)<td class="head">{{ translate('Country Of Origin') }}: {{ $countryOfOrigin }}</td>@endif
+            @if($invoiceCurrencyCode)<td class="head">{{ translate('Currency') }}: {{ $invoiceCurrencyCode }}</td>@endif
+            @if($order->consignee_copy_status)<td class="head">{{ translate('Consignee Copy') }}: {{ translate(ucwords(str_replace('_', ' ', $order->consignee_copy_status))) }}</td>@endif
+        </tr>
+        @endif
     </table>
 
     <div style="margin-top: 8px;">
@@ -631,23 +710,24 @@
             <td colspan="2" class="head">{{ translate('Total QTY') }}: {{ $totalQty }}</td>
             <td class="head">{{ translate('Coupon Discount') }}: {{ $invoicePrice($couponDiscount) }}</td>
             <td class="head">{{ translate('IGST') }}: {{ $invoicePrice($igstTotal) }}</td>
-            <td class="head">{{ translate('CR/DR Note Adjusted') }}: {{ $invoicePrice(0) }}</td>
+            <td class="head">{{ translate('Shipping / Freight') }}: {{ $invoicePrice($shippingTotal) }}</td>
         </tr>
+        @if($pointsEarned > 0)
         <tr>
-            <td colspan="2" class="head">{{ translate('Exempted Value') }}: {{ $invoicePrice($exemptedValue) }}</td>
-            <td class="head">{{ translate('Insurance / Packing') }}: {{ $invoicePrice(0) }}</td>
-            <td class="head">{{ translate('GST') }}: {{ $invoicePrice($taxTotal) }}</td>
-            <td class="head">{{ translate('Round Off') }}: {{ $invoicePrice($roundOff) }}</td>
+            <td colspan="5" class="head">{{ translate('Total Points Earn') }}: {{ number_format($pointsEarned, 2) }}</td>
         </tr>
+        @endif
         <tr>
             <td colspan="4" class="head text-right">{{ translate('Grand Total') }}</td>
             <td colspan="1"><strong>{{ $invoicePrice($grandTotal) }}</strong></td>
         </tr>
     </table>
 
-    <div class="note-band">
-        {{ translate('PLEASE NOTE: NO EXPIRY / NO BREAKAGE / NO GOODS RETURN AT ANY CONDITION') }}
-    </div>
+    @if($isDomestic)
+        <div class="note-band">
+            {{ translate('PLEASE NOTE: NO EXPIRY / NO BREAKAGE / NO GOODS RETURN AT ANY CONDITION') }}
+        </div>
+    @endif
 
     <table class="grid" style="margin-top: 6px;">
         <tr>
@@ -660,19 +740,25 @@
                 <span class="invoice-checkbox">@if($ccAttached)&#10003;@endif</span>
                 @if($order->attached_file_name)<br>{{ $order->attached_file_name }}@endif
             </td>
-            <td width="16%">{{ translate('Door Delivery') }}</td>
+            <td width="16%">
+                @if($deliveryType)
+                    {{ $termsDeliveryLabel }}: {{ $deliveryType }}
+                @endif
+            </td>
             <td width="52%" rowspan="2">                
                 <div class="label">{{ translate('Registered Under MSMED Act') }}</div>
                 <div>{{ translate('Account Name') }} : {{ $siteName }}</div>
-                <div>{{ translate('Bank') }} : {{ get_setting('company_bank') ?? '-' }}</div>
-                <div>{{ translate('IFSC.') }} : {{ get_setting('company_bank_ifsc') ?? '-' }}</div>
-                <div>{{ translate('GST No.') }} : {{ get_setting('company_gst') ?? '-' }}</div>
-                <div>{{ translate('PAN No.') }} : {{ get_setting('company_pan') ?? '-' }}</div>
-                <div>{{ translate('Drug Licence') }} : 
+                @if(get_setting('company_bank'))<div>{{ translate('Bank') }} : {{ get_setting('company_bank') }}</div>@endif
+                @if(get_setting('company_bank_ifsc'))<div>{{ translate('IFSC.') }} : {{ get_setting('company_bank_ifsc') }}</div>@endif
+                @if(get_setting('company_gst'))<div>{{ translate('GST No.') }} : {{ get_setting('company_gst') }}</div>@endif
+                @if(get_setting('company_pan'))<div>{{ translate('PAN No.') }} : {{ get_setting('company_pan') }}</div>@endif
+                @if($drugLicenceNumbers)
+                <div>{{ $isDomestic ? translate('Drug Licence') : translate('Pharmacy Licence') }} :
                     @foreach($drugLicenceNumbers as $dlNum)
                         <br>{{ $dlNum }}
                     @endforeach
                 </div>
+                @endif
             </td>
         </tr>
         <tr>
@@ -685,24 +771,25 @@
                     <li>{{ translate('Our responsibility ceases the moment goods leave our premises.') }}</li>
                     <li>{{ translate('Goods once sold will not be taken back or echanged at any condition') }}</li>
                     <li>{{ translate('Expird and Breakage Goods will not be taken back or exchanged at any condition') }}</li>
-                    <li>{{ translate('If Medicine Solution is not clear or ii contains suspended particles DO NOT USE & send back for Free replacement.,Subject to Mumbai Jurisdictions Only') }}</li>
+                    <li>{{ translate('If medicine solution is not clear or it contains suspended particles, DO NOT USE it and send it back for free replacement.') }}</li>
+                    <li>{{ translate('Subject to Mumbai jurisdiction only.') }}</li>
                 </ol>
             </td>
         </tr>
+        @if($isDomestic)
         <tr>
             <td colspan="4" style="border-top:0; padding-top:2px; font-size:10px;">
                 {{ translate('We hereby certify that my / our Registration Certificate under the Goods & Services Tax Act.2017 is in force on the date 1st July 2017 on which the sale of the goods specified in this GST invoice & Bill of Supply is made by me / us and that the transaction of sale covered by this GST invoice has been effected by me/ us and it shall be accounted for in the turnover of sales while filling of return and the due tax if any payable on the sale has been paid or shall be paid') }}
             </td>
         </tr>
+        @endif
         <tr>
             <td colspan="3" class="footer-box text-center">
-                <br>
                 <br>
                 <div class="red-color label">{{ translate('Received By') }}</div>
                 <div class="small">{{ translate('Sign with Rubber Stamp') }}</div>
             </td>
             <td class="footer-box text-center">
-                <br>
                 <br>
                 <div class="label">{{ translate('For') }} <span class="red-color">{{ $siteName }}</span></div>
                 <div>{{ translate('Authorised Signatory') }}</div>

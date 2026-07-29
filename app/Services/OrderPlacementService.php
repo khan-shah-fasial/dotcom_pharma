@@ -16,6 +16,9 @@ use App\Models\ProductBatch;
 use App\Models\ProductStock;
 use App\Models\ShippingMethod;
 use App\Models\Transport;
+use App\Models\Airport;
+use App\Models\SeaPort;
+use App\Support\InvoiceType;
 use App\Models\User;
 use App\Utility\CartUtility;
 use App\Utility\EmailUtility;
@@ -221,6 +224,27 @@ class OrderPlacementService
 
     protected function createSellerOrder(CombinedOrder $combinedOrder, User $customer, Request $request, array $options, array $shippingAddress, array $billingAddress): Order
     {
+        $invoiceType = InvoiceType::forUser($customer);
+        $isBackendOrder = ($options['source'] ?? null) === 'backend';
+        $paymentType = $options['payment_type'] ?? $request->input('payment_option');
+        if ($isBackendOrder) {
+            $paymentType = $request->input('payment_type', $paymentType);
+            if (!array_key_exists((string) $paymentType, InvoiceType::paymentTerms($invoiceType))) {
+                $this->fail('payment_type', translate('Please select payment terms allowed for this customer type.'));
+            }
+        }
+
+        $deliveryTerm = $request->input('transport_delivery_type');
+        $isInternational = $invoiceType === InvoiceType::INTERNATIONAL;
+        if ($isBackendOrder) {
+            if (!array_key_exists((string) $deliveryTerm, InvoiceType::deliveryTerms($invoiceType))) {
+                $this->fail('transport_delivery_type', translate('Please select terms of delivery allowed for this customer type.'));
+            }
+            if ($isInternational) {
+                $this->validateInternationalLogistics($request);
+            }
+        }
+
         $shippingChoice = $request->input('shipping_method') ?: 'courier';
         $transport = null;
         $bookedTo = null;
@@ -240,7 +264,7 @@ class OrderPlacementService
             if ($request->input('fod_mode') === 'surface' && !in_array($request->input('transport_surface_mode'), ['road', 'train'], true)) {
                 $this->fail('transport_surface_mode', translate('Please select Road or Train for Surface transport.'));
             }
-            if (!in_array($request->input('transport_delivery_type'), ['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'], true)) {
+            if (!$isBackendOrder && !in_array($deliveryTerm, ['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'], true)) {
                 $this->fail('transport_delivery_type', translate('Please select a delivery type.'));
             }
         } elseif ($shippingChoice === 'local') {
@@ -263,7 +287,7 @@ class OrderPlacementService
         $order->additional_info = ($options['source'] ?? null) === 'backend'
             ? $this->capitalizeFirst($request->input('additional_info'))
             : $request->additional_info;
-        $order->payment_type = $options['payment_type'] ?? $request->input('payment_option');
+        $order->payment_type = $paymentType;
         $order->payment_status = ($options['payment_status'] ?? 'unpaid') === 'paid' ? 'paid' : 'unpaid';
         $order->shipping_choice = $shippingChoice;
         $order->shipping_by = $shippingChoice === 'courier'
@@ -276,10 +300,32 @@ class OrderPlacementService
         $order->local_delivery_partner_id = optional($localDeliveryPartner)->id;
         $order->transport_mode = $shippingChoice === 'transport' ? $request->fod_mode : null;
         $order->transport_surface_mode = ($shippingChoice === 'transport' && $request->fod_mode === 'surface') ? $request->transport_surface_mode : null;
-        $deliveryType = $request->input('transport_delivery_type') === 'transport_godown'
-            ? 'transport_warehouse'
-            : $request->input('transport_delivery_type');
-        $order->transport_delivery_type = $shippingChoice === 'transport' ? $deliveryType : null;
+        $normalizedDeliveryTerm = $deliveryTerm === 'transport_godown' ? 'transport_warehouse' : $deliveryTerm;
+        $order->transport_delivery_type = $isBackendOrder || $shippingChoice === 'transport'
+            ? $normalizedDeliveryTerm
+            : null;
+        $order->reverse_charge = $isBackendOrder && !$isInternational ? $request->boolean('reverse_charge') : null;
+        $order->loading_location_type = $isBackendOrder && $isInternational ? $request->input('loading_location_type') : null;
+        $order->loading_sea_port_id = $isBackendOrder && $isInternational && $request->input('loading_location_type') === 'sea'
+            ? $request->input('loading_sea_port_id')
+            : null;
+        $order->loading_airport_id = $isBackendOrder && $isInternational && $request->input('loading_location_type') === 'air'
+            ? $request->input('loading_airport_id')
+            : null;
+        $order->discharge_location_type = $isBackendOrder && $isInternational ? $request->input('discharge_location_type') : null;
+        $order->discharge_sea_port_id = $isBackendOrder && $isInternational && $request->input('discharge_location_type') === 'sea'
+            ? $request->input('discharge_sea_port_id')
+            : null;
+        $order->discharge_airport_id = $isBackendOrder && $isInternational && $request->input('discharge_location_type') === 'air'
+            ? $request->input('discharge_airport_id')
+            : null;
+        $order->final_destination = $isBackendOrder && $isInternational
+            ? $this->nullableTrimmed($request->input('final_destination'))
+            : null;
+        $order->carrier_tax_number = $this->nullableTrimmed($request->input('carrier_tax_number'));
+        $order->net_weight_kg = $request->filled('net_weight_kg') ? $request->input('net_weight_kg') : null;
+        $order->gross_weight_kg = $request->filled('gross_weight_kg') ? $request->input('gross_weight_kg') : null;
+        $order->total_volume_cbm = $request->filled('total_volume_cbm') ? $request->input('total_volume_cbm') : null;
         $order->cases = $this->nullableTrimmed($request->input('cases'));
         $order->attached_file_name = $this->nullableTrimmed($request->input('attached_file_name'));
         $order->po_number = $this->nullableTrimmed($request->input('po_number'));
@@ -1516,6 +1562,31 @@ class OrderPlacementService
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);
+    }
+
+    protected function validateInternationalLogistics(Request $request): void
+    {
+        $loadingType = $request->input('loading_location_type');
+        if (!in_array($loadingType, ['sea', 'air'], true)) {
+            $this->fail('loading_location_type', translate('Please select a sea port or airport of loading.'));
+        }
+        if ($loadingType === 'sea' && !SeaPort::where('status', 1)->whereKey($request->input('loading_sea_port_id'))->exists()) {
+            $this->fail('loading_sea_port_id', translate('Please select an active sea port of loading.'));
+        }
+        if ($loadingType === 'air' && !Airport::where('status', 1)->whereKey($request->input('loading_airport_id'))->exists()) {
+            $this->fail('loading_airport_id', translate('Please select an active airport of loading.'));
+        }
+
+        $dischargeType = $request->input('discharge_location_type');
+        if (!in_array($dischargeType, ['sea', 'air'], true)) {
+            $this->fail('discharge_location_type', translate('Please select a sea port or airport of discharge.'));
+        }
+        if ($dischargeType === 'sea' && !SeaPort::where('status', 1)->whereKey($request->input('discharge_sea_port_id'))->exists()) {
+            $this->fail('discharge_sea_port_id', translate('Please select an active sea port of discharge.'));
+        }
+        if ($dischargeType === 'air' && !Airport::where('status', 1)->whereKey($request->input('discharge_airport_id'))->exists()) {
+            $this->fail('discharge_airport_id', translate('Please select an active airport of discharge.'));
+        }
     }
 
     protected function transportAndBookedToAreSame(Request $request, ?Transport $transport): bool

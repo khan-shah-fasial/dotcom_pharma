@@ -12,11 +12,15 @@ class Order extends Model
     protected $casts = [
         'freight_paid' => 'boolean',
         'free_shipping' => 'boolean',
+        'reverse_charge' => 'boolean',
         'lr_date' => 'date',
         'po_date' => 'date',
         'order_date' => 'date',
         'weight_grams' => 'decimal:3',
         'weight_kg' => 'decimal:6',
+        'net_weight_kg' => 'decimal:6',
+        'gross_weight_kg' => 'decimal:6',
+        'total_volume_cbm' => 'decimal:6',
     ];
 
     public function orderDetails()
@@ -62,6 +66,26 @@ class Order extends Model
     public function localDeliveryPartner()
     {
         return $this->belongsTo(LocalDeliveryPartner::class);
+    }
+
+    public function loadingSeaPort()
+    {
+        return $this->belongsTo(SeaPort::class, 'loading_sea_port_id');
+    }
+
+    public function loadingAirport()
+    {
+        return $this->belongsTo(Airport::class, 'loading_airport_id');
+    }
+
+    public function dischargeSeaPort()
+    {
+        return $this->belongsTo(SeaPort::class, 'discharge_sea_port_id');
+    }
+
+    public function dischargeAirport()
+    {
+        return $this->belongsTo(Airport::class, 'discharge_airport_id');
     }
 
     public function affiliate_log()

@@ -24,8 +24,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        // One daily request stays within exchangeratesapi.io's typical low-volume plans.
+        $schedule->command('forex:refresh-countries')
+            ->dailyAt('01:00')
+            ->withoutOverlapping();
     }
 
     /**

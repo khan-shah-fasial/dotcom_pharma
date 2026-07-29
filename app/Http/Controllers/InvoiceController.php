@@ -8,6 +8,7 @@ use App\Models\Order;
 use Session;
 use PDF;
 use Config;
+use App\Support\InvoiceType;
 
 class InvoiceController extends Controller
 {
@@ -101,10 +102,30 @@ class InvoiceController extends Controller
 
         $config = [];
 
-        $order = Order::findOrFail($id);
+        $order = Order::with([
+            'user.user_details.businessCountry',
+            'user.user_details.businessState',
+            'user.user_details.personalCountry',
+            'user.user_details.personalState',
+            'orderDetails.product.stocks',
+            'orderDetails.product.brand',
+            'orderDetails.product.main_category',
+            'orderDetails.batch',
+            'transport',
+            'bookedTo',
+            'localDeliveryPartner',
+            'loadingSeaPort',
+            'loadingAirport',
+            'dischargeSeaPort',
+            'dischargeAirport',
+            'salesExecutive',
+            'billingByStaff',
+        ])->findOrFail($id);
+        $invoiceType = InvoiceType::forUser($order->user);
         if (in_array(auth()->user()->user_type, ['admin','staff']) || in_array(auth()->id(), [$order->user_id, $order->seller_id])) {
             return PDF::loadView('backend.invoices.invoice2', [
                 'order' => $order,
+                'invoiceType' => $invoiceType,
                 'font_family' => $font_family,
                 'direction' => $direction,
                 'text_align' => $text_align,

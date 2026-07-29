@@ -1868,6 +1868,16 @@
                                                 <span class="aiz-side-nav-text">{{ translate('Local Delivery Partners') }}</span>
                                             </a>
                                         </li>
+                                        <li class="aiz-side-nav-item">
+                                            <a href="{{ route('sea-ports.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['sea-ports.index','sea-ports.create','sea-ports.edit']) }}">
+                                                <span class="aiz-side-nav-text">{{ translate('Sea Port Master') }}</span>
+                                            </a>
+                                        </li>
+                                        <li class="aiz-side-nav-item">
+                                            <a href="{{ route('airports.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['airports.index','airports.create','airports.edit']) }}">
+                                                <span class="aiz-side-nav-text">{{ translate('Airport Master') }}</span>
+                                            </a>
+                                        </li>
                                     </ul>
                                 </li>
                             @endcan
