@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Brand;
 use App\Models\BrandTranslation;
+use App\Models\Company;
 use App\Models\Product;
 use Illuminate\Support\Str;
 
@@ -31,7 +32,9 @@ class BrandController extends Controller
             $brands = $brands->where('name', 'like', '%'.$sort_search.'%');
         }
         $brands = $brands->paginate(15);
-        return view('backend.product.brands.index', compact('brands', 'sort_search'));
+        $companies = Company::orderBy('company_name')->get(['id', 'company_name']);
+
+        return view('backend.product.brands.index', compact('brands', 'sort_search', 'companies'));
     }
 
     /**
@@ -51,7 +54,12 @@ class BrandController extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+        ]);
+
         $brand = new Brand;
+        $brand->company_id = $request->company_id;
         $brand->name = $request->name;
         $brand->meta_title = $request->meta_title;
         $brand->meta_description = $request->meta_description;
@@ -95,7 +103,9 @@ class BrandController extends Controller
     {
         $lang   = $request->lang;
         $brand  = Brand::findOrFail($id);
-        return view('backend.product.brands.edit', compact('brand','lang'));
+        $companies = Company::orderBy('company_name')->get(['id', 'company_name']);
+
+        return view('backend.product.brands.edit', compact('brand', 'lang', 'companies'));
     }
 
     /**
@@ -107,7 +117,12 @@ class BrandController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+        ]);
+
         $brand = Brand::findOrFail($id);
+        $brand->company_id = $request->company_id;
         if($request->lang == env("DEFAULT_LANGUAGE")){
             $brand->name = $request->name;
         }

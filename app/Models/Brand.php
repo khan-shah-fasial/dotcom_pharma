@@ -12,7 +12,7 @@ class Brand extends Model
     use PreventDemoModeChanges;
 
     protected $with = ['brand_translations'];
-    protected $fillable = ['name', 'logo', 'slug', 'meta_title', 'meta_description'];
+    protected $fillable = ['company_id', 'name', 'logo', 'slug', 'meta_title', 'meta_description'];
     
     public function getTranslation($field = '', $lang = false)
     {
@@ -24,5 +24,10 @@ class Brand extends Model
     public function brand_translations()
     {
         return $this->hasMany(BrandTranslation::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 }

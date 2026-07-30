@@ -236,16 +236,19 @@ class OrderPlacementService
 
         $deliveryTerm = $request->input('transport_delivery_type');
         $isInternational = $invoiceType === InvoiceType::INTERNATIONAL;
+        $shippingChoice = $request->input('shipping_method') ?: 'courier';
+        $usesPortLogistics = $isBackendOrder
+            && $shippingChoice === 'transport'
+            && in_array($request->input('fod_mode'), ['sea', 'air'], true);
         if ($isBackendOrder) {
             if (!array_key_exists((string) $deliveryTerm, InvoiceType::deliveryTerms($invoiceType))) {
                 $this->fail('transport_delivery_type', translate('Please select terms of delivery allowed for this customer type.'));
             }
-            if ($isInternational) {
-                $this->validateInternationalLogistics($request);
+            if ($usesPortLogistics) {
+                $this->validatePortLogistics($request);
             }
         }
 
-        $shippingChoice = $request->input('shipping_method') ?: 'courier';
         $transport = null;
         $bookedTo = null;
         $localDeliveryPartner = null;
@@ -305,21 +308,21 @@ class OrderPlacementService
             ? $normalizedDeliveryTerm
             : null;
         $order->reverse_charge = $isBackendOrder && !$isInternational ? $request->boolean('reverse_charge') : null;
-        $order->loading_location_type = $isBackendOrder && $isInternational ? $request->input('loading_location_type') : null;
-        $order->loading_sea_port_id = $isBackendOrder && $isInternational && $request->input('loading_location_type') === 'sea'
+        $order->loading_location_type = $usesPortLogistics ? $request->input('loading_location_type') : null;
+        $order->loading_sea_port_id = $usesPortLogistics && $request->input('loading_location_type') === 'sea'
             ? $request->input('loading_sea_port_id')
             : null;
-        $order->loading_airport_id = $isBackendOrder && $isInternational && $request->input('loading_location_type') === 'air'
+        $order->loading_airport_id = $usesPortLogistics && $request->input('loading_location_type') === 'air'
             ? $request->input('loading_airport_id')
             : null;
-        $order->discharge_location_type = $isBackendOrder && $isInternational ? $request->input('discharge_location_type') : null;
-        $order->discharge_sea_port_id = $isBackendOrder && $isInternational && $request->input('discharge_location_type') === 'sea'
+        $order->discharge_location_type = $usesPortLogistics ? $request->input('discharge_location_type') : null;
+        $order->discharge_sea_port_id = $usesPortLogistics && $request->input('discharge_location_type') === 'sea'
             ? $request->input('discharge_sea_port_id')
             : null;
-        $order->discharge_airport_id = $isBackendOrder && $isInternational && $request->input('discharge_location_type') === 'air'
+        $order->discharge_airport_id = $usesPortLogistics && $request->input('discharge_location_type') === 'air'
             ? $request->input('discharge_airport_id')
             : null;
-        $order->final_destination = $isBackendOrder && $isInternational
+        $order->final_destination = $usesPortLogistics
             ? $this->nullableTrimmed($request->input('final_destination'))
             : null;
         $order->carrier_tax_number = $this->nullableTrimmed($request->input('carrier_tax_number'));
@@ -1564,7 +1567,7 @@ class OrderPlacementService
         ]);
     }
 
-    protected function validateInternationalLogistics(Request $request): void
+    protected function validatePortLogistics(Request $request): void
     {
         $loadingType = $request->input('loading_location_type');
         if (!in_array($loadingType, ['sea', 'air'], true)) {

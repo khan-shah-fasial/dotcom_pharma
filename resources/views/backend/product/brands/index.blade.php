@@ -73,6 +73,21 @@
 					<form action="{{ route('brands.store') }}" method="POST">
 						@csrf
 						<div class="form-group mb-3">
+							<label for="company_id">{{ translate('Company Name') }}</label>
+							<select id="company_id" name="company_id" class="form-control aiz-selectpicker"
+								data-live-search="true" data-placeholder="{{ translate('Select Company') }}">
+								<option value="">{{ translate('Select Company') }}</option>
+								@foreach ($companies as $company)
+									<option value="{{ $company->id }}" @selected(old('company_id') == $company->id)>
+										{{ $company->company_name }}
+									</option>
+								@endforeach
+							</select>
+							@error('company_id')
+								<span class="text-danger small">{{ $message }}</span>
+							@enderror
+						</div>
+						<div class="form-group mb-3">
 							<label for="name">{{translate('Name')}}</label>
 							<input type="text" placeholder="{{translate('Name')}}" name="name" class="form-control" required>
 						</div>

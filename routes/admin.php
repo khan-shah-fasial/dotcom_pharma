@@ -14,6 +14,7 @@ use App\Http\Controllers\BusinessSettingsController;
 use App\Http\Controllers\CarrierController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CityController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ConversationController;
@@ -311,6 +312,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
         Route::post('/customers/credit/update','update_credit')->name('customers.credits.update');
     });
+
+    // Company Master
+    Route::resource('companies', CompanyController::class);
 
     Route::middleware(['auth','can:admin'])->group(function () {
         Route::get('/request-docs', [RequestDocController::class, 'adminIndex'])->name('customers.request-doc.index');

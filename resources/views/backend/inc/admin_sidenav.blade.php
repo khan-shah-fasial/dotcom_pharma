@@ -165,7 +165,7 @@
                 </li>
 
                 <!-- Product -->
-                @canany(['add_new_product', 'show_all_products','show_in_house_products','show_seller_products','show_digital_products','product_bulk_import','product_bulk_export','view_product_categories', 'view_all_brands', 'brand_bulk_upload','view_product_attributes','view_colors','view_product_warranties','view_product_reviews'])
+                @canany(['add_new_product', 'show_all_products','show_in_house_products','show_seller_products','show_digital_products','product_bulk_import','product_bulk_export','view_product_categories', 'view_all_companies', 'view_all_brands', 'brand_bulk_upload','view_product_attributes','view_colors','view_product_warranties','view_product_reviews'])
                     <li class="aiz-side-nav-item">
                         <a href="#" class="aiz-side-nav-link">
                             <div class="aiz-side-nav-icon">
@@ -264,6 +264,14 @@
                                 <li class="aiz-side-nav-item">
                                     <a href="{{route('categories_wise_product_discount')}}" class="aiz-side-nav-link">
                                         <span class="aiz-side-nav-text">{{translate('Category Based Discount')}}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_all_companies')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('companies.index') }}"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['companies.index', 'companies.create', 'companies.show', 'companies.edit']) }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Company Master') }}</span>
                                     </a>
                                 </li>
                             @endcan

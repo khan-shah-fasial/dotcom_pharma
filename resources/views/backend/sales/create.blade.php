@@ -346,6 +346,62 @@ span#picker-info-stock-badge {
         .order-accordion-toggle[aria-expanded="true"] .order-accordion-icon {
             transform: rotate(180deg);
         }
+        .selected-location-hover {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            margin-top: 7px;
+        }
+        .selected-location-name {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            padding: 5px 9px;
+            color: #2563eb;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            cursor: help;
+        }
+        .selected-location-name span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .selected-location-card {
+            display: none;
+            position: absolute;
+            right: 0;
+            z-index: 1080;
+            width: min(420px, 85vw);
+            max-height: 330px;
+            overflow-y: auto;
+            padding: 12px;
+            color: #334155;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, .18);
+        }
+        .selected-location-hover:hover .selected-location-card,
+        .selected-location-hover:focus-within .selected-location-card {
+            display: block;
+        }
+        .selected-location-detail-row {
+            display: grid;
+            grid-template-columns: minmax(105px, 38%) minmax(0, 1fr);
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid #eef2f7;
+            font-size: 12px;
+        }
+        .selected-location-detail-row:last-child {
+            border-bottom: 0;
+        }
+        .selected-location-detail-label {
+            color: #64748b;
+            font-weight: 600;
+        }
 
         .product-info-item.product-final-amount-item span {
     color: #047857;
@@ -788,9 +844,9 @@ span#picker-info-stock-badge {
                             <div class="form-group">
                                 <label>{{ translate('Transport Mode') }}</label>
                                 <select class="form-control" name="fod_mode">
-                                    <option value="surface">{{ translate('Surface') }}</option>
-                                    <option value="air">{{ translate('Air') }}</option>
-                                    <option value="sea">{{ translate('Sea') }}</option>
+                                    <option value="surface" @selected(old('fod_mode', 'surface') === 'surface')>{{ translate('Surface') }}</option>
+                                    <option value="air" @selected(old('fod_mode') === 'air')>{{ translate('Air') }}</option>
+                                    <option value="sea" @selected(old('fod_mode') === 'sea')>{{ translate('Sea') }}</option>
                                 </select>
                             </div>
                             <div class="form-group d-none" id="transport-surface-mode-fields">
@@ -871,67 +927,90 @@ span#picker-info-stock-badge {
                         </div>
 
                         <div id="international-logistics-fields" class="d-none">
+                            <input type="hidden" class="international-logistics-input" name="loading_location_type"
+                                id="loading-location-type" value="{{ old('loading_location_type', 'sea') }}">
+                            <input type="hidden" class="international-logistics-input" name="discharge_location_type"
+                                id="discharge-location-type" value="{{ old('discharge_location_type', 'sea') }}">
+
                             <div class="form-group">
-                                <label>{{ translate('Loading Location Type') }}</label>
-                                <select class="form-control international-logistics-input" name="loading_location_type" id="loading-location-type">
-                                    <option value="sea" @selected(old('loading_location_type', 'sea') === 'sea')>{{ translate('Sea Port') }}</option>
-                                    <option value="air" @selected(old('loading_location_type') === 'air')>{{ translate('Airport') }}</option>
+                                <label id="loading-country-label">{{ translate('Port Of Loading Country') }}</label>
+                                <select class="form-control international-logistics-input logistics-country-select"
+                                    id="loading-logistics-country" data-prefix="loading">
+                                    <option value="">{{ translate('Select Country') }}</option>
                                 </select>
                             </div>
                             <div class="form-group" id="loading-sea-port-wrap">
-                                <label>{{ translate('Sea Port Of Loading') }}</label>
-                                <select class="form-control international-logistics-input" name="loading_sea_port_id">
+                                <label>{{ translate('Port Of Loading') }}</label>
+                                <select class="form-control international-logistics-input logistics-location-select"
+                                    name="loading_sea_port_id" id="loading-sea-port-id" data-prefix="loading" data-kind="sea">
                                     <option value="">{{ translate('Select Sea Port') }}</option>
-                                    @foreach($seaPorts as $port)
-                                        <option value="{{ $port->id }}" @selected((string) old('loading_sea_port_id') === (string) $port->id)>
-                                            {{ $port->country }} - {{ $port->name }}{{ $port->un_locode ? ' (' . $port->un_locode . ')' : '' }}
-                                        </option>
-                                    @endforeach
                                 </select>
                             </div>
                             <div class="form-group d-none" id="loading-airport-wrap">
-                                <label>{{ translate('Airport Of Loading') }}</label>
-                                <select class="form-control international-logistics-input" name="loading_airport_id">
+                                <label>{{ translate('Departure') }}</label>
+                                <select class="form-control international-logistics-input logistics-location-select"
+                                    name="loading_airport_id" id="loading-airport-id" data-prefix="loading" data-kind="air">
                                     <option value="">{{ translate('Select Airport') }}</option>
-                                    @foreach($airports as $airport)
-                                        <option value="{{ $airport->id }}" @selected((string) old('loading_airport_id') === (string) $airport->id)>
-                                            {{ $airport->country }} - {{ $airport->name }}{{ $airport->iata ? ' (' . $airport->iata . ')' : '' }}
-                                        </option>
-                                    @endforeach
                                 </select>
                             </div>
+
+                            <div class="selected-location-hover d-none mb-3" id="loading-location-detail" tabindex="0">
+                                <div class="selected-location-name">
+                                    <i class="las la-info-circle mr-1"></i><span></span>
+                                </div>
+                                <div class="selected-location-card"></div>
+                            </div>
+
                             <div class="form-group">
-                                <label>{{ translate('Discharge Location Type') }}</label>
-                                <select class="form-control international-logistics-input" name="discharge_location_type" id="discharge-location-type">
-                                    <option value="sea" @selected(old('discharge_location_type', 'sea') === 'sea')>{{ translate('Sea Port') }}</option>
-                                    <option value="air" @selected(old('discharge_location_type') === 'air')>{{ translate('Airport') }}</option>
+                                <label id="discharge-country-label">{{ translate('Destination Country') }}</label>
+                                <select class="form-control international-logistics-input logistics-country-select"
+                                    id="discharge-logistics-country" data-prefix="discharge">
+                                    <option value="">{{ translate('Select Country') }}</option>
                                 </select>
                             </div>
                             <div class="form-group" id="discharge-sea-port-wrap">
-                                <label>{{ translate('Port Of Discharge') }}</label>
-                                <select class="form-control international-logistics-input" name="discharge_sea_port_id">
+                                <label>{{ translate('Destination Port Of Discharge') }}</label>
+                                <select class="form-control international-logistics-input logistics-location-select"
+                                    name="discharge_sea_port_id" id="discharge-sea-port-id" data-prefix="discharge" data-kind="sea">
                                     <option value="">{{ translate('Select Sea Port') }}</option>
-                                    @foreach($seaPorts as $port)
-                                        <option value="{{ $port->id }}" @selected((string) old('discharge_sea_port_id') === (string) $port->id)>
-                                            {{ $port->country }} - {{ $port->name }}{{ $port->un_locode ? ' (' . $port->un_locode . ')' : '' }}
-                                        </option>
-                                    @endforeach
                                 </select>
                             </div>
                             <div class="form-group d-none" id="discharge-airport-wrap">
-                                <label>{{ translate('Airport Of Discharge') }}</label>
-                                <select class="form-control international-logistics-input" name="discharge_airport_id">
+                                <label>{{ translate('Arrival') }}</label>
+                                <select class="form-control international-logistics-input logistics-location-select"
+                                    name="discharge_airport_id" id="discharge-airport-id" data-prefix="discharge" data-kind="air">
                                     <option value="">{{ translate('Select Airport') }}</option>
-                                    @foreach($airports as $airport)
-                                        <option value="{{ $airport->id }}" @selected((string) old('discharge_airport_id') === (string) $airport->id)>
-                                            {{ $airport->country }} - {{ $airport->name }}{{ $airport->iata ? ' (' . $airport->iata . ')' : '' }}
-                                        </option>
-                                    @endforeach
                                 </select>
                             </div>
+                            <div class="selected-location-hover d-none mb-3" id="discharge-location-detail" tabindex="0">
+                                <div class="selected-location-name">
+                                    <i class="las la-info-circle mr-1"></i><span></span>
+                                </div>
+                                <div class="selected-location-card"></div>
+                            </div>
+
                             <div class="form-group">
                                 <label>{{ translate('Final Destination') }}</label>
-                                <input type="text" class="form-control international-logistics-input auto-capitalize-first" name="final_destination" value="{{ old('final_destination') }}">
+                                <select class="form-control international-logistics-input" name="final_destination_type"
+                                    id="final-destination-type">
+                                    <option value="billing" @selected(old('final_destination_type', 'billing') === 'billing')>
+                                        {{ translate('Same as Billing Address') }}
+                                    </option>
+                                    <option value="shipping" @selected(old('final_destination_type') === 'shipping')>
+                                        {{ translate('Same as Shipping Address') }}
+                                    </option>
+                                    <option value="custom" @selected(old('final_destination_type') === 'custom')>
+                                        {{ translate('Not in List') }}
+                                    </option>
+                                </select>
+                                <input type="hidden" class="international-logistics-input" name="final_destination"
+                                    id="final-destination-value" value="{{ old('final_destination') }}">
+                                <div class="small text-muted mt-2" id="final-destination-preview"></div>
+                            </div>
+                            <div class="border rounded p-3 mb-3 d-none" id="final-destination-custom-fields">
+                                <div class="row gutters-10">
+                                    @include('backend.sales.partials.create_order_address_fields', ['prefix' => 'final_destination', 'countries' => $countries])
+                                </div>
                             </div>
                         </div>
 
@@ -1119,6 +1198,28 @@ span#picker-info-stock-badge {
 @endsection
 
 @section('script')
+    @php
+        $seaPortCatalog = $seaPorts->map(function ($port) {
+            return [
+                'id' => (string) $port->id,
+                'country_id' => (string) ($port->country_id ?: ''),
+                'country' => $port->country,
+                'name' => $port->name,
+                'code' => $port->un_locode,
+                'details' => $port->toArray(),
+            ];
+        })->values();
+        $airportCatalog = $airports->map(function ($airport) {
+            return [
+                'id' => (string) $airport->id,
+                'country_id' => (string) ($airport->country_id ?: ''),
+                'country' => $airport->country,
+                'name' => $airport->name,
+                'code' => $airport->iata ?: $airport->icao,
+                'details' => $airport->toArray(),
+            ];
+        })->values();
+    @endphp
     <script>
         (function () {
             var customerSearchUrl = @json(route('orders.create.customers'));
@@ -1138,6 +1239,21 @@ span#picker-info-stock-badge {
             var quoteRequestSequence = 0;
             var debounceTimer = null;
             var customerAddresses = [];
+            var currentInvoiceType = 'domestic';
+            var locationCatalog = {
+                sea: @json($seaPortCatalog),
+                air: @json($airportCatalog)
+            };
+            var selectedLocationIds = {
+                loading: {
+                    sea: @json((string) old('loading_sea_port_id', '')),
+                    air: @json((string) old('loading_airport_id', ''))
+                },
+                discharge: {
+                    sea: @json((string) old('discharge_sea_port_id', '')),
+                    air: @json((string) old('discharge_airport_id', ''))
+                }
+            };
             var salePriceEdited = false;
             var bookedToOptions = @json($bookedToOptions->map(function ($option) {
                 return ['id' => $option->id, 'transport_id' => $option->transport_id, 'name' => $option->name];
@@ -1148,6 +1264,8 @@ span#picker-info-stock-badge {
             var orderNumberPreviewTimer = null;
             var walletRewardEarnedTemplate = @json(translate('Customer will earn :amount wallet point reward on this order after payment.'));
             var walletRewardNextTemplate = @json(translate('Add :amount more to earn :reward wallet reward.'));
+
+            $('#international-logistics-fields').insertAfter('#transport-surface-mode-fields');
 
             function money(value) {
                 return (Number(value || 0)).toFixed(3);
@@ -1457,17 +1575,154 @@ span#picker-info-stock-badge {
                 }
             }
 
-            function toggleInternationalLocation(prefix) {
-                var type = $('#' + prefix + '-location-type').val() || 'sea';
-                $('#' + prefix + '-sea-port-wrap').toggleClass('d-none', type !== 'sea')
-                    .find('select').prop('disabled', type !== 'sea');
-                $('#' + prefix + '-airport-wrap').toggleClass('d-none', type !== 'air')
-                    .find('select').prop('disabled', type !== 'air');
+            function locationCountryKey(location) {
+                return location.country_id
+                    ? 'id:' + location.country_id
+                    : 'name:' + String(location.country || '').toLowerCase();
+            }
+
+            function locationSelect(prefix, kind) {
+                return $('#' + prefix + '-' + (kind === 'sea' ? 'sea-port' : 'airport') + '-id');
+            }
+
+            function usesPortLogistics() {
+                var mode = $('select[name="fod_mode"]').val();
+                return $('#shipping-method').val() === 'transport' && (mode === 'sea' || mode === 'air');
+            }
+
+            function findLocation(kind, id) {
+                return (locationCatalog[kind] || []).find(function (location) {
+                    return String(location.id) === String(id || '');
+                }) || null;
+            }
+
+            function locationFieldLabel(key) {
+                var labels = {
+                    port_id: '{{ translate('Port ID') }}',
+                    iso2: 'ISO2',
+                    iso3: 'ISO3',
+                    iata: 'IATA',
+                    icao: 'ICAO',
+                    un_locode: 'UN/LOCODE',
+                    ro_ro_supported: 'Ro-Ro Supported',
+                    latitude: '{{ translate('Latitude') }}',
+                    longitude: '{{ translate('Longitude') }}'
+                };
+                if (labels[key]) return labels[key];
+                return key.split('_').map(function (part) {
+                    return part ? part.charAt(0).toUpperCase() + part.slice(1) : '';
+                }).join(' ');
+            }
+
+            function renderLocationDetail(prefix, kind, id) {
+                var location = findLocation(kind, id);
+                var $detail = $('#' + prefix + '-location-detail');
+                if (!location) {
+                    $detail.addClass('d-none').find('.selected-location-card').empty();
+                    return;
+                }
+
+                var ignored = ['id', 'country_id', 'status', 'created_at', 'updated_at'];
+                var detailHtml = '';
+                Object.keys(location.details || {}).forEach(function (key) {
+                    var value = location.details[key];
+                    if (ignored.indexOf(key) !== -1 || value === null || value === undefined || value === '') return;
+                    detailHtml += '<div class="selected-location-detail-row">'
+                        + '<span class="selected-location-detail-label">' + escapeHtml(locationFieldLabel(key)) + '</span>'
+                        + '<span>' + escapeHtml(value) + '</span></div>';
+                });
+
+                $detail.removeClass('d-none')
+                    .find('.selected-location-name span').text(location.name);
+                $detail.find('.selected-location-card').html(detailHtml);
+            }
+
+            function renderLogisticsCountries(prefix, kind) {
+                var $country = $('#' + prefix + '-logistics-country');
+                var selectedLocation = findLocation(kind, selectedLocationIds[prefix][kind]);
+                var previousCountry = String($country.val() || '');
+                var countries = {};
+
+                (locationCatalog[kind] || []).forEach(function (location) {
+                    countries[locationCountryKey(location)] = location.country || '{{ translate('Unknown Country') }}';
+                });
+
+                $country.empty().append('<option value="">{{ translate('Select Country') }}</option>');
+                Object.keys(countries).sort(function (a, b) {
+                    return countries[a].localeCompare(countries[b]);
+                }).forEach(function (key) {
+                    $country.append($('<option></option>').val(key).text(countries[key]));
+                });
+
+                var selectedCountry = selectedLocation ? locationCountryKey(selectedLocation) : previousCountry;
+                if (selectedCountry && Object.prototype.hasOwnProperty.call(countries, selectedCountry)) {
+                    $country.val(selectedCountry);
+                }
+                renderLogisticsLocations(prefix, kind);
+            }
+
+            function renderLogisticsLocations(prefix, kind) {
+                var countryKey = $('#' + prefix + '-logistics-country').val();
+                var $select = locationSelect(prefix, kind);
+                var selectedId = selectedLocationIds[prefix][kind];
+                var placeholder = kind === 'sea'
+                    ? '{{ translate('Select Sea Port') }}'
+                    : '{{ translate('Select Airport') }}';
+
+                $select.empty().append($('<option></option>').val('').text(
+                    countryKey ? placeholder : '{{ translate('Select Country First') }}'
+                ));
+
+                (locationCatalog[kind] || []).filter(function (location) {
+                    return countryKey && locationCountryKey(location) === countryKey;
+                }).forEach(function (location) {
+                    var label = location.name + (location.code ? ' (' + location.code + ')' : '');
+                    $select.append($('<option></option>').val(location.id).text(label));
+                });
+
+                if ($select.find('option[value="' + selectedId + '"]').length) {
+                    $select.val(selectedId);
+                } else {
+                    selectedLocationIds[prefix][kind] = '';
+                }
+                $select.prop('disabled', !usesPortLogistics() || !countryKey);
+                renderLocationDetail(prefix, kind, $select.val());
+            }
+
+            function syncTransportLogistics() {
+                var mode = $('select[name="fod_mode"]').val();
+                var active = usesPortLogistics();
+                var $fields = $('#international-logistics-fields');
+
+                $fields.toggleClass('d-none', !active).find(':input').prop('disabled', !active);
+                if (!active) {
+                    $('#loading-location-detail,#discharge-location-detail').addClass('d-none');
+                    syncFinalDestination();
+                    return;
+                }
+
+                $('#loading-location-type,#discharge-location-type').val(mode);
+                $('#loading-sea-port-wrap,#discharge-sea-port-wrap').toggleClass('d-none', mode !== 'sea')
+                    .find('select').prop('disabled', mode !== 'sea');
+                $('#loading-airport-wrap,#discharge-airport-wrap').toggleClass('d-none', mode !== 'air')
+                    .find('select').prop('disabled', mode !== 'air');
+
+                $('#loading-country-label').text(mode === 'sea'
+                    ? '{{ translate('Port Of Loading Country') }}'
+                    : '{{ translate('Departure Country') }}');
+                $('#discharge-country-label').text(mode === 'sea'
+                    ? '{{ translate('Destination Country') }}'
+                    : '{{ translate('Arrival Country') }}');
+
+                renderLogisticsCountries('loading', mode);
+                renderLogisticsCountries('discharge', mode);
+                syncFinalDestination();
             }
 
             function applyCustomerInvoiceType(customer) {
                 var invoiceType = customer && customer.type_option === 'international' ? 'international' : 'domestic';
                 var international = invoiceType === 'international';
+                currentInvoiceType = invoiceType;
 
                 filterInvoiceOptions($('#payment-terms'), invoiceType);
                 filterInvoiceOptions($('#terms-of-delivery'), invoiceType);
@@ -1479,13 +1734,8 @@ span#picker-info-stock-badge {
                     : '{{ translate('Carrier GST No.') }}');
                 $('#domestic-invoice-fields').toggleClass('d-none', international)
                     .find(':input').prop('disabled', international);
-                $('#international-logistics-fields').toggleClass('d-none', !international);
-                $('.international-logistics-input').prop('disabled', !international);
-
-                if (international) {
-                    toggleInternationalLocation('loading');
-                    toggleInternationalLocation('discharge');
-                }
+                syncTransportLogistics();
+                syncFinalDestination();
             }
 
             function sortedByDefaultThenLatest(addresses) {
@@ -1509,6 +1759,75 @@ span#picker-info-stock-badge {
                     + '<div>' + escapeHtml(address.address || '') + '</div>'
                     + '<small>' + escapeHtml([address.village, address.city, address.district, address.state, address.country, address.postal_code].filter(Boolean).join(', '))
                     + '<br>' + escapeHtml(address.phone || '') + '</small>';
+            }
+
+            function addressPlainText(address) {
+                address = address || {};
+                return [
+                    address.contact_person,
+                    address.address,
+                    address.village,
+                    address.city,
+                    address.district,
+                    address.state,
+                    address.country,
+                    address.postal_code,
+                    address.phone
+                ].filter(function (value) {
+                    return value !== null && value !== undefined && $.trim(String(value)) !== '';
+                }).join(', ');
+            }
+
+            function addressFromFields(prefix) {
+                function selectedText(selector) {
+                    var $option = $(selector).find('option:selected');
+                    return $option.val() ? $option.text().trim() : '';
+                }
+
+                return {
+                    contact_person: $('[name="' + prefix + '_contact_person"]').val(),
+                    phone: $('[name="' + prefix + '_phone"]').val(),
+                    address: $('[name="' + prefix + '_address"]').val(),
+                    postal_code: $('[name="' + prefix + '_postal_code"]').val(),
+                    village: $('[name="' + prefix + '_village"]').val(),
+                    country: selectedText('#' + prefix + '-country-id'),
+                    state: selectedText('#' + prefix + '-state-id'),
+                    city: selectedText('#' + prefix + '-city-id'),
+                    district: $('[name="' + prefix + '_district"]').val()
+                };
+            }
+
+            function selectedFinalDestinationAddress() {
+                var type = $('#final-destination-type').val() || 'billing';
+                if (type === 'custom') return addressFromFields('final_destination');
+                if (type === 'billing') {
+                    return findAddress($('input[name="billing_address_id"]:checked').val());
+                }
+                if ($('input[name="shipping_same_as_billing"]:checked').val() === '1') {
+                    return findAddress($('input[name="billing_address_id"]:checked').val());
+                }
+                if ($('#new-shipping-toggle').is(':checked')) {
+                    return addressFromFields('shipping');
+                }
+                return findAddress($('input[name="shipping_address_id"]:checked').val());
+            }
+
+            function syncFinalDestination() {
+                var custom = $('#final-destination-type').val() === 'custom';
+                var active = usesPortLogistics();
+                var $customFields = $('#final-destination-custom-fields');
+                var destination = addressPlainText(selectedFinalDestinationAddress());
+
+                $customFields.toggleClass('d-none', !custom);
+                $customFields.find(':input').prop('disabled', !active || !custom);
+                $customFields.find('[name="final_destination_address"],[name="final_destination_country_id"],'
+                    + '[name="final_destination_state_id"],[name="final_destination_city_id"],'
+                    + '[name="final_destination_postal_code"],[name="final_destination_phone"]')
+                    .prop('required', active && custom);
+                $('#final-destination-value').prop('disabled', !active).val(destination);
+                $('#final-destination-preview').text(destination || (custom
+                    ? '{{ translate('Enter the final destination address below.') }}'
+                    : '{{ translate('Select the related customer address above.') }}'));
             }
 
             function addressRadioHtml(address, name, label, checked) {
@@ -1615,6 +1934,7 @@ span#picker-info-stock-badge {
                     }
 
                     syncShippingMode();
+                    syncFinalDestination();
                 });
             }
 
@@ -2495,12 +2815,17 @@ span#picker-info-stock-badge {
                 loadCourierServices();
             });
 
-            $('#loading-location-type').on('change', function () {
-                toggleInternationalLocation('loading');
+            $(document).on('change', '.logistics-country-select', function () {
+                var prefix = $(this).data('prefix');
+                var mode = $('select[name="fod_mode"]').val();
+                renderLogisticsLocations(prefix, mode);
             });
 
-            $('#discharge-location-type').on('change', function () {
-                toggleInternationalLocation('discharge');
+            $(document).on('change', '.logistics-location-select', function () {
+                var prefix = $(this).data('prefix');
+                var kind = $(this).data('kind');
+                selectedLocationIds[prefix][kind] = String($(this).val() || '');
+                renderLocationDetail(prefix, kind, $(this).val());
             });
 
             $('#additional-discount,#additional-discount-type').on('input change', function () {
@@ -2540,6 +2865,7 @@ span#picker-info-stock-badge {
                 $('#courier-fields').toggleClass('d-none', value !== 'courier');
                 $('#transport-fields').toggleClass('d-none', value !== 'transport');
                 $('#local-fields').toggleClass('d-none', value !== 'local');
+                syncTransportLogistics();
                 if (value !== 'courier') {
                     shippingItems = shippingItems.filter(function (item) { return item.source !== 'courier'; });
                     renderShippingItems();
@@ -2567,7 +2893,14 @@ span#picker-info-stock-badge {
                 var isSurface = $(this).val() === 'surface';
                 $('#transport-surface-mode-fields').toggleClass('d-none', !isSurface);
                 $('#transport-surface-mode').prop('disabled', !isSurface);
+                syncTransportLogistics();
             }).trigger('change');
+
+            $('#final-destination-type').on('change', syncFinalDestination);
+
+            $(document).on('input change', '#final-destination-custom-fields :input,#new-shipping-fields :input', function () {
+                syncFinalDestination();
+            });
 
             $('#new-shipping-toggle').on('change', function () {
                 $('#new-shipping-fields').toggleClass('d-none', !this.checked);
@@ -2576,10 +2909,12 @@ span#picker-info-stock-badge {
                 } else if (!$('input[name="shipping_address_id"]:checked').length) {
                     $('input[name="shipping_address_id"]').first().prop('checked', true);
                 }
+                syncFinalDestination();
             });
 
             $(document).on('change', 'input[name="billing_address_id"]', function () {
                 syncShippingSamePreview();
+                syncFinalDestination();
                 refreshSummary();
                 if ($('#shipping-method').val() === 'courier' && $('#courier-provider').val()) loadCourierServices();
             });
@@ -2590,6 +2925,7 @@ span#picker-info-stock-badge {
                     $('#new-shipping-fields').addClass('d-none');
                 }
                 syncShippingMode();
+                syncFinalDestination();
                 refreshSummary();
                 if ($('#shipping-method').val() === 'courier' && $('#courier-provider').val()) loadCourierServices();
             });
@@ -2599,6 +2935,7 @@ span#picker-info-stock-badge {
                 $.post(stateUrl, {_token: csrf, country_id: $(this).val()}, function (html) {
                     $('#' + prefix + '-state-id').html(JSON.parse(html));
                     $('#' + prefix + '-city-id').html('<option value="">{{ translate('Select City') }}</option>');
+                    syncFinalDestination();
                 });
             });
 
@@ -2606,10 +2943,12 @@ span#picker-info-stock-badge {
                 var prefix = $(this).data('prefix');
                 $.post(cityUrl, {_token: csrf, state_id: $(this).val()}, function (html) {
                     $('#' + prefix + '-city-id').html(JSON.parse(html));
+                    syncFinalDestination();
                 });
             });
 
             $('#backend-order-form').on('submit', function (event) {
+                syncFinalDestination();
                 if (!$('#selected-customer-id').val()) {
                     event.preventDefault();
                     notify('warning', '{{ translate('Please select an approved customer.') }}');

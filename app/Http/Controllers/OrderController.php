@@ -700,6 +700,8 @@ class OrderController extends Controller
             if ($shippingCostType === 'free_shipping') {
                 $request->merge(['shipping_costs' => [], 'shipping_items' => []]);
             }
+            $usesPortLogistics = $request->input('shipping_method') === 'transport'
+                && in_array($request->input('fod_mode'), ['sea', 'air'], true);
 
             $request->validate([
                 'customer_id' => ['required', 'integer'],
@@ -742,12 +744,12 @@ class OrderController extends Controller
                 'shipping_items.*.tax_inclusive' => ['nullable', 'boolean'],
                 'transport_delivery_type' => ['required', Rule::in(array_keys(InvoiceType::deliveryTerms($invoiceType)))],
                 'reverse_charge' => [$isInternational ? 'prohibited' : 'nullable', 'boolean'],
-                'loading_location_type' => [$isInternational ? 'required' : 'prohibited', Rule::in(['sea', 'air'])],
-                'loading_sea_port_id' => [$isInternational && $request->input('loading_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],
-                'loading_airport_id' => [$isInternational && $request->input('loading_location_type') === 'air' ? 'required' : 'nullable', 'integer', Rule::exists('airports', 'id')],
-                'discharge_location_type' => [$isInternational ? 'required' : 'prohibited', Rule::in(['sea', 'air'])],
-                'discharge_sea_port_id' => [$isInternational && $request->input('discharge_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],
-                'discharge_airport_id' => [$isInternational && $request->input('discharge_location_type') === 'air' ? 'required' : 'nullable', 'integer', Rule::exists('airports', 'id')],
+                'loading_location_type' => [$usesPortLogistics ? 'required' : 'nullable', Rule::in(['sea', 'air'])],
+                'loading_sea_port_id' => [$usesPortLogistics && $request->input('loading_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],
+                'loading_airport_id' => [$usesPortLogistics && $request->input('loading_location_type') === 'air' ? 'required' : 'nullable', 'integer', Rule::exists('airports', 'id')],
+                'discharge_location_type' => [$usesPortLogistics ? 'required' : 'nullable', Rule::in(['sea', 'air'])],
+                'discharge_sea_port_id' => [$usesPortLogistics && $request->input('discharge_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],
+                'discharge_airport_id' => [$usesPortLogistics && $request->input('discharge_location_type') === 'air' ? 'required' : 'nullable', 'integer', Rule::exists('airports', 'id')],
                 'final_destination' => ['nullable', 'string', 'max:255'],
                 'carrier_tax_number' => ['nullable', 'string', 'max:100'],
                 'net_weight_kg' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],

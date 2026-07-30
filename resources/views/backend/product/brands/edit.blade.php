@@ -24,6 +24,24 @@
                 <input type="hidden" name="lang" value="{{ $lang }}">
                 @csrf
                 <div class="form-group row">
+                    <label class="col-sm-3 col-form-label" for="company_id">{{ translate('Company Name') }}</label>
+                    <div class="col-sm-9">
+                        <select id="company_id" name="company_id" class="form-control aiz-selectpicker"
+                            data-live-search="true" data-placeholder="{{ translate('Select Company') }}">
+                            <option value="">{{ translate('Select Company') }}</option>
+                            @foreach ($companies as $company)
+                                <option value="{{ $company->id }}"
+                                    @selected(old('company_id', $brand->company_id) == $company->id)>
+                                    {{ $company->company_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('company_id')
+                            <span class="text-danger small">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+                <div class="form-group row">
                     <label class="col-sm-3 col-from-label" for="name">{{translate('Name')}} <i class="las la-language text-danger" title="{{translate('Translatable')}}"></i></label>
                     <div class="col-sm-9">
                         <input type="text" placeholder="{{translate('Name')}}" id="name" name="name" value="{{ $brand->getTranslation('name', $lang) }}" class="form-control" required>
