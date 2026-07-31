@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Brand;
 use App\Models\BrandTranslation;
+use App\Models\Category;
 use App\Models\Company;
 use App\Models\Product;
 use Illuminate\Support\Str;
@@ -25,16 +26,36 @@ class BrandController extends Controller
      */
     public function index(Request $request)
     {
-        $sort_search =null;
-        $brands = Brand::orderBy('name', 'asc');
-        if ($request->has('search')){
-            $sort_search = $request->search;
-            $brands = $brands->where('name', 'like', '%'.$sort_search.'%');
+        $sort_search = null;
+        $brands = Brand::query()
+            ->with([
+                'company.categories',
+            ])
+            ->orderBy('name', 'asc');
+
+        if ($request->filled('search')) {
+            $sort_search = trim((string) $request->search);
+            $brands->where(function ($query) use ($sort_search) {
+                $query->where('name', 'like', '%' . $sort_search . '%')
+                    ->orWhereHas('company', function ($companyQuery) use ($sort_search) {
+                        $companyQuery->where('code', 'like', '%' . $sort_search . '%')
+                            ->orWhere('company_name', 'like', '%' . $sort_search . '%')
+                            ->orWhere('company_type', 'like', '%' . $sort_search . '%')
+                            ->orWhereHas('categories', function ($categoryQuery) use ($sort_search) {
+                                $categoryQuery->where('categories.name', 'like', '%' . $sort_search . '%')
+                                    ->orWhereHas('category_translations', function ($translationQuery) use ($sort_search) {
+                                        $translationQuery->where('name', 'like', '%' . $sort_search . '%');
+                                    });
+                            });
+                    });
+            });
         }
+
         $brands = $brands->paginate(15);
         $companies = Company::orderBy('company_name')->get(['id', 'company_name']);
+        $categories = Category::orderBy('name')->get(['id', 'name', 'parent_id']);
 
-        return view('backend.product.brands.index', compact('brands', 'sort_search', 'companies'));
+        return view('backend.product.brands.index', compact('brands', 'sort_search', 'companies', 'categories'));
     }
 
     /**

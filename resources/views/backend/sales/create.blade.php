@@ -727,11 +727,6 @@ span#picker-info-stock-badge {
                             <small class="text-muted">{{ translate('Fetched automatically from Account Master.') }}</small>
                         </div>
                         <div class="form-group">
-                            <label>{{ translate('Record File.No') }}</label>
-                            <input type="text" class="form-control" id="record-file-no" value="" readonly>
-                            <small class="text-muted">{{ translate('Fetched automatically from the selected customer.') }}</small>
-                        </div>
-                        <div class="form-group">
                             <label>{{ translate('P.O. No.') }}</label>
                             <input type="text" class="form-control" name="po_number" value="{{ old('po_number') }}">
                             @error('po_number') <div class="text-danger small">{{ $message }}</div> @enderror
@@ -1509,7 +1504,6 @@ span#picker-info-stock-badge {
                     ['{{ translate('WhatsApp Number(s)') }}', (customer.whatsapp_numbers || []).join(', ')],
                     ['{{ translate('Email') }}', customer.email],
                     ['{{ translate('Person Name') }}', customer.person_name ? capitalizeFirst(customer.person_name) : ''],
-                    ['{{ translate('Record File.No') }}', customer.record_file_no],
                     ['{{ translate('Sales Man Code') }}', customer.sales_man_code],
                     ['{{ translate('Default Shipping') }}', customer.default_shipping_method]
                 ];
@@ -1875,7 +1869,6 @@ span#picker-info-stock-badge {
                         .on('click', function () {
                             $('#selected-customer-id').val(customer.id);
                             $('#sales-man-code').val(customer.sales_man_code || '');
-                            $('#record-file-no').val(customer.record_file_no || '');
                             $('#selected-customer-card').removeClass('d-none').html(customerMetaHtml(customer));
                             $box.empty();
                             applyCustomerInvoiceType(customer);

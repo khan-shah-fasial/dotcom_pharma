@@ -2,6 +2,38 @@
 
 @section('content')
 
+@php
+	$categoryById = $categories->keyBy('id');
+	$categoryPath = function ($category) use ($categoryById) {
+		$path = collect();
+		$seen = [];
+
+		while ($category && !in_array((int) $category->id, $seen, true)) {
+			$seen[] = (int) $category->id;
+			$path->prepend($category->getTranslation('name'));
+			$category = $category->parent_id ? $categoryById->get($category->parent_id) : null;
+		}
+
+		return $path->implode(' > ');
+	};
+@endphp
+
+<style>
+	.brand-list-table {
+		min-width: 1200px;
+	}
+	.brand-category-list {
+		min-width: 180px;
+		max-width: 320px;
+		white-space: normal;
+	}
+	.brand-category-list .badge {
+		white-space: normal;
+		text-align: left;
+		line-height: 1.4;
+	}
+</style>
+
 <div class="aiz-titlebar text-left mt-2 mb-3">
 	<div class="align-items-center">
 		<h1 class="h3">{{translate('All Brands')}}</h1>
@@ -9,7 +41,7 @@
 </div>
 
 <div class="row">
-	<div class="@if(auth()->user()->can('add_brand')) col-lg-7 @else col-lg-12 @endif">
+	<div class="@if(auth()->user()->can('add_brand')) col-lg-8 @else col-lg-12 @endif">
 		<div class="card">
 		    <div class="card-header row gutters-5">
 				<div class="col text-center text-md-left">
@@ -18,45 +50,74 @@
 				<div class="col-md-4">
 					<form class="" id="sort_brands" action="" method="GET">
 						<div class="input-group input-group-sm">
-					  		<input type="text" class="form-control" id="search" name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset placeholder="{{ translate('Type name & Enter') }}">
+							<input type="text" class="form-control" id="search" name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset placeholder="{{ translate('Search brand or company') }}">
 						</div>
 					</form>
 				</div>
 		    </div>
 		    <div class="card-body">
-		        <table class="table aiz-table mb-0">
-		            <thead>
-		                <tr>
-		                    <th>#</th>
-		                    <th>{{translate('Name')}}</th>
-		                    <th>{{translate('Logo')}}</th>
-		                    <th class="text-right">{{translate('Options')}}</th>
-		                </tr>
-		            </thead>
-		            <tbody>
-		                @foreach($brands as $key => $brand)
-		                    <tr>
-		                        <td>{{ ($key+1) + ($brands->currentPage() - 1)*$brands->perPage() }}</td>
-		                        <td>{{ $brand->getTranslation('name') }}</td>
-								<td>
-		                            <img src="{{ uploaded_asset($brand->logo) }}" alt="{{translate('Brand')}}" class="h-50px">
-		                        </td>
-		                        <td class="text-right">
-									@can('edit_brand')
-										<a class="btn btn-soft-primary btn-icon btn-circle btn-sm" href="{{route('brands.edit', ['id'=>$brand->id, 'lang'=>env('DEFAULT_LANGUAGE')] )}}" title="{{ translate('Edit') }}">
-											<i class="las la-edit"></i>
-										</a>
-									@endcan
-									@can('delete_brand')
-										<a href="#" class="btn btn-soft-danger btn-icon btn-circle btn-sm confirm-delete" data-href="{{route('brands.destroy', $brand->id)}}" title="{{ translate('Delete') }}">
-											<i class="las la-trash"></i>
-										</a>
-									@endcan
-		                        </td>
-		                    </tr>
-		                @endforeach
-		            </tbody>
-		        </table>
+				<div class="table-responsive">
+					<table class="table aiz-table mb-0 brand-list-table">
+						<thead>
+							<tr>
+								<th>{{ translate('Sr.No') }}</th>
+								<th>{{ translate('Brand Name') }}</th>
+								<th>{{ translate('Company Code') }}</th>
+								<th>{{ translate('Company Name') }}</th>
+								<th>{{ translate('Company Type') }}</th>
+								<th>{{ translate('Deal In Category') }}</th>
+								<th>{{ translate('Brand Logo') }}</th>
+								<th class="text-right">{{ translate('Options') }}</th>
+							</tr>
+						</thead>
+						<tbody>
+							@forelse($brands as $key => $brand)
+								@php
+									$company = $brand->company;
+								@endphp
+								<tr>
+									<td>{{ $brands->firstItem() + $key }}</td>
+									<td>{{ $brand->getTranslation('name') }}</td>
+									<td>{{ $company->code ?? '-' }}</td>
+									<td>{{ $company->company_name ?? '-' }}</td>
+									<td>{{ $company->company_type ?? '-' }}</td>
+									<td class="brand-category-list">
+										@if ($company)
+											@forelse ($company->categories->sortBy(fn ($category) => $categoryPath($category)) as $category)
+												<span class="badge badge-inline badge-soft-info mb-1">
+													{{ $categoryPath($category) }}
+												</span>
+											@empty
+												-
+											@endforelse
+										@else
+											-
+										@endif
+									</td>
+									<td>
+										<img src="{{ uploaded_asset($brand->logo) }}" alt="{{ $brand->getTranslation('name') }}" class="h-50px">
+									</td>
+									<td class="text-right">
+										@can('edit_brand')
+											<a class="btn btn-soft-primary btn-icon btn-circle btn-sm" href="{{route('brands.edit', ['id'=>$brand->id, 'lang'=>env('DEFAULT_LANGUAGE')] )}}" title="{{ translate('Edit') }}">
+												<i class="las la-edit"></i>
+											</a>
+										@endcan
+										@can('delete_brand')
+											<a href="#" class="btn btn-soft-danger btn-icon btn-circle btn-sm confirm-delete" data-href="{{route('brands.destroy', $brand->id)}}" title="{{ translate('Delete') }}">
+												<i class="las la-trash"></i>
+											</a>
+										@endcan
+									</td>
+								</tr>
+							@empty
+								<tr>
+									<td colspan="8" class="text-center">{{ translate('No brands found.') }}</td>
+								</tr>
+							@endforelse
+						</tbody>
+					</table>
+				</div>
 		        <div class="aiz-pagination">
                 	{{ $brands->appends(request()->input())->links() }}
             	</div>
@@ -64,7 +125,7 @@
 		</div>
 	</div>
 	@can('add_brand')
-		<div class="col-md-5">
+		<div class="col-lg-4">
 			<div class="card">
 				<div class="card-header">
 					<h5 class="mb-0 h6">{{ translate('Add New Brand') }}</h5>
