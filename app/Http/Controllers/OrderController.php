@@ -14,6 +14,7 @@ use App\Models\CouponUsage;
 use App\Models\Coupon;
 use App\Models\User;
 use App\Models\CombinedOrder;
+use App\Models\Company;
 use App\Models\Country;
 use App\Models\Airport;
 use App\Models\SeaPort;
@@ -165,8 +166,10 @@ class OrderController extends Controller
         $transports = Transport::active()->orderBy('name')->get();
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
         $localDeliveryPartners = LocalDeliveryPartner::active()->orderBy('name')->get();
+        $companies = Company::orderBy('company_name')->get(['id', 'code', 'company_name']);
         extract($this->orderFormStaffOptions());
-        $generatedOrderNo = preview_financial_year_order_code(null, 'S');
+        $selectedCompany = $companies->firstWhere('id', (int) old('company_id'));
+        $orderNumberParts = financial_year_order_code_parts(old('order_date', now()->toDateString()), 'S');
 
         return view('backend.sales.create', compact(
             'countries',
@@ -176,11 +179,13 @@ class OrderController extends Controller
             'transports',
             'bookedToOptions',
             'localDeliveryPartners',
+            'companies',
             'salesPeople',
             'packedStaff',
             'checkedStaff',
             'billingStaff',
-            'generatedOrderNo'
+            'selectedCompany',
+            'orderNumberParts'
         ));
     }
 
@@ -534,13 +539,19 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'order_date' => ['required', 'date'],
+            'company_id' => ['required', 'integer', 'exists:companies,id'],
         ]);
 
+        $company = Company::findOrFail($validated['company_id']);
+        $parts = financial_year_order_code_parts($validated['order_date'], 'S', $company->code);
+        $code = preview_financial_year_order_code($validated['order_date'], 'S', $company->code);
+
         return response()->json([
-            'code' => preview_financial_year_order_code(
-                $validated['order_date'],
-                'S'
-            ),
+            'code' => $code,
+            'company_code' => $parts['brand'],
+            'series' => $parts['document'],
+            'financial_year' => $parts['segment'],
+            'number' => substr($code, strlen($parts['prefix'])),
         ]);
     }
 
@@ -705,6 +716,7 @@ class OrderController extends Controller
 
             $request->validate([
                 'customer_id' => ['required', 'integer'],
+                'company_id' => ['required', 'integer', 'exists:companies,id'],
                 'payment_type' => ['required', Rule::in(array_keys(InvoiceType::paymentTerms($invoiceType)))],
                 'order_no_preview' => ['nullable', 'string', 'max:191'],
                 'order_code_letter' => ['required', 'string', 'size:1', 'regex:/^[A-Za-z]$/'],
@@ -768,6 +780,9 @@ class OrderController extends Controller
                 'shipping_state_id' => ['nullable', 'integer', Rule::exists('states', 'id')],
                 'shipping_city_id' => ['nullable', 'integer', Rule::exists('cities', 'id')],
             ]);
+
+            $company = Company::findOrFail($request->integer('company_id'));
+            $request->merge(['order_company_code' => $company->code]);
 
             $storedAttachments = [];
             foreach ([

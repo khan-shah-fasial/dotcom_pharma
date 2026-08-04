@@ -6270,13 +6270,17 @@ if (!function_exists('financial_year_order_code_parts')) {
     /**
      * @return array{brand:string,document:string,start:int,end:int,segment:string,prefix:string}
      */
-    function financial_year_order_code_parts($moment = null, $documentCode = null): array
+    function financial_year_order_code_parts($moment = null, $documentCode = null, $companyCode = null): array
     {
         $date = $moment instanceof Carbon ? $moment->copy() : Carbon::parse($moment ?: 'now');
         $start = $date->month >= 4 ? $date->year : $date->year - 1;
         $end = $start + 1;
-        $configuredBrand = strtoupper(trim((string) get_setting('order_brand_short_code', 'DP')));
-        $brand = preg_replace('/[^A-Z0-9]/', '', $configuredBrand) ?: 'DP';
+        if ($companyCode !== null && trim((string) $companyCode) !== '') {
+            $brand = trim((string) $companyCode);
+        } else {
+            $configuredBrand = strtoupper(trim((string) get_setting('order_brand_short_code', 'DP')));
+            $brand = preg_replace('/[^A-Z0-9]/', '', $configuredBrand) ?: 'DP';
+        }
         $configuredDocument = strtoupper(trim((string) ($documentCode ?: get_setting('order_document_code', 'O'))));
         $document = substr(preg_replace('/[^A-Z]/', '', $configuredDocument) ?: 'O', 0, 1);
         $segment = substr((string) $start, -2) . '-' . substr((string) $end, -2);
@@ -6311,9 +6315,9 @@ if (!function_exists('preview_financial_year_order_code')) {
     /**
      * Preview only. The final number is allocated atomically when the order is saved.
      */
-    function preview_financial_year_order_code($moment = null, $documentCode = null): string
+    function preview_financial_year_order_code($moment = null, $documentCode = null, $companyCode = null): string
     {
-        $parts = financial_year_order_code_parts($moment, $documentCode);
+        $parts = financial_year_order_code_parts($moment, $documentCode, $companyCode);
         $lastSequence = 0;
 
         if (\Illuminate\Support\Facades\Schema::hasTable('order_number_sequences')) {
@@ -6338,9 +6342,9 @@ if (!function_exists('generate_financial_year_order_code')) {
     /**
      * Allocate a concurrency-safe order code such as DP-O-26-27-2.
      */
-    function generate_financial_year_order_code($moment = null, $documentCode = null): string
+    function generate_financial_year_order_code($moment = null, $documentCode = null, $companyCode = null): string
     {
-        $parts = financial_year_order_code_parts($moment, $documentCode);
+        $parts = financial_year_order_code_parts($moment, $documentCode, $companyCode);
 
         if (!\Illuminate\Support\Facades\Schema::hasTable('order_number_sequences')) {
             return $parts['prefix'] . (current_order_sequence_for_prefix($parts['prefix']) + 1);

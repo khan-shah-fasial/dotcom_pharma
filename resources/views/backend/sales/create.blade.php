@@ -82,6 +82,17 @@
             color: #74788d;
             font-weight: 700;
         }
+        .order-number-parts {
+            display: grid;
+            grid-template-columns: minmax(110px, 1.4fr) minmax(80px, .8fr) minmax(100px, 1fr) minmax(80px, .7fr);
+            gap: 6px;
+        }
+        .order-number-part-label {
+            display: block;
+            margin-bottom: 3px;
+            color: #74788d;
+            font-size: 11px;
+        }
         .selected-file-list {
             min-height: 42px;
             padding: 7px;
@@ -412,6 +423,7 @@ span#picker-info-stock-badge {
     border-top: 1px solid #6ee7b7;
 }
         @media (max-width: 767.98px) {
+            .order-number-parts { grid-template-columns: 1fr 1fr; }
             .product-info-grid { grid-template-columns: 1fr; }
             .product-info-item:nth-child(odd) { border-right: 0; }
             .product-composition-item { grid-column: auto; grid-template-columns: minmax(105px, 42%) minmax(0, 1fr); }
@@ -442,17 +454,47 @@ span#picker-info-stock-badge {
                     <div class="card-body">
                         <div class="row gutters-5">
                             <input type="hidden" name="order_code_letter" id="order-code-letter" value="S">
-                            <div class="col-md-6 form-group">
+                            <div class="col-md-4 form-group">
+                                <label for="order-company-id">{{ translate('Company') }} <span class="text-danger">*</span></label>
+                                <select class="form-control aiz-selectpicker" name="company_id" id="order-company-id" data-live-search="true" title="{{ translate('Select Company') }}" required>
+                                    <option value="">{{ translate('Select Company') }}</option>
+                                    @foreach ($companies as $company)
+                                        <option value="{{ $company->id }}" data-code="{{ $company->code }}" @selected((string) old('company_id') === (string) $company->id)>
+                                            {{ $company->company_name }} ({{ $company->code }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('company_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-8 form-group">
                                 <label>{{ translate('Order No') }} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="order_no_preview" id="order-no-preview" value="{{ $generatedOrderNo }}" readonly>
+                                <div class="order-number-parts">
+                                    <div>
+                                        <span class="order-number-part-label">{{ translate('Company Code') }}</span>
+                                        <input type="text" class="form-control" id="order-company-code" value="{{ optional($selectedCompany)->code }}" readonly>
+                                    </div>
+                                    <div>
+                                        <span class="order-number-part-label">{{ translate('Code (Series)') }}</span>
+                                        <input type="text" class="form-control" id="order-series" value="S" readonly>
+                                    </div>
+                                    <div>
+                                        <span class="order-number-part-label">{{ translate('Financial Year') }}</span>
+                                        <input type="text" class="form-control" id="order-financial-year" value="{{ $orderNumberParts['segment'] }}" readonly>
+                                    </div>
+                                    <div>
+                                        <span class="order-number-part-label">{{ translate('Number') }}</span>
+                                        <input type="text" class="form-control" id="order-sequence-number" value="" readonly>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="order_no_preview" id="order-no-preview" value="">
                                 <small class="text-muted">{{ translate('Preview only. The final sequential number is reserved when the order is saved.') }}</small>
                             </div>
-                            <div class="col-md-3 form-group">
+                            <div class="col-md-6 form-group">
                                 <label>{{ translate('Order Date') }} <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="order_date" value="{{ old('order_date', now()->toDateString()) }}" required>
                                 @error('order_date') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
-                            <div class="col-md-3 form-group">
+                            <div class="col-md-6 form-group">
                                 <label>{{ translate('Order Time') }} <span class="text-danger">*</span></label>
                                 <input type="time" class="form-control" name="order_time" value="{{ old('order_time', now()->format('H:i')) }}" required>
                                 @error('order_time') <div class="text-danger small">{{ $message }}</div> @enderror
@@ -1257,6 +1299,7 @@ span#picker-info-stock-badge {
             var shippingItems = [];
             var nextShippingItemId = 1;
             var orderNumberPreviewTimer = null;
+            var orderNumberPreviewRequest = null;
             var walletRewardEarnedTemplate = @json(translate('Customer will earn :amount wallet point reward on this order after payment.'));
             var walletRewardNextTemplate = @json(translate('Add :amount more to earn :reward wallet reward.'));
 
@@ -1354,23 +1397,45 @@ span#picker-info-stock-badge {
             function updateOrderCodePreview() {
                 var $code = $('#order-code-letter');
                 var letter = String($code.val() || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 1);
+                var companyId = $('#order-company-id').val();
+                var companyCode = $('#order-company-id option:selected').data('code') || '';
+                var dateParts = String($('input[name="order_date"]').val() || '').split('-');
                 $code.val(letter);
-                if (!letter) return;
-                $('#order-no-preview').val(function (_, current) {
-                    return String(current || '').replace(/^([A-Z0-9]+-)[A-Z](-\d{2}-\d{2}-\d+)$/, '$1' + letter + '$2');
-                });
+                $('#order-company-code').val(companyCode);
+                $('#order-series').val(letter);
+                $('#order-sequence-number').val('');
+                $('#order-no-preview').val('');
 
                 clearTimeout(orderNumberPreviewTimer);
+                if (orderNumberPreviewRequest) {
+                    orderNumberPreviewRequest.abort();
+                    orderNumberPreviewRequest = null;
+                }
+                if (dateParts.length === 3) {
+                    var dateYear = Number(dateParts[0]);
+                    var dateMonth = Number(dateParts[1]);
+                    var financialYearStart = dateMonth >= 4 ? dateYear : dateYear - 1;
+                    $('#order-financial-year').val(String(financialYearStart).slice(-2) + '-' + String(financialYearStart + 1).slice(-2));
+                }
+                if (!letter || !companyId || dateParts.length !== 3) return;
+
                 orderNumberPreviewTimer = setTimeout(function () {
-                    requestJson({
+                    orderNumberPreviewRequest = requestJson({
                         url: orderNumberPreviewUrl,
                         method: 'GET',
                         data: {
                             order_date: $('input[name="order_date"]').val(),
-                            order_code_letter: letter
+                            company_id: companyId
                         }
                     }).done(function (response) {
-                        if (response.code) $('#order-no-preview').val(response.code);
+                        if (!response.code) return;
+                        $('#order-company-code').val(response.company_code || '');
+                        $('#order-series').val(response.series || letter);
+                        $('#order-financial-year').val(response.financial_year || '');
+                        $('#order-sequence-number').val(response.number || '');
+                        $('#order-no-preview').val(response.code);
+                    }).always(function () {
+                        orderNumberPreviewRequest = null;
                     });
                 }, 250);
             }
@@ -2599,7 +2664,7 @@ span#picker-info-stock-badge {
 
             $('#weight-grams').on('input change', updateWeightDisplay);
             updateWeightDisplay();
-            $('#order-code-letter,input[name="order_date"]').on('input change', updateOrderCodePreview);
+            $('#order-company-id,#order-code-letter,input[name="order_date"]').on('input change', updateOrderCodePreview);
             updateOrderCodePreview();
 
             $(document).on('blur', '.auto-capitalize-first', function () {

@@ -372,7 +372,11 @@ class OrderPlacementService
         $orderMoment = $request->filled('order_date') && $request->filled('order_time')
             ? Carbon::createFromFormat('Y-m-d H:i', $request->input('order_date') . ' ' . $request->input('order_time'), config('app.timezone'))
             : Carbon::now();
-        $order->code = generate_financial_year_order_code($orderMoment, $request->input('order_code_letter'));
+        $order->code = generate_financial_year_order_code(
+            $orderMoment,
+            $request->input('order_code_letter'),
+            $request->input('order_company_code')
+        );
         $order->order_date = $orderMoment->toDateString();
         $order->order_time = $orderMoment->format('H:i:s');
         $order->date = $orderMoment->timestamp;

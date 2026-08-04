@@ -50,9 +50,9 @@ class OrderFormHelpersTest extends TestCase
             (object) ['type' => 'order_brand_short_code', 'value' => 'DP', 'lang' => null],
         ]));
 
-        $march = financial_year_order_code_parts(Carbon::parse('2027-03-31 23:59:59'), 'S');
-        $april = financial_year_order_code_parts(Carbon::parse('2027-04-01 00:00:00'), 'P');
-        $default = financial_year_order_code_parts(Carbon::parse('2026-07-20 12:00:00'));
+        $march = financial_year_order_code_parts(Carbon::parse('2027-03-31 23:59:59'), 'S', '786-DP');
+        $april = financial_year_order_code_parts(Carbon::parse('2027-04-01 00:00:00'), 'P', '786-DP');
+        $default = financial_year_order_code_parts(Carbon::parse('2026-07-20 12:00:00'), null, '786-DP');
 
         $this->assertSame('786-DP-O-26-27-', $default['prefix']);
         $this->assertSame('786-DP-S-26-27-', $march['prefix']);
