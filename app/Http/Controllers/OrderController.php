@@ -137,7 +137,26 @@ class OrderController extends Controller
     public function show($id)
     {
         // $order = Order::findOrFail(decrypt($id));
-        $order = Order::with(['orderDetails', 'shipment', 'transport', 'bookedTo', 'localDeliveryPartner', 'attachments'])->findOrFail(decrypt($id));
+        $order = Order::with([
+            'user',
+            'delivery_boy',
+            'shipment',
+            'transport',
+            'bookedTo',
+            'localDeliveryPartner',
+            'loadingSeaPort',
+            'loadingAirport',
+            'dischargeSeaPort',
+            'dischargeAirport',
+            'salesPerson',
+            'salesExecutive',
+            'packedByStaff',
+            'checkedByStaff',
+            'billingByStaff',
+            'attachments',
+            'orderDetails.product.stocks',
+            'orderDetails.batch',
+        ])->findOrFail(decrypt($id));
         
         $order_shipping_address = json_decode($order->shipping_address);
         $delivery_boys = User::where('city', $order_shipping_address->city)
@@ -149,7 +168,7 @@ class OrderController extends Controller
             $order->save();
         }
 
-        return view('backend.sales.show', compact('order', 'delivery_boys'));
+        return view('backend.sales.show2', compact('order', 'delivery_boys'));
     }
 
     /**
