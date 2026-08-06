@@ -136,11 +136,28 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
         if ($lrNumber = $this->filterValue('lr_number')) {
             $query->where('lr_number', 'like', $lrNumber . '%');
         }
-        if ($state = $this->filterValue('state')) {
-            $query->where('state', 'like', $state . '%');
+        if ($countryId = (int) $this->filterValue('country_id')) {
+            $query->whereHas('customerDetails', function ($customerQuery) use ($countryId) {
+                $customerQuery->where('country_id_business', $countryId);
+            });
         }
-        if ($city = $this->filterValue('city')) {
-            $query->where('city', 'like', $city . '%');
+        if ($stateId = (int) $this->filterValue('state_id')) {
+            $query->whereHas('customerDetails', function ($customerQuery) use ($stateId) {
+                $customerQuery->where('state_id_business', $stateId);
+            });
+        }
+        if ($cityId = (int) $this->filterValue('city_id')) {
+            $query->whereHas('customerDetails', function ($customerQuery) use ($cityId) {
+                $customerQuery->where('city_id_business', $cityId);
+            });
+        }
+        if ($pincode = $this->filterValue('pincode')) {
+            $query->where(function ($pincodeQuery) use ($pincode) {
+                $pincodeQuery->where('pincode', 'like', $pincode . '%')
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($pincode) {
+                        $customerQuery->where('pincode_business', 'like', $pincode . '%');
+                    });
+            });
         }
         if ($district = $this->filterValue('district')) {
             $query->where(function ($districtQuery) use ($district) {

@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseHistory;
 use App\Models\ProductStock;
 use App\Models\UserDetails;
+use App\Models\Country;
+use App\Models\State;
+use App\Models\City;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -122,20 +125,7 @@ class PurchaseHistoryReportController extends Controller
         if ($lrNumber = trim((string) $request->get('lr_number', ''))) {
             $query->where('lr_number', 'like', $lrNumber . '%');
         }
-        if ($state = trim((string) $request->get('state', ''))) {
-            $query->where('state', 'like', $state . '%');
-        }
-        if ($city = trim((string) $request->get('city', ''))) {
-            $query->where('city', 'like', $city . '%');
-        }
-        if ($district = trim((string) $request->get('district', ''))) {
-            $query->where(function ($districtQuery) use ($district) {
-                $districtQuery->where('district', 'like', $district . '%')
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($district) {
-                        $customerQuery->where('district_business', 'like', $district . '%');
-                    });
-            });
-        }
+        $this->applyLocationFilters($query, $request, 'purchase_history.');
         if ($transport = trim((string) $request->get('transport', ''))) {
             $query->where('transport', 'like', $transport . '%');
         }
@@ -304,11 +294,32 @@ class PurchaseHistoryReportController extends Controller
             ->paginate($perPage)
             ->appends($request->query());
 
+        $countries = Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']);
+        $states = collect();
+        $cities = collect();
+        if ($request->filled('country_id')) {
+            $states = State::query()
+                ->where('status', 1)
+                ->where('country_id', (int) $request->get('country_id'))
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        }
+        if ($request->filled('state_id')) {
+            $cities = City::query()
+                ->where('status', 1)
+                ->where('state_id', (int) $request->get('state_id'))
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        }
+
         return view('backend.purchase_history.index', [
             'purchaseHistory' => $purchaseHistory,
             'search'          => $search ?? null,
             'sortBy'          => $sortBy,
             'sortDir'         => $sortDir,
+            'countries'       => $countries,
+            'states'          => $states,
+            'cities'          => $cities,
         ]);
     }
 
@@ -878,8 +889,10 @@ class PurchaseHistoryReportController extends Controller
                 'invoice_number',
                 'sales_man_code',
                 'lr_number',
-                'state',
-                'city',
+                'country_id',
+                'state_id',
+                'city_id',
+                'pincode',
                 'district',
                 'transport',
                 'product_name',
@@ -945,6 +958,51 @@ class PurchaseHistoryReportController extends Controller
         $this->applyParsedDateExpressionFilter($query, $dateSql, $from, $to);
     }
 
+    private function applyLocationFilters($query, $request, string $columnPrefix = 'purchase_history.'): void
+    {
+        $countryId = (int) $request->get('country_id', 0);
+        $stateId = (int) $request->get('state_id', 0);
+        $cityId = (int) $request->get('city_id', 0);
+        $pincode = trim((string) $request->get('pincode', ''));
+        $district = trim((string) $request->get('district', ''));
+
+        if ($countryId > 0) {
+            $query->whereHas('customerDetails', function ($customerQuery) use ($countryId) {
+                $customerQuery->where('country_id_business', $countryId);
+            });
+        }
+
+        if ($stateId > 0) {
+            $query->whereHas('customerDetails', function ($customerQuery) use ($stateId) {
+                $customerQuery->where('state_id_business', $stateId);
+            });
+        }
+
+        if ($cityId > 0) {
+            $query->whereHas('customerDetails', function ($customerQuery) use ($cityId) {
+                $customerQuery->where('city_id_business', $cityId);
+            });
+        }
+
+        if ($pincode !== '') {
+            $query->where(function ($pincodeQuery) use ($pincode, $columnPrefix) {
+                $pincodeQuery->where($columnPrefix . 'pincode', 'like', $pincode . '%')
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($pincode) {
+                        $customerQuery->where('pincode_business', 'like', $pincode . '%');
+                    });
+            });
+        }
+
+        if ($district !== '') {
+            $query->where(function ($districtQuery) use ($district, $columnPrefix) {
+                $districtQuery->where($columnPrefix . 'district', 'like', $district . '%')
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($district) {
+                        $customerQuery->where('district_business', 'like', $district . '%');
+                    });
+            });
+        }
+    }
+
     private function applyParsedDateExpressionFilter($query, string $dateSql, $from, $to): void
     {
         if ($normalizedFrom = $this->normalizeDateInput($from)) {
@@ -1008,20 +1066,7 @@ class PurchaseHistoryReportController extends Controller
         if ($lrNumber = trim((string) $request->get('lr_number', ''))) {
             $query->where('purchase_history.lr_number', 'like', $lrNumber . '%');
         }
-        if ($state = trim((string) $request->get('state', ''))) {
-            $query->where('purchase_history.state', 'like', $state . '%');
-        }
-        if ($city = trim((string) $request->get('city', ''))) {
-            $query->where('purchase_history.city', 'like', $city . '%');
-        }
-        if ($district = trim((string) $request->get('district', ''))) {
-            $query->where(function ($districtQuery) use ($district) {
-                $districtQuery->where('purchase_history.district', 'like', $district . '%')
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($district) {
-                        $customerQuery->where('district_business', 'like', $district . '%');
-                    });
-            });
-        }
+        $this->applyLocationFilters($query, $request, 'purchase_history.');
         if ($transport = trim((string) $request->get('transport', ''))) {
             $query->where('purchase_history.transport', 'like', $transport . '%');
         }

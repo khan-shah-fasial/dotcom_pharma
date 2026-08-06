@@ -141,8 +141,10 @@
                     request('lr_number'),
                     request('party_name'),
                     request('user_name'),
-                    request('state'),
-                    request('city'),
+                    request('pincode'),
+                    request('country_id'),
+                    request('state_id'),
+                    request('city_id'),
                     request('district'),
                     request('transport'),
                     request('order_date_from'),
@@ -253,14 +255,50 @@
                                            value="{{ request('transport') }}" placeholder="{{ translate('Transport') }}">
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label" for="state">{{ translate('State') }}</label>
-                                    <input type="text" class="form-control" id="state" name="state"
-                                           value="{{ request('state') }}" placeholder="{{ translate('State') }}">
+                                    <label class="form-label" for="pincode">{{ translate('Pincode') }}</label>
+                                    <input type="text" inputmode="numeric" maxlength="10" class="form-control"
+                                           id="pincode" name="pincode" value="{{ request('pincode') }}"
+                                           placeholder="{{ translate('Pincode') }}" autocomplete="off">
+                                    <small class="text-muted" id="pincode-status"></small>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label" for="city">{{ translate('City') }}</label>
-                                    <input type="text" class="form-control" id="city" name="city"
-                                           value="{{ request('city') }}" placeholder="{{ translate('City') }}">
+                                    <label class="form-label" for="country_id">{{ translate('Country') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="country_id" name="country_id"
+                                            data-live-search="true">
+                                        <option value="">{{ translate('All') }}</option>
+                                        @foreach($countries as $country)
+                                            <option value="{{ $country->id }}"
+                                                {{ (string) request('country_id') === (string) $country->id ? 'selected' : '' }}>
+                                                {{ $country->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="state_id">{{ translate('State') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="state_id" name="state_id"
+                                            data-live-search="true">
+                                        <option value="">{{ translate('All') }}</option>
+                                        @foreach($states as $state)
+                                            <option value="{{ $state->id }}"
+                                                {{ (string) request('state_id') === (string) $state->id ? 'selected' : '' }}>
+                                                {{ $state->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="city_id">{{ translate('City') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="city_id" name="city_id"
+                                            data-live-search="true">
+                                        <option value="">{{ translate('All') }}</option>
+                                        @foreach($cities as $city)
+                                            <option value="{{ $city->id }}"
+                                                {{ (string) request('city_id') === (string) $city->id ? 'selected' : '' }}>
+                                                {{ $city->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label" for="district">{{ translate('District') }}</label>
@@ -576,6 +614,151 @@
                 $(this).siblings('.custom-file-label').addClass('selected').text(fileName);
             }
         });
+
+        (function () {
+            var csrf = '{{ csrf_token() }}';
+            var stateUrl = @json(route('get-state'));
+            var cityUrl = @json(route('get-city'));
+            var locationUrl = @json(route('get-location'));
+            var allLabel = @json(translate('All'));
+            var pincodeTimer = null;
+
+            function refreshPicker($el) {
+                if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.bootstrapSelect === 'function') {
+                    AIZ.plugins.bootstrapSelect('refresh');
+                } else if ($.fn.selectpicker) {
+                    $el.selectpicker('refresh');
+                }
+            }
+
+            function normalizeOptionsHtml(response) {
+                if (typeof response !== 'string') {
+                    return response;
+                }
+                try {
+                    return JSON.parse(response);
+                } catch (error) {
+                    return response;
+                }
+            }
+
+            function setSelectHtml($select, html, selected) {
+                var parsed = normalizeOptionsHtml(html);
+                if (typeof parsed === 'string') {
+                    parsed = parsed.replace(
+                        /<option value="">[^<]*<\/option>/,
+                        '<option value="">' + allLabel + '</option>'
+                    );
+                }
+                $select.html(parsed);
+                if (selected !== null && selected !== undefined && selected !== '') {
+                    $select.val(String(selected));
+                }
+                refreshPicker($select);
+            }
+
+            function resetCity() {
+                $('#city_id').html('<option value="">' + allLabel + '</option>');
+                refreshPicker($('#city_id'));
+            }
+
+            function resetStateAndCity() {
+                $('#state_id').html('<option value="">' + allLabel + '</option>');
+                refreshPicker($('#state_id'));
+                resetCity();
+            }
+
+            function loadStates(countryId, selectedStateId, thenLoadCityId) {
+                if (!countryId) {
+                    resetStateAndCity();
+                    return;
+                }
+
+                $.post(stateUrl, {_token: csrf, country_id: countryId}, function (html) {
+                    setSelectHtml($('#state_id'), html, selectedStateId || '');
+                    if (selectedStateId) {
+                        loadCities(selectedStateId, thenLoadCityId || '');
+                    } else {
+                        resetCity();
+                    }
+                });
+            }
+
+            function loadCities(stateId, selectedCityId) {
+                if (!stateId) {
+                    resetCity();
+                    return;
+                }
+
+                $.post(cityUrl, {_token: csrf, state_id: stateId}, function (html) {
+                    setSelectHtml($('#city_id'), html, selectedCityId || '');
+                });
+            }
+
+            function lookupPincode() {
+                var postalCode = $.trim($('#pincode').val());
+                var $status = $('#pincode-status');
+
+                if (postalCode.length < 4) {
+                    $status.removeClass('text-danger text-success').addClass('text-muted').text('');
+                    return;
+                }
+
+                $status.removeClass('text-danger text-success').addClass('text-muted')
+                    .html('<i class="las la-spinner la-spin"></i> {{ translate('Loading location...') }}');
+
+                $.ajax({
+                    url: locationUrl,
+                    method: 'POST',
+                    data: {
+                        _token: csrf,
+                        postal_code: postalCode,
+                        country_id: $('#country_id').val() || ''
+                    }
+                }).done(function (location) {
+                    if (!location || (!location.country_id && !location.state_id && !location.city_id)) {
+                        $status.removeClass('text-muted text-success').addClass('text-danger')
+                            .text('{{ translate('No location found for this pincode.') }}');
+                        return;
+                    }
+
+                    if (location.country_id) {
+                        $('#country_id').val(String(location.country_id));
+                        refreshPicker($('#country_id'));
+                    }
+
+                    if (location.country_id && location.state_id) {
+                        loadStates(location.country_id, location.state_id, location.city_id || '');
+                    } else if (location.country_id) {
+                        loadStates(location.country_id, '', '');
+                    }
+
+                    if (location.district && !$('#district').val()) {
+                        $('#district').val(location.district);
+                    }
+
+                    $status.removeClass('text-muted text-danger').addClass('text-success')
+                        .text('{{ translate('Location loaded.') }}');
+                }).fail(function (xhr) {
+                    var message = xhr.responseJSON && (xhr.responseJSON.message || Object.values(xhr.responseJSON.errors || {})[0]);
+                    $status.removeClass('text-muted text-success').addClass('text-danger')
+                        .text(message || '{{ translate('Unable to fetch location. Please select manually.') }}');
+                });
+            }
+
+            $('#country_id').on('change', function () {
+                loadStates($(this).val(), '', '');
+            });
+
+            $('#state_id').on('change', function () {
+                loadCities($(this).val(), '');
+            });
+
+            $('#pincode').on('input', function () {
+                clearTimeout(pincodeTimer);
+                pincodeTimer = setTimeout(lookupPincode, 450);
+            });
+        })();
     </script>
 @endsection
 

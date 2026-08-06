@@ -577,7 +577,20 @@ class OrderController extends Controller
     public function backendCourierRates(Request $request, OrderPlacementService $orders)
     {
         try {
-            $customer = $orders->resolveApprovedCustomer($request->input('customer_id'));
+            $existingOrder = null;
+            if ($request->filled('order_id')) {
+                $existingOrder = Order::with(['user', 'orderDetails.product.stocks'])
+                    ->findOrFail($request->integer('order_id'));
+                $customer = $existingOrder->user;
+                if (!$customer) {
+                    throw ValidationException::withMessages([
+                        'order_id' => translate('The order customer could not be found.'),
+                    ]);
+                }
+            } else {
+                $customer = $orders->resolveApprovedCustomer($request->input('customer_id'));
+            }
+
             $method = ShippingMethod::where('is_active', 1)->find($request->input('shipping_method_id'));
             if (!$method) {
                 throw ValidationException::withMessages([
@@ -585,14 +598,20 @@ class OrderController extends Controller
                 ]);
             }
 
-            $addressId = $request->boolean('shipping_same_as_billing')
-                ? $request->input('billing_address_id')
-                : $request->input('shipping_address_id');
-            $address = $addressId
-                ? Address::where('user_id', $customer->id)->find($addressId)
-                : null;
-            $toPincode = optional($address)->postal_code
-                ?: $request->input($request->boolean('shipping_same_as_billing') ? 'billing_postal_code' : 'shipping_postal_code');
+            if ($existingOrder) {
+                $address = null;
+                $shippingAddress = json_decode((string) $existingOrder->shipping_address, true) ?: [];
+                $toPincode = $shippingAddress['postal_code'] ?? null;
+            } else {
+                $addressId = $request->boolean('shipping_same_as_billing')
+                    ? $request->input('billing_address_id')
+                    : $request->input('shipping_address_id');
+                $address = $addressId
+                    ? Address::where('user_id', $customer->id)->find($addressId)
+                    : null;
+                $toPincode = optional($address)->postal_code
+                    ?: $request->input($request->boolean('shipping_same_as_billing') ? 'billing_postal_code' : 'shipping_postal_code');
+            }
 
             if (!$toPincode) {
                 throw ValidationException::withMessages([
@@ -604,20 +623,54 @@ class OrderController extends Controller
             $length = 0.0;
             $width = 0.0;
             $height = 0.0;
-            foreach ((array) $request->input('items', []) as $item) {
-                $product = Product::find($item['product_id'] ?? null);
-                if (!$product) {
-                    continue;
-                }
+            if ($existingOrder) {
+                $weight = $request->filled('weight_grams')
+                    ? (float) $request->input('weight_grams') / 1000
+                    : (float) ($existingOrder->weight_kg ?: ((float) $existingOrder->weight_grams / 1000));
+                $length = $request->filled('length_cm')
+                    ? (float) $request->input('length_cm')
+                    : (float) $existingOrder->length_cm;
+                $width = $request->filled('width_cm')
+                    ? (float) $request->input('width_cm')
+                    : (float) $existingOrder->width_cm;
+                $height = $request->filled('height_cm')
+                    ? (float) $request->input('height_cm')
+                    : (float) $existingOrder->height_cm;
 
-                $stock = !empty($item['stock_id'])
-                    ? $product->stocks()->where('id', $item['stock_id'])->first()
-                    : null;
-                $quantity = max(1, (int) ($item['quantity'] ?? 1));
-                $weight += (float) ($stock->weight ?? $product->weight ?? 0.21) * $quantity;
-                $length += (float) ($stock->length ?? $product->length ?? 10) * $quantity;
-                $width += (float) ($stock->width ?? $product->width ?? 10) * $quantity;
-                $height += (float) ($stock->height ?? $product->height ?? 10) * $quantity;
+                if ($weight <= 0 || $length <= 0 || $width <= 0 || $height <= 0) {
+                    $weight = 0.0;
+                    $length = 0.0;
+                    $width = 0.0;
+                    $height = 0.0;
+                    foreach ($existingOrder->orderDetails as $detail) {
+                        $product = $detail->product;
+                        if (!$product || (bool) ($detail->is_scheme ?? false)) {
+                            continue;
+                        }
+                        $stock = $product->stocks->firstWhere('variant', $detail->variation);
+                        $quantity = max(1, (int) $detail->quantity);
+                        $weight += (float) ($stock->weight ?? $product->weight ?? 0.21) * $quantity;
+                        $length += (float) ($stock->length ?? $product->length ?? 10) * $quantity;
+                        $width += (float) ($stock->width ?? $product->width ?? 10) * $quantity;
+                        $height += (float) ($stock->height ?? $product->height ?? 10) * $quantity;
+                    }
+                }
+            } else {
+                foreach ((array) $request->input('items', []) as $item) {
+                    $product = Product::find($item['product_id'] ?? null);
+                    if (!$product) {
+                        continue;
+                    }
+
+                    $stock = !empty($item['stock_id'])
+                        ? $product->stocks()->where('id', $item['stock_id'])->first()
+                        : null;
+                    $quantity = max(1, (int) ($item['quantity'] ?? 1));
+                    $weight += (float) ($stock->weight ?? $product->weight ?? 0.21) * $quantity;
+                    $length += (float) ($stock->length ?? $product->length ?? 10) * $quantity;
+                    $width += (float) ($stock->width ?? $product->width ?? 10) * $quantity;
+                    $height += (float) ($stock->height ?? $product->height ?? 10) * $quantity;
+                }
             }
 
             if ($weight <= 0) {
@@ -640,7 +693,7 @@ class OrderController extends Controller
                 'provider' => $method->slug,
                 'address_id' => optional($address)->id,
                 'to_pincode' => $toPincode,
-                'payment_type' => $request->input('payment_type') === 'cash_on_delivery' ? 'cod' : 'prepaid',
+                'payment_type' => $request->input('payment_type', optional($existingOrder)->payment_type) === 'cash_on_delivery' ? 'cod' : 'prepaid',
                 'package' => $package,
             ]);
             $class = 'App\\Http\\Controllers\\Shipment\\' . ucfirst($method->slug) . 'Controller';
@@ -693,8 +746,12 @@ class OrderController extends Controller
                 ->orderBy('id')
                 ->first();
             $order->cc_attached_path = optional($replacement)->path;
-            $order->save();
         }
+        if (!$order->attachments()->where('category', 'consignee_copy')->exists()
+            && blank($order->cc_attached_path)) {
+            $order->consignee_copy_status = 'not_attached';
+        }
+        $order->save();
 
         flash(translate('Attachment removed successfully.'))->success();
 
@@ -1361,9 +1418,38 @@ class OrderController extends Controller
      */
     public function edit($id)
     {
-        $order = Order::with(['orderDetails', 'transport', 'bookedTo', 'attachments'])->findOrFail($id);
+        $order = Order::with([
+            'user.user_details',
+            'orderDetails',
+            'transport',
+            'bookedTo',
+            'localDeliveryPartner',
+            'loadingSeaPort',
+            'loadingAirport',
+            'dischargeSeaPort',
+            'dischargeAirport',
+            'attachments',
+            'shipment',
+        ])->findOrFail($id);
+        $invoiceType = InvoiceType::forUser($order->user);
+        $currentShippingMethod = optional($order->shipment)->shipping_method_id
+            ? ShippingMethod::find($order->shipment->shipping_method_id)
+            : null;
+        if (!$currentShippingMethod && filled($order->shipping_by)) {
+            $currentShippingMethod = ShippingMethod::where('slug', $order->shipping_by)->first();
+        }
+        $shippingMethods = ShippingMethod::where('is_active', 1)->orderBy('name')->get();
+        if ($currentShippingMethod && !$shippingMethods->contains('id', $currentShippingMethod->id)) {
+            $shippingMethods->push($currentShippingMethod);
+        }
+        $courierConfigurationLocked = $order->shipping_choice === 'courier'
+            && filled(optional($order->shipment)->shipping_id)
+            && optional($order->shipment)->status !== 'error';
         $transports = Transport::active()->orderBy('name')->get();
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
+        $localDeliveryPartners = LocalDeliveryPartner::active()->orderBy('name')->get();
+        $seaPorts = SeaPort::where('status', 1)->orderBy('country')->orderBy('name')->get();
+        $airports = Airport::where('status', 1)->orderBy('country')->orderBy('name')->get();
         extract($this->orderFormStaffOptions([
             $order->sales_executive_id ?: $order->sales_person_id,
             $order->packed_by,
@@ -1374,8 +1460,15 @@ class OrderController extends Controller
 
         return view('backend.sales.edit', compact(
             'order',
+            'invoiceType',
+            'shippingMethods',
+            'currentShippingMethod',
+            'courierConfigurationLocked',
             'transports',
             'bookedToOptions',
+            'localDeliveryPartners',
+            'seaPorts',
+            'airports',
             'salesPeople',
             'packedStaff',
             'checkedStaff',
@@ -1393,22 +1486,60 @@ class OrderController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $order = Order::with(['orderDetails', 'attachments'])->findOrFail($id);
+        $order = Order::with(['orderDetails', 'attachments', 'shipment'])->findOrFail($id);
+        $invoiceType = InvoiceType::forUser($order->user);
+        $shippingChoice = $order->shipping_choice ?: 'transport';
+        $courierConfigurationLocked = $shippingChoice === 'courier'
+            && filled(optional($order->shipment)->shipping_id)
+            && optional($order->shipment)->status !== 'error';
+        $usesPortLogistics = $shippingChoice === 'transport'
+            && in_array($request->input('fod_mode', $order->fod_mode), ['sea', 'air'], true);
 
         if ($request->hasFile('cc_attachments')) {
             $request->merge(['consignee_copy_status' => 'attached']);
         }
 
         $validated = $request->validate([
+            'payment_type' => ['required', Rule::in(array_keys(InvoiceType::paymentTerms($invoiceType)))],
+            'shipping_method_id' => ['nullable', 'integer', Rule::exists('shipping_methods', 'id')->where(fn ($query) => $query->where('is_active', 1))],
+            'courier_service' => ['nullable', 'string', 'max:191'],
             'transport_id' => ['nullable', 'integer', Rule::exists('transports', 'id')],
-            'transport_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
+            'transport_delivery_type' => ['required', Rule::in(array_merge(array_keys(InvoiceType::deliveryTerms($invoiceType)), ['transport_godown']))],
             'booked_to_id' => ['nullable', 'integer', Rule::exists('booked_to', 'id')],
+            'local_delivery_partner_id' => ['nullable', 'integer', Rule::exists('local_delivery_partners', 'id')],
             'consignee_copy_status' => ['required', Rule::in(['attached', 'not_attached'])],
             'cc_attachments' => ['nullable', 'array', 'max:20'],
             'cc_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
+            'order_attachments' => ['nullable', 'array', 'max:20'],
+            'order_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
+            'fod_mode' => ['nullable', Rule::in(['surface', 'air', 'sea'])],
+            'transport_surface_mode' => ['nullable', Rule::in(['road', 'train'])],
             'freight_type' => ['nullable', Rule::in(['pre_paid', 'to_pay', 'fod'])],
             'shipping_cost_type' => ['required', Rule::in(['by_seller', 'free_shipping'])],
             'sell_amount' => ['required_if:shipping_cost_type,by_seller', 'nullable', 'numeric', 'min:0', 'max:99999999999.99'],
+            'reverse_charge' => [InvoiceType::isDomestic($invoiceType) ? 'nullable' : 'prohibited', 'boolean'],
+            'loading_location_type' => [$usesPortLogistics ? 'required' : 'nullable', Rule::in(['sea', 'air'])],
+            'loading_sea_port_id' => [$usesPortLogistics && $request->input('loading_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],
+            'loading_airport_id' => [$usesPortLogistics && $request->input('loading_location_type') === 'air' ? 'required' : 'nullable', 'integer', Rule::exists('airports', 'id')],
+            'discharge_location_type' => [$usesPortLogistics ? 'required' : 'nullable', Rule::in(['sea', 'air'])],
+            'discharge_sea_port_id' => [$usesPortLogistics && $request->input('discharge_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],
+            'discharge_airport_id' => [$usesPortLogistics && $request->input('discharge_location_type') === 'air' ? 'required' : 'nullable', 'integer', Rule::exists('airports', 'id')],
+            'final_destination' => ['nullable', 'string', 'max:255'],
+            'carrier_tax_number' => ['nullable', 'string', 'max:100'],
+            'cases' => ['nullable', 'integer', 'min:0'],
+            'weight_grams' => ['nullable', 'numeric', 'min:0', 'max:99999999999.999'],
+            'length_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:width_cm,height_cm'],
+            'width_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,height_cm'],
+            'height_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,width_cm'],
+            'attached_file_name' => ['nullable', 'string', 'max:255'],
+            'additional_info' => ['nullable', 'string', 'max:2000'],
+            'po_number' => ['nullable', 'string', 'max:255'],
+            'po_date' => ['nullable', 'date'],
+            'lr_number' => ['nullable', 'string', 'max:255'],
+            'lr_date' => ['nullable', 'date'],
+            'net_weight_kg' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
+            'gross_weight_kg' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
+            'total_volume_cbm' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
             'sales_executive_id' => [
                 'nullable',
                 'integer',
@@ -1440,7 +1571,46 @@ class OrderController extends Controller
             ],
         ]);
 
-        if (!empty($validated['booked_to_id']) && !empty($validated['transport_id'])) {
+        if ($shippingChoice === 'transport'
+            && ($validated['fod_mode'] ?? $order->fod_mode) === 'surface'
+            && empty($validated['transport_surface_mode'])) {
+            throw ValidationException::withMessages([
+                'transport_surface_mode' => translate('Please select Road or Train for Surface transport.'),
+            ]);
+        }
+
+        if ($shippingChoice === 'transport' && empty($validated['transport_id'])) {
+            throw ValidationException::withMessages([
+                'transport_id' => translate('Please select a transport provider.'),
+            ]);
+        }
+
+        if ($shippingChoice === 'transport' && empty($validated['booked_to_id'])) {
+            throw ValidationException::withMessages([
+                'booked_to_id' => translate('Please select a booked-to destination.'),
+            ]);
+        }
+
+        if ($shippingChoice === 'local' && empty($validated['local_delivery_partner_id'])) {
+            throw ValidationException::withMessages([
+                'local_delivery_partner_id' => translate('Please select a local delivery partner.'),
+            ]);
+        }
+
+        if ($shippingChoice === 'courier' && !$courierConfigurationLocked) {
+            if (empty($validated['shipping_method_id'])) {
+                throw ValidationException::withMessages([
+                    'shipping_method_id' => translate('Please select an active courier provider.'),
+                ]);
+            }
+            if (empty($validated['courier_service'])) {
+                throw ValidationException::withMessages([
+                    'courier_service' => translate('Please select a courier service.'),
+                ]);
+            }
+        }
+
+        if ($shippingChoice === 'transport' && !empty($validated['booked_to_id']) && !empty($validated['transport_id'])) {
             $bookedToMatchesTransport = BookedTo::whereKey($validated['booked_to_id'])
                 ->where('transport_id', $validated['transport_id'])
                 ->exists();
@@ -1461,18 +1631,23 @@ class OrderController extends Controller
         }
 
         $storedAttachments = [];
-        foreach ($request->file('cc_attachments', []) as $file) {
-            $storedAttachments[] = [
-                'category' => 'consignee_copy',
-                'original_name' => $file->getClientOriginalName(),
-                'path' => $file->store('uploads/order-cc-attachments', 'public'),
-                'mime_type' => $file->getClientMimeType(),
-                'size' => $file->getSize(),
-            ];
+        foreach ([
+            'cc_attachments' => ['category' => 'consignee_copy', 'directory' => 'uploads/order-cc-attachments'],
+            'order_attachments' => ['category' => 'order_attachment', 'directory' => 'uploads/order-attachments'],
+        ] as $input => $config) {
+            foreach ($request->file($input, []) as $file) {
+                $storedAttachments[] = [
+                    'category' => $config['category'],
+                    'original_name' => $file->getClientOriginalName(),
+                    'path' => $file->store($config['directory'], 'public'),
+                    'mime_type' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                ];
+            }
         }
 
         try {
-            DB::transaction(function () use ($order, $validated, $storedAttachments) {
+            DB::transaction(function () use ($order, $validated, $storedAttachments, $shippingChoice, $courierConfigurationLocked, $usesPortLogistics, $invoiceType) {
                 $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
                 $details = OrderDetail::where('order_id', $lockedOrder->id)->lockForUpdate()->get();
                 $oldShipping = (float) $details->sum('shipping_cost');
@@ -1490,16 +1665,77 @@ class OrderController extends Controller
                     $paidDetail->save();
                 }
 
-                $lockedOrder->transport_id = $validated['transport_id'] ?? null;
-                $lockedOrder->booked_to_id = $validated['booked_to_id'] ?? null;
+                $lockedOrder->payment_type = $validated['payment_type'];
+                $lockedOrder->transport_id = $shippingChoice === 'transport' ? ($validated['transport_id'] ?? null) : null;
+                $lockedOrder->booked_to_id = $shippingChoice === 'transport' ? ($validated['booked_to_id'] ?? null) : null;
+                $lockedOrder->local_delivery_partner_id = $shippingChoice === 'local' ? ($validated['local_delivery_partner_id'] ?? null) : null;
+                $lockedOrder->shipping_by = $shippingChoice === 'transport'
+                    ? optional(Transport::find($validated['transport_id'] ?? null))->name
+                    : ($shippingChoice === 'local'
+                        ? optional(LocalDeliveryPartner::find($validated['local_delivery_partner_id'] ?? null))->name
+                        : $lockedOrder->shipping_by);
+                if ($shippingChoice === 'courier' && !$courierConfigurationLocked) {
+                    $courierMethod = ShippingMethod::where('is_active', 1)
+                        ->findOrFail($validated['shipping_method_id']);
+                    $lockedOrder->shipping_by = $courierMethod->slug;
+                    $lockedOrder->shipping_courier_id = $validated['courier_service'];
+
+                    if ($lockedOrder->shipment
+                        && (!filled($lockedOrder->shipment->shipping_id) || $lockedOrder->shipment->status === 'error')) {
+                        $lockedOrder->shipment->shipping_method_id = $courierMethod->id;
+                        $lockedOrder->shipment->save();
+                    }
+                }
                 $deliveryType = ($validated['transport_delivery_type'] ?? null) === 'transport_godown'
                     ? 'transport_warehouse'
                     : ($validated['transport_delivery_type'] ?? null);
                 $lockedOrder->transport_delivery_type = $deliveryType;
+                $lockedOrder->fod_mode = $shippingChoice === 'transport' ? ($validated['fod_mode'] ?? null) : null;
+                $lockedOrder->transport_mode = $lockedOrder->fod_mode;
+                $lockedOrder->transport_surface_mode = $shippingChoice === 'transport'
+                    && ($validated['fod_mode'] ?? null) === 'surface'
+                    ? ($validated['transport_surface_mode'] ?? null)
+                    : null;
                 $lockedOrder->consignee_copy_status = $validated['consignee_copy_status'];
                 $lockedOrder->freight_type = $validated['freight_type'] ?? null;
                 $lockedOrder->freight_paid = ($validated['freight_type'] ?? null) === 'pre_paid';
                 $lockedOrder->free_shipping = $validated['shipping_cost_type'] === 'free_shipping';
+                $lockedOrder->reverse_charge = InvoiceType::isDomestic($invoiceType)
+                    ? (bool) ($validated['reverse_charge'] ?? false)
+                    : null;
+                $lockedOrder->loading_location_type = $usesPortLogistics ? ($validated['loading_location_type'] ?? null) : null;
+                $lockedOrder->loading_sea_port_id = $usesPortLogistics && ($validated['loading_location_type'] ?? null) === 'sea'
+                    ? ($validated['loading_sea_port_id'] ?? null)
+                    : null;
+                $lockedOrder->loading_airport_id = $usesPortLogistics && ($validated['loading_location_type'] ?? null) === 'air'
+                    ? ($validated['loading_airport_id'] ?? null)
+                    : null;
+                $lockedOrder->discharge_location_type = $usesPortLogistics ? ($validated['discharge_location_type'] ?? null) : null;
+                $lockedOrder->discharge_sea_port_id = $usesPortLogistics && ($validated['discharge_location_type'] ?? null) === 'sea'
+                    ? ($validated['discharge_sea_port_id'] ?? null)
+                    : null;
+                $lockedOrder->discharge_airport_id = $usesPortLogistics && ($validated['discharge_location_type'] ?? null) === 'air'
+                    ? ($validated['discharge_airport_id'] ?? null)
+                    : null;
+                $lockedOrder->final_destination = $usesPortLogistics ? ($validated['final_destination'] ?? null) : null;
+                $lockedOrder->carrier_tax_number = $validated['carrier_tax_number'] ?? null;
+                $lockedOrder->cases = $validated['cases'] ?? null;
+                $lockedOrder->weight_grams = $validated['weight_grams'] ?? null;
+                $lockedOrder->weight_kg = isset($validated['weight_grams'])
+                    ? (float) $validated['weight_grams'] / 1000
+                    : null;
+                $lockedOrder->length_cm = $validated['length_cm'] ?? null;
+                $lockedOrder->width_cm = $validated['width_cm'] ?? null;
+                $lockedOrder->height_cm = $validated['height_cm'] ?? null;
+                $lockedOrder->attached_file_name = $validated['attached_file_name'] ?? null;
+                $lockedOrder->additional_info = $validated['additional_info'] ?? null;
+                $lockedOrder->po_number = $validated['po_number'] ?? null;
+                $lockedOrder->po_date = $validated['po_date'] ?? null;
+                $lockedOrder->lr_number = $validated['lr_number'] ?? null;
+                $lockedOrder->lr_date = $validated['lr_date'] ?? null;
+                $lockedOrder->net_weight_kg = $validated['net_weight_kg'] ?? null;
+                $lockedOrder->gross_weight_kg = $validated['gross_weight_kg'] ?? null;
+                $lockedOrder->total_volume_cbm = $validated['total_volume_cbm'] ?? null;
                 $lockedOrder->sales_person_id = $validated['sales_executive_id'] ?? null;
                 $lockedOrder->sales_executive_id = $validated['sales_executive_id'] ?? null;
                 $lockedOrder->packed_by = $validated['packed_by'] ?? null;
