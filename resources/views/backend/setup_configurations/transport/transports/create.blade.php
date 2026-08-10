@@ -21,6 +21,17 @@
                 </div>
             </div>
             <div class="form-group row">
+                <label class="col-md-2 col-form-label">{{ translate('Mode') }} <span class="text-danger">*</span></label>
+                <div class="col-md-9">
+                    <select name="mode" class="form-control aiz-selectpicker" required>
+                        <option value="surface" @selected(old('mode', 'surface') === 'surface')>{{ translate('Surface') }}</option>
+                        <option value="sea" @selected(old('mode') === 'sea')>{{ translate('Sea') }}</option>
+                        <option value="air" @selected(old('mode') === 'air')>{{ translate('Air') }}</option>
+                    </select>
+                    @error('mode') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+            <div class="form-group row">
                 <label class="col-md-2 col-form-label">{{ translate('URL') }}</label>
                 <div class="col-md-9">
                     <input type="url" name="url" class="form-control" value="{{ old('url') }}" placeholder="https://example.com">

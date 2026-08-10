@@ -869,22 +869,23 @@ span#picker-info-stock-badge {
 
                         <div id="transport-fields" class="d-none">
                             <div class="form-group">
-                                <label>{{ translate('Transport') }}</label>
-                                <select class="form-control" name="transport_id" id="transport-id">
-                                    <option value="">{{ translate('Select Transport') }}</option>
-                                    @foreach($transports as $transport)
-                                        <option value="{{ $transport->id }}">{{ $transport->name }}</option>
-                                    @endforeach
-                                </select>
-                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="transport_name" placeholder="{{ translate('Or enter transport name') }}">
-                            </div>
-                            <div class="form-group">
                                 <label>{{ translate('Transport Mode') }}</label>
                                 <select class="form-control" name="fod_mode">
                                     <option value="surface" @selected(old('fod_mode', 'surface') === 'surface')>{{ translate('Surface') }}</option>
                                     <option value="air" @selected(old('fod_mode') === 'air')>{{ translate('Air') }}</option>
                                     <option value="sea" @selected(old('fod_mode') === 'sea')>{{ translate('Sea') }}</option>
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Transport') }}</label>
+                                <select class="form-control" name="transport_id" id="transport-id">
+                                    <option value="">{{ translate('Select Transport') }}</option>
+                                    @foreach($transports as $transport)
+                                        <option value="{{ $transport->id }}" data-mode="{{ $transport->mode }}"
+                                            @selected((string) old('transport_id') === (string) $transport->id)>{{ $transport->name }}</option>
+                                    @endforeach
+                                </select>
+                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="transport_name" placeholder="{{ translate('Or enter transport name') }}">
                             </div>
                             <div class="form-group d-none" id="transport-surface-mode-fields">
                                 <label>{{ translate('Surface Mode') }}</label>
@@ -1609,9 +1610,9 @@ span#picker-info-stock-badge {
 
                 if (method !== 'transport') return;
 
+                $('select[name="fod_mode"]').val(customer.default_transport_mode || 'surface').trigger('change');
                 $('#transport-id').val(customer.default_transport_id || '').trigger('change');
                 $('#booked-to-id').val(customer.default_booked_to_id || '');
-                $('select[name="fod_mode"]').val(customer.default_transport_mode || 'surface').trigger('change');
                 $('#transport-surface-mode').val(customer.default_transport_surface_mode || 'road');
                 var deliveryType = customer.default_delivery_type === 'transport_godown'
                     ? 'transport_warehouse'
@@ -2947,8 +2948,29 @@ span#picker-info-stock-badge {
                 $bookedTo.prop('disabled', !transportId);
             });
 
+            function filterTransportsByMode(mode) {
+                var $transport = $('#transport-id');
+                var selectedMode = String(mode || '');
+                var selectedIsAvailable = false;
+
+                $transport.find('option').each(function () {
+                    var optionMode = String($(this).data('mode') || '');
+                    var visible = !this.value || optionMode === selectedMode;
+                    $(this).prop('disabled', !visible).toggle(visible);
+
+                    if (visible && this.selected && this.value) {
+                        selectedIsAvailable = true;
+                    }
+                });
+
+                if ($transport.val() && !selectedIsAvailable) {
+                    $transport.val('').trigger('change');
+                }
+            }
+
             $('select[name="fod_mode"]').on('change', function () {
                 var isSurface = $(this).val() === 'surface';
+                filterTransportsByMode($(this).val());
                 $('#transport-surface-mode-fields').toggleClass('d-none', !isSurface);
                 $('#transport-surface-mode').prop('disabled', !isSurface);
                 syncTransportLogistics();

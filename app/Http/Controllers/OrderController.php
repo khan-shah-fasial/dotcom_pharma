@@ -1303,6 +1303,7 @@ class OrderController extends Controller
 
         return Transport::create([
             'name' => $name,
+            'mode' => $request->input('fod_mode', 'surface'),
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);

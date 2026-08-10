@@ -55,6 +55,9 @@ class CompanyRequest extends FormRequest
             'whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+()\-\s.]+$/'],
             'email' => ['nullable', 'email:rfc', 'max:255'],
             'company_type' => ['required', Rule::in(UserDetails::CUSTOMER_TYPES)],
+            'logo' => ['nullable', 'integer', 'exists:uploads,id'],
+            'stamp' => ['nullable', 'integer', 'exists:uploads,id'],
+            'sign' => ['nullable', 'integer', 'exists:uploads,id'],
             'deal_in_category_ids' => ['required', 'array', 'min:1'],
             'deal_in_category_ids.*' => ['required', 'integer', 'distinct', 'exists:categories,id'],
         ];

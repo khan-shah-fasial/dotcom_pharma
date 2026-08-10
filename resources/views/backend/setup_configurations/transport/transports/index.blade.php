@@ -31,6 +31,7 @@
                 <tr>
                     <th>#</th>
                     <th>{{ translate('Name') }}</th>
+                    <th>{{ translate('Mode') }}</th>
                     <th>{{ translate('URL') }}</th>
                     <th>{{ translate('Created By') }}</th>
                     <th>{{ translate('Status') }}</th>
@@ -42,6 +43,7 @@
                     <tr>
                         <td>{{ $transports->firstItem() + $key }}</td>
                         <td>{{ $transport->name }}</td>
+                        <td>{{ translate(ucfirst($transport->mode)) }}</td>
                         <td>
                             @if($transport->url)
                                 <a href="{{ $transport->url }}" target="_blank" rel="noopener">{{ translate('Open') }}</a>

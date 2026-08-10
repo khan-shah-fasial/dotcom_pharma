@@ -23,6 +23,30 @@
     </div>
 </div>
 
+<div class="row">
+    @foreach ([
+        'logo' => 'Logo',
+        'stamp' => 'Stamp',
+        'sign' => 'Sign',
+    ] as $field => $label)
+        <div class="col-lg-4">
+            <div class="form-group">
+                <label>{{ translate($label) }}</label>
+                <div class="input-group" data-toggle="aizuploader" data-type="image">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse') }}</div>
+                    </div>
+                    <div class="form-control file-amount">{{ translate('Choose File') }}</div>
+                    <input type="hidden" name="{{ $field }}"
+                        value="{{ old($field, $company->{$field} ?? '') }}" class="selected-files">
+                </div>
+                <div class="file-preview box sm"></div>
+                @error($field) <span class="text-danger small">{{ $message }}</span> @enderror
+            </div>
+        </div>
+    @endforeach
+</div>
+
 <div class="form-group row">
     <label class="col-md-3 col-form-label" for="company_name">
         {{ translate('Company Name') }} <span class="text-danger">*</span>

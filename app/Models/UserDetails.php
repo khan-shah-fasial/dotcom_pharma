@@ -114,6 +114,7 @@ class UserDetails extends Model
         'micr_code_business',
         'ad_code_business',
         'crm_id',
+        'opening_balance',
         'record_file_no',
         'transport',
 

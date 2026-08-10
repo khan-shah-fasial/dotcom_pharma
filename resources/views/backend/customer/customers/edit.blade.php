@@ -81,6 +81,17 @@
                             @enderror
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label" for="opening_balance">{{ translate('Opening Balance') }}</label>
+                            <input type="number" id="opening_balance" name="opening_balance"
+                                class="form-control" step="0.001"
+                                value="{{ old('opening_balance', $details?->opening_balance ?? 0) }}">
+                            @error('opening_balance')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
                 {{-- Type --}}
                 <div class="customer-collapsible-section">

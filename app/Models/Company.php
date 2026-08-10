@@ -16,6 +16,9 @@ class Company extends Model
         'whatsapp',
         'email',
         'company_type',
+        'logo',
+        'stamp',
+        'sign',
         'created_by',
     ];
 

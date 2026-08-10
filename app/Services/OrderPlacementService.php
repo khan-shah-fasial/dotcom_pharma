@@ -256,6 +256,9 @@ class OrderPlacementService
 
         if ($shippingChoice === 'transport') {
             $transport = $this->resolveTransport($request);
+            if ($transport && $transport->mode !== $request->input('fod_mode')) {
+                $this->fail('transport_id', translate('The selected transport does not support this transport mode.'));
+            }
             $transportAndBookedToAreSame = $this->transportAndBookedToAreSame($request, $transport);
             $bookedTo = $transportAndBookedToAreSame ? null : $this->resolveBookedTo($request, $transport);
             if (!$transport || (!$bookedTo && !$transportAndBookedToAreSame)) {
@@ -1532,6 +1535,7 @@ class OrderPlacementService
 
         return Transport::create([
             'name' => $this->capitalizeFirst($name),
+            'mode' => $request->input('fod_mode', 'surface'),
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);

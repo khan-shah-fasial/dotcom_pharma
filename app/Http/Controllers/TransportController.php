@@ -35,12 +35,14 @@ class TransportController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'mode' => 'required|in:surface,sea,air',
             'url' => 'nullable|url|max:500',
             'status' => 'required|in:active,inactive',
         ]);
 
         Transport::create([
             'name' => trim($request->name),
+            'mode' => $request->mode,
             'url' => $request->filled('url') ? trim($request->url) : null,
             'status' => $request->status,
             'created_by' => auth()->id(),
@@ -60,6 +62,7 @@ class TransportController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'mode' => 'required|in:surface,sea,air',
             'url' => 'nullable|url|max:500',
             'status' => 'required|in:active,inactive',
         ]);
@@ -67,6 +70,7 @@ class TransportController extends Controller
         $transport = Transport::findOrFail($id);
         $transport->update([
             'name' => trim($request->name),
+            'mode' => $request->mode,
             'url' => $request->filled('url') ? trim($request->url) : null,
             'status' => $request->status,
         ]);

@@ -75,6 +75,24 @@
                     </div>
                 </div>
 
+                @foreach ([
+                    'Logo' => $company->logo,
+                    'Stamp' => $company->stamp,
+                    'Sign' => $company->sign,
+                ] as $label => $uploadId)
+                    <div class="col-md-4 mb-3">
+                        <div class="text-muted fs-12 mb-2">{{ translate($label) }}</div>
+                        @if ($uploadId)
+                            <a href="{{ uploaded_asset($uploadId) }}" target="_blank" rel="noopener">
+                                <img src="{{ uploaded_asset($uploadId) }}" alt="{{ translate($label) }}"
+                                    class="img-fluid border rounded p-1" style="max-height: 120px;">
+                            </a>
+                        @else
+                            <div class="font-weight-bold">-</div>
+                        @endif
+                    </div>
+                @endforeach
+
                 <div class="col-md-6">
                     <div class="text-muted fs-12">{{ translate('Created By') }}</div>
                     <div>{{ optional($company->creator)->name ?: '-' }}</div>

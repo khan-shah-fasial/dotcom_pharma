@@ -661,6 +661,7 @@ class CustomerController extends Controller
         $validator = \Validator::make($request->all(), [
             'type_option' => ['required', 'in:domestic,international'],
             'crm_id' => ['required', 'string', 'max:255', 'unique:user_details,crm_id'],
+            'opening_balance' => ['nullable', 'numeric', 'between:-99999999999999999.999,99999999999999999.999'],
             'domestic_identity_selection' => ['nullable', 'in:gst,aadhaar_pan'],
             'international_identity_selection' => ['nullable', 'in:iec,passport'],
 
@@ -901,6 +902,7 @@ class CustomerController extends Controller
             $details->fill([
                 'type_option' => $typeOption,
                 'crm_id' => $validated['crm_id'],
+                'opening_balance' => $validated['opening_balance'] ?? 0,
                 'transport_id' => $transportSelection['transport_id'],
                 'booked_to_id' => $transportSelection['booked_to_id'],
                 'transport' => $transportSelection['transport'],
@@ -1148,6 +1150,7 @@ class CustomerController extends Controller
         $businessRules = [
             'type_option' => 'required|in:domestic,international',
             'crm_id' => ['nullable', 'string', 'max:255', 'unique:user_details,crm_id,' . $details->id],
+            'opening_balance' => ['nullable', 'numeric', 'between:-99999999999999999.999,99999999999999999.999'],
             'record_file_no' => ['nullable', 'string', 'max:255'],
             'registration_date' => [$businessRequired ? 'required' : 'nullable'],
             'const_of_business' => [$businessRequired ? 'required' : 'nullable'],
@@ -1269,6 +1272,7 @@ class CustomerController extends Controller
         $validator = \Validator::make($request->all(), [
             'prim_email_personal'  => ['required', 'email'],
             'record_file_no'       => ['nullable', 'string', 'max:255'],
+            'opening_balance'      => ['nullable', 'numeric', 'between:-99999999999999999.999,99999999999999999.999'],
             'religion'             => ['nullable', 'string', 'max:150'],
             'anniversary'          => ['nullable', 'date'],
             'customer_type'        => ['nullable', Rule::in(UserDetails::CUSTOMER_TYPES)],
@@ -1403,6 +1407,7 @@ class CustomerController extends Controller
         $details->fill([
             'type_option' => $typeOption,
             'crm_id' => $request->input('crm_id', $details->crm_id ?? null),
+            'opening_balance' => $validated['opening_balance'] ?? $details->opening_balance ?? 0,
             'record_file_no' => $request->filled('record_file_no')
                 ? trim((string) $request->input('record_file_no'))
                 : null,
