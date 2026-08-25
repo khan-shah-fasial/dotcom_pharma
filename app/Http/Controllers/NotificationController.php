@@ -122,7 +122,7 @@ class NotificationController extends Controller
         return view('backend.notification.custom_notification_history', compact('customNotifications'));
     }
 
-   
+
 
     // Notification delete
     public function bulkDeleteAdmin(Request $request){
@@ -194,7 +194,7 @@ class NotificationController extends Controller
             $route = $userType == 'admin'
                     ? ( $notification->data['status'] == 'pending' ? 'withdraw_requests_all' : 'sellers.payment_histories')
                     : ( $notification->data['status'] == 'pending' ? 'seller.money_withdraw_requests.index' : 'seller.payments.index');
-                
+
             return redirect()->route($route);
         }
 

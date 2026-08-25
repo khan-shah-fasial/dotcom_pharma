@@ -101,8 +101,8 @@ class OrderController extends Controller
             $orders = $orders->where('orders.manual_payment', 1);
             if($request->order_type != null){
                 $order_type = $request->order_type;
-                $orders = $order_type =='inhouse_orders' ? 
-                            $orders->where('orders.seller_id', '=', $admin_user_id) : 
+                $orders = $order_type =='inhouse_orders' ?
+                            $orders->where('orders.seller_id', '=', $admin_user_id) :
                             $orders->where('orders.seller_id', '!=', $admin_user_id);
             }
         }
@@ -157,12 +157,12 @@ class OrderController extends Controller
             'orderDetails.product.stocks',
             'orderDetails.batch',
         ])->findOrFail(decrypt($id));
-        
+
         $order_shipping_address = json_decode($order->shipping_address);
         $delivery_boys = User::where('city', $order_shipping_address->city)
                 ->where('user_type', 'delivery_boy')
                 ->get();
-                
+
         if(env('DEMO_MODE') != 'On') {
             $order->viewed = 1;
             $order->save();
@@ -1002,13 +1002,13 @@ class OrderController extends Controller
             $order->delivery_viewed = '0';
             $order->payment_status_viewed = '0';
             $order->code = generate_financial_year_order_code();
-            $order->date = strtotime('now');    
+            $order->date = strtotime('now');
             $order->save();
             if ($firstOrderForReferral === null) {
                 $firstOrderForReferral = $order;
             }
 
-            storeIPLocation('orders', $order->id); //store ip location            
+            storeIPLocation('orders', $order->id); //store ip location
 
             $subtotal = 0;
             $tax = 0;
@@ -1096,12 +1096,12 @@ class OrderController extends Controller
                 $product_variation = $cartItem['variation'];
 
                 $product_stock = $product->stocks->where('variant', $product_variation)->first();
-                
+
                 // Get batch_id from cart if available
                 $batchId = $cartItem['batch_id'] ?? null;
                 $selectedBatch = null;
                 $groupKey = (int) $cartItem['product_id'] . '|' . (string) ($product_variation ?? '');
-                
+
                 // Stock validation and deduction
                 if ($product->digital != 1 && $product_stock) {
                     if ($batchId) {
@@ -1118,10 +1118,10 @@ class OrderController extends Controller
                             $order->delete();
                             return redirect()->route('cart')->send();
                         }
-                        
+
                         $selectedBatch->qty -= $cartItem['quantity'];
                         $selectedBatch->save();
-                        
+
                         // Update parent stock quantity (aggregate from batches)
                         $product_stock->load('batches');
                         $batches = $product_stock->batches;
@@ -1889,7 +1889,7 @@ class OrderController extends Controller
             }
         }
         // Delivery Status change email notification to Admin, seller, Customer
-        EmailUtility::order_email($order, $request->status);  
+        EmailUtility::order_email($order, $request->status);
 
         // Delivery Status change SMS notification
         if (addon_is_activated('otp_system') && SmsTemplate::where('identifier', 'delivery_status_change')->first()->status == 1) {
@@ -1980,7 +1980,7 @@ class OrderController extends Controller
 
         // Payment Status change email notification to Admin, seller, Customer
         if($request->status == 'paid'){
-            EmailUtility::order_email($order, $request->status);  
+            EmailUtility::order_email($order, $request->status);
         }
 
         //Sends Web Notifications to Admin, seller, Customer

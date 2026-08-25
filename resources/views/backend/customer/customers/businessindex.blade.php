@@ -87,8 +87,10 @@
 
     <div class="card">
         <form class="" id="sort_customers" action="" method="GET">
+            <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+            <input type="hidden" name="sort_order" value="{{ $sortOrder }}">
             @php
-                $filtersApplied = $sort_search || $company_name || $account_number || $gst_no || $verification_status || $filter_transport || $hasBusinessLocationFilters || $hasPersonalLocationFilters;
+                $filtersApplied = $sort_search || $company_name || $account_number || $gst_no || $verification_status || ($ban_status && $ban_status !== 'active') || $filter_transport || $hasBusinessLocationFilters || $hasPersonalLocationFilters;
             @endphp
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
                 <div class="mb-2">
@@ -153,6 +155,18 @@
                                             {{ translate('Verified') }}</option>
                                         <option value="un_verified" {{ $verification_status === 'un_verified' ? 'selected' : '' }}>
                                             {{ translate('Unverified') }}</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="ban_status">{{ translate('Ban Status') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="ban_status"
+                                        name="ban_status" data-live-search="true">
+                                        <option value="">{{ translate('All') }}</option>
+                                        <option value="active" {{ ($ban_status ?? '') === 'active' ? 'selected' : '' }}>
+                                            {{ translate('Active') }}</option>
+                                        <option value="banned" {{ ($ban_status ?? '') === 'banned' ? 'selected' : '' }}>
+                                            {{ translate('Banned') }}</option>
                                     </select>
                                 </div>
 
@@ -352,6 +366,7 @@
                             ['approval_status', 'Approval Status'],
                             ['customer_role', 'Customer Role'],
                             ['current_status', 'Current Status'],
+                            ['ban_status', 'Ban Status'],
                         ],
                         [
                             ['credit_status', 'Credit Status'],
@@ -379,15 +394,18 @@
                         ],
                     ];
 
-                    $sortHeading = function ($key, $label) {
-                        $active = request('sort_by', 'crm_id') === $key;
-                        $nextOrder = $active && request('sort_order', 'asc') === 'asc' ? 'desc' : 'asc';
-                        $url = route('customers.business', array_merge(request()->all(), [
-                            'sort_by' => $key,
-                            'sort_order' => $nextOrder,
-                        ]));
+                    $sortHeading = function ($key, $label) use ($sortBy, $sortOrder) {
+                        $active = $sortBy === $key;
+                        $nextOrder = $active && $sortOrder === 'asc' ? 'desc' : 'asc';
+                        $url = url()->current() . '?' . http_build_query(array_merge(
+                            request()->except(['page', 'sort_by', 'sort_order']),
+                            [
+                                'sort_by' => $key,
+                                'sort_order' => $nextOrder,
+                            ]
+                        ));
                         $icon = $active
-                            ? '<i class="las la-sort-amount-' . (request('sort_order', 'asc') === 'asc' ? 'up' : 'down') . '"></i>'
+                            ? '<i class="las la-sort-amount-' . ($sortOrder === 'asc' ? 'up' : 'down') . '"></i>'
                             : '<i class="las la-sort"></i>';
                         $displayLabel = e(translate($label));
 
@@ -462,6 +480,7 @@
                                             <div>
                                                 @if ($user->banned == 1)
                                                     <i class="fa fa-ban text-danger" aria-hidden="true"></i>
+                                                    <span class="badge badge-inline badge-danger">{{ translate('Banned') }}</span>
                                                 @endif
                                                 <span class="business-customer-company-name">{{ $details->company_name ?? '-' }}</span>
                                             </div>
@@ -497,6 +516,13 @@
                                             <div>{{ $user->approval_status == 1 ? translate('Verified') : translate('Unverified') }}</div>
                                             <div>{{ $user->user_subtype ?: translate('Customer') }}</div>
                                             <div>{{ $details->current_status ?? '-' }}</div>
+                                            <div>
+                                                @if ($user->banned == 1)
+                                                    <span class="badge badge-inline badge-danger">{{ translate('Banned') }}</span>
+                                                @else
+                                                    <span class="badge badge-inline badge-success">{{ translate('Active') }}</span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td>
                                             <div>{{ $user->credit_status == 1 ? translate('Active') : translate('Deactive') }}</div>
@@ -995,7 +1021,14 @@
         }
 
         $(function () {
-            initLocationFilters();
+            const hasLocationFilter = {{ ($hasBusinessLocationFilters || $hasPersonalLocationFilters) ? 'true' : 'false' }};
+            if (hasLocationFilter) {
+                initLocationFilters();
+            } else {
+                $('#customerFilterModal').one('shown.bs.modal', function () {
+                    initLocationFilters();
+                });
+            }
         });
 
         function initLocationFilters() {

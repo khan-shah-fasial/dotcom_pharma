@@ -12,6 +12,10 @@ class ProductNotifyController extends Controller
 {
     public function store(Request $request)
     {
+        // #region agent log
+        @file_put_contents(base_path('debug-a0012d.log'), json_encode(['sessionId'=>'a0012d','hypothesisId'=>'B','runId'=>'post-fix','location'=>'ProductNotifyController.php:store','message'=>'store entered','data'=>['auth'=>\Illuminate\Support\Facades\Auth::check(),'user_type'=>optional(\Illuminate\Support\Facades\Auth::user())->user_type,'user_id'=>\Illuminate\Support\Facades\Auth::id(),'product_id'=>$request->input('product_id'),'wants_json'=>$request->expectsJson(),'ajax'=>$request->ajax()],'timestamp'=>round(microtime(true)*1000)])."\n", FILE_APPEND);
+        // #endregion
+
         $request->validate([
             'product_id' => ['required', 'exists:products,id'],
         ]);
@@ -26,15 +30,26 @@ class ProductNotifyController extends Controller
         $exists = ProductNotify::where('user_id', $userId)->where('product_id', $productId)->exists();
 
         if (!$exists) {
-            ProductNotify::create([
-                'user_id'    => $userId,
-                'product_id' => $productId,
-            ]);
+            try {
+                ProductNotify::create([
+                    'user_id'    => $userId,
+                    'product_id' => $productId,
+                ]);
+                $created = true;
+            } catch (\Throwable $e) {
+                // #region agent log
+                @file_put_contents(base_path('debug-a0012d.log'), json_encode(['sessionId'=>'a0012d','hypothesisId'=>'E','location'=>'ProductNotifyController.php:store','message'=>'create failed','data'=>['error'=>$e->getMessage(),'user_id'=>$userId,'product_id'=>$productId],'timestamp'=>round(microtime(true)*1000)])."\n", FILE_APPEND);
+                // #endregion
+                throw $e;
+            }
             Log::info('[ProductNotify] subscribed', ['user_id' => $userId, 'product_id' => $productId]);
-            $created = true;
         } else {
             $created = false; // already there
         }
+
+        // #region agent log
+        @file_put_contents(base_path('debug-a0012d.log'), json_encode(['sessionId'=>'a0012d','hypothesisId'=>'E','runId'=>'post-fix','location'=>'ProductNotifyController.php:store','message'=>'store result','data'=>['user_id'=>$userId,'product_id'=>$productId,'exists'=>$exists,'created'=>$created ?? false],'timestamp'=>round(microtime(true)*1000)])."\n", FILE_APPEND);
+        // #endregion
 
         return response()->json(['success' => true, 'subscribed' => true, 'created' => $created]);
     }

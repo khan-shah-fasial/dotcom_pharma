@@ -842,6 +842,11 @@
                     <i class="la la-bell"></i>
                     <span class="notify-text">{{ $alreadySubscribed ? translate('Subscribed for restock') : translate('Notify me') }}</span>
                 </button>
+                @php
+                    // #region agent log
+                    @file_put_contents(base_path('debug-a0012d.log'), json_encode(['sessionId'=>'a0012d','hypothesisId'=>'A','location'=>'details.blade.php:notify-button','message'=>'notify button rendered','data'=>['product_id'=>$detailedProduct->id,'auth'=>auth()->check(),'user_type'=>optional(auth()->user())->user_type,'already_subscribed'=>$alreadySubscribed,'email_verified'=>optional(auth()->user())->email_verified_at ? true : false],'timestamp'=>round(microtime(true)*1000)])."\n", FILE_APPEND);
+                    // #endregion
+                @endphp
             @elseif ($detailedProduct->digital == 1)
                 <button type="button"
                     class="btn btn-success mr-3 add-to-cart fw-600 min-w-150px rounded-0 text-white border-radius-50 mb-md-0 mb-2"
@@ -3118,11 +3123,17 @@
             $('.add-to-cart').removeClass('d-none');
             $('.out-of-stock').addClass('d-none');
             $('.notify-restock').addClass('d-none');
+            // #region agent log
+            fetch('http://127.0.0.1:7709/ingest/bc7f5758-2112-4bdf-aa97-57a867b0ac48',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a0012d'},body:JSON.stringify({sessionId:'a0012d',hypothesisId:'A',location:'details.blade.php:refreshAvailabilityFromBatch',message:'batch treated as in stock, hiding notify',data:{batchId:batchId,maxPaidQty:maxPaidQty,minQty:minQty},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
         } else {
             $('.buy-now').addClass('d-none');
             $('.add-to-cart').addClass('d-none');
             $('.out-of-stock').removeClass('d-none');
             $('.notify-restock').removeClass('d-none');
+            // #region agent log
+            fetch('http://127.0.0.1:7709/ingest/bc7f5758-2112-4bdf-aa97-57a867b0ac48',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a0012d'},body:JSON.stringify({sessionId:'a0012d',hypothesisId:'A',location:'details.blade.php:refreshAvailabilityFromBatch',message:'batch treated as out of stock, showing notify',data:{batchId:batchId,maxPaidQty:maxPaidQty,minQty:minQty},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
         }
     }
 
@@ -3156,9 +3167,15 @@
 
     function toggleNotify(product_id){
         const isSubscribed = $('.notify-restock').data('subscribed') == 1;
+        // #region agent log
+        fetch('http://127.0.0.1:7709/ingest/bc7f5758-2112-4bdf-aa97-57a867b0ac48',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a0012d'},body:JSON.stringify({sessionId:'a0012d',hypothesisId:'D',location:'details.blade.php:toggleNotify',message:'toggleNotify called',data:{product_id:product_id,isSubscribed:isSubscribed,dataAttr:$('.notify-restock').attr('data-subscribed'),hasToken:!!$('meta[name="csrf-token"]').attr('content')},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
 
         if(isSubscribed){
             $.post('{{ route('product-notify.remove') }}', {_token:'{{ csrf_token() }}', product_id: product_id}, function(response){
+                // #region agent log
+                fetch('http://127.0.0.1:7709/ingest/bc7f5758-2112-4bdf-aa97-57a867b0ac48',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a0012d'},body:JSON.stringify({sessionId:'a0012d',hypothesisId:'B',location:'details.blade.php:toggleNotify.remove.success',message:'remove ajax success',data:{type:typeof response,success:!!(response&&response.success),keys:response&&typeof response==='object'?Object.keys(response).slice(0,8):null},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 if(response.success){
                     setNotifyButtonState(false);
                     AIZ.plugins.notify('success', '{{ translate('Restock notification removed') }}');
@@ -3166,6 +3183,9 @@
                     AIZ.plugins.notify('warning', '{{ translate('Nothing to remove') }}');
                 }
             }).fail(function(xhr){
+                // #region agent log
+                fetch('http://127.0.0.1:7709/ingest/bc7f5758-2112-4bdf-aa97-57a867b0ac48',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a0012d'},body:JSON.stringify({sessionId:'a0012d',hypothesisId:'C',location:'details.blade.php:toggleNotify.remove.fail',message:'remove ajax fail',data:{status:xhr.status,body:(xhr.responseText||'').slice(0,180)},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 if(xhr.status === 401){
                     showLoginModal();
                 }else{
@@ -3174,11 +3194,17 @@
             });
         } else {
             $.post('{{ route('product-notify.store') }}', {_token:'{{ csrf_token() }}', product_id: product_id}, function(response){
+                // #region agent log
+                fetch('http://127.0.0.1:7709/ingest/bc7f5758-2112-4bdf-aa97-57a867b0ac48',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a0012d'},body:JSON.stringify({sessionId:'a0012d',hypothesisId:'B',location:'details.blade.php:toggleNotify.store.success',message:'store ajax success',data:{type:typeof response,success:!!(response&&response.success),keys:response&&typeof response==='object'?Object.keys(response).slice(0,8):null},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 if(response.success){
                     setNotifyButtonState(true);
                     AIZ.plugins.notify('success', '{{ translate('You will be notified when the product is back in stock.') }}');
                 }
             }).fail(function(xhr){
+                // #region agent log
+                fetch('http://127.0.0.1:7709/ingest/bc7f5758-2112-4bdf-aa97-57a867b0ac48',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a0012d'},body:JSON.stringify({sessionId:'a0012d',hypothesisId:'C',location:'details.blade.php:toggleNotify.store.fail',message:'store ajax fail',data:{status:xhr.status,body:(xhr.responseText||'').slice(0,180)},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
                 if(xhr.status === 401){
                     showLoginModal();
                 }else{

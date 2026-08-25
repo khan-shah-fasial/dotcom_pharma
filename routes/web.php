@@ -503,6 +503,10 @@ Route::post('/shipment/create', function (Request $request) {
     return response()->json(['success' => (bool) $success, 'message' => $message, 'data' => $data]);
 })->name('shipment.create')->middleware('auth');
 
+Route::middleware(['auth'])->group(function () {
+    Route::post('/product-notify', [\App\Http\Controllers\ProductNotifyController::class, 'store'])->name('product-notify.store');
+    Route::post('/product-notify/remove', [\App\Http\Controllers\ProductNotifyController::class, 'remove'])->name('product-notify.remove');
+});
 
 Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function () {
 
@@ -525,8 +529,6 @@ Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function ()
     // Frontend: Support staff listing for user
     Route::get('/support', [\App\Http\Controllers\UserSupportController::class, 'index'])->name('user.support');
     Route::get('/subscribe-list', [\App\Http\Controllers\HomeController::class, 'subscribeList'])->name('subscribe-list');
-    Route::post('/product-notify', [\App\Http\Controllers\ProductNotifyController::class, 'store'])->name('product-notify.store');
-    Route::post('/product-notify/remove', [\App\Http\Controllers\ProductNotifyController::class, 'remove'])->name('product-notify.remove');
 
     // Wishlist
     Route::resource('wishlists', WishlistController::class);

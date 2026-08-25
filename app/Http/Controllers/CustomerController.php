@@ -180,6 +180,7 @@ class CustomerController extends Controller
         $dl_expiry_Data      = $request->dl_expiry_Data ?? null;
         $gst_no              = $request->gst_no ?? null;
         $account_number      = $request->account_number ?? null;
+        $ban_status          = $request->get('ban_status', 'active');
         $sortBy              = $request->get('sort_by');
         $sortOrder           = $request->get('sort_order', 'asc');
 
@@ -203,15 +204,11 @@ class CustomerController extends Controller
         $filter_transport  = $request->transport ?? null;
         $staffAreaAssignments = $this->currentStaffAreaAssignments();
 
-        // Base query
-        $users = User::with('details')
+        // Base query. Details are eager-loaded after pagination so we do not
+        // hydrate 122-column rows (including longtext file fields) for every match.
+        $users = User::query()
             ->where('user_type', 'customer')
             ->whereNotNull('step');
-            // ->orderBy(
-            //     UserDetails::select('crm_id')
-            //         ->whereColumn('user_details.user_id', 'users.id'),
-            //     'ASC'
-            // );
 
         if ($staffAreaAssignments !== null) {
             $this->applyStaffAreaScope($users, $staffAreaAssignments);
@@ -223,10 +220,18 @@ class CustomerController extends Controller
         }
 
         // Approval filter
-        if ($verification_status !== null) {
+        if ($verification_status !== null && $verification_status !== '') {
             $users = $verification_status === 'verified'
                 ? $users->where('approval_Status', 1)
                 : $users->where('approval_Status', 0);
+        }
+
+        if ($ban_status === 'banned') {
+            $users->where('banned', 1);
+        } elseif ($ban_status === 'active') {
+            $users->where(function ($q) {
+                $q->where('banned', 0)->orWhereNull('banned');
+            });
         }
 
         // Text search
@@ -328,95 +333,125 @@ class CustomerController extends Controller
             });
         }
 
-        // TRANSPORT list
-        $transportList = UserDetails::whereNotNull('transport')
-            ->where('transport', '!=', '')
-            ->pluck('transport')
-            ->map(function ($value) {
-                // Trim spaces and convert to lowercase
-                return Str::lower(trim($value));
-            })
-            ->unique()
-            ->sort()
-            ->values();
+        $transportList = Cache::remember('business_customer_transport_list', 600, function () {
+            return UserDetails::query()
+                ->whereNotNull('transport')
+                ->where('transport', '!=', '')
+                ->distinct()
+                ->pluck('transport')
+                ->map(function ($value) {
+                    return Str::lower(trim($value));
+                })
+                ->unique()
+                ->sort()
+                ->values();
+        });
 
         // Administrators can filter by every enabled country. Staff only see countries
         // included in their assigned area records.
-        $countryOptionsQuery = Country::query()->isEnabled()->orderBy('name');
+        $countryOptions = Cache::remember('enabled_countries_id_name', 86400, function () {
+            return Country::query()->isEnabled()->orderBy('name')->get(['id', 'name'])
+                ->map(function ($country) {
+                    return ['id' => (int) $country->id, 'name' => $country->name];
+                })
+                ->values()
+                ->all();
+        });
         if ($staffAreaAssignments !== null) {
-            $countryOptionsQuery->whereIn('id', collect($staffAreaAssignments)->pluck('country_id')->unique()->all());
+            $allowedCountryIds = collect($staffAreaAssignments)->pluck('country_id')->unique()->all();
+            $countryOptions = array_values(array_filter($countryOptions, function ($country) use ($allowedCountryIds) {
+                return in_array($country['id'], $allowedCountryIds, true);
+            }));
         }
-        $countryOptions = $countryOptionsQuery->get(['id', 'name']);
         $businessCountryOptions = $countryOptions;
         $personalCountryOptions = $countryOptions;
 
-        // Sorting
         $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
         $sortBy = $sortBy ?: 'crm_id';
 
-        $users
-            ->leftJoin('user_details as sort_details', 'sort_details.user_id', '=', 'users.id')
-            ->leftJoin('cities as sort_business_city', 'sort_business_city.id', '=', 'sort_details.city_id_business')
-            ->leftJoin('cities as sort_personal_city', 'sort_personal_city.id', '=', 'sort_details.city_id')
-            ->leftJoin('states as sort_business_state', 'sort_business_state.id', '=', 'sort_details.state_id_business')
-            ->leftJoin('states as sort_personal_state', 'sort_personal_state.id', '=', 'sort_details.state_id')
-            ->leftJoin('countries as sort_business_country', 'sort_business_country.id', '=', 'sort_details.country_id_business')
-            ->leftJoin('countries as sort_personal_country', 'sort_personal_country.id', '=', 'sort_details.country_id')
-            ->select('users.*');
-
         $sortMap = [
-            'sr_no' => 'users.id',
-            'crm_id' => 'sort_details.crm_id',
-            'company_name' => 'sort_details.company_name',
-            'person_name' => 'sort_details.name',
-            'customer_type' => 'sort_details.customer_type',
-            'village' => DB::raw('COALESCE(sort_details.village_business, sort_details.village)'),
-            'post' => DB::raw('COALESCE(sort_details.post_business, sort_details.post)'),
-            'district' => DB::raw('COALESCE(sort_details.district_business, sort_details.district)'),
-            'pincode' => DB::raw('COALESCE(sort_details.pincode_business, sort_details.pincode)'),
-            'city' => DB::raw('COALESCE(sort_business_city.name, sort_personal_city.name)'),
-            'state' => DB::raw('COALESCE(sort_business_state.name, sort_personal_state.name)'),
-            'country' => DB::raw('COALESCE(sort_business_country.name, sort_personal_country.name)'),
-            'mobile' => DB::raw('COALESCE(sort_details.prim_mobile_no_business, sort_details.prim_mobile_no, users.phone)'),
-            'alt_mobile' => DB::raw('COALESCE(sort_details.alt_mobile_no_business, sort_details.alt_mobile_no)'),
-            'whatsapp' => DB::raw('COALESCE(sort_details.prim_whats_app_no_business, sort_details.prim_whats_app_no)'),
-            'alt_whatsapp' => DB::raw('COALESCE(sort_details.alternate_whats_app_no_business, sort_details.alt_whats_app_no)'),
-            'email' => DB::raw('COALESCE(sort_details.prim_email_business, sort_details.prim_email_personal, users.email)'),
-            'alt_email' => DB::raw('COALESCE(sort_details.alt_email_business, sort_details.alt_email_personal)'),
-            'gst_no' => 'sort_details.gst_no',
-            'aadhaar_no' => 'sort_details.aadhaar_no',
-            'pan_no' => 'sort_details.pan_no',
-            'approval_status' => 'users.approval_status',
-            'customer_role' => 'users.user_subtype',
-            'current_status' => 'sort_details.current_status',
-            'credit_status' => 'users.credit_status',
-            'credit_days' => 'users.credit_days',
-            'credit_limit' => 'users.credit_limit',
-            'transport' => 'sort_details.transport',
-            'booked_to' => 'sort_details.booked_to',
-            'salesman' => 'sort_details.salesman',
-            'iec_no' => 'sort_details.iec_no',
-            'passport_no' => 'sort_details.passport_no',
-            'dl1' => 'sort_details.d_l_no_1',
-            'dl2' => 'sort_details.d_l_no_2',
-            'dl3' => 'sort_details.d_l_no_3',
-            'doctor_hospital_reg_no' => 'sort_details.doctor_hospital_reg_no',
-            'dairy_trust_ngo_reg_no' => 'sort_details.dairy_trust_ngo_reg_no',
-            'other_registration_no' => 'sort_details.cc_mdl_reg_no',
+            'sr_no' => ['column' => 'users.id', 'joins' => [], 'empty_last' => false],
+            'crm_id' => ['column' => DB::raw("CAST(NULLIF(TRIM(sort_details.crm_id), '') AS UNSIGNED)"), 'joins' => ['details'], 'empty_last' => false],
+            'company_name' => ['column' => 'sort_details.company_name', 'joins' => ['details'], 'empty_last' => true],
+            'person_name' => ['column' => DB::raw('COALESCE(sort_details.name, users.name)'), 'joins' => ['details'], 'empty_last' => true],
+            'customer_type' => ['column' => 'sort_details.customer_type', 'joins' => ['details'], 'empty_last' => true],
+            'village' => ['column' => DB::raw('COALESCE(sort_details.village_business, sort_details.village)'), 'joins' => ['details'], 'empty_last' => true],
+            'post' => ['column' => DB::raw('COALESCE(sort_details.post_business, sort_details.post)'), 'joins' => ['details'], 'empty_last' => true],
+            'district' => ['column' => DB::raw('COALESCE(sort_details.district_business, sort_details.district)'), 'joins' => ['details'], 'empty_last' => true],
+            'pincode' => ['column' => DB::raw('COALESCE(sort_details.pincode_business, sort_details.pincode)'), 'joins' => ['details'], 'empty_last' => true],
+            'city' => ['column' => DB::raw('COALESCE(sort_business_city.name, sort_personal_city.name)'), 'joins' => ['details', 'city'], 'empty_last' => true],
+            'state' => ['column' => DB::raw('COALESCE(sort_business_state.name, sort_personal_state.name)'), 'joins' => ['details', 'state'], 'empty_last' => true],
+            'country' => ['column' => DB::raw('COALESCE(sort_business_country.name, sort_personal_country.name)'), 'joins' => ['details', 'country'], 'empty_last' => true],
+            'mobile' => ['column' => DB::raw('COALESCE(sort_details.prim_mobile_no_business, sort_details.prim_mobile_no, users.phone)'), 'joins' => ['details'], 'empty_last' => true],
+            'alt_mobile' => ['column' => DB::raw('COALESCE(sort_details.alt_mobile_no_business, sort_details.alt_mobile_no)'), 'joins' => ['details'], 'empty_last' => true],
+            'whatsapp' => ['column' => DB::raw('COALESCE(sort_details.prim_whats_app_no_business, sort_details.prim_whats_app_no)'), 'joins' => ['details'], 'empty_last' => true],
+            'alt_whatsapp' => ['column' => DB::raw('COALESCE(sort_details.alternate_whats_app_no_business, sort_details.alt_whats_app_no)'), 'joins' => ['details'], 'empty_last' => true],
+            'email' => ['column' => DB::raw('COALESCE(sort_details.prim_email_business, sort_details.prim_email_personal, users.email)'), 'joins' => ['details'], 'empty_last' => true],
+            'alt_email' => ['column' => DB::raw('COALESCE(sort_details.alt_email_business, sort_details.alt_email_personal)'), 'joins' => ['details'], 'empty_last' => true],
+            'gst_no' => ['column' => 'sort_details.gst_no', 'joins' => ['details'], 'empty_last' => true],
+            'aadhaar_no' => ['column' => 'sort_details.aadhaar_no', 'joins' => ['details'], 'empty_last' => true],
+            'pan_no' => ['column' => 'sort_details.pan_no', 'joins' => ['details'], 'empty_last' => true],
+            'approval_status' => ['column' => 'users.approval_status', 'joins' => [], 'empty_last' => false],
+            'customer_role' => ['column' => 'users.user_subtype', 'joins' => [], 'empty_last' => true],
+            'current_status' => ['column' => 'sort_details.current_status', 'joins' => ['details'], 'empty_last' => true],
+            'ban_status' => ['column' => 'users.banned', 'joins' => [], 'empty_last' => false],
+            'credit_status' => ['column' => 'users.credit_status', 'joins' => [], 'empty_last' => false],
+            'credit_days' => ['column' => 'users.credit_days', 'joins' => [], 'empty_last' => false],
+            'credit_limit' => ['column' => 'users.credit_limit', 'joins' => [], 'empty_last' => false],
+            'transport' => ['column' => 'sort_details.transport', 'joins' => ['details'], 'empty_last' => true],
+            'booked_to' => ['column' => 'sort_details.booked_to', 'joins' => ['details'], 'empty_last' => true],
+            'salesman' => ['column' => 'sort_details.salesman', 'joins' => ['details'], 'empty_last' => true],
+            'iec_no' => ['column' => 'sort_details.iec_no', 'joins' => ['details'], 'empty_last' => true],
+            'passport_no' => ['column' => 'sort_details.passport_no', 'joins' => ['details'], 'empty_last' => true],
+            'dl1' => ['column' => 'sort_details.d_l_no_1', 'joins' => ['details'], 'empty_last' => true],
+            'dl2' => ['column' => 'sort_details.d_l_no_2', 'joins' => ['details'], 'empty_last' => true],
+            'dl3' => ['column' => 'sort_details.d_l_no_3', 'joins' => ['details'], 'empty_last' => true],
+            'doctor_hospital_reg_no' => ['column' => 'sort_details.doctor_hospital_reg_no', 'joins' => ['details'], 'empty_last' => true],
+            'dairy_trust_ngo_reg_no' => ['column' => 'sort_details.dairy_trust_ngo_reg_no', 'joins' => ['details'], 'empty_last' => true],
+            'other_registration_no' => ['column' => 'sort_details.cc_mdl_reg_no', 'joins' => ['details'], 'empty_last' => true],
         ];
 
         if (!array_key_exists($sortBy, $sortMap)) {
             $sortBy = 'crm_id';
         }
 
-        $sortColumn = $sortMap[$sortBy];
-        if ($sortColumn instanceof \Illuminate\Database\Query\Expression) {
-            $users = $users->orderByRaw($sortColumn->getValue(DB::connection()->getQueryGrammar()) . ' ' . $sortOrder);
-        } else {
-            $users = $users->orderBy($sortColumn, $sortOrder);
+        $sortJoins = $sortMap[$sortBy]['joins'];
+        if (in_array('details', $sortJoins, true)) {
+            $users->leftJoin('user_details as sort_details', 'sort_details.user_id', '=', 'users.id');
+        }
+        if (in_array('city', $sortJoins, true)) {
+            $users->leftJoin('cities as sort_business_city', 'sort_business_city.id', '=', 'sort_details.city_id_business')
+                ->leftJoin('cities as sort_personal_city', 'sort_personal_city.id', '=', 'sort_details.city_id');
+        }
+        if (in_array('state', $sortJoins, true)) {
+            $users->leftJoin('states as sort_business_state', 'sort_business_state.id', '=', 'sort_details.state_id_business')
+                ->leftJoin('states as sort_personal_state', 'sort_personal_state.id', '=', 'sort_details.state_id');
+        }
+        if (in_array('country', $sortJoins, true)) {
+            $users->leftJoin('countries as sort_business_country', 'sort_business_country.id', '=', 'sort_details.country_id_business')
+                ->leftJoin('countries as sort_personal_country', 'sort_personal_country.id', '=', 'sort_details.country_id');
+        }
+        if ($sortJoins !== []) {
+            $users->select('users.*');
         }
 
-        $users = $users->paginate(15)->appends($request->query());
+        $sortColumn = $sortMap[$sortBy]['column'];
+        $sortSql = $sortColumn instanceof \Illuminate\Database\Query\Expression
+            ? $sortColumn->getValue(DB::connection()->getQueryGrammar())
+            : $sortColumn;
+
+        if (!empty($sortMap[$sortBy]['empty_last'])) {
+            $users->orderByRaw("CASE WHEN ({$sortSql}) IS NULL OR TRIM({$sortSql}) = '' THEN 1 ELSE 0 END ASC");
+        }
+        $users->orderByRaw($sortSql . ' ' . $sortOrder)
+            ->orderBy('users.id', $sortOrder);
+
+        $users = $users
+            ->with(['details' => function ($query) {
+                $query->select($this->businessCustomerListDetailColumns());
+            }])
+            ->paginate(15)
+            ->appends($request->query());
 
         // Preload state/city names for display to avoid repeated lookups.
         $stateIds = collect($users->pluck('details'))->filter()->flatMap(function ($detail) {
@@ -449,6 +484,7 @@ class CustomerController extends Controller
             'license_details',
             'gst_no',
             'verification_status',
+            'ban_status',
             'filter_transport',
             'account_number',
             'sortBy',
@@ -588,7 +624,7 @@ class CustomerController extends Controller
         // $password = substr(hash('sha512', rand()), 0, 8);
         $email = null;
         $phone = null;
-        
+
         // Register By email
         if (filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
             $email = $request->email;
@@ -1609,7 +1645,7 @@ class CustomerController extends Controller
     public function destroy($id)
     {
         $customer = User::findOrFail($id);
-        $customer->customer_products()->delete(); 
+        $customer->customer_products()->delete();
         $customer->user_details()->delete();
         $customer->addresses()->delete();
 
@@ -1617,16 +1653,16 @@ class CustomerController extends Controller
         flash(translate('Customer has been deleted successfully'))->success();
         return redirect()->route('customers.index');
     }
-    
+
     public function bulk_customer_delete(Request $request) {
         if($request->id) {
             foreach ($request->id as $customer_id) {
                 $customer = User::findOrFail($customer_id);
-                $customer->customer_products()->delete(); 
+                $customer->customer_products()->delete();
                 $this->destroy($customer_id);
             }
         }
-        
+
         return 1;
     }
 
@@ -1651,7 +1687,7 @@ class CustomerController extends Controller
         }
 
         $user->save();
-        
+
         return back();
     }
 
@@ -1926,6 +1962,63 @@ class CustomerController extends Controller
         $file->move($documentPath, $documentName);
 
         return 'uploads/document/' . $documentName;
+    }
+
+    /**
+     * Columns needed by the business customer list table.
+     * Excludes longtext document fields that would be loaded by select *.
+     */
+    protected function businessCustomerListDetailColumns(): array
+    {
+        return [
+            'id',
+            'user_id',
+            'crm_id',
+            'company_name',
+            'name',
+            'customer_type',
+            'current_status',
+            'village_business',
+            'village',
+            'post_business',
+            'post',
+            'district_business',
+            'district',
+            'pincode_business',
+            'pincode',
+            'city_id_business',
+            'city_id',
+            'state_id_business',
+            'state_id',
+            'country_id_business',
+            'country_id',
+            'prim_mobile_no_business',
+            'prim_mobile_no',
+            'alt_mobile_no_business',
+            'alt_mobile_no',
+            'prim_whats_app_no_business',
+            'prim_whats_app_no',
+            'alternate_whats_app_no_business',
+            'alt_whats_app_no',
+            'prim_email_business',
+            'prim_email_personal',
+            'alt_email_business',
+            'alt_email_personal',
+            'gst_no',
+            'aadhaar_no',
+            'pan_no',
+            'iec_no',
+            'passport_no',
+            'transport',
+            'booked_to',
+            'salesman',
+            'd_l_no_1',
+            'd_l_no_2',
+            'd_l_no_3',
+            'doctor_hospital_reg_no',
+            'dairy_trust_ngo_reg_no',
+            'cc_mdl_reg_no',
+        ];
     }
 
     /**
