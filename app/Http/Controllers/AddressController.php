@@ -243,6 +243,7 @@ class AddressController extends Controller
             'country_code' => $country ? $country->code : ($locationData['country_code'] ?? null),
             'village' => $locationData['village'] ?? $locationData['placename'] ?? null,
             'district' => $locationData['district'] ?? null,
+            'post' => $locationData['village'] ?? $locationData['placename'] ?? null,
             'postal_code' => $locationData['postal_code'] ?? $postalCode,
         ]);        
     }  

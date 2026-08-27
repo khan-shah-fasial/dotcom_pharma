@@ -146,6 +146,7 @@
                     request('state_id'),
                     request('city_id'),
                     request('district'),
+                    request('post'),
                     request('transport'),
                     request('order_date_from'),
                     request('order_date_to'),
@@ -302,8 +303,17 @@
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label" for="district">{{ translate('District') }}</label>
-                                    <input type="text" class="form-control" id="district" name="district"
-                                           value="{{ request('district') }}" placeholder="{{ translate('District') }}">
+                                    <select class="form-control aiz-selectpicker" id="district" name="district"
+                                            data-live-search="true" data-selected="{{ request('district') }}">
+                                        <option value="">{{ translate('All') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="post">{{ translate('Post') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="post" name="post"
+                                            data-live-search="true" data-selected="{{ request('post') }}">
+                                        <option value="">{{ translate('All') }}</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="order_date_range">{{ translate('Order Date Range') }}</label>
@@ -617,82 +627,155 @@
 
         (function () {
             var csrf = '{{ csrf_token() }}';
-            var stateUrl = @json(route('get-state'));
-            var cityUrl = @json(route('get-city'));
             var locationUrl = @json(route('get-location'));
+            var locationOptionsUrl = @json(route('customers.location.options'));
             var allLabel = @json(translate('All'));
             var pincodeTimer = null;
+            var suppressLocationChange = 0;
+
+            function beginSuppress() {
+                suppressLocationChange += 1;
+            }
+
+            function endSuppress() {
+                setTimeout(function () {
+                    suppressLocationChange = Math.max(0, suppressLocationChange - 1);
+                }, 0);
+            }
 
             function refreshPicker($el) {
+                if ($.fn.selectpicker) {
+                    $el.selectpicker('refresh');
+                    return;
+                }
                 if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.bootstrapSelect === 'function') {
                     AIZ.plugins.bootstrapSelect('refresh');
-                } else if ($.fn.selectpicker) {
-                    $el.selectpicker('refresh');
                 }
             }
 
-            function normalizeOptionsHtml(response) {
-                if (typeof response !== 'string') {
-                    return response;
+            function selectedValue($select) {
+                var value = $select.val();
+                if ((value === null || value === undefined || value === '') && $.fn.selectpicker) {
+                    value = $select.selectpicker('val');
                 }
-                try {
-                    return JSON.parse(response);
-                } catch (error) {
-                    return response;
-                }
+                return value || '';
             }
 
-            function setSelectHtml($select, html, selected) {
-                var parsed = normalizeOptionsHtml(html);
-                if (typeof parsed === 'string') {
-                    parsed = parsed.replace(
-                        /<option value="">[^<]*<\/option>/,
-                        '<option value="">' + allLabel + '</option>'
-                    );
-                }
-                $select.html(parsed);
+            function setSelectOptions($select, options, selected) {
+                $select.empty();
+                $select.append($('<option>', { value: '', text: allLabel }));
+                (options || []).forEach(function (opt) {
+                    $select.append($('<option>', { value: String(opt.id), text: opt.name }));
+                });
                 if (selected !== null && selected !== undefined && selected !== '') {
-                    $select.val(String(selected));
+                    var selectedValue = String(selected);
+                    var hasOption = $select.find('option').filter(function () {
+                        return String($(this).val()) === selectedValue;
+                    }).length > 0;
+                    if (!hasOption) {
+                        $select.append($('<option>', { value: selectedValue, text: selectedValue }));
+                    }
+                    $select.val(selectedValue);
+                } else {
+                    $select.val('');
                 }
+                $select.data('selected', '');
                 refreshPicker($select);
             }
 
-            function resetCity() {
-                $('#city_id').html('<option value="">' + allLabel + '</option>');
-                refreshPicker($('#city_id'));
+            function resetCityDistrictPost() {
+                setSelectOptions($('#city_id'), [], '');
+                setSelectOptions($('#district'), [], '');
+                setSelectOptions($('#post'), [], '');
             }
 
-            function resetStateAndCity() {
-                $('#state_id').html('<option value="">' + allLabel + '</option>');
-                refreshPicker($('#state_id'));
-                resetCity();
+            function fetchLocationOptions(params) {
+                return $.get(locationOptionsUrl, $.extend({ scope: 'business' }, params));
             }
 
-            function loadStates(countryId, selectedStateId, thenLoadCityId) {
+            function loadStates(countryId, selectedStateId) {
                 if (!countryId) {
-                    resetStateAndCity();
+                    setSelectOptions($('#state_id'), [], '');
+                    resetCityDistrictPost();
+                    return $.Deferred().resolve().promise();
+                }
+
+                beginSuppress();
+                return fetchLocationOptions({ country_id: countryId }).done(function (resp) {
+                    setSelectOptions($('#state_id'), (resp && resp.states) || [], selectedStateId || '');
+                    if (!selectedStateId) {
+                        resetCityDistrictPost();
+                    }
+                }).fail(function () {
+                    setSelectOptions($('#state_id'), [], '');
+                    resetCityDistrictPost();
+                }).always(endSuppress);
+            }
+
+            function loadCityDistrictPost(countryId, stateId, selected) {
+                selected = selected || {};
+                if (!countryId || !stateId) {
+                    resetCityDistrictPost();
+                    return $.Deferred().resolve().promise();
+                }
+
+                beginSuppress();
+                return fetchLocationOptions({
+                    country_id: countryId,
+                    state: stateId
+                }).done(function (resp) {
+                    setSelectOptions($('#city_id'), (resp && resp.cities) || [], selected.city_id || '');
+                    setSelectOptions($('#district'), (resp && resp.districts) || [], selected.district || '');
+                    setSelectOptions($('#post'), (resp && resp.posts) || [], selected.post || '');
+                }).fail(function () {
+                    resetCityDistrictPost();
+                }).always(endSuppress);
+            }
+
+            function loadPosts(countryId, stateId, district, cityId, selectedPost) {
+                if (!countryId || !stateId) {
+                    setSelectOptions($('#post'), [], '');
                     return;
                 }
 
-                $.post(stateUrl, {_token: csrf, country_id: countryId}, function (html) {
-                    setSelectHtml($('#state_id'), html, selectedStateId || '');
-                    if (selectedStateId) {
-                        loadCities(selectedStateId, thenLoadCityId || '');
-                    } else {
-                        resetCity();
-                    }
+                var params = {
+                    country_id: countryId,
+                    state: stateId
+                };
+                if (district) {
+                    params.district = district;
+                }
+                if (cityId) {
+                    params.city = cityId;
+                }
+
+                fetchLocationOptions(params).done(function (resp) {
+                    setSelectOptions($('#post'), (resp && resp.posts) || [], selectedPost || '');
+                }).fail(function () {
+                    setSelectOptions($('#post'), [], '');
                 });
             }
 
-            function loadCities(stateId, selectedCityId) {
-                if (!stateId) {
-                    resetCity();
-                    return;
+            function applyFetchedLocation(location) {
+                if (!location || !location.country_id) {
+                    return $.Deferred().reject().promise();
                 }
 
-                $.post(cityUrl, {_token: csrf, state_id: stateId}, function (html) {
-                    setSelectHtml($('#city_id'), html, selectedCityId || '');
-                });
+                beginSuppress();
+                $('#country_id').val(String(location.country_id));
+                refreshPicker($('#country_id'));
+
+                return loadStates(location.country_id, location.state_id || '').then(function () {
+                    if (!location.state_id) {
+                        resetCityDistrictPost();
+                        return;
+                    }
+                    return loadCityDistrictPost(location.country_id, location.state_id, {
+                        city_id: location.city_id || '',
+                        district: location.district || '',
+                        post: location.post || location.village || ''
+                    });
+                }).always(endSuppress);
             }
 
             function lookupPincode() {
@@ -707,57 +790,121 @@
                 $status.removeClass('text-danger text-success').addClass('text-muted')
                     .html('<i class="las la-spinner la-spin"></i> {{ translate('Loading location...') }}');
 
-                $.ajax({
-                    url: locationUrl,
-                    method: 'POST',
-                    data: {
-                        _token: csrf,
-                        postal_code: postalCode,
-                        country_id: $('#country_id').val() || ''
-                    }
-                }).done(function (location) {
-                    if (!location || (!location.country_id && !location.state_id && !location.city_id)) {
-                        $status.removeClass('text-muted text-success').addClass('text-danger')
-                            .text('{{ translate('No location found for this pincode.') }}');
+                fetchLocationOptions({
+                    pincode: postalCode,
+                    country_id: selectedValue($('#country_id')) || undefined
+                }).done(function (resp) {
+                    if (resp && resp.location && resp.location.country_id) {
+                        applyFetchedLocation(resp.location).done(function () {
+                            $status.removeClass('text-muted text-danger').addClass('text-success')
+                                .text('{{ translate('Location loaded.') }}');
+                        });
                         return;
                     }
 
-                    if (location.country_id) {
-                        $('#country_id').val(String(location.country_id));
-                        refreshPicker($('#country_id'));
-                    }
+                    $.ajax({
+                        url: locationUrl,
+                        method: 'POST',
+                        data: {
+                            _token: csrf,
+                            postal_code: postalCode,
+                            country_id: selectedValue($('#country_id')) || ''
+                        }
+                    }).done(function (location) {
+                        if (!location || (!location.country_id && !location.state_id && !location.city_id)) {
+                            $status.removeClass('text-muted text-success').addClass('text-danger')
+                                .text('{{ translate('No location found for this pincode.') }}');
+                            return;
+                        }
 
-                    if (location.country_id && location.state_id) {
-                        loadStates(location.country_id, location.state_id, location.city_id || '');
-                    } else if (location.country_id) {
-                        loadStates(location.country_id, '', '');
-                    }
-
-                    if (location.district && !$('#district').val()) {
-                        $('#district').val(location.district);
-                    }
-
-                    $status.removeClass('text-muted text-danger').addClass('text-success')
-                        .text('{{ translate('Location loaded.') }}');
-                }).fail(function (xhr) {
-                    var message = xhr.responseJSON && (xhr.responseJSON.message || Object.values(xhr.responseJSON.errors || {})[0]);
+                        applyFetchedLocation({
+                            country_id: location.country_id,
+                            state_id: location.state_id,
+                            city_id: location.city_id,
+                            district: location.district,
+                            post: location.post || location.village || ''
+                        }).done(function () {
+                            $status.removeClass('text-muted text-danger').addClass('text-success')
+                                .text('{{ translate('Location loaded.') }}');
+                        });
+                    }).fail(function (xhr) {
+                        var message = xhr.responseJSON && (xhr.responseJSON.message || Object.values(xhr.responseJSON.errors || {})[0]);
+                        $status.removeClass('text-muted text-success').addClass('text-danger')
+                            .text(message || '{{ translate('Unable to fetch location. Please select manually.') }}');
+                    });
+                }).fail(function () {
                     $status.removeClass('text-muted text-success').addClass('text-danger')
-                        .text(message || '{{ translate('Unable to fetch location. Please select manually.') }}');
+                        .text('{{ translate('Unable to fetch location. Please select manually.') }}');
                 });
             }
 
-            $('#country_id').on('change', function () {
-                loadStates($(this).val(), '', '');
+            function restoreSelectedLocationFilters() {
+                var countryId = selectedValue($('#country_id'));
+                var stateId = selectedValue($('#state_id'));
+                if (!countryId || !stateId) {
+                    return;
+                }
+
+                loadCityDistrictPost(countryId, stateId, {
+                    city_id: selectedValue($('#city_id')),
+                    district: $('#district').data('selected') || '',
+                    post: $('#post').data('selected') || ''
+                });
+            }
+
+            function bindLocationChange($el, handler) {
+                $el.on('changed.bs.select change', function () {
+                    if (suppressLocationChange || $el.data('handling-location-change')) {
+                        return;
+                    }
+                    $el.data('handling-location-change', true);
+                    handler.call(this);
+                    setTimeout(function () {
+                        $el.data('handling-location-change', false);
+                    }, 0);
+                });
+            }
+
+            bindLocationChange($('#country_id'), function () {
+                loadStates(selectedValue($('#country_id')), '');
             });
 
-            $('#state_id').on('change', function () {
-                loadCities($(this).val(), '');
+            bindLocationChange($('#state_id'), function () {
+                loadCityDistrictPost(selectedValue($('#country_id')), selectedValue($('#state_id')));
+            });
+
+            bindLocationChange($('#district'), function () {
+                loadPosts(
+                    selectedValue($('#country_id')),
+                    selectedValue($('#state_id')),
+                    selectedValue($('#district')),
+                    selectedValue($('#city_id')),
+                    ''
+                );
+            });
+
+            bindLocationChange($('#city_id'), function () {
+                loadPosts(
+                    selectedValue($('#country_id')),
+                    selectedValue($('#state_id')),
+                    selectedValue($('#district')),
+                    selectedValue($('#city_id')),
+                    ''
+                );
             });
 
             $('#pincode').on('input', function () {
                 clearTimeout(pincodeTimer);
                 pincodeTimer = setTimeout(lookupPincode, 450);
             });
+
+            $('#purchaseHistoryFilterModal').on('shown.bs.modal', function () {
+                ['#country_id', '#state_id', '#city_id', '#district', '#post'].forEach(function (sel) {
+                    refreshPicker($(sel));
+                });
+            });
+
+            restoreSelectedLocationFilters();
         })();
     </script>
 @endsection

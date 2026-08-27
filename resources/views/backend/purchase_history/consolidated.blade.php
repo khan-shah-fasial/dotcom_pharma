@@ -175,6 +175,7 @@
             'state',
             'city',
             'district',
+            'post',
             'transport',
             'expiry_date_from',
             'expiry_date_to',

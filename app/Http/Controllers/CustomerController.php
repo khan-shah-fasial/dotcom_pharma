@@ -2339,14 +2339,20 @@ class CustomerController extends Controller
             $cities = $cityQuery->orderBy('name')->get(['id', 'name']);
         }
 
-        if ($countryId && $stateId && $district && $cityId) {
-            $district = trim((string) $district);
-
-            $posts = $newDetailsQuery()
+        if ($countryId && $stateId) {
+            $postQuery = $newDetailsQuery()
                 ->where($countryCol, $countryId)
-                ->where($stateCol, $stateId)
-                ->where($cityCol, $cityId)
-                ->whereRaw('LOWER(TRIM(' . $distCol . ')) = ?', [strtolower($district)])
+                ->where($stateCol, $stateId);
+
+            if (filled($district)) {
+                $postQuery->whereRaw('LOWER(TRIM(' . $distCol . ')) = ?', [strtolower(trim((string) $district))]);
+            }
+
+            if ($cityId) {
+                $postQuery->where($cityCol, $cityId);
+            }
+
+            $posts = $postQuery
                 ->pluck($postCol)
                 ->filter()
                 ->map(function ($val) {

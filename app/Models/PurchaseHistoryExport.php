@@ -160,11 +160,18 @@ class PurchaseHistoryExport implements FromQuery, WithHeadings, WithMapping, Wit
             });
         }
         if ($district = $this->filterValue('district')) {
-            $query->where(function ($districtQuery) use ($district) {
-                $districtQuery->where('district', 'like', $district . '%')
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($district) {
-                        $customerQuery->where('district_business', 'like', $district . '%');
+            $districtValue = strtolower($district);
+            $query->where(function ($districtQuery) use ($districtValue) {
+                $districtQuery->whereRaw('LOWER(TRIM(district)) = ?', [$districtValue])
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($districtValue) {
+                        $customerQuery->whereRaw('LOWER(TRIM(district_business)) = ?', [$districtValue]);
                     });
+            });
+        }
+        if ($post = $this->filterValue('post')) {
+            $postValue = strtolower($post);
+            $query->whereHas('customerDetails', function ($customerQuery) use ($postValue) {
+                $customerQuery->whereRaw('LOWER(TRIM(post_business)) = ?', [$postValue]);
             });
         }
         if ($transport = $this->filterValue('transport')) {

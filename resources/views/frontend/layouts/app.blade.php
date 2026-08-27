@@ -1579,18 +1579,12 @@
                            $('.add-to-cart').addClass('d-none');
                            $('.out-of-stock').removeClass('d-none');
                            $('.notify-restock').removeClass('d-none');
-                           // #region agent log
-                           fetch('http://127.0.0.1:7709/ingest/bc7f5758-2112-4bdf-aa97-57a867b0ac48',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a0012d'},body:JSON.stringify({sessionId:'a0012d',hypothesisId:'A',location:'app.blade.php:getVariantPrice',message:'variant price out of stock, showing notify',data:{effectiveInStock:effectiveInStock,digital:data.digital,selectedBatchQty:selectedBatchQty},timestamp:Date.now()})}).catch(()=>{});
-                           // #endregion
                         }
                         else{
                            $('.buy-now').removeClass('d-none');
                            $('.add-to-cart').removeClass('d-none');
                            $('.out-of-stock').addClass('d-none');
                            $('.notify-restock').addClass('d-none');
-                           // #region agent log
-                           fetch('http://127.0.0.1:7709/ingest/bc7f5758-2112-4bdf-aa97-57a867b0ac48',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a0012d'},body:JSON.stringify({sessionId:'a0012d',hypothesisId:'A',location:'app.blade.php:getVariantPrice',message:'variant price in stock, hiding notify',data:{effectiveInStock:effectiveInStock,digital:data.digital,selectedBatchQty:selectedBatchQty},timestamp:Date.now()})}).catch(()=>{});
-                           // #endregion
                         }
 
                         AIZ.extra.plusMinus();

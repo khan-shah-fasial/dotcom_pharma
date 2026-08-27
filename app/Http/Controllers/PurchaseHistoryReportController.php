@@ -894,6 +894,7 @@ class PurchaseHistoryReportController extends Controller
                 'city_id',
                 'pincode',
                 'district',
+                'post',
                 'transport',
                 'product_name',
                 'expiry_date_from',
@@ -965,6 +966,7 @@ class PurchaseHistoryReportController extends Controller
         $cityId = (int) $request->get('city_id', 0);
         $pincode = trim((string) $request->get('pincode', ''));
         $district = trim((string) $request->get('district', ''));
+        $post = trim((string) $request->get('post', ''));
 
         if ($countryId > 0) {
             $query->whereHas('customerDetails', function ($customerQuery) use ($countryId) {
@@ -994,11 +996,19 @@ class PurchaseHistoryReportController extends Controller
         }
 
         if ($district !== '') {
-            $query->where(function ($districtQuery) use ($district, $columnPrefix) {
-                $districtQuery->where($columnPrefix . 'district', 'like', $district . '%')
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($district) {
-                        $customerQuery->where('district_business', 'like', $district . '%');
+            $districtValue = strtolower($district);
+            $query->where(function ($districtQuery) use ($districtValue, $columnPrefix) {
+                $districtQuery->whereRaw('LOWER(TRIM(' . $columnPrefix . 'district)) = ?', [$districtValue])
+                    ->orWhereHas('customerDetails', function ($customerQuery) use ($districtValue) {
+                        $customerQuery->whereRaw('LOWER(TRIM(district_business)) = ?', [$districtValue]);
                     });
+            });
+        }
+
+        if ($post !== '') {
+            $postValue = strtolower($post);
+            $query->whereHas('customerDetails', function ($customerQuery) use ($postValue) {
+                $customerQuery->whereRaw('LOWER(TRIM(post_business)) = ?', [$postValue]);
             });
         }
     }
