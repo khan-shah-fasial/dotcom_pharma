@@ -538,7 +538,7 @@ body .translater_menu .select2-container {
     @endif
 
     <!-- Top Bar -->
-    <div class="top-navbar bg-white z-1035 h-35px h-sm-auto">
+    <div class="top-navbar top-navbar--with-live-info bg-white z-1035">
         <div class="container">
             <div class="row d-flex">
 
@@ -586,10 +586,8 @@ body .translater_menu .select2-container {
                 </div>
 
 
-                <div class="col-xl-5 col-lg-6 col-md-8 col-4 d-flex justify-content-end">
-
-
-                    <ul class="list-inline d-flex justify-content-end mb-0">
+                <div class="col-xl-5 col-lg-6 col-md-8 col-4 d-flex justify-content-end align-items-center">
+                    <ul class="list-inline d-flex justify-content-end mb-0 w-100">
 
                         <li class="list-inline-item d-none d-md-inline">
                             <button type="button" id="defaultEnglishLanguageBtn"
@@ -711,6 +709,12 @@ body .translater_menu .select2-container {
                             </li>
                         @endif
                     </ul>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    @include('frontend.partials.header_live_info')
                 </div>
             </div>
         </div>

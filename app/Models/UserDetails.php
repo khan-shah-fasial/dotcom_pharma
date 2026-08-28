@@ -50,6 +50,13 @@ class UserDetails extends Model
         'R & D Center',
     ];
 
+    protected $casts = [
+        'cash_on_delivery' => 'boolean',
+        'free_shipping' => 'boolean',
+        'has_warranty' => 'boolean',
+        'refundable' => 'boolean',
+    ];
+
     protected $fillable = [
         'user_id',
         'type_option',
@@ -60,6 +67,10 @@ class UserDetails extends Model
         'default_transport_mode',
         'default_transport_surface_mode',
         'default_delivery_type',
+        'cash_on_delivery',
+        'free_shipping',
+        'has_warranty',
+        'refundable',
         'salesman',
         'dl_expiry',
         'dl1',

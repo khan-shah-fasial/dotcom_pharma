@@ -1015,6 +1015,8 @@
 
 
 
+                @include('backend.customer.customers.partials.order_preferences', ['details' => $details ?? null])
+
                 {{-- Transport details --}}
                 @php
                     $selectedTransportId = old('transport_id', $details?->transport_id);
@@ -1041,7 +1043,7 @@
                             <i class="las la-angle-up customer-section-icon" aria-hidden="true"></i>
                         </button>
                     </div>
-+                    <div class="col-md-3 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label class="form-label" for="default_shipping_method">{{ translate('Default Shipping Method') }}</label>
                         <select id="default_shipping_method" name="default_shipping_method" class="form-control aiz-selectpicker">
                             <option value="transport" {{ old('default_shipping_method', $details?->default_shipping_method ?? 'transport') === 'transport' ? 'selected' : '' }}>{{ translate('Transport') }}</option>

@@ -301,6 +301,7 @@ Route::post('/currency', [CurrencyController::class, 'changeCurrency'])->name('c
 
 // Country + Language + Currency (session) switch
 Route::post('/location', [LocationController::class, 'change'])->name('location.change');
+Route::post('/location/live-area', [LocationController::class, 'updateLiveArea'])->name('location.live-area');
 
 // Size Chart Show
 Route::get('/size-charts-show/{id}', [SizeChartController::class, 'show'])->name('size-charts-show');

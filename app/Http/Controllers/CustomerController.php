@@ -590,6 +590,27 @@ class CustomerController extends Controller
         ];
     }
 
+    private function customerOrderPreferenceFlags(Request $request, ?UserDetails $details = null): array
+    {
+        $defaults = [
+            'cash_on_delivery' => $details?->cash_on_delivery ?? true,
+            'free_shipping' => $details?->free_shipping ?? false,
+            'has_warranty' => $details?->has_warranty ?? false,
+            'refundable' => $details?->refundable ?? true,
+        ];
+
+        return [
+            'cash_on_delivery' => get_setting('cash_payment') == '1'
+                ? $request->boolean('cash_on_delivery')
+                : (bool) $defaults['cash_on_delivery'],
+            'free_shipping' => $request->boolean('free_shipping'),
+            'has_warranty' => $request->boolean('has_warranty'),
+            'refundable' => addon_is_activated('refund_request')
+                ? $request->boolean('refundable')
+                : (bool) $defaults['refundable'],
+        ];
+    }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -806,6 +827,10 @@ class CustomerController extends Controller
             'default_transport_mode' => ['nullable', Rule::in(['air', 'sea', 'surface'])],
             'default_transport_surface_mode' => ['nullable', Rule::in(['road', 'train'])],
             'default_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
+            'cash_on_delivery' => ['nullable', 'boolean'],
+            'free_shipping' => ['nullable', 'boolean'],
+            'has_warranty' => ['nullable', 'boolean'],
+            'refundable' => ['nullable', 'boolean'],
             'salesman' => ['nullable', 'string', 'max:255'],
             'dl_expiry' => ['nullable', 'string', 'max:255'],
             'dl1' => ['nullable', 'string', 'max:255'],
@@ -935,6 +960,7 @@ class CustomerController extends Controller
 
             $details = new UserDetails(['user_id' => $user->id]);
             $transportSelection = $this->resolveTransportSelection($request);
+            $orderPreferences = $this->customerOrderPreferenceFlags($request);
             $details->fill([
                 'type_option' => $typeOption,
                 'crm_id' => $validated['crm_id'],
@@ -947,6 +973,10 @@ class CustomerController extends Controller
                 'default_transport_mode' => $request->input('default_transport_mode', 'surface'),
                 'default_transport_surface_mode' => $request->input('default_transport_surface_mode', 'road'),
                 'default_delivery_type' => $request->input('default_delivery_type', 'door_delivery'),
+                'cash_on_delivery' => $orderPreferences['cash_on_delivery'],
+                'free_shipping' => $orderPreferences['free_shipping'],
+                'has_warranty' => $orderPreferences['has_warranty'],
+                'refundable' => $orderPreferences['refundable'],
                 'salesman' => $request->input('salesman'),
                 'dl_expiry' => $request->input('dl_expiry'),
                 'dl1' => $request->input('dl1'),
@@ -1318,6 +1348,10 @@ class CustomerController extends Controller
             'default_transport_mode' => ['nullable', Rule::in(['air', 'sea', 'surface'])],
             'default_transport_surface_mode' => ['nullable', Rule::in(['road', 'train'])],
             'default_delivery_type' => ['nullable', Rule::in(['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'])],
+            'cash_on_delivery' => ['nullable', 'boolean'],
+            'free_shipping' => ['nullable', 'boolean'],
+            'has_warranty' => ['nullable', 'boolean'],
+            'refundable' => ['nullable', 'boolean'],
             // 'phone_business'       => ['nullable'],
         ]);
         if ($validator->fails()) {
@@ -1440,6 +1474,7 @@ class CustomerController extends Controller
         ]);
 
         $transportSelection = $this->resolveTransportSelection($request, $details);
+        $orderPreferences = $this->customerOrderPreferenceFlags($request, $details);
         $details->fill([
             'type_option' => $typeOption,
             'crm_id' => $request->input('crm_id', $details->crm_id ?? null),
@@ -1456,6 +1491,10 @@ class CustomerController extends Controller
             'default_transport_mode' => $request->input('default_transport_mode', $details->default_transport_mode ?? 'surface'),
             'default_transport_surface_mode' => $request->input('default_transport_surface_mode', $details->default_transport_surface_mode ?? 'road'),
             'default_delivery_type' => $request->input('default_delivery_type', $details->default_delivery_type ?? 'door_delivery'),
+            'cash_on_delivery' => $orderPreferences['cash_on_delivery'],
+            'free_shipping' => $orderPreferences['free_shipping'],
+            'has_warranty' => $orderPreferences['has_warranty'],
+            'refundable' => $orderPreferences['refundable'],
             'salesman' => $request->input('salesman', $details->salesman ?? null),
             'dl_expiry' => $request->input('dl_expiry', $details->dl_expiry ?? null),
             'dl1' => $request->input('dl1', $details->dl1 ?? null),

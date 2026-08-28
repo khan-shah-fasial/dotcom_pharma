@@ -91,6 +91,12 @@ li {
     padding-bottom: 8px;
 }
 
+.top-navbar--with-live-info {
+    height: auto !important;
+    overflow: visible;
+    padding-bottom: 6px;
+}
+
 .top_baar_icons img {
     width: 24px !important;
     margin-right: 8px;

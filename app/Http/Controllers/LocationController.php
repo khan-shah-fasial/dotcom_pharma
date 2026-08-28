@@ -56,4 +56,27 @@ class LocationController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function updateLiveArea(Request $request)
+    {
+        $validated = $request->validate([
+            'area_name' => ['required', 'string', 'max:255'],
+            'latitude' => ['nullable', 'numeric'],
+            'longitude' => ['nullable', 'numeric'],
+        ]);
+
+        $request->session()->put('live_area_name', trim($validated['area_name']));
+
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $request->session()->put('live_area_coords', [
+                'lat' => (float) $validated['latitude'],
+                'lng' => (float) $validated['longitude'],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'area_name' => $request->session()->get('live_area_name'),
+        ]);
+    }
 }
