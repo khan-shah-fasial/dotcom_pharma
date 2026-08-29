@@ -96,12 +96,53 @@
                                     </div>
                                 </div>
                             @endif
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0 h6">{{ translate('Product Policies') }}</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (get_setting('cash_payment') == '1')
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{ translate('Cash On Delivery') }}</label>
+                                    <div class="col-md-8">
+                                        <label class="aiz-switch aiz-switch-success mb-0">
+                                            <input type="checkbox" name="cash_on_delivery" value="1" checked>
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if (get_setting('shipping_type') == 'product_wise_shipping')
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{ translate('Free Shipping') }}</label>
+                                    <div class="col-md-8">
+                                        <label class="aiz-switch aiz-switch-success mb-0">
+                                            <input type="checkbox" name="free_shipping_toggle" class="free-shipping-toggle" value="1" @checked(old('shipping_type') == 'free' || old('free_shipping_toggle') == 1)>
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="form-group row">
+                                <label class="col-md-3 col-from-label">{{ translate('Warranty') }}</label>
+                                <div class="col-md-8">
+                                    <label class="aiz-switch aiz-switch-success mb-0">
+                                        <input type="checkbox" name="has_warranty" class="has-warranty-toggle" onchange="warrantySelection()" value="1" @checked(old('has_warranty') == 1)>
+                                        <span></span>
+                                    </label>
+                                </div>
+                            </div>
+
                             @if (addon_is_activated('refund_request'))
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{ translate('Refundable') }}</label>
                                     <div class="col-md-8">
                                         <label class="aiz-switch aiz-switch-success mb-0">
-                                            <input type="checkbox" name="refundable" checked value="1">
+                                            <input type="checkbox" name="refundable" value="1" checked>
                                             <span></span>
                                         </label>
                                     </div>
@@ -980,8 +1021,25 @@
 
 @include('partials.product.product_temp_data')
 <script type="text/javascript">
+    function syncFreeShippingToggle() {
+        const isFreeShipping = $('input[name="shipping_type"][value="free"]').is(':checked');
+        $('.free-shipping-toggle').prop('checked', isFreeShipping);
+    }
+
     $(document).ready(function() {
+        $('input[name="shipping_type"]').on('change', syncFreeShippingToggle);
+
+        $('.free-shipping-toggle').on('change', function() {
+            const isChecked = $(this).is(':checked');
+            $('input[name="shipping_type"][value="free"]').prop('checked', isChecked);
+            if (!isChecked) {
+                $('input[name="shipping_type"][value="flat_rate"]').prop('checked', true);
+            }
+            syncFreeShippingToggle();
+        });
+
         warrantySelection();
+        syncFreeShippingToggle();
     });
 </script>
 @endsection

@@ -105,16 +105,57 @@
                     </div>
                     @endif
 
-                    @if (addon_is_activated('refund_request'))
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 h6">{{ translate('Product Policies') }}</h5>
+                </div>
+                <div class="card-body">
+                    @if (get_setting('cash_payment') == '1')
+                        <div class="form-group row">
+                            <label class="col-lg-3 col-from-label">{{translate('Cash On Delivery')}}</label>
+                            <div class="col-lg-8">
+                                <label class="aiz-switch aiz-switch-success mb-0" style="margin-top:5px;">
+                                    <input type="checkbox" name="cash_on_delivery" value="1" @if($product->cash_on_delivery == 1) checked @endif>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if (get_setting('shipping_type') == 'product_wise_shipping')
+                        <div class="form-group row">
+                            <label class="col-lg-3 col-from-label">{{translate('Free Shipping')}}</label>
+                            <div class="col-lg-8">
+                                <label class="aiz-switch aiz-switch-success mb-0" style="margin-top:5px;">
+                                    <input type="checkbox" name="free_shipping_toggle" class="free-shipping-toggle" value="1" @checked($product->shipping_type == 'free')>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="form-group row">
-                        <label class="col-lg-3 col-from-label">{{translate('Refundable')}}</label>
+                        <label class="col-lg-3 col-from-label">{{translate('Warranty')}}</label>
                         <div class="col-lg-8">
                             <label class="aiz-switch aiz-switch-success mb-0" style="margin-top:5px;">
-                                <input type="checkbox" name="refundable" @if ($product->refundable == 1) checked @endif value="1">
-                                <span class="slider round"></span></label>
+                                <input type="checkbox" name="has_warranty" class="has-warranty-toggle" onchange="warrantySelection()" @if($product->has_warranty == 1) checked @endif value="1">
+                                <span class="slider round"></span>
                             </label>
                         </div>
                     </div>
+
+                    @if (addon_is_activated('refund_request'))
+                        <div class="form-group row">
+                            <label class="col-lg-3 col-from-label">{{translate('Refundable')}}</label>
+                            <div class="col-lg-8">
+                                <label class="aiz-switch aiz-switch-success mb-0" style="margin-top:5px;">
+                                    <input type="checkbox" name="refundable" @if ($product->refundable == 1) checked @endif value="1">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
                     @endif
                 </div>
             </div>

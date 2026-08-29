@@ -1019,10 +1019,8 @@
                     <!-- Shipping -->
                     <div class="tab-pane fade" id="shipping" role="tabpanel" aria-labelledby="shipping-tab">
                         <div class="bg-white p-3 p-sm-2rem">
-                            <!-- Shipping Configuration -->
-                            <h5 class="mb-3 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Shipping Configuration')}}</h5>
+                            <h5 class="mb-3 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Product Policies')}}</h5>
                             <div class="w-100">
-                                <!-- Cash On Delivery -->
                                 @if (get_setting('cash_payment') == '1')
                                     <div class="form-group row">
                                         <label class="col-md-3 col-from-label">{{translate('Cash On Delivery')}}</label>
@@ -1033,18 +1031,49 @@
                                             </label>
                                         </div>
                                     </div>
-                                @else
-                                    <p>
-                                        {{ translate('Cash On Delivery option is disabled. Activate this feature from here') }}
-                                        <a href="{{route('activation.index')}}" class="aiz-side-nav-link {{ areActiveRoutes(['shipping_configuration.index','shipping_configuration.edit','shipping_configuration.update'])}}">
-                                            <span class="aiz-side-nav-text">{{translate('Cash Payment Activation')}}</span>
-                                        </a>
-                                    </p>
                                 @endif
 
                                 @if (get_setting('shipping_type') == 'product_wise_shipping')
-                                <!-- Free Shipping -->
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-from-label">{{translate('Free Shipping')}}</label>
+                                        <div class="col-md-9">
+                                            <label class="aiz-switch aiz-switch-success mb-0">
+                                                <input type="checkbox" name="free_shipping_toggle" class="free-shipping-toggle" value="1" @checked($product->shipping_type == 'free')>
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{translate('Warranty')}}</label>
+                                    <div class="col-md-9">
+                                        <label class="aiz-switch aiz-switch-success mb-0">
+                                            <input type="checkbox" name="has_warranty" class="has-warranty-toggle" onchange="warrantySelection()" @if($product->has_warranty == 1) checked @endif value="1">
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                @if (addon_is_activated('refund_request'))
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-from-label">{{translate('Refundable')}}</label>
+                                        <div class="col-md-9">
+                                            <label class="aiz-switch aiz-switch-success mb-0">
+                                                <input type="checkbox" name="refundable" @if ($product->refundable == 1) checked @endif value="1">
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Shipping Configuration -->
+                            <h5 class="mb-3 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Shipping Configuration')}}</h5>
+                            <div class="w-100">
+                                @if (get_setting('shipping_type') == 'product_wise_shipping')
+                                <!-- Free Shipping -->
+                                <div class="form-group row" style="display:none;">
                                     <label class="col-md-3 col-from-label">{{translate('Free Shipping')}}</label>
                                     <div class="col-md-9">
                                         <label class="aiz-switch aiz-switch-success mb-0">
@@ -1054,7 +1083,7 @@
                                     </div>
                                 </div>
                                 <!-- Flat Rate -->
-                                <div class="form-group row">
+                                <div class="form-group row" style="display:none;">
                                     <label class="col-md-3 col-from-label">{{translate('Flat Rate')}}</label>
                                     <div class="col-md-9">
                                         <label class="aiz-switch aiz-switch-success mb-0">
