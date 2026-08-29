@@ -125,6 +125,22 @@ class BackendOrderPricingTest extends TestCase
         $this->assertEqualsWithDelta(105.000, $inclusiveLine->shipping_cost, 0.0001);
     }
 
+    public function test_product_free_shipping_toggle_maps_to_supported_shipping_type(): void
+    {
+        $method = new ReflectionMethod(\App\Services\ProductService::class, 'normalizeFreeShippingToggle');
+        $method->setAccessible(true);
+
+        $collection = collect([
+            'free_shipping_toggle' => true,
+            'shipping_type' => 'flat_rate',
+        ]);
+
+        $normalized = $method->invoke(app(\App\Services\ProductService::class), $collection);
+
+        $this->assertSame('free', $normalized->get('shipping_type'));
+        $this->assertArrayNotHasKey('free_shipping_toggle', $normalized->toArray());
+    }
+
     public function test_seller_shipping_amount_respects_gst_inclusive_checkbox(): void
     {
         $exclusiveLine = $this->shippingProductLine();

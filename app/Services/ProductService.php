@@ -15,6 +15,20 @@ use Illuminate\Support\Str;
 
 class ProductService
 {
+    private function normalizeFreeShippingToggle($collection)
+    {
+        if (! $collection instanceof \Illuminate\Support\Collection) {
+            $collection = collect($collection);
+        }
+
+        if ($collection->has('free_shipping_toggle')) {
+            $collection['shipping_type'] = $collection->get('free_shipping_toggle') ? 'free' : ($collection->get('shipping_type') ?? 'flat_rate');
+            $collection->offsetUnset('free_shipping_toggle');
+        }
+
+        return $collection;
+    }
+
     public function store(array $data)
     {
         $collection = collect($data);
@@ -71,10 +85,7 @@ class ProductService
             $collection['meta_img'] = $collection['thumbnail_img'];
         }
 
-        if ($collection->has('free_shipping_toggle')) {
-            $collection['shipping_type'] = $collection->get('free_shipping_toggle') ? 'free' : ($collection->get('shipping_type') ?? 'flat_rate');
-            unset($collection['free_shipping_toggle']);
-        }
+        $collection = $this->normalizeFreeShippingToggle($collection);
 
         $shipping_cost = 0;
         if (isset($collection['shipping_type'])) {
@@ -300,9 +311,7 @@ class ProductService
         unset($collection['lang']);
 
         
-        if (array_key_exists('free_shipping_toggle', $data ?? []) || array_key_exists('free_shipping_toggle', $collection->toArray())) {
-            $collection['shipping_type'] = $collection->get('free_shipping_toggle') ? 'free' : ($collection->get('shipping_type') ?? 'flat_rate');
-        }
+        $collection = $this->normalizeFreeShippingToggle($collection);
 
         $shipping_cost = 0;
         if (isset($collection['shipping_type'])) {
@@ -313,7 +322,6 @@ class ProductService
             }
         }
         unset($collection['flat_shipping_cost']);
-        unset($collection['free_shipping_toggle']);
 
         $colors = json_encode(array());
         if (
