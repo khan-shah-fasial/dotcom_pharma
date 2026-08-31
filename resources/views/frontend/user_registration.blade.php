@@ -109,7 +109,7 @@
         //     alternate_mob_no_personal_meta: 'null'
         // };
         --}}
-        let country_id = '';
+        let country_id = String(window.CountryPhoneDefaults.countryId || '');
 
         $(document).ready(function() {
 
@@ -544,18 +544,9 @@
                         return country.dialCode === phone_meta;
                     });
 
-                    iti1.setCountry(matchedCountry.iso2); // 'in' is the ISO2 code for India
+                    iti1.setCountry(matchedCountry ? matchedCountry.iso2 : window.CountryPhoneDefaults.countryCode);
                 } else {
-                    // Set default country code to +91 (India)
-                    let country = new URLSearchParams(window.location.search).get('type') || 'null';
-
-                    if (country === "domestic") {
-                        iti1.setCountry('in'); // 'in' is the ISO2 code for India
-                    } else if (country === "international") {
-                        iti1.setCountry('us'); // set to 'us' for international
-                    } else {
-                        iti1.setCountry('in'); // default fallback
-                    }
+                    iti1.setCountry(window.CountryPhoneDefaults.countryCode);
                 }
 
                 // Update the hidden input with the selected country's dial code
@@ -882,18 +873,9 @@
                     return country.dialCode === phone_meta;
                 });
 
-                iti1.setCountry(matchedCountry.iso2);// 'in' is the ISO2 code for India
+                iti1.setCountry(matchedCountry ? matchedCountry.iso2 : window.CountryPhoneDefaults.countryCode);
             } else {
-                // Set default country code to +91 (India)
-                let country = new URLSearchParams(window.location.search).get('type') || 'null';
-
-                if (country === "domestic") {
-                    iti1.setCountry('in'); // 'in' is the ISO2 code for India
-                } else if (country === "international") {
-                    iti1.setCountry('us'); // set to 'us' for international
-                } else {
-                    iti1.setCountry('in'); // default fallback
-                }
+                iti1.setCountry(window.CountryPhoneDefaults.countryCode);
             }
 
             // Update the hidden input with the selected country's dial code

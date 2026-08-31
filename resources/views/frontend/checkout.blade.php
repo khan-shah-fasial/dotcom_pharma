@@ -431,6 +431,7 @@
 @section('script')
     <script type="text/javascript">
         window.checkoutOwnerId = @json(optional($carts->first())->owner_id ?? 1);
+        window.checkoutFreeShippingOwnerIds = @json($freeShippingOwnerIds ?? []);
 
         $(document).ready(function() {
             $(".online_payment").click(function() {
@@ -944,7 +945,10 @@
                 var html = '<div class="row gutters-10">';
                 items.forEach(function(it, i){
                     var id = 'svc_'+(it.carrier_id||i);
-                    var priceText = (it.price==null)? '' : ('₹'+Number(it.price).toFixed(2));
+                    var ownerHasFreeShipping = window.checkoutFreeShippingOwnerIds
+                        .includes(Number(window.checkoutOwnerId));
+                    var customerPrice = ownerHasFreeShipping ? 0 : it.price;
+                    var priceText = (customerPrice==null)? '' : ('₹'+Number(customerPrice).toFixed(2));
                     html += `
                     <div class="col-xl-4 col-md-6">
                         <div class="h=100">
@@ -953,7 +957,7 @@
                                     value="${it.carrier_id||''}" ${i===0?'checked':''}
                                     data-provider="${it.provider||''}"
                                     data-carrier-id="${it.carrier_id||''}"
-                                    data-charge="${it.price??''}"
+                                    data-charge="${customerPrice??''}"
                                     onchange="updateDeliveryInfoByShipping(this)">
                             <span class="d-flex flex-column aiz-megabox-elem rounded-0 p-3">
                                 <span class="fs-12 fw-600">${it.name||'Carrier'}</span>

@@ -2594,6 +2594,7 @@ function getShippingCost($carts, $index, $shipping_info = '', $carrier = '')
     $shipping_type = get_setting('shipping_type');
     $admin_products = array();
     $seller_products = array();
+    $chargeable_product_count = 0;
     $admin_product_total_weight = 0;
     $admin_product_total_price = 0;
     $seller_product_total_weight = array();
@@ -2606,8 +2607,18 @@ function getShippingCost($carts, $index, $shipping_info = '', $carrier = '')
         return 0;
     }
 
+    // Product-level free shipping is an explicit override, regardless of the
+    // globally selected shipping calculation method.
+    if ($product->shipping_type === 'free') {
+        return 0;
+    }
+
     foreach ($carts as $key => $cart_item) {
         $item_product = Product::find($cart_item['product_id']);
+        if ($item_product->shipping_type === 'free') {
+            continue;
+        }
+        $chargeable_product_count++;
         if ($item_product->added_by == 'admin') {
             array_push($admin_products, $cart_item['product_id']);
 
@@ -2645,7 +2656,7 @@ function getShippingCost($carts, $index, $shipping_info = '', $carrier = '')
     }
 
     if ($shipping_type == 'flat_rate') {
-        return get_setting('flat_rate_shipping_cost') / count($carts);
+        return get_setting('flat_rate_shipping_cost') / max(1, $chargeable_product_count);
     } elseif ($shipping_type == 'seller_wise_shipping') {
         if ($product->added_by == 'admin') {
             return get_setting('shipping_cost_admin') / count($admin_products);

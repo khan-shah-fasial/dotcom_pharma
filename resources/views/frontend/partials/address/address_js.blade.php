@@ -58,10 +58,9 @@
                 return country.dialCode === phone_meta;
             });
 
-            iti1.setCountry(matchedCountry.iso2); 
+            iti1.setCountry(matchedCountry ? matchedCountry.iso2 : window.CountryPhoneDefaults.countryCode);
         } else {
-            // Set default country code to +91 (India)
-            iti1.setCountry('in'); // 'in' is the ISO2 code for India
+            iti1.setCountry(window.CountryPhoneDefaults.countryCode);
         }
 
         // Update the hidden input with the selected country's dial code

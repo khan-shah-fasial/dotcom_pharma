@@ -115,17 +115,17 @@
                                 </div>
                             @endif
 
-                            @if (get_setting('shipping_type') == 'product_wise_shipping')
-                                <div class="form-group row">
-                                    <label class="col-md-3 col-from-label">{{ translate('Free Shipping') }}</label>
-                                    <div class="col-md-8">
-                                        <label class="aiz-switch aiz-switch-success mb-0">
-                                            <input type="checkbox" name="free_shipping_toggle" class="free-shipping-toggle" value="1" @checked(old('shipping_type') == 'free' || old('free_shipping_toggle') == 1)>
-                                            <span></span>
-                                        </label>
-                                    </div>
+                            <div class="form-group row">
+                                <label class="col-md-3 col-from-label">{{ translate('Free Shipping') }}</label>
+                                <div class="col-md-8">
+                                    <input type="hidden" name="free_shipping_toggle" value="0">
+                                    <label class="aiz-switch aiz-switch-success mb-0">
+                                        <input type="checkbox" name="free_shipping_toggle" class="free-shipping-toggle" value="1"
+                                            @checked(old('free_shipping_toggle', get_setting('shipping_type') == 'product_wise_shipping' ? 1 : 0))>
+                                        <span></span>
+                                    </label>
                                 </div>
-                            @endif
+                            </div>
 
                             <div class="form-group row">
                                 <label class="col-md-3 col-from-label">{{ translate('Warranty') }}</label>
@@ -1022,7 +1022,11 @@
 @include('partials.product.product_temp_data')
 <script type="text/javascript">
     function syncFreeShippingToggle() {
-        const isFreeShipping = $('input[name="shipping_type"][value="free"]').is(':checked');
+        const shippingTypeInputs = $('input[name="shipping_type"]');
+        if (!shippingTypeInputs.length) {
+            return;
+        }
+        const isFreeShipping = shippingTypeInputs.filter('[value="free"]').is(':checked');
         $('.free-shipping-toggle').prop('checked', isFreeShipping);
     }
 

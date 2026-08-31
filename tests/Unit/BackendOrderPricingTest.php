@@ -141,6 +141,22 @@ class BackendOrderPricingTest extends TestCase
         $this->assertArrayNotHasKey('free_shipping_toggle', $normalized->toArray());
     }
 
+    public function test_disabled_product_free_shipping_toggle_restores_flat_rate_type(): void
+    {
+        $method = new ReflectionMethod(\App\Services\ProductService::class, 'normalizeFreeShippingToggle');
+        $method->setAccessible(true);
+
+        $collection = collect([
+            'free_shipping_toggle' => '0',
+            'shipping_type' => 'free',
+        ]);
+
+        $normalized = $method->invoke(app(\App\Services\ProductService::class), $collection);
+
+        $this->assertSame('flat_rate', $normalized->get('shipping_type'));
+        $this->assertArrayNotHasKey('free_shipping_toggle', $normalized->toArray());
+    }
+
     public function test_seller_shipping_amount_respects_gst_inclusive_checkbox(): void
     {
         $exclusiveLine = $this->shippingProductLine();

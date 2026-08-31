@@ -173,8 +173,7 @@
                 // // Set default country code to +91 (India)
                 // iti1.setCountry('in'); // 'in' is the ISO2 code for India
 
-                // Set default country code to +91 (India)
-                iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                iti1.setCountry(window.CountryPhoneDefaults.countryCode);
   
 
                 // Update the hidden input with the selected country's dial code

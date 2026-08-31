@@ -38,7 +38,7 @@
             }
         });
 
-        iti.setCountry('in'); // 'in' is the ISO2 code for India
+        iti.setCountry(window.CountryPhoneDefaults.countryCode);
 
         var country = iti.getSelectedCountryData();
         $('input[name=country_code]').val(country.dialCode);

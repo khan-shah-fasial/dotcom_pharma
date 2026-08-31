@@ -171,7 +171,28 @@ class CheckoutController extends Controller
 
             $carts = $carts->fresh();
 
-            return view('frontend.checkout', compact('carts', 'address_id', 'billing_address_id', 'total', 'carrier_list', 'shipping_info', 'referral_discount_preview'));
+            $paidCarts = $carts->filter(function ($cartItem) {
+                return !(bool) ($cartItem->is_scheme ?? false);
+            });
+            $paidCarts->loadMissing('product');
+            $freeShippingOwnerIds = $paidCarts
+                ->groupBy('owner_id')
+                ->filter(function ($ownerCarts) {
+                    return $ownerCarts->isNotEmpty() && $ownerCarts->every(function ($cartItem) {
+                        $product = $cartItem->product;
+
+                        return $product && ((bool) $product->digital
+                            || $product->shipping_type === 'free');
+                    });
+                })
+                ->keys()
+                ->map(function ($ownerId) {
+                    return (int) $ownerId;
+                })
+                ->values()
+                ->all();
+
+            return view('frontend.checkout', compact('carts', 'address_id', 'billing_address_id', 'total', 'carrier_list', 'shipping_info', 'referral_discount_preview', 'freeShippingOwnerIds'));
         }
         flash(translate('Please Select cart items to Proceed'))->error();
         return back();
@@ -846,7 +867,9 @@ class CheckoutController extends Controller
         $proceed = 0;
         $user    = auth()->user();
 
-        $carts = $user ? Cart::where('user_id', $user->id)->active()->get() : (Cart::where('temp_user_id', $request->session()->get('temp_user_id'))->active()->get() ?: collect());
+        $carts = $user
+            ? Cart::with('product')->where('user_id', $user->id)->active()->get()
+            : (Cart::with('product')->where('temp_user_id', $request->session()->get('temp_user_id'))->active()->get() ?: collect());
 
         if ($carts->isEmpty()) {
             return view('frontend.partials.cart.cart_summary', compact('carts','proceed'))->render();
@@ -860,7 +883,9 @@ class CheckoutController extends Controller
         $userCarts = $carts->where('owner_id', $ownerId)->values();
         $shippingApplied = false;
         foreach ($userCarts as $item) {
-            if ((bool) ($item->is_scheme ?? false)) {
+            $product = $item->product;
+            if ((bool) ($item->is_scheme ?? false)
+                || ($product && ((bool) $product->digital || $product->shipping_type === 'free'))) {
                 $item->shipping_cost = 0.0;
                 $item->save();
                 continue;

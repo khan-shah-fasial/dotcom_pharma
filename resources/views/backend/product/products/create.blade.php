@@ -902,6 +902,18 @@ margin-left: 42px;
                             <!-- Shipping Configuration -->
                             <h5 class="mb-3 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Shipping Configuration')}}</h5>
                             <div class="w-100">
+                                <div class="form-group row">
+                                    <label class="col-md-3 col-from-label">{{ translate('Free Shipping') }}</label>
+                                    <div class="col-md-9">
+                                        <input type="hidden" name="free_shipping_toggle" value="0">
+                                        <label class="aiz-switch aiz-switch-success mb-0">
+                                            <input type="checkbox" name="free_shipping_toggle" value="1"
+                                                @checked(old('free_shipping_toggle', get_setting('shipping_type') == 'product_wise_shipping' ? 1 : 0))>
+                                            <span></span>
+                                        </label>
+                                        <small class="form-text text-muted">{{ translate('Overrides the global shipping method for this product.') }}</small>
+                                    </div>
+                                </div>
                                 @if (get_setting('shipping_type') == 'product_wise_shipping')
                                 <!-- Free Shipping -->
                                 <div class="form-group row" style="display:none;">

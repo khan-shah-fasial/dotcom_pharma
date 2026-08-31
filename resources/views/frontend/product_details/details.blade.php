@@ -2752,7 +2752,9 @@
                             class="fs-16 fw-700 text-soft-dark d-none">{{ translate('Phone no.') }} <span
                                 class="text-danger">*</span></label>
                         <input type="tel" class="form-control rounded-0"
-                            placeholder="{{ translate('Enter Your Phone') }}" name="phone" required>
+                            placeholder="{{ translate('Enter Your Phone') }}" name="phone" required
+                            data-country-phone-default data-dial-code-target="[name='phone_country_code']">
+                        <input type="hidden" name="phone_country_code" value="">
                     </div>
 
                     <!-- Pincode -->

@@ -22,7 +22,10 @@ class ProductService
         }
 
         if ($collection->has('free_shipping_toggle')) {
-            $collection['shipping_type'] = $collection->get('free_shipping_toggle') ? 'free' : ($collection->get('shipping_type') ?? 'flat_rate');
+            $collection['shipping_type'] = filter_var(
+                $collection->get('free_shipping_toggle'),
+                FILTER_VALIDATE_BOOLEAN
+            ) ? 'free' : 'flat_rate';
             $collection->offsetUnset('free_shipping_toggle');
         }
 
@@ -92,7 +95,7 @@ class ProductService
             if ($collection['shipping_type'] == 'free') {
                 $shipping_cost = 0;
             } elseif ($collection['shipping_type'] == 'flat_rate') {
-                $shipping_cost = $collection['flat_shipping_cost'];
+                $shipping_cost = (float) $collection->get('flat_shipping_cost', 0);
             }
         }
         unset($collection['flat_shipping_cost']);
@@ -318,7 +321,7 @@ class ProductService
             if ($collection['shipping_type'] == 'free') {
                 $shipping_cost = 0;
             } elseif ($collection['shipping_type'] == 'flat_rate') {
-                $shipping_cost = $collection['flat_shipping_cost'];
+                $shipping_cost = (float) $collection->get('flat_shipping_cost', $product->shipping_cost ?? 0);
             }
         }
         unset($collection['flat_shipping_cost']);

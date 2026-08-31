@@ -241,10 +241,11 @@ class ContactController extends Controller
     public function contact(Request $request)
     {
         $admin = get_admin();
+        $phone = $this->withCountryDialCode($request->phone, $request->phone_country_code);
 
         $array['name'] = $request->name;
         $array['email'] = $request->email;
-        $array['phone'] = $request->phone;
+        $array['phone'] = $phone;
         $array['content'] = str_replace("\n", "<br>", $request->content);
         $array['subject'] = translate('Query Contact');
         $array['from'] = $request->email;
@@ -254,7 +255,7 @@ class ContactController extends Controller
             Contact::insert([
                 'name' => $request->name,
                 'email' => $request->email,
-                'phone' => $request->phone,
+                'phone' => $phone,
                 'content' => $request->content,
             ]);
         } catch (\Exception $e) {
@@ -546,11 +547,12 @@ class ContactController extends Controller
 
         // $pincode_data = getLocationByPostalCode($request->pincode);
         $admin = get_admin();
+        $phone = $this->withCountryDialCode($request->phone, $request->phone_country_code);
         $product_img = getProductImage($request->product_id);
 
         $array['name'] = $request->name;
         $array['email'] = $request->email;
-        $array['phone'] = $request->phone;
+        $array['phone'] = $phone;
         // $array['pincode'] = $request->pincode;
         $array['url'] = $request->current_url;
         $array['product_img'] = $product_img;
@@ -565,7 +567,7 @@ class ContactController extends Controller
                 'type' => $request->type,
                 'name' => $request->name,
                 'email' => $request->email,
-                'phone' => $request->phone,
+                'phone' => $phone,
                 'content' => $request->content,
                 'product_id' => $request->product_id,
                 // 'pincode' => $request->pincode,
@@ -580,6 +582,18 @@ class ContactController extends Controller
         return back();
     }
 
+
+    private function withCountryDialCode(?string $phone, ?string $dialCode): string
+    {
+        $phone = trim((string) $phone);
+        $dialCode = preg_replace('/\D+/', '', (string) $dialCode);
+
+        if ($phone === '' || $dialCode === '' || str_starts_with($phone, '+')) {
+            return $phone;
+        }
+
+        return '+' . $dialCode . '-' . $phone;
+    }
 
     public function prescription_store(Request $request)
     {

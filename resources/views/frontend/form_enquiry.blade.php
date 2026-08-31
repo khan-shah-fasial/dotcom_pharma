@@ -820,10 +820,8 @@ div#productPhotoModal .modal-content {
                                     </div>
                                     <div class="col-md-3">
                                         <label class="label-strong">{{ translate('Mobile No *') }}</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" style="     max-width: 70px !important;    border-radius: 5px 0px 0px 5px !important;" name="mobile_country_code" id="mobile_country_code" value="+91">
-                                            <input type="tel" class="form-control" name="mobile_number" id="mobile_number" required placeholder="{{ translate('Enter number') }}" style="border-radius: 0px 5px 5px 0px !important;">
-                                        </div>
+                                        <input type="hidden" name="mobile_country_code" id="mobile_country_code" value="{{ old('mobile_country_code') }}">
+                                        <input type="tel" class="form-control" name="mobile_number" id="mobile_number" value="{{ old('mobile_number') }}" required placeholder="{{ translate('Enter number') }}">
                                     </div>
                                     <div class="col-md-3">
                                         <label class="label-strong">{{ translate('E-mail ID *') }}</label>
@@ -848,7 +846,7 @@ div#productPhotoModal .modal-content {
                                         <select class="form-control aiz-selectpicker" data-live-search="true" name="company_country_id" id="company_country">
                                             <option value="">{{ translate('Select Country') }}</option>
                                             @foreach($countries as $country)
-                                                <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                                <option value="{{ $country->id }}" @selected((string) old('company_country_id', $defaultCountryId) === (string) $country->id)>{{ $country->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -1280,6 +1278,33 @@ div#productPhotoModal .modal-content {
     const mobileCountryCodeInput = document.getElementById('mobile_country_code');
     const mobileNumberInput = document.getElementById('mobile_number');
     const companyEmailInput = document.getElementById('company_email');
+    let mobilePhoneInput = null;
+
+    function syncMobileCountryCode() {
+        if (!mobilePhoneInput || !mobileCountryCodeInput) return;
+        const selected = mobilePhoneInput.getSelectedCountryData();
+        mobileCountryCodeInput.value = selected.dialCode ? '+' + selected.dialCode : '';
+    }
+
+    function setMobileCountryById(countryId) {
+        const iso2 = window.CountryPhoneDefaults.isoForCountryId(countryId);
+        if (mobilePhoneInput && iso2) {
+            mobilePhoneInput.setCountry(iso2);
+            syncMobileCountryCode();
+        }
+    }
+
+    if (mobileNumberInput && window.intlTelInput) {
+        mobilePhoneInput = intlTelInput(mobileNumberInput, {
+            separateDialCode: true,
+            utilsScript: "{{ static_asset('assets/js/intlTelutils.js') }}?1590403638580",
+            onlyCountries: @json($countries->pluck('code')->map(fn ($code) => strtolower($code))->values()),
+            initialCountry: window.CountryPhoneDefaults.countryCode
+        });
+        setMobileCountryById(companyCountry?.value || window.CountryPhoneDefaults.countryId);
+        mobileNumberInput.addEventListener('countrychange', syncMobileCountryCode);
+        syncMobileCountryCode();
+    }
 
     async function loadStates(countryId, stateSelect, selectedStateId = null) {
         if (!stateSelect) return;
@@ -1320,6 +1345,7 @@ div#productPhotoModal .modal-content {
 
     companyCountry?.addEventListener('change', () => {
         loadStates(companyCountry.value, companyState);
+        setMobileCountryById(companyCountry.value);
     });
 
     // Auto-detect by pincode
@@ -1340,6 +1366,7 @@ div#productPhotoModal .modal-content {
         if (data.country_id) {
             companyCountry.value = data.country_id;
             $(companyCountry).selectpicker('refresh');
+            setMobileCountryById(data.country_id);
             await loadStates(data.country_id, companyState, data.state_id);
         } else if (data.state_id) {
             await loadStates(companyCountry.value, companyState, data.state_id);
@@ -1392,6 +1419,9 @@ div#productPhotoModal .modal-content {
             }
             if (mobileCountryCodeInput && data.mobile_country_code) {
                 mobileCountryCodeInput.value = data.mobile_country_code;
+                const dialCode = String(data.mobile_country_code).replace(/\D/g, '');
+                const matched = window.intlTelInputGlobals.getCountryData().find(country => country.dialCode === dialCode);
+                if (mobilePhoneInput && matched) mobilePhoneInput.setCountry(matched.iso2);
             }
             if (mobileNumberInput && data.mobile_number) {
                 mobileNumberInput.value = data.mobile_number;

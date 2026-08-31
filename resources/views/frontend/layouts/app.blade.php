@@ -1894,6 +1894,8 @@
     </script>
 
 
+    @include('partials.country_phone_defaults')
+
     <script type="text/javascript">
         if ($('input[name=country_code]').length > 0){
             // Country Code
@@ -1921,8 +1923,7 @@
             });
 
 
-            // Set default country code to +91 (India)
-            iti.setCountry('in'); // 'in' is the ISO2 code for India
+            iti.setCountry(window.CountryPhoneDefaults.countryCode);
 
             var country = iti.getSelectedCountryData();
             $('input[name=country_code]').val(country.dialCode);

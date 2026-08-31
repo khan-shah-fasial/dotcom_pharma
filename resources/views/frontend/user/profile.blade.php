@@ -247,9 +247,9 @@
                     return country.dialCode === phone_meta;
                 });
 
-                iti1.setCountry(matchedCountry.iso2); 
+                iti1.setCountry(matchedCountry ? matchedCountry.iso2 : window.CountryPhoneDefaults.countryCode);
             } else {
-                iti1.setCountry('in');
+                iti1.setCountry(window.CountryPhoneDefaults.countryCode);
             }
 
             // Update the hidden input with the selected country's dial code

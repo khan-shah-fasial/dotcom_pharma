@@ -124,17 +124,16 @@
                         </div>
                     @endif
 
-                    @if (get_setting('shipping_type') == 'product_wise_shipping')
-                        <div class="form-group row">
-                            <label class="col-lg-3 col-from-label">{{translate('Free Shipping')}}</label>
-                            <div class="col-lg-8">
-                                <label class="aiz-switch aiz-switch-success mb-0" style="margin-top:5px;">
-                                    <input type="checkbox" name="free_shipping_toggle" class="free-shipping-toggle" value="1" @checked($product->shipping_type == 'free')>
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
+                    <div class="form-group row">
+                        <label class="col-lg-3 col-from-label">{{translate('Free Shipping')}}</label>
+                        <div class="col-lg-8">
+                            <input type="hidden" name="free_shipping_toggle" value="0">
+                            <label class="aiz-switch aiz-switch-success mb-0" style="margin-top:5px;">
+                                <input type="checkbox" name="free_shipping_toggle" class="free-shipping-toggle" value="1" @checked($product->shipping_type == 'free')>
+                                <span class="slider round"></span>
+                            </label>
                         </div>
-                    @endif
+                    </div>
 
                     <div class="form-group row">
                         <label class="col-lg-3 col-from-label">{{translate('Warranty')}}</label>

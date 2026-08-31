@@ -130,7 +130,8 @@
                                   <div class="col-md-6">
                                         <div class="form-group">
                                    
-                                    <input type="tel" class="form-control rounded-0" value="{{ old('phone') }}" placeholder="{{  translate('Enter Phone') }}" name="phone">
+                                    <input type="tel" class="form-control rounded-0" value="{{ old('phone') }}" placeholder="{{  translate('Enter Phone') }}" name="phone" data-country-phone-default data-dial-code-target="[name='phone_country_code']">
+                                    <input type="hidden" name="phone_country_code" value="{{ old('phone_country_code') }}">
                                 </div>
                                   </div>
 

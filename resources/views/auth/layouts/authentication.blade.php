@@ -125,6 +125,7 @@ button.btn.btn-primary.btn-block.fw-700.fs-14.rounded-0
     @yield('content')
 
     <!-- SCRIPTS -->
+    @include('partials.country_phone_defaults')
     @include('auth.login_register_js')
 
     @yield('script')

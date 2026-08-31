@@ -498,7 +498,7 @@
                 iti1.setCountry(country_selected); // 'in' is the ISO2 code for India
             } else {
                 // Set default country code to +91 (India)
-                iti1.setCountry('in'); // 'in' is the ISO2 code for India
+                iti1.setCountry(window.CountryPhoneDefaults.countryCode);
             }
 
             // // Set default country code to +91 (India)

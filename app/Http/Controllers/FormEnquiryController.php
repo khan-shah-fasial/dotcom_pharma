@@ -17,8 +17,12 @@ class FormEnquiryController extends Controller
 {
     public function create(Request $request)
     {
-        $States    = State::orderBy('name')->where('country_id', 101)->get(['id', 'name']);
         $countries = get_active_countries();
+        $defaultCountryId = (int) $request->session()->get('country_id', 0);
+        $defaultCountryId = $countries->contains('id', $defaultCountryId)
+            ? $defaultCountryId
+            : (int) optional($countries->first())->id;
+        $States = State::orderBy('name')->where('country_id', 101)->get(['id', 'name']);
 
         $codes = [
             'enquiry'    => $this->previewFormCode('enquiry'),
@@ -36,6 +40,7 @@ class FormEnquiryController extends Controller
         return view('frontend.form_enquiry', [
             'gov_state'          => $States,
             'countries'          => $countries,
+            'defaultCountryId'   => $defaultCountryId,
             'today'              => now()->toDateString(),
             'nextCodes'          => $codes,
             'undertakingSample'  => $undertakingSample,
