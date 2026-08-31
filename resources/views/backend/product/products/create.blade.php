@@ -899,6 +899,22 @@ margin-left: 42px;
                     <!-- Shipping -->
                     <div class="tab-pane fade" id="shipping" role="tabpanel" aria-labelledby="shipping-tab">
                         <div class="bg-white p-3 p-sm-2rem">
+                            <h5 class="mb-3 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{ translate('Product Policies') }}</h5>
+                            <div class="w-100">
+                                @if (get_setting('cash_payment') == '1')
+                                    <div class="form-group row">
+                                        <label class="col-md-3 col-from-label">{{ translate('Cash On Delivery') }}</label>
+                                        <div class="col-md-9">
+                                            <label class="aiz-switch aiz-switch-success mb-0">
+                                                <input type="checkbox" name="cash_on_delivery" value="1" checked>
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                @endif
+
+                            </div>
+
                             <!-- Shipping Configuration -->
                             <h5 class="mb-3 pb-3 fs-17 fw-700" style="border-bottom: 1px dashed #e4e5eb;">{{translate('Shipping Configuration')}}</h5>
                             <div class="w-100">
