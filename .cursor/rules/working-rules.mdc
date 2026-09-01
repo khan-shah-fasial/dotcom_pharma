@@ -1,0 +1,22 @@
+---
+description: Core working rules — no migrations, no regressions, always include reproduce steps
+alwaysApply: true
+---
+
+# Working Rules
+
+## 1. Never run database migrations
+
+- Do not run `php artisan migrate`, `migrate:fresh`, `migrate:refresh`, `migrate:rollback`, `db:seed`, or any equivalent SQL/schema change against the live or local database.
+- Do not generate or execute migration files unless the user explicitly asks to create a migration file (still do not run it).
+- Prefer application-level fixes, config, and code paths that work with the existing schema.
+
+## 2. Do not break existing work
+
+- Treat this as a live ecommerce CMS. Preserve current features, add-ons, routes, views, and data flows.
+- Prefer the smallest change that solves the request. Reuse existing patterns, helpers, and components.
+- Before finishing a fix or feature, check related pages, shared state, and edge cases (empty, error, logged-in vs guest) so the change does not regress other flows.
+
+## 3. Always end with reproduce steps
+
+Every completed change must finish with a numbered list of steps a person can follow to see the change in effect (URLs, clicks, expected result). Include any local server start command if relevant.

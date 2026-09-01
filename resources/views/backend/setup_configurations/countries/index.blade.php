@@ -5,32 +5,93 @@
     <div class="card">
         <form class="" id="" action="" method="GET">
             <div class="card-header row gutters-5">
-                <div class="col text-center text-md-left">
-                    <h5 class="mb-md-0 h6">{{ translate('Countries') }}</h5>
+                <div class="col-md-12 mb-2">
+                    <h5 class="mb-0 h6">{{ translate('Countries') }}</h5>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-2 mb-2">
                     <button type="submit" form="refresh-forex-form" class="btn btn-soft-success btn-block">
                         <i class="las la-sync"></i> {{ translate('Refresh Forex') }}
                     </button>
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group mb-0">
-                        <label class="mb-0">{{ translate('System Default Country') }}</label>
-                        <select id="system_default_country" class="form-control" onchange="update_system_default_country(this)">
-                            <option value="">{{ translate('Select') }}</option>
-                            @foreach($enabled_countries as $enabled_country)
-                                <option value="{{ $enabled_country->id }}" @selected((string)$system_default_country_id === (string)$enabled_country->id)>
-                                    {{ $enabled_country->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                <div class="col-md-3 mb-2">
+                    <label class="mb-0 small">{{ translate('System Default Country') }}</label>
+                    <select id="system_default_country" class="form-control aiz-selectpicker" data-live-search="true" data-skip-country-default="1" onchange="update_system_default_country(this)">
+                        <option value="">{{ translate('Select') }}</option>
+                        @foreach($enabled_countries as $enabled_country)
+                            <option value="{{ $enabled_country->id }}" @selected((string)$system_default_country_id === (string)$enabled_country->id)>
+                                {{ $enabled_country->name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="col-md-3">
-                    <input type="text" class="form-control" id="sort_country" name="sort_country" @isset($sort_country) value="{{ $sort_country }}" @endisset placeholder="{{ translate('Type country name') }}">
+                <div class="col-md-3 mb-2">
+                    <label class="mb-0 small">{{ translate('Country') }}</label>
+                    <select name="country_id" class="form-control aiz-selectpicker" data-live-search="true" data-skip-country-default="1">
+                        <option value="">{{ translate('All Countries') }}</option>
+                        @foreach($filter_countries as $filterCountry)
+                            <option value="{{ $filterCountry->id }}" @selected((string) $countryId === (string) $filterCountry->id)>{{ $filterCountry->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="col-md-1">
-                    <button class="btn btn-primary" type="submit">{{ translate('Filter') }}</button>
+                <div class="col-md-2 mb-2">
+                    <label class="mb-0 small">{{ translate('Status') }}</label>
+                    <select name="status" class="form-control aiz-selectpicker">
+                        <option value="">{{ translate('All Statuses') }}</option>
+                        <option value="1" @selected((string) $status === '1')>{{ translate('Shown') }}</option>
+                        <option value="0" @selected((string) $status === '0')>{{ translate('Hidden') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="mb-0 small">{{ translate('Default Currency') }}</label>
+                    <select name="default_currency_id" class="form-control aiz-selectpicker" data-live-search="true">
+                        <option value="">{{ translate('All Currencies') }}</option>
+                        @foreach($active_currencies as $currency)
+                            <option value="{{ $currency->id }}" @selected((string) $currencyId === (string) $currency->id)>{{ $currency->name }} ({{ $currency->code }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="mb-0 small">{{ translate('Default Language') }}</label>
+                    <select name="default_language_id" class="form-control aiz-selectpicker" data-live-search="true">
+                        <option value="">{{ translate('All Languages') }}</option>
+                        @foreach($active_languages as $language)
+                            <option value="{{ $language->id }}" @selected((string) $languageId === (string) $language->id)>{{ $language->name }} ({{ $language->code }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="mb-0 small">{{ translate('Search') }}</label>
+                    <input type="text" class="form-control" id="sort_country" name="sort_country" @isset($sort_country) value="{{ $sort_country }}" @endisset placeholder="{{ translate('Name, ISO2, ISO3 or capital') }}">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="mb-0 small">{{ translate('Sort By') }}</label>
+                    <select name="sort_by" class="form-control aiz-selectpicker">
+                        @foreach([
+                            'status' => 'Status',
+                            'name' => 'Name',
+                            'code' => 'ISO2',
+                            'iso3' => 'ISO3',
+                            'capital' => 'Capital',
+                            'forex_rate' => 'Forex Rate',
+                            'default_currency_id' => 'Default Currency',
+                            'default_language_id' => 'Default Language',
+                        ] as $value => $label)
+                            <option value="{{ $value }}" @selected($sortBy === $value)>{{ translate($label) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-1 mb-2">
+                    <label class="mb-0 small">{{ translate('Order') }}</label>
+                    <select name="sort_order" class="form-control">
+                        <option value="asc" @selected($sortOrder === 'asc')>{{ translate('Asc') }}</option>
+                        <option value="desc" @selected($sortOrder === 'desc')>{{ translate('Desc') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2 d-flex align-items-end">
+                    <button class="btn btn-primary btn-block" type="submit">{{ translate('Filter') }}</button>
+                </div>
+                <div class="col-md-1 mb-2 d-flex align-items-end">
+                    <a href="{{ route('countries.index') }}?country_id=" class="btn btn-soft-secondary btn-block">{{ translate('Reset') }}</a>
                 </div>
             </div>
         </form>
@@ -43,17 +104,17 @@
                 <thead>
                     <tr>
                         <th width="10%">#</th>
-                        <th>{{translate('Name')}}</th>
-                        <th data-breakpoints="lg">{{ translate('ISO2') }}</th>
-                        <th data-breakpoints="lg">{{ translate('ISO3') }}</th>
-                        <th data-breakpoints="lg">{{ translate('Capital Of Country') }}</th>
+                        @include('backend.inc.sort_th', ['column' => 'name', 'label' => translate('Name'), 'sortBy' => $sortBy, 'sortOrder' => $sortOrder])
+                        @include('backend.inc.sort_th', ['column' => 'code', 'label' => translate('ISO2'), 'sortBy' => $sortBy, 'sortOrder' => $sortOrder])
+                        @include('backend.inc.sort_th', ['column' => 'iso3', 'label' => translate('ISO3'), 'sortBy' => $sortBy, 'sortOrder' => $sortOrder])
+                        @include('backend.inc.sort_th', ['column' => 'capital', 'label' => translate('Capital Of Country'), 'sortBy' => $sortBy, 'sortOrder' => $sortOrder])
                         <th class="d-none" data-breakpoints="lg">{{ translate('Timezone') }}</th>
                         <th>{{ translate('Live Current Date / Day & Time') }}</th>
-                        <th>{{ translate('Live Forex Rate') }}</th>
-                        <th>{{ translate('Default Currency') }}</th>
-                        <th>{{ translate('Default Language') }}</th>
+                        @include('backend.inc.sort_th', ['column' => 'forex_rate', 'label' => translate('Live Forex Rate'), 'sortBy' => $sortBy, 'sortOrder' => $sortOrder])
+                        @include('backend.inc.sort_th', ['column' => 'default_currency_id', 'label' => translate('Default Currency'), 'sortBy' => $sortBy, 'sortOrder' => $sortOrder])
+                        @include('backend.inc.sort_th', ['column' => 'default_language_id', 'label' => translate('Default Language'), 'sortBy' => $sortBy, 'sortOrder' => $sortOrder])
                         <th>{{ translate('Regional Languages') }}</th>
-                        <th>{{translate('Show/Hide')}}</th>
+                        @include('backend.inc.sort_th', ['column' => 'status', 'label' => translate('Show/Hide'), 'sortBy' => $sortBy, 'sortOrder' => $sortOrder])
                     </tr>
                 </thead>
                 <tbody>

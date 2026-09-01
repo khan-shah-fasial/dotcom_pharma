@@ -404,7 +404,7 @@
                                 <td>{{ $key + 1 + ($reportRows->currentPage() - 1) * $reportRows->perPage() }}</td>
                                 <td>
                                     @if ($product)
-                                        <a href="{{ route('products.admin.edit', $product->id) }}"
+                                        <a href="{{ route('products.admin.edit', ['id' => $product->id, 'lang' => fallback_lang()]) }}"
                                             class="btn btn-soft-primary btn-icon btn-circle btn-sm"
                                             title="{{ translate('Edit Product') }}">
                                             <i class="las la-edit"></i>

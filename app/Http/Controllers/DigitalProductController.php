@@ -138,7 +138,7 @@ class DigitalProductController extends Controller
      */
     public function edit(Request $request, $id)
     {
-        $lang = $request->lang;
+        $lang = fallback_lang($request->lang);
         $product = Product::findOrFail($id);
         $categories = Category::where('parent_id', 0)
             ->where('digital', 1)
@@ -161,6 +161,8 @@ class DigitalProductController extends Controller
      */
     public function update(ProductRequest $request, $id)
     {
+        $request->merge(['lang' => fallback_lang($request->input('lang'))]);
+
         $product                    = Product::findOrFail($id);
 
         //Product Update

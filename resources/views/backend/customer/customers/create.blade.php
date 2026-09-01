@@ -134,6 +134,10 @@
             }
         });
 
+        if (window.CountryPhoneDefaults && window.CountryPhoneDefaults.countryCode) {
+            iti.setCountry(window.CountryPhoneDefaults.countryCode);
+        }
+
         var country = iti.getSelectedCountryData();
         $('input[name=country_code]').val(country.dialCode);
 

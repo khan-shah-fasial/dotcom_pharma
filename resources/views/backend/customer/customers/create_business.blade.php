@@ -446,7 +446,7 @@
                 </div>
                 @php
                     // fallback default dial
-                    $defaultDial = $details?->country_code_business ?? '91';
+                    $defaultDial = $details?->country_code_business ?: (detected_dial_code() ?: '91');
 
                     // Primary business phone
                     if (old('country_code_phone_code_business') !== null || old('phone_business') !== null) {
@@ -476,7 +476,7 @@
                         $waRaw = optional($details)->prim_whats_app_no_business ?? '';
                     }
                     $wa = parse_phone_number($waRaw, $defaultDial);
-                    if (!$wa['dial']) { $wa['dial'] = '91'; }
+                    if (!$wa['dial']) { $wa['dial'] = detected_dial_code() ?: '91'; }
 
                     // Alternate WhatsApp
                     if (old('country_code_alternate_whats_app_no_business') !== null || old('alternate_whats_app_no_business') !== null) {
@@ -802,7 +802,7 @@
                                 ? explode('-', $details?->alt_whats_app_no, 2)[0]
                                 : ($details?->country_code ?? ''));
                         // reuse parse helper for personal contacts
-                        $personalDefaultDial = $details?->country_code ?? '91';
+                        $personalDefaultDial = $details?->country_code ?: (detected_dial_code() ?: '91');
                         $personalPrimRaw = (old('country_code_phone_code_personal') || old('phone_personal'))
                             ? (old('country_code_phone_code_personal', '') !== '' ? old('country_code_phone_code_personal') . '-' : '') . old('phone_personal', '')
                             : (optional($details)->prim_mobile_no ?? ($user->phone ?? ''));
@@ -1413,7 +1413,7 @@
                         try { iti.setCountry(matched.iso2); } catch (e) {}
                     }
                 } else {
-                    iti.setCountry('{{ old('type_option', $user->type_option ?: 'domestic') === 'international' ? 'us' : 'in' }}');
+                    iti.setCountry((window.CountryPhoneDefaults && window.CountryPhoneDefaults.countryCode) ? window.CountryPhoneDefaults.countryCode : 'in');
                 }
 
                 const selected = iti.getSelectedCountryData();

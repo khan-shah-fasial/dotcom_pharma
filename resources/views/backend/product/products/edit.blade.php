@@ -90,7 +90,7 @@
                 @csrf
                 <input name="_method" type="hidden" value="POST">
                 <input type="hidden" name="id" value="{{ $product->id }}">
-                <input type="hidden" name="lang" value="{{ $lang }}">
+                <input type="hidden" name="lang" value="{{ fallback_lang($lang) }}">
                 <input type="hidden" name="tab" id="tab">
 
                 <!-- <ul class="nav nav-tabs nav-fill language-bar">

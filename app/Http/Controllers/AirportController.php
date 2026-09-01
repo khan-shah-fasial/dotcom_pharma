@@ -21,8 +21,19 @@ class AirportController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->input('search'));
-        $countryId = $request->input('country_id');
+        $countryId = requested_or_detected_country_id($request);
         $status = $request->input('status');
+        $city = trim((string) $request->input('city'));
+        $terminalType = trim((string) $request->input('terminal_type'));
+        $cargoAirport = trim((string) $request->input('cargo_airport'));
+        $customsAirport = trim((string) $request->input('customs_airport'));
+        $coldChain = trim((string) $request->input('cold_chain_facility'));
+        if (!$request->has('country_id') && $countryId) {
+            return redirect()->to($request->fullUrlWithQuery(['country_id' => $countryId]));
+        }
+        [$sortBy, $sortOrder] = $this->resolveSort($request, [
+            'name', 'port_id', 'iata', 'icao', 'country', 'city', 'terminal_type', 'status', 'created_at',
+        ], 'name');
 
         $airports = Airport::query()
             ->with('country')
@@ -34,6 +45,7 @@ class AirportController extends Controller
                         ->orWhere('icao', 'like', "%{$search}%")
                         ->orWhere('country', 'like', "%{$search}%")
                         ->orWhere('city', 'like', "%{$search}%")
+                        ->orWhere('terminal_type', 'like', "%{$search}%")
                         ->orWhere('authority_name', 'like', "%{$search}%")
                         ->orWhere('authority_mobile', 'like', "%{$search}%")
                         ->orWhere('authority_email', 'like', "%{$search}%")
@@ -44,18 +56,41 @@ class AirportController extends Controller
             })
             ->when($countryId, fn ($query) => $query->where('country_id', $countryId))
             ->when(in_array((string) $status, ['0', '1'], true), fn ($query) => $query->where('status', (int) $status))
-            ->orderBy('name')
+            ->when($city !== '', fn ($query) => $query->where('city', $city))
+            ->when($terminalType !== '', fn ($query) => $query->where('terminal_type', $terminalType))
+            ->when($cargoAirport !== '', fn ($query) => $query->where('cargo_airport', $cargoAirport))
+            ->when($customsAirport !== '', fn ($query) => $query->where('customs_airport', $customsAirport))
+            ->when($coldChain !== '', fn ($query) => $query->where('cold_chain_facility', $coldChain))
+            ->orderBy($sortBy, $sortOrder)
+            ->orderBy('id')
             ->paginate(20)
-            ->withQueryString();
+            ->appends($request->except('page') + [
+                'country_id' => $countryId,
+                'sort_by' => $sortBy,
+                'sort_order' => $sortOrder,
+            ]);
 
         $countries = Country::query()->orderBy('name')->get(['id', 'name']);
+        $facilityOptions = ['Yes', 'No', 'Limited', 'N/A'];
+        $cities = $this->distinctValues('city');
+        $terminalTypes = $this->distinctValues('terminal_type');
 
         return view('backend.setup_configurations.logistics.airports.index', compact(
             'airports',
             'countries',
             'search',
             'countryId',
-            'status'
+            'status',
+            'city',
+            'terminalType',
+            'cargoAirport',
+            'customsAirport',
+            'coldChain',
+            'facilityOptions',
+            'cities',
+            'terminalTypes',
+            'sortBy',
+            'sortOrder'
         ));
     }
 
@@ -207,5 +242,23 @@ class AirportController extends Controller
         $validated['icao'] = $validated['icao'] ?: null;
 
         return $validated;
+    }
+
+    private function resolveSort(Request $request, array $allowed, string $default): array
+    {
+        $sortBy = in_array($request->input('sort_by'), $allowed, true) ? $request->input('sort_by') : $default;
+        $sortOrder = $request->input('sort_order') === 'desc' ? 'desc' : 'asc';
+
+        return [$sortBy, $sortOrder];
+    }
+
+    private function distinctValues(string $column)
+    {
+        return Airport::query()
+            ->whereNotNull($column)
+            ->where($column, '!=', '')
+            ->distinct()
+            ->orderBy($column)
+            ->pluck($column);
     }
 }

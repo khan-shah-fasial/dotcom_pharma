@@ -32,11 +32,51 @@ class CountryController extends Controller
     public function index(Request $request)
     {
         $sort_country = $request->sort_country;
-        $country_queries = Country::query()->with(['defaultCurrency', 'defaultLanguage']);
-        if($request->sort_country) {
-            $country_queries->where('name', 'like', "%$sort_country%");
+        $countryId = requested_or_detected_country_id($request);
+        $status = $request->input('status');
+        $currencyId = $request->input('default_currency_id');
+        $languageId = $request->input('default_language_id');
+        if (!$request->has('country_id') && $countryId) {
+            return redirect()->to($request->fullUrlWithQuery(['country_id' => $countryId]));
         }
-        $countries = $country_queries->orderBy('status', 'desc')->paginate(15);
+        $allowedSorts = ['name', 'code', 'iso3', 'capital', 'status', 'forex_rate', 'default_currency_id', 'default_language_id'];
+        if ($request->filled('sort_by') && in_array($request->input('sort_by'), $allowedSorts, true)) {
+            $sortBy = $request->input('sort_by');
+            $sortOrder = $request->input('sort_order') === 'desc' ? 'desc' : 'asc';
+        } else {
+            $sortBy = 'status';
+            $sortOrder = 'desc';
+        }
+
+        $country_queries = Country::query()->with(['defaultCurrency', 'defaultLanguage']);
+        if ($sort_country) {
+            $country_queries->where(function ($query) use ($sort_country) {
+                $query->where('name', 'like', "%$sort_country%")
+                    ->orWhere('code', 'like', "%$sort_country%")
+                    ->orWhere('iso3', 'like', "%$sort_country%")
+                    ->orWhere('capital', 'like', "%$sort_country%");
+            });
+        }
+        if ($countryId) {
+            $country_queries->where('id', $countryId);
+        }
+        if (in_array((string) $status, ['0', '1'], true)) {
+            $country_queries->where('status', (int) $status);
+        }
+        if ($currencyId) {
+            $country_queries->where('default_currency_id', $currencyId);
+        }
+        if ($languageId) {
+            $country_queries->where('default_language_id', $languageId);
+        }
+
+        $countries = $country_queries->orderBy($sortBy, $sortOrder)->orderBy('name')
+            ->paginate(15)
+            ->appends($request->except('page') + [
+                'country_id' => $countryId,
+                'sort_by' => $sortBy,
+                'sort_order' => $sortOrder,
+            ]);
 
         $active_currencies = Currency::where('status', 1)->orderBy('name')->get();
         $active_languages = Language::where('status', 1)->orderBy('name')->get();
@@ -63,17 +103,25 @@ class CountryController extends Controller
         $display_timezone = $display_timezone ?: config('app.timezone', 'Asia/Kolkata');
 
         $enabled_countries = Country::query()->isEnabled()->orderBy('name')->get();
+        $filter_countries = Country::query()->orderBy('name')->get(['id', 'name']);
 
         return view('backend.setup_configurations.countries.index', compact(
             'countries',
             'sort_country',
+            'countryId',
+            'status',
+            'currencyId',
+            'languageId',
+            'sortBy',
+            'sortOrder',
             'active_currencies',
             'active_languages',
             'system_default_currency_id',
             'default_language_id',
             'system_default_country_id',
             'display_timezone',
-            'enabled_countries'
+            'enabled_countries',
+            'filter_countries'
         ));
     }
 

@@ -142,7 +142,7 @@ class DigitalProductController  extends Controller
             ->with('childrenGroups')
             ->orderBy('name', 'asc')
             ->get();
-        $lang = $request->lang;
+        $lang = fallback_lang($request->lang);
         $product = Product::find($id);
         return view('seller.product.digitalproducts.edit', compact('categories', 'groups', 'product', 'lang'));
     }
@@ -157,6 +157,8 @@ class DigitalProductController  extends Controller
 
     public function update(ProductRequest $request, Product $product)
     {
+        $request->merge(['lang' => fallback_lang($request->input('lang'))]);
+
         //Product Update
         $product = (new ProductService)->update($request->except([
             '_token', 'tax_id', 'tax', 'tax_type'

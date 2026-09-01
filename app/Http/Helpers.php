@@ -218,6 +218,22 @@ if (!function_exists('default_language')) {
     }
 }
 
+if (!function_exists('fallback_lang')) {
+    /**
+     * Language code for product translations. Empty/null becomes the site default.
+     */
+    function fallback_lang($lang = null)
+    {
+        if (is_string($lang)) {
+            $lang = trim($lang);
+        }
+        if ($lang === null || $lang === '') {
+            return env('DEFAULT_LANGUAGE') ?: 'en';
+        }
+        return $lang;
+    }
+}
+
 /**
  * Save JSON File
  * @return Response
@@ -240,8 +256,11 @@ if (!function_exists('convert_to_kes')) {
 
 // Parse phone as "dial-number" into ['dial' => ..., 'number' => ...] with a fallback dial code.
 if (!function_exists('parse_phone_number')) {
-    function parse_phone_number($raw, $defaultDial = '91')
+    function parse_phone_number($raw, $defaultDial = null)
     {
+        if ($defaultDial === null || $defaultDial === '') {
+            $defaultDial = detected_dial_code() ?: '91';
+        }
         $raw = $raw ?? '';
         if ($raw === '') {
             return ['dial' => $defaultDial, 'number' => ''];
@@ -281,6 +300,70 @@ if (!function_exists('get_active_countries')) {
 
             return $countries;
         });
+    }
+}
+
+if (!function_exists('detected_country')) {
+    function detected_country()
+    {
+        $countries = get_active_countries();
+        $id = (int) session('country_id', 0);
+        $code = strtolower((string) session('country_code', ''));
+
+        $country = $id ? $countries->firstWhere('id', $id) : null;
+        if (!$country && $code !== '') {
+            $country = $countries->first(function ($item) use ($code) {
+                return strtolower((string) $item->code) === $code;
+            });
+        }
+
+        return $country;
+    }
+}
+
+if (!function_exists('detected_country_id')) {
+    function detected_country_id()
+    {
+        return (int) optional(detected_country())->id;
+    }
+}
+
+if (!function_exists('detected_country_code')) {
+    function detected_country_code()
+    {
+        $code = optional(detected_country())->code ?: session('country_code', '');
+        return strtolower((string) $code);
+    }
+}
+
+if (!function_exists('detected_dial_code')) {
+    function detected_dial_code()
+    {
+        $dial = preg_replace('/\D+/', '', (string) session('dial_code', ''));
+        if ($dial !== '') {
+            return $dial;
+        }
+
+        $ipData = (array) session('ip_data', []);
+        return preg_replace('/\D+/', '', (string) ($ipData['calling_code'] ?? $ipData['country_calling_code'] ?? ''));
+    }
+}
+
+if (!function_exists('requested_or_detected_country_id')) {
+    /**
+     * Use an explicit country filter when present (including "all countries" as empty),
+     * otherwise fall back to the IP-detected country.
+     */
+    function requested_or_detected_country_id($request = null, string $key = 'country_id'): ?int
+    {
+        $request = $request ?: request();
+        if ($request->has($key)) {
+            $value = $request->input($key);
+            return ($value === null || $value === '') ? null : (int) $value;
+        }
+
+        $detected = function_exists('detected_country_id') ? detected_country_id() : 0;
+        return $detected ?: null;
     }
 }
 

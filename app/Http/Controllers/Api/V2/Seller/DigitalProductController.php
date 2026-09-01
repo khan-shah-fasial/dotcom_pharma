@@ -94,6 +94,8 @@ class DigitalProductController extends Controller
 
     public function update(ProductRequest $request, Product $product)
     {
+        $request->merge(['lang' => fallback_lang($request->input('lang'))]);
+
         //Product Update
         $product = (new ProductService)->update($request->except([
             '_token', 'tax_id', 'tax', 'tax_type'

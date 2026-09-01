@@ -481,7 +481,7 @@ class ProductController extends Controller
             return redirect('admin/digitalproducts/' . $id . '/edit');
         }
 
-        $lang = $request->lang;
+        $lang = fallback_lang($request->lang);
         $tags = json_decode($product->tags);
         $categories = Category::where('parent_id', 0)
             ->where('digital', 0)
@@ -508,7 +508,7 @@ class ProductController extends Controller
         if ($product->digital == 1) {
             return redirect('digitalproducts/' . $id . '/edit');
         }
-        $lang = $request->lang;
+        $lang = fallback_lang($request->lang);
         $tags = json_decode($product->tags);
         // $categories = Category::all();
         $categories = Category::where('parent_id', 0)
@@ -533,7 +533,7 @@ class ProductController extends Controller
      */
     public function update(ProductRequest $request, Product $product)
     {
-
+        $request->merge(['lang' => fallback_lang($request->input('lang'))]);
 
         if ($request->has('choice_no')) {
             foreach ($request->input('choice_no') as $choiceNo) {

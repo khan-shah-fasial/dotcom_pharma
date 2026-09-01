@@ -26,7 +26,7 @@
     <div class="row gutters-5">
         <div class="col-lg-8">
             <input name="_method" type="hidden" value="POST">
-            <input type="hidden" name="lang" value="{{ $lang }}">
+            <input type="hidden" name="lang" value="{{ fallback_lang($lang) }}">
             <input type="hidden" name="id" value="{{ $product->id }}">
             @csrf
             <input type="hidden" name="added_by" value="seller">

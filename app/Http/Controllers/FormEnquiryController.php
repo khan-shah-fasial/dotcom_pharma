@@ -18,7 +18,7 @@ class FormEnquiryController extends Controller
     public function create(Request $request)
     {
         $countries = get_active_countries();
-        $defaultCountryId = (int) $request->session()->get('country_id', 0);
+        $defaultCountryId = detected_country_id();
         $defaultCountryId = $countries->contains('id', $defaultCountryId)
             ? $defaultCountryId
             : (int) optional($countries->first())->id;

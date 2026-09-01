@@ -10,12 +10,7 @@ class DetectCountryCurrencyLanguage
 {
     public function handle(Request $request, Closure $next)
     {
-        if ($request->is('admin/*') || $request->is('api/*')) {
-            return $next($request);
-        }
-
-        // Avoid mutating session for API-style or background requests.
-        if ($request->expectsJson()) {
+        if ($request->is('api/*') || $request->expectsJson()) {
             return $next($request);
         }
 
@@ -25,15 +20,30 @@ class DetectCountryCurrencyLanguage
             return $next($request);
         }
 
-        if ($session->has('country_id') && $session->has('currency_code') && $session->has('locale')) {
-            return $next($request);
+        $isAdmin = $request->is('admin/*');
+
+        if ($session->has('country_id') && $session->has('country_code')) {
+            $this->backfillDialCode($session);
+            if ($isAdmin || ($session->has('currency_code') && $session->has('locale'))) {
+                return $next($request);
+            }
         }
 
         $ipData = (array) (function_exists('getLocationFromIP') ? getLocationFromIP() : []);
         $session->put('ip_data', $ipData);
+        $this->storeDialCode($session, $ipData);
 
         $country = LocationUtility::matchEnabledCountryFromIpData($ipData) ?: LocationUtility::getFallbackCountry();
         if (!$country) {
+            return $next($request);
+        }
+
+        // Admin screens should pick up the detected country for form defaults,
+        // without changing the admin language or currency.
+        if ($isAdmin) {
+            $session->put('country_id', (int) $country->id);
+            $session->put('country', $country->name);
+            $session->put('country_code', $country->code);
             return $next($request);
         }
 
@@ -57,5 +67,20 @@ class DetectCountryCurrencyLanguage
 
         return $next($request);
     }
-}
 
+    protected function storeDialCode($session, array $ipData): void
+    {
+        $dial = preg_replace('/\D+/', '', (string) ($ipData['calling_code'] ?? $ipData['country_calling_code'] ?? ''));
+        if ($dial !== '') {
+            $session->put('dial_code', $dial);
+        }
+    }
+
+    protected function backfillDialCode($session): void
+    {
+        if ($session->has('dial_code') && $session->get('dial_code') !== '') {
+            return;
+        }
+        $this->storeDialCode($session, (array) $session->get('ip_data', []));
+    }
+}

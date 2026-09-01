@@ -11,7 +11,7 @@
             <div class="col-lg-8">
                 <input name="_method" type="hidden" value="PATCH">
                 <input type="hidden" name="id" value="{{ $product->id }}">
-                <input type="hidden" name="lang" value="{{ $lang }}">
+                <input type="hidden" name="lang" value="{{ fallback_lang($lang) }}">
                 @csrf
 
                 <div class="card">

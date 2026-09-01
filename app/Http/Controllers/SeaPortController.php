@@ -21,8 +21,23 @@ class SeaPortController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->input('search'));
-        $countryId = $request->input('country_id');
+        $countryId = requested_or_detected_country_id($request);
         $status = $request->input('status');
+        $continent = trim((string) $request->input('continent'));
+        $stateRegion = trim((string) $request->input('state_region'));
+        $portType = trim((string) $request->input('port_type'));
+        $terminalType = trim((string) $request->input('terminal_type'));
+        $classification = trim((string) $request->input('classification'));
+        $customsPort = trim((string) $request->input('customs_port'));
+        $exportSupported = trim((string) $request->input('export_supported'));
+        $importSupported = trim((string) $request->input('import_supported'));
+        if (!$request->has('country_id') && $countryId) {
+            return redirect()->to($request->fullUrlWithQuery(['country_id' => $countryId]));
+        }
+        [$sortBy, $sortOrder] = $this->resolveSort($request, [
+            'name', 'port_id', 'un_locode', 'country', 'state_region', 'continent',
+            'port_type', 'terminal_type', 'classification', 'status', 'created_at',
+        ], 'name');
 
         $ports = SeaPort::query()
             ->with('country')
@@ -33,6 +48,10 @@ class SeaPortController extends Controller
                         ->orWhere('un_locode', 'like', "%{$search}%")
                         ->orWhere('country', 'like', "%{$search}%")
                         ->orWhere('state_region', 'like', "%{$search}%")
+                        ->orWhere('continent', 'like', "%{$search}%")
+                        ->orWhere('port_type', 'like', "%{$search}%")
+                        ->orWhere('terminal_type', 'like', "%{$search}%")
+                        ->orWhere('classification', 'like', "%{$search}%")
                         ->orWhere('authority_name', 'like', "%{$search}%")
                         ->orWhere('authority_mobile', 'like', "%{$search}%")
                         ->orWhere('authority_email', 'like', "%{$search}%")
@@ -43,18 +62,53 @@ class SeaPortController extends Controller
             })
             ->when($countryId, fn ($query) => $query->where('country_id', $countryId))
             ->when(in_array((string) $status, ['0', '1'], true), fn ($query) => $query->where('status', (int) $status))
-            ->orderBy('name')
+            ->when($continent !== '', fn ($query) => $query->where('continent', $continent))
+            ->when($stateRegion !== '', fn ($query) => $query->where('state_region', $stateRegion))
+            ->when($portType !== '', fn ($query) => $query->where('port_type', $portType))
+            ->when($terminalType !== '', fn ($query) => $query->where('terminal_type', $terminalType))
+            ->when($classification !== '', fn ($query) => $query->where('classification', $classification))
+            ->when($customsPort !== '', fn ($query) => $query->where('customs_port', $customsPort))
+            ->when($exportSupported !== '', fn ($query) => $query->where('export_supported', $exportSupported))
+            ->when($importSupported !== '', fn ($query) => $query->where('import_supported', $importSupported))
+            ->orderBy($sortBy, $sortOrder)
+            ->orderBy('id')
             ->paginate(20)
-            ->withQueryString();
+            ->appends($request->except('page') + [
+                'country_id' => $countryId,
+                'sort_by' => $sortBy,
+                'sort_order' => $sortOrder,
+            ]);
 
         $countries = Country::query()->orderBy('name')->get(['id', 'name']);
+        $supportOptions = ['Yes', 'No', 'Limited', 'N/A'];
+        $continents = $this->distinctValues('continent');
+        $stateRegions = $this->distinctValues('state_region');
+        $portTypes = $this->distinctValues('port_type');
+        $terminalTypes = $this->distinctValues('terminal_type');
+        $classifications = $this->distinctValues('classification');
 
         return view('backend.setup_configurations.logistics.sea_ports.index', compact(
             'ports',
             'countries',
             'search',
             'countryId',
-            'status'
+            'status',
+            'continent',
+            'stateRegion',
+            'portType',
+            'terminalType',
+            'classification',
+            'customsPort',
+            'exportSupported',
+            'importSupported',
+            'supportOptions',
+            'continents',
+            'stateRegions',
+            'portTypes',
+            'terminalTypes',
+            'classifications',
+            'sortBy',
+            'sortOrder'
         ));
     }
 
@@ -208,5 +262,23 @@ class SeaPortController extends Controller
         $validated['iso3'] = $country->iso3 ? strtoupper((string) $country->iso3) : null;
 
         return $validated;
+    }
+
+    private function resolveSort(Request $request, array $allowed, string $default): array
+    {
+        $sortBy = in_array($request->input('sort_by'), $allowed, true) ? $request->input('sort_by') : $default;
+        $sortOrder = $request->input('sort_order') === 'desc' ? 'desc' : 'asc';
+
+        return [$sortBy, $sortOrder];
+    }
+
+    private function distinctValues(string $column)
+    {
+        return SeaPort::query()
+            ->whereNotNull($column)
+            ->where($column, '!=', '')
+            ->distinct()
+            ->orderBy($column)
+            ->pluck($column);
     }
 }

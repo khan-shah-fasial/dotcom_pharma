@@ -23,7 +23,7 @@
     <form class="" action="{{route('seller.digitalproducts.update', $product->id)}}" method="POST" enctype="multipart/form-data">
         <input name="_method" type="hidden" value="Post">
         <input type="hidden" name="id" value="{{ $product->id }}">
-        <input type="hidden" name="lang" value="{{ $lang }}">
+        <input type="hidden" name="lang" value="{{ fallback_lang($lang) }}">
         
         @csrf
         <div class="row">
