@@ -68,6 +68,7 @@ use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\WarrantyController;
 use App\Http\Controllers\Admin\GiftController as AdminGiftController;
 use App\Http\Controllers\Admin\GiftRequestController;
+use App\Http\Controllers\Admin\UiPreviewController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\ZoneController;
 use App\Http\Controllers\RequestDocController;
@@ -97,6 +98,11 @@ Route::controller(UpdateController::class)->group(function () {
 
 Route::get('/admin', [AdminController::class, 'admin_dashboard'])->name('admin.dashboard')->middleware(['auth', 'admin', 'prevent-back-history']);
 Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-back-history']], function () {
+
+    Route::controller(UiPreviewController::class)->group(function () {
+        Route::get('/previews', 'index')->name('admin.previews.index');
+        Route::get('/previews/{preview}', 'show')->name('admin.previews.show');
+    });
 
     // Purchase History Report (admin)
     Route::controller(PurchaseHistoryReportController::class)->group(function () {

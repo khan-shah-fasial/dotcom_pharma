@@ -40,7 +40,9 @@ use App\Utility\EmailUtility;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use App\Support\InvoiceType;
+use App\Support\ShippingPath;
 use App\Services\OrderPlacementService;
 use App\Services\WalletRewardService;
 use Illuminate\Validation\ValidationException;
@@ -143,6 +145,7 @@ class OrderController extends Controller
             'shipment',
             'transport',
             'bookedTo',
+            'bookedFrom',
             'localDeliveryPartner',
             'loadingSeaPort',
             'loadingAirport',
@@ -787,7 +790,7 @@ class OrderController extends Controller
             if ($shippingCostType === 'free_shipping') {
                 $request->merge(['shipping_costs' => [], 'shipping_items' => []]);
             }
-            $usesPortLogistics = $request->input('shipping_method') === 'transport'
+            $usesPortLogistics = $request->input('shipping_method') !== 'local'
                 && in_array($request->input('fod_mode'), ['sea', 'air'], true);
 
             $request->validate([
@@ -818,6 +821,8 @@ class OrderController extends Controller
                 'width_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,height_cm'],
                 'height_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,width_cm'],
                 'freight_type' => ['nullable', Rule::in(['pre_paid', 'to_pay', 'fod'])],
+                'fod_mode' => ['required', Rule::in(['surface', 'air', 'sea'])],
+                'transport_surface_mode' => ['required', Rule::in(ShippingPath::allSubModes())],
                 'shipping_cost_type' => ['required', Rule::in(['by_seller', 'free_shipping'])],
                 'free_shipping' => ['nullable', 'boolean'],
                 'shipping_costs' => ['required_if:shipping_cost_type,by_seller', 'array'],
@@ -845,6 +850,8 @@ class OrderController extends Controller
                 'total_volume_cbm' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
                 'transport_name' => ['nullable', 'string', 'max:255'],
                 'booked_to_name' => ['nullable', 'string', 'max:255'],
+                'booked_from_id' => ['nullable', 'integer', Rule::exists('booked_to', 'id')],
+                'booked_from_name' => ['nullable', 'string', 'max:255'],
                 'local_delivery_partner_name' => ['nullable', 'string', 'max:255'],
                 'shipping_contact_person' => ['nullable', 'string', 'max:255'],
                 'shipping_address' => ['nullable', 'string', 'max:2000'],
@@ -1424,6 +1431,7 @@ class OrderController extends Controller
             'orderDetails',
             'transport',
             'bookedTo',
+            'bookedFrom',
             'localDeliveryPartner',
             'loadingSeaPort',
             'loadingAirport',
@@ -1493,7 +1501,7 @@ class OrderController extends Controller
         $courierConfigurationLocked = $shippingChoice === 'courier'
             && filled(optional($order->shipment)->shipping_id)
             && optional($order->shipment)->status !== 'error';
-        $usesPortLogistics = $shippingChoice === 'transport'
+        $usesPortLogistics = $shippingChoice !== 'local'
             && in_array($request->input('fod_mode', $order->fod_mode), ['sea', 'air'], true);
 
         if ($request->hasFile('cc_attachments')) {
@@ -1507,6 +1515,7 @@ class OrderController extends Controller
             'transport_id' => ['nullable', 'integer', Rule::exists('transports', 'id')],
             'transport_delivery_type' => ['required', Rule::in(array_merge(array_keys(InvoiceType::deliveryTerms($invoiceType)), ['transport_godown']))],
             'booked_to_id' => ['nullable', 'integer', Rule::exists('booked_to', 'id')],
+            'booked_from_id' => ['nullable', 'integer', Rule::exists('booked_to', 'id')],
             'local_delivery_partner_id' => ['nullable', 'integer', Rule::exists('local_delivery_partners', 'id')],
             'consignee_copy_status' => ['required', Rule::in(['attached', 'not_attached'])],
             'cc_attachments' => ['nullable', 'array', 'max:20'],
@@ -1514,7 +1523,7 @@ class OrderController extends Controller
             'order_attachments' => ['nullable', 'array', 'max:20'],
             'order_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
             'fod_mode' => ['nullable', Rule::in(['surface', 'air', 'sea'])],
-            'transport_surface_mode' => ['nullable', Rule::in(['road', 'train'])],
+            'transport_surface_mode' => ['nullable', Rule::in(ShippingPath::allSubModes())],
             'freight_type' => ['nullable', Rule::in(['pre_paid', 'to_pay', 'fod'])],
             'shipping_cost_type' => ['required', Rule::in(['by_seller', 'free_shipping'])],
             'sell_amount' => ['required_if:shipping_cost_type,by_seller', 'nullable', 'numeric', 'min:0', 'max:99999999999.99'],
@@ -1572,11 +1581,12 @@ class OrderController extends Controller
             ],
         ]);
 
-        if ($shippingChoice === 'transport'
-            && ($validated['fod_mode'] ?? $order->fod_mode) === 'surface'
-            && empty($validated['transport_surface_mode'])) {
+        $fodMode = $shippingChoice === 'local'
+            ? 'surface'
+            : ($validated['fod_mode'] ?? $order->fod_mode);
+        if ($fodMode && !ShippingPath::isValidSubMode($fodMode, $validated['transport_surface_mode'] ?? $order->transport_surface_mode)) {
             throw ValidationException::withMessages([
-                'transport_surface_mode' => translate('Please select Road or Train for Surface transport.'),
+                'transport_surface_mode' => translate('Please select a valid mode for this transport path.'),
             ]);
         }
 
@@ -1586,7 +1596,7 @@ class OrderController extends Controller
             ]);
         }
 
-        if ($shippingChoice === 'transport' && empty($validated['booked_to_id'])) {
+        if ($shippingChoice === 'transport' && !$usesPortLogistics && empty($validated['booked_to_id'])) {
             throw ValidationException::withMessages([
                 'booked_to_id' => translate('Please select a booked-to destination.'),
             ]);
@@ -1618,6 +1628,17 @@ class OrderController extends Controller
             if (!$bookedToMatchesTransport) {
                 throw ValidationException::withMessages([
                     'booked_to_id' => translate('The booked-to destination does not belong to the selected transport.'),
+                ]);
+            }
+        }
+
+        if ($shippingChoice === 'transport' && !empty($validated['booked_from_id']) && !empty($validated['transport_id'])) {
+            $bookedFromMatchesTransport = BookedTo::whereKey($validated['booked_from_id'])
+                ->where('transport_id', $validated['transport_id'])
+                ->exists();
+            if (!$bookedFromMatchesTransport) {
+                throw ValidationException::withMessages([
+                    'booked_from_id' => translate('The source (from) location does not belong to the selected transport.'),
                 ]);
             }
         }
@@ -1669,6 +1690,9 @@ class OrderController extends Controller
                 $lockedOrder->payment_type = $validated['payment_type'];
                 $lockedOrder->transport_id = $shippingChoice === 'transport' ? ($validated['transport_id'] ?? null) : null;
                 $lockedOrder->booked_to_id = $shippingChoice === 'transport' ? ($validated['booked_to_id'] ?? null) : null;
+                if (Schema::hasColumn($lockedOrder->getTable(), 'booked_from_id')) {
+                    $lockedOrder->booked_from_id = $shippingChoice === 'transport' ? ($validated['booked_from_id'] ?? null) : null;
+                }
                 $lockedOrder->local_delivery_partner_id = $shippingChoice === 'local' ? ($validated['local_delivery_partner_id'] ?? null) : null;
                 $lockedOrder->shipping_by = $shippingChoice === 'transport'
                     ? optional(Transport::find($validated['transport_id'] ?? null))->name
@@ -1691,12 +1715,11 @@ class OrderController extends Controller
                     ? 'transport_warehouse'
                     : ($validated['transport_delivery_type'] ?? null);
                 $lockedOrder->transport_delivery_type = $deliveryType;
-                $lockedOrder->fod_mode = $shippingChoice === 'transport' ? ($validated['fod_mode'] ?? null) : null;
+                $lockedOrder->fod_mode = $shippingChoice === 'local'
+                    ? 'surface'
+                    : ($validated['fod_mode'] ?? $lockedOrder->fod_mode);
                 $lockedOrder->transport_mode = $lockedOrder->fod_mode;
-                $lockedOrder->transport_surface_mode = $shippingChoice === 'transport'
-                    && ($validated['fod_mode'] ?? null) === 'surface'
-                    ? ($validated['transport_surface_mode'] ?? null)
-                    : null;
+                $lockedOrder->transport_surface_mode = $validated['transport_surface_mode'] ?? $lockedOrder->transport_surface_mode;
                 $lockedOrder->consignee_copy_status = $validated['consignee_copy_status'];
                 $lockedOrder->freight_type = $validated['freight_type'] ?? null;
                 $lockedOrder->freight_paid = ($validated['freight_type'] ?? null) === 'pre_paid';
@@ -1718,7 +1741,7 @@ class OrderController extends Controller
                 $lockedOrder->discharge_airport_id = $usesPortLogistics && ($validated['discharge_location_type'] ?? null) === 'air'
                     ? ($validated['discharge_airport_id'] ?? null)
                     : null;
-                $lockedOrder->final_destination = $usesPortLogistics ? ($validated['final_destination'] ?? null) : null;
+                $lockedOrder->final_destination = $validated['final_destination'] ?? $lockedOrder->final_destination;
                 $lockedOrder->carrier_tax_number = $validated['carrier_tax_number'] ?? null;
                 $lockedOrder->cases = $validated['cases'] ?? null;
                 $lockedOrder->weight_grams = $validated['weight_grams'] ?? null;

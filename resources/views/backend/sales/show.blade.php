@@ -207,28 +207,37 @@
                                 <td class="text-right">
                                     @if($order->shipping_choice === 'transport')
                                         {{ translate('Transport') }}: {{ optional($order->transport)->name ?? $order->shipping_by ?? '-' }}
+                                        @if($order->bookedFrom)
+                                            <br>{{ translate('Source (From)') }}: {{ $order->bookedFrom->name }}
+                                        @endif
                                         @if($order->bookedTo)
                                             <br>{{ translate('Booked To') }}: {{ $order->bookedTo->name }}
-                                        @endif
-                                        @if($order->transport_mode)
-                                            <br>{{ translate('Mode') }}: {{ translate(ucfirst($order->transport_mode)) }}
-                                            @if($order->transport_surface_mode)
-                                                / {{ translate(ucfirst($order->transport_surface_mode)) }}
-                                            @endif
-                                        @endif
-                                        @if($order->transport_delivery_type)
-                                            <br>{{ translate([
-                                                'transport_godown' => 'Transport Warehouse',
-                                                'transport_warehouse' => 'Transport Warehouse',
-                                                'our_warehouse_delivery' => 'Our Warehouse Delivery',
-                                                'hand_delivery' => 'Hand Delivery',
-                                                'door_delivery' => 'Door Delivery',
-                                            ][$order->transport_delivery_type] ?? ucfirst(str_replace('_', ' ', $order->transport_delivery_type))) }}
                                         @endif
                                     @elseif($order->shipping_choice === 'local')
                                         {{ translate('Local') }}: {{ optional($order->localDeliveryPartner)->name ?? $order->shipping_by ?? '-' }}
                                     @else
                                         {{ $order->shipping_by ?? $order->shipping_choice ?? '-' }}
+                                    @endif
+                                    @if($order->fod_mode || $order->transport_mode)
+                                        <br>{{ translate('Mode') }}: {{ translate(ucfirst($order->fod_mode ?: $order->transport_mode)) }}
+                                        @if($order->transport_surface_mode)
+                                            / {{ translate(\App\Support\ShippingPath::subModeLabel($order->transport_surface_mode)) }}
+                                        @endif
+                                    @endif
+                                    @if($order->transport_delivery_type)
+                                        <br>{{ translate([
+                                            'transport_godown' => 'Transport Warehouse',
+                                            'transport_warehouse' => 'Transport Warehouse',
+                                            'our_warehouse_delivery' => 'Our Warehouse Delivery',
+                                            'hand_delivery' => 'Hand Delivery',
+                                            'door_delivery' => 'Door Delivery',
+                                        ][$order->transport_delivery_type] ?? ucfirst(str_replace('_', ' ', $order->transport_delivery_type))) }}
+                                    @endif
+                                    @if($order->carrier_tax_number)
+                                        <br>{{ translate('Carrier GST / Tax No.') }}: {{ $order->carrier_tax_number }}
+                                    @endif
+                                    @if($order->final_destination)
+                                        <br>{{ translate('Final Destination') }}: {{ $order->final_destination }}
                                     @endif
                                 </td>
                             </tr>

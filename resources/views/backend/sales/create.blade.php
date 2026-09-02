@@ -94,6 +94,12 @@
             font-size: 11px;
         }
         .selected-file-list {
+            min-height: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+        }
+        .selected-file-list.has-files {
             min-height: 42px;
             padding: 7px;
             border: 1px solid #e2e5ec;
@@ -356,6 +362,27 @@ span#picker-info-stock-badge {
         }
         .order-accordion-toggle[aria-expanded="true"] .order-accordion-icon {
             transform: rotate(180deg);
+        }
+        .order-sidebar-accordion .form-group > label {
+            display: inline-block;
+            max-width: 100%;
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 18px;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: top;
+        }
+        .shipping-section-title {
+            margin: 0 0 8px;
+            color: #74788d;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .selected-location-hover {
             position: relative;
@@ -732,6 +759,15 @@ span#picker-info-stock-badge {
                     <div id="additional-details-collapse" class="collapse show"
                         aria-labelledby="additional-details-heading" data-parent="#order-sidebar-accordion">
                     <div class="card-body">
+                        <div id="domestic-invoice-fields">
+                            <div class="form-group">
+                                <label>{{ translate('Reverse Charges') }}</label>
+                                <select class="form-control" name="reverse_charge">
+                                    <option value="0" @selected(old('reverse_charge', '0') === '0')>{{ translate('No') }}</option>
+                                    <option value="1" @selected(old('reverse_charge') === '1')>{{ translate('Yes') }}</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label>{{ translate('Sales Executive Name') }}</label>
                             <select class="form-control aiz-selectpicker" name="sales_executive_id" data-live-search="true" title="{{ translate('Select Sales Executive') }}">
@@ -768,35 +804,16 @@ span#picker-info-stock-badge {
                             <input type="text" class="form-control" id="sales-man-code" value="{{ old('sales_man_code') }}" readonly>
                             <small class="text-muted">{{ translate('Fetched automatically from Account Master.') }}</small>
                         </div>
+                        <div class="shipping-section-title border-top pt-3">{{ translate('P.O. Details') }}</div>
                         <div class="form-group">
                             <label>{{ translate('P.O. No.') }}</label>
                             <input type="text" class="form-control" name="po_number" value="{{ old('po_number') }}">
                             @error('po_number') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label>{{ translate('P.O. Date') }}</label>
                             <input type="date" class="form-control" name="po_date" value="{{ old('po_date') }}">
                             @error('po_date') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</label>
-                            <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number') }}">
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('LR Date') }}</label>
-                            <input type="date" class="form-control" name="lr_date" value="{{ old('lr_date') }}">
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('Attached File Name') }}</label>
-                            <input type="text" class="form-control" name="attached_file_name" value="{{ old('attached_file_name') }}">
-                            @error('attached_file_name') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="form-group mb-0">
-                            <label>{{ translate('Attachment Option') }}</label>
-                            <input type="file" class="form-control" name="order_attachments[]" id="order-attachments" multiple
-                                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv">
-                            <small class="text-muted">{{ translate('Select multiple files; maximum 10 MB per file.') }}</small>
-                            @error('order_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                     </div>
                     </div>
@@ -814,11 +831,29 @@ span#picker-info-stock-badge {
                     <div id="shipping-collapse" class="collapse"
                         aria-labelledby="shipping-heading" data-parent="#order-sidebar-accordion">
                     <div class="card-body">
+                        <div class="shipping-section-title">{{ translate('AutoFill') }}</div>
                         <div class="form-group">
                             <label>{{ translate('Total Cases') }}</label>
                             <input type="number" min="0" step="1" class="form-control" name="cases" value="{{ old('cases') }}">
                             @error('cases') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
+                        <div class="form-group">
+                            <label>{{ translate('Net Weight (KG)') }}</label>
+                            <input type="number" min="0" step="0.000001" class="form-control" name="net_weight_kg" value="{{ old('net_weight_kg') }}">
+                            @error('net_weight_kg') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Gross Weight (KG)') }}</label>
+                            <input type="number" min="0" step="0.000001" class="form-control" name="gross_weight_kg" value="{{ old('gross_weight_kg') }}">
+                            @error('gross_weight_kg') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Total Volume / CBM') }}</label>
+                            <input type="number" min="0" step="0.000001" class="form-control" name="total_volume_cbm" value="{{ old('total_volume_cbm') }}">
+                            @error('total_volume_cbm') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="shipping-section-title border-top pt-3">{{ translate('Manual') }}</div>
                         <div class="form-group">
                             <label>{{ translate('Weight (Gram)') }}</label>
                             <input type="number" min="0" step="0.001" class="form-control" name="weight_grams" id="weight-grams" value="{{ old('weight_grams') }}">
@@ -828,24 +863,66 @@ span#picker-info-stock-badge {
                         <div class="form-group">
                             <label>{{ translate('Dimensions (CM)') }}</label>
                             <div class="dimension-inputs">
-                                <input type="number" min="0" step="0.01" class="form-control" name="length_cm" value="{{ old('length_cm') }}" placeholder="{{ translate('Length') }}">
+                                <input type="number" min="0" step="0.01" class="form-control" id="length-cm" name="length_cm" value="{{ old('length_cm') }}" placeholder="{{ translate('Length') }}">
                                 <span class="dimension-separator">×</span>
-                                <input type="number" min="0" step="0.01" class="form-control" name="width_cm" value="{{ old('width_cm') }}" placeholder="{{ translate('Width') }}">
+                                <input type="number" min="0" step="0.01" class="form-control" id="width-cm" name="width_cm" value="{{ old('width_cm') }}" placeholder="{{ translate('Width') }}">
                                 <span class="dimension-separator">×</span>
-                                <input type="number" min="0" step="0.01" class="form-control" name="height_cm" value="{{ old('height_cm') }}" placeholder="{{ translate('Height') }}">
+                                <input type="number" min="0" step="0.01" class="form-control" id="height-cm" name="height_cm" value="{{ old('height_cm') }}" placeholder="{{ translate('Height') }}">
                                 <span class="dimension-separator">CM</span>
                             </div>
+                            <small class="text-muted d-block mt-1" id="manual-cbm-display">0 CBM</small>
                             @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
                             @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
                             @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                         <div class="form-group">
+                            <label>{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</label>
+                            <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('LR Date') }}</label>
+                            <input type="date" class="form-control" name="lr_date" value="{{ old('lr_date') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Attached File Name') }}</label>
+                            <input type="text" class="form-control" name="attached_file_name" value="{{ old('attached_file_name') }}">
+                            @error('attached_file_name') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Attachment Option') }}</label>
+                            <input type="file" class="form-control multi-file-input" name="order_attachments[]" id="order-attachments" multiple
+                                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#order-attachment-names">
+                            <small class="text-muted">{{ translate('Select multiple files; maximum 10 MB per file.') }}</small>
+                            <div class="selected-file-list mt-1" id="order-attachment-names"></div>
+                            @error('order_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="shipping-section-title border-top pt-3">{{ translate('Shipping') }}</div>
+                        <div class="form-group">
                             <label>{{ translate('Shipping Method') }}</label>
                             <select class="form-control" name="shipping_method" id="shipping-method">
-                                <option value="courier">{{ translate('Courier') }}</option>
-                                <option value="transport">{{ translate('Transport') }}</option>
-                                <option value="local">{{ translate('Local Delivery') }}</option>
+                                <option value="courier" @selected(old('shipping_method', 'courier') === 'courier')>{{ translate('Courier') }}</option>
+                                <option value="transport" @selected(old('shipping_method') === 'transport')>{{ translate('Transport') }}</option>
+                                <option value="local" @selected(old('shipping_method') === 'local')>{{ translate('Local Delivery') }}</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Transport Mode') }}</label>
+                            <select class="form-control" name="fod_mode" id="fod-mode">
+                                <option value="surface" @selected(old('fod_mode', 'surface') === 'surface')>{{ translate('Surface') }}</option>
+                                <option value="sea" @selected(old('fod_mode') === 'sea')>{{ translate('Sea') }}</option>
+                                <option value="air" @selected(old('fod_mode') === 'air')>{{ translate('Air') }}</option>
+                            </select>
+                            @error('fod_mode') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group" id="transport-surface-mode-fields">
+                            <label id="transport-surface-mode-label">{{ translate('Surface Mode') }}</label>
+                            <select class="form-control" name="transport_surface_mode" id="transport-surface-mode"
+                                data-old="{{ old('transport_surface_mode', 'road') }}">
+                                <option value="road" @selected(old('transport_surface_mode', 'road') === 'road')>{{ translate('Road') }}</option>
+                                <option value="train" @selected(old('transport_surface_mode') === 'train')>{{ translate('Train') }}</option>
+                            </select>
+                            @error('transport_surface_mode') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
 
                         <div id="courier-fields">
@@ -869,14 +946,6 @@ span#picker-info-stock-badge {
 
                         <div id="transport-fields" class="d-none">
                             <div class="form-group">
-                                <label>{{ translate('Transport Mode') }}</label>
-                                <select class="form-control" name="fod_mode">
-                                    <option value="surface" @selected(old('fod_mode', 'surface') === 'surface')>{{ translate('Surface') }}</option>
-                                    <option value="air" @selected(old('fod_mode') === 'air')>{{ translate('Air') }}</option>
-                                    <option value="sea" @selected(old('fod_mode') === 'sea')>{{ translate('Sea') }}</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
                                 <label>{{ translate('Transport') }}</label>
                                 <select class="form-control" name="transport_id" id="transport-id">
                                     <option value="">{{ translate('Select Transport') }}</option>
@@ -886,45 +955,6 @@ span#picker-info-stock-badge {
                                     @endforeach
                                 </select>
                                 <input type="text" class="form-control mt-2 auto-capitalize-first" name="transport_name" placeholder="{{ translate('Or enter transport name') }}">
-                            </div>
-                            <div class="form-group d-none" id="transport-surface-mode-fields">
-                                <label>{{ translate('Surface Mode') }}</label>
-                                <select class="form-control" name="transport_surface_mode" id="transport-surface-mode">
-                                    <option value="road">{{ translate('Road') }}</option>
-                                    <option value="train">{{ translate('Train') }}</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>{{ translate('Consignee Copy') }}</label>
-                                <select class="form-control" name="consignee_copy_status" id="consignee-copy-status">
-                                    <option value="attached" @selected(old('consignee_copy_status') === 'attached')>{{ translate('Attached') }}</option>
-                                    <option value="not_attached" @selected(old('consignee_copy_status', 'not_attached') === 'not_attached')>{{ translate('Not Attached') }}</option>
-                                </select>
-                                @error('consignee_copy_status') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="form-group" id="consignee-copy-files-wrap">
-                                <label>{{ translate('LR / Consignee Copy Files') }}</label>
-                                <input type="file" class="form-control multi-file-input" name="cc_attachments[]" id="cc-attachments" multiple
-                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#cc-attachment-names">
-                                <div class="selected-file-list mt-1" id="cc-attachment-names"><span class="text-muted">{{ translate('No files selected') }}</span></div>
-                                @error('cc_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="form-group">
-                                <label>{{ translate('Booked To') }}</label>
-                                <select class="form-control" name="booked_to_id" id="booked-to-id" disabled>
-                                    <option value="">{{ translate('Select transport first') }}</option>
-                                </select>
-                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="booked_to_name" placeholder="{{ translate('Or enter booked to') }}">
-                            </div>
-                            <div class="form-group">
-                                <label>{{ translate('Freight') }}</label>
-                                <select class="form-control" name="freight_type">
-                                    <option value="">{{ translate('Select Freight') }}</option>
-                                    <option value="pre_paid" @selected(old('freight_type') === 'pre_paid')>{{ translate('Pre-Paid') }}</option>
-                                    <option value="to_pay" @selected(old('freight_type') === 'to_pay')>{{ translate('To Pay') }}</option>
-                                    <option value="fod" @selected(old('freight_type') === 'fod')>{{ translate('FOD') }}</option>
-                                </select>
-                                @error('freight_type') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                         </div>
 
@@ -942,25 +972,27 @@ span#picker-info-stock-badge {
                         </div>
 
                         <div class="form-group">
-                            <label id="terms-of-delivery-label">{{ translate('Terms Of Delivery') }}</label>
-                            <select class="form-control" name="transport_delivery_type" id="terms-of-delivery">
-                                @foreach(\App\Support\InvoiceType::DOMESTIC_DELIVERY_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="domestic" @selected(old('transport_delivery_type') === $value)>{{ translate($label) }}</option>
-                                @endforeach
-                                @foreach(\App\Support\InvoiceType::INTERNATIONAL_DELIVERY_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="international" @selected(old('transport_delivery_type') === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                            <label id="carrier-tax-number-label">{{ translate('Carrier GST No.') }}</label>
+                            <input type="text" class="form-control" name="carrier_tax_number" value="{{ old('carrier_tax_number') }}">
                         </div>
 
-                        <div id="domestic-invoice-fields">
+                        <div id="surface-route-fields">
                             <div class="form-group">
-                                <label>{{ translate('Reverse Charges') }}</label>
-                                <select class="form-control" name="reverse_charge">
-                                    <option value="0" @selected(old('reverse_charge', '0') === '0')>{{ translate('No') }}</option>
-                                    <option value="1" @selected(old('reverse_charge') === '1')>{{ translate('Yes') }}</option>
+                                <label>{{ translate('Loading Country') }}</label>
+                                <input type="text" class="form-control" id="surface-loading-country" value="" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Source (From)') }}</label>
+                                <select class="form-control" name="booked_from_id" id="booked-from-id" disabled
+                                    data-selected="{{ (string) old('booked_from_id') }}">
+                                    <option value="">{{ translate('Select transport first') }}</option>
                                 </select>
+                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="booked_from_name" placeholder="{{ translate('Or enter source (from)') }}" value="{{ old('booked_from_name') }}">
+                                @error('booked_from_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Destination Country') }}</label>
+                                <input type="text" class="form-control" id="surface-destination-country" value="" readonly>
                             </div>
                         </div>
 
@@ -1026,49 +1058,61 @@ span#picker-info-stock-badge {
                                 </div>
                                 <div class="selected-location-card"></div>
                             </div>
+                        </div>
 
-                            <div class="form-group">
-                                <label>{{ translate('Final Destination') }}</label>
-                                <select class="form-control international-logistics-input" name="final_destination_type"
-                                    id="final-destination-type">
-                                    <option value="billing" @selected(old('final_destination_type', 'billing') === 'billing')>
-                                        {{ translate('Same as Billing Address') }}
-                                    </option>
-                                    <option value="shipping" @selected(old('final_destination_type') === 'shipping')>
-                                        {{ translate('Same as Shipping Address') }}
-                                    </option>
-                                    <option value="custom" @selected(old('final_destination_type') === 'custom')>
-                                        {{ translate('Not in List') }}
-                                    </option>
-                                </select>
-                                <input type="hidden" class="international-logistics-input" name="final_destination"
-                                    id="final-destination-value" value="{{ old('final_destination') }}">
-                                <div class="small text-muted mt-2" id="final-destination-preview"></div>
-                            </div>
-                            <div class="border rounded p-3 mb-3 d-none" id="final-destination-custom-fields">
-                                <div class="row gutters-10">
-                                    @include('backend.sales.partials.create_order_address_fields', ['prefix' => 'final_destination', 'countries' => $countries])
-                                </div>
+                        <div class="form-group" id="booked-to-wrap">
+                            <label>{{ translate('Booked To') }}</label>
+                            <select class="form-control" name="booked_to_id" id="booked-to-id" disabled
+                                data-selected="{{ (string) old('booked_to_id') }}">
+                                <option value="">{{ translate('Select transport first') }}</option>
+                            </select>
+                            <input type="text" class="form-control mt-2 auto-capitalize-first" name="booked_to_name" placeholder="{{ translate('Or enter booked to') }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label>{{ translate('Final Destination') }}</label>
+                            <select class="form-control" name="final_destination_type" id="final-destination-type">
+                                <option value="billing" @selected(old('final_destination_type', 'billing') === 'billing')>
+                                    {{ translate('Same as Billing Address') }}
+                                </option>
+                                <option value="shipping" @selected(old('final_destination_type') === 'shipping')>
+                                    {{ translate('Same as Shipping Address') }}
+                                </option>
+                                <option value="custom" @selected(old('final_destination_type') === 'custom')>
+                                    {{ translate('Not in List') }}
+                                </option>
+                            </select>
+                            <input type="hidden" name="final_destination" id="final-destination-value" value="{{ old('final_destination') }}">
+                            <div class="small text-muted mt-2" id="final-destination-preview"></div>
+                        </div>
+                        <div class="border rounded p-3 mb-3 d-none" id="final-destination-custom-fields">
+                            <div class="row gutters-10">
+                                @include('backend.sales.partials.create_order_address_fields', ['prefix' => 'final_destination', 'countries' => $countries])
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label id="carrier-tax-number-label">{{ translate('Carrier GST No.') }}</label>
-                            <input type="text" class="form-control" name="carrier_tax_number" value="{{ old('carrier_tax_number') }}">
+                            <label id="terms-of-delivery-label">{{ translate('Terms Of Delivery') }}</label>
+                            <select class="form-control" name="transport_delivery_type" id="terms-of-delivery">
+                                @foreach(\App\Support\InvoiceType::DOMESTIC_DELIVERY_TERMS as $value => $label)
+                                    <option value="{{ $value }}" data-invoice-type="domestic" @selected(old('transport_delivery_type') === $value)>{{ translate($label) }}</option>
+                                @endforeach
+                                @foreach(\App\Support\InvoiceType::INTERNATIONAL_DELIVERY_TERMS as $value => $label)
+                                    <option value="{{ $value }}" data-invoice-type="international" @selected(old('transport_delivery_type') === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
-                        <div class="row gutters-5">
-                            <div class="col-md-4 form-group">
-                                <label>{{ translate('Net Weight (KG)') }}</label>
-                                <input type="number" min="0" step="0.000001" class="form-control" name="net_weight_kg" value="{{ old('net_weight_kg') }}">
-                            </div>
-                            <div class="col-md-4 form-group">
-                                <label>{{ translate('Gross Weight (KG)') }}</label>
-                                <input type="number" min="0" step="0.000001" class="form-control" name="gross_weight_kg" value="{{ old('gross_weight_kg') }}">
-                            </div>
-                            <div class="col-md-4 form-group">
-                                <label>{{ translate('Total Volume / CBM') }}</label>
-                                <input type="number" min="0" step="0.000001" class="form-control" name="total_volume_cbm" value="{{ old('total_volume_cbm') }}">
-                            </div>
+
+                        <div class="form-group">
+                            <label>{{ translate('Freight') }}</label>
+                            <select class="form-control" name="freight_type">
+                                <option value="">{{ translate('Select Freight') }}</option>
+                                <option value="pre_paid" @selected(old('freight_type') === 'pre_paid')>{{ translate('Pre-Paid') }}</option>
+                                <option value="to_pay" @selected(old('freight_type') === 'to_pay')>{{ translate('To Pay') }}</option>
+                                <option value="fod" @selected(old('freight_type') === 'fod')>{{ translate('FOD') }}</option>
+                            </select>
+                            @error('freight_type') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="border-top pt-3">
@@ -1094,6 +1138,21 @@ span#picker-info-stock-badge {
                                     <div id="shipping-items" class="small text-muted">{{ translate('No shipping items added.') }}</div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label>{{ translate('Consignee Copy') }}</label>
+                            <select class="form-control" name="consignee_copy_status" id="consignee-copy-status">
+                                <option value="not_attached" @selected(old('consignee_copy_status', 'not_attached') === 'not_attached')>{{ translate('Not Attached') }}</option>
+                                <option value="attached" @selected(old('consignee_copy_status') === 'attached')>{{ translate('Attached') }}</option>
+                            </select>
+                            @error('consignee_copy_status') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group mb-0 d-none" id="consignee-copy-files-wrap">
+                            <label>{{ translate('LR / Consignee Copy Files') }}</label>
+                            <input type="file" class="form-control multi-file-input" name="cc_attachments[]" id="cc-attachments" multiple
+                                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#cc-attachment-names">
+                            <div class="selected-file-list mt-1" id="cc-attachment-names"></div>
+                            @error('cc_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                     </div>
                     </div>
@@ -1271,6 +1330,7 @@ span#picker-info-stock-badge {
             var cityUrl = @json(route('get-city'));
             var locationUrl = @json(route('get-location'));
             var csrf = @json(csrf_token());
+            var airCargoTypes = @json(\App\Support\ShippingPath::AIR_CARGO_TYPES);
             var lines = [];
             var currentProduct = null;
             var currentQuote = null;
@@ -1395,6 +1455,11 @@ span#picker-info-stock-badge {
                 $('#weight-kg-display').text((Math.round(kilograms * 1000000) / 1000000) + ' KG');
             }
 
+            function updateManualCbm() {
+                var cbm = ((Number($('#length-cm').val()) || 0) * (Number($('#width-cm').val()) || 0) * (Number($('#height-cm').val()) || 0)) / 1000000;
+                $('#manual-cbm-display').text(cbm.toFixed(6) + ' CBM');
+            }
+
             function updateOrderCodePreview() {
                 var $code = $('#order-code-letter');
                 var letter = String($code.val() || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 1);
@@ -1446,9 +1511,10 @@ span#picker-info-stock-badge {
                 var $list = $($input.data('list')).empty();
                 var files = Array.prototype.slice.call(input.files || []);
                 if (!files.length) {
-                    $list.html('<span class="text-muted">{{ translate('No files selected') }}</span>');
+                    $list.removeClass('has-files').empty();
                     return;
                 }
+                $list.addClass('has-files');
                 files.forEach(function (file, index) {
                     $list.append('<div class="selected-file-chip"><span class="text-truncate">' + escapeHtml(file.name) + '</span>'
                         + '<button type="button" class="btn btn-xs btn-soft-danger remove-selected-file" data-input="' + input.id + '" data-index="' + index + '" aria-label="{{ translate('Remove file') }}">&times;</button></div>');
@@ -1607,12 +1673,13 @@ span#picker-info-stock-badge {
             function applyCustomerShippingDefaults(customer) {
                 var method = customer.default_shipping_method || 'transport';
                 $('#shipping-method').val(method).trigger('change');
+                $('select[name="fod_mode"]').val(customer.default_transport_mode || 'surface').trigger('change');
 
                 if (method !== 'transport') return;
 
-                $('select[name="fod_mode"]').val(customer.default_transport_mode || 'surface').trigger('change');
                 $('#transport-id').val(customer.default_transport_id || '').trigger('change');
                 $('#booked-to-id').val(customer.default_booked_to_id || '');
+                $('#transport-surface-mode').data('old', customer.default_transport_surface_mode || 'road');
                 $('#transport-surface-mode').val(customer.default_transport_surface_mode || 'road');
                 var deliveryType = customer.default_delivery_type === 'transport_godown'
                     ? 'transport_warehouse'
@@ -1647,7 +1714,7 @@ span#picker-info-stock-badge {
 
             function usesPortLogistics() {
                 var mode = $('select[name="fod_mode"]').val();
-                return $('#shipping-method').val() === 'transport' && (mode === 'sea' || mode === 'air');
+                return $('#shipping-method').val() !== 'local' && (mode === 'sea' || mode === 'air');
             }
 
             function findLocation(kind, id) {
@@ -1754,6 +1821,8 @@ span#picker-info-stock-badge {
                 var active = usesPortLogistics();
                 var $fields = $('#international-logistics-fields');
 
+                $('#surface-route-fields').toggleClass('d-none', active);
+                $('#booked-to-wrap').toggleClass('d-none', active);
                 $fields.toggleClass('d-none', !active).find(':input').prop('disabled', !active);
                 if (!active) {
                     $('#loading-location-detail,#discharge-location-detail').addClass('d-none');
@@ -1874,20 +1943,29 @@ span#picker-info-stock-badge {
 
             function syncFinalDestination() {
                 var custom = $('#final-destination-type').val() === 'custom';
-                var active = usesPortLogistics();
                 var $customFields = $('#final-destination-custom-fields');
                 var destination = addressPlainText(selectedFinalDestinationAddress());
 
                 $customFields.toggleClass('d-none', !custom);
-                $customFields.find(':input').prop('disabled', !active || !custom);
+                $customFields.find(':input').prop('disabled', !custom);
                 $customFields.find('[name="final_destination_address"],[name="final_destination_country_id"],'
                     + '[name="final_destination_state_id"],[name="final_destination_city_id"],'
                     + '[name="final_destination_postal_code"],[name="final_destination_phone"]')
-                    .prop('required', active && custom);
-                $('#final-destination-value').prop('disabled', !active).val(destination);
+                    .prop('required', custom);
+                $('#final-destination-value').prop('disabled', false).val(destination);
                 $('#final-destination-preview').text(destination || (custom
                     ? '{{ translate('Enter the final destination address below.') }}'
                     : '{{ translate('Select the related customer address above.') }}'));
+            }
+
+            function syncSurfaceOrigin() {
+                var billing = findAddress($('input[name="billing_address_id"]:checked').val()) || {};
+                var shippingSame = $('input[name="shipping_same_as_billing"]:checked').val() === '1';
+                var shipping = shippingSame
+                    ? billing
+                    : (findAddress($('input[name="shipping_address_id"]:checked').val()) || billing);
+                $('#surface-loading-country').val(billing.country || '');
+                $('#surface-destination-country').val(shipping.country || billing.country || '');
             }
 
             function addressRadioHtml(address, name, label, checked) {
@@ -1994,6 +2072,7 @@ span#picker-info-stock-badge {
 
                     syncShippingMode();
                     syncFinalDestination();
+                    syncSurfaceOrigin();
                 });
             }
 
@@ -2664,7 +2743,9 @@ span#picker-info-stock-badge {
             }
 
             $('#weight-grams').on('input change', updateWeightDisplay);
+            $('#length-cm,#width-cm,#height-cm').on('input change', updateManualCbm);
             updateWeightDisplay();
+            updateManualCbm();
             $('#order-company-id,#order-code-letter,input[name="order_date"]').on('input change', updateOrderCodePreview);
             updateOrderCodePreview();
 
@@ -2924,6 +3005,10 @@ span#picker-info-stock-badge {
                 $('#courier-fields').toggleClass('d-none', value !== 'courier');
                 $('#transport-fields').toggleClass('d-none', value !== 'transport');
                 $('#local-fields').toggleClass('d-none', value !== 'local');
+                if (value === 'local' && $('select[name="fod_mode"]').val() !== 'surface') {
+                    $('select[name="fod_mode"]').val('surface');
+                }
+                syncSubModeOptions();
                 syncTransportLogistics();
                 if (value !== 'courier') {
                     shippingItems = shippingItems.filter(function (item) { return item.source !== 'courier'; });
@@ -2936,17 +3021,65 @@ span#picker-info-stock-badge {
             });
 
             $('#transport-id').on('change', function () {
-                var transportId = Number($(this).val());
-                var $bookedTo = $('#booked-to-id').empty();
-                var matches = bookedToOptions.filter(function (option) {
-                    return Number(option.transport_id) === transportId;
-                });
-                $bookedTo.append('<option value="">' + (transportId ? '{{ translate('Select Booked To') }}' : '{{ translate('Select transport first') }}') + '</option>');
-                matches.forEach(function (option) {
-                    $bookedTo.append('<option value="' + option.id + '">' + escapeHtml(option.name) + '</option>');
-                });
-                $bookedTo.prop('disabled', !transportId);
+                fillBookedLocationSelect($('#booked-from-id'), Number($(this).val()), '{{ translate('Select Source (From)') }}');
+                fillBookedLocationSelect($('#booked-to-id'), Number($(this).val()), '{{ translate('Select Booked To') }}');
             });
+
+            function fillBookedLocationSelect($select, transportId, readyPlaceholder) {
+                if (!$select.length) {
+                    return;
+                }
+                var selected = String($select.data('selected') || $select.val() || '');
+                var matches = bookedToOptions.filter(function (option) {
+                    return Number(option.transport_id) === Number(transportId);
+                });
+                $select.empty().append('<option value="">' + (transportId ? readyPlaceholder : '{{ translate('Select transport first') }}') + '</option>');
+                matches.forEach(function (option) {
+                    $select.append('<option value="' + option.id + '">' + escapeHtml(option.name) + '</option>');
+                });
+                $select.prop('disabled', !transportId);
+                if (selected && matches.some(function (option) { return String(option.id) === selected; })) {
+                    $select.val(selected);
+                } else {
+                    $select.val('');
+                }
+                $select.data('selected', $select.val() || '');
+            }
+
+            $('#booked-from-id,#booked-to-id').on('change', function () {
+                $(this).data('selected', $(this).val() || '');
+            });
+                var mode = $('select[name="fod_mode"]').val();
+                var $select = $('#transport-surface-mode');
+                var current = String($select.data('old') || $select.val() || '');
+                var options = [];
+                var label = '{{ translate('Surface Mode') }}';
+                if (mode === 'sea') {
+                    label = '{{ translate('Shipment Type') }}';
+                    options = [{ value: 'lcl', label: 'LCL' }, { value: 'fcl', label: 'FCL' }];
+                } else if (mode === 'air') {
+                    label = '{{ translate('Shipment Type') }}';
+                    Object.keys(airCargoTypes).forEach(function (key) {
+                        options.push({ value: key, label: airCargoTypes[key] });
+                    });
+                } else {
+                    options = [
+                        { value: 'road', label: '{{ translate('Road') }}' },
+                        { value: 'train', label: '{{ translate('Train') }}' }
+                    ];
+                }
+                $('#transport-surface-mode-label').text(label);
+                $select.prop('disabled', false).empty();
+                options.forEach(function (option) {
+                    $select.append($('<option></option>').val(option.value).text(option.label));
+                });
+                if (options.some(function (option) { return option.value === current; })) {
+                    $select.val(current);
+                } else {
+                    $select.val(options[0] ? options[0].value : '');
+                }
+                $select.data('old', $select.val());
+            }
 
             function filterTransportsByMode(mode) {
                 var $transport = $('#transport-id');
@@ -2969,12 +3102,17 @@ span#picker-info-stock-badge {
             }
 
             $('select[name="fod_mode"]').on('change', function () {
-                var isSurface = $(this).val() === 'surface';
+                if ($('#shipping-method').val() === 'local' && $(this).val() !== 'surface') {
+                    $(this).val('surface');
+                }
                 filterTransportsByMode($(this).val());
-                $('#transport-surface-mode-fields').toggleClass('d-none', !isSurface);
-                $('#transport-surface-mode').prop('disabled', !isSurface);
+                syncSubModeOptions();
                 syncTransportLogistics();
             }).trigger('change');
+
+            $('#transport-surface-mode').on('change', function () {
+                $(this).data('old', $(this).val() || '');
+            });
 
             $('#final-destination-type').on('change', syncFinalDestination);
 
@@ -2995,6 +3133,7 @@ span#picker-info-stock-badge {
             $(document).on('change', 'input[name="billing_address_id"]', function () {
                 syncShippingSamePreview();
                 syncFinalDestination();
+                syncSurfaceOrigin();
                 refreshSummary();
                 if ($('#shipping-method').val() === 'courier' && $('#courier-provider').val()) loadCourierServices();
             });
@@ -3006,6 +3145,7 @@ span#picker-info-stock-badge {
                 }
                 syncShippingMode();
                 syncFinalDestination();
+                syncSurfaceOrigin();
                 refreshSummary();
                 if ($('#shipping-method').val() === 'courier' && $('#courier-provider').val()) loadCourierServices();
             });
@@ -3060,7 +3200,7 @@ span#picker-info-stock-badge {
                 }
                 if (shippingMethod === 'transport') {
                     var hasTransport = $('#transport-id').val() || $.trim($('input[name="transport_name"]').val());
-                    var hasBookedTo = $('#booked-to-id').val() || $.trim($('input[name="booked_to_name"]').val());
+                    var hasBookedTo = usesPortLogistics() || $('#booked-to-id').val() || $.trim($('input[name="booked_to_name"]').val());
                     if (!hasTransport || !hasBookedTo) {
                         event.preventDefault();
                         notify('warning', '{{ translate('Please select a transport provider and booked-to destination.') }}');
@@ -3074,6 +3214,7 @@ span#picker-info-stock-badge {
             });
 
             applyCustomerInvoiceType({type_option: 'domestic'});
+            $('#shipping-method').trigger('change');
         })();
     </script>
 @endsection

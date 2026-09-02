@@ -101,6 +101,25 @@
                                 @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
 
+                            <div class="form-group">
+                                <label>{{ translate('Transport Mode') }}</label>
+                                <select class="form-control" name="fod_mode" id="edit-fod-mode">
+                                    <option value="surface" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode ?: 'surface') === 'surface')>{{ translate('Surface') }}</option>
+                                    <option value="sea" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode) === 'sea')>{{ translate('Sea') }}</option>
+                                    <option value="air" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode) === 'air')>{{ translate('Air') }}</option>
+                                </select>
+                                @error('fod_mode') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="form-group" id="edit-transport-surface-mode-wrap">
+                                <label id="edit-surface-mode-label">{{ translate('Surface Mode') }}</label>
+                                <select class="form-control" name="transport_surface_mode" id="edit-transport-surface-mode"
+                                    data-old="{{ old('transport_surface_mode', $order->transport_surface_mode) }}">
+                                    <option value="road" @selected(old('transport_surface_mode', $order->transport_surface_mode ?: 'road') === 'road')>{{ translate('Road') }}</option>
+                                    <option value="train" @selected(old('transport_surface_mode', $order->transport_surface_mode) === 'train')>{{ translate('Train') }}</option>
+                                </select>
+                                @error('transport_surface_mode') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+
                             @if($shippingChoice === 'transport')
                                 <div class="form-group">
                                     <label>{{ translate('Transport') }}</label>
@@ -113,28 +132,12 @@
                                     @error('transport_id') <div class="text-danger small">{{ $message }}</div> @enderror
                                 </div>
 
-                                <div class="row gutters-10">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>{{ translate('Transport Mode') }}</label>
-                                            <select class="form-control" name="fod_mode" id="edit-fod-mode">
-                                                <option value="surface" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode ?: 'surface') === 'surface')>{{ translate('Surface') }}</option>
-                                                <option value="air" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode) === 'air')>{{ translate('Air') }}</option>
-                                                <option value="sea" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode) === 'sea')>{{ translate('Sea') }}</option>
-                                            </select>
-                                            @error('fod_mode') <div class="text-danger small">{{ $message }}</div> @enderror
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group" id="edit-transport-surface-mode-wrap">
-                                            <label>{{ translate('Surface Mode') }}</label>
-                                            <select class="form-control" name="transport_surface_mode" id="edit-transport-surface-mode">
-                                                <option value="road" @selected(old('transport_surface_mode', $order->transport_surface_mode ?: 'road') === 'road')>{{ translate('Road') }}</option>
-                                                <option value="train" @selected(old('transport_surface_mode', $order->transport_surface_mode) === 'train')>{{ translate('Train') }}</option>
-                                            </select>
-                                            @error('transport_surface_mode') <div class="text-danger small">{{ $message }}</div> @enderror
-                                        </div>
-                                    </div>
+                                <div class="form-group">
+                                    <label>{{ translate('Source (From)') }}</label>
+                                    <select class="form-control" name="booked_from_id" id="edit-booked-from-id" data-selected="{{ (string) old('booked_from_id', $order->booked_from_id) }}">
+                                        <option value="">{{ translate('Select transport first') }}</option>
+                                    </select>
+                                    @error('booked_from_id') <div class="text-danger small">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="form-group">
@@ -226,7 +229,7 @@
                                 </div>
                             @endif
 
-                            @if($shippingChoice === 'transport')
+                            @if($shippingChoice !== 'local')
                                 <input type="hidden" name="loading_location_type" id="edit-loading-location-type" value="{{ old('loading_location_type', $order->loading_location_type ?: ($order->fod_mode ?: 'sea')) }}">
                                 <input type="hidden" name="discharge_location_type" id="edit-discharge-location-type" value="{{ old('discharge_location_type', $order->discharge_location_type ?: ($order->fod_mode ?: 'sea')) }}">
 
@@ -276,14 +279,14 @@
                                             @error('discharge_airport_id') <div class="text-danger small">{{ $message }}</div> @enderror
                                         </div>
                                     </div>
-
-                                    <div class="form-group">
-                                        <label>{{ translate('Final Destination') }}</label>
-                                        <input type="text" class="form-control" name="final_destination" value="{{ old('final_destination', $order->final_destination) }}">
-                                        @error('final_destination') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
                                 </div>
                             @endif
+
+                            <div class="form-group">
+                                <label>{{ translate('Final Destination') }}</label>
+                                <input type="text" class="form-control" name="final_destination" value="{{ old('final_destination', $order->final_destination) }}">
+                                @error('final_destination') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
 
                             <div class="form-group">
                                 <label>{{ translate('Freight') }}</label>
@@ -528,6 +531,7 @@
             var courierRatesUrl = @json(route('orders.create.courier_rates'));
             var orderId = @json($order->id);
             var csrf = @json(csrf_token());
+            var airCargoTypes = @json(\App\Support\ShippingPath::AIR_CARGO_TYPES);
             var bookedToOptions = @json($bookedToOptions->map(function ($option) {
                 return ['id' => (string) $option->id, 'transport_id' => (string) $option->transport_id, 'name' => $option->name];
             })->values());
@@ -643,37 +647,73 @@
                 if (shippingChoice !== 'transport') {
                     return;
                 }
+                fillEditBookedLocation($('#edit-booked-from-id'), '{{ translate('Select Source (From)') }}');
+                fillEditBookedLocation($('#edit-booked-to-id'), '{{ translate('Select Booked To') }}');
+            }
+
+            function fillEditBookedLocation($select, readyPlaceholder) {
+                if (!$select.length) {
+                    return;
+                }
                 var transportId = String($('#edit-transport-id').val() || '');
-                var $bookedTo = $('#edit-booked-to-id');
-                var selected = String($bookedTo.data('selected') || $bookedTo.val() || '');
+                var selected = String($select.data('selected') || $select.val() || '');
                 var matches = bookedToOptions.filter(function (option) {
                     return String(option.transport_id) === transportId;
                 });
-                $bookedTo.empty();
-                $bookedTo.append('<option value="">' + (transportId ? '{{ translate('Select Booked To') }}' : '{{ translate('Select transport first') }}') + '</option>');
+                $select.empty();
+                $select.append('<option value="">' + (transportId ? readyPlaceholder : '{{ translate('Select transport first') }}') + '</option>');
                 matches.forEach(function (option) {
-                    $bookedTo.append('<option value="' + option.id + '">' + escapeHtml(option.name) + '</option>');
+                    $select.append('<option value="' + option.id + '">' + escapeHtml(option.name) + '</option>');
                 });
-                $bookedTo.prop('disabled', !transportId);
+                $select.prop('disabled', !transportId);
                 if (selected && matches.some(function (option) { return String(option.id) === selected; })) {
-                    $bookedTo.val(selected);
+                    $select.val(selected);
                 } else if (selected) {
-                    $bookedTo.val('');
+                    $select.val('');
                 }
-                $bookedTo.data('selected', $bookedTo.val() || '');
+                $select.data('selected', $select.val() || '');
             }
 
             function syncSurfaceMode() {
-                if (shippingChoice !== 'transport') {
+                var mode = $('#edit-fod-mode').val();
+                var $select = $('#edit-transport-surface-mode');
+                if (!$select.length) {
                     return;
                 }
-                var isSurface = $('#edit-fod-mode').val() === 'surface';
-                $('#edit-transport-surface-mode-wrap').toggleClass('d-none', !isSurface);
-                $('#edit-transport-surface-mode').prop('disabled', !isSurface);
+                var current = String($select.data('old') || $select.val() || '');
+                var options = [];
+                var label = '{{ translate('Surface Mode') }}';
+                if (mode === 'sea') {
+                    label = '{{ translate('Shipment Type') }}';
+                    options = [{ value: 'lcl', label: 'LCL' }, { value: 'fcl', label: 'FCL' }];
+                } else if (mode === 'air') {
+                    label = '{{ translate('Shipment Type') }}';
+                    Object.keys(airCargoTypes).forEach(function (key) {
+                        options.push({ value: key, label: airCargoTypes[key] });
+                    });
+                } else {
+                    options = [
+                        { value: 'road', label: '{{ translate('Road') }}' },
+                        { value: 'train', label: '{{ translate('Train') }}' }
+                    ];
+                }
+                $('#edit-surface-mode-label').text(label);
+                $select.empty();
+                options.forEach(function (option) {
+                    $select.append($('<option></option>').val(option.value).text(option.label));
+                });
+                if (options.some(function (option) { return option.value === current; })) {
+                    $select.val(current);
+                } else {
+                    $select.val(options[0] ? options[0].value : '');
+                }
+                $select.data('old', $select.val());
+                $select.prop('disabled', false);
+                $('#edit-transport-surface-mode-wrap').removeClass('d-none');
             }
 
             function syncPortLogistics() {
-                if (shippingChoice !== 'transport') {
+                if (shippingChoice === 'local') {
                     return;
                 }
                 var mode = $('#edit-fod-mode').val();
@@ -691,12 +731,18 @@
             $('#edit-shipping-cost-type').on('change', syncShippingCost);
             $('#edit-weight-grams').on('input change', updateWeightDisplay);
             $('#edit-transport-id').on('change', filterBookedTo);
-            $('#edit-booked-to-id').on('change', function () {
+            $('#edit-booked-to-id,#edit-booked-from-id').on('change', function () {
                 $(this).data('selected', $(this).val() || '');
             });
             $('#edit-fod-mode').on('change', function () {
+                if (shippingChoice === 'local' && $(this).val() !== 'surface') {
+                    $(this).val('surface');
+                }
                 syncSurfaceMode();
                 syncPortLogistics();
+            });
+            $('#edit-transport-surface-mode').on('change', function () {
+                $(this).data('old', $(this).val() || '');
             });
             $('#edit-courier-provider').on('change', function () {
                 $('#edit-courier-service').data('selected', '');

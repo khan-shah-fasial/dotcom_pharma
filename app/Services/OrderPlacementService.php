@@ -19,6 +19,7 @@ use App\Models\Transport;
 use App\Models\Airport;
 use App\Models\SeaPort;
 use App\Support\InvoiceType;
+use App\Support\ShippingPath;
 use App\Models\User;
 use App\Utility\CartUtility;
 use App\Utility\EmailUtility;
@@ -238,7 +239,7 @@ class OrderPlacementService
         $isInternational = $invoiceType === InvoiceType::INTERNATIONAL;
         $shippingChoice = $request->input('shipping_method') ?: 'courier';
         $usesPortLogistics = $isBackendOrder
-            && $shippingChoice === 'transport'
+            && $shippingChoice !== 'local'
             && in_array($request->input('fod_mode'), ['sea', 'air'], true);
         if ($isBackendOrder) {
             if (!array_key_exists((string) $deliveryTerm, InvoiceType::deliveryTerms($invoiceType))) {
@@ -251,6 +252,7 @@ class OrderPlacementService
 
         $transport = null;
         $bookedTo = null;
+        $bookedFrom = null;
         $localDeliveryPartner = null;
         $courierMethod = null;
 
@@ -260,15 +262,16 @@ class OrderPlacementService
                 $this->fail('transport_id', translate('The selected transport does not support this transport mode.'));
             }
             $transportAndBookedToAreSame = $this->transportAndBookedToAreSame($request, $transport);
-            $bookedTo = $transportAndBookedToAreSame ? null : $this->resolveBookedTo($request, $transport);
-            if (!$transport || (!$bookedTo && !$transportAndBookedToAreSame)) {
+            $bookedTo = $transportAndBookedToAreSame ? null : $this->resolveBookedLocation($request, $transport, 'booked_to_id', 'booked_to_name');
+            $bookedFrom = $this->resolveBookedLocation($request, $transport, 'booked_from_id', 'booked_from_name');
+            if (!$transport || (!$usesPortLogistics && !$bookedTo && !$transportAndBookedToAreSame)) {
                 $this->fail('booked_to_id', translate('Please select a transport provider and its booked-to destination.'));
             }
             if (!in_array($request->input('fod_mode'), ['air', 'sea', 'surface'], true)) {
                 $this->fail('fod_mode', translate('Please select a transport mode.'));
             }
-            if ($request->input('fod_mode') === 'surface' && !in_array($request->input('transport_surface_mode'), ['road', 'train'], true)) {
-                $this->fail('transport_surface_mode', translate('Please select Road or Train for Surface transport.'));
+            if (!ShippingPath::isValidSubMode($request->input('fod_mode'), $request->input('transport_surface_mode'))) {
+                $this->fail('transport_surface_mode', translate('Please select a valid mode for this transport path.'));
             }
             if (!$isBackendOrder && !in_array($deliveryTerm, ['door_delivery', 'our_warehouse_delivery', 'hand_delivery', 'transport_warehouse', 'transport_godown'], true)) {
                 $this->fail('transport_delivery_type', translate('Please select a delivery type.'));
@@ -282,6 +285,18 @@ class OrderPlacementService
             $courierMethod = ShippingMethod::where('is_active', 1)->find($request->input('shipping_method_id'));
             if (!$courierMethod || !$request->filled('courier_service')) {
                 $this->fail('courier_service', translate('Please select a courier provider and service.'));
+            }
+        }
+
+        if ($isBackendOrder) {
+            if ($shippingChoice === 'local') {
+                $request->merge(['fod_mode' => 'surface']);
+            }
+            if (!in_array($request->input('fod_mode'), ['air', 'sea', 'surface'], true)) {
+                $this->fail('fod_mode', translate('Please select a transport mode.'));
+            }
+            if (!ShippingPath::isValidSubMode($request->input('fod_mode'), $request->input('transport_surface_mode'))) {
+                $this->fail('transport_surface_mode', translate('Please select a valid mode for this transport path.'));
             }
         }
 
@@ -299,13 +314,20 @@ class OrderPlacementService
         $order->shipping_by = $shippingChoice === 'courier'
             ? $courierMethod->slug
             : ($shippingChoice === 'transport' ? optional($transport)->name : optional($localDeliveryPartner)->name);
-        $order->fod_mode = $shippingChoice === 'transport' ? $request->fod_mode : null;
+        $order->fod_mode = $isBackendOrder
+            ? $request->input('fod_mode')
+            : ($shippingChoice === 'transport' ? $request->fod_mode : null);
         $order->shipping_courier_id = $shippingChoice === 'courier' ? $request->courier_service : null;
         $order->transport_id = optional($transport)->id;
         $order->booked_to_id = optional($bookedTo)->id;
+        if (Schema::hasColumn($order->getTable(), 'booked_from_id')) {
+            $order->booked_from_id = optional($bookedFrom)->id;
+        }
         $order->local_delivery_partner_id = optional($localDeliveryPartner)->id;
-        $order->transport_mode = $shippingChoice === 'transport' ? $request->fod_mode : null;
-        $order->transport_surface_mode = ($shippingChoice === 'transport' && $request->fod_mode === 'surface') ? $request->transport_surface_mode : null;
+        $order->transport_mode = $order->fod_mode;
+        $order->transport_surface_mode = $isBackendOrder
+            ? $request->input('transport_surface_mode')
+            : (($shippingChoice === 'transport' && $request->fod_mode === 'surface') ? $request->transport_surface_mode : null);
         $normalizedDeliveryTerm = $deliveryTerm === 'transport_godown' ? 'transport_warehouse' : $deliveryTerm;
         $order->transport_delivery_type = $isBackendOrder || $shippingChoice === 'transport'
             ? $normalizedDeliveryTerm
@@ -325,7 +347,7 @@ class OrderPlacementService
         $order->discharge_airport_id = $usesPortLogistics && $request->input('discharge_location_type') === 'air'
             ? $request->input('discharge_airport_id')
             : null;
-        $order->final_destination = $usesPortLogistics
+        $order->final_destination = $isBackendOrder
             ? $this->nullableTrimmed($request->input('final_destination'))
             : null;
         $order->carrier_tax_number = $this->nullableTrimmed($request->input('carrier_tax_number'));
@@ -1543,33 +1565,38 @@ class OrderPlacementService
 
     protected function resolveBookedTo(Request $request, ?Transport $transport): ?BookedTo
     {
+        return $this->resolveBookedLocation($request, $transport, 'booked_to_id', 'booked_to_name');
+    }
+
+    protected function resolveBookedLocation(Request $request, ?Transport $transport, string $idKey, string $nameKey): ?BookedTo
+    {
         if (!$transport) {
             return null;
         }
 
-        $id = (int) $request->input('booked_to_id');
+        $id = (int) $request->input($idKey);
         if ($id > 0) {
-            $bookedTo = BookedTo::where('transport_id', $transport->id)->where('id', $id)->first();
-            if ($bookedTo) {
-                return $bookedTo;
+            $location = BookedTo::where('transport_id', $transport->id)->where('id', $id)->first();
+            if ($location) {
+                return $location;
             }
         }
 
-        $location = trim((string) $request->input('booked_to_name'));
-        if ($location === '') {
+        $name = trim((string) $request->input($nameKey));
+        if ($name === '') {
             return null;
         }
 
-        $bookedTo = BookedTo::where('transport_id', $transport->id)
-            ->whereRaw('LOWER(name) = ?', [strtolower($location)])
+        $location = BookedTo::where('transport_id', $transport->id)
+            ->whereRaw('LOWER(name) = ?', [strtolower($name)])
             ->first();
-        if ($bookedTo) {
-            return $bookedTo;
+        if ($location) {
+            return $location;
         }
 
         return BookedTo::create([
             'transport_id' => $transport->id,
-            'name' => $this->capitalizeFirst($location),
+            'name' => $this->capitalizeFirst($name),
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);

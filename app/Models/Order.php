@@ -63,6 +63,11 @@ class Order extends Model
         return $this->belongsTo(BookedTo::class, 'booked_to_id');
     }
 
+    public function bookedFrom()
+    {
+        return $this->belongsTo(BookedTo::class, 'booked_from_id');
+    }
+
     public function localDeliveryPartner()
     {
         return $this->belongsTo(LocalDeliveryPartner::class);
