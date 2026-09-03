@@ -3049,6 +3049,8 @@ span#picker-info-stock-badge {
             $('#booked-from-id,#booked-to-id').on('change', function () {
                 $(this).data('selected', $(this).val() || '');
             });
+
+            function syncSubModeOptions() {
                 var mode = $('select[name="fod_mode"]').val();
                 var $select = $('#transport-surface-mode');
                 var current = String($select.data('old') || $select.val() || '');
