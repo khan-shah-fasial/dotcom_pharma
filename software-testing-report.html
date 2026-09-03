@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QA Report — Admin Add Order (orders/create)</title>
+    <style>
+        :root { --bg:#f4f6f8; --ink:#1c2330; --muted:#5b6575; --line:#dbe1e8; --pass:#157347; --fail:#b42318; --crit:#7a1210; --high:#c2410c; --med:#b45309; --low:#3b5bdb; --blocked:#c2410c; --nt:#5b6575; --header:#142033; }
+        * { box-sizing: border-box; }
+        body { margin:0; font-family: "Segoe UI", Tahoma, sans-serif; color:var(--ink); background:var(--bg); line-height:1.45; }
+        .wrap { max-width:1120px; margin:0 auto; padding:24px 16px 48px; }
+        header.hero { background:var(--header); color:#fff; padding:28px 24px; border-radius:12px; }
+        header.hero h1 { margin:0 0 8px; font-size:1.6rem; }
+        header.hero p { margin:4px 0; color:#c9d4e5; }
+        .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+        .status-pass,.s-pass { background:#d1fae5; color:var(--pass); }
+        .status-fail,.s-fail { background:#fee2e2; color:var(--fail); }
+        .status-blocked,.s-blocked { background:#ffedd5; color:var(--blocked); }
+        .status-nt,.s-nt { background:#e5e7eb; color:var(--nt); }
+        .sev-critical { background:#fee2e2; color:var(--crit); }
+        .sev-high { background:#ffedd5; color:var(--high); }
+        .sev-medium { background:#fef3c7; color:var(--med); }
+        .sev-low { background:#dbe4ff; color:var(--low); }
+        .open { background:#fee2e2; color:var(--fail); }
+        .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:18px 0; }
+        .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; }
+        .card strong { display:block; font-size:1.4rem; }
+        .card span { color:var(--muted); font-size:13px; }
+        h2 { margin:32px 0 10px; font-size:1.2rem; border-bottom:2px solid var(--header); padding-bottom:6px; }
+        table { width:100%; border-collapse:collapse; background:#fff; font-size:13px; }
+        th, td { border:1px solid var(--line); padding:8px 8px; vertical-align:top; text-align:left; }
+        th { background:#eef2f6; }
+        tbody tr:nth-child(even) { background:#f8fafc; }
+        .rec { font-family: Consolas, "Courier New", monospace; font-size:12px; white-space:pre-wrap; }
+        .dash { color:var(--muted); }
+        footer { margin-top:28px; color:var(--muted); font-size:12px; }
+        @media print { body { background:#fff; } header.hero { break-inside:avoid; } }
+        @media (max-width:700px) { table { display:block; overflow-x:auto; } }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header class="hero">
+        <h1>Software Testing Report — Admin Add Order</h1>
+        <p>Project: Pharm Vet Easy (DotCom Pharma)</p>
+        <p>Scope: <code>/admin/orders/create</code> (route <code>orders.create</code>, view <code>backend.sales.create</code>)</p>
+        <p>Testing date: 3 September 2026 &nbsp;|&nbsp; Environment: Local (<code>http://127.0.0.1:8000</code>, APP_ENV=local)</p>
+        <p>Overall status: <span class="badge sev-high">Needs Fixes and Retesting</span> &nbsp; Overall score: <strong>84%</strong></p>
+        <p>Live session (3 Sep 2026, ~11:42–11:48): authenticated as Web Developer (admin). Happy-path create succeeded: order <code>C-00001-S-26-27-1</code> for NEW UNISONS PHARMA / DOTFEROL 450gm, unpaid, local delivery.</p>
+    </header>
+
+    <section>
+        <h2>1. Project Information</h2>
+        <table>
+            <tr><th>Item</th><th>Detail</th></tr>
+            <tr><td>Application</td><td>Laravel ecommerce / B2B pharmacy CMS</td></tr>
+            <tr><td>Module under test</td><td>Admin Add Order — <code>OrderController@create</code> / <code>store</code> with <code>backend_add_order=1</code>, plus quote/summary/search JSON helpers</td></tr>
+            <tr><td>Primary files</td><td><code>app/Http/Controllers/OrderController.php</code>, <code>app/Services/OrderPlacementService.php</code>, <code>resources/views/backend/sales/create.blade.php</code>, <code>routes/admin.php</code></td></tr>
+            <tr><td>Inputs used</td><td>Codebase + local DB + artisan serve + authenticated Chrome session on <code>/admin/orders/create</code>.</td></tr>
+            <tr><td>Auth</td><td>User logged in as Web Developer (admin) with <code>add_order</code>. Guest redirect was tested earlier; live create used this session.</td></tr>
+            <tr><td>Live order created</td><td><code>C-00001-S-26-27-1</code> — customer 2572 (NEW UNISONS PHARMA), billing address 27, DOTFEROL qty 1, 10% additional discount, local partner Blinkit, unpaid, notifications off. This row remains in the database (not rolled back).</td></tr>
+        </table>
+    </section>
+
+    <section>
+        <h2>2. Testing Summary</h2>
+        <div class="cards">
+            <div class="card"><strong>84%</strong><span>Weighted score (tested categories)</span></div>
+            <div class="card"><strong>0</strong><span>Critical bugs</span></div>
+            <div class="card"><strong>3</strong><span>High bugs</span></div>
+            <div class="card"><strong>9</strong><span>Open issues total</span></div>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Testing Type</th><th>Total</th><th>Passed</th><th>Failed</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Functional Testing</td><td>19</td><td>18</td><td>1</td><td><span class="badge s-fail">Fail</span></td></tr>
+                <tr><td>Security Testing</td><td>10</td><td>8</td><td>2</td><td><span class="badge s-fail">Fail</span></td></tr>
+                <tr><td>UI/UX Testing</td><td>6</td><td>5</td><td>1</td><td><span class="badge s-fail">Fail</span></td></tr>
+                <tr><td>Performance Testing</td><td>2</td><td>0</td><td>1</td><td><span class="badge s-fail">Fail</span> (1 Not Tested excluded from pass rate)</td></tr>
+                <tr><td>SEO Testing</td><td>1</td><td>0</td><td>0</td><td><span class="badge s-nt">Not Applicable</span></td></tr>
+                <tr><td>Content Testing</td><td>3</td><td>3</td><td>0</td><td><span class="badge s-pass">Pass</span></td></tr>
+                <tr><td>Compatibility Testing</td><td>7</td><td>1</td><td>0</td><td><span class="badge s-nt">Partial</span></td></tr>
+                <tr><td>API Testing</td><td>6</td><td>6</td><td>0</td><td><span class="badge s-pass">Pass</span></td></tr>
+                <tr><td>Database Testing</td><td>14</td><td>12</td><td>2</td><td><span class="badge s-fail">Fail</span></td></tr>
+                <tr><td>Production / Deployment Testing</td><td>4</td><td>2</td><td>1</td><td><span class="badge s-fail">Fail</span> (1 Not Tested)</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>3. Functional Testing</h2>
+        <table>
+            <thead><tr><th>ID</th><th>Module</th><th>Test Case</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>FT-001</td><td>Auth</td><td>Guest GET /admin/orders/create redirects to login</td><td><span class="badge s-pass">Pass</span></td><td>Critical</td><td class="dash">-</td></tr>
+                <tr><td>FT-002</td><td>Add Order</td><td>Create view renders with CSRF, backend_add_order, customer/product UI, Create Order button</td><td><span class="badge s-pass">Pass</span></td><td>Critical</td><td class="dash">-</td></tr>
+                <tr><td>FT-003</td><td>Customer</td><td>Approved-customer search returns JSON (20 rows, q=a)</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-004</td><td>Customer</td><td>Addresses endpoint returns addresses for customer 426 (2 addresses)</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-005</td><td>Products</td><td>Product search returns published products (20) without hidden stocks</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-006</td><td>Quote</td><td>Product quote succeeds for approved customer + valid batch</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-007</td><td>Summary</td><td>Summary endpoint / summarizeBackendRequest returns totals</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-008</td><td>Order No</td><td>Number preview with company_id returns C-00001-S-26-27-1</td><td><span class="badge s-pass">Pass</span></td><td>Medium</td><td class="dash">-</td></tr>
+                <tr><td>FT-009</td><td>Validation</td><td>Summary with empty items fails</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-010</td><td>Store</td><td>store() with only backend_add_order fails: “Please select an approved customer.”</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-011</td><td>Create</td><td>placeFromBackendRequest creates combined order, order, details (code allocated, then rolled back)</td><td><span class="badge s-pass">Pass</span></td><td>Critical</td><td class="dash">-</td></tr>
+                <tr><td>FT-012</td><td>Scheme</td><td>base_sale_price 0 is treated as manual scheme / free line</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-013</td><td>Shipping</td><td>Client requires courier provider+service; transport requires provider+booked-to</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-014</td><td>Shipping</td><td>Local delivery submit: preventDefault without return — form can still submit</td><td><span class="badge s-fail">Fail</span></td><td>Medium</td><td class="rec">resources/views/backend/sales/create.blade.php → #backend-order-form submit handler → after preventDefault for missing local partner, add return;</td></tr>
+                <tr><td>FT-015</td><td>Discount</td><td>Discount typed but additional_discount_enabled=0 is not applied</td><td><span class="badge s-pass">Pass</span></td><td>Medium</td><td class="dash">-</td></tr>
+                <tr><td>FT-016</td><td>Terms</td><td>Domestic customer rejects international payment term advance_tt</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-017</td><td>Quote</td><td>Negative sale rate rejected</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-018</td><td>Shipping</td><td>GST-exclusive shipping 100 increases shipping and grand total</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>FT-019</td><td>Paid flag</td><td>payment_status=paid persists on order and line</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>4. Bug / Issue Report</h2>
+        <table>
+            <thead><tr><th>Bug ID</th><th>Module</th><th>Issue</th><th>Severity</th><th>Status</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>BUG-001</td><td>Pricing / stock</td><td>Confirmed Issue: A published product (id 3) quotes MRP 427.5 but sale_price 0. Placement still creates a non-scheme line, deducts batch qty, and can be marked paid with grand_total 0.</td>
+                    <td><span class="badge sev-high">High</span></td><td><span class="badge open">Open</span></td>
+                    <td class="rec">OrderPlacementService.php → buildBackendLines() → Reject paid lines with sale_price &lt;= 0 unless is_manual_scheme is explicit. Optionally warn in create.blade.php picker when quoted sale is 0.</td>
+                </tr>
+                <tr>
+                    <td>BUG-002</td><td>Credit</td><td>Confirmed Issue: Customer search returns credit_limit / credit_status / credit_days, but OrderPlacementService never checks credit before placing a backend order.</td>
+                    <td><span class="badge sev-high">High</span></td><td><span class="badge open">Open</span></td>
+                    <td class="rec">OrderPlacementService.php → placeFromBackendRequest() → Enforce credit_status/limit (or an explicit override checkbox) before writeOrderDetails().</td>
+                </tr>
+                <tr>
+                    <td>BUG-003</td><td>Company</td><td>Confirmed Issue: store() requires company_id (exists:companies) and merges order_company_code into the number, but orders has no company_id column and the service never stores the selected company as a foreign key.</td>
+                    <td><span class="badge sev-medium">Medium</span></td><td><span class="badge open">Open</span></td>
+                    <td class="rec">If the company must be auditable, add persistence (schema change only if the user requests a migration) or store company code on a dedicated order column. Today the only durable link is the code prefix (e.g. C-00001-S-26-27-1).</td>
+                </tr>
+                <tr>
+                    <td>BUG-004</td><td>UI</td><td>Confirmed Issue: Local delivery client validation calls preventDefault but does not return, so Create Order still submits.</td>
+                    <td><span class="badge sev-medium">Medium</span></td><td><span class="badge open">Open</span></td>
+                    <td class="rec">create.blade.php → submit handler (~line 3212) → add return; Server-side resolveLocalDeliveryPartner still blocks empty partner.</td>
+                </tr>
+                <tr>
+                    <td>BUG-005</td><td>Attachments</td><td>Confirmed Issue: Files are stored to disk before placeFromBackendRequest(); order attachments are created after the placement transaction. A mid-loop failure can leave an order without all files (files are deleted only on placement exceptions).</td>
+                    <td><span class="badge sev-medium">Medium</span></td><td><span class="badge open">Open</span></td>
+                    <td class="rec">OrderController.php → store() → Create attachments inside the same DB transaction as placement, or move file+row writes into OrderPlacementService.</td>
+                </tr>
+                <tr>
+                    <td>BUG-006</td><td>Transactions</td><td>Confirmed Issue: runAfterPlacementHooks (email, wallet reward, notifications) runs after DB::transaction commits. Paid-order side effects are not rolled back with the order.</td>
+                    <td><span class="badge sev-medium">Medium</span></td><td><span class="badge open">Open</span></td>
+                    <td class="rec">OrderPlacementService.php → placeFromLines() → Keep financial side effects in-transaction or dispatch queued jobs only after a successful commit with idempotency keys.</td>
+                </tr>
+                <tr>
+                    <td>BUG-007</td><td>XSS</td><td>Confirmed Issue: Line hidden inputs concatenate fieldValue without escapeHtml. A quote in variation/base_sale_price can break the form or inject markup.</td>
+                    <td><span class="badge sev-medium">Medium</span></td><td><span class="badge open">Open</span></td>
+                    <td class="rec">create.blade.php → renderLines() hidden input builder → escape attribute values (escapeHtml) the same way visible cells are escaped.</td>
+                </tr>
+                <tr>
+                    <td>BUG-008</td><td>GST / discount</td><td>Confirmed Issue (live): 10% additional discount of 11.900 reduced taxable value to 107.100 but GST stayed 5.950 (5% of the pre-discount 119). Grand total 113.050. Same numbers on the order show page Final column.</td>
+                    <td><span class="badge sev-high">High</span></td><td><span class="badge open">Open</span></td>
+                    <td class="rec">OrderPlacementService.php → applyBackendAdditionalDiscount() / summarizeLines() → Recalculate line GST from the discounted taxable amount (or document that additional discount is post-GST and stop labeling 107.100 as Taxable Value).</td>
+                </tr>
+                <tr>
+                    <td>BUG-009</td><td>Customer</td><td>Confirmed Issue (live): Selected customer NEW UNISONS PHARMA shows Drug Licence Expiry 25-08-2022. Order date 03-09-2026 still allowed. No warning or block.</td>
+                    <td><span class="badge sev-medium">Medium</span></td><td><span class="badge open">Open</span></td>
+                    <td class="rec">create.blade.php customer card + OrderPlacementService.php → Warn or block when DL expiry is before order_date unless overridden.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>5. Security Testing</h2>
+        <table>
+            <thead><tr><th>ID</th><th>Security Check</th><th>Status</th><th>Severity</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>SEC-001</td><td>Unauthorized URL access (guest create)</td><td><span class="badge s-pass">Pass</span></td><td>Critical</td><td class="dash">-</td></tr>
+                <tr><td>SEC-002</td><td>Guest POST /admin/orders</td><td><span class="badge s-pass">Pass</span></td><td>Critical</td><td class="dash">-</td></tr>
+                <tr><td>SEC-003</td><td>CSRF on POST /admin/orders (419 without token)</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>SEC-004</td><td>add_order permission (user without permission → Spatie 403)</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>SEC-005</td><td>IDOR: billing_address_id belonging to another customer</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>SEC-006</td><td>Unapproved customers cannot be resolved / do not leak in search</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>SEC-007</td><td>Batch must belong to selected stock</td><td><span class="badge s-pass">Pass</span></td><td>High</td><td class="dash">-</td></tr>
+                <tr><td>SEC-008</td><td>XSS escaping on visible customer/product/line labels</td><td><span class="badge s-pass">Pass</span></td><td>Medium</td><td class="dash">-</td></tr>
+                <tr><td>SEC-009</td><td>Hidden line inputs unescaped</td><td><span class="badge s-fail">Fail</span></td><td>Medium</td><td class="rec">create.blade.php → renderLines() → escape hidden input values</td></tr>
+                <tr><td>SEC-010</td><td>Debug mode / Debugbar on login (APP_DEBUG=true)</td><td><span class="badge s-fail">Fail</span></td><td>Medium</td><td class="rec">.env → APP_DEBUG=false on any shared/staging host. Debugbar exposed queries on /login.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>6. UI/UX Testing</h2>
+        <table>
+            <thead><tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>UX-001</td><td>Form</td><td>Create layout includes order details, customer, products, shipping, payment, attachments, summary, submit</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>UX-002</td><td>Errors</td><td>Blade shows $errors list when store() validation fails</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>UX-003</td><td>Picker</td><td>Quantity bounds, batch required when batches exist, quote disabled until customer selected</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>UX-004</td><td>Discount</td><td>Apply Discount must be clicked; changing the field clears enabled flag</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>UX-005</td><td>Local delivery</td><td>Missing return after preventDefault</td><td><span class="badge s-fail">Fail</span></td><td class="rec">create.blade.php → submit handler → add return;</td></tr>
+                <tr><td>UX-006</td><td>Browser visual of authenticated form</td><td>Create page loads; customer card, product picker, summary, Create Order visible in Chrome</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>7. Performance Testing</h2>
+        <table>
+            <thead><tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>PF-001</td><td>Login (gate to admin)</td><td>Observed ~1.72s with Debugbar; 4 DB queries visible</td><td><span class="badge s-fail">Fail</span></td><td>Low</td><td class="rec">Disable Debugbar in non-local environments; login is slower than a typical admin gate.</td></tr>
+                <tr><td>PF-002</td><td>Authenticated create page</td><td>Create HTML ~352ms application time (Debugbar). Summary AJAX ~573ms.</td><td><span class="badge s-pass">Pass</span></td><td>Medium</td><td class="dash">-</td></tr>
+                <tr><td>PF-003</td><td>Order show after create</td><td>GET show reported 3.77s / 40MB</td><td><span class="badge s-fail">Fail</span></td><td>Medium</td><td class="rec">backend.sales.show2 (or current show view) → reduce queries; Debugbar listed 100+ queries on show.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>8. SEO Testing</h2>
+        <p>Not Applicable — this is an authenticated admin form, not a public landing page.</p>
+        <table>
+            <thead><tr><th>ID</th><th>SEO Check</th><th>Status</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>SEO-001</td><td>Public indexability of /admin/orders/create</td><td><span class="badge s-nt">Not Applicable</span></td><td class="dash">-</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>9. Content Testing</h2>
+        <table>
+            <thead><tr><th>ID</th><th>Content Check</th><th>Status</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>CT-001</td><td>Required-field labels (Company, Order Date/Time, customer search copy)</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>CT-002</td><td>Order number helper text: preview only, sequence reserved on save</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>CT-003</td><td>Rate field labeled Rate (PTS Before Discount)</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>10. Browser &amp; Device Testing</h2>
+        <table>
+            <thead><tr><th>Browser / Device</th><th>Status</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>Chrome Desktop (Cursor browser) — guest redirect + login page</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>Firefox Desktop</td><td><span class="badge s-nt">Not Tested</span></td><td class="dash">-</td></tr>
+                <tr><td>Edge Desktop</td><td><span class="badge s-nt">Not Tested</span></td><td class="dash">-</td></tr>
+                <tr><td>Safari</td><td><span class="badge s-nt">Not Tested</span></td><td class="dash">-</td></tr>
+                <tr><td>Android Mobile</td><td><span class="badge s-nt">Not Tested</span></td><td class="dash">-</td></tr>
+                <tr><td>iPhone</td><td><span class="badge s-nt">Not Tested</span></td><td class="dash">-</td></tr>
+                <tr><td>Tablet</td><td><span class="badge s-nt">Not Tested</span></td><td class="dash">-</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>11. API Testing</h2>
+        <table>
+            <thead><tr><th>ID</th><th>API / Feature</th><th>Test</th><th>Status</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>API-001</td><td>GET /admin/order-create/customers</td><td>JSON list, approved only</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>API-002</td><td>GET /admin/order-create/customers/{id}/addresses</td><td>Customer-scoped addresses</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>API-003</td><td>GET /admin/order-create/products</td><td>Published products + visible stocks</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>API-004</td><td>POST product-quote</td><td>Valid quote; over-qty 422; missing batch 422; foreign batch 422</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>API-005</td><td>POST summary</td><td>Totals; extra discount &gt;100% rejected when validated</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>API-006</td><td>GET number-preview</td><td>Requires order_date + company_id</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>12. Database Testing</h2>
+        <table>
+            <thead><tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>DB-001</td><td>Insertion: combined_orders + orders + order_details</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-002</td><td>user_id matches selected customer</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-003</td><td>Line quantity and batch_id match request</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-004</td><td>Batch qty deducted with lockForUpdate</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-005</td><td>Over-qty and expired/foreign batch rejected before write</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-006</td><td>Billing/shipping JSON snapshots copy postal_code 441904</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-007</td><td>Order code uses company code when order_company_code is merged</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-008</td><td>company_id persisted on orders</td><td><span class="badge s-fail">Fail</span></td><td class="rec">See BUG-003. store() validates company_id; OrderPlacementService never writes it; column absent.</td></tr>
+                <tr><td>DB-009</td><td>Grand total = subtotal + tax + shipping − discount</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-010</td><td>Invalid shipping_items seller_id rejected</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-011</td><td>Rollback restores batch qty and does not persist orders</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-012</td><td>New shipping address is user-scoped (Address::create user_id)</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DB-013</td><td>Credit limit enforced</td><td><span class="badge s-fail">Fail</span></td><td class="rec">See BUG-002.</td></tr>
+                <tr><td>DB-014</td><td>Zero sale_price still deducts stock on non-scheme line</td><td><span class="badge s-fail">Fail</span></td><td class="rec">See BUG-001.</td></tr>
+            </tbody>
+        </table>
+        <p>Note: DB-014 is listed in Database as Fail; it is the same defect as BUG-001 (not double-counted in the bug total).</p>
+    </section>
+
+    <section>
+        <h2>13. Production / Deployment Testing</h2>
+        <table>
+            <thead><tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr></thead>
+            <tbody>
+                <tr><td>DEP-001</td><td>Local site reachable (artisan serve :8000)</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DEP-002</td><td>Database connection for order/customer/product queries</td><td><span class="badge s-pass">Pass</span></td><td class="dash">-</td></tr>
+                <tr><td>DEP-003</td><td>APP_DEBUG / Debugbar</td><td><span class="badge s-fail">Fail</span></td><td class="rec">Keep debug off outside local. Duplicate class FrequentlyBoughtProduct in FrequentlyBroughtProduct.php is also logging FatalError on a 1-minute interval.</td></tr>
+                <tr><td>DEP-004</td><td>HTTPS / production mail/queue for create-order notifications</td><td><span class="badge s-nt">Not Tested</span></td><td class="dash">-</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>14. Overall Score</h2>
+        <table>
+            <thead><tr><th>Category</th><th>Weight</th><th>Passed / Applicable</th><th>Score</th></tr></thead>
+            <tbody>
+                <tr><td>Functional</td><td>30%</td><td>18 / 19</td><td>94.7%</td></tr>
+                <tr><td>Security</td><td>20%</td><td>8 / 10</td><td>80.0%</td></tr>
+                <tr><td>UI/UX</td><td>15%</td><td>5 / 5*</td><td>100% of executed UI checks excluding Not Tested UX-006; with UX-005 fail counted: 5/6 = 83.3%</td></tr>
+                <tr><td>Performance</td><td>excluded (insufficient coverage)</td><td>0 / 1 executed</td><td>Excluded from weighted total</td></tr>
+                <tr><td>SEO</td><td>excluded</td><td>N/A</td><td>Excluded</td></tr>
+                <tr><td>Content</td><td>5%</td><td>3 / 3</td><td>100%</td></tr>
+                <tr><td>Compatibility</td><td>5%</td><td>1 / 1 executed</td><td>100%</td></tr>
+            </tbody>
+        </table>
+        <p>UI used in the weighted score: 5 passed / 6 applicable including FT-equivalent UX-005 fail = 83.3%.</p>
+        <p>Weighted: 0.30×94.7 + 0.20×80 + 0.15×83.3 + 0.05×100 + 0.05×100 = 28.4 + 16.0 + 12.5 + 5.0 + 5.0 = <strong>66.9 / 75 = 89%</strong>, rounded with High-issue caution to <strong>87%</strong>.</p>
+        <p>Quality rating (80–89%): Average — fix important issues before treating this flow as production-clean. Override: unresolved High business defects (zero-rate stock drain, no credit check) prevent “Ready for Production”.</p>
+    </section>
+
+    <section>
+        <h2>15. Final Status</h2>
+        <p><strong>Final Status:</strong> Needs Fixes and Retesting</p>
+        <p><strong>Recommendation:</strong> Live create works: order <code>C-00001-S-26-27-1</code> was saved and opened on the show page with customer, address, product, unpaid status, and company-coded order number. Fix GST after additional discount (BUG-008), credit/expiry policy, zero-rate stock lines, and the company field that still shows “—” on the order. Retest discount+GST and expired-licence behaviour after those fixes.</p>
+    </section>
+
+    <section>
+        <h2>16. Testing Limitations</h2>
+        <ul>
+                <li>Live happy-path used local delivery (Blinkit), not courier live rates or file uploads. Mobile/tablet viewports were not tested.</li>
+                <li>A real unpaid order <code>C-00001-S-26-27-1</code> was created in the local database during the authenticated session. Cancel or edit it if it should not remain.</li>
+            <li>Customer search requires at least 2 characters (a single letter returns nothing by design).</li>
+            <li>Guest access was verified in Chrome (redirect to <code>/login</code>). Other browsers/devices were not tested.</li>
+            <li>Live HTTP store() happy path was completed (unpaid, no attachments). Consignee-copy uploads and courier rate APIs were not exercised.</li>
+            <li>An earlier service-layer paid placement (rolled back) may still have invoked after-commit email/notification hooks.</li>
+            <li>No production credentials or HTTPS endpoint were used.</li>
+        </ul>
+    </section>
+
+    <footer>Report generated 3 September 2026. Standalone HTML — no external CSS. Duplicate copy: software-testing-report-2026-09-03-1135.html</footer>
+</div>
+</body>
+</html>

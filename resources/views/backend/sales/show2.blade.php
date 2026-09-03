@@ -133,7 +133,7 @@
                     <table class="table table-sm mb-0 order-detail-table">
                         <tbody>
                             <tr><th>{{ translate('Order No.') }}</th><td class="text-info fw-700">{{ $order->code }}</td></tr>
-                            <tr><th>{{ translate('Company') }}</th><td>—</td></tr>
+                            <tr><th>{{ translate('Company') }}</th><td>{{ $displayValue(issuing_company_label_for_order($order)) }}</td></tr>
                             <tr><th>{{ translate('Order Date') }}</th><td>{{ $order->order_date ? $formatDate($order->order_date) : date('d-m-Y', $order->date) }}</td></tr>
                             <tr><th>{{ translate('Order Time') }}</th><td>{{ $order->order_time ? \Carbon\Carbon::parse($order->order_time)->format('h:i A') : date('h:i A', $order->date) }}</td></tr>
                             <tr><th>{{ translate('Order Status') }}</th><td><span class="status-chip">{{ $formatEnum($deliveryStatus) }}</span></td></tr>

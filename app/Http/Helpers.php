@@ -6482,3 +6482,48 @@ if (!function_exists('generate_financial_year_order_code')) {
         });
     }
 }
+
+if (!function_exists('issuing_company_for_order_code')) {
+    /**
+     * Resolve the selling company from an order number such as C-00001-S-26-27-1.
+     */
+    function issuing_company_for_order_code(?string $code): ?\App\Models\Company
+    {
+        $brand = issuing_company_code_from_order_code($code);
+        if ($brand === null || !\Illuminate\Support\Facades\Schema::hasTable('companies')) {
+            return null;
+        }
+
+        return \App\Models\Company::query()->where('code', $brand)->first();
+    }
+}
+
+if (!function_exists('issuing_company_code_from_order_code')) {
+    function issuing_company_code_from_order_code(?string $code): ?string
+    {
+        $code = trim((string) $code);
+        if ($code === '' || !preg_match('/^(.+)-([A-Za-z])-(\d{2}-\d{2})-(\d+)$/', $code, $matches)) {
+            return null;
+        }
+
+        $brand = trim($matches[1]);
+
+        return $brand === '' ? null : $brand;
+    }
+}
+
+if (!function_exists('issuing_company_label_for_order')) {
+    function issuing_company_label_for_order($order): ?string
+    {
+        $code = is_object($order) ? ($order->code ?? null) : $order;
+        $company = issuing_company_for_order_code($code);
+        if ($company) {
+            $name = trim((string) $company->company_name);
+            $brand = trim((string) $company->code);
+
+            return $name !== '' ? $name . ' (' . $brand . ')' : $brand;
+        }
+
+        return issuing_company_code_from_order_code($code);
+    }
+}

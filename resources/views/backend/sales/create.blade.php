@@ -82,10 +82,30 @@
             color: #74788d;
             font-weight: 700;
         }
+        .order-number-group.form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-width: 0;
+        }
+        .order-number-group > .order-number-heading {
+            display: block;
+            float: none;
+            position: static;
+            width: 100%;
+            max-width: 100%;
+            margin-bottom: 6px;
+            white-space: nowrap;
+        }
         .order-number-parts {
             display: grid;
             grid-template-columns: minmax(110px, 1.4fr) minmax(80px, .8fr) minmax(100px, 1fr) minmax(80px, .7fr);
             gap: 6px;
+            clear: both;
+            width: 100%;
+        }
+        .order-number-parts > div {
+            min-width: 0;
         }
         .order-number-part-label {
             display: block;
@@ -493,8 +513,8 @@ span#picker-info-stock-badge {
                                 </select>
                                 @error('company_id') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
-                            <div class="col-md-8 form-group">
-                                <label>{{ translate('Order No') }} <span class="text-danger">*</span></label>
+                            <div class="col-md-8 form-group order-number-group">
+                                <label class="order-number-heading">{{ translate('Order No') }} <span class="text-danger">*</span></label>
                                 <div class="order-number-parts">
                                     <div>
                                         <span class="order-number-part-label">{{ translate('Company Code') }}</span>
