@@ -332,7 +332,9 @@ class OrderPlacementService
         $order->transport_delivery_type = $isBackendOrder || $shippingChoice === 'transport'
             ? $normalizedDeliveryTerm
             : null;
-        $order->reverse_charge = $isBackendOrder && !$isInternational ? $request->boolean('reverse_charge') : null;
+        $order->reverse_charge = $isBackendOrder && !$isInternational
+            ? $this->nullableBoolean($request->input('reverse_charge'))
+            : null;
         $order->loading_location_type = $usesPortLogistics ? $request->input('loading_location_type') : null;
         $order->loading_sea_port_id = $usesPortLogistics && $request->input('loading_location_type') === 'sea'
             ? $request->input('loading_sea_port_id')
@@ -417,6 +419,15 @@ class OrderPlacementService
         $value = trim((string) $value);
 
         return $value === '' ? null : $value;
+    }
+
+    protected function nullableBoolean($value): ?bool
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? (bool) $value;
     }
 
     protected function capitalizeFirst($value): ?string

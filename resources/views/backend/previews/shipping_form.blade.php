@@ -85,6 +85,19 @@
             gap: 6px;
         }
         .order-number-part-label { display: block; margin-bottom: 3px; color: #74788d; font-size: 11px; }
+        .order-details-company-group > label {
+            min-height: 21px;
+            margin-bottom: 6px;
+        }
+        .order-details-company-group .bootstrap-select { width: 100% !important; }
+        .order-details-company-group .bootstrap-select > .dropdown-toggle,
+        .order-number-parts .form-control {
+            height: 36px;
+            min-height: 36px;
+            padding-top: 6px;
+            padding-bottom: 6px;
+            line-height: 22px;
+        }
         .summary-tax-hover { position: relative; display: inline-flex; align-items: center; gap: 4px; cursor: help; }
         .summary-tax-hover-label { border-bottom: 1px dashed currentColor; }
         .summary-tax-tooltip {
@@ -123,8 +136,9 @@
                     </div>
                     <div class="card-body">
                         <div class="row gutters-5">
-                            <div class="col-md-4 form-group">
+                            <div class="col-md-4 form-group order-details-company-group">
                                 <label>{{ translate('Company') }} <span class="text-danger">*</span></label>
+                                <span class="order-number-part-label">&nbsp;</span>
                                 <select class="form-control aiz-selectpicker" name="company_id" data-live-search="true">
                                     <option value="">{{ translate('Select Company') }}</option>
                                     @foreach ($companies as $company)
@@ -161,6 +175,14 @@
                             <div class="col-md-4 form-group">
                                 <label>{{ translate('Order Time') }} <span class="text-danger">*</span></label>
                                 <input type="time" class="form-control" name="order_time" value="{{ now()->format('H:i') }}">
+                            </div>
+                            <div class="col-md-4 form-group" id="domestic-invoice-fields">
+                                <label>{{ translate('Reverse Charges') }}</label>
+                                <select class="form-control" name="reverse_charge">
+                                    <option value="">{{ translate('None') }}</option>
+                                    <option value="0">{{ translate('No') }}</option>
+                                    <option value="1">{{ translate('Yes') }}</option>
+                                </select>
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>{{ translate('Invoice Type') }}</label>
@@ -293,13 +315,6 @@
                         </div>
                         <div id="additional-details-collapse" class="collapse show">
                             <div class="card-body">
-                                <div class="form-group" id="reverse-charge-wrap">
-                                    <label>{{ translate('Reverse Charges') }}</label>
-                                    <select class="form-control" name="reverse_charge">
-                                        <option value="0">{{ translate('No') }}</option>
-                                        <option value="1">{{ translate('Yes') }}</option>
-                                    </select>
-                                </div>
                                 <div class="form-group">
                                     <label>{{ translate('Sales Executive Name') }}</label>
                                     <select class="form-control aiz-selectpicker" name="sales_executive_id" data-live-search="true">
@@ -451,26 +466,28 @@
                                 <div id="transport-fields">
                                     <div class="form-group">
                                         <label id="transport-name-label">{{ translate('Transport') }}</label>
-                                        <select class="form-control" name="transport_id" id="transport-id">
+                                        <select class="form-control js-other-select" name="transport_id" id="transport-id">
                                             <option value="">{{ translate('Select Transport') }}</option>
                                             @foreach ($transports as $transport)
                                                 <option value="{{ $transport['id'] }}" data-mode="{{ $transport['mode'] }}">{{ $transport['name'] }}</option>
                                             @endforeach
+                                            <option value="other">{{ translate('Other') }}</option>
                                         </select>
-                                        <input type="text" class="form-control mt-2" name="transport_name" placeholder="{{ translate('Or enter transport name') }}">
+                                        <input type="text" class="form-control mt-2 other-enter-input d-none" name="transport_name" placeholder="{{ translate('Enter transport name') }}">
                                     </div>
                                 </div>
 
                                 <div id="local-fields" class="d-none">
                                     <div class="form-group">
                                         <label>{{ translate('Local Delivery Partner') }}</label>
-                                        <select class="form-control" name="local_delivery_partner_id">
+                                        <select class="form-control js-other-select" name="local_delivery_partner_id">
                                             <option value="">{{ translate('Select Partner') }}</option>
                                             @foreach ($localDeliveryPartners as $partner)
                                                 <option value="{{ $partner['id'] }}">{{ $partner['name'] }}</option>
                                             @endforeach
+                                            <option value="other">{{ translate('Other') }}</option>
                                         </select>
-                                        <input type="text" class="form-control mt-2" name="local_delivery_partner_name" placeholder="{{ translate('Or enter partner name') }}">
+                                        <input type="text" class="form-control mt-2 other-enter-input d-none" name="local_delivery_partner_name" placeholder="{{ translate('Enter partner name') }}">
                                     </div>
                                 </div>
 
@@ -533,10 +550,10 @@
 
                                 <div class="form-group" id="booked-to-wrap">
                                     <label id="booked-to-label">{{ translate('Booked To') }}</label>
-                                    <select class="form-control" name="booked_to_id" id="booked-to-id" disabled>
+                                    <select class="form-control js-other-select" name="booked_to_id" id="booked-to-id" disabled>
                                         <option value="">{{ translate('Select transport first') }}</option>
                                     </select>
-                                    <input type="text" class="form-control mt-2" name="booked_to_name" placeholder="{{ translate('Or enter booked to') }}">
+                                    <input type="text" class="form-control mt-2 other-enter-input d-none" name="booked_to_name" placeholder="{{ translate('Enter booked to') }}">
                                 </div>
 
                                 <div class="form-group">
@@ -556,12 +573,12 @@
 
                                 <div class="form-group">
                                     <label id="terms-of-delivery-label">{{ translate('Terms Of Delivery') }}</label>
-                                    <select class="form-control" name="transport_delivery_type" id="terms-of-delivery">
+                                    <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="terms-of-delivery" data-live-search="true" data-hide-disabled="true">
                                         @foreach ($domesticDeliveryTerms as $value => $label)
-                                            <option value="{{ $value }}" data-invoice-type="domestic">{{ translate($label) }}</option>
+                                            <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::deliveryTermFullForm($value) }}">{{ translate($label) }}</option>
                                         @endforeach
                                         @foreach ($internationalDeliveryTerms as $value => $label)
-                                            <option value="{{ $value }}" data-invoice-type="international">{{ $label }}</option>
+                                            <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::deliveryTermFullForm($value) }}">{{ $label }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -631,12 +648,12 @@
                             <div class="card-body">
                                 <div class="form-group">
                                     <label>{{ translate('Payment Terms') }}</label>
-                                    <select class="form-control" name="payment_type" id="payment-terms">
+                                    <select class="form-control aiz-selectpicker" name="payment_type" id="payment-terms" data-live-search="true" data-hide-disabled="true">
                                         @foreach ($domesticPaymentTerms as $value => $label)
-                                            <option value="{{ $value }}" data-invoice-type="domestic">{{ translate($label) }}</option>
+                                            <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::paymentTermFullForm($value) }}">{{ translate($label) }}</option>
                                         @endforeach
                                         @foreach ($internationalPaymentTerms as $value => $label)
-                                            <option value="{{ $value }}" data-invoice-type="international">{{ $label }}</option>
+                                            <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::paymentTermFullForm($value) }}">{{ $label }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -862,24 +879,36 @@
                 var $transport = $('#transport-id');
                 var selectedOk = false;
                 $transport.find('option').each(function () {
-                    var visible = !this.value || String($(this).data('mode') || '') === mode;
+                    var visible = !this.value || this.value === 'other' || String($(this).data('mode') || '') === mode;
                     $(this).prop('disabled', !visible).toggle(visible);
                     if (visible && this.selected && this.value) selectedOk = true;
                 });
                 if ($transport.val() && !selectedOk) $transport.val('');
             }
 
+            function syncOtherEnter($select) {
+                var $input = $select.siblings('.other-enter-input');
+                var isOther = String($select.val()) === 'other';
+                $input.toggleClass('d-none', !isOther);
+                if (!isOther) {
+                    $input.val('');
+                }
+            }
+
             function syncBookedTo() {
                 var method = $('#shipping-method').val();
-                var transportId = Number($('#transport-id').val());
+                var transportValue = String($('#transport-id').val() || '');
+                var transportIsOther = transportValue === 'other';
+                var transportId = Number(transportValue);
                 var $bookedTo = $('#booked-to-id').empty();
                 var matches = bookedToOptions;
+                var hasTransport = transportIsOther || transportId > 0;
                 if (method === 'transport') {
-                    matches = bookedToOptions.filter(function (option) {
+                    matches = transportIsOther ? [] : bookedToOptions.filter(function (option) {
                         return Number(option.transport_id) === transportId;
                     });
-                    $bookedTo.append('<option value="">' + (transportId ? '{{ translate('Select Booked To') }}' : '{{ translate('Select transport first') }}') + '</option>');
-                    $bookedTo.prop('disabled', !transportId);
+                    $bookedTo.append('<option value="">' + (hasTransport ? '{{ translate('Select Booked To') }}' : '{{ translate('Select transport first') }}') + '</option>');
+                    $bookedTo.prop('disabled', !hasTransport);
                 } else {
                     $bookedTo.append('<option value="">{{ translate('Select Booked To') }}</option>');
                     $bookedTo.prop('disabled', false);
@@ -887,6 +916,9 @@
                 matches.forEach(function (option) {
                     $bookedTo.append('<option value="' + option.id + '">' + escapeHtml(option.name) + '</option>');
                 });
+                $bookedTo.append('<option value="other">{{ translate('Other') }}</option>');
+                syncOtherEnter($('#transport-id'));
+                syncOtherEnter($bookedTo);
             }
 
             function syncPortSelects() {
@@ -940,7 +972,7 @@
                 $('#terms-of-delivery-label').text(international
                     ? '{{ translate('Incoterm / Terms Of Delivery') }}'
                     : '{{ translate('Terms Of Delivery') }}');
-                $('#reverse-charge-wrap').toggleClass('d-none', international);
+                $('#domestic-invoice-fields').toggleClass('d-none', international);
                 $('#excel-path-chip').text(path);
 
                 var usePorts = method !== 'local' && (mode === 'sea' || mode === 'air');
@@ -1022,6 +1054,9 @@
             });
             $('#sub-mode').on('change', syncLabels);
             $('#transport-id').on('change', syncBookedTo);
+            $(document).on('change', '.js-other-select', function () {
+                syncOtherEnter($(this));
+            });
             $('#loading-country,#discharge-country').on('change', refreshPortOptions);
             $('#loading-sea-port,#discharge-sea-port,#loading-airport,#discharge-airport').on('change', function () {
                 var kind = $('#fod-mode').val();

@@ -362,7 +362,7 @@
                             <tr><th>{{ translate('Net Weight') }}</th><td>{{ $order->net_weight_kg !== null ? (float) $order->net_weight_kg . ' KG' : '—' }}</td></tr>
                             <tr><th>{{ translate('Gross Weight') }}</th><td>{{ $order->gross_weight_kg !== null ? (float) $order->gross_weight_kg . ' KG' : '—' }}</td></tr>
                             <tr><th>{{ translate('Total Volume / CBM') }}</th><td>{{ $displayValue($order->total_volume_cbm) }}</td></tr>
-                            <tr><th>{{ translate('Reverse Charges') }}</th><td>{{ $order->reverse_charge === null ? '—' : ($order->reverse_charge ? translate('Yes') : translate('No')) }}</td></tr>
+                            <tr><th>{{ translate('Reverse Charges') }}</th><td>{{ $order->reverse_charge === null ? translate('None') : ($order->reverse_charge ? translate('Yes') : translate('No')) }}</td></tr>
                         </tbody>
                     </table>
                 </div>

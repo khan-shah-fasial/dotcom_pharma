@@ -189,7 +189,9 @@ class OrderController extends Controller
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
         $localDeliveryPartners = LocalDeliveryPartner::active()->orderBy('name')->get();
         $companies = Company::orderBy('company_name')->get(['id', 'code', 'company_name']);
-        extract($this->orderFormStaffOptions());
+        extract($this->orderFormStaffOptions([
+            'sales' => Auth::id(),
+        ]));
         $selectedCompany = $companies->firstWhere('id', (int) old('company_id'));
         $orderNumberParts = financial_year_order_code_parts(old('order_date', now()->toDateString()), 'S');
 
@@ -206,6 +208,7 @@ class OrderController extends Controller
             'packedStaff',
             'checkedStaff',
             'billingStaff',
+            'defaultBillingBy',
             'selectedCompany',
             'orderNumberParts'
         ));
@@ -774,6 +777,7 @@ class OrderController extends Controller
             $invoiceType = InvoiceType::forUser($customer);
             $isInternational = $invoiceType === InvoiceType::INTERNATIONAL;
             $request->merge(['order_code_letter' => 'S']);
+            $this->normalizeOtherLookupSelects($request);
 
             if ($request->hasFile('cc_attachments')) {
                 $request->merge(['consignee_copy_status' => 'attached']);
@@ -1460,10 +1464,10 @@ class OrderController extends Controller
         $seaPorts = SeaPort::where('status', 1)->orderBy('country')->orderBy('name')->get();
         $airports = Airport::where('status', 1)->orderBy('country')->orderBy('name')->get();
         extract($this->orderFormStaffOptions([
-            $order->sales_executive_id ?: $order->sales_person_id,
-            $order->packed_by,
-            $order->checked_by,
-            $order->billing_by,
+            'sales' => $order->sales_executive_id ?: $order->sales_person_id,
+            'packed' => $order->packed_by,
+            'checked' => $order->checked_by,
+            'billing' => $order->billing_by,
         ]));
         $sellAmount = (float) $order->orderDetails->sum('shipping_cost');
 
@@ -1482,6 +1486,7 @@ class OrderController extends Controller
             'packedStaff',
             'checkedStaff',
             'billingStaff',
+            'defaultBillingBy',
             'sellAmount'
         ));
     }
@@ -1508,15 +1513,21 @@ class OrderController extends Controller
             $request->merge(['consignee_copy_status' => 'attached']);
         }
 
+        $this->normalizeOtherLookupSelects($request);
+
         $validated = $request->validate([
             'payment_type' => ['required', Rule::in(array_keys(InvoiceType::paymentTerms($invoiceType)))],
             'shipping_method_id' => ['nullable', 'integer', Rule::exists('shipping_methods', 'id')->where(fn ($query) => $query->where('is_active', 1))],
             'courier_service' => ['nullable', 'string', 'max:191'],
             'transport_id' => ['nullable', 'integer', Rule::exists('transports', 'id')],
+            'transport_name' => ['nullable', 'string', 'max:255'],
             'transport_delivery_type' => ['required', Rule::in(array_merge(array_keys(InvoiceType::deliveryTerms($invoiceType)), ['transport_godown']))],
             'booked_to_id' => ['nullable', 'integer', Rule::exists('booked_to', 'id')],
+            'booked_to_name' => ['nullable', 'string', 'max:255'],
             'booked_from_id' => ['nullable', 'integer', Rule::exists('booked_to', 'id')],
+            'booked_from_name' => ['nullable', 'string', 'max:255'],
             'local_delivery_partner_id' => ['nullable', 'integer', Rule::exists('local_delivery_partners', 'id')],
+            'local_delivery_partner_name' => ['nullable', 'string', 'max:255'],
             'consignee_copy_status' => ['required', Rule::in(['attached', 'not_attached'])],
             'cc_attachments' => ['nullable', 'array', 'max:20'],
             'cc_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
@@ -1588,6 +1599,17 @@ class OrderController extends Controller
             throw ValidationException::withMessages([
                 'transport_surface_mode' => translate('Please select a valid mode for this transport path.'),
             ]);
+        }
+
+        if ($shippingChoice === 'transport') {
+            $transport = $this->resolveTransport($request);
+            $validated['transport_id'] = optional($transport)->id;
+            $validated['booked_to_id'] = optional($this->resolveBookedTo($request, $transport))->id;
+            $validated['booked_from_id'] = optional($this->resolveBookedFrom($request, $transport))->id;
+        }
+
+        if ($shippingChoice === 'local') {
+            $validated['local_delivery_partner_id'] = optional($this->resolveLocalDeliveryPartner($request))->id;
         }
 
         if ($shippingChoice === 'transport' && empty($validated['transport_id'])) {
@@ -1725,7 +1747,7 @@ class OrderController extends Controller
                 $lockedOrder->freight_paid = ($validated['freight_type'] ?? null) === 'pre_paid';
                 $lockedOrder->free_shipping = $validated['shipping_cost_type'] === 'free_shipping';
                 $lockedOrder->reverse_charge = InvoiceType::isDomestic($invoiceType)
-                    ? (bool) ($validated['reverse_charge'] ?? false)
+                    ? $this->nullableBoolean($validated['reverse_charge'] ?? null)
                     : null;
                 $lockedOrder->loading_location_type = $usesPortLogistics ? ($validated['loading_location_type'] ?? null) : null;
                 $lockedOrder->loading_sea_port_id = $usesPortLogistics && ($validated['loading_location_type'] ?? null) === 'sea'
@@ -2120,7 +2142,8 @@ class OrderController extends Controller
      */
     protected function orderFormStaffOptions(array $selectedUserIds = []): array
     {
-        $selectedUserIds = array_values(array_filter(array_map('intval', $selectedUserIds)));
+        $selectedByField = $selectedUserIds;
+        $selectedUserIds = array_values(array_filter(array_map('intval', array_values($selectedUserIds))));
         $staffMaster = Staff::with(['user', 'role'])
             ->whereHas('user')
             ->where(function ($query) use ($selectedUserIds) {
@@ -2158,12 +2181,95 @@ class OrderController extends Controller
                 })
                 ->values();
         };
+        $appendSelected = function ($collection, $userId) use ($staffMaster) {
+            $userId = (int) $userId;
+            if ($userId && !$collection->contains('user_id', $userId)) {
+                $staff = $staffMaster->firstWhere('user_id', $userId);
+                if ($staff) {
+                    return $collection->prepend($staff)->values();
+                }
+            }
+
+            return $collection;
+        };
+
+        $salesPeople = $appendSelected(
+            $staffFor('/sales|business development|marketing/i'),
+            $selectedByField['sales'] ?? Auth::id()
+        );
+        $salesPeople = $appendSelected($salesPeople, Auth::id());
+
+        $billingStaff = $appendSelected($staffForRole('Billing'), $selectedByField['billing'] ?? null);
+        $defaultBillingBy = optional(
+            $billingStaff->first(function ($staff) {
+                return (bool) preg_match('/accountant/i', trim((string) $staff->designation));
+            }) ?: $billingStaff->first()
+        )->user_id;
 
         return [
-            'salesPeople' => $staffFor('/sales|business development|marketing/i'),
-            'packedStaff' => $staffForRole('Packing'),
-            'checkedStaff' => $staffForRole('Checking'),
-            'billingStaff' => $staffForRole('Billing'),
+            'salesPeople' => $salesPeople,
+            'packedStaff' => $appendSelected($staffForRole('Packing'), $selectedByField['packed'] ?? null),
+            'checkedStaff' => $appendSelected($staffForRole('Checking'), $selectedByField['checked'] ?? null),
+            'billingStaff' => $billingStaff,
+            'defaultBillingBy' => $defaultBillingBy,
         ];
+    }
+
+    protected function normalizeOtherLookupSelects(Request $request): void
+    {
+        $normalized = [];
+        foreach (['transport_id', 'booked_to_id', 'booked_from_id', 'local_delivery_partner_id'] as $key) {
+            $value = $request->input($key);
+            if ($value === 'other' || $value === '') {
+                $normalized[$key] = null;
+            }
+        }
+
+        if ($normalized !== []) {
+            $request->merge($normalized);
+        }
+    }
+
+    protected function nullableBoolean($value): ?bool
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? (bool) $value;
+    }
+
+    private function resolveBookedFrom(Request $request, ?Transport $transport): ?BookedTo
+    {
+        if (!$transport) {
+            return null;
+        }
+
+        $id = (int) $request->input('booked_from_id');
+        if ($id > 0) {
+            $bookedFrom = BookedTo::where('transport_id', $transport->id)->where('id', $id)->first();
+            if ($bookedFrom) {
+                return $bookedFrom;
+            }
+        }
+
+        $location = trim((string) $request->input('booked_from_name'));
+        if ($location === '') {
+            return null;
+        }
+
+        $bookedFrom = BookedTo::where('transport_id', $transport->id)
+            ->whereRaw('LOWER(name) = ?', [strtolower($location)])
+            ->first();
+        if ($bookedFrom) {
+            return $bookedFrom;
+        }
+
+        return BookedTo::create([
+            'transport_id' => $transport->id,
+            'name' => $location,
+            'status' => 'inactive',
+            'created_by' => Auth::id(),
+        ]);
     }
 }

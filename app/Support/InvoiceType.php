@@ -53,6 +53,23 @@ class InvoiceType
         'ddp' => 'DDP',
     ];
 
+    public const DELIVERY_TERM_FULL_FORMS = [
+        'door_delivery' => 'Door Delivery',
+        'transport_warehouse' => 'Carrier Warehouse',
+        'transport_godown' => 'Carrier Warehouse',
+        'our_warehouse_delivery' => 'Our Warehouse',
+        'hand_delivery' => 'In Hand',
+        'exw' => 'Ex Works',
+        'fca' => 'Free Carrier',
+        'fob' => 'Free On Board',
+        'cfr' => 'Cost and Freight',
+        'cif' => 'Cost, Insurance and Freight',
+        'cpt' => 'Carriage Paid To',
+        'cip' => 'Carriage and Insurance Paid To',
+        'dap' => 'Delivered At Place',
+        'ddp' => 'Delivered Duty Paid',
+    ];
+
     public static function forUser(?User $user): string
     {
         $rawType = $user?->type_option;
@@ -108,8 +125,36 @@ class InvoiceType
         return self::paymentTerms($type)[$value] ?? null;
     }
 
+    public static function paymentTermFullForm(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $label = self::DOMESTIC_PAYMENT_TERMS[$value] ?? self::INTERNATIONAL_PAYMENT_TERMS[$value] ?? null;
+        if ($label === null) {
+            return null;
+        }
+
+        $separator = strpos($label, ' / ');
+        if ($separator === false) {
+            return $label;
+        }
+
+        return trim(substr($label, $separator + 3));
+    }
+
     public static function deliveryTermLabel(?string $value, string $type): ?string
     {
         return self::deliveryTerms($type)[$value] ?? null;
+    }
+
+    public static function deliveryTermFullForm(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return self::DELIVERY_TERM_FULL_FORMS[$value] ?? null;
     }
 }

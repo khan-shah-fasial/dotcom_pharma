@@ -107,6 +107,40 @@
         .order-number-parts > div {
             min-width: 0;
         }
+        .order-details-company-group > label,
+        .order-number-group > .order-number-heading {
+            min-height: 21px;
+            margin-bottom: 6px;
+        }
+        .order-details-company-group .bootstrap-select {
+            width: 100% !important;
+        }
+        .order-details-company-group .bootstrap-select > .dropdown-toggle,
+        .order-number-parts .form-control {
+            height: 36px;
+            min-height: 36px;
+            padding-top: 6px;
+            padding-bottom: 6px;
+            line-height: 22px;
+        }
+        .order-details-company-group .bootstrap-select .filter-option {
+            display: flex;
+            align-items: center;
+            height: 22px;
+        }
+        .delivery-term-tooltip {
+            position: fixed;
+            z-index: 4000;
+            max-width: 280px;
+            padding: 6px 10px;
+            color: #fff;
+            background: #1f2937;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.35;
+            pointer-events: none;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .18);
+        }
         .order-number-part-label {
             display: block;
             margin-bottom: 3px;
@@ -501,8 +535,9 @@ span#picker-info-stock-badge {
                     <div class="card-body">
                         <div class="row gutters-5">
                             <input type="hidden" name="order_code_letter" id="order-code-letter" value="S">
-                            <div class="col-md-4 form-group">
+                            <div class="col-md-4 form-group order-details-company-group">
                                 <label for="order-company-id">{{ translate('Company') }} <span class="text-danger">*</span></label>
+                                <span class="order-number-part-label">&nbsp;</span>
                                 <select class="form-control aiz-selectpicker" name="company_id" id="order-company-id" data-live-search="true" title="{{ translate('Select Company') }}" required>
                                     <option value="">{{ translate('Select Company') }}</option>
                                     @foreach ($companies as $company)
@@ -545,6 +580,15 @@ span#picker-info-stock-badge {
                                 <label>{{ translate('Order Time') }} <span class="text-danger">*</span></label>
                                 <input type="time" class="form-control" name="order_time" value="{{ old('order_time', now()->format('H:i')) }}" required>
                                 @error('order_time') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-6 form-group" id="domestic-invoice-fields">
+                                <label>{{ translate('Reverse Charges') }}</label>
+                                <select class="form-control" name="reverse_charge">
+                                    <option value="" @selected(old('reverse_charge', '') === '' || old('reverse_charge') === null)>{{ translate('None') }}</option>
+                                    <option value="0" @selected((string) old('reverse_charge') === '0')>{{ translate('No') }}</option>
+                                    <option value="1" @selected((string) old('reverse_charge') === '1')>{{ translate('Yes') }}</option>
+                                </select>
+                                @error('reverse_charge') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                         </div>
                     </div>
@@ -779,38 +823,29 @@ span#picker-info-stock-badge {
                     <div id="additional-details-collapse" class="collapse show"
                         aria-labelledby="additional-details-heading" data-parent="#order-sidebar-accordion">
                     <div class="card-body">
-                        <div id="domestic-invoice-fields">
-                            <div class="form-group">
-                                <label>{{ translate('Reverse Charges') }}</label>
-                                <select class="form-control" name="reverse_charge">
-                                    <option value="0" @selected(old('reverse_charge', '0') === '0')>{{ translate('No') }}</option>
-                                    <option value="1" @selected(old('reverse_charge') === '1')>{{ translate('Yes') }}</option>
-                                </select>
-                            </div>
-                        </div>
                         <div class="form-group">
                             <label>{{ translate('Sales Executive Name') }}</label>
                             <select class="form-control aiz-selectpicker" name="sales_executive_id" data-live-search="true" title="{{ translate('Select Sales Executive') }}">
                                 <option value="">{{ translate('Select Sales Executive') }}</option>
                                 @foreach ($salesPeople as $staff)
-                                    <option value="{{ $staff->user_id }}" @selected((string) old('sales_executive_id') === (string) $staff->user_id)>
+                                    <option value="{{ $staff->user_id }}" @selected((string) old('sales_executive_id', auth()->id()) === (string) $staff->user_id)>
                                         {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        @foreach ([
-                            ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
-                            ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
-                            ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff],
-                        ] as $staffField)
+                            @foreach ([
+                                ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
+                                ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
+                                ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff, 'default' => $defaultBillingBy ?? optional($billingStaff->first())->user_id],
+                            ] as $staffField)
                             <div class="form-group">
                                 <label>{{ translate($staffField['label']) }}</label>
                                 <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
                                     <option value="">{{ translate('Select Staff') }}</option>
                                     @foreach ($staffField['staff'] as $staff)
-                                        <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], optional($staffField['staff']->first())->user_id) === (string) $staff->user_id)>
+                                        <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], $staffField['default'] ?? optional($staffField['staff']->first())->user_id) === (string) $staff->user_id)>
                                             {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
                                         </option>
                                     @endforeach
@@ -967,27 +1002,29 @@ span#picker-info-stock-badge {
                         <div id="transport-fields" class="d-none">
                             <div class="form-group">
                                 <label>{{ translate('Transport') }}</label>
-                                <select class="form-control" name="transport_id" id="transport-id">
+                                <select class="form-control js-other-select" name="transport_id" id="transport-id">
                                     <option value="">{{ translate('Select Transport') }}</option>
                                     @foreach($transports as $transport)
                                         <option value="{{ $transport->id }}" data-mode="{{ $transport->mode }}"
                                             @selected((string) old('transport_id') === (string) $transport->id)>{{ $transport->name }}</option>
                                     @endforeach
+                                    <option value="other" @selected(old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')))>{{ translate('Other') }}</option>
                                 </select>
-                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="transport_name" placeholder="{{ translate('Or enter transport name') }}">
+                                <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')) ? '' : 'd-none' }}" name="transport_name" placeholder="{{ translate('Enter transport name') }}" value="{{ old('transport_name') }}">
                             </div>
                         </div>
 
                         <div id="local-fields" class="d-none">
                             <div class="form-group">
                                 <label>{{ translate('Local Delivery Partner') }}</label>
-                                <select class="form-control" name="local_delivery_partner_id">
+                                <select class="form-control js-other-select" name="local_delivery_partner_id">
                                     <option value="">{{ translate('Select Partner') }}</option>
                                     @foreach($localDeliveryPartners as $partner)
-                                        <option value="{{ $partner->id }}">{{ $partner->name }}</option>
+                                        <option value="{{ $partner->id }}" @selected((string) old('local_delivery_partner_id') === (string) $partner->id)>{{ $partner->name }}</option>
                                     @endforeach
+                                    <option value="other" @selected(old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')))>{{ translate('Other') }}</option>
                                 </select>
-                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="local_delivery_partner_name" placeholder="{{ translate('Or enter partner name') }}">
+                                <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')) ? '' : 'd-none' }}" name="local_delivery_partner_name" placeholder="{{ translate('Enter partner name') }}" value="{{ old('local_delivery_partner_name') }}">
                             </div>
                         </div>
 
@@ -1003,11 +1040,11 @@ span#picker-info-stock-badge {
                             </div>
                             <div class="form-group">
                                 <label>{{ translate('Source (From)') }}</label>
-                                <select class="form-control" name="booked_from_id" id="booked-from-id" disabled
-                                    data-selected="{{ (string) old('booked_from_id') }}">
+                                <select class="form-control js-other-select" name="booked_from_id" id="booked-from-id" disabled
+                                    data-selected="{{ old('booked_from_id') === 'other' || (filled(old('booked_from_name')) && !old('booked_from_id')) ? 'other' : (string) old('booked_from_id') }}">
                                     <option value="">{{ translate('Select transport first') }}</option>
                                 </select>
-                                <input type="text" class="form-control mt-2 auto-capitalize-first" name="booked_from_name" placeholder="{{ translate('Or enter source (from)') }}" value="{{ old('booked_from_name') }}">
+                                <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('booked_from_id') === 'other' || filled(old('booked_from_name')) ? '' : 'd-none' }}" name="booked_from_name" placeholder="{{ translate('Enter source (from)') }}" value="{{ old('booked_from_name') }}">
                                 @error('booked_from_id') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                             <div class="form-group">
@@ -1082,11 +1119,11 @@ span#picker-info-stock-badge {
 
                         <div class="form-group" id="booked-to-wrap">
                             <label>{{ translate('Booked To') }}</label>
-                            <select class="form-control" name="booked_to_id" id="booked-to-id" disabled
-                                data-selected="{{ (string) old('booked_to_id') }}">
+                            <select class="form-control js-other-select" name="booked_to_id" id="booked-to-id" disabled
+                                data-selected="{{ old('booked_to_id') === 'other' || (filled(old('booked_to_name')) && !old('booked_to_id')) ? 'other' : (string) old('booked_to_id') }}">
                                 <option value="">{{ translate('Select transport first') }}</option>
                             </select>
-                            <input type="text" class="form-control mt-2 auto-capitalize-first" name="booked_to_name" placeholder="{{ translate('Or enter booked to') }}">
+                            <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('booked_to_id') === 'other' || filled(old('booked_to_name')) ? '' : 'd-none' }}" name="booked_to_name" placeholder="{{ translate('Enter booked to') }}" value="{{ old('booked_to_name') }}">
                         </div>
 
                         <div class="form-group">
@@ -1113,12 +1150,12 @@ span#picker-info-stock-badge {
 
                         <div class="form-group">
                             <label id="terms-of-delivery-label">{{ translate('Terms Of Delivery') }}</label>
-                            <select class="form-control" name="transport_delivery_type" id="terms-of-delivery">
+                            <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="terms-of-delivery" data-live-search="true" data-hide-disabled="true" title="{{ translate('Select Terms Of Delivery') }}">
                                 @foreach(\App\Support\InvoiceType::DOMESTIC_DELIVERY_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="domestic" @selected(old('transport_delivery_type') === $value)>{{ translate($label) }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::deliveryTermFullForm($value) }}" @selected(old('transport_delivery_type') === $value)>{{ translate($label) }}</option>
                                 @endforeach
                                 @foreach(\App\Support\InvoiceType::INTERNATIONAL_DELIVERY_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="international" @selected(old('transport_delivery_type') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::deliveryTermFullForm($value) }}" @selected(old('transport_delivery_type') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
@@ -1192,12 +1229,12 @@ span#picker-info-stock-badge {
                     <div class="card-body">
                         <div class="form-group">
                             <label>{{ translate('Payment Terms') }}</label>
-                            <select class="form-control" name="payment_type" id="payment-terms">
+                            <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="payment-terms" data-live-search="true" data-hide-disabled="true" title="{{ translate('Select Payment Terms') }}">
                                 @foreach(\App\Support\InvoiceType::DOMESTIC_PAYMENT_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="domestic" @selected(old('payment_type') === $value)>{{ translate($label) }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::paymentTermFullForm($value) }}" @selected(old('payment_type') === $value)>{{ translate($label) }}</option>
                                 @endforeach
                                 @foreach(\App\Support\InvoiceType::INTERNATIONAL_PAYMENT_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="international" @selected(old('payment_type') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::paymentTermFullForm($value) }}" @selected(old('payment_type') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
@@ -1720,6 +1757,44 @@ span#picker-info-stock-badge {
                 if (!$select.find('option:selected').length || $select.find('option:selected').prop('disabled')) {
                     $select.val($allowed.first().val());
                 }
+                if ($select.data('selectpicker') && $.fn.selectpicker) {
+                    $select.selectpicker('refresh');
+                }
+            }
+
+            function bindDeliveryTermTooltips($select) {
+                var $tip = $('#delivery-term-tooltip');
+                if (!$tip.length) {
+                    $tip = $('<div id="delivery-term-tooltip" class="delivery-term-tooltip d-none"></div>').appendTo('body');
+                }
+                function hideTip() {
+                    $tip.addClass('d-none').text('');
+                }
+                function showTip(text, event) {
+                    if (!text) {
+                        hideTip();
+                        return;
+                    }
+                    $tip.text(text).removeClass('d-none').css({
+                        top: (event.clientY + 14) + 'px',
+                        left: (event.clientX + 14) + 'px'
+                    });
+                }
+                $select.on('shown.bs.select', function () {
+                    var $menu = $(this).closest('.bootstrap-select').find('.dropdown-menu');
+                    $menu.off('.deliveryTermTip');
+                    $menu.on('mousemove.deliveryTermTip', 'li', function (event) {
+                        var index = $(this).data('original-index');
+                        var $opt = typeof index !== 'undefined'
+                            ? $select.find('option').eq(index)
+                            : $select.find('option').filter(function () {
+                                return !this.disabled && $.trim($(this).text()) === $.trim($(event.currentTarget).find('.text').text() || $(event.currentTarget).text());
+                            }).first();
+                        showTip($opt.data('fullform'), event);
+                    });
+                    $menu.on('mouseleave.deliveryTermTip', hideTip);
+                });
+                $select.on('hidden.bs.select', hideTip);
             }
 
             function locationCountryKey(location) {
@@ -3041,29 +3116,62 @@ span#picker-info-stock-badge {
             });
 
             $('#transport-id').on('change', function () {
-                fillBookedLocationSelect($('#booked-from-id'), Number($(this).val()), '{{ translate('Select Source (From)') }}');
-                fillBookedLocationSelect($('#booked-to-id'), Number($(this).val()), '{{ translate('Select Booked To') }}');
+                fillBookedLocationSelect($('#booked-from-id'), $(this).val(), '{{ translate('Select Source (From)') }}');
+                fillBookedLocationSelect($('#booked-to-id'), $(this).val(), '{{ translate('Select Booked To') }}');
+            });
+
+            function isOtherValue(value) {
+                return String(value) === 'other';
+            }
+
+            function otherEnterInput($select) {
+                return $select.siblings('.other-enter-input');
+            }
+
+            function syncOtherEnter($select) {
+                var $input = otherEnterInput($select);
+                var isOther = isOtherValue($select.val());
+                $input.toggleClass('d-none', !isOther);
+                if (!isOther) {
+                    $input.val('');
+                }
+            }
+
+            function appendOtherOption($select) {
+                if ($select.length && !$select.find('option[value="other"]').length) {
+                    $select.append('<option value="other">{{ translate('Other') }}</option>');
+                }
+            }
+
+            $(document).on('change', '.js-other-select', function () {
+                syncOtherEnter($(this));
             });
 
             function fillBookedLocationSelect($select, transportId, readyPlaceholder) {
                 if (!$select.length) {
                     return;
                 }
+                var transportIsOther = isOtherValue(transportId);
+                var hasTransport = transportIsOther || Number(transportId) > 0;
                 var selected = String($select.data('selected') || $select.val() || '');
-                var matches = bookedToOptions.filter(function (option) {
+                var matches = transportIsOther ? [] : bookedToOptions.filter(function (option) {
                     return Number(option.transport_id) === Number(transportId);
                 });
-                $select.empty().append('<option value="">' + (transportId ? readyPlaceholder : '{{ translate('Select transport first') }}') + '</option>');
+                $select.empty().append('<option value="">' + (hasTransport ? readyPlaceholder : '{{ translate('Select transport first') }}') + '</option>');
                 matches.forEach(function (option) {
                     $select.append('<option value="' + option.id + '">' + escapeHtml(option.name) + '</option>');
                 });
-                $select.prop('disabled', !transportId);
-                if (selected && matches.some(function (option) { return String(option.id) === selected; })) {
+                if (hasTransport) {
+                    appendOtherOption($select);
+                }
+                $select.prop('disabled', !hasTransport);
+                if (isOtherValue(selected) || (selected && matches.some(function (option) { return String(option.id) === selected; }))) {
                     $select.val(selected);
                 } else {
                     $select.val('');
                 }
                 $select.data('selected', $select.val() || '');
+                syncOtherEnter($select);
             }
 
             $('#booked-from-id,#booked-to-id').on('change', function () {
@@ -3110,7 +3218,7 @@ span#picker-info-stock-badge {
 
                 $transport.find('option').each(function () {
                     var optionMode = String($(this).data('mode') || '');
-                    var visible = !this.value || optionMode === selectedMode;
+                    var visible = !this.value || this.value === 'other' || optionMode === selectedMode;
                     $(this).prop('disabled', !visible).toggle(visible);
 
                     if (visible && this.selected && this.value) {
@@ -3221,22 +3329,46 @@ span#picker-info-stock-badge {
                     return;
                 }
                 if (shippingMethod === 'transport') {
-                    var hasTransport = $('#transport-id').val() || $.trim($('input[name="transport_name"]').val());
-                    var hasBookedTo = usesPortLogistics() || $('#booked-to-id').val() || $.trim($('input[name="booked_to_name"]').val());
+                    var transportValue = $('#transport-id').val();
+                    var hasTransport = (transportValue && !isOtherValue(transportValue)) || $.trim($('input[name="transport_name"]').val());
+                    var bookedToValue = $('#booked-to-id').val();
+                    var hasBookedTo = usesPortLogistics() || (bookedToValue && !isOtherValue(bookedToValue)) || $.trim($('input[name="booked_to_name"]').val());
                     if (!hasTransport || !hasBookedTo) {
                         event.preventDefault();
                         notify('warning', '{{ translate('Please select a transport provider and booked-to destination.') }}');
                         return;
                     }
+                    if (isOtherValue(transportValue) && !$.trim($('input[name="transport_name"]').val())) {
+                        event.preventDefault();
+                        notify('warning', '{{ translate('Please enter a transport name.') }}');
+                        return;
+                    }
                 }
-                if (shippingMethod === 'local' && !$('select[name="local_delivery_partner_id"]').val() && !$.trim($('input[name="local_delivery_partner_name"]').val())) {
-                    event.preventDefault();
-                    notify('warning', '{{ translate('Please select or enter a local delivery partner.') }}');
+                if (shippingMethod === 'local') {
+                    var partnerValue = $('select[name="local_delivery_partner_id"]').val();
+                    if ((!partnerValue || isOtherValue(partnerValue)) && !$.trim($('input[name="local_delivery_partner_name"]').val())) {
+                        event.preventDefault();
+                        notify('warning', '{{ translate('Please select or enter a local delivery partner.') }}');
+                        return;
+                    }
                 }
+
+                $('.js-other-select').each(function () {
+                    if (isOtherValue($(this).val())) {
+                        $(this).val('');
+                    }
+                });
+            });
+
+            $('.js-other-select').each(function () {
+                syncOtherEnter($(this));
             });
 
             applyCustomerInvoiceType({type_option: 'domestic'});
+            bindDeliveryTermTooltips($('#terms-of-delivery'));
+            bindDeliveryTermTooltips($('#payment-terms'));
             $('#shipping-method').trigger('change');
+            $('#transport-id').trigger('change');
         })();
     </script>
 @endsection

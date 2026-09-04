@@ -393,7 +393,7 @@
         <tr>
             <td>
                 @if($isDomestic)
-                    {{ translate('Reverse Charges') }}: {{ $order->reverse_charge ? translate('Yes') : translate('No') }}<br>
+                    {{ translate('Reverse Charges') }}: {{ $order->reverse_charge === null ? translate('None') : ($order->reverse_charge ? translate('Yes') : translate('No')) }}<br>
                 @endif
                 {{ $documentTitle }}
             </td>

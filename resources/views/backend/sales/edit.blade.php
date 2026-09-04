@@ -46,6 +46,19 @@
             border-radius: 6px;
             background: #fff;
         }
+        .delivery-term-tooltip {
+            position: fixed;
+            z-index: 4000;
+            max-width: 280px;
+            padding: 6px 10px;
+            color: #fff;
+            background: #1f2937;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.35;
+            pointer-events: none;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .18);
+        }
     </style>
 
     <div class="card">
@@ -56,7 +69,7 @@
             </a>
         </div>
         <div class="card-body">
-            <form action="{{ route('orders.update', $order->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('orders.update', $order->id) }}" method="POST" enctype="multipart/form-data" id="edit-order-form">
                 @csrf
                 @method('PUT')
 
@@ -88,14 +101,30 @@
                                         <input type="text" class="form-control" value="{{ ucfirst(str_replace('_', ' ', $shippingChoice)) }}" readonly>
                                     </div>
                                 </div>
+                                @if(!$isInternational)
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>{{ translate('Reverse Charges') }}</label>
+                                            @php
+                                                $reverseChargeValue = old('reverse_charge', $order->reverse_charge === null ? '' : (string) (int) $order->reverse_charge);
+                                            @endphp
+                                            <select class="form-control" name="reverse_charge">
+                                                <option value="" @selected($reverseChargeValue === '')>{{ translate('None') }}</option>
+                                                <option value="0" @selected($reverseChargeValue === '0')>{{ translate('No') }}</option>
+                                                <option value="1" @selected($reverseChargeValue === '1')>{{ translate('Yes') }}</option>
+                                            </select>
+                                            @error('reverse_charge') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="form-group">
                                 <label>{{ translate('Payment Terms') }}</label>
-                                <select class="form-control" name="payment_type">
+                                <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="edit-payment-terms" data-live-search="true">
                                     <option value="">{{ translate('Select Payment Terms') }}</option>
                                     @foreach(\App\Support\InvoiceType::paymentTerms($invoiceType) as $value => $label)
-                                        <option value="{{ $value }}" @selected(old('payment_type', $order->payment_type) === $value)>{{ translate($label) }}</option>
+                                        <option value="{{ $value }}" data-fullform="{{ \App\Support\InvoiceType::paymentTermFullForm($value) }}" @selected(old('payment_type', $order->payment_type) === $value)>{{ translate($label) }}</option>
                                     @endforeach
                                 </select>
                                 @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
@@ -123,39 +152,46 @@
                             @if($shippingChoice === 'transport')
                                 <div class="form-group">
                                     <label>{{ translate('Transport') }}</label>
-                                    <select class="form-control" name="transport_id" id="edit-transport-id">
+                                    <select class="form-control js-other-select" name="transport_id" id="edit-transport-id">
                                         <option value="">{{ translate('Select Transport') }}</option>
                                         @foreach($transports as $transport)
                                             <option value="{{ $transport->id }}" @selected((string) old('transport_id', $order->transport_id) === (string) $transport->id)>{{ $transport->name }}</option>
                                         @endforeach
+                                        <option value="other" @selected(old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')))>{{ translate('Other') }}</option>
                                     </select>
+                                    <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')) ? '' : 'd-none' }}" name="transport_name" placeholder="{{ translate('Enter transport name') }}" value="{{ old('transport_name') }}">
                                     @error('transport_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    @error('transport_name') <div class="text-danger small">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="form-group">
                                     <label>{{ translate('Source (From)') }}</label>
-                                    <select class="form-control" name="booked_from_id" id="edit-booked-from-id" data-selected="{{ (string) old('booked_from_id', $order->booked_from_id) }}">
+                                    <select class="form-control js-other-select" name="booked_from_id" id="edit-booked-from-id" data-selected="{{ old('booked_from_id') === 'other' || (filled(old('booked_from_name')) && !old('booked_from_id')) ? 'other' : (string) old('booked_from_id', $order->booked_from_id) }}">
                                         <option value="">{{ translate('Select transport first') }}</option>
                                     </select>
+                                    <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('booked_from_id') === 'other' || filled(old('booked_from_name')) ? '' : 'd-none' }}" name="booked_from_name" placeholder="{{ translate('Enter source (from)') }}" value="{{ old('booked_from_name') }}">
                                     @error('booked_from_id') <div class="text-danger small">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="form-group">
                                     <label>{{ translate('Booked To') }}</label>
-                                    <select class="form-control" name="booked_to_id" id="edit-booked-to-id" data-selected="{{ (string) old('booked_to_id', $order->booked_to_id) }}">
+                                    <select class="form-control js-other-select" name="booked_to_id" id="edit-booked-to-id" data-selected="{{ old('booked_to_id') === 'other' || (filled(old('booked_to_name')) && !old('booked_to_id')) ? 'other' : (string) old('booked_to_id', $order->booked_to_id) }}">
                                         <option value="">{{ translate('Select transport first') }}</option>
                                     </select>
+                                    <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('booked_to_id') === 'other' || filled(old('booked_to_name')) ? '' : 'd-none' }}" name="booked_to_name" placeholder="{{ translate('Enter booked to') }}" value="{{ old('booked_to_name') }}">
                                     @error('booked_to_id') <div class="text-danger small">{{ $message }}</div> @enderror
                                 </div>
                             @elseif($shippingChoice === 'local')
                                 <div class="form-group">
                                     <label>{{ translate('Local Delivery Partner') }}</label>
-                                    <select class="form-control" name="local_delivery_partner_id">
+                                    <select class="form-control js-other-select" name="local_delivery_partner_id">
                                         <option value="">{{ translate('Select Partner') }}</option>
                                         @foreach($localDeliveryPartners as $partner)
                                             <option value="{{ $partner->id }}" @selected((string) old('local_delivery_partner_id', $order->local_delivery_partner_id) === (string) $partner->id)>{{ $partner->name }}</option>
                                         @endforeach
+                                        <option value="other" @selected(old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')))>{{ translate('Other') }}</option>
                                     </select>
+                                    <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')) ? '' : 'd-none' }}" name="local_delivery_partner_name" placeholder="{{ translate('Enter partner name') }}" value="{{ old('local_delivery_partner_name') }}">
                                     @error('local_delivery_partner_id') <div class="text-danger small">{{ $message }}</div> @enderror
                                 </div>
                             @else
@@ -209,25 +245,14 @@
 
                             <div class="form-group">
                                 <label>{{ translate('Delivery Type') }}</label>
-                                <select class="form-control" name="transport_delivery_type">
+                                <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="edit-terms-of-delivery" data-live-search="true" data-hide-disabled="true">
                                     <option value="">{{ translate('Select Delivery Type') }}</option>
                                     @foreach(\App\Support\InvoiceType::deliveryTerms($invoiceType) as $value => $label)
-                                        <option value="{{ $value }}" @selected(old('transport_delivery_type', $order->transport_delivery_type) === $value)>{{ translate($label) }}</option>
+                                        <option value="{{ $value }}" data-fullform="{{ \App\Support\InvoiceType::deliveryTermFullForm($value) }}" @selected(old('transport_delivery_type', $order->transport_delivery_type) === $value)>{{ translate($label) }}</option>
                                     @endforeach
                                 </select>
                                 @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
-
-                            @if(!$isInternational)
-                                <div class="form-group">
-                                    <label>{{ translate('Reverse Charges') }}</label>
-                                    <select class="form-control" name="reverse_charge">
-                                        <option value="0" @selected((string) old('reverse_charge', (int) $order->reverse_charge) === '0')>{{ translate('No') }}</option>
-                                        <option value="1" @selected((string) old('reverse_charge', (int) $order->reverse_charge) === '1')>{{ translate('Yes') }}</option>
-                                    </select>
-                                    @error('reverse_charge') <div class="text-danger small">{{ $message }}</div> @enderror
-                                </div>
-                            @endif
 
                             @if($shippingChoice !== 'local')
                                 <input type="hidden" name="loading_location_type" id="edit-loading-location-type" value="{{ old('loading_location_type', $order->loading_location_type ?: ($order->fod_mode ?: 'sea')) }}">
@@ -548,6 +573,45 @@
                 });
             }
 
+            function bindDeliveryTermTooltips($select) {
+                if (!$select.length) {
+                    return;
+                }
+                var $tip = $('#delivery-term-tooltip');
+                if (!$tip.length) {
+                    $tip = $('<div id="delivery-term-tooltip" class="delivery-term-tooltip d-none"></div>').appendTo('body');
+                }
+                function hideTip() {
+                    $tip.addClass('d-none').text('');
+                }
+                function showTip(text, event) {
+                    if (!text) {
+                        hideTip();
+                        return;
+                    }
+                    $tip.text(text).removeClass('d-none').css({
+                        top: (event.clientY + 14) + 'px',
+                        left: (event.clientX + 14) + 'px'
+                    });
+                }
+                $select.on('shown.bs.select', function () {
+                    var $menu = $(this).closest('.bootstrap-select').find('.dropdown-menu');
+                    $menu.off('.deliveryTermTip');
+                    $menu.on('mousemove.deliveryTermTip', 'li', function (event) {
+                        var index = $(this).data('original-index');
+                        var $opt = typeof index !== 'undefined'
+                            ? $select.find('option').eq(index)
+                            : $select.find('option').filter(function () {
+                                var optionText = $.trim($(event.currentTarget).find('.text').text() || $(event.currentTarget).text());
+                                return !this.disabled && $.trim($(this).text()) === optionText;
+                            }).first();
+                        showTip($opt.data('fullform'), event);
+                    });
+                    $menu.on('mouseleave.deliveryTermTip', hideTip);
+                });
+                $select.on('hidden.bs.select', hideTip);
+            }
+
             function loadCourierServices() {
                 if (shippingChoice !== 'courier' || !$('#edit-courier-provider').length) {
                     return;
@@ -651,27 +715,52 @@
                 fillEditBookedLocation($('#edit-booked-to-id'), '{{ translate('Select Booked To') }}');
             }
 
+            function isOtherValue(value) {
+                return String(value) === 'other';
+            }
+
+            function syncOtherEnter($select) {
+                var $input = $select.siblings('.other-enter-input');
+                var isOther = isOtherValue($select.val());
+                $input.toggleClass('d-none', !isOther);
+                if (!isOther) {
+                    $input.val('');
+                }
+            }
+
+            function appendOtherOption($select) {
+                if ($select.length && !$select.find('option[value="other"]').length) {
+                    $select.append('<option value="other">{{ translate('Other') }}</option>');
+                }
+            }
+
             function fillEditBookedLocation($select, readyPlaceholder) {
                 if (!$select.length) {
                     return;
                 }
                 var transportId = String($('#edit-transport-id').val() || '');
+                var transportIsOther = isOtherValue(transportId);
+                var hasTransport = transportIsOther || Number(transportId) > 0;
                 var selected = String($select.data('selected') || $select.val() || '');
-                var matches = bookedToOptions.filter(function (option) {
+                var matches = transportIsOther ? [] : bookedToOptions.filter(function (option) {
                     return String(option.transport_id) === transportId;
                 });
                 $select.empty();
-                $select.append('<option value="">' + (transportId ? readyPlaceholder : '{{ translate('Select transport first') }}') + '</option>');
+                $select.append('<option value="">' + (hasTransport ? readyPlaceholder : '{{ translate('Select transport first') }}') + '</option>');
                 matches.forEach(function (option) {
                     $select.append('<option value="' + option.id + '">' + escapeHtml(option.name) + '</option>');
                 });
-                $select.prop('disabled', !transportId);
-                if (selected && matches.some(function (option) { return String(option.id) === selected; })) {
+                if (hasTransport) {
+                    appendOtherOption($select);
+                }
+                $select.prop('disabled', !hasTransport);
+                if (isOtherValue(selected) || (selected && matches.some(function (option) { return String(option.id) === selected; }))) {
                     $select.val(selected);
                 } else if (selected) {
                     $select.val('');
                 }
                 $select.data('selected', $select.val() || '');
+                syncOtherEnter($select);
             }
 
             function syncSurfaceMode() {
@@ -730,9 +819,35 @@
             $('#edit-consignee-copy-status').on('change', syncConsigneeCopy);
             $('#edit-shipping-cost-type').on('change', syncShippingCost);
             $('#edit-weight-grams').on('input change', updateWeightDisplay);
-            $('#edit-transport-id').on('change', filterBookedTo);
+            $('#edit-transport-id').on('change', function () {
+                syncOtherEnter($(this));
+                filterBookedTo();
+            });
+            $(document).on('change', '.js-other-select', function () {
+                syncOtherEnter($(this));
+            });
             $('#edit-booked-to-id,#edit-booked-from-id').on('change', function () {
                 $(this).data('selected', $(this).val() || '');
+            });
+            $('#edit-order-form').on('submit', function (event) {
+                if (shippingChoice === 'transport' && isOtherValue($('#edit-transport-id').val()) && !$.trim($('input[name="transport_name"]').val())) {
+                    event.preventDefault();
+                    alert('{{ translate('Please enter a transport name.') }}');
+                    return;
+                }
+                if (shippingChoice === 'local') {
+                    var partnerValue = $('select[name="local_delivery_partner_id"]').val();
+                    if (isOtherValue(partnerValue) && !$.trim($('input[name="local_delivery_partner_name"]').val())) {
+                        event.preventDefault();
+                        alert('{{ translate('Please enter a partner name.') }}');
+                        return;
+                    }
+                }
+                $('.js-other-select').each(function () {
+                    if (isOtherValue($(this).val())) {
+                        $(this).val('');
+                    }
+                });
             });
             $('#edit-fod-mode').on('change', function () {
                 if (shippingChoice === 'local' && $(this).val() !== 'surface') {
@@ -793,8 +908,13 @@
             syncShippingCost();
             updateWeightDisplay();
             filterBookedTo();
+            $('.js-other-select').each(function () {
+                syncOtherEnter($(this));
+            });
             syncSurfaceMode();
             syncPortLogistics();
+            bindDeliveryTermTooltips($('#edit-terms-of-delivery'));
+            bindDeliveryTermTooltips($('#edit-payment-terms'));
         })();
     </script>
 @endsection
