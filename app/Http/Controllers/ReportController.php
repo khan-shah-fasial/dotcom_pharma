@@ -25,6 +25,7 @@ class ReportController extends Controller
         $this->middleware(['permission:seller_products_sale_report'])->only('seller_sale_report');
         $this->middleware(['permission:products_stock_report'])->only([
             'stock_report',
+            'updateStockReportBatch',
             'product_detail_report',
             'getProductDetailFilterOptions',
         ]);
@@ -41,37 +42,42 @@ class ReportController extends Controller
         $variantId = $request->filled('variant_id') ? (int) $request->variant_id : null;
         $batchId = $request->filled('batch_id') ? (int) $request->batch_id : null;
 
-        $productsQuery = Product::query()
-            ->orderBy('created_at', 'desc')
+        $reportRows = ProductBatch::query()
+            ->join('products', 'products.id', '=', 'product_batches.product_id')
+            ->join('product_stocks', 'product_stocks.id', '=', 'product_batches.product_stock_id')
+            ->select('product_batches.*')
+            ->with([
+                'stock',
+                'product.brand',
+                'product.main_category',
+                'product.main_group',
+                'product.categories',
+                'product.groups',
+                'product.taxes',
+            ])
             ->when($categoryId, function ($query) use ($categoryId) {
-                $query->where('category_id', $categoryId);
+                $query->where(function ($categoryQuery) use ($categoryId) {
+                    $categoryQuery
+                        ->where('products.category_id', $categoryId)
+                        ->orWhereHas('product.categories', function ($relationQuery) use ($categoryId) {
+                            $relationQuery->where('categories.id', $categoryId);
+                        });
+                });
             })
             ->when($productId, function ($query) use ($productId) {
-                $query->where('id', $productId);
+                $query->where('product_batches.product_id', $productId);
             })
-            ->whereHas('stocks.batches')
-            ->with([
-                'stocks' => function ($stockQuery) use ($variantId, $batchId) {
-                    $stockQuery
-                        ->when($variantId, function ($query) use ($variantId) {
-                            $query->where('id', $variantId);
-                        })
-                        ->whereHas('batches', function ($batchQuery) use ($batchId) {
-                            $batchQuery->when($batchId, function ($query) use ($batchId) {
-                                $query->where('id', $batchId);
-                            });
-                        })
-                        ->with(['batches' => function ($batchQuery) use ($batchId) {
-                            $batchQuery
-                                ->when($batchId, function ($query) use ($batchId) {
-                                    $query->where('id', $batchId);
-                                })
-                                ->orderBy('id', 'desc');
-                        }]);
-                }
-            ]);
-
-        $products = $productsQuery->paginate(5);
+            ->when($variantId, function ($query) use ($variantId) {
+                $query->where('product_batches.product_stock_id', $variantId);
+            })
+            ->when($batchId, function ($query) use ($batchId) {
+                $query->where('product_batches.id', $batchId);
+            })
+            ->orderBy('products.name')
+            ->orderBy('product_stocks.variant')
+            ->orderBy('product_batches.batch')
+            ->paginate(25)
+            ->withQueryString();
 
         $categories = Category::orderBy('name', 'asc')->get(['id', 'name']);
 
@@ -99,7 +105,7 @@ class ReportController extends Controller
         }
 
         return view('backend.reports.stock_report', compact(
-            'products',
+            'reportRows',
             'categories',
             'productsForFilter',
             'variants',
@@ -109,6 +115,153 @@ class ReportController extends Controller
             'variantId',
             'batchId'
         ));
+    }
+
+    public function updateStockReportBatch(Request $request)
+    {
+        $request->validate([
+            'batch_id' => 'required|integer',
+            'field' => 'required|string',
+            'value' => 'nullable',
+        ]);
+
+        $field = (string) $request->input('field');
+        $roleKeys = ['pts', 'ptr', 'ptd', 'gov', 'expo', 'customer'];
+        $allowed = array_merge(
+            ['batch', 'manufacturing_date', 'product_exp_date', 'qty', 'mrp_price'],
+            $roleKeys
+        );
+
+        if (!in_array($field, $allowed, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => translate('This field cannot be edited here.'),
+            ], 422);
+        }
+
+        $batch = ProductBatch::with('stock')->find((int) $request->input('batch_id'));
+        if (!$batch) {
+            return response()->json([
+                'success' => false,
+                'message' => translate('Batch not found.'),
+            ], 404);
+        }
+
+        $value = $request->input('value');
+
+        if ($field === 'batch') {
+            $batchCode = trim((string) $value);
+            if ($batchCode === '') {
+                return response()->json([
+                    'success' => false,
+                    'message' => translate('Batch / Lot No is required.'),
+                ], 422);
+            }
+            $batch->batch = $batchCode;
+        } elseif ($field === 'qty') {
+            if ($value === null || $value === '' || !preg_match('/^\d+$/', (string) $value)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => translate('Qty must be a whole number.'),
+                ], 422);
+            }
+            $batch->qty = (int) $value;
+        } elseif ($field === 'mrp_price') {
+            if ($value === null || $value === '') {
+                $batch->mrp_price = null;
+            } elseif (!is_numeric($value) || (float) $value < 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => translate('MRP must be a valid amount.'),
+                ], 422);
+            } else {
+                $batch->mrp_price = round((float) $value, 2);
+            }
+        } elseif ($field === 'manufacturing_date' || $field === 'product_exp_date') {
+            $trimmed = trim((string) ($value ?? ''));
+            $useEndOfMonth = $field === 'product_exp_date';
+            if ($trimmed !== '' && $this->normalizeStockReportMonth($value, $useEndOfMonth) === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => translate('Use a valid month.'),
+                ], 422);
+            }
+            $normalized = $this->normalizeStockReportMonth($value, $useEndOfMonth);
+            if ($field === 'manufacturing_date') {
+                $batch->manufacturing_date = $normalized;
+            } else {
+                $batch->product_exp_date = $normalized;
+            }
+        } elseif (in_array($field, $roleKeys, true)) {
+            if ($value === null || $value === '') {
+                return response()->json([
+                    'success' => false,
+                    'message' => translate('Price cannot be empty.'),
+                ], 422);
+            }
+            if (!is_numeric($value) || (float) $value < 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => translate('Price must be a valid amount.'),
+                ], 422);
+            }
+
+            $rolePrices = is_array($batch->role_price)
+                ? $batch->role_price
+                : json_decode((string) $batch->role_price, true);
+            $rolePrices = is_array($rolePrices) ? $rolePrices : [];
+            $rolePrices[$field] = round((float) $value, 2);
+            $batch->role_price = json_encode($rolePrices);
+        }
+
+        $batch->save();
+
+        $stock = $batch->stock;
+        if ($stock) {
+            if ($field === 'qty') {
+                $stock->qty = (int) $stock->batches()->sum('qty');
+            }
+
+            $firstBatch = $stock->batches()->orderBy('id')->first();
+            if ($firstBatch && (int) $firstBatch->id === (int) $batch->id) {
+                if ($field === 'mrp_price') {
+                    $stock->mrp_price = $batch->mrp_price;
+                }
+                if ($field === 'product_exp_date') {
+                    $stock->product_exp_date = $batch->product_exp_date;
+                }
+            }
+
+            if ($stock->isDirty()) {
+                $stock->save();
+            }
+        }
+
+        $display = $value;
+        if ($field === 'manufacturing_date' || $field === 'product_exp_date') {
+            $dateValue = $field === 'manufacturing_date' ? $batch->manufacturing_date : $batch->product_exp_date;
+            $display = $dateValue && strtotime((string) $dateValue) !== false
+                ? date('F-y', strtotime((string) $dateValue))
+                : '';
+        } elseif ($field === 'mrp_price' || in_array($field, $roleKeys, true)) {
+            $amount = $field === 'mrp_price'
+                ? $batch->mrp_price
+                : round((float) $value, 2);
+            $display = $amount === null || $amount === ''
+                ? ''
+                : number_format((float) $amount, 2, '.', '');
+        } elseif ($field === 'qty') {
+            $display = (string) (int) $batch->qty;
+        } elseif ($field === 'batch') {
+            $display = (string) $batch->batch;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => translate('Saved'),
+            'display' => $display,
+            'qty' => (int) $batch->qty,
+        ]);
     }
 
     public function product_detail_report(Request $request)
@@ -538,6 +691,36 @@ class ReportController extends Controller
             ->when($brandId, function ($productQuery) use ($brandId) {
                 $productQuery->where('brand_id', $brandId);
             });
+    }
+
+    private function normalizeStockReportMonth($value, bool $useEndOfMonth = false): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('/^\d{4}-\d{2}$/', $value)) {
+            if ($useEndOfMonth) {
+                return \Carbon\Carbon::createFromFormat('Y-m-d', $value . '-01')->endOfMonth()->toDateString();
+            }
+
+            return $value . '-01';
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            if ($useEndOfMonth) {
+                return \Carbon\Carbon::parse($value)->endOfMonth()->toDateString();
+            }
+
+            return $value;
+        }
+
+        return null;
     }
 
 }
