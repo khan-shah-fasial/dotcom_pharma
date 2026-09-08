@@ -101,6 +101,79 @@ class StockReportInlineEditTest extends TestCase
         $response->assertSee(route('stock_report.update_batch'), false);
     }
 
+    public function test_stock_report_matches_master_column_order_and_exposes_all_sort_keys(): void
+    {
+        $response = $this->actingAsAdminWithoutCsrf()
+            ->get(route('stock_report.index'));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            'SR.No',
+            'Category',
+            'Product/Brand Name',
+            'Pack Size',
+            'Batch / Lot No',
+            'P.Date',
+            'Supplier Code',
+            'P.Rate',
+            'P.TaxCode',
+            'PTS',
+            'PTR',
+            'PTD',
+            'Govt.',
+            'Export',
+            'Customer',
+            'MRP',
+            'S TaxCode',
+            'HSN Code',
+            'Avg.',
+            'Piece',
+            'Buffer Box / Shrink Pack',
+            'Buffer Box / Shrink Pack Per Case',
+            'Per Case',
+        ], false);
+
+        foreach ([
+            'sku',
+            'origin',
+            'category',
+            'group',
+            'schedule',
+            'product_name',
+            'composition',
+            'company',
+            'pack_size',
+            'batch',
+            'qty',
+            'scheme',
+            'purchase_rate',
+            'purchase_value',
+            'pts',
+            'pts_value',
+            'pts_gp',
+            'mrp',
+            'hsn',
+            'average_gp',
+            'piece_qty',
+            'per_case_qty',
+        ] as $sortKey) {
+            $response->assertSee('data-sort-key="' . $sortKey . '"', false);
+        }
+
+        $response->assertSee('plain-header-label', false);
+    }
+
+    public function test_supported_and_placeholder_stock_report_sorts_load(): void
+    {
+        $this->actingAsAdminWithoutCsrf()
+            ->get(route('stock_report.index', ['sort_by' => 'pts_gp', 'sort_order' => 'desc']))
+            ->assertOk();
+
+        $this->actingAsAdminWithoutCsrf()
+            ->get(route('stock_report.index', ['sort_by' => 'average_gp', 'sort_order' => 'asc']))
+            ->assertOk();
+    }
+
     public function test_admin_can_update_qty_and_sync_variant_stock_total(): void
     {
         $batch = $this->sampleBatch();
