@@ -266,6 +266,8 @@ class StaffController extends Controller
             ['leads', 'assigned_to', $staff->user_id],
             ['leads', 'created_by', $staff->user_id],
             ['lead_activities', 'created_by', $staff->user_id],
+            ['directory_contacts', 'created_by', $staff->user_id],
+            ['directory_contacts', 'updated_by', $staff->user_id],
             ['orders', 'sales_person_id', $staff->user_id],
             ['orders', 'sales_executive_id', $staff->user_id],
             ['orders', 'packed_by', $staff->user_id],

@@ -32,6 +32,8 @@ use App\Http\Controllers\FinancialArchiveController;
 use App\Http\Controllers\FlashDealController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\ContactClassificationController;
+use App\Http\Controllers\DirectoryContactController;
 use App\Http\Controllers\LeadActivitySubStatusController;
 use App\Http\Controllers\LeadActivityTypeController;
 use App\Http\Controllers\LeadController;
@@ -380,6 +382,26 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/leads/{lead}/activities', 'storeActivity')->name('leads.activities.store');
         Route::post('/leads/{lead}/activities/{activity}/update', 'updateActivity')->name('leads.activities.update');
         Route::get('/leads/{lead}/activities/{activity}/destroy', 'destroyActivity')->name('leads.activities.destroy');
+    });
+
+    Route::controller(ContactClassificationController::class)->group(function () {
+        Route::get('/contact-classifications', 'index')->name('contact-classifications.index');
+        Route::get('/contact-classifications/options', 'options')->name('contact-classifications.options');
+        Route::post('/contact-classifications', 'store')->name('contact-classifications.store');
+        Route::get('/contact-classifications/{contactClassification}/edit', 'edit')->name('contact-classifications.edit');
+        Route::post('/contact-classifications/{contactClassification}/update', 'update')->name('contact-classifications.update');
+        Route::get('/contact-classifications/{contactClassification}/destroy', 'destroy')->name('contact-classifications.destroy');
+        Route::post('/contact-classifications/update-status', 'updateStatus')->name('contact-classifications.update_status');
+    });
+
+    Route::controller(DirectoryContactController::class)->group(function () {
+        Route::get('/contact-directory', 'index')->name('contact-directory.index');
+        Route::get('/contact-directory/create', 'create')->name('contact-directory.create');
+        Route::post('/contact-directory', 'store')->name('contact-directory.store');
+        Route::get('/contact-directory/destroy/{directoryContact}', 'destroy')->name('contact-directory.destroy');
+        Route::get('/contact-directory/{directoryContact}', 'show')->name('contact-directory.show');
+        Route::get('/contact-directory/{directoryContact}/edit', 'edit')->name('contact-directory.edit');
+        Route::post('/contact-directory/{directoryContact}/update', 'update')->name('contact-directory.update');
     });
 
     // Newsletter

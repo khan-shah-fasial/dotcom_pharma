@@ -451,6 +451,40 @@
                     </li>
                 @endcanany
 
+                <!-- Contact Management -->
+                @canany(['view_contact_directory', 'add_contact_directory'])
+                    <li class="aiz-side-nav-item">
+                        <a href="#" class="aiz-side-nav-link">
+                            <div class="aiz-side-nav-icon">
+                                <i class="las la-address-book fs-16"></i>
+                            </div>
+                            <span class="aiz-side-nav-text">{{ translate('Contact Management') }}</span>
+                            <span class="aiz-side-nav-arrow"></span>
+                        </a>
+                        <ul class="aiz-side-nav-list level-2">
+                            @can('add_contact_directory')
+                                <li class="aiz-side-nav-item">
+                                    <a class="aiz-side-nav-link {{ areActiveRoutes(['contact-directory.create']) }}" href="{{ route('contact-directory.create') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Add New Contact') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_contact_directory')
+                                <li class="aiz-side-nav-item">
+                                    <a class="aiz-side-nav-link {{ areActiveRoutes(['contact-directory.index','contact-directory.show','contact-directory.edit']) }}" href="{{ route('contact-directory.index') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Contact List') }}</span>
+                                    </a>
+                                </li>
+                                <li class="aiz-side-nav-item">
+                                    <a class="aiz-side-nav-link {{ areActiveRoutes(['contact-classifications.index','contact-classifications.edit']) }}" href="{{ route('contact-classifications.index') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Contact Master') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </li>
+                @endcanany
+
 
                 <!-- Auction Product -->
                 @if(addon_is_activated('auction'))
