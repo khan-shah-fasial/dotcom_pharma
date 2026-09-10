@@ -194,6 +194,11 @@
                                         <span class="aiz-side-nav-text">{{ translate('All Products') }}</span>
                                     </a>
                                 </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('products.dimensions') }}" class="aiz-side-nav-link {{ areActiveRoutes(['products.dimensions']) }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Product Dimensions') }}</span>
+                                    </a>
+                                </li>
                             @endcan
                             @can('show_in_house_products')
                                 <li class="aiz-side-nav-item">

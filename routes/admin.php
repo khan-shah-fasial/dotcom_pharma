@@ -51,6 +51,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PickupPointController;
 use App\Http\Controllers\ProductBulkUploadController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductDimensionsController;
 use App\Http\Controllers\ProductQueryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -219,6 +220,12 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/products/download-product-stock-excel', 'download_stock_Excel')->name('download-product-stock-excel');
 
         Route::post('/products/price-update/upload', 'upload_excel_update_stock')->name('price-update.upload');
+    });
+
+    Route::controller(ProductDimensionsController::class)->group(function () {
+        Route::get('/products/dimensions', 'index')->name('products.dimensions');
+        Route::get('/products/dimensions/same-as', 'sameAsSearch')->name('products.dimensions.same_as');
+        Route::post('/products/dimensions/{id}', 'update')->name('products.dimensions.update');
     });
 
     // Digital Product
