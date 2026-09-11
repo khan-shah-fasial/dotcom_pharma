@@ -7,20 +7,17 @@ use App\Models\Category;
 use App\Models\ProductStock;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class ProductDimensionsController extends Controller
 {
-    protected array $dimensionFields = [
-        'length',
-        'width',
-        'height',
-        'buffer_length',
-        'buffer_width',
-        'buffer_height',
-        'case_length',
-        'case_width',
-        'case_height',
+    protected array $integerFields = [
+        'min_qty',
+        'count',
+        'qty_per_piece',
+        'qty_per_buffer_box',
+        'total_qty_per_case',
     ];
 
     public function __construct()
@@ -28,28 +25,97 @@ class ProductDimensionsController extends Controller
         $this->middleware(['permission:show_all_products']);
     }
 
+    public function packingGroups(): array
+    {
+        $piece = 'COALESCE(product_stocks.weight, 0)';
+        $bufferQty = 'COALESCE(product_stocks.qty_per_buffer_box, 0)';
+        $buffersPerCase = 'COALESCE(product_stocks.count, 0)';
+        $piecesPerCase = 'COALESCE(product_stocks.total_qty_per_case, 0)';
+
+        return [
+            'piece' => [
+                'label' => 'Each Piece-(Base)',
+                'qty_field' => 'qty_per_piece',
+                'qty_fixed' => null,
+                'net_field' => 'weight',
+                'gross_field' => 'weight',
+                'net_sql' => $piece,
+                'gross_sql' => $piece,
+                'net_factors' => ['weight'],
+                'length' => 'length',
+                'width' => 'width',
+                'height' => 'height',
+            ],
+            'buffer' => [
+                'label' => 'Inner Buffer Or Shrink Pack',
+                'qty_field' => 'qty_per_buffer_box',
+                'qty_fixed' => null,
+                'net_field' => null,
+                'gross_field' => 'weight_buffer_box',
+                'net_sql' => '(' . $bufferQty . ' * ' . $piece . ')',
+                'gross_sql' => 'COALESCE(product_stocks.weight_buffer_box, 0)',
+                'net_factors' => ['qty_per_buffer_box', 'weight'],
+                'length' => 'buffer_length',
+                'width' => 'buffer_width',
+                'height' => 'buffer_height',
+            ],
+            'buffer_per_case' => [
+                'label' => 'Inner Buffer Or Shrink Pack / Case / Carton',
+                'qty_field' => 'count',
+                'qty_fixed' => null,
+                'net_field' => null,
+                'gross_field' => 'weight_case',
+                'net_sql' => '(' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $piece . ')',
+                'gross_sql' => 'COALESCE(product_stocks.weight_case, 0)',
+                'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
+                'length' => 'case_length',
+                'width' => 'case_width',
+                'height' => 'case_height',
+            ],
+            'qty_per_case' => [
+                'label' => 'Qty Per Outer Case/Shipper/Carton',
+                'qty_field' => 'total_qty_per_case',
+                'qty_fixed' => null,
+                'net_field' => null,
+                'gross_field' => 'weight_case',
+                'net_sql' => '(' . $piecesPerCase . ' * ' . $piece . ')',
+                'gross_sql' => 'COALESCE(product_stocks.weight_case, 0)',
+                'net_factors' => ['total_qty_per_case', 'weight'],
+                'length' => 'case_length',
+                'width' => 'case_width',
+                'height' => 'case_height',
+            ],
+            'outer_case' => [
+                'label' => 'Outer Case / Shipper / Carton',
+                'qty_field' => null,
+                'qty_fixed' => 1,
+                'net_field' => null,
+                'gross_field' => 'weight_case',
+                'net_sql' => '(' . $piecesPerCase . ' * ' . $piece . ')',
+                'gross_sql' => 'COALESCE(product_stocks.weight_case, 0)',
+                'net_factors' => ['total_qty_per_case', 'weight'],
+                'length' => 'case_length',
+                'width' => 'case_width',
+                'height' => 'case_height',
+            ],
+        ];
+    }
+
     public function index(Request $request): View
     {
-        $productName = trim((string) $request->get('product_name', ''));
-        $sku = trim((string) $request->get('sku', ''));
-        $categoryId = $request->filled('category_id') ? (int) $request->get('category_id') : null;
-        $brandId = $request->filled('brand_id') ? (int) $request->get('brand_id') : null;
-        $missingDimensions = $request->get('missing_dimensions') === '1';
-
-        $sortable = [
-            'product_name' => 'products.name',
-            'sku' => 'product_stocks.sku',
-            'variant' => 'product_stocks.variant',
-            'piece_cbm' => '(COALESCE(product_stocks.length, 0) * COALESCE(product_stocks.width, 0) * COALESCE(product_stocks.height, 0)) / 1000000',
-            'buffer_cbm' => '(COALESCE(product_stocks.buffer_length, 0) * COALESCE(product_stocks.buffer_width, 0) * COALESCE(product_stocks.buffer_height, 0)) / 1000000',
-            'case_cbm' => '(COALESCE(product_stocks.case_length, 0) * COALESCE(product_stocks.case_width, 0) * COALESCE(product_stocks.case_height, 0)) / 1000000',
-        ];
-
+        $groups = $this->packingGroups();
+        $sortable = $this->sortableColumns($groups);
         $sortBy = $request->get('sort_by', 'product_name');
         if (!array_key_exists($sortBy, $sortable)) {
             $sortBy = 'product_name';
         }
         $sortDir = strtolower((string) $request->get('sort_dir')) === 'desc' ? 'desc' : 'asc';
+
+        $productName = trim((string) $request->get('product_name', ''));
+        $sku = trim((string) $request->get('sku', ''));
+        $variant = trim((string) $request->get('variant', ''));
+        $categoryId = $request->filled('category_id') ? (int) $request->get('category_id') : null;
+        $brandId = $request->filled('brand_id') ? (int) $request->get('brand_id') : null;
 
         $query = ProductStock::query()
             ->join('products', 'products.id', '=', 'product_stocks.product_id')
@@ -71,6 +137,10 @@ class ProductDimensionsController extends Controller
             $query->where('product_stocks.sku', 'like', '%' . $sku . '%');
         }
 
+        if ($variant !== '') {
+            $query->where('product_stocks.variant', 'like', '%' . $variant . '%');
+        }
+
         if ($categoryId) {
             $query->where(function ($categoryQuery) use ($categoryId) {
                 $categoryQuery
@@ -88,10 +158,41 @@ class ProductDimensionsController extends Controller
             $query->where('products.brand_id', $brandId);
         }
 
-        if ($missingDimensions) {
-            $query->where(function ($missingQuery) {
-                foreach ($this->dimensionFields as $field) {
-                    $missingQuery->orWhereNull('product_stocks.' . $field);
+        $this->applyNumericRange($query, 'product_stocks.min_qty', $request->get('min_qty_from'), $request->get('min_qty_to'));
+        $this->applyNumericRange($query, 'product_stocks.count', $request->get('count_from'), $request->get('count_to'));
+
+        foreach ($groups as $key => $group) {
+            if (!empty($group['qty_field'])) {
+                $this->applyNumericRange($query, 'product_stocks.' . $group['qty_field'], $request->get($key . '_qty_from'), $request->get($key . '_qty_to'));
+            }
+            $this->applyRawRange($query, $group['net_sql'], $request->get($key . '_net_from'), $request->get($key . '_net_to'));
+            $this->applyRawRange($query, $group['net_sql'], $this->kgToGm($request->get($key . '_net_kg_from')), $this->kgToGm($request->get($key . '_net_kg_to')));
+            $this->applyRawRange($query, $group['gross_sql'], $request->get($key . '_gross_from'), $request->get($key . '_gross_to'));
+            $this->applyRawRange($query, $group['gross_sql'], $this->kgToGm($request->get($key . '_gross_kg_from')), $this->kgToGm($request->get($key . '_gross_kg_to')));
+            $this->applyNumericRange($query, 'product_stocks.' . $group['length'], $request->get($key . '_length_from'), $request->get($key . '_length_to'));
+            $this->applyNumericRange($query, 'product_stocks.' . $group['width'], $request->get($key . '_width_from'), $request->get($key . '_width_to'));
+            $this->applyNumericRange($query, 'product_stocks.' . $group['height'], $request->get($key . '_height_from'), $request->get($key . '_height_to'));
+            $this->applyCbmRange($query, $group, $request->get($key . '_cbm_from'), $request->get($key . '_cbm_to'));
+
+            if ($request->get('missing_' . $key) === '1') {
+                $query->where(function ($missingQuery) use ($group) {
+                    foreach (['qty_field', 'gross_field', 'length', 'width', 'height'] as $part) {
+                        if (!empty($group[$part]) && $this->columnExists($group[$part])) {
+                            $missingQuery->orWhereNull('product_stocks.' . $group[$part]);
+                        }
+                    }
+                });
+            }
+        }
+
+        if ($request->get('missing_any') === '1') {
+            $query->where(function ($missingQuery) use ($groups) {
+                foreach ($groups as $group) {
+                    foreach (['qty_field', 'gross_field', 'length', 'width', 'height'] as $part) {
+                        if (!empty($group[$part]) && $this->columnExists($group[$part])) {
+                            $missingQuery->orWhereNull('product_stocks.' . $group[$part]);
+                        }
+                    }
                 }
             });
         }
@@ -112,29 +213,29 @@ class ProductDimensionsController extends Controller
             ->paginate(25)
             ->appends($request->query());
 
-        $categories = Category::where('digital', 0)->orderBy('name')->get(['id', 'name']);
-        $brands = Brand::orderBy('name')->get(['id', 'name']);
+        $filterValues = $request->except(['page']);
+        $filtersApplied = collect($filterValues)->contains(function ($value, $key) {
+            if (in_array($key, ['sort_by', 'sort_dir'], true)) {
+                return false;
+            }
 
-        $filtersApplied = collect([
-            $productName,
-            $sku,
-            $categoryId,
-            $brandId,
-            $missingDimensions ? '1' : '',
-        ])->contains(fn ($value) => $value !== null && $value !== '' && $value !== 0);
+            return $value !== null && $value !== '';
+        });
 
         return view('backend.product.dimensions.index', [
             'stocks' => $stocks,
-            'categories' => $categories,
-            'brands' => $brands,
+            'packingGroups' => $groups,
+            'categories' => Category::where('digital', 0)->orderBy('name')->get(['id', 'name']),
+            'brands' => Brand::orderBy('name')->get(['id', 'name']),
             'sortBy' => $sortBy,
             'sortDir' => $sortDir,
             'filtersApplied' => $filtersApplied,
             'productName' => $productName,
             'sku' => $sku,
+            'variant' => $variant,
             'categoryId' => $categoryId,
             'brandId' => $brandId,
-            'missingDimensions' => $missingDimensions,
+            'jsGroups' => $this->jsGroups($groups),
         ]);
     }
 
@@ -148,6 +249,10 @@ class ProductDimensionsController extends Controller
         }
 
         $like = '%' . $term . '%';
+        $columns = array_merge(
+            ['product_stocks.id', 'product_stocks.sku', 'product_stocks.variant', 'products.name as product_name'],
+            collect($this->existingFields($this->copyFields()))->map(fn ($field) => 'product_stocks.' . $field)->all()
+        );
 
         $results = ProductStock::query()
             ->join('products', 'products.id', '=', 'product_stocks.product_id')
@@ -167,28 +272,14 @@ class ProductDimensionsController extends Controller
             ->orderBy('products.name')
             ->orderBy('product_stocks.sku')
             ->limit(20)
-            ->get([
-                'product_stocks.id',
-                'product_stocks.sku',
-                'product_stocks.variant',
-                'products.name as product_name',
-                'product_stocks.length',
-                'product_stocks.width',
-                'product_stocks.height',
-                'product_stocks.buffer_length',
-                'product_stocks.buffer_width',
-                'product_stocks.buffer_height',
-                'product_stocks.case_length',
-                'product_stocks.case_width',
-                'product_stocks.case_height',
-            ]);
+            ->get($columns);
 
         return response()->json([
             'results' => $results->map(function ($stock) {
                 return [
                     'id' => $stock->id,
                     'label' => $this->sameAsLabel($stock->product_name, $stock->sku, $stock->variant),
-                    'dims' => $this->dimensionPayload($stock),
+                    'dims' => $this->fieldPayload($stock, $this->copyFields()),
                 ];
             })->values(),
         ]);
@@ -196,8 +287,9 @@ class ProductDimensionsController extends Controller
 
     public function update(Request $request, $id): JsonResponse
     {
+        $fields = $this->editableFields();
         $rules = [];
-        foreach ($this->dimensionFields as $field) {
+        foreach ($fields as $field) {
             $rules[$field] = ['nullable', 'numeric', 'min:0'];
         }
 
@@ -209,9 +301,16 @@ class ProductDimensionsController extends Controller
             })
             ->findOrFail($id);
 
-        foreach ($this->dimensionFields as $field) {
+        foreach ($this->existingFields($fields) as $field) {
             $value = $validated[$field] ?? null;
-            $stock->{$field} = ($value === null || $value === '') ? null : round((float) $value, 2);
+            if ($value === null || $value === '') {
+                $stock->{$field} = $field === 'min_qty' ? 1 : null;
+                continue;
+            }
+
+            $stock->{$field} = in_array($field, $this->integerFields, true)
+                ? (int) round((float) $value)
+                : round((float) $value, in_array($field, $this->weightFields(), true) ? 3 : 2);
         }
 
         $stock->save();
@@ -219,26 +318,177 @@ class ProductDimensionsController extends Controller
         return response()->json([
             'success' => true,
             'message' => translate('Dimensions saved'),
-            'dims' => $this->dimensionPayload($stock),
-            'cbm' => [
-                'piece' => $this->cbm($stock->length, $stock->width, $stock->height),
-                'buffer' => $this->cbm($stock->buffer_length, $stock->buffer_width, $stock->buffer_height),
-                'case' => $this->cbm($stock->case_length, $stock->case_width, $stock->case_height),
-            ],
+            'dims' => $this->fieldPayload($stock, $fields),
         ]);
     }
 
-    protected function dimensionPayload($stock): array
+    protected function sortableColumns(array $groups): array
+    {
+        $sortable = [
+            'product_name' => 'products.name',
+            'sku' => 'product_stocks.sku',
+            'variant' => 'product_stocks.variant',
+            'min_qty' => 'product_stocks.min_qty',
+            'count' => 'product_stocks.count',
+        ];
+
+        foreach ($groups as $key => $group) {
+            if (!empty($group['qty_field']) && $this->columnExists($group['qty_field'])) {
+                $sortable[$key . '_qty'] = 'product_stocks.' . $group['qty_field'];
+            }
+            $sortable[$key . '_net'] = $group['net_sql'];
+            $sortable[$key . '_net_kg'] = '(' . $group['net_sql'] . ' / 1000)';
+            $sortable[$key . '_gross'] = $group['gross_sql'];
+            $sortable[$key . '_gross_kg'] = '(' . $group['gross_sql'] . ' / 1000)';
+            if ($this->columnExists($group['length'])) {
+                $sortable[$key . '_length'] = 'product_stocks.' . $group['length'];
+            }
+            if ($this->columnExists($group['width'])) {
+                $sortable[$key . '_width'] = 'product_stocks.' . $group['width'];
+            }
+            if ($this->columnExists($group['height'])) {
+                $sortable[$key . '_height'] = 'product_stocks.' . $group['height'];
+            }
+            if ($this->columnExists($group['length']) && $this->columnExists($group['width']) && $this->columnExists($group['height'])) {
+                $sortable[$key . '_cbm'] = $this->cbmSql($group);
+            }
+        }
+
+        return $sortable;
+    }
+
+    protected function editableFields(): array
+    {
+        return array_values(array_unique(array_merge(['min_qty', 'count'], $this->copyFields())));
+    }
+
+    protected function copyFields(): array
+    {
+        $fields = [];
+        foreach ($this->packingGroups() as $group) {
+            foreach (['qty_field', 'net_field', 'gross_field', 'length', 'width', 'height'] as $part) {
+                if (!empty($group[$part])) {
+                    $fields[] = $group[$part];
+                }
+            }
+        }
+
+        return array_values(array_unique($fields));
+    }
+
+    protected function weightFields(): array
+    {
+        $fields = [];
+        foreach ($this->packingGroups() as $group) {
+            foreach (['net_field', 'gross_field'] as $part) {
+                if (!empty($group[$part])) {
+                    $fields[] = $group[$part];
+                }
+            }
+        }
+
+        return array_values(array_unique($fields));
+    }
+
+    protected function jsGroups(array $groups): array
     {
         $payload = [];
-        foreach ($this->dimensionFields as $field) {
-            $payload[$field] = $this->formatDim($stock->{$field} ?? null);
+        foreach ($groups as $key => $group) {
+            $payload[$key] = [
+                'qtyField' => $group['qty_field'],
+                'qtyFixed' => $group['qty_fixed'],
+                'netField' => $group['net_field'],
+                'grossField' => $group['gross_field'],
+                'netFactors' => $group['net_factors'],
+                'length' => $group['length'],
+                'width' => $group['width'],
+                'height' => $group['height'],
+            ];
         }
 
         return $payload;
     }
 
-    protected function formatDim($value): string
+    protected function applyRawRange($query, string $sql, $from, $to): void
+    {
+        if ($from !== null && $from !== '' && is_numeric($from)) {
+            $query->whereRaw($sql . ' >= ?', [(float) $from]);
+        }
+        if ($to !== null && $to !== '' && is_numeric($to)) {
+            $query->whereRaw($sql . ' <= ?', [(float) $to]);
+        }
+    }
+
+    protected function applyNumericRange($query, string $column, $from, $to): void
+    {
+        $field = str_replace('product_stocks.', '', $column);
+        if (!$this->columnExists($field)) {
+            return;
+        }
+
+        if ($from !== null && $from !== '' && is_numeric($from)) {
+            $query->where($column, '>=', $from);
+        }
+        if ($to !== null && $to !== '' && is_numeric($to)) {
+            $query->where($column, '<=', $to);
+        }
+    }
+
+    protected function applyCbmRange($query, array $group, $from, $to): void
+    {
+        if (!$this->columnExists($group['length']) || !$this->columnExists($group['width']) || !$this->columnExists($group['height'])) {
+            return;
+        }
+
+        $sql = $this->cbmSql($group);
+        if ($from !== null && $from !== '' && is_numeric($from)) {
+            $query->whereRaw($sql . ' >= ?', [(float) $from]);
+        }
+        if ($to !== null && $to !== '' && is_numeric($to)) {
+            $query->whereRaw($sql . ' <= ?', [(float) $to]);
+        }
+    }
+
+    protected function cbmSql(array $group): string
+    {
+        return '(COALESCE(product_stocks.' . $group['length'] . ', 0) * COALESCE(product_stocks.' . $group['width'] . ', 0) * COALESCE(product_stocks.' . $group['height'] . ', 0)) / 1000000';
+    }
+
+    protected function kgToGm($value)
+    {
+        if ($value === null || $value === '' || !is_numeric($value)) {
+            return $value;
+        }
+
+        return (float) $value * 1000;
+    }
+
+    protected function fieldPayload($stock, array $fields): array
+    {
+        $payload = [];
+        foreach ($fields as $field) {
+            $payload[$field] = $this->formatNumber($stock->{$field} ?? null, in_array($field, $this->weightFields(), true) ? 3 : 2);
+        }
+
+        return $payload;
+    }
+
+    protected function existingFields(array $fields): array
+    {
+        return array_values(array_filter($fields, fn ($field) => $this->columnExists($field)));
+    }
+
+    protected function columnExists(string $field): bool
+    {
+        static $columns = null;
+        if ($columns === null) {
+            $columns = array_flip(Schema::getColumnListing('product_stocks'));
+        }
+
+        return isset($columns[$field]);
+    }
+
+    protected function formatNumber($value, int $decimals = 2): string
     {
         if ($value === null || $value === '') {
             return '';
@@ -249,21 +499,11 @@ class ProductDimensionsController extends Controller
             return '';
         }
 
-        return rtrim(rtrim(sprintf('%.2f', $number), '0'), '.') ?: '0';
-    }
-
-    protected function cbm($length, $width, $height): string
-    {
-        if ($length === null || $width === null || $height === null || $length === '' || $width === '' || $height === '') {
-            return '';
+        if ($decimals === 0) {
+            return (string) (int) round($number);
         }
 
-        $value = ((float) $length * (float) $width * (float) $height) / 1000000;
-        if (!is_finite($value) || $value < 0) {
-            return '';
-        }
-
-        return number_format($value, 4, '.', '');
+        return rtrim(rtrim(sprintf('%.' . $decimals . 'f', $number), '0'), '.') ?: '0';
     }
 
     protected function sameAsLabel($productName, $sku, $variant): string

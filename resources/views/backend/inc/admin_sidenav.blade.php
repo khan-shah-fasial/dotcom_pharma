@@ -196,7 +196,7 @@
                                 </li>
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('products.dimensions') }}" class="aiz-side-nav-link {{ areActiveRoutes(['products.dimensions']) }}">
-                                        <span class="aiz-side-nav-text">{{ translate('Product Dimensions') }}</span>
+                                        <span class="aiz-side-nav-text">{{ translate('Weight And Dimension Master') }}</span>
                                     </a>
                                 </li>
                             @endcan
