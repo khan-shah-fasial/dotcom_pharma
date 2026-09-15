@@ -38,47 +38,49 @@ class RouteServiceProvider extends ServiceProvider
    *
    * @return void
    */
-  public function map()
-  {
-    $this->mapApiRoutes();
+    public function map()
+    {
+      $this->mapApiRoutes();
 
-    $this->mapApiSellerRoutes();
+      $this->mapApiSellerRoutes();
 
-    $this->mapAdminRoutes();
+      $this->mapAdminRoutes();
 
-    $this->mapSellerRoutes();
+      $this->mapSellerRoutes();
 
-    $this->mapAffiliateRoutes();
+      $this->mapAffiliateRoutes();
 
-    $this->mapRefundRoutes();
+      $this->mapRefundRoutes();
 
-    $this->mapClubPointsRoutes();
+      $this->mapClubPointsRoutes();
 
-    $this->mapOtpRoutes();
+      $this->mapOtpRoutes();
 
-    $this->mapOfflinePaymentRoutes();
+      $this->mapOfflinePaymentRoutes();
 
-    $this->mapAfricanPaymentGatewayRoutes();
+      $this->mapAfricanPaymentGatewayRoutes();
 
-    $this->mapPaytmRoutes();
+      $this->mapPaytmRoutes();
 
-    $this->mapPosRoutes();
+      $this->mapPosRoutes();
 
-    $this->mapSellerPackageRoutes();
+      $this->mapSellerPackageRoutes();
 
-    $this->mapDeliveryBoyRoutes();
+      $this->mapDeliveryBoyRoutes();
 
-    $this->mapAuctionRoutes();
+      $this->mapAuctionRoutes();
 
-    $this->mapWholesaleRoutes();
+      $this->mapWholesaleRoutes();
 
-    $this->mapWebRoutes();
+      $this->mapWebRoutes();
 
-  // $this->mapInstallRoutes();
+      $this->mapDiscountMasterDemoRoutes();
 
-  //$this->mapUpdateRoutes();
-  }
+    // $this->mapInstallRoutes();
 
+    //$this->mapUpdateRoutes();
+
+    }
   /**
    * Define the "b2b" routes for the application.
    *
@@ -288,6 +290,18 @@ class RouteServiceProvider extends ServiceProvider
     Route::middleware('web')
        ->namespace($this->namespace)
        ->group(base_path('routes/web.php'));
+  }
+
+  /**
+   * Define the "discount master demo" routes for the application.
+   *
+   * @return void
+   */
+  protected function mapDiscountMasterDemoRoutes()
+  {
+    Route::middleware('web')
+       ->namespace($this->namespace)
+       ->group(base_path('routes/discount_master_demo.php'));
   }
 
   /**

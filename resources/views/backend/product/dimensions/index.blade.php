@@ -181,7 +181,7 @@
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
             <h1 class="h3">{{ translate('Weight And Dimension Master') }}</h1>
-            <p class="text-muted mb-0">{{ translate('Net = contents (qty × piece gm). Gross = stored pack/case weight. In KG = gm ÷ 1000. CBM = L × W × H (cm) ÷ 1,000,000. Same as copies packing values once; click Save.') }}</p>
+            <p class="text-muted mb-0">{{ translate('Piece Gross is entered. Other Gross = group Qty × piece Gross. Net = contents (qty × piece Net). In KG = gm ÷ 1000. CBM = L × W × H (cm) ÷ 1,000,000. Same as copies packing values once; click Save.') }}</p>
         </div>
     </div>
 
@@ -404,7 +404,7 @@
                                         : $factorProduct($stock, $group['net_factors'] ?? []);
                                     $grossValue = !empty($group['gross_field'])
                                         ? $stock->{$group['gross_field']}
-                                        : $netValue;
+                                        : $factorProduct($stock, $group['gross_factors'] ?? []);
                                 @endphp
                                 <td>
                                     @if($group['qty_fixed'] !== null)
@@ -558,7 +558,9 @@
                 Object.keys(groups).forEach(function (key) {
                     const group = groups[key];
                     let net = group.netField ? fieldValue($row, group.netField) : factorProduct($row, group.netFactors);
-                    let gross = group.grossField ? fieldValue($row, group.grossField) : net;
+                    let gross = group.grossField
+                        ? fieldValue($row, group.grossField)
+                        : factorProduct($row, group.grossFactors);
                     if (!group.netField) {
                         $row.find('[data-net="' + key + '"]').text(formatCalc(net, 3));
                     }
