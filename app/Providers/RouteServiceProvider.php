@@ -74,8 +74,6 @@ class RouteServiceProvider extends ServiceProvider
 
       $this->mapWebRoutes();
 
-      $this->mapDiscountMasterDemoRoutes();
-
     // $this->mapInstallRoutes();
 
     //$this->mapUpdateRoutes();
@@ -290,18 +288,6 @@ class RouteServiceProvider extends ServiceProvider
     Route::middleware('web')
        ->namespace($this->namespace)
        ->group(base_path('routes/web.php'));
-  }
-
-  /**
-   * Define the "discount master demo" routes for the application.
-   *
-   * @return void
-   */
-  protected function mapDiscountMasterDemoRoutes()
-  {
-    Route::middleware('web')
-       ->namespace($this->namespace)
-       ->group(base_path('routes/discount_master_demo.php'));
   }
 
   /**

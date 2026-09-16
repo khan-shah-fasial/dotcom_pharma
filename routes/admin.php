@@ -26,6 +26,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerPackageController;
 use App\Http\Controllers\CustomerProductController;
 use App\Http\Controllers\DigitalProductController;
+use App\Http\Controllers\DiscountMasterController;
 use App\Http\Controllers\DynamicPopupController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\FinancialArchiveController;
@@ -576,6 +577,22 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/flash_deals/update_featured', 'update_featured')->name('flash_deals.update_featured');
         Route::post('/flash_deals/product_discount', 'product_discount')->name('flash_deals.product_discount');
         Route::post('/flash_deals/product_discount_edit', 'product_discount_edit')->name('flash_deals.product_discount_edit');
+    });
+
+    // Discount Master
+    Route::controller(DiscountMasterController::class)->group(function () {
+        Route::get('/discount-masters', 'index')->name('discount_masters.index');
+        Route::get('/discount-masters/create', 'create')->name('discount_masters.create');
+        Route::post('/discount-masters', 'store')->name('discount_masters.store');
+        Route::get('/discount-masters/lookup/stocks', 'lookupStocks')->name('discount_masters.lookup.stocks');
+        Route::get('/discount-masters/lookup/batches', 'lookupBatches')->name('discount_masters.lookup.batches');
+        Route::get('/discount-masters/lookup/customers', 'lookupCustomers')->name('discount_masters.lookup.customers');
+        Route::get('/discount-masters/lookup/target', 'lookupTarget')->name('discount_masters.lookup.target');
+        Route::get('/discount-masters/next-code', 'nextCode')->name('discount_masters.next_code');
+        Route::post('/discount-masters/update-status', 'updateStatus')->name('discount_masters.update_status');
+        Route::get('/discount-masters/{id}/edit', 'edit')->name('discount_masters.edit');
+        Route::put('/discount-masters/{id}', 'update')->name('discount_masters.update');
+        Route::get('/discount-masters/destroy/{id}', 'destroy')->name('discount_masters.destroy');
     });
 
     //Subscribers

@@ -62,4 +62,9 @@ class ProductStock extends Model
     {
         return $this->hasMany(ProductBatch::class, 'product_stock_id');
     }
+
+    public function dimensionSheet()
+    {
+        return $this->hasOne(ProductStockDimension::class, 'product_stock_id');
+    }
 }

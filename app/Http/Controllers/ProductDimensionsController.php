@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\ProductStock;
+use App\Models\ProductStockDimension;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +15,6 @@ class ProductDimensionsController extends Controller
 {
     protected array $integerFields = [
         'min_qty',
-        'count',
         'qty_per_piece',
         'qty_per_buffer_box',
         'total_qty_per_case',
@@ -23,6 +23,7 @@ class ProductDimensionsController extends Controller
     public function __construct()
     {
         $this->middleware(['permission:show_all_products']);
+        ProductStockDimension::ensureTable();
     }
 
     public function packingGroups(): array
@@ -32,6 +33,7 @@ class ProductDimensionsController extends Controller
         $bufferQty = 'COALESCE(product_stocks.qty_per_buffer_box, 0)';
         $buffersPerCase = 'COALESCE(product_stocks.count, 0)';
         $piecesPerCase = 'COALESCE(product_stocks.total_qty_per_case, 0)';
+        $bufferPerCaseGross = $this->bufferPerCaseGrossSql();
 
         return [
             'piece' => [
@@ -54,12 +56,10 @@ class ProductDimensionsController extends Controller
                 'qty_field' => 'qty_per_buffer_box',
                 'qty_fixed' => null,
                 'net_field' => null,
-                'gross_field' => null,
-                'gross_persist' => 'weight_buffer_box',
+                'gross_field' => 'weight_buffer_box',
                 'net_sql' => '(' . $bufferQty . ' * ' . $pieceNet . ')',
-                'gross_sql' => '(' . $bufferQty . ' * (' . $pieceGross . '))',
+                'gross_sql' => 'COALESCE(product_stocks.weight_buffer_box, 0)',
                 'net_factors' => ['qty_per_buffer_box', 'weight'],
-                'gross_factors' => ['qty_per_buffer_box', 'piece_gross'],
                 'length' => 'buffer_length',
                 'width' => 'buffer_width',
                 'height' => 'buffer_height',
@@ -69,9 +69,10 @@ class ProductDimensionsController extends Controller
                 'qty_field' => 'count',
                 'qty_fixed' => null,
                 'net_field' => null,
-                'gross_field' => 'weight_case',
+                'gross_field' => 'weight_buffer_per_case',
+                'gross_virtual' => true,
                 'net_sql' => '(' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . ')',
-                'gross_sql' => 'COALESCE(product_stocks.weight_case, 0)',
+                'gross_sql' => $bufferPerCaseGross,
                 'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
                 'length' => 'case_length',
                 'width' => 'case_width',
@@ -125,6 +126,7 @@ class ProductDimensionsController extends Controller
 
         $query = ProductStock::query()
             ->join('products', 'products.id', '=', 'product_stocks.product_id')
+            ->leftJoin('product_stock_dimensions', 'product_stock_dimensions.product_stock_id', '=', 'product_stocks.id')
             ->where('products.digital', 0)
             ->select('product_stocks.*');
 
@@ -182,11 +184,7 @@ class ProductDimensionsController extends Controller
 
             if ($request->get('missing_' . $key) === '1') {
                 $query->where(function ($missingQuery) use ($group) {
-                    foreach (['qty_field', 'net_field', 'gross_field', 'gross_persist', 'length', 'width', 'height'] as $part) {
-                        if (!empty($group[$part]) && !$this->isVirtualField($group[$part]) && $this->columnExists($group[$part])) {
-                            $missingQuery->orWhereNull('product_stocks.' . $group[$part]);
-                        }
-                    }
+                    $this->applyMissingParts($missingQuery, $group);
                 });
             }
         }
@@ -194,11 +192,7 @@ class ProductDimensionsController extends Controller
         if ($request->get('missing_any') === '1') {
             $query->where(function ($missingQuery) use ($groups) {
                 foreach ($groups as $group) {
-                    foreach (['qty_field', 'net_field', 'gross_field', 'gross_persist', 'length', 'width', 'height'] as $part) {
-                        if (!empty($group[$part]) && !$this->isVirtualField($group[$part]) && $this->columnExists($group[$part])) {
-                            $missingQuery->orWhereNull('product_stocks.' . $group[$part]);
-                        }
-                    }
+                    $this->applyMissingParts($missingQuery, $group);
                 }
             });
         }
@@ -213,6 +207,7 @@ class ProductDimensionsController extends Controller
                             $brandQuery->select(['id', 'name']);
                         }]);
                 },
+                'dimensionSheet',
             ])
             ->orderByRaw($sortable[$sortBy] . ' ' . $sortDir)
             ->orderBy('product_stocks.id')
@@ -220,7 +215,7 @@ class ProductDimensionsController extends Controller
             ->appends($request->query());
 
         $stocks->getCollection()->each(function ($stock) {
-            $stock->setAttribute('piece_gross', $this->resolvePieceGross($stock));
+            $this->overlaySatellite($stock);
         });
 
         $filterValues = $request->except(['page']);
@@ -261,7 +256,7 @@ class ProductDimensionsController extends Controller
         $like = '%' . $term . '%';
         $columns = array_merge(
             ['product_stocks.id', 'product_stocks.sku', 'product_stocks.variant', 'products.name as product_name'],
-            collect($this->existingFields(array_merge($this->copyFields(), $this->persistWeightFields())))
+            collect($this->existingFields($this->copyFields()))
                 ->map(fn ($field) => 'product_stocks.' . $field)
                 ->all()
         );
@@ -281,6 +276,7 @@ class ProductDimensionsController extends Controller
                     ->orWhere('product_stocks.sku', 'like', $like)
                     ->orWhere('product_stocks.variant', 'like', $like);
             })
+            ->with('dimensionSheet')
             ->orderBy('products.name')
             ->orderBy('product_stocks.sku')
             ->limit(20)
@@ -288,8 +284,8 @@ class ProductDimensionsController extends Controller
 
         return response()->json([
             'results' => $results->map(function ($stock) {
+                $this->overlaySatellite($stock);
                 $dims = $this->fieldPayload($stock, $this->copyFields());
-                $dims['piece_gross'] = $this->formatNumber($this->resolvePieceGross($stock), 3);
 
                 return [
                     'id' => $stock->id,
@@ -307,7 +303,6 @@ class ProductDimensionsController extends Controller
         foreach ($fields as $field) {
             $rules[$field] = ['nullable', 'numeric', 'min:0'];
         }
-        $rules['piece_gross'] = ['nullable', 'numeric', 'min:0'];
 
         $validated = $request->validate($rules);
 
@@ -315,10 +310,15 @@ class ProductDimensionsController extends Controller
             ->whereHas('product', function ($productQuery) {
                 $productQuery->where('digital', 0);
             })
+            ->with('dimensionSheet')
             ->findOrFail($id);
 
         foreach ($this->existingFields($fields) as $field) {
             $value = $validated[$field] ?? null;
+            if ($field === 'count') {
+                $this->persistCount($stock, $value);
+                continue;
+            }
             if ($value === null || $value === '') {
                 $stock->{$field} = $field === 'min_qty' ? 1 : null;
                 continue;
@@ -329,11 +329,10 @@ class ProductDimensionsController extends Controller
                 : round((float) $value, in_array($field, $this->weightFields(), true) ? 3 : 2);
         }
 
-        $this->applyDerivedGrossWeights($stock, $validated['piece_gross'] ?? null);
         $stock->save();
-
+        $this->persistSatellite($stock, $validated);
+        $this->overlaySatellite($stock);
         $dims = $this->fieldPayload($stock, $fields);
-        $dims['piece_gross'] = $this->formatNumber($this->resolvePieceGross($stock), 3);
 
         return response()->json([
             'success' => true,
@@ -387,7 +386,7 @@ class ProductDimensionsController extends Controller
         $fields = [];
         foreach ($this->packingGroups() as $group) {
             foreach (['qty_field', 'net_field', 'gross_field', 'length', 'width', 'height'] as $part) {
-                if (!empty($group[$part]) && !$this->isVirtualField($group[$part])) {
+                if (!empty($group[$part])) {
                     $fields[] = $group[$part];
                 }
             }
@@ -396,24 +395,17 @@ class ProductDimensionsController extends Controller
         return array_values(array_unique($fields));
     }
 
-    protected function persistWeightFields(): array
+    protected function satelliteFields(): array
     {
-        $fields = [];
-        foreach ($this->packingGroups() as $group) {
-            if (!empty($group['gross_persist'])) {
-                $fields[] = $group['gross_persist'];
-            }
-        }
-
-        return array_values(array_unique($fields));
+        return ['piece_gross', 'weight_buffer_per_case'];
     }
 
     protected function weightFields(): array
     {
         $fields = ['weight'];
         foreach ($this->packingGroups() as $group) {
-            foreach (['net_field', 'gross_field', 'gross_persist'] as $part) {
-                if (!empty($group[$part]) && !$this->isVirtualField($group[$part])) {
+            foreach (['net_field', 'gross_field'] as $part) {
+                if (!empty($group[$part])) {
                     $fields[] = $group[$part];
                 }
             }
@@ -442,47 +434,102 @@ class ProductDimensionsController extends Controller
         return $payload;
     }
 
-    protected function applyDerivedGrossWeights($stock, $pieceGross): void
+    protected function persistSatellite(ProductStock $stock, array $validated): void
     {
-        if (!$this->hasNumeric($pieceGross)) {
-            return;
+        ProductStockDimension::ensureTable();
+
+        $sheet = $stock->dimensionSheet ?: $stock->dimensionSheet()->make();
+        $sheet->product_stock_id = $stock->id;
+
+        foreach ($this->satelliteFields() as $field) {
+            $value = $validated[$field] ?? null;
+            $sheet->{$field} = $this->hasNumeric($value) ? round((float) $value, 3) : null;
         }
 
-        $pieceGross = round((float) $pieceGross, 3);
+        $sheet->save();
+        $stock->setRelation('dimensionSheet', $sheet);
+    }
 
-        if ($this->columnExists('weight_buffer_box')) {
-            $bufferQty = $stock->qty_per_buffer_box;
-            $stock->weight_buffer_box = $this->hasNumeric($bufferQty)
-                ? round($pieceGross * (float) $bufferQty, 3)
-                : null;
+    protected function overlaySatellite(ProductStock $stock): void
+    {
+        $sheet = $stock->dimensionSheet;
+        foreach ($this->satelliteFields() as $field) {
+            $stock->setAttribute($field, $sheet?->{$field});
         }
     }
 
-    protected function resolvePieceGross($stock): ?float
+    protected function persistCount(ProductStock $stock, $value): void
     {
-        $bufferQty = $stock->qty_per_buffer_box ?? null;
-        $bufferWeight = $stock->weight_buffer_box ?? null;
-        if ($this->hasNumeric($bufferQty) && (float) $bufferQty != 0.0 && $this->hasNumeric($bufferWeight)) {
-            return (float) $bufferWeight / (float) $bufferQty;
+        $existing = $stock->getRawOriginal('count');
+        if ($existing === null) {
+            $existing = $stock->count;
         }
 
-        return null;
+        if ($value === null || $value === '') {
+            if ($this->isPackTextCount($existing)) {
+                return;
+            }
+            $stock->count = null;
+            return;
+        }
+
+        $incoming = (string) (int) round((float) $value);
+        if ($this->isPackTextCount($existing)) {
+            $existingNumeric = (string) (int) round((float) $existing);
+            if ($existingNumeric === $incoming) {
+                return;
+            }
+        }
+
+        $stock->count = $incoming;
+    }
+
+    protected function isPackTextCount($value): bool
+    {
+        if ($value === null || $value === '') {
+            return false;
+        }
+
+        return !preg_match('/^\d+(\.\d+)?$/', trim((string) $value));
+    }
+
+    protected function applyMissingParts($missingQuery, array $group): void
+    {
+        foreach (['qty_field', 'net_field', 'gross_field', 'length', 'width', 'height'] as $part) {
+            if (empty($group[$part])) {
+                continue;
+            }
+
+            $field = $group[$part];
+            if ($this->isSatelliteField($field)) {
+                $missingQuery->orWhereNull('product_stock_dimensions.' . $field);
+                continue;
+            }
+
+            if ($this->columnExists($field)) {
+                $missingQuery->orWhereNull('product_stocks.' . $field);
+            }
+        }
     }
 
     protected function pieceGrossSql(): string
     {
-        return '(CASE
-            WHEN product_stocks.qty_per_buffer_box IS NOT NULL
-                AND product_stocks.qty_per_buffer_box <> 0
-                AND product_stocks.weight_buffer_box IS NOT NULL
-            THEN product_stocks.weight_buffer_box / product_stocks.qty_per_buffer_box
-            ELSE NULL
-        END)';
+        return 'product_stock_dimensions.piece_gross';
+    }
+
+    protected function bufferPerCaseGrossSql(): string
+    {
+        return 'product_stock_dimensions.weight_buffer_per_case';
     }
 
     protected function isVirtualField($field): bool
     {
-        return $field === 'piece_gross';
+        return $this->isSatelliteField($field);
+    }
+
+    protected function isSatelliteField($field): bool
+    {
+        return in_array($field, $this->satelliteFields(), true);
     }
 
     protected function hasNumeric($value): bool

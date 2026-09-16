@@ -1070,6 +1070,7 @@
 
                 <!-- marketing -->
                 @canany(['view_all_flash_deals',
+                            'view_all_discount_masters',
                             'view_all_dynamic_popups',
                                 'view_all_custom_alerts',
                                     'manage_email_templates',
@@ -1100,6 +1101,13 @@
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('flash_deals.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['flash_deals.index', 'flash_deals.create', 'flash_deals.edit'])}}">
                                         <span class="aiz-side-nav-text">{{ translate('Flash deals') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_all_discount_masters')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('discount_masters.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['discount_masters.index', 'discount_masters.create', 'discount_masters.edit'])}}">
+                                        <span class="aiz-side-nav-text">{{ translate('Discount Master') }}</span>
                                     </a>
                                 </li>
                             @endcan
