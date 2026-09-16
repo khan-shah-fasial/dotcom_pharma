@@ -181,7 +181,7 @@
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
             <h1 class="h3">{{ translate('Weight And Dimension Master') }}</h1>
-            <p class="text-muted mb-0">{{ translate('Piece Gross is entered. Other Gross = group Qty × piece Gross. Net = contents (qty × piece Net). In KG = gm ÷ 1000. CBM = L × W × H (cm) ÷ 1,000,000. Same as copies packing values once; click Save.') }}</p>
+            <p class="text-muted mb-0">{{ translate('Piece Gross is entered. Buffer Gross = buffer qty × piece Gross. Qty Per Case Gross = case qty × piece Gross. Buffer/Case Gross and Outer Case Gross are entered (same case weight). Net = contents (qty × piece Net). In KG = gm ÷ 1000. CBM = L × W × H (cm) ÷ 1,000,000. Same as copies packing values once; click Save.') }}</p>
         </div>
     </div>
 

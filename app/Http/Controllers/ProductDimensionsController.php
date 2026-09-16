@@ -69,12 +69,10 @@ class ProductDimensionsController extends Controller
                 'qty_field' => 'count',
                 'qty_fixed' => null,
                 'net_field' => null,
-                'gross_field' => null,
-                'gross_persist' => 'weight_case',
+                'gross_field' => 'weight_case',
                 'net_sql' => '(' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . ')',
-                'gross_sql' => '(' . $buffersPerCase . ' * (' . $pieceGross . '))',
+                'gross_sql' => 'COALESCE(product_stocks.weight_case, 0)',
                 'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
-                'gross_factors' => ['count', 'piece_gross'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
@@ -85,7 +83,6 @@ class ProductDimensionsController extends Controller
                 'qty_fixed' => null,
                 'net_field' => null,
                 'gross_field' => null,
-                'gross_persist' => 'weight_case',
                 'net_sql' => '(' . $piecesPerCase . ' * ' . $pieceNet . ')',
                 'gross_sql' => '(' . $piecesPerCase . ' * (' . $pieceGross . '))',
                 'net_factors' => ['total_qty_per_case', 'weight'],
@@ -99,12 +96,10 @@ class ProductDimensionsController extends Controller
                 'qty_field' => null,
                 'qty_fixed' => 1,
                 'net_field' => null,
-                'gross_field' => null,
-                'gross_persist' => 'weight_case',
+                'gross_field' => 'weight_case',
                 'net_sql' => '(' . $piecesPerCase . ' * ' . $pieceNet . ')',
-                'gross_sql' => '(' . $piecesPerCase . ' * (' . $pieceGross . '))',
+                'gross_sql' => 'COALESCE(product_stocks.weight_case, 0)',
                 'net_factors' => ['total_qty_per_case', 'weight'],
-                'gross_factors' => ['total_qty_per_case', 'piece_gross'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
@@ -391,7 +386,7 @@ class ProductDimensionsController extends Controller
     {
         $fields = [];
         foreach ($this->packingGroups() as $group) {
-            foreach (['qty_field', 'net_field', 'length', 'width', 'height'] as $part) {
+            foreach (['qty_field', 'net_field', 'gross_field', 'length', 'width', 'height'] as $part) {
                 if (!empty($group[$part]) && !$this->isVirtualField($group[$part])) {
                     $fields[] = $group[$part];
                 }
@@ -417,7 +412,7 @@ class ProductDimensionsController extends Controller
     {
         $fields = ['weight'];
         foreach ($this->packingGroups() as $group) {
-            foreach (['net_field', 'gross_persist'] as $part) {
+            foreach (['net_field', 'gross_field', 'gross_persist'] as $part) {
                 if (!empty($group[$part]) && !$this->isVirtualField($group[$part])) {
                     $fields[] = $group[$part];
                 }
@@ -461,23 +456,10 @@ class ProductDimensionsController extends Controller
                 ? round($pieceGross * (float) $bufferQty, 3)
                 : null;
         }
-
-        if ($this->columnExists('weight_case')) {
-            $caseQty = $stock->total_qty_per_case;
-            $stock->weight_case = $this->hasNumeric($caseQty)
-                ? round($pieceGross * (float) $caseQty, 3)
-                : null;
-        }
     }
 
     protected function resolvePieceGross($stock): ?float
     {
-        $caseQty = $stock->total_qty_per_case ?? null;
-        $caseWeight = $stock->weight_case ?? null;
-        if ($this->hasNumeric($caseQty) && (float) $caseQty != 0.0 && $this->hasNumeric($caseWeight)) {
-            return (float) $caseWeight / (float) $caseQty;
-        }
-
         $bufferQty = $stock->qty_per_buffer_box ?? null;
         $bufferWeight = $stock->weight_buffer_box ?? null;
         if ($this->hasNumeric($bufferQty) && (float) $bufferQty != 0.0 && $this->hasNumeric($bufferWeight)) {
@@ -490,10 +472,6 @@ class ProductDimensionsController extends Controller
     protected function pieceGrossSql(): string
     {
         return '(CASE
-            WHEN product_stocks.total_qty_per_case IS NOT NULL
-                AND product_stocks.total_qty_per_case <> 0
-                AND product_stocks.weight_case IS NOT NULL
-            THEN product_stocks.weight_case / product_stocks.total_qty_per_case
             WHEN product_stocks.qty_per_buffer_box IS NOT NULL
                 AND product_stocks.qty_per_buffer_box <> 0
                 AND product_stocks.weight_buffer_box IS NOT NULL
