@@ -67,6 +67,7 @@ use App\Http\Controllers\StateController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TaxController;
+use App\Http\Controllers\TaxMasterController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\WarrantyController;
@@ -515,6 +516,16 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/tax/edit/{id}', 'edit')->name('tax.edit');
         Route::get('/tax/destroy/{id}', 'destroy')->name('tax.destroy');
         Route::post('tax-status', 'change_tax_status')->name('taxes.tax-status');
+    });
+
+    Route::controller(TaxMasterController::class)->group(function () {
+        Route::get('/tax-masters', 'index')->name('tax_masters.index');
+        Route::get('/tax-masters/create', 'create')->name('tax_masters.create');
+        Route::post('/tax-masters', 'store')->name('tax_masters.store');
+        Route::post('/tax-masters/update-status', 'updateStatus')->name('tax_masters.update_status');
+        Route::get('/tax-masters/{id}/edit', 'edit')->name('tax_masters.edit');
+        Route::put('/tax-masters/{id}', 'update')->name('tax_masters.update');
+        Route::get('/tax-masters/destroy/{id}', 'destroy')->name('tax_masters.destroy');
     });
 
     // Language

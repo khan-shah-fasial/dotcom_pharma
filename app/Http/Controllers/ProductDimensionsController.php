@@ -32,16 +32,20 @@ class ProductDimensionsController extends Controller
         $pieceGross = $this->pieceGrossSql();
         $bufferQty = 'COALESCE(product_stocks.qty_per_buffer_box, 0)';
         $buffersPerCase = 'COALESCE(product_stocks.count, 0)';
-        $piecesPerCase = 'COALESCE(product_stocks.total_qty_per_case, 0)';
-        $bufferPerCaseGross = $this->bufferPerCaseGrossSql();
+        $bufferGross = 'COALESCE(product_stocks.weight_buffer_box, (' . $bufferQty . ' * ' . $pieceGross . '))';
+        $bufferPerCaseGross = '(' . $buffersPerCase . ' * (' . $bufferGross . '))';
 
         return [
             'piece' => [
                 'label' => 'Each Piece-(Base)',
+                'color' => '#FFFF00',
                 'qty_field' => 'qty_per_piece',
                 'qty_fixed' => null,
+                'qty_mode' => 'fill',
                 'net_field' => 'weight',
+                'net_mode' => 'fill',
                 'gross_field' => 'piece_gross',
+                'gross_mode' => 'fill',
                 'gross_virtual' => true,
                 'net_sql' => $pieceNet,
                 'gross_sql' => $pieceGross,
@@ -50,60 +54,85 @@ class ProductDimensionsController extends Controller
                 'length' => 'length',
                 'width' => 'width',
                 'height' => 'height',
+                'dim_mode' => 'fill',
             ],
             'buffer' => [
-                'label' => 'Inner Buffer Or Shrink Pack',
+                'label' => 'Qty in Inner Buffer Or Shrink Pack',
+                'color' => '#92D050',
                 'qty_field' => 'qty_per_buffer_box',
                 'qty_fixed' => null,
+                'qty_mode' => 'fill',
                 'net_field' => null,
+                'net_mode' => 'auto_lock',
                 'gross_field' => 'weight_buffer_box',
+                'gross_mode' => 'auto_edit',
                 'net_sql' => '(' . $bufferQty . ' * ' . $pieceNet . ')',
-                'gross_sql' => 'COALESCE(product_stocks.weight_buffer_box, 0)',
+                'gross_sql' => $bufferGross,
                 'net_factors' => ['qty_per_buffer_box', 'weight'],
+                'gross_factors' => ['qty_per_buffer_box', 'piece_gross'],
                 'length' => 'buffer_length',
                 'width' => 'buffer_width',
                 'height' => 'buffer_height',
+                'dim_mode' => 'fill',
             ],
             'buffer_per_case' => [
                 'label' => 'Inner Buffer Or Shrink Pack / Case / Carton',
+                'color' => '#FFC000',
                 'qty_field' => 'count',
                 'qty_fixed' => null,
+                'qty_mode' => 'fill',
                 'net_field' => null,
-                'gross_field' => 'weight_buffer_per_case',
-                'gross_virtual' => true,
+                'net_mode' => 'auto_lock',
+                'gross_field' => null,
+                'gross_mode' => 'auto_lock',
                 'net_sql' => '(' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . ')',
                 'gross_sql' => $bufferPerCaseGross,
                 'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
+                'gross_factors' => ['count', 'weight_buffer_box'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
+                'dim_mode' => 'fill',
             ],
             'qty_per_case' => [
                 'label' => 'Qty Per Outer Case/Shipper/Carton',
+                'color' => '#D99694',
                 'qty_field' => 'total_qty_per_case',
                 'qty_fixed' => null,
+                'qty_mode' => 'auto_edit',
+                'qty_factors' => ['qty_per_buffer_box', 'count'],
                 'net_field' => null,
+                'net_mode' => 'auto_lock',
                 'gross_field' => null,
-                'net_sql' => '(' . $piecesPerCase . ' * ' . $pieceNet . ')',
-                'gross_sql' => '(' . $piecesPerCase . ' * (' . $pieceGross . '))',
-                'net_factors' => ['total_qty_per_case', 'weight'],
-                'gross_factors' => ['total_qty_per_case', 'piece_gross'],
+                'gross_mode' => 'auto_lock',
+                'net_sql' => '(' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . ')',
+                'gross_sql' => $bufferPerCaseGross,
+                'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
+                'gross_factors' => ['count', 'weight_buffer_box'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
+                'dim_mode' => 'auto_lock',
             ],
             'outer_case' => [
                 'label' => 'Outer Case / Shipper / Carton',
+                'color' => '#8DB4E3',
+                'tone' => '#96B3D8',
                 'qty_field' => null,
                 'qty_fixed' => 1,
-                'net_field' => null,
+                'qty_mode' => 'fixed',
+                'net_field' => 'outer_net',
+                'net_mode' => 'auto_edit',
                 'gross_field' => 'weight_case',
-                'net_sql' => '(' . $piecesPerCase . ' * ' . $pieceNet . ')',
-                'gross_sql' => 'COALESCE(product_stocks.weight_case, 0)',
-                'net_factors' => ['total_qty_per_case', 'weight'],
+                'gross_mode' => 'auto_edit',
+                'net_sql' => 'COALESCE(product_stock_dimensions.outer_net, (' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . '))',
+                'gross_sql' => 'COALESCE(product_stocks.weight_case, ' . $bufferPerCaseGross . ')',
+                'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
+                'gross_factors' => ['count', 'weight_buffer_box'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
+                'dim_mode' => 'auto_edit',
             ],
         ];
     }
@@ -241,6 +270,7 @@ class ProductDimensionsController extends Controller
             'categoryId' => $categoryId,
             'brandId' => $brandId,
             'jsGroups' => $this->jsGroups($groups),
+            'jsAutoEdits' => $this->jsAutoEdits(),
         ]);
     }
 
@@ -397,7 +427,7 @@ class ProductDimensionsController extends Controller
 
     protected function satelliteFields(): array
     {
-        return ['piece_gross', 'weight_buffer_per_case'];
+        return ['piece_gross', 'outer_net'];
     }
 
     protected function weightFields(): array
@@ -419,19 +449,37 @@ class ProductDimensionsController extends Controller
         $payload = [];
         foreach ($groups as $key => $group) {
             $payload[$key] = [
+                'color' => $group['color'] ?? null,
+                'tone' => $group['tone'] ?? ($group['color'] ?? null),
                 'qtyField' => $group['qty_field'],
                 'qtyFixed' => $group['qty_fixed'],
+                'qtyMode' => $group['qty_mode'] ?? 'fill',
+                'qtyFactors' => $group['qty_factors'] ?? [],
                 'netField' => $group['net_field'],
+                'netMode' => $group['net_mode'] ?? 'fill',
                 'grossField' => $group['gross_field'] ?? null,
+                'grossMode' => $group['gross_mode'] ?? 'fill',
                 'grossFactors' => $group['gross_factors'] ?? [],
                 'netFactors' => $group['net_factors'] ?? [],
                 'length' => $group['length'],
                 'width' => $group['width'],
                 'height' => $group['height'],
+                'dimMode' => $group['dim_mode'] ?? 'fill',
             ];
         }
 
         return $payload;
+    }
+
+    protected function jsAutoEdits(): array
+    {
+        return [
+            ['field' => 'min_qty', 'factors' => ['qty_per_buffer_box'], 'decimals' => 0],
+            ['field' => 'weight_buffer_box', 'factors' => ['qty_per_buffer_box', 'piece_gross'], 'decimals' => 3],
+            ['field' => 'total_qty_per_case', 'factors' => ['count', 'qty_per_buffer_box'], 'decimals' => 0],
+            ['field' => 'outer_net', 'factors' => ['count', 'qty_per_buffer_box', 'weight'], 'decimals' => 3],
+            ['field' => 'weight_case', 'factors' => ['count', 'weight_buffer_box'], 'decimals' => 3],
+        ];
     }
 
     protected function persistSatellite(ProductStock $stock, array $validated): void
@@ -495,20 +543,41 @@ class ProductDimensionsController extends Controller
 
     protected function applyMissingParts($missingQuery, array $group): void
     {
-        foreach (['qty_field', 'net_field', 'gross_field', 'length', 'width', 'height'] as $part) {
-            if (empty($group[$part])) {
+        $editableModes = ['fill', 'auto_edit'];
+        $checks = [
+            ['qty_field', $group['qty_mode'] ?? 'fill'],
+            ['net_field', $group['net_mode'] ?? 'fill'],
+            ['gross_field', $group['gross_mode'] ?? 'fill'],
+        ];
+
+        foreach ($checks as [$part, $mode]) {
+            if (!in_array($mode, $editableModes, true) || empty($group[$part])) {
                 continue;
             }
 
-            $field = $group[$part];
-            if ($this->isSatelliteField($field)) {
-                $missingQuery->orWhereNull('product_stock_dimensions.' . $field);
-                continue;
-            }
+            $this->applyMissingField($missingQuery, $group[$part]);
+        }
 
-            if ($this->columnExists($field)) {
-                $missingQuery->orWhereNull('product_stocks.' . $field);
+        if (!in_array($group['dim_mode'] ?? 'fill', $editableModes, true)) {
+            return;
+        }
+
+        foreach (['length', 'width', 'height'] as $part) {
+            if (!empty($group[$part])) {
+                $this->applyMissingField($missingQuery, $group[$part]);
             }
+        }
+    }
+
+    protected function applyMissingField($missingQuery, string $field): void
+    {
+        if ($this->isSatelliteField($field)) {
+            $missingQuery->orWhereNull('product_stock_dimensions.' . $field);
+            return;
+        }
+
+        if ($this->columnExists($field)) {
+            $missingQuery->orWhereNull('product_stocks.' . $field);
         }
     }
 
@@ -519,7 +588,7 @@ class ProductDimensionsController extends Controller
 
     protected function bufferPerCaseGrossSql(): string
     {
-        return 'product_stock_dimensions.weight_buffer_per_case';
+        return '(COALESCE(product_stocks.count, 0) * COALESCE(product_stocks.weight_buffer_box, 0))';
     }
 
     protected function isVirtualField($field): bool

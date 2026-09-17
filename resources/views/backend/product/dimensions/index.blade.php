@@ -71,6 +71,23 @@
 
             return $product;
         };
+        $isInputMode = function ($mode) {
+            return in_array($mode, ['fill', 'auto_edit'], true);
+        };
+        $displayValue = function ($stock, $field, $mode, array $factors, int $decimals) use ($formatNum, $factorProduct) {
+            $stored = $field ? ($stock->{$field} ?? null) : null;
+            if ($stored !== null && $stored !== '') {
+                return $formatNum($stored, $decimals);
+            }
+            if (in_array($mode, ['auto_edit', 'auto_lock'], true) && !empty($factors)) {
+                return $formatNum($factorProduct($stock, $factors), $decimals);
+            }
+
+            return $formatNum($stored, $decimals);
+        };
+        $qtyDecimals = function ($field) {
+            return in_array($field, ['qty_per_piece', 'qty_per_buffer_box', 'total_qty_per_case', 'count', 'min_qty'], true) ? 0 : 2;
+        };
         $rangeInput = function (string $name, string $label) {
             return '<div class="col-md-3 mb-2">'
                 . '<label class="form-label mb-1">'.e($label).'</label>'
@@ -101,8 +118,10 @@
             text-align: center;
             background: #fff;
         }
-        .dimensions-sheet thead th.group-head { background: #f3f4f6; }
-        .dimensions-sheet thead th.sub-head { background: #f8fafc; }
+        .dimensions-sheet thead th.group-head {
+            background: var(--group-color) !important;
+        }
+        .dimensions-sheet thead th.sub-head { background: #f8fafc !important; }
         .dimensions-sheet th a {
             color: #007bff;
             display: block;
@@ -128,7 +147,7 @@
             font-weight: 700;
         }
         .dimensions-sheet .dim-input {
-            background: #fffce8;
+            background: #fff;
             border: 1px solid #e2e8f0;
             border-radius: 2px;
             font-size: 11px;
@@ -142,10 +161,13 @@
             outline: 1px solid #80bdff;
         }
         .dimensions-sheet .readonly-cell {
-            background: #f8fafc;
+            background: #fff;
             font-variant-numeric: tabular-nums;
             text-align: right;
             white-space: nowrap;
+        }
+        .dimensions-sheet .tone-cell {
+            background: var(--group-tone) !important;
         }
         .dimensions-sheet .same-as-picker { position: relative; }
         .dimensions-sheet .same-as-results {
@@ -181,7 +203,7 @@
     <div class="aiz-titlebar text-left mt-2 mb-3">
         <div class="align-items-center">
             <h1 class="h3">{{ translate('Weight And Dimension Master') }}</h1>
-            <p class="text-muted mb-0">{{ translate('Piece Gross is entered. Buffer Gross = buffer qty × piece Gross. Qty Per Case Gross = case qty × piece Gross. Buffer/Case Gross and Outer Case Gross are entered (same case weight). Net = contents (qty × piece Net). In KG = gm ÷ 1000. CBM = L × W × H (cm) ÷ 1,000,000. Same as copies packing values once; click Save.') }}</p>
+            <p class="text-muted mb-0">{{ translate('MOQ = buffer qty. Package Count = buffers per case. Buffer Net/Gross = piece × buffer qty. Buffer/Case and Qty Per Case Net/Gross = buffer × buffers per case. Outer Gross copies Qty Per Case Gross. Outer QTY is always 1. Yellow = fill or auto-but-editable. In KG = gm ÷ 1000. CBM = L × W × H (cm) ÷ 1,000,000.') }}</p>
         </div>
     </div>
 
@@ -345,7 +367,7 @@
                         <th rowspan="3" style="width: 70px">{!! $sortHeading('min_qty', translate('MOQ')) !!}</th>
                         <th rowspan="3" style="width: 80px">{!! $sortHeading('count', translate('Package Count')) !!}</th>
                         @foreach($packingGroups as $group)
-                            <th colspan="9" class="group-head">{{ translate($group['label']) }}</th>
+                            <th colspan="9" class="group-head" style="--group-color: {{ $group['color'] }}; background: {{ $group['color'] }} !important">{{ translate($group['label']) }}</th>
                         @endforeach
                         <th rowspan="3" style="width: 70px">{{ translate('Save') }}</th>
                     </tr>
@@ -395,44 +417,54 @@
                             <td><input type="number" lang="en" min="0" step="1" class="dim-input" data-field="count" value="{{ $formatNum($stock->count, 0) }}"></td>
                             @foreach($packingGroups as $groupKey => $group)
                                 @php
+                                    $qtyMode = $group['qty_mode'] ?? 'fill';
+                                    $netMode = $group['net_mode'] ?? 'fill';
+                                    $grossMode = $group['gross_mode'] ?? 'fill';
+                                    $dimMode = $group['dim_mode'] ?? 'fill';
+                                    $qtyDec = $qtyDecimals($group['qty_field'] ?? '');
                                     $qtyValue = $group['qty_fixed'] ?? null;
-                                    if ($qtyValue === null && !empty($group['qty_field'])) {
-                                        $qtyValue = $stock->{$group['qty_field']};
+                                    if ($qtyValue === null) {
+                                        $qtyValue = $displayValue($stock, $group['qty_field'] ?? null, $qtyMode, $group['qty_factors'] ?? [], $qtyDec);
+                                    } else {
+                                        $qtyValue = $formatNum($qtyValue, 0);
                                     }
-                                    $netValue = !empty($group['net_field'])
-                                        ? $stock->{$group['net_field']}
-                                        : $factorProduct($stock, $group['net_factors'] ?? []);
-                                    $grossValue = !empty($group['gross_field'])
-                                        ? $stock->{$group['gross_field']}
-                                        : $factorProduct($stock, $group['gross_factors'] ?? []);
+                                    $netValue = $displayValue($stock, $group['net_field'] ?? null, $netMode, $group['net_factors'] ?? [], 3);
+                                    $grossValue = $displayValue($stock, $group['gross_field'] ?? null, $grossMode, $group['gross_factors'] ?? [], 3);
+                                    $tone = $group['tone'] ?? $group['color'] ?? '#ffffff';
                                 @endphp
                                 <td>
-                                    @if($group['qty_fixed'] !== null)
-                                        <span class="readonly-cell d-block" data-qty="{{ $groupKey }}">{{ $formatNum($group['qty_fixed'], 0) }}</span>
+                                    @if($group['qty_fixed'] !== null || !$isInputMode($qtyMode) || empty($group['qty_field']))
+                                        <span class="readonly-cell d-block" data-qty="{{ $groupKey }}">{{ $qtyValue }}</span>
                                     @else
-                                        <input type="number" lang="en" min="0" step="any" class="dim-input" data-field="{{ $group['qty_field'] }}" value="{{ $formatNum($qtyValue) }}">
+                                        <input type="number" lang="en" min="0" step="{{ $qtyDec === 0 ? '1' : 'any' }}" class="dim-input" data-field="{{ $group['qty_field'] }}" value="{{ $qtyValue }}">
                                     @endif
                                 </td>
                                 <td>
-                                    @if(!empty($group['net_field']))
-                                        <input type="number" lang="en" min="0" step="0.001" class="dim-input js-weight" data-group="{{ $groupKey }}" data-field="{{ $group['net_field'] }}" value="{{ $formatNum($netValue, 3) }}">
+                                    @if($isInputMode($netMode) && !empty($group['net_field']))
+                                        <input type="number" lang="en" min="0" step="0.001" class="dim-input js-weight" data-group="{{ $groupKey }}" data-field="{{ $group['net_field'] }}" value="{{ $netValue }}">
                                     @else
-                                        <span class="readonly-cell d-block" data-net="{{ $groupKey }}">{{ $formatNum($netValue, 3) }}</span>
+                                        <span class="readonly-cell d-block" data-net="{{ $groupKey }}">{{ $netValue }}</span>
                                     @endif
                                 </td>
-                                <td class="readonly-cell" data-net-kg="{{ $groupKey }}">{{ $kg($netValue) }}</td>
+                                <td class="readonly-cell tone-cell" data-net-kg="{{ $groupKey }}" style="--group-tone: {{ $tone }}; background: {{ $tone }} !important">{{ $kg($netValue === '' ? null : $netValue) }}</td>
                                 <td>
-                                    @if(!empty($group['gross_field']))
-                                        <input type="number" lang="en" min="0" step="0.001" class="dim-input js-weight" data-group="{{ $groupKey }}" data-field="{{ $group['gross_field'] }}" value="{{ $formatNum($grossValue, 3) }}">
+                                    @if($isInputMode($grossMode) && !empty($group['gross_field']))
+                                        <input type="number" lang="en" min="0" step="0.001" class="dim-input js-weight" data-group="{{ $groupKey }}" data-field="{{ $group['gross_field'] }}" value="{{ $grossValue }}">
                                     @else
-                                        <span class="readonly-cell d-block" data-gross="{{ $groupKey }}">{{ $formatNum($grossValue, 3) }}</span>
+                                        <span class="readonly-cell d-block" data-gross="{{ $groupKey }}">{{ $grossValue }}</span>
                                     @endif
                                 </td>
-                                <td class="readonly-cell" data-gross-kg="{{ $groupKey }}">{{ $kg($grossValue) }}</td>
-                                <td><input type="number" lang="en" min="0" step="0.01" class="dim-input js-dim" data-group="{{ $groupKey }}" data-field="{{ $group['length'] }}" value="{{ $formatNum($stock->{$group['length']}) }}"></td>
-                                <td><input type="number" lang="en" min="0" step="0.01" class="dim-input js-dim" data-group="{{ $groupKey }}" data-field="{{ $group['width'] }}" value="{{ $formatNum($stock->{$group['width']}) }}"></td>
-                                <td><input type="number" lang="en" min="0" step="0.01" class="dim-input js-dim" data-group="{{ $groupKey }}" data-field="{{ $group['height'] }}" value="{{ $formatNum($stock->{$group['height']}) }}"></td>
-                                <td class="readonly-cell" data-cbm="{{ $groupKey }}">{{ $cbm($stock->{$group['length']}, $stock->{$group['width']}, $stock->{$group['height']}) }}</td>
+                                <td class="readonly-cell tone-cell" data-gross-kg="{{ $groupKey }}" style="--group-tone: {{ $tone }}; background: {{ $tone }} !important">{{ $kg($grossValue === '' ? null : $grossValue) }}</td>
+                                @if($isInputMode($dimMode))
+                                    <td><input type="number" lang="en" min="0" step="0.01" class="dim-input js-dim" data-group="{{ $groupKey }}" data-field="{{ $group['length'] }}" value="{{ $formatNum($stock->{$group['length']}) }}"></td>
+                                    <td><input type="number" lang="en" min="0" step="0.01" class="dim-input js-dim" data-group="{{ $groupKey }}" data-field="{{ $group['width'] }}" value="{{ $formatNum($stock->{$group['width']}) }}"></td>
+                                    <td><input type="number" lang="en" min="0" step="0.01" class="dim-input js-dim" data-group="{{ $groupKey }}" data-field="{{ $group['height'] }}" value="{{ $formatNum($stock->{$group['height']}) }}"></td>
+                                @else
+                                    <td class="readonly-cell" data-length="{{ $groupKey }}">{{ $formatNum($stock->{$group['length']}) }}</td>
+                                    <td class="readonly-cell" data-width="{{ $groupKey }}">{{ $formatNum($stock->{$group['width']}) }}</td>
+                                    <td class="readonly-cell" data-height="{{ $groupKey }}">{{ $formatNum($stock->{$group['height']}) }}</td>
+                                @endif
+                                <td class="readonly-cell tone-cell" data-cbm="{{ $groupKey }}" style="--group-tone: {{ $tone }}; background: {{ $tone }} !important">{{ $cbm($stock->{$group['length']}, $stock->{$group['width']}, $stock->{$group['height']}) }}</td>
                             @endforeach
                             <td>
                                 <button type="button" class="btn btn-sm btn-primary btn-save-dims">{{ translate('Save') }}</button>
@@ -461,6 +493,7 @@
             const searchUrl = @json(route('products.dimensions.same_as'));
             const updateUrlTemplate = @json(route('products.dimensions.update', ['id' => '__ID__']));
             const groups = @json($jsGroups);
+            const autoEdits = @json($jsAutoEdits);
 
             function uniqueFields(fields) {
                 return fields.filter(function (field, index) {
@@ -468,16 +501,25 @@
                 });
             }
 
+            function isInputMode(mode) {
+                return mode === 'fill' || mode === 'auto_edit';
+            }
+
             const editableFields = uniqueFields(['min_qty'].concat(Object.keys(groups).reduce(function (fields, key) {
                 const group = groups[key];
-                return fields.concat([
-                    group.qtyField,
-                    group.netField,
-                    group.grossField,
-                    group.length,
-                    group.width,
-                    group.height
-                ]);
+                if (isInputMode(group.qtyMode)) {
+                    fields.push(group.qtyField);
+                }
+                if (isInputMode(group.netMode)) {
+                    fields.push(group.netField);
+                }
+                if (isInputMode(group.grossMode)) {
+                    fields.push(group.grossField);
+                }
+                if (isInputMode(group.dimMode)) {
+                    fields.push(group.length, group.width, group.height);
+                }
+                return fields;
             }, [])));
             const copyFields = editableFields.filter(function (field) {
                 return field !== 'min_qty';
@@ -491,12 +533,38 @@
                 alert(message);
             }
 
-            function fieldValue($row, field) {
+            function fieldInputs($row, field) {
                 if (!field) {
-                    return '';
+                    return $();
                 }
-                const $input = $row.find('[data-field="' + field + '"]').first();
+                return $row.find('[data-field="' + field + '"]');
+            }
+
+            function fieldValue($row, field) {
+                const $input = fieldInputs($row, field).first();
                 return $input.length ? $.trim($input.val()) : '';
+            }
+
+            function setField($row, field, value) {
+                fieldInputs($row, field).val(value == null ? '' : value);
+            }
+
+            function autoEditRule(field) {
+                return autoEdits.find(function (rule) {
+                    return rule.field === field;
+                }) || null;
+            }
+
+            function isDirty($row, field) {
+                return fieldInputs($row, field).first().attr('data-dirty') === '1';
+            }
+
+            function markDirty($row, field) {
+                fieldInputs($row, field).attr('data-dirty', '1');
+            }
+
+            function markLinked($row, field) {
+                fieldInputs($row, field).removeAttr('data-dirty');
             }
 
             function factorProduct($row, factors) {
@@ -532,6 +600,21 @@
                 return String(Number(number.toFixed(decimals)));
             }
 
+            function numbersEqual(left, right, decimals) {
+                if (left === '' && right === '') {
+                    return true;
+                }
+                if (left === '' || right === '') {
+                    return false;
+                }
+                const leftNumber = Number(left);
+                const rightNumber = Number(right);
+                if (!isFinite(leftNumber) || !isFinite(rightNumber)) {
+                    return false;
+                }
+                return Number(leftNumber.toFixed(decimals)) === Number(rightNumber.toFixed(decimals));
+            }
+
             function toKg(grams) {
                 if (grams === '') {
                     return '';
@@ -554,43 +637,110 @@
                 return value.toFixed(4);
             }
 
+            function applyLinkedAutoEdits($row) {
+                autoEdits.forEach(function (rule) {
+                    if (isDirty($row, rule.field)) {
+                        return;
+                    }
+                    const formatted = formatCalc(factorProduct($row, rule.factors), rule.decimals);
+                    if (formatted !== '') {
+                        setField($row, rule.field, formatted);
+                    }
+                });
+            }
+
             function refreshCalculated($row) {
+                applyLinkedAutoEdits($row);
                 Object.keys(groups).forEach(function (key) {
                     const group = groups[key];
-                    let net = group.netField ? fieldValue($row, group.netField) : factorProduct($row, group.netFactors);
-                    let gross = group.grossField
+                    let net = isInputMode(group.netMode) && group.netField
+                        ? fieldValue($row, group.netField)
+                        : factorProduct($row, group.netFactors);
+                    let gross = isInputMode(group.grossMode) && group.grossField
                         ? fieldValue($row, group.grossField)
                         : factorProduct($row, group.grossFactors);
-                    if (!group.netField) {
+                    if (group.qtyFixed == null && group.qtyMode === 'auto_lock') {
+                        $row.find('[data-qty="' + key + '"]').text(formatCalc(fieldValue($row, group.qtyField), 0));
+                    }
+                    if (!(isInputMode(group.netMode) && group.netField)) {
                         $row.find('[data-net="' + key + '"]').text(formatCalc(net, 3));
                     }
-                    if (!group.grossField) {
+                    if (!(isInputMode(group.grossMode) && group.grossField)) {
                         $row.find('[data-gross="' + key + '"]').text(formatCalc(gross, 3));
                     }
                     $row.find('[data-net-kg="' + key + '"]').text(toKg(net));
                     $row.find('[data-gross-kg="' + key + '"]').text(toKg(gross));
-                    $row.find('[data-cbm="' + key + '"]').text(toCbm(
-                        fieldValue($row, group.length),
-                        fieldValue($row, group.width),
-                        fieldValue($row, group.height)
-                    ));
+                    const length = fieldValue($row, group.length);
+                    const width = fieldValue($row, group.width);
+                    const height = fieldValue($row, group.height);
+                    if (group.dimMode === 'auto_lock') {
+                        $row.find('[data-length="' + key + '"]').text(formatCalc(length, 2));
+                        $row.find('[data-width="' + key + '"]').text(formatCalc(width, 2));
+                        $row.find('[data-height="' + key + '"]').text(formatCalc(height, 2));
+                    }
+                    $row.find('[data-cbm="' + key + '"]').text(toCbm(length, width, height));
                 });
+            }
+
+            function initLinkedState($row) {
+                autoEdits.forEach(function (rule) {
+                    const stored = fieldValue($row, rule.field);
+                    const formatted = formatCalc(factorProduct($row, rule.factors), rule.decimals);
+                    if (formatted === '') {
+                        markLinked($row, rule.field);
+                        return;
+                    }
+                    if (stored === '') {
+                        setField($row, rule.field, formatted);
+                        markLinked($row, rule.field);
+                        return;
+                    }
+                    if (numbersEqual(stored, formatted, rule.decimals)) {
+                        markLinked($row, rule.field);
+                        return;
+                    }
+                    markDirty($row, rule.field);
+                });
+                refreshCalculated($row);
             }
 
             function applyFields($row, values, fields) {
                 fields.forEach(function (field) {
                     if (Object.prototype.hasOwnProperty.call(values, field)) {
-                        $row.find('[data-field="' + field + '"]').val(values[field] != null ? values[field] : '');
+                        setField($row, field, values[field] != null ? values[field] : '');
                     }
                 });
-                refreshCalculated($row);
+                initLinkedState($row);
             }
+
+            function syncAutoEditDirty($row, field) {
+                const rule = autoEditRule(field);
+                if (!rule) {
+                    return;
+                }
+                const current = fieldValue($row, field);
+                if (current === '') {
+                    markLinked($row, field);
+                    return;
+                }
+                const formatted = formatCalc(factorProduct($row, rule.factors), rule.decimals);
+                if (formatted !== '' && numbersEqual(current, formatted, rule.decimals)) {
+                    markLinked($row, field);
+                    return;
+                }
+                markDirty($row, field);
+            }
+
+            $('.dimension-row').each(function () {
+                initLinkedState($(this));
+            });
 
             $(document).on('input', '.dim-input', function () {
                 const $input = $(this);
                 const $row = $input.closest('.dimension-row');
                 const field = $input.data('field');
                 $row.find('[data-field="' + field + '"]').not($input).val($input.val());
+                syncAutoEditDirty($row, field);
                 refreshCalculated($row);
             });
 
@@ -650,6 +800,7 @@
 
             $(document).on('click', '.btn-save-dims', function () {
                 const $row = $(this).closest('.dimension-row');
+                refreshCalculated($row);
                 const payload = { _token: csrfToken };
                 editableFields.forEach(function (field) {
                     payload[field] = fieldValue($row, field);

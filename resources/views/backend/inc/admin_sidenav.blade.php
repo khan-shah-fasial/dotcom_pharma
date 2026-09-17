@@ -1702,7 +1702,7 @@
                 @endcanany
 
                 <!-- Setup & Configurations -->
-                @canany(['general_settings','features_activation','language_setup','currency_setup','vat_&_tax_setup',
+                @canany(['general_settings','features_activation','language_setup','currency_setup','vat_&_tax_setup','view_all_tax_masters',
                         'pickup_point_setup','smtp_settings','payment_methods_configurations','order_configuration','file_system_&_cache_configuration',
                         'social_media_logins','facebook_chat','facebook_comment','analytics_tools_configuration','google_recaptcha_configuration','google_map_setting',
                         'google_firebase_setting','shipping_configuration','shipping_country_setting','manage_shipping_states','manage_shipping_cities','manage_zones','manage_carriers'])
@@ -1742,6 +1742,13 @@
                                 <li class="aiz-side-nav-item">
                                     <a href="{{route('tax.index')}}" class="aiz-side-nav-link {{ areActiveRoutes(['tax.index', 'tax.create', 'tax.store', 'tax.show', 'tax.edit'])}}">
                                         <span class="aiz-side-nav-text">{{translate('Vat & TAX')}}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_all_tax_masters')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('tax_masters.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['tax_masters.index', 'tax_masters.create', 'tax_masters.edit']) }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Tax Master') }}</span>
                                     </a>
                                 </li>
                             @endcan

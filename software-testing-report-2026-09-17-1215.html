@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA Report — Discount Master</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #fff;
+            --pass: #166534;
+            --passbg: #dcfce7;
+            --fail: #991b1b;
+            --failbg: #fee2e2;
+            --warn: #9a3412;
+            --warnbg: #ffedd5;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --crit: #7f1d1d;
+            --high: #c2410c;
+            --medium: #a16207;
+            --low: #334155;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Segoe UI, Arial, sans-serif; color: #0f172a; background: #f1f5f9; }
+        header { background: var(--bg); color: #fff; padding: 28px 24px; }
+        header h1 { margin: 0 0 8px; font-size: 24px; }
+        header p { margin: 4px 0; color: #cbd5e1; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .status-crit { background: #fecaca; color: #7f1d1d; }
+        .wrap { max-width: 1180px; margin: 0 auto; padding: 20px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+        .card .n { font-size: 28px; font-weight: 700; }
+        .card .l { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+        h2 { margin-top: 32px; border-bottom: 2px solid var(--bg); padding-bottom: 6px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+        th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+        th { background: #0f172a; color: #fff; }
+        tr:nth-child(even) td { background: #f8fafc; }
+        .pass { background: var(--passbg); color: var(--pass); font-weight: 700; }
+        .fail { background: var(--failbg); color: var(--fail); font-weight: 700; }
+        .blocked { background: var(--warnbg); color: var(--warn); font-weight: 700; }
+        .nt { background: #e2e8f0; color: #334155; font-weight: 700; }
+        .high { color: var(--high); font-weight: 700; }
+        .medium { color: var(--medium); font-weight: 700; }
+        .low { color: var(--low); font-weight: 700; }
+        .crit { color: var(--crit); font-weight: 700; }
+        .open { background: var(--failbg); color: var(--fail); font-weight: 700; }
+        code, .mono { font-family: Consolas, "Courier New", monospace; font-size: 12px; }
+        .note { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
+        footer { color: var(--muted); font-size: 12px; padding: 24px; text-align: center; }
+        @media (max-width: 800px) {
+            table { display: block; overflow-x: auto; }
+            header h1 { font-size: 20px; }
+        }
+        @media print {
+            header, th, .pass, .fail, .blocked, .nt, .open { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .wrap { max-width: none; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Software Testing &amp; QA Report</h1>
+    <p>Project: Pharm Vet Easy / Dotcom Pharma — Discount Master</p>
+    <p>Date: 17 Sep 2026 &nbsp;|&nbsp; Environment: Local codebase + attempted <span class="mono">http://127.0.0.1:8000</span> &nbsp;|&nbsp; Tester: Automated QA pass</p>
+    <p>Overall score: <strong>48%</strong> &nbsp;|&nbsp; Rating: Critical &nbsp;|&nbsp; <span class="badge status-crit">Not Ready for Production</span></p>
+</header>
+<div class="wrap">
+
+<section>
+    <h2>1. Project Information</h2>
+    <table>
+        <tr><th>Item</th><th>Detail</th></tr>
+        <tr><td>Application</td><td>Laravel 10 ecommerce CMS (admin marketing module)</td></tr>
+        <tr><td>Scope</td><td>Discount Master only: listing, create/edit form, lookups, status toggle, delete, and whether saved discounts affect pricing/orders</td></tr>
+        <tr><td>Code inspected</td><td><span class="mono">app/Models/DiscountMaster.php</span>, <span class="mono">app/Http/Controllers/DiscountMasterController.php</span>, <span class="mono">app/Http/Requests/DiscountMasterRequest.php</span>, <span class="mono">resources/views/backend/marketing/discount_master/*</span>, <span class="mono">routes/admin.php</span>, <span class="mono">app/Services/OrderPlacementService.php</span>, <span class="mono">app/Console/Kernel.php</span></td></tr>
+        <tr><td>Live URL intended</td><td><span class="mono">http://127.0.0.1:8000/admin/discount-masters</span></td></tr>
+        <tr><td>Database during this run</td><td>MySQL service <span class="mono">wampmysqld64</span> was Stopped; connection to <span class="mono">dotcom_pharma</span> refused. Runtime CRUD and browser walkthroughs were not executed.</td></tr>
+        <tr><td>Automated tests</td><td>No PHPUnit/Pest cases exist for Discount Master</td></tr>
+        <tr><td>Credentials</td><td>Not used. Guest HTTP probes to admin routes timed out because the app waits on the down database.</td></tr>
+    </table>
+    <div class="note">
+        This pass looked for <strong>nonsensical or buggy behavior</strong> in Discount Master: impossible combinations, broken calculations, filters that do not mean what they say, and records that cannot affect an order. Findings below are from source inspection unless marked Not Tested.
+    </div>
+</section>
+
+<section>
+    <h2>2. Testing Summary</h2>
+    <div class="cards">
+        <div class="card"><div class="l">Overall</div><div class="n">48%</div></div>
+        <div class="card"><div class="l">Critical bugs</div><div class="n">1</div></div>
+        <div class="card"><div class="l">High bugs</div><div class="n">5</div></div>
+        <div class="card"><div class="l">Open issues</div><div class="n">18</div></div>
+    </div>
+    <table>
+        <tr><th>Testing Type</th><th>Total</th><th>Passed</th><th>Failed</th><th>Status</th></tr>
+        <tr><td>Functional Testing</td><td>20</td><td>8</td><td>12</td><td class="fail">Fail</td></tr>
+        <tr><td>Security Testing</td><td>8</td><td>5</td><td>3</td><td class="fail">Fail</td></tr>
+        <tr><td>UI/UX Testing</td><td>9</td><td>3</td><td>6</td><td class="fail">Fail</td></tr>
+        <tr><td>Performance Testing</td><td>3</td><td>2</td><td>1</td><td class="fail">Fail</td></tr>
+        <tr><td>SEO Testing</td><td>0</td><td>0</td><td>0</td><td class="nt">Not Applicable (admin)</td></tr>
+        <tr><td>Content Testing</td><td>4</td><td>1</td><td>3</td><td class="fail">Fail</td></tr>
+        <tr><td>Compatibility Testing</td><td>0</td><td>0</td><td>0</td><td class="nt">Not Tested</td></tr>
+        <tr><td>API Testing</td><td>3</td><td>2</td><td>1</td><td class="fail">Fail</td></tr>
+        <tr><td>Database Testing</td><td>4</td><td>2</td><td>2</td><td class="fail">Fail</td></tr>
+        <tr><td>Production / Deployment Testing</td><td>3</td><td>2</td><td>1</td><td class="fail">Fail</td></tr>
+    </table>
+    <p>Totals exclude Blocked / Not Tested rows. SEO and browser compatibility were not scored in the overall percentage.</p>
+</section>
+
+<section>
+    <h2>3. Functional Testing</h2>
+    <table>
+        <tr><th>ID</th><th>Module</th><th>Test Case</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr>
+        <tr>
+            <td>FT-001</td><td>Auth</td><td>Discount Master routes sit behind <span class="mono">auth</span>, <span class="mono">admin</span>, and Spatie permission middleware</td>
+            <td class="pass">Pass</td><td>Critical</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-002</td><td>Validation</td><td>Applied On requires the matching target (SKU/variant stock, batch, category, group, or customer)</td>
+            <td class="pass">Pass</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-003</td><td>Validation</td><td>To Date cannot be before From Date (<span class="mono">after_or_equal:from_date</span>)</td>
+            <td class="pass">Pass</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-004</td><td>Validation</td><td>When value type is percent, percent is required and capped at 100</td>
+            <td class="pass">Pass</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-005</td><td>Codes</td><td>Discount ID prefixes are generated per type (D-BW-, D-PW-, D-POW-, D-AW-, D-SW-)</td>
+            <td class="pass">Pass</td><td>Medium</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-006</td><td>Listing</td><td>Search covers discount code, SKU, variant, batch, product, category, group, and customer name/company</td>
+            <td class="pass">Pass</td><td>Medium</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-007</td><td>Listing</td><td>If <span class="mono">discount_masters</span> table is missing, index shows a warning instead of querying it</td>
+            <td class="pass">Pass</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-008</td><td>Scheme</td><td>When “scheme product is same” is No, scheme product stock is required</td>
+            <td class="pass">Pass</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-009</td><td>Pricing engine</td><td>A saved Discount Master is applied on cart, checkout, or backend order create</td>
+            <td class="fail">Fail</td><td class="crit">Critical</td>
+            <td><span class="mono">OrderPlacementService.php</span> → entire placement path → Discount Master is never loaded or applied. Wire an apply service into cart/order pricing, or do not present this screen as a live discount engine.</td>
+        </tr>
+        <tr>
+            <td>FT-010</td><td>Save</td><td>Invalid / unknown <span class="mono">product_stock_id</span> or <span class="mono">batch_id</span> is rejected</td>
+            <td class="fail">Fail</td><td class="high">High</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">payloadFromRequest()</span> → <span class="mono">ProductStock::find()</span> / <span class="mono">ProductBatch::find()</span> writes null when missing. Add <span class="mono">exists:</span> rules and do not save Applied On SKU/batch with a null target.</td>
+        </tr>
+        <tr>
+            <td>FT-011</td><td>Validation</td><td>Qty slab From cannot be greater than Qty slab To</td>
+            <td class="fail">Fail</td><td class="medium">Medium</td>
+            <td><span class="mono">DiscountMasterRequest.php</span> → <span class="mono">rules()</span> → add <span class="mono">qty_slab_to: gte:qty_slab_from</span> (and require slabs when they are used in amount calc).</td>
+        </tr>
+        <tr>
+            <td>FT-012</td><td>Validation</td><td>Zero-value discounts and empty schemewise records are rejected</td>
+            <td class="fail">Fail</td><td class="medium">Medium</td>
+            <td><span class="mono">DiscountMasterRequest.php</span> → <span class="mono">rules()</span> → require <span class="mono">gt:0</span> for the active value field; for schemewise require at least one of free qty / percent / value.</td>
+        </tr>
+        <tr>
+            <td>FT-013</td><td>Combinations</td><td>Discount Type is constrained by Applied On (e.g. batchwise only on batch, amount-wise only at invoice/customer level)</td>
+            <td class="fail">Fail</td><td class="high">High</td>
+            <td><span class="mono">DiscountMasterRequest.php</span> → <span class="mono">rules()</span> → reject illegal pairs such as Batchwise + Category, Pointwise + no product, Amount-wise + SKU if those are not business-valid.</td>
+        </tr>
+        <tr>
+            <td>FT-014</td><td>Filters</td><td>From Date / To Date filters return discounts that overlap the selected range</td>
+            <td class="fail">Fail</td><td class="high">High</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">index()</span> → <span class="mono">date_from</span> uses <span class="mono">from_date &gt;= filter</span>, which drops long-running offers that started earlier. <span class="mono">date_to</span> keeps null end dates or <span class="mono">to_date &lt;= filter</span>, which is not an overlap query. Filter as: start ≤ range-end AND (end is null OR end ≥ range-start).</td>
+        </tr>
+        <tr>
+            <td>FT-015</td><td>Save</td><td>Switching Applied On to category/group/customer clears rate snapshot fields</td>
+            <td class="fail">Fail</td><td class="medium">Medium</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">payloadFromRequest()</span> → also null <span class="mono">effective_rate</span> (currently rate/amount are cleared, effective_rate is kept from the hidden form fields).</td>
+        </tr>
+        <tr>
+            <td>FT-016</td><td>Save</td><td>Switching to Schemewise does not keep leftover flat/percent values from the previous type</td>
+            <td class="fail">Fail</td><td class="medium">Medium</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">payloadFromRequest()</span> → schemewise is excluded from clearing <span class="mono">value_type / value_amount / value_percent</span>. Clear them unless schemewise actually uses those columns.</td>
+        </tr>
+        <tr>
+            <td>FT-017</td><td>Form math</td><td>Amount, percent, scheme value, and effective rate calculate from the fields the labels describe</td>
+            <td class="fail">Fail</td><td class="high">High</td>
+            <td><span class="mono">_form_script.blade.php</span> → <span class="mono">recalc()</span> → Amount uses only <span class="mono">qty_slab_from * rate</span> and ignores To. Schemewise uses buy qty 50 when From is empty and overwrites Scheme Value with <span class="mono">freeQty * rate</span>. Amount-wise effective rate still uses product rate, not invoice amount. Recalc from the visible business fields only; never invent a qty of 50.</td>
+        </tr>
+        <tr>
+            <td>FT-018</td><td>Form math</td><td>A flat discount larger than rate can still be saved</td>
+            <td class="fail">Fail</td><td class="high">High</td>
+            <td><span class="mono">_form_script.blade.php</span> → <span class="mono">recalc()</span> plus <span class="mono">DiscountMasterRequest.php</span> → JS writes <span class="mono">value_percent</span> above 100; the request still has <span class="mono">max:100</span> on that column even for flat type, so a valid flat amount can fail save. Either cap the derived percent for display only, or drop max:100 when value_type is flat.</td>
+        </tr>
+        <tr>
+            <td>FT-019</td><td>Form restore</td><td>After validation error, SKU/batch/customer labels and Deactivate stay selected</td>
+            <td class="fail">Fail</td><td class="medium">Medium</td>
+            <td><span class="mono">_form.blade.php</span> → typeahead values come from the model, not <span class="mono">old()</span>. Status Active uses <span class="mono">@selected(old('status'))</span>; PHP treats string <span class="mono">"0"</span> as truthy and boolean false stringifies to empty, so Deactivate is lost. Restore labels from old IDs and compare status with strict <span class="mono">(string) old('status') === '1'</span>.</td>
+        </tr>
+        <tr>
+            <td>FT-020</td><td>Applied On</td><td>SKU Product and Full Variant represent different targets</td>
+            <td class="fail">Fail</td><td class="medium">Medium</td>
+            <td><span class="mono">DiscountMaster.php</span> → <span class="mono">APPLIED_ON</span> and <span class="mono">DiscountMasterController.php</span> → <span class="mono">lookupStocks()</span> / <span class="mono">payloadFromRequest()</span> → both store one <span class="mono">product_stock_id</span> and the lookups are almost the same. Either collapse to one option, or make Full Variant apply to every stock that shares the variant.</td>
+        </tr>
+        <tr>
+            <td>FT-021</td><td>Create/Edit</td><td>Happy-path create, edit, toggle, and delete in the browser</td>
+            <td class="nt">Not Tested</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-022</td><td>Dates vs status</td><td>Expired To Date auto-deactivates the offer</td>
+            <td class="nt">Not Tested</td><td>Medium</td><td>-</td>
+        </tr>
+        <tr>
+            <td>FT-023</td><td>Overlap</td><td>Two active discounts cannot be saved for the same target and overlapping dates</td>
+            <td class="nt">Not Tested</td><td>High</td><td>-</td>
+        </tr>
+    </table>
+    <div class="note">
+        FT-022 / FT-023: there is no expiry command in <span class="mono">app/Console/Kernel.php</span> and no unique/overlap rule in the request or table. They are Not Tested at runtime; the missing engine already makes expiry unused. Treat overlapping rows as allowed until a pricing engine exists.
+    </div>
+</section>
+
+<section>
+    <h2>4. Bug / Issue Report</h2>
+    <table>
+        <tr><th>Bug ID</th><th>Module</th><th>Issue</th><th>Severity</th><th>Status</th><th>Recommendation</th></tr>
+        <tr>
+            <td>BUG-001</td><td>Pricing</td><td>Discount Master is CRUD-only. Cart, checkout, and backend order placement never read <span class="mono">discount_masters</span>. Saving an “Active” offer does not change price, points, scheme free qty, or invoice discount.</td>
+            <td class="crit">Critical</td><td class="open">Open</td>
+            <td><span class="mono">OrderPlacementService.php</span> → placement/pricing → introduce a single apply-Discount-Master step (with date, status, role, qty slab, and target match). Until then, show a clear admin notice that records are not applied to orders.</td>
+        </tr>
+        <tr>
+            <td>BUG-002</td><td>Save</td><td>Required integer IDs can be junk. <span class="mono">find()</span> then stores null, so Applied On can be SKU/batch with no product.</td>
+            <td class="high">High</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">payloadFromRequest()</span> → validate <span class="mono">exists:product_stocks,id</span> / <span class="mono">exists:product_batches,id</span> and abort if the resolved model is null.</td>
+        </tr>
+        <tr>
+            <td>BUG-003</td><td>Form math</td><td>Amount, scheme, and effective rate do not match the field labels. Scheme buy qty defaults to 50. Scheme Value is overwritten. Amount-wise uses product rate. Flat &gt; rate writes percent &gt; 100 and can fail validation.</td>
+            <td class="high">High</td><td class="open">Open</td>
+            <td><span class="mono">_form_script.blade.php</span> → <span class="mono">recalc()</span> → compute from the selected type only; do not default qty to 50; do not force scheme_value; keep derived percent out of the posted <span class="mono">value_percent</span> when type is flat.</td>
+        </tr>
+        <tr>
+            <td>BUG-004</td><td>Listing filters</td><td>Date filters do not mean “active during this range”. A discount from 2020–2030 is excluded if From Date filter is 2026.</td>
+            <td class="high">High</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">index()</span> → use overlap logic on <span class="mono">from_date</span> / <span class="mono">to_date</span>.</td>
+        </tr>
+        <tr>
+            <td>BUG-005</td><td>Combinations</td><td>Any Discount Type can be saved with any Applied On. Batchwise-on-category and amount-wise-on-SKU are legal records with no defined meaning.</td>
+            <td class="high">High</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMasterRequest.php</span> → <span class="mono">rules()</span> → encode the allowed matrix; hide illegal types in <span class="mono">_form_script.blade.php</span>.</td>
+        </tr>
+        <tr>
+            <td>BUG-006</td><td>Delete</td><td>Destroy is a GET route. The confirm modal follows that GET href. An authenticated admin who opens a crafted link deletes the row (same CMS pattern as flash deals, still unsafe).</td>
+            <td class="high">High</td><td class="open">Open</td>
+            <td><span class="mono">routes/admin.php</span> → discount master group → change destroy to DELETE/POST with CSRF. <span class="mono">DiscountMasterController.php</span> → <span class="mono">destroy()</span>.</td>
+        </tr>
+        <tr>
+            <td>BUG-007</td><td>Save</td><td>Category / group / customer saves can keep a leftover <span class="mono">effective_rate</span> from the hidden role-price block.</td>
+            <td class="medium">Medium</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">payloadFromRequest()</span> → null <span class="mono">effective_rate</span> with rate/amount for non-stock targets.</td>
+        </tr>
+        <tr>
+            <td>BUG-008</td><td>Save</td><td>Schemewise keeps leftover <span class="mono">value_amount</span> / <span class="mono">value_percent</span> from a previously selected batchwise/productwise block.</td>
+            <td class="medium">Medium</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">payloadFromRequest()</span> → clear value columns for schemewise unless they are part of the scheme.</td>
+        </tr>
+        <tr>
+            <td>BUG-009</td><td>Validation</td><td>Qty slab inversion, 0% / 0 amount, and fully empty schemewise rows are accepted.</td>
+            <td class="medium">Medium</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMasterRequest.php</span> → <span class="mono">rules()</span> → add gte, gt:0, and “at least one scheme field”.</td>
+        </tr>
+        <tr>
+            <td>BUG-010</td><td>Form restore</td><td>Failed save blanks typeahead labels. Deactivate can display as Active because <span class="mono">@selected("0")</span> is truthy in PHP.</td>
+            <td class="medium">Medium</td><td class="open">Open</td>
+            <td><span class="mono">_form.blade.php</span> → status options and typeahead value attributes → compare status as strings; rebuild labels from old IDs.</td>
+        </tr>
+        <tr>
+            <td>BUG-011</td><td>Applied On</td><td>SKU Product and Full Variant are duplicate selectors for the same <span class="mono">product_stocks</span> row. Listing then shows SKU in one column or variant in the other, which looks like two different grains of discount.</td>
+            <td class="medium">Medium</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMaster.php</span> → <span class="mono">APPLIED_ON</span> → collapse or implement true variant-wide matching.</td>
+        </tr>
+        <tr>
+            <td>BUG-012</td><td>Lookups</td><td>Create form Stock Available for SKU uses the latest batch qty. Listing Stock uses <span class="mono">product_stocks.qty</span>. Same discount, two numbers.</td>
+            <td class="medium">Medium</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">lookupTarget()</span> and <span class="mono">DiscountMaster.php</span> → <span class="mono">sourceQty()</span> → pick one source (stock vs batch) and use it on both screens.</td>
+        </tr>
+        <tr>
+            <td>BUG-013</td><td>Save</td><td>Customer/category/group IDs are not existence-checked. Lookup customers are approved only; save accepts any integer, including non-customers.</td>
+            <td class="medium">Medium</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMasterRequest.php</span> → <span class="mono">rules()</span> → <span class="mono">exists:</span> plus approved-customer check reused from <span class="mono">OrderPlacementService::approvedCustomerQuery()</span>.</td>
+        </tr>
+        <tr>
+            <td>BUG-014</td><td>Listing UI</td><td>Sixteen stacked header columns and a red Reset button. The table is the form laid on its side; it does not scan as a list.</td>
+            <td class="low">Low</td><td class="open">Open</td>
+            <td><span class="mono">index.blade.php</span> → reduce to identity, type, target, value, dates, status, actions. Style Reset as secondary, not danger.</td>
+        </tr>
+        <tr>
+            <td>BUG-015</td><td>Codes</td><td><span class="mono">nextCode()</span> takes the latest row by id, not max numeric suffix, and is not locked. Two concurrent saves of the same type can hit the unique <span class="mono">discount_code</span> constraint and 500.</td>
+            <td class="low">Low</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMaster.php</span> → <span class="mono">nextCode()</span> → compute MAX of the numeric suffix inside a transaction, retry on unique conflict.</td>
+        </tr>
+        <tr>
+            <td>BUG-016</td><td>Listing</td><td>Role-price grid is live from product/batch JSON, while Rate / Amount / Effective Rate are the saved snapshot. After a price change the row disagrees with itself.</td>
+            <td class="low">Low</td><td class="open">Open</td>
+            <td><span class="mono">index.blade.php</span> → show saved <span class="mono">rate</span> as the source of truth, or label the grid “Current prices (not saved)”.</td>
+        </tr>
+        <tr>
+            <td>BUG-017</td><td>Form</td><td>“Category (Main)” and Group dropdowns load every category/group, including children. Hidden stocks are also returned by SKU lookup.</td>
+            <td class="low">Low</td><td class="open">Open</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">formPayload()</span> / <span class="mono">lookupStocks()</span> → restrict to parent categories if that is the business rule; exclude <span class="mono">is_hidden</span> stocks.</td>
+        </tr>
+        <tr>
+            <td>BUG-018</td><td>Form</td><td>Create form “Date Of Add / Edit” is the page-load clock, not a saved timestamp. Switching Applied On SKU→batch can leave a hidden <span class="mono">product_stock_id</span> so save succeeds with an empty SKU box.</td>
+            <td class="low">Low</td><td class="open">Open</td>
+            <td><span class="mono">_form.blade.php</span> and <span class="mono">_form_script.blade.php</span> → <span class="mono">showAppliedOnFields()</span> → blank unused hidden IDs; show Date Of Add only on edit from <span class="mono">updated_at</span>.</td>
+        </tr>
+    </table>
+</section>
+
+<section>
+    <h2>5. Security Testing</h2>
+    <table>
+        <tr><th>ID</th><th>Security Check</th><th>Status</th><th>Severity</th><th>Recommendation</th></tr>
+        <tr>
+            <td>SEC-001</td><td>SQL injection protection (Eloquent / bound parameters on listing search)</td>
+            <td class="pass">Pass</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>SEC-002</td><td>XSS on listing/form output (Blade <span class="mono">{{ }}</span>)</td>
+            <td class="pass">Pass</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>SEC-003</td><td>CSRF on POST store / PUT update / POST update-status</td>
+            <td class="pass">Pass</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>SEC-004</td><td>Authentication: routes inside <span class="mono">auth</span> + <span class="mono">admin</span></td>
+            <td class="pass">Pass</td><td>Critical</td><td>-</td>
+        </tr>
+        <tr>
+            <td>SEC-005</td><td>Authorization: view / add / edit / delete permissions on controller actions</td>
+            <td class="pass">Pass</td><td>High</td><td>-</td>
+        </tr>
+        <tr>
+            <td>SEC-006</td><td>CSRF / unsafe method on delete</td>
+            <td class="fail">Fail</td><td class="high">High</td>
+            <td><span class="mono">routes/admin.php</span> → <span class="mono">discount_masters.destroy</span> is GET. Change to DELETE/POST with CSRF token.</td>
+        </tr>
+        <tr>
+            <td>SEC-007</td><td>IDOR / unsanitized target IDs on save (customer, category, group, stock, batch)</td>
+            <td class="fail">Fail</td><td class="medium">Medium</td>
+            <td><span class="mono">DiscountMasterRequest.php</span> → <span class="mono">rules()</span> → add exists + approved-customer checks. Lookups filter; save does not.</td>
+        </tr>
+        <tr>
+            <td>SEC-008</td><td>Rate limiting on lookup/next-code JSON endpoints</td>
+            <td class="fail">Fail</td><td class="low">Low</td>
+            <td><span class="mono">DiscountMasterController.php</span> → lookup methods → add throttle middleware. Admin-only, but unbounded autocomplete is still scrapeable.</td>
+        </tr>
+        <tr>
+            <td>SEC-009</td><td>Debug mode / error disclosure on these routes</td>
+            <td class="nt">Not Tested</td><td>Medium</td><td>-</td>
+        </tr>
+        <tr>
+            <td>SEC-010</td><td>Guest HTTP redirect for <span class="mono">/admin/discount-masters</span></td>
+            <td class="nt">Not Tested</td><td>High</td><td>-</td>
+        </tr>
+    </table>
+</section>
+
+<section>
+    <h2>6. UI/UX Testing</h2>
+    <table>
+        <tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Recommendation</th></tr>
+        <tr>
+            <td>UX-001</td><td>Create form</td><td>Applied On and Discount Type show/hide the matching blocks</td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+        <tr>
+            <td>UX-002</td><td>Listing</td><td>Table is readable as a list of offers</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">index.blade.php</span> → 16 columns copy the form. Replace with a compact list plus expand/detail.</td>
+        </tr>
+        <tr>
+            <td>UX-003</td><td>Listing</td><td>Reset is visually distinct from delete</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">index.blade.php</span> → Reset uses <span class="mono">btn-danger</span>. Use outline/secondary.</td>
+        </tr>
+        <tr>
+            <td>UX-004</td><td>Labels</td><td>“Amount Or %” next to “% Or Amount” is understandable</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">_form.blade.php</span> → label one field Amount and the other Percent, driven by Type.</td>
+        </tr>
+        <tr>
+            <td>UX-005</td><td>Typeahead</td><td>Selected SKU/batch/customer remains visible after a failed save</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">_form.blade.php</span> → populate typeahead from <span class="mono">old()</span> IDs, not only the stored model.</td>
+        </tr>
+        <tr>
+            <td>UX-006</td><td>Create form</td><td>Date Of Add / Edit is a real saved value</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">_form.blade.php</span> → hide on create; on edit show <span class="mono">updated_at</span> only.</td>
+        </tr>
+        <tr>
+            <td>UX-007</td><td>Role prices</td><td>Selecting a role highlights the cell and fills Rate</td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+        <tr>
+            <td>UX-008</td><td>Responsive</td><td>Listing usable on a typical laptop/tablet width</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">index.blade.php</span> → horizontal scroll on 16 columns is the only option today. Reduce columns.</td>
+        </tr>
+        <tr>
+            <td>UX-009</td><td>Empty state</td><td>Empty listing shows a message</td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+    </table>
+</section>
+
+<section>
+    <h2>7. Performance Testing</h2>
+    <table>
+        <tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr>
+        <tr>
+            <td>PF-001</td><td>Listing query</td><td>Index paginates 15 and eager-loads product, stock.batches, batch, category, group, customer, schemeStock</td>
+            <td class="pass">Pass</td><td>Medium</td><td>-</td>
+        </tr>
+        <tr>
+            <td>PF-002</td><td>Lookups</td><td>Autocomplete queries are limited to 20 rows</td>
+            <td class="pass">Pass</td><td>Medium</td><td>-</td>
+        </tr>
+        <tr>
+            <td>PF-003</td><td>Create form</td><td>Category and group dropdowns are unbounded full-table loads</td>
+            <td class="fail">Fail</td><td class="medium">Medium</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">formPayload()</span> → restrict to main/parent records or use typeahead like SKU.</td>
+        </tr>
+        <tr>
+            <td>PF-004</td><td>Page load</td><td>Measured TTFB / browser load for listing and create</td>
+            <td class="nt">Not Tested</td><td>Low</td><td>Not Tested - Measurement unavailable in current environment.</td>
+        </tr>
+    </table>
+</section>
+
+<section>
+    <h2>8. SEO Testing</h2>
+    <p><strong>Not Applicable.</strong> Discount Master is an authenticated admin screen. Public title/meta/canonical/robots checks do not apply to this module.</p>
+    <table>
+        <tr><th>ID</th><th>SEO Check</th><th>Status</th><th>Recommendation</th></tr>
+        <tr><td>SEO-001</td><td>Public indexability of Discount Master</td><td class="nt">Not Applicable</td><td>-</td></tr>
+    </table>
+</section>
+
+<section>
+    <h2>9. Content Testing</h2>
+    <table>
+        <tr><th>ID</th><th>Content Check</th><th>Status</th><th>Recommendation</th></tr>
+        <tr>
+            <td>CT-001</td><td>No lorem/placeholder copy on the module screens</td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+        <tr>
+            <td>CT-002</td><td>Status option “Deactivate” reads as a saved state, not an action</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">_form.blade.php</span> / <span class="mono">index.blade.php</span> → use Active / Inactive.</td>
+        </tr>
+        <tr>
+            <td>CT-003</td><td>“Amount Or %” / “% Or Amount” / “Same as / Batch / Lot.No” are clear</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">_form.blade.php</span> → rename to Amount, Percent, Batch / Lot No.</td>
+        </tr>
+        <tr>
+            <td>CT-004</td><td>UI does not imply Batchwise vs Productwise vs Amount-wise behave differently, while they share the same value fields and no apply engine</td>
+            <td class="fail">Fail</td>
+            <td>Either implement distinct apply rules per type, or add help text that these records are master data only until pricing is wired.</td>
+        </tr>
+    </table>
+</section>
+
+<section>
+    <h2>10. Browser &amp; Device Testing</h2>
+    <table>
+        <tr><th>Browser / Device</th><th>Status</th><th>Recommendation</th></tr>
+        <tr><td>Chrome Desktop</td><td class="nt">Not Tested</td><td>MySQL was down; admin pages did not render.</td></tr>
+        <tr><td>Firefox Desktop</td><td class="nt">Not Tested</td><td>-</td></tr>
+        <tr><td>Edge Desktop</td><td class="nt">Not Tested</td><td>-</td></tr>
+        <tr><td>Safari</td><td class="nt">Not Tested</td><td>-</td></tr>
+        <tr><td>Android Mobile</td><td class="nt">Not Tested</td><td>-</td></tr>
+        <tr><td>iPhone</td><td class="nt">Not Tested</td><td>-</td></tr>
+        <tr><td>Tablet</td><td class="nt">Not Tested</td><td>-</td></tr>
+    </table>
+</section>
+
+<section>
+    <h2>11. API Testing</h2>
+    <table>
+        <tr><th>ID</th><th>API / Feature</th><th>Test</th><th>Status</th><th>Recommendation</th></tr>
+        <tr>
+            <td>API-001</td><td>Admin JSON lookups</td><td>Stocks, batches, customers, target, and next-code endpoints exist and are permission-gated to view</td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+        <tr>
+            <td>API-002</td><td>next-code</td><td>Unknown <span class="mono">discount_type</span> returns empty code instead of inventing a prefix</td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+        <tr>
+            <td>API-003</td><td>lookup/target</td><td>SKU/full_variant stock_available matches listing stock qty</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">DiscountMasterController.php</span> → <span class="mono">lookupTarget()</span> → uses latest batch qty when a batch exists. Align with <span class="mono">sourceQty()</span>.</td>
+        </tr>
+        <tr>
+            <td>API-004</td><td>Runtime JSON</td><td>Live 200 responses and validation of payload shape</td>
+            <td class="nt">Not Tested</td><td>-</td>
+        </tr>
+    </table>
+</section>
+
+<section>
+    <h2>12. Database Testing</h2>
+    <table>
+        <tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr>
+        <tr>
+            <td>DB-001</td><td>Unique <span class="mono">discount_code</span></td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+        <tr>
+            <td>DB-002</td><td>Foreign keys on product, stock, batch, category, group, customer, scheme stock</td>
+            <td class="fail">Fail</td>
+            <td><span class="mono">database/migrations/2026_09_16_000002_create_discount_masters_table.php</span> → indexed unsigned IDs only, no FK. Orphans are allowed after product delete. Add FKs or application-level cleanup; do not run migrations unless asked.</td>
+        </tr>
+        <tr>
+            <td>DB-003</td><td>Prevent duplicate active offers on the same target and date range</td>
+            <td class="fail">Fail</td>
+            <td>No unique index or request rule. Add a validation query in <span class="mono">DiscountMasterRequest.php</span> before introducing a unique DB constraint.</td>
+        </tr>
+        <tr>
+            <td>DB-004</td><td>App requires from_date while the column is nullable</td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+        <tr>
+            <td>DB-005</td><td>Live insert/update/delete against MySQL</td>
+            <td class="nt">Not Tested</td><td>-</td>
+        </tr>
+    </table>
+</section>
+
+<section>
+    <h2>13. Production / Deployment Testing</h2>
+    <table>
+        <tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr>
+        <tr>
+            <td>DP-001</td><td>Missing-table guard on index/create/store</td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+        <tr>
+            <td>DP-002</td><td>Permissions are created and copied from flash-deal roles</td>
+            <td class="pass">Pass</td><td>-</td>
+        </tr>
+        <tr>
+            <td>DP-003</td><td>Deploying this module changes checkout/order discounts</td>
+            <td class="fail">Fail</td>
+            <td>There is no apply path. Shipping the CRUD screen alone will not change invoices. See BUG-001.</td>
+        </tr>
+        <tr>
+            <td>DP-004</td><td>Local database reachable for this QA run</td>
+            <td class="blocked">Blocked</td>
+            <td>WAMP MySQL was stopped and could not be started from this session. Not an application defect.</td>
+        </tr>
+        <tr>
+            <td>DP-005</td><td>HTTPS / production debug / queues for this module</td>
+            <td class="nt">Not Tested</td><td>-</td>
+        </tr>
+    </table>
+</section>
+
+<section>
+    <h2>14. Overall Score</h2>
+    <table>
+        <tr><th>Category</th><th>Weight</th><th>Passed / Applicable</th><th>Score</th><th>Included?</th></tr>
+        <tr><td>Functional</td><td>30%</td><td>8 / 20</td><td>40%</td><td>Yes</td></tr>
+        <tr><td>Security</td><td>20%</td><td>5 / 8</td><td>63%</td><td>Yes</td></tr>
+        <tr><td>UI/UX</td><td>15%</td><td>3 / 9</td><td>33%</td><td>Yes</td></tr>
+        <tr><td>Performance</td><td>15%</td><td>2 / 3</td><td>67%</td><td>Yes</td></tr>
+        <tr><td>SEO</td><td>10%</td><td>—</td><td>—</td><td>Excluded (Not Applicable)</td></tr>
+        <tr><td>Compatibility</td><td>5%</td><td>—</td><td>—</td><td>Excluded (Not Tested)</td></tr>
+        <tr><td>Content</td><td>5%</td><td>1 / 4</td><td>25%</td><td>Yes</td></tr>
+    </table>
+    <p>Normalized overall (tested weights 85%): <strong>48%</strong>.</p>
+    <p>Quality rating table: 48% = Critical / Not ready for production. Override also applies: unresolved Critical defect BUG-001.</p>
+</section>
+
+<section>
+    <h2>15. Final Status</h2>
+    <p><strong>Final Status</strong></p>
+    <p><span class="badge status-crit">Not Ready for Production</span></p>
+    <p><strong>Recommendation</strong></p>
+    <ul>
+        <li>What works: permissioned admin CRUD scaffolding, type-prefixed codes, applied-on required fields, date-order validation, search, pagination, table-missing guard, and scheme “other product” required when not same.</li>
+        <li>What must be fixed first: Discount Master does not participate in cart, checkout, or backend order pricing. Active rows are inert.</li>
+        <li>Critical/High still open: BUG-001 (no apply engine), BUG-002 (null targets), BUG-003 (nonsensical recalc), BUG-004 (date filters), BUG-005 (illegal type/target pairs), BUG-006 (GET delete).</li>
+        <li>Retesting is required after an apply engine exists and the form/filter bugs are fixed. Browser happy-path was not run because MySQL was down.</li>
+        <li>Production deployment of this module is not recommended if the business expects these offers to change invoices, points, or schemes.</li>
+    </ul>
+</section>
+
+<section>
+    <h2>16. Testing Limitations</h2>
+    <ul>
+        <li>Local MySQL (<span class="mono">wampmysqld64</span>) was Stopped. <span class="mono">Schema::hasTable('discount_masters')</span> and record sampling failed with connection refused.</li>
+        <li>Guest requests to <span class="mono">/admin/discount-masters</span> timed out instead of returning a login redirect, because the app could not reach the database.</li>
+        <li>No admin credentials were used. Create/edit/toggle/delete were not clicked in a browser.</li>
+        <li>Payment, storefront checkout, and backend Add Order were inspected in code for Discount Master usage only; no live order was placed.</li>
+        <li>Safari, Firefox, Edge, and mobile viewports were not tested.</li>
+        <li>Performance timings were not measured.</li>
+        <li>The user-journey note under <span class="mono">.kilo/plans/</span> describes seller CRUD, bulk actions, and <span class="mono">discount:deactivate-expired</span>. Those are not in the shipped module. They were treated as plan text, not as confirmed product bugs, except where the current admin UI itself behaves incorrectly.</li>
+    </ul>
+</section>
+
+</div>
+<footer>
+    Report generated 17 Sep 2026 — Discount Master QA — standalone HTML, no external CSS.
+</footer>
+</body>
+</html>
