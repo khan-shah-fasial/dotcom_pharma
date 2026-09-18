@@ -1,15 +1,15 @@
 @php
     $t = $tax;
-    $kind = old('kind', $t->kind ?? 'taxable');
-    $same = old('sale_same_as_purchase', $t->sale_same_as_purchase ?? true);
+    $kind = old('kind', optional($t)->kind ?? 'taxable');
+    $same = old('sale_same_as_purchase', optional($t)->sale_same_as_purchase ?? true);
     if ($same === '0' || $same === 0 || $same === false) {
         $same = false;
     } else {
         $same = (bool) $same;
     }
-    $status = old('status', $t->status ?? true);
+    $status = old('status', optional($t)->status ?? true);
     $rate = function ($field, $default = 0) use ($t) {
-        $value = old($field, $t->$field ?? $default);
+        $value = old($field, optional($t)->$field ?? $default);
         return \App\Models\TaxMaster::formatRate($value);
     };
 @endphp
@@ -47,18 +47,19 @@
                             <option value="{{ $key }}" @selected($kind === $key)>{{ translate($label) }}</option>
                         @endforeach
                     </select>
+                    <small class="text-muted d-block mt-1">{{ translate('Taxable = GST extra. Inclusive = GST already in price. Exempted = no tax (all rates 0).') }}</small>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="form-group">
                     <label>{{ translate('Tax Code') }} <span class="text-danger">*</span></label>
-                    <input type="text" name="tax_code" id="tax_code" class="form-control @error('tax_code') is-invalid @enderror" value="{{ old('tax_code', $t->tax_code ?? '') }}" maxlength="20" placeholder="G5">
+                    <input type="text" name="tax_code" id="tax_code" class="form-control @error('tax_code') is-invalid @enderror" value="{{ old('tax_code', optional($t)->tax_code) }}" maxlength="20" placeholder="G5">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="form-group">
                     <label>{{ translate('Description') }}</label>
-                    <input type="text" name="description" id="description" class="form-control" value="{{ old('description', $t->description ?? '') }}" maxlength="255" placeholder="{{ translate('Description') }}">
+                    <input type="text" name="description" id="description" class="form-control" value="{{ old('description', optional($t)->description) }}" maxlength="255" placeholder="{{ translate('Description') }}">
                 </div>
             </div>
         </div>
@@ -92,11 +93,13 @@
             <div class="col-md-2">
                 <div class="form-group">
                     <label>{{ translate('TOTAL GST%') }}</label>
-                    <input type="text" id="purchase_total" class="form-control" value="{{ $rate('purchase_tax', $t ? $t->purchaseTotal() : 0) }}" readonly>
+                    <input type="text" id="purchase_total" class="form-control" value="{{ $t ? \App\Models\TaxMaster::formatRate($t->purchaseTotal()) : '0' }}" readonly>
+                    <small class="text-danger tm-mismatch d-none" data-side="purchase">{{ translate('Tax % must equal CGST + SGST + IGST.') }}</small>
                 </div>
             </div>
         </div>
 
+        <hr class="mt-1 mb-3">
         <div class="row">
             <div class="col-md-5">
                 <div class="form-group">
@@ -157,7 +160,8 @@
             <div class="col-md-2">
                 <div class="form-group">
                     <label>{{ translate('TOTAL GST%') }}</label>
-                    <input type="text" id="sale_total" class="form-control" value="{{ $rate('sale_tax', $t ? $t->saleTotal() : 0) }}" readonly>
+                    <input type="text" id="sale_total" class="form-control" value="{{ $t ? \App\Models\TaxMaster::formatRate($t->saleTotal()) : '0' }}" readonly>
+                    <small class="text-danger tm-mismatch d-none" data-side="sale">{{ translate('Tax % must equal CGST + SGST + IGST.') }}</small>
                 </div>
             </div>
         </div>

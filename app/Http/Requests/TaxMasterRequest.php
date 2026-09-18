@@ -16,7 +16,6 @@ class TaxMasterRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        TaxMaster::ensureTable();
         $this->merge(TaxMaster::normalize($this->all()));
     }
 
@@ -24,15 +23,20 @@ class TaxMasterRequest extends FormRequest
     {
         $id = $this->route('id');
 
+        $taxCodeRules = [
+            'required',
+            'string',
+            'max:20',
+            'regex:/^[A-Z0-9][A-Z0-9\-_]*$/',
+        ];
+
+        if (TaxMaster::tableReady()) {
+            $taxCodeRules[] = Rule::unique('tax_masters', 'tax_code')->ignore($id);
+        }
+
         return [
             'kind' => ['required', Rule::in(array_keys(TaxMaster::KINDS))],
-            'tax_code' => [
-                'required',
-                'string',
-                'max:20',
-                'regex:/^[A-Z0-9][A-Z0-9\-_]*$/',
-                Rule::unique('tax_masters', 'tax_code')->ignore($id),
-            ],
+            'tax_code' => $taxCodeRules,
             'description' => ['nullable', 'string', 'max:255'],
             'purchase_tax' => ['required', 'numeric', 'min:0', 'max:100'],
             'purchase_cgst' => ['required', 'numeric', 'min:0', 'max:100'],

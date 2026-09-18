@@ -68,6 +68,7 @@ use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\TaxMasterController;
+use App\Http\Controllers\BatchMasterController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\WarrantyController;
@@ -228,6 +229,18 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/products/dimensions', 'index')->name('products.dimensions');
         Route::get('/products/dimensions/same-as', 'sameAsSearch')->name('products.dimensions.same_as');
         Route::post('/products/dimensions/{id}', 'update')->name('products.dimensions.update');
+    });
+
+    Route::controller(BatchMasterController::class)->group(function () {
+        Route::get('/batch-masters', 'index')->name('batch_masters.index');
+        Route::get('/batch-masters/create', 'create')->name('batch_masters.create');
+        Route::post('/batch-masters', 'store')->name('batch_masters.store');
+        Route::get('/batch-masters/lookup/stocks', 'lookupStocks')->name('batch_masters.lookup.stocks');
+        Route::get('/batch-masters/lookup/stock', 'lookupStock')->name('batch_masters.lookup.stock');
+        Route::post('/batch-masters/update-status', 'updateStatus')->name('batch_masters.update_status');
+        Route::get('/batch-masters/{id}/edit', 'edit')->name('batch_masters.edit');
+        Route::put('/batch-masters/{id}', 'update')->name('batch_masters.update');
+        Route::get('/batch-masters/destroy/{id}', 'destroy')->name('batch_masters.destroy');
     });
 
     // Digital Product

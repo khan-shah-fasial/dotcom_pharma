@@ -63,6 +63,7 @@
         var balanced = Math.abs(tax - total) <= epsilon;
         $tax.toggleClass('is-invalid', !balanced);
         $('#' + side + '_total').toggleClass('is-invalid', !balanced);
+        $('.tm-mismatch[data-side="' + side + '"]').toggleClass('d-none', balanced);
         return balanced;
     }
 

@@ -190,4 +190,21 @@ class TaxMasterCalculationTest extends TestCase
             ), $row['tax_code'] . ' sale');
         }
     }
+
+    public function test_sortable_columns_and_resolve_sort(): void
+    {
+        $columns = TaxMaster::sortableColumns();
+        foreach (['id', 'kind', 'tax_code', 'description', 'purchase_tax', 'sale_same_as_purchase', 'sale_tax', 'status', 'updated_at'] as $key) {
+            $this->assertArrayHasKey($key, $columns);
+        }
+
+        [$sortBy, $sortDir, $column] = TaxMaster::resolveSort('tax_code', 'asc');
+        $this->assertSame('tax_code', $sortBy);
+        $this->assertSame('asc', $sortDir);
+        $this->assertSame('tax_masters.tax_code', $column);
+
+        [$sortBy, $sortDir] = TaxMaster::resolveSort('not_a_column', 'up');
+        $this->assertSame('id', $sortBy);
+        $this->assertSame('desc', $sortDir);
+    }
 }

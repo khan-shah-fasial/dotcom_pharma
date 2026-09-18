@@ -3,10 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Spatie\Permission\PermissionRegistrar;
 
 class TaxMaster extends Model
 {
@@ -55,6 +52,11 @@ class TaxMaster extends Model
         'sale_same_as_purchase' => 'boolean',
         'status' => 'boolean',
     ];
+
+    public static function tableReady(): bool
+    {
+        return Schema::hasTable('tax_masters');
+    }
 
     public static function toDecimal($value): float
     {
@@ -237,158 +239,6 @@ class TaxMaster extends Model
         ], $purchase, $sale);
     }
 
-    public static function schemaBlueprint(Blueprint $table): void
-    {
-        $table->id();
-        $table->string('kind', 20)->index();
-        $table->string('tax_code', 20)->unique();
-        $table->string('description')->nullable();
-        $table->decimal('purchase_tax', 12, 4)->default(0);
-        $table->decimal('purchase_cgst', 12, 4)->default(0);
-        $table->decimal('purchase_sgst', 12, 4)->default(0);
-        $table->decimal('purchase_igst', 12, 4)->default(0);
-        $table->boolean('sale_same_as_purchase')->default(true);
-        $table->decimal('sale_tax', 12, 4)->default(0);
-        $table->decimal('sale_cgst', 12, 4)->default(0);
-        $table->decimal('sale_sgst', 12, 4)->default(0);
-        $table->decimal('sale_igst', 12, 4)->default(0);
-        $table->boolean('status')->default(true)->index();
-        $table->timestamps();
-    }
-
-    public static function seedSamples(): void
-    {
-        if (!Schema::hasTable('tax_masters')) {
-            return;
-        }
-
-        foreach (self::sampleRows() as $row) {
-            $values = $row;
-            if (Schema::hasColumn('tax_masters', 'created_at')) {
-                $values['created_at'] = $values['created_at'] ?? now();
-                $values['updated_at'] = $values['updated_at'] ?? now();
-            }
-
-            DB::table('tax_masters')->updateOrInsert(
-                ['tax_code' => $row['tax_code']],
-                $values
-            );
-        }
-    }
-
-    public static function ensureTable(): bool
-    {
-        static $ready = false;
-        if ($ready) {
-            return Schema::hasTable('tax_masters');
-        }
-
-        if (!Schema::hasTable('tax_masters')) {
-            Schema::create('tax_masters', function (Blueprint $table) {
-                self::schemaBlueprint($table);
-            });
-            self::seedSamples();
-        }
-
-        $ready = Schema::hasTable('tax_masters');
-
-        return $ready;
-    }
-
-    public static function ensurePermissions(): void
-    {
-        static $ready = false;
-        if ($ready || !Schema::hasTable('permissions')) {
-            $ready = $ready || !Schema::hasTable('permissions');
-            return;
-        }
-
-        foreach (self::PERMISSIONS as $name) {
-            $values = [
-                'name' => $name,
-                'section' => 'setup_configurations',
-            ];
-
-            if (Schema::hasColumn('permissions', 'guard_name')) {
-                $values['guard_name'] = 'web';
-            }
-
-            if (Schema::hasColumn('permissions', 'created_at')) {
-                $values['created_at'] = now();
-                $values['updated_at'] = now();
-            }
-
-            DB::table('permissions')->updateOrInsert(
-                ['name' => $name],
-                $values
-            );
-        }
-
-        $sourcePermissionId = DB::table('permissions')
-            ->where('name', 'vat_&_tax_setup')
-            ->value('id');
-
-        if ($sourcePermissionId) {
-            foreach (self::PERMISSIONS as $name) {
-                $newPermissionId = DB::table('permissions')
-                    ->where('name', $name)
-                    ->value('id');
-
-                if ($newPermissionId) {
-                    self::copyRoleAssignments((int) $sourcePermissionId, (int) $newPermissionId);
-                    self::copyDirectAssignments((int) $sourcePermissionId, (int) $newPermissionId);
-                }
-            }
-        }
-
-        if (class_exists(PermissionRegistrar::class)) {
-            app(PermissionRegistrar::class)->forgetCachedPermissions();
-        }
-
-        $ready = true;
-    }
-
-    private static function copyRoleAssignments(int $sourcePermissionId, int $newPermissionId): void
-    {
-        if (!Schema::hasTable('role_has_permissions')) {
-            return;
-        }
-
-        $rows = DB::table('role_has_permissions')
-            ->where('permission_id', $sourcePermissionId)
-            ->get(['role_id'])
-            ->map(fn ($row) => [
-                'permission_id' => $newPermissionId,
-                'role_id' => $row->role_id,
-            ])
-            ->all();
-
-        if (!empty($rows)) {
-            DB::table('role_has_permissions')->insertOrIgnore($rows);
-        }
-    }
-
-    private static function copyDirectAssignments(int $sourcePermissionId, int $newPermissionId): void
-    {
-        if (!Schema::hasTable('model_has_permissions')) {
-            return;
-        }
-
-        $rows = DB::table('model_has_permissions')
-            ->where('permission_id', $sourcePermissionId)
-            ->get(['model_type', 'model_id'])
-            ->map(fn ($row) => [
-                'permission_id' => $newPermissionId,
-                'model_type' => $row->model_type,
-                'model_id' => $row->model_id,
-            ])
-            ->all();
-
-        if (!empty($rows)) {
-            DB::table('model_has_permissions')->insertOrIgnore($rows);
-        }
-    }
-
     public function purchaseTotal(): float
     {
         return self::splitTotal((float) $this->purchase_cgst, (float) $this->purchase_sgst, (float) $this->purchase_igst);
@@ -402,5 +252,87 @@ class TaxMaster extends Model
     public function kindLabel(): string
     {
         return self::KINDS[$this->kind] ?? (string) $this->kind;
+    }
+
+    public static function sortableColumns(): array
+    {
+        return [
+            'id' => 'tax_masters.id',
+            'kind' => 'tax_masters.kind',
+            'tax_code' => 'tax_masters.tax_code',
+            'description' => 'tax_masters.description',
+            'purchase_tax' => 'tax_masters.purchase_tax',
+            'sale_same_as_purchase' => 'tax_masters.sale_same_as_purchase',
+            'sale_tax' => 'tax_masters.sale_tax',
+            'status' => 'tax_masters.status',
+            'updated_at' => 'tax_masters.updated_at',
+        ];
+    }
+
+    public static function resolveSort(string $sortBy, string $sortDir): array
+    {
+        $columns = self::sortableColumns();
+        if (!array_key_exists($sortBy, $columns)) {
+            $sortBy = 'id';
+        }
+        $sortDir = strtolower($sortDir) === 'asc' ? 'asc' : 'desc';
+
+        return [$sortBy, $sortDir, $columns[$sortBy]];
+    }
+
+    public static function applyListingFilters($query, array $filters)
+    {
+        if (($filters['search'] ?? '') !== '') {
+            $like = '%' . $filters['search'] . '%';
+            $query->where(function ($nested) use ($like, $filters) {
+                $nested->where('tax_code', 'like', $like)
+                    ->orWhere('description', 'like', $like);
+
+                if (ctype_digit($filters['search'])) {
+                    $nested->orWhere('id', (int) $filters['search']);
+                }
+            });
+        }
+
+        if (array_key_exists($filters['kind'] ?? '', self::KINDS)) {
+            $query->where('kind', $filters['kind']);
+        }
+
+        if (($filters['tax_code'] ?? '') !== '') {
+            $query->where('tax_code', 'like', '%' . $filters['tax_code'] . '%');
+        }
+
+        if (($filters['description'] ?? '') !== '') {
+            $query->where('description', 'like', '%' . $filters['description'] . '%');
+        }
+
+        if (($filters['sale_same_as_purchase'] ?? '') === '1' || ($filters['sale_same_as_purchase'] ?? '') === '0') {
+            $query->where('sale_same_as_purchase', (int) $filters['sale_same_as_purchase']);
+        }
+
+        if (($filters['status'] ?? '') === '1' || ($filters['status'] ?? '') === '0') {
+            $query->where('status', (int) $filters['status']);
+        }
+
+        if (($filters['purchase_tax_from'] ?? '') !== '') {
+            $query->where('purchase_tax', '>=', (float) $filters['purchase_tax_from']);
+        }
+        if (($filters['purchase_tax_to'] ?? '') !== '') {
+            $query->where('purchase_tax', '<=', (float) $filters['purchase_tax_to']);
+        }
+        if (($filters['sale_tax_from'] ?? '') !== '') {
+            $query->where('sale_tax', '>=', (float) $filters['sale_tax_from']);
+        }
+        if (($filters['sale_tax_to'] ?? '') !== '') {
+            $query->where('sale_tax', '<=', (float) $filters['sale_tax_to']);
+        }
+        if (($filters['date_from'] ?? '') !== '') {
+            $query->whereDate('updated_at', '>=', $filters['date_from']);
+        }
+        if (($filters['date_to'] ?? '') !== '') {
+            $query->whereDate('updated_at', '<=', $filters['date_to']);
+        }
+
+        return $query;
     }
 }

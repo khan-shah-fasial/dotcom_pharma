@@ -165,7 +165,7 @@
                 </li>
 
                 <!-- Product -->
-                @canany(['add_new_product', 'show_all_products','show_in_house_products','show_seller_products','show_digital_products','product_bulk_import','product_bulk_export','view_product_categories', 'view_all_companies', 'view_all_brands', 'brand_bulk_upload','view_product_attributes','view_colors','view_product_warranties','view_product_reviews'])
+                @canany(['add_new_product', 'show_all_products','show_in_house_products','show_seller_products','show_digital_products','product_bulk_import','product_bulk_export','view_product_categories', 'view_all_companies', 'view_all_brands', 'brand_bulk_upload','view_product_attributes','view_colors','view_product_warranties','view_product_reviews','view_all_batch_masters'])
                     <li class="aiz-side-nav-item">
                         <a href="#" class="aiz-side-nav-link">
                             <div class="aiz-side-nav-icon">
@@ -197,6 +197,13 @@
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('products.dimensions') }}" class="aiz-side-nav-link {{ areActiveRoutes(['products.dimensions']) }}">
                                         <span class="aiz-side-nav-text">{{ translate('Weight And Dimension Master') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view_all_batch_masters')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('batch_masters.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['batch_masters.index', 'batch_masters.create', 'batch_masters.edit']) }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Batch / Lot Master') }}</span>
                                     </a>
                                 </li>
                             @endcan

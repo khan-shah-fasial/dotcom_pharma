@@ -18,49 +18,51 @@ class TaxMasterController extends Controller
 
     public function index(Request $request)
     {
-        TaxMaster::ensurePermissions();
-
         $filters = [
             'search' => trim((string) $request->input('search')),
             'kind' => (string) $request->input('kind'),
+            'tax_code' => trim((string) $request->input('tax_code')),
+            'description' => trim((string) $request->input('description')),
+            'sale_same_as_purchase' => (string) $request->input('sale_same_as_purchase'),
             'status' => (string) $request->input('status'),
+            'purchase_tax_from' => trim((string) $request->input('purchase_tax_from')),
+            'purchase_tax_to' => trim((string) $request->input('purchase_tax_to')),
+            'sale_tax_from' => trim((string) $request->input('sale_tax_from')),
+            'sale_tax_to' => trim((string) $request->input('sale_tax_to')),
+            'date_from' => trim((string) $request->input('date_from')),
+            'date_to' => trim((string) $request->input('date_to')),
         ];
 
-        $tableReady = TaxMaster::ensureTable();
+        [$sortBy, $sortDir, $sortColumn] = TaxMaster::resolveSort(
+            (string) $request->input('sort_by', 'id'),
+            (string) $request->input('sort_dir', 'desc')
+        );
+
+        $tableReady = TaxMaster::tableReady();
         $taxes = null;
 
         if ($tableReady) {
-            $query = TaxMaster::query()->orderByDesc('id');
-
-            if ($filters['search'] !== '') {
-                $like = '%' . $filters['search'] . '%';
-                $query->where(function ($nested) use ($like, $filters) {
-                    $nested->where('tax_code', 'like', $like)
-                        ->orWhere('description', 'like', $like);
-
-                    if (ctype_digit($filters['search'])) {
-                        $nested->orWhere('id', (int) $filters['search']);
-                    }
-                });
+            $query = TaxMaster::query();
+            TaxMaster::applyListingFilters($query, $filters);
+            $query->orderBy($sortColumn, $sortDir);
+            if ($sortBy !== 'id') {
+                $query->orderBy('tax_masters.id', 'desc');
             }
-
-            if (array_key_exists($filters['kind'], TaxMaster::KINDS)) {
-                $query->where('kind', $filters['kind']);
-            }
-
-            if ($filters['status'] === '1' || $filters['status'] === '0') {
-                $query->where('status', (int) $filters['status']);
-            }
-
             $taxes = $query->paginate(15)->withQueryString();
         }
 
-        return view('backend.setup_configurations.tax_master.index', compact('taxes', 'filters', 'tableReady'));
+        return view('backend.setup_configurations.tax_master.index', compact(
+            'taxes',
+            'filters',
+            'tableReady',
+            'sortBy',
+            'sortDir'
+        ));
     }
 
     public function create()
     {
-        if (!TaxMaster::ensureTable()) {
+        if (!TaxMaster::tableReady()) {
             flash(translate('Tax Master table is not ready yet.'))->error();
 
             return redirect()->route('tax_masters.index');
@@ -73,7 +75,7 @@ class TaxMasterController extends Controller
 
     public function store(TaxMasterRequest $request)
     {
-        if (!TaxMaster::ensureTable()) {
+        if (!TaxMaster::tableReady()) {
             flash(translate('Tax Master table is not ready yet.'))->error();
 
             return back()->withInput();
@@ -90,7 +92,7 @@ class TaxMasterController extends Controller
 
     public function edit($id)
     {
-        if (!TaxMaster::ensureTable()) {
+        if (!TaxMaster::tableReady()) {
             flash(translate('Tax Master table is not ready yet.'))->error();
 
             return redirect()->route('tax_masters.index');
