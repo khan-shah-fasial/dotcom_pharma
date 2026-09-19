@@ -3,11 +3,25 @@
     $appliedOn = old('applied_on', $d->applied_on ?? '');
     $discountType = old('discount_type', $d->discount_type ?? '');
     $roleKey = old('role_key', $d->role_key ?? '');
-    $skuLabel = $d && $d->stock ? trim(optional($d->product)->name . ' / ' . ($d->stock->sku ?: $d->stock->variant)) : '';
+    $buildStockLabel = function ($product, $stock) {
+        $label = optional($product)->name ?? '';
+        if ($stock->sku) {
+            $label .= ' / ' . $stock->sku;
+        }
+        if ($stock->hasExpandedVariantInfo()) {
+            $label .= ' / ' . $stock->expandedVariantLabel();
+        }
+        if (!$stock->sku && !$stock->hasExpandedVariantInfo()) {
+            $label .= ' / #' . $stock->id;
+        }
+        return trim($label);
+    };
+
+    $skuLabel = $d && $d->stock ? $buildStockLabel($d->product, $d->stock) : '';
     $variantLabel = $skuLabel;
     $batchLabel = $d && $d->batch ? trim(($d->batch->batch ?: '-') . ' / ' . optional($d->product)->name) : '';
     $customerLabel = $d ? $d->customerDisplayName() : '';
-    $schemeLabel = $d && $d->schemeStock ? trim(optional($d->schemeStock->product)->name . ' / ' . ($d->schemeStock->sku ?: $d->schemeStock->variant)) : '';
+    $schemeLabel = $d && $d->schemeStock ? $buildStockLabel($d->schemeStock->product, $d->schemeStock) : '';
     if ($customerLabel === '—') {
         $customerLabel = '';
     }

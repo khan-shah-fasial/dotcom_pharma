@@ -234,15 +234,29 @@ class DiscountMasterController extends Controller
             ->limit(20)
             ->get();
 
+        $allParts = [];
+        foreach ($stocks as $stock) {
+            foreach (preg_split('/[-_\/]+/', trim((string) $stock->variant)) ?: [] as $part) {
+                $part = trim($part);
+                if ($part !== '') {
+                    $allParts[] = $part;
+                }
+            }
+        }
+        ProductStock::warmVariantLabelCache($allParts);
+
         return response()->json($stocks->map(function (ProductStock $stock) {
             $productName = $stock->product ? $stock->product->getTranslation('name') : '';
+            $expanded = $stock->expandedVariantLabel();
 
             return [
                 'id' => $stock->id,
                 'product_id' => $stock->product_id,
                 'sku' => $stock->sku,
                 'variant' => $stock->variant,
-                'label' => trim($productName . ' / ' . ($stock->sku ?: $stock->variant ?: ('#' . $stock->id))),
+                'id_variant' => $stock->id_variant,
+                'expanded_variant' => $expanded,
+                'label' => $stock->fullLookupLabel($stock->product),
             ];
         })->values());
     }

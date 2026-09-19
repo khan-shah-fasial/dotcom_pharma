@@ -88,7 +88,7 @@ class ProductDimensionsController extends Controller
                 'net_sql' => '(' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . ')',
                 'gross_sql' => $bufferPerCaseGross,
                 'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
-                'gross_factors' => ['count', 'weight_buffer_box'],
+                'gross_factors' => ['count', 'qty_per_buffer_box', 'weight'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
@@ -108,7 +108,7 @@ class ProductDimensionsController extends Controller
                 'net_sql' => '(' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . ')',
                 'gross_sql' => $bufferPerCaseGross,
                 'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
-                'gross_factors' => ['count', 'weight_buffer_box'],
+                'gross_factors' => ['count', 'qty_per_buffer_box', 'weight'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
@@ -128,7 +128,7 @@ class ProductDimensionsController extends Controller
                 'net_sql' => 'COALESCE(product_stock_dimensions.outer_net, (' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . '))',
                 'gross_sql' => 'COALESCE(product_stocks.weight_case, ' . $bufferPerCaseGross . ')',
                 'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
-                'gross_factors' => ['count', 'weight_buffer_box'],
+                'gross_factors' => ['count', 'qty_per_buffer_box', 'weight'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
@@ -312,14 +312,27 @@ class ProductDimensionsController extends Controller
             ->limit(20)
             ->get($columns);
 
+        $allParts = [];
+        foreach ($results as $stock) {
+            foreach (preg_split('/[-_\/]+/', trim((string) $stock->variant)) ?: [] as $part) {
+                $part = trim($part);
+                if ($part !== '') {
+                    $allParts[] = $part;
+                }
+            }
+        }
+        ProductStock::warmVariantLabelCache($allParts);
+
         return response()->json([
             'results' => $results->map(function ($stock) {
                 $this->overlaySatellite($stock);
                 $dims = $this->fieldPayload($stock, $this->copyFields());
+                $expanded = $stock->expandedVariantLabel();
 
                 return [
                     'id' => $stock->id,
-                    'label' => $this->sameAsLabel($stock->product_name, $stock->sku, $stock->variant),
+                    'id_variant' => $stock->id_variant,
+                    'label' => $this->sameAsLabel($stock->product_name, $stock->sku, $stock->variant, $expanded),
                     'dims' => $dims,
                 ];
             })->values(),
@@ -454,9 +467,6 @@ class ProductDimensionsController extends Controller
                 'qtyField' => $group['qty_field'],
                 'qtyFixed' => $group['qty_fixed'],
                 'qtyMode' => $group['qty_mode'] ?? 'fill',
-                'qtyFactors' => $group['qty_factors'] ?? [],
-                'netField' => $group['net_field'],
-                'netMode' => $group['net_mode'] ?? 'fill',
                 'grossField' => $group['gross_field'] ?? null,
                 'grossMode' => $group['gross_mode'] ?? 'fill',
                 'grossFactors' => $group['gross_factors'] ?? [],
@@ -703,16 +713,20 @@ class ProductDimensionsController extends Controller
         return rtrim(rtrim(sprintf('%.' . $decimals . 'f', $number), '0'), '.') ?: '0';
     }
 
-    protected function sameAsLabel($productName, $sku, $variant): string
+    protected function sameAsLabel($productName, $sku, $variant, $expandedVariant = null): string
     {
         $sku = trim((string) $sku);
         $variant = trim((string) $variant);
+        $hasInfo = $expandedVariant !== null && $expandedVariant !== ''
+            && strpos($expandedVariant, '(') !== false && strpos($expandedVariant, ')') !== false;
+        $displayVariant = $hasInfo ? $expandedVariant : $variant;
+
         $parts = array_filter([
             $productName,
             $sku !== '' ? $sku : null,
-            $variant !== '' ? $variant : null,
+            $displayVariant !== '' ? $displayVariant : null,
         ]);
 
-        return implode(' â€” ', $parts);
+        return implode(' — ', $parts);
     }
 }

@@ -63,6 +63,98 @@ class ProductStock extends Model
         return $this->hasMany(ProductBatch::class, 'product_stock_id');
     }
 
+    protected static array $variantLabelCache = [];
+
+    public static function warmVariantLabelCache(array $values): void
+    {
+        $values = array_values(array_unique(array_filter($values)));
+        if (empty(static::$variantLabelCache) && !empty($values)) {
+            $normalizedMap = [];
+            $uniqueNormalized = [];
+            foreach ($values as $v) {
+                $normalized = str_replace(' ', '', $v);
+                $normalizedMap[$normalized] = $v;
+                $uniqueNormalized[] = $normalized;
+            }
+            $uniqueNormalized = array_values(array_unique($uniqueNormalized));
+
+            $attrValues = AttributeValue::whereIn('value', $uniqueNormalized)
+                ->with('attribute')
+                ->get();
+
+            foreach ($values as $v) {
+                $normalized = str_replace(' ', '', $v);
+                $match = $attrValues->firstWhere('value', $normalized);
+                if ($match && $match->attribute) {
+                    static::$variantLabelCache[$v] = '(' . $match->attribute->name . ') - ' . $match->value;
+                } else {
+                    static::$variantLabelCache[$v] = $v;
+                }
+            }
+        }
+    }
+
+    public function expandedVariantLabel(): string
+    {
+        $variant = trim((string) $this->variant);
+        if ($variant === '') {
+            return '';
+        }
+
+        $parts = preg_split('/[-_\/]+/', $variant) ?: [];
+        $details = [];
+
+        foreach ($parts as $part) {
+            $part = trim((string) $part);
+            if ($part === '') {
+                continue;
+            }
+
+            if (isset(static::$variantLabelCache[$part])) {
+                $details[] = static::$variantLabelCache[$part];
+                continue;
+            }
+
+            $normalizedPart = str_replace(' ', '', $part);
+            $attrValue = AttributeValue::where('value', $normalizedPart)->first();
+            if ($attrValue && $attrValue->attribute) {
+                static::$variantLabelCache[$part] = '(' . $attrValue->attribute->name . ') - ' . $attrValue->value;
+            } else {
+                static::$variantLabelCache[$part] = $part;
+            }
+
+            $details[] = static::$variantLabelCache[$part];
+        }
+
+        return $details ? implode(' / ', $details) : $variant;
+    }
+
+    public function hasExpandedVariantInfo(): bool
+    {
+        $expanded = $this->expandedVariantLabel();
+        if ($expanded === '') {
+            return false;
+        }
+
+        return strpos($expanded, '(') !== false && strpos($expanded, ')') !== false;
+    }
+
+    public function fullLookupLabel(?Product $product = null): string
+    {
+        $productName = $product ? $product->getTranslation('name') : ($this->product ? $this->product->getTranslation('name') : '');
+        $label = $productName;
+        if ($this->sku) {
+            $label .= ' / ' . $this->sku;
+        }
+        if ($this->hasExpandedVariantInfo()) {
+            $label .= ' / ' . $this->expandedVariantLabel();
+        }
+        if (!$this->sku && !$this->hasExpandedVariantInfo()) {
+            $label .= ' / #' . $this->id;
+        }
+        return trim($label);
+    }
+
     public function dimensionSheet()
     {
         return $this->hasOne(ProductStockDimension::class, 'product_stock_id');
