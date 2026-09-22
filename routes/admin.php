@@ -44,6 +44,7 @@ use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\MeasurementPointsController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\NoteTypeMasterController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationTypeController;
 use App\Http\Controllers\OrderController;
@@ -273,6 +274,17 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/note/edit/{id}', 'edit')->name('note.edit');
         Route::get('note/delete/{note}', 'destroy')->name('note.delete');
         // Route::post('/get-notes', 'getNotes')->name('get_notes');
+    });
+
+    // Note Type Master
+    Route::controller(NoteTypeMasterController::class)->group(function () {
+        Route::get('/note-types', 'index')->name('note_types.index');
+        Route::get('/note-types/create', 'create')->name('note_types.create');
+        Route::post('/note-types', 'store')->name('note_types.store');
+        Route::post('/note-types/update-status', 'updateStatus')->name('note_types.update_status');
+        Route::get('/note-types/{id}/edit', 'edit')->name('note_types.edit');
+        Route::put('/note-types/{id}', 'update')->name('note_types.update');
+        Route::get('/note-types/destroy/{id}', 'destroy')->name('note_types.destroy');
     });
 
     // Financial Archive

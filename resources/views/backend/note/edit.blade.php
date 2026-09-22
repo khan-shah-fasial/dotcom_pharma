@@ -26,22 +26,28 @@
                     @csrf
 
                     <div class="form-group row">
-                        <label class="col-md-2 col-form-label">{{ translate('Type') }}</label>
+                        <label class="col-md-2 col-form-label">{{ translate('Type') }} *</label>
                         <div class="col-md-10">
-                            <select name="note_type" required class="form-control aiz-selectpicker mb-2 mb-md-0">
+                            <select name="note_type" required class="form-control aiz-selectpicker mb-2 mb-md-0" data-live-search="true">
                                 @foreach ($types as $type)
-                                    <option value="{{ $type->value }}" class="text-uppercase" @selected($type->value == $note->note_type)>
-                                        {{ translate($type->name) }}</option>
+                                    <option value="{{ $type->slug }}" @selected(old('note_type', $note->note_type) === $type->slug)>
+                                        {{ $type->name }}
+                                    </option>
                                 @endforeach
                             </select>
+                            @error('note_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                            <small class="text-muted d-block mt-1">
+                                <a href="{{ route('note_types.index') }}">{{ translate('Manage types') }}</a>
+                            </small>
                         </div>
                     </div>
 
                     <!-- Description -->
                     <div class="form-group row">
-                        <label class="col-md-2 col-from-label">{{ translate('Description') }} <i class="las la-language text-danger" title="{{ translate('Translatable') }}"></i></label>
+                        <label class="col-md-2 col-from-label">{{ translate('Description') }} * <i class="las la-language text-danger" title="{{ translate('Translatable') }}"></i></label>
                         <div class="col-md-10">
-                            <textarea name="description" rows="8" class="form-control">{{ $note->description }}</textarea>
+                            <textarea name="description" rows="8" class="form-control" required>{{ old('description', $note->getTranslation('description', $lang)) }}</textarea>
+                            @error('description') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                     </div>
                     <div class="form-group mb-0 text-right">

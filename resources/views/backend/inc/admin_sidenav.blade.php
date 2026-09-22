@@ -415,6 +415,14 @@
                                     </a>
                                 </li>
                             @endcan
+
+                            @can('view_notes')
+                                <li class="aiz-side-nav-item">
+                                    <a class="aiz-side-nav-link" href="{{ route('note_types.index') }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Note Type Master') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
                         </ul>
                     </li>
                 @endcanany
