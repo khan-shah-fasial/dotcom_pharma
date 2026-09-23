@@ -45,103 +45,27 @@
     </div>
 </div>
 
+@php
+    $airportFiltersApplied = collect([
+        $search, $status, $city, $terminalType, $cargoAirport, $customsAirport, $coldChain,
+    ])->contains(fn ($value) => $value !== null && $value !== '');
+@endphp
 <div class="card">
-    <div class="card-header">
-        <h5 class="mb-0 h6">{{ translate('Airports') }}</h5>
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+        <div class="mb-2">
+            <h5 class="mb-0 h6">{{ translate('Airports') }}</h5>
+            @if ($airportFiltersApplied)
+                <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+            @endif
+        </div>
+        <div class="d-flex flex-wrap align-items-center">
+            <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#airportFilterModal">
+                {{ translate('Open Filters') }}
+            </button>
+            <a href="{{ route('airports.index') }}?country_id=" class="btn btn-danger mb-2">{{ translate('Reset') }}</a>
+        </div>
     </div>
     <div class="card-body">
-        <form method="GET" action="{{ route('airports.index') }}" class="mb-3">
-            <div class="row gutters-5">
-                <div class="col-md-3 mb-2">
-                    <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="{{ translate('Search Port ID, name, IATA, ICAO, city or contact') }}">
-                </div>
-                <div class="col-md-2 mb-2">
-                    <select name="country_id" class="form-control aiz-selectpicker" data-live-search="true" data-skip-country-default="1" data-placeholder="{{ translate('All Countries') }}">
-                        <option value="">{{ translate('All Countries') }}</option>
-                        @foreach($countries as $country)
-                            <option value="{{ $country->id }}" @selected((string) $countryId === (string) $country->id)>{{ $country->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2 mb-2">
-                    <select name="status" class="form-control aiz-selectpicker">
-                        <option value="">{{ translate('All Statuses') }}</option>
-                        <option value="1" @selected((string) $status === '1')>{{ translate('Active') }}</option>
-                        <option value="0" @selected((string) $status === '0')>{{ translate('Inactive') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-2 mb-2">
-                    <select name="city" class="form-control aiz-selectpicker" data-live-search="true">
-                        <option value="">{{ translate('All Cities') }}</option>
-                        @foreach($cities as $value)
-                            <option value="{{ $value }}" @selected($city === (string) $value)>{{ $value }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 mb-2">
-                    <select name="terminal_type" class="form-control aiz-selectpicker" data-live-search="true">
-                        <option value="">{{ translate('All Terminal Types') }}</option>
-                        @foreach($terminalTypes as $value)
-                            <option value="{{ $value }}" @selected($terminalType === (string) $value)>{{ $value }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2 mb-2">
-                    <select name="cargo_airport" class="form-control aiz-selectpicker">
-                        <option value="">{{ translate('Cargo Airport') }}</option>
-                        @foreach($facilityOptions as $value)
-                            <option value="{{ $value }}" @selected($cargoAirport === $value)>{{ translate($value) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2 mb-2">
-                    <select name="customs_airport" class="form-control aiz-selectpicker">
-                        <option value="">{{ translate('Customs Airport') }}</option>
-                        @foreach($facilityOptions as $value)
-                            <option value="{{ $value }}" @selected($customsAirport === $value)>{{ translate($value) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2 mb-2">
-                    <select name="cold_chain_facility" class="form-control aiz-selectpicker">
-                        <option value="">{{ translate('Cold Chain') }}</option>
-                        @foreach($facilityOptions as $value)
-                            <option value="{{ $value }}" @selected($coldChain === $value)>{{ translate($value) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2 mb-2">
-                    <select name="sort_by" class="form-control aiz-selectpicker">
-                        @foreach([
-                            'name' => 'Airport Name',
-                            'port_id' => 'Port ID',
-                            'iata' => 'IATA',
-                            'icao' => 'ICAO',
-                            'country' => 'Country',
-                            'city' => 'City',
-                            'terminal_type' => 'Terminal Type',
-                            'status' => 'Status',
-                            'created_at' => 'Created Date',
-                        ] as $value => $label)
-                            <option value="{{ $value }}" @selected($sortBy === $value)>{{ translate($label) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-1 mb-2">
-                    <select name="sort_order" class="form-control">
-                        <option value="asc" @selected($sortOrder === 'asc')>{{ translate('Asc') }}</option>
-                        <option value="desc" @selected($sortOrder === 'desc')>{{ translate('Desc') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-2 mb-2">
-                    <button class="btn btn-primary btn-block" type="submit">{{ translate('Filter') }}</button>
-                </div>
-                <div class="col-md-1 mb-2">
-                    <a href="{{ route('airports.index') }}?country_id=" class="btn btn-soft-secondary btn-block">{{ translate('Reset') }}</a>
-                </div>
-            </div>
-        </form>
-
         <div class="table-responsive">
             <table class="table aiz-table mb-0">
                 <thead>
@@ -231,10 +155,130 @@
 
 @section('modal')
     @include('modals.delete_modal')
+
+    <div class="modal fade" id="airportFilterModal" tabindex="-1" role="dialog" aria-labelledby="airportFilterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <form method="GET" action="{{ route('airports.index') }}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="airportFilterModalLabel">{{ translate('Filter Airports') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row gutters-5">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{{ translate('Search') }}</label>
+                                <input type="text" name="search" value="{{ $search }}" class="form-control" placeholder="{{ translate('Search Port ID, name, IATA, ICAO, city or contact') }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{ translate('Country') }}</label>
+                                <select name="country_id" class="form-control aiz-selectpicker" data-live-search="true" data-container="body" data-skip-country-default="1" data-placeholder="{{ translate('All Countries') }}">
+                                    <option value="">{{ translate('All Countries') }}</option>
+                                    @foreach($countries as $country)
+                                        <option value="{{ $country->id }}" @selected((string) $countryId === (string) $country->id)>{{ $country->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">{{ translate('Status') }}</label>
+                                <select name="status" class="form-control aiz-selectpicker" data-container="body">
+                                    <option value="">{{ translate('All Statuses') }}</option>
+                                    <option value="1" @selected((string) $status === '1')>{{ translate('Active') }}</option>
+                                    <option value="0" @selected((string) $status === '0')>{{ translate('Inactive') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ translate('City') }}</label>
+                                <select name="city" class="form-control aiz-selectpicker" data-live-search="true" data-container="body">
+                                    <option value="">{{ translate('All Cities') }}</option>
+                                    @foreach($cities as $value)
+                                        <option value="{{ $value }}" @selected($city === (string) $value)>{{ $value }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ translate('Terminal Type') }}</label>
+                                <select name="terminal_type" class="form-control aiz-selectpicker" data-live-search="true" data-container="body">
+                                    <option value="">{{ translate('All Terminal Types') }}</option>
+                                    @foreach($terminalTypes as $value)
+                                        <option value="{{ $value }}" @selected($terminalType === (string) $value)>{{ $value }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ translate('Cargo Airport') }}</label>
+                                <select name="cargo_airport" class="form-control aiz-selectpicker" data-container="body">
+                                    <option value="">{{ translate('Cargo Airport') }}</option>
+                                    @foreach($facilityOptions as $value)
+                                        <option value="{{ $value }}" @selected($cargoAirport === $value)>{{ translate($value) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ translate('Customs Airport') }}</label>
+                                <select name="customs_airport" class="form-control aiz-selectpicker" data-container="body">
+                                    <option value="">{{ translate('Customs Airport') }}</option>
+                                    @foreach($facilityOptions as $value)
+                                        <option value="{{ $value }}" @selected($customsAirport === $value)>{{ translate($value) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ translate('Cold Chain') }}</label>
+                                <select name="cold_chain_facility" class="form-control aiz-selectpicker" data-container="body">
+                                    <option value="">{{ translate('Cold Chain') }}</option>
+                                    @foreach($facilityOptions as $value)
+                                        <option value="{{ $value }}" @selected($coldChain === $value)>{{ translate($value) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ translate('Sort By') }}</label>
+                                <select name="sort_by" class="form-control aiz-selectpicker" data-container="body">
+                                    @foreach([
+                                        'name' => 'Airport Name',
+                                        'port_id' => 'Port ID',
+                                        'iata' => 'IATA',
+                                        'icao' => 'ICAO',
+                                        'country' => 'Country',
+                                        'city' => 'City',
+                                        'terminal_type' => 'Terminal Type',
+                                        'status' => 'Status',
+                                        'created_at' => 'Created Date',
+                                    ] as $value => $label)
+                                        <option value="{{ $value }}" @selected($sortBy === $value)>{{ translate($label) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-0">
+                                <label class="form-label">{{ translate('Order') }}</label>
+                                <select name="sort_order" class="form-control">
+                                    <option value="asc" @selected($sortOrder === 'asc')>{{ translate('Asc') }}</option>
+                                    <option value="desc" @selected($sortOrder === 'desc')>{{ translate('Desc') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route('airports.index') }}?country_id=" class="btn btn-light">{{ translate('Reset') }}</a>
+                        <button class="btn btn-primary" type="submit">{{ translate('Apply Filters') }}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @section('script')
 <script>
+    $('#airportFilterModal').on('shown.bs.modal', function () {
+        if (window.AIZ && AIZ.plugins && AIZ.plugins.bootstrapSelect) {
+            AIZ.plugins.bootstrapSelect('refresh');
+        }
+    });
+
     function updateAirportStatus(el) {
         $.post('{{ route('airports.update-status') }}', {
             _token: '{{ csrf_token() }}',

@@ -33,6 +33,8 @@
 
             return $sortOrder === 'asc' ? 'la-sort-amount-up' : 'la-sort-amount-down';
         };
+
+        $filtersApplied = collect($filters)->contains(fn ($value) => $value !== null && $value !== '');
     @endphp
 
     <style>
@@ -72,81 +74,20 @@
     </div>
 
     <div class="card">
-        <form action="{{ route('companies.index') }}" method="GET">
-            <div class="card-header">
-                <div class="row gutters-5 align-items-end w-100">
-                    <div class="col-lg-3 col-md-6">
-                        <label class="form-label" for="search">{{ translate('Search') }}</label>
-                        <input type="text" class="form-control form-control-sm" id="search" name="search"
-                            value="{{ $filters['search'] }}"
-                            placeholder="{{ translate('Code, name, address, contact, mobile, e-mail or category') }}">
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label" for="company_type">{{ translate('Company Type') }}</label>
-                        <select class="form-control form-control-sm aiz-selectpicker" id="company_type"
-                            name="company_type" data-live-search="true">
-                            <option value="">{{ translate('All Company Types') }}</option>
-                            @foreach ($companyTypes as $companyType)
-                                <option value="{{ $companyType }}" @selected($filters['company_type'] === $companyType)>
-                                    {{ translate($companyType) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label" for="category_id">{{ translate('Deal In Category') }}</label>
-                        <select class="form-control form-control-sm aiz-selectpicker" id="category_id"
-                            name="category_id" data-live-search="true">
-                            <option value="">{{ translate('All Categories') }}</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}"
-                                    @selected($filters['category_id'] === (string) $category->id)>
-                                    {{ $categoryPath($category) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label" for="sort_by">{{ translate('Sort By') }}</label>
-                        <select class="form-control form-control-sm aiz-selectpicker" id="sort_by" name="sort_by">
-                            @foreach ([
-                                'created_at' => 'Created Date',
-                                'code' => 'Code',
-                                'company_name' => 'Company Name',
-                                'company_type' => 'Company Type',
-                                'contact_person' => 'Contact Person',
-                                'deal_in_category' => 'Deal In Category',
-                            ] as $value => $label)
-                                <option value="{{ $value }}" @selected($sortBy === $value)>{{ translate($label) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-lg-1 col-md-3">
-                        <label class="form-label" for="sort_order">{{ translate('Order') }}</label>
-                        <select class="form-control form-control-sm" id="sort_order" name="sort_order">
-                            <option value="asc" @selected($sortOrder === 'asc')>{{ translate('Ascending') }}</option>
-                            <option value="desc" @selected($sortOrder === 'desc')>{{ translate('Descending') }}</option>
-                        </select>
-                    </div>
-                    <div class="col-lg-1 col-md-3">
-                        <label class="form-label" for="date_from">{{ translate('From') }}</label>
-                        <input type="date" class="form-control form-control-sm" id="date_from" name="date_from"
-                            value="{{ $filters['date_from'] }}">
-                    </div>
-                    <div class="col-lg-1 col-md-3">
-                        <label class="form-label" for="date_to">{{ translate('To') }}</label>
-                        <input type="date" class="form-control form-control-sm" id="date_to" name="date_to"
-                            value="{{ $filters['date_to'] }}">
-                    </div>
-                    <div class="col-auto mt-2">
-                        <button type="submit" class="btn btn-sm btn-primary">{{ translate('Filter') }}</button>
-                        <a href="{{ route('companies.index') }}" class="btn btn-sm btn-soft-secondary">
-                            {{ translate('Reset') }}
-                        </a>
-                    </div>
-                </div>
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+            <div class="mb-2">
+                <h5 class="mb-0 h6">{{ translate('Companies') }}</h5>
+                @if ($filtersApplied)
+                    <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+                @endif
             </div>
-        </form>
+            <div class="d-flex flex-wrap align-items-center">
+                <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#companyFilterModal">
+                    {{ translate('Open Filters') }}
+                </button>
+                <a href="{{ route('companies.index') }}" class="btn btn-danger mb-2">{{ translate('Reset') }}</a>
+            </div>
+        </div>
 
         <div class="card-body">
             <div class="table-responsive">
@@ -257,8 +198,102 @@
     </div>
 @endsection
 
+@section('modal')
+    <div class="modal fade" id="companyFilterModal" tabindex="-1" role="dialog" aria-labelledby="companyFilterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <form method="GET" action="{{ route('companies.index') }}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="companyFilterModalLabel">{{ translate('Filter Companies') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row gutters-5">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="search">{{ translate('Search') }}</label>
+                                <input type="text" class="form-control" id="search" name="search"
+                                    value="{{ $filters['search'] }}"
+                                    placeholder="{{ translate('Code, name, address, contact, mobile, e-mail or category') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="company_type">{{ translate('Company Type') }}</label>
+                                <select class="form-control aiz-selectpicker" id="company_type"
+                                    name="company_type" data-live-search="true" data-container="body">
+                                    <option value="">{{ translate('All Company Types') }}</option>
+                                    @foreach ($companyTypes as $companyType)
+                                        <option value="{{ $companyType }}" @selected($filters['company_type'] === $companyType)>
+                                            {{ translate($companyType) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label" for="category_id">{{ translate('Deal In Category') }}</label>
+                                <select class="form-control aiz-selectpicker" id="category_id"
+                                    name="category_id" data-live-search="true" data-container="body">
+                                    <option value="">{{ translate('All Categories') }}</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->id }}"
+                                            @selected($filters['category_id'] === (string) $category->id)>
+                                            {{ $categoryPath($category) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="sort_by">{{ translate('Sort By') }}</label>
+                                <select class="form-control aiz-selectpicker" id="sort_by" name="sort_by" data-container="body">
+                                    @foreach ([
+                                        'created_at' => 'Created Date',
+                                        'code' => 'Code',
+                                        'company_name' => 'Company Name',
+                                        'company_type' => 'Company Type',
+                                        'contact_person' => 'Contact Person',
+                                        'deal_in_category' => 'Deal In Category',
+                                    ] as $value => $label)
+                                        <option value="{{ $value }}" @selected($sortBy === $value)>{{ translate($label) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="sort_order">{{ translate('Order') }}</label>
+                                <select class="form-control" id="sort_order" name="sort_order">
+                                    <option value="asc" @selected($sortOrder === 'asc')>{{ translate('Ascending') }}</option>
+                                    <option value="desc" @selected($sortOrder === 'desc')>{{ translate('Descending') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="date_from">{{ translate('From') }}</label>
+                                <input type="date" class="form-control" id="date_from" name="date_from"
+                                    value="{{ $filters['date_from'] }}">
+                            </div>
+                            <div class="col-md-6 mb-0">
+                                <label class="form-label" for="date_to">{{ translate('To') }}</label>
+                                <input type="date" class="form-control" id="date_to" name="date_to"
+                                    value="{{ $filters['date_to'] }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route('companies.index') }}" class="btn btn-light">{{ translate('Reset') }}</a>
+                        <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection
+
 @section('script')
     <script>
+        $('#companyFilterModal').on('shown.bs.modal', function () {
+            if (window.AIZ && AIZ.plugins && AIZ.plugins.bootstrapSelect) {
+                AIZ.plugins.bootstrapSelect('refresh');
+            }
+        });
+
         $('.company-delete-form').on('submit', function (event) {
             if (!window.confirm(@json(translate('Are you sure you want to delete this company?')))) {
                 event.preventDefault();

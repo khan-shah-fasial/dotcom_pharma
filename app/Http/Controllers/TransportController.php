@@ -15,7 +15,7 @@ class TransportController extends Controller
     public function index(Request $request)
     {
         $sort_search = $request->search;
-        $transports = Transport::with('creator')->orderBy('created_at', 'desc');
+        $transports = Transport::with('creator')->orderBy('created_at', 'desc')->orderBy('id', 'desc');
 
         if ($sort_search) {
             $transports->where('name', 'like', '%' . $sort_search . '%');
