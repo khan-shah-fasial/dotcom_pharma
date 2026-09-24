@@ -14,17 +14,78 @@ class GiftController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $status = $request->input('status');
+        $filters = [
+            'name' => trim((string) $request->input('name', $request->input('search', ''))),
+            'description' => trim((string) $request->input('description')),
+            'cost_from' => $request->input('cost_from'),
+            'cost_to' => $request->input('cost_to'),
+            'stock_from' => $request->input('stock_from'),
+            'stock_to' => $request->input('stock_to'),
+            'updated_from' => trim((string) $request->input('updated_from')),
+            'updated_to' => trim((string) $request->input('updated_to')),
+            'status' => (string) $request->input('status', ''),
+        ];
 
-        $gifts = Gift::query()
-            ->when($search, fn ($q) => $q->where('name', 'like', '%' . $search . '%'))
-            ->when($status !== null && $status !== '', fn ($q) => $q->where('is_active', (bool) $status))
-            ->orderByDesc('created_at')
-            ->paginate(15)
-            ->withQueryString();
+        $sortBy = in_array($request->input('sort_by'), ['updated_at', 'name', 'cost', 'description', 'stock'], true)
+            ? $request->input('sort_by')
+            : 'updated_at';
+        $sortDir = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
 
-        return view('backend.gifts.index', compact('gifts', 'search', 'status'));
+        $query = Gift::query();
+
+        if ($filters['name'] !== '') {
+            $query->where('name', 'like', '%' . $filters['name'] . '%');
+        }
+
+        if ($filters['description'] !== '') {
+            $query->where('description', 'like', '%' . $filters['description'] . '%');
+        }
+
+        $costFrom = is_numeric($filters['cost_from']) ? (float) $filters['cost_from'] : null;
+        $costTo = is_numeric($filters['cost_to']) ? (float) $filters['cost_to'] : null;
+        if (! ($costFrom !== null && $costTo !== null && $costFrom > $costTo)) {
+            if ($costFrom !== null) {
+                $query->where('cost', '>=', $costFrom);
+            }
+            if ($costTo !== null) {
+                $query->where('cost', '<=', $costTo);
+            }
+        }
+
+        $stockFrom = is_numeric($filters['stock_from']) ? (int) $filters['stock_from'] : null;
+        $stockTo = is_numeric($filters['stock_to']) ? (int) $filters['stock_to'] : null;
+        if (! ($stockFrom !== null && $stockTo !== null && $stockFrom > $stockTo)) {
+            if ($stockFrom !== null) {
+                $query->where('stock', '>=', $stockFrom);
+            }
+            if ($stockTo !== null) {
+                $query->where('stock', '<=', $stockTo);
+            }
+        }
+
+        $updatedFrom = preg_match('/^\d{4}-\d{2}-\d{2}$/', $filters['updated_from']) ? $filters['updated_from'] : '';
+        $updatedTo = preg_match('/^\d{4}-\d{2}-\d{2}$/', $filters['updated_to']) ? $filters['updated_to'] : '';
+        if (! ($updatedFrom !== '' && $updatedTo !== '' && $updatedFrom > $updatedTo)) {
+            if ($updatedFrom !== '') {
+                $query->whereDate('updated_at', '>=', $updatedFrom);
+            }
+            if ($updatedTo !== '') {
+                $query->whereDate('updated_at', '<=', $updatedTo);
+            }
+        }
+
+        if ($filters['status'] === '1' || $filters['status'] === '0') {
+            $query->where('is_active', $filters['status'] === '1');
+        }
+
+        $query->orderBy($sortBy, $sortDir);
+        if ($sortBy !== 'id') {
+            $query->orderBy('id', 'desc');
+        }
+
+        $gifts = $query->paginate(15)->withQueryString();
+
+        return view('backend.gifts.index', compact('gifts', 'filters', 'sortBy', 'sortDir'));
     }
 
     public function create()

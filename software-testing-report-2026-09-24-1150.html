@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QA Report — Gift list — 24 Sep 2026</title>
+<style>
+  :root { --ink:#1f2933; --muted:#52606d; --line:#e4e7eb; --bg:#f5f7fa; --card:#fff; --pass:#0f7b4c; --fail:#b42318; --warn:#b54708; --gray:#52606d; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:#102a43; color:#fff; padding:28px 32px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; color:#bcccdc; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
+  .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+  .pass { background:#e3f9e5; color:var(--pass); }
+  .fail { background:#ffe3e3; color:var(--fail); }
+  .blocked, .retest { background:#fff4e5; color:var(--warn); }
+  .na, .not { background:#e4e7eb; color:var(--gray); }
+  .critical { background:#8a041a; color:#fff; }
+  .high { background:#fff1e6; color:#c4320a; }
+  .medium { background:#fff7d6; color:#8d6b00; }
+  .low { background:#e6f0ff; color:#1d4e89; }
+  .open { background:#ffe3e3; color:var(--fail); }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 18px 8px; margin:16px 0; }
+  h2 { margin:0 0 12px; font-size:18px; }
+  .cards { display:flex; flex-wrap:wrap; gap:12px; }
+  .card { flex:1 1 160px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .card strong { display:block; font-size:22px; }
+  table { width:100%; border-collapse:collapse; margin:0 0 14px; font-size:14px; }
+  th, td { border-bottom:1px solid var(--line); text-align:left; padding:8px 6px; vertical-align:top; }
+  th { background:#f0f4f8; }
+  tr:nth-child(even) td { background:#fafbfc; }
+  code { font-family:Consolas, monospace; font-size:12px; }
+  .score { font-size:42px; font-weight:700; }
+  footer { color:var(--muted); font-size:13px; padding:8px 0 24px; }
+  @media print { body { background:#fff; } section, .card { break-inside:avoid; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Software testing report</h1>
+  <p>Pharm Vet Easy — gift list correction &nbsp;|&nbsp; 24 Sep 2026 &nbsp;|&nbsp; Local MySQL + http://127.0.0.1:8000</p>
+  <p style="margin-top:10px"><span class="badge pass">Passed with Minor Issues</span> &nbsp; Overall score of tested categories: 100%</p>
+</header>
+<main>
+<section>
+  <h2>1. Project information</h2>
+  <table>
+    <tr><th>Project</th><td>dotcom_pharma (Pharm Vet Easy)</td></tr>
+    <tr><th>Scope</th><td>Admin gift list: description column, one filter button, sorting, small image that enlarges on click.</td></tr>
+    <tr><th>Environment</th><td>Windows, PHP 8.2.12, MySQL on port 3306, Laravel served at http://127.0.0.1:8000. XAMPP on port 80 does not serve this project.</td></tr>
+    <tr><th>Data</th><td>1 gift row: LED TV, cost 10000, stock 2, updated 20 Sep 2026, one photo.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>2. Testing summary</h2>
+  <div class="cards">
+    <div class="card"><strong>18</strong>Functional passed</div>
+    <div class="card"><strong>0</strong>Failed</div>
+    <div class="card"><strong>1</strong>Open unrelated issue</div>
+    <div class="card"><strong>100%</strong>Tested-category score</div>
+  </div>
+  <table>
+    <thead><tr><th>Testing type</th><th>Total</th><th>Passed</th><th>Failed</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Functional Testing</td><td>18</td><td>18</td><td>0</td><td><span class="badge pass">Passed</span></td></tr>
+      <tr><td>Security Testing</td><td>5</td><td>3</td><td>0</td><td><span class="badge pass">Passed</span></td></tr>
+      <tr><td>UI/UX Testing</td><td>4</td><td>3</td><td>0</td><td><span class="badge pass">Passed</span></td></tr>
+      <tr><td>Performance Testing</td><td>2</td><td>1</td><td>0</td><td><span class="badge pass">Passed</span></td></tr>
+      <tr><td>SEO Testing</td><td>1</td><td>0</td><td>0</td><td><span class="badge na">Not Applicable</span></td></tr>
+      <tr><td>Content Testing</td><td>2</td><td>2</td><td>0</td><td><span class="badge pass">Passed</span></td></tr>
+      <tr><td>Compatibility Testing</td><td>6</td><td>1</td><td>0</td><td><span class="badge pass">Passed</span></td></tr>
+      <tr><td>API Testing</td><td>1</td><td>0</td><td>0</td><td><span class="badge na">Not Applicable</span></td></tr>
+      <tr><td>Database Testing</td><td>2</td><td>1</td><td>0</td><td><span class="badge pass">Passed</span></td></tr>
+      <tr><td>Production / Deployment Testing</td><td>3</td><td>2</td><td>0</td><td><span class="badge pass">Passed</span></td></tr>
+    </tbody>
+  </table>
+  <p>Not Tested and Not Applicable rows are excluded from the category score. SEO and API were excluded from the weighted total.</p>
+</section>
+
+<section>
+  <h2>3. Functional testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Module</th><th>Test case</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>FT-001</td><td>Auth</td><td>Guest GET /admin/gifts</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-002</td><td>Gifts</td><td>List shows Image, Updated, Name, Cost, Description, Stock, and the LED TV description</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-003</td><td>Gifts</td><td>Thumbnail click opens a large image titled LED TV</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-004</td><td>Gifts</td><td>Open Filters shows Name, Description, Cost, Stock, Updated, and Status</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-005</td><td>Gifts</td><td>Description filter “HDR” returns LED TV</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-006</td><td>Gifts</td><td>Description filter with no match shows “No gifts found”</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+      <tr><td>FT-007</td><td>Gifts</td><td>Name filter “LED” returns the gift</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-008</td><td>Gifts</td><td>Cost 1 to 20000 returns the gift</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-009</td><td>Gifts</td><td>Cost 50 to 60 returns no rows</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+      <tr><td>FT-010</td><td>Gifts</td><td>Cost from 50 to 10 is ignored and the gift stays listed</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+      <tr><td>FT-011</td><td>Gifts</td><td>Stock 1 to 5 returns the gift</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-012</td><td>Gifts</td><td>Stock 9 to 12 returns no rows</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+      <tr><td>FT-013</td><td>Gifts</td><td>Updated 1–30 Sep 2026 returns the gift</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-014</td><td>Gifts</td><td>Updated 1–2 Jan 2026 returns no rows</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+      <tr><td>FT-015</td><td>Gifts</td><td>Updated from October to September is ignored and the gift stays listed</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+      <tr><td>FT-016</td><td>Gifts</td><td>Active returns the gift; Inactive returns no rows</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-017</td><td>Gifts</td><td>Name sort stays selected with the description filter; an unknown sort column falls back to Updated</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>FT-018</td><td>Gifts</td><td>A script string in the description filter is escaped and returns no row</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>4. Bug / issue report</h2>
+  <table>
+    <thead><tr><th>Bug ID</th><th>Module</th><th>Issue</th><th>Severity</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>BUG-001</td>
+        <td>Models</td>
+        <td>Laravel log repeats a fatal error: class FrequentlyBoughtProduct is already in use. Two model files declare the same class. The gift list still rendered.</td>
+        <td><span class="badge medium">Medium</span></td>
+        <td><span class="badge open">Open</span></td>
+        <td><code>app/Models/FrequentlyBroughtProduct.php</code> → class declaration → give this file its own class name so it does not collide with <code>app/Models/FrequentlyBoughtProduct.php</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>5. Security testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Security check</th><th>Status</th><th>Severity</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>S-001</td><td>Guest cannot open the gift list</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>S-002</td><td>Description filter output is escaped</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>S-003</td><td>Filter text is passed through the query builder and a hostile string did not error</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+      <tr><td>S-004</td><td>HTTPS</td><td><span class="badge not">Not Tested</span></td><td>Medium</td><td>-</td></tr>
+      <tr><td>S-005</td><td>CSRF on toggle and delete</td><td><span class="badge not">Not Tested</span></td><td>High</td><td>-</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>6. UI/UX testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>U-001</td><td>Filters</td><td>Filter dialog layout and labels</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+      <tr><td>U-002</td><td>Image</td><td>List thumbnail stays small; click shows the photo at 480×480 inside the dialog</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+      <tr><td>U-003</td><td>Description</td><td>Description is clamped to two lines</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+      <tr><td>U-004</td><td>Mobile</td><td>Narrow viewport</td><td><span class="badge not">Not Tested</span></td><td>-</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>7. Performance testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>P-001</td><td>Image</td><td>Gift photo responds 200, image/webp, 30340 bytes</td><td><span class="badge pass">Pass</span></td><td>Low</td><td>-</td></tr>
+      <tr><td>P-002</td><td>Page</td><td>Measured load time</td><td><span class="badge not">Not Tested</span></td><td>Medium</td><td>Not Tested - Measurement unavailable in current environment.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>8. SEO testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>SEO check</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>SEO-001</td><td>Public page metadata</td><td><span class="badge na">Not Applicable</span></td><td>The gift list is an authenticated admin screen.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>9. Content testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Content check</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>C-001</td><td>Name, ₹ 10,000.00, stock 2, and description text match the stored gift</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+      <tr><td>C-002</td><td>Empty result text “No gifts found”</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>10. Browser and device testing</h2>
+  <table>
+    <thead><tr><th>Browser / device</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>Chrome desktop</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+      <tr><td>Firefox desktop</td><td><span class="badge not">Not Tested</span></td><td>-</td></tr>
+      <tr><td>Edge desktop</td><td><span class="badge not">Not Tested</span></td><td>-</td></tr>
+      <tr><td>Safari</td><td><span class="badge not">Not Tested</span></td><td>-</td></tr>
+      <tr><td>Android mobile</td><td><span class="badge not">Not Tested</span></td><td>-</td></tr>
+      <tr><td>iPhone</td><td><span class="badge not">Not Tested</span></td><td>-</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>11. API testing</h2>
+  <p>Not Applicable. This change is the admin gift list page.</p>
+</section>
+
+<section>
+  <h2>12. Database testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>D-001</td><td>Read tbl_gifts, including a soft-delete scope, and return the LED TV row</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+      <tr><td>D-002</td><td>Create, update, or delete a gift</td><td><span class="badge not">Not Tested</span></td><td>Not run, so existing gift data was left unchanged.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>13. Production / deployment testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>DP-001</td><td>Local app responds on port 8000</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+      <tr><td>DP-002</td><td>MySQL connection to dotcom_pharma</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+      <tr><td>DP-003</td><td>Production HTTPS and deployment</td><td><span class="badge not">Not Tested</span></td><td>-</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>14. Overall score</h2>
+  <p class="score">100%</p>
+  <p>Weighted from categories that had applicable tests: Functional 30, Security 20, UI/UX 15, Performance 15, Compatibility 5, Content 5. SEO and API were excluded. Not Tested rows were excluded inside each category. Every applicable test passed.</p>
+  <table>
+    <thead><tr><th>Score</th><th>Rating</th><th>Recommendation</th></tr></thead>
+    <tbody><tr><td>100% of tested gift checks</td><td>Excellent for this screen</td><td>The gift list change is working on the data that exists. This is not a full-application production sign-off.</td></tr></tbody>
+  </table>
+</section>
+
+<section>
+  <h2>15. Final status</h2>
+  <p><span class="badge pass">Passed with Minor Issues</span></p>
+  <p>The gift list shows the description, filters from one dialog, sorts the requested columns, and enlarges a small thumbnail when clicked. Guest access is redirected to login. No gift-list test failed.</p>
+  <p>An unrelated model class collision is still in the log. Retest of create, toggle, and delete was not done. A logged-in browser session was not available, so the click checks used the real rendered admin page served locally.</p>
+</section>
+
+<section>
+  <h2>16. Testing limitations</h2>
+  <ul>
+    <li>Only one gift exists, so a sort that reorders several rows could not be seen.</li>
+    <li>Create, edit, toggle, and delete were not submitted.</li>
+    <li>The admin password was not available, so the browser was not logged in. Click and filter checks used the page rendered for the admin user and then served locally.</li>
+    <li>http://localhost/admin/gifts returns Apache 404 because this project is not the XAMPP document root. The working URL is http://127.0.0.1:8000/admin/gifts.</li>
+    <li>Mobile, Firefox, Edge, Safari, HTTPS, and production deployment were not tested.</li>
+  </ul>
+</section>
+
+<footer>Report generated 24 Sep 2026. No passwords or tokens are included.</footer>
+</main>
+</body>
+</html>

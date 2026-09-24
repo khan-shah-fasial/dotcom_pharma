@@ -5,11 +5,12 @@ alwaysApply: true
 
 # Working Rules
 
-## 1. Never run database migrations
+## 1. Never write or run database migrations
 
-- Do not run `php artisan migrate`, `migrate:fresh`, `migrate:refresh`, `migrate:rollback`, `db:seed`, or any equivalent SQL/schema change against the live or local database.
-- Do not generate or execute migration files unless the user explicitly asks to create a migration file (still do not run it).
+- Do not create, edit, or generate Laravel migration files.
+- Do not run `php artisan migrate`, `migrate:fresh`, `migrate:refresh`, `migrate:rollback`, `db:seed`, or any SQL/schema change against the live or local database.
 - Prefer application-level fixes, config, and code paths that work with the existing schema.
+- When a change still needs a table or column, do the application work and put the raw SQL at the end of the reply for the user to run. Do not execute that SQL.
 
 ## 2. Do not break existing work
 
