@@ -16,6 +16,12 @@
 
 		return $path->implode(' > ');
 	};
+	$filters = $filters ?? [];
+	$sortBy = $sortBy ?? 'name';
+	$sortDir = $sortDir ?? 'asc';
+	$filtersApplied = filled($sort_search) || collect($filters)->contains(function ($value) {
+		return $value !== null && $value !== '';
+	});
 @endphp
 
 <style>
@@ -35,24 +41,35 @@
 </style>
 
 <div class="aiz-titlebar text-left mt-2 mb-3">
-	<div class="align-items-center">
-		<h1 class="h3">{{translate('All Brands')}}</h1>
+	<div class="row align-items-center">
+		<div class="col-md-6">
+			<h1 class="h3">{{translate('All Brands')}}</h1>
+		</div>
+		@can('add_brand')
+			<div class="col-md-6 text-md-right">
+				<a href="{{ route('brands.create') }}" class="btn btn-circle btn-info">
+					<span>{{ translate('Add New Brand') }}</span>
+				</a>
+			</div>
+		@endcan
 	</div>
 </div>
 
 <div class="row">
-	<div class="@if(auth()->user()->can('add_brand')) col-lg-8 @else col-lg-12 @endif">
+	<div class="col-lg-12">
 		<div class="card">
-		    <div class="card-header row gutters-5">
-				<div class="col text-center text-md-left">
+		    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+				<div class="mb-2">
 					<h5 class="mb-md-0 h6">{{ translate('Brands') }}</h5>
+					@if ($filtersApplied)
+						<span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+					@endif
 				</div>
-				<div class="col-md-4">
-					<form class="" id="sort_brands" action="" method="GET">
-						<div class="input-group input-group-sm">
-							<input type="text" class="form-control" id="search" name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset placeholder="{{ translate('Search brand or company') }}">
-						</div>
-					</form>
+				<div>
+					<button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#brandFilterModal">
+						{{ translate('Open Filters') }}
+					</button>
+					<a href="{{ route('brands.index') }}" class="btn btn-danger mb-2">{{ translate('Reset') }}</a>
 				</div>
 		    </div>
 		    <div class="card-body">
@@ -61,11 +78,11 @@
 						<thead>
 							<tr>
 								<th>{{ translate('Sr.No') }}</th>
-								<th>{{ translate('Brand Name') }}</th>
+								@include('backend.inc.sortable_th', ['column' => 'name', 'label' => translate('Brand Name'), 'routeName' => 'brands.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
 								<th>{{ translate('Company Code') }}</th>
-								<th>{{ translate('Company Name') }}</th>
-								<th>{{ translate('Company Type') }}</th>
-								<th>{{ translate('Deal In Category') }}</th>
+								@include('backend.inc.sortable_th', ['column' => 'company_name', 'label' => translate('Company Name'), 'routeName' => 'brands.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+								@include('backend.inc.sortable_th', ['column' => 'company_type', 'label' => translate('Company Type'), 'routeName' => 'brands.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+								@include('backend.inc.sortable_th', ['column' => 'deals_in', 'label' => translate('Deal In Category'), 'routeName' => 'brands.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
 								<th>{{ translate('Brand Logo') }}</th>
 								<th class="text-right">{{ translate('Options') }}</th>
 							</tr>
@@ -124,75 +141,47 @@
 		    </div>
 		</div>
 	</div>
-	@can('add_brand')
-		<div class="col-lg-4">
-			<div class="card">
-				<div class="card-header">
-					<h5 class="mb-0 h6">{{ translate('Add New Brand') }}</h5>
-				</div>
-				<div class="card-body">
-					<form action="{{ route('brands.store') }}" method="POST">
-						@csrf
-						<div class="form-group mb-3">
-							<label for="company_id">{{ translate('Company Name') }}</label>
-							<select id="company_id" name="company_id" class="form-control aiz-selectpicker"
-								data-live-search="true" data-placeholder="{{ translate('Select Company') }}">
-								<option value="">{{ translate('Select Company') }}</option>
-								@foreach ($companies as $company)
-									<option value="{{ $company->id }}" @selected(old('company_id') == $company->id)>
-										{{ $company->company_name }}
-									</option>
-								@endforeach
-							</select>
-							@error('company_id')
-								<span class="text-danger small">{{ $message }}</span>
-							@enderror
-						</div>
-						<div class="form-group mb-3">
-							<label for="name">{{translate('Name')}}</label>
-							<input type="text" placeholder="{{translate('Name')}}" name="name" class="form-control" required>
-						</div>
-						<div class="form-group mb-3">
-							<label for="name">{{translate('Logo')}} <small>({{ translate('120x80') }})</small></label>
-							<div class="input-group" data-toggle="aizuploader" data-type="image">
-								<div class="input-group-prepend">
-										<div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse')}}</div>
-								</div>
-								<div class="form-control file-amount">{{ translate('Choose File') }}</div>
-								<input type="hidden" name="logo" class="selected-files">
-							</div>
-							<div class="file-preview box sm">
-							</div>
-                            <small class="text-muted">{{ translate('Minimum dimensions required: 126px width X 100px height.') }}</small>
-						</div>
-						<div class="form-group mb-3">
-							<label for="name">{{translate('Meta Title')}}</label>
-							<input type="text" class="form-control" name="meta_title" placeholder="{{translate('Meta Title')}}">
-						</div>
-						<div class="form-group mb-3">
-							<label for="name">{{translate('Meta Description')}}</label>
-							<textarea name="meta_description" rows="5" class="form-control"></textarea>
-						</div>
-						<div class="form-group mb-3 text-right">
-							<button type="submit" class="btn btn-primary">{{translate('Save')}}</button>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
-	@endcan
 </div>
 
 @endsection
 
 @section('modal')
     @include('modals.delete_modal')
+    <form action="{{ route('brands.index') }}" method="GET">
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+        <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
+        <div class="modal fade" id="brandFilterModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ translate('Filter Brands') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>{{ translate('Brand Name') }}</label>
+                            <input type="text" class="form-control" name="brand_name" value="{{ $filters['brand_name'] ?? '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Company Name') }}</label>
+                            <input type="text" class="form-control" name="company_name" value="{{ $filters['company_name'] ?? '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Type') }}</label>
+                            <input type="text" class="form-control" name="company_type" value="{{ $filters['company_type'] ?? '' }}">
+                        </div>
+                        <div class="form-group mb-0">
+                            <label>{{ translate('Deals In') }}</label>
+                            <input type="text" class="form-control" name="deals_in" value="{{ $filters['deals_in'] ?? '' }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route('brands.index') }}" class="btn btn-danger">{{ translate('Reset') }}</a>
+                        <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 @endsection
 
-@section('script')
-<script type="text/javascript">
-    function sort_brands(el){
-        $('#sort_brands').submit();
-    }
-</script>
-@endsection

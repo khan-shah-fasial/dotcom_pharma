@@ -36,6 +36,8 @@ class DiscountMasterController extends Controller
 
         $tableReady = Schema::hasTable('discount_masters');
         $discounts = null;
+        $sortBy = '';
+        $sortDir = 'desc';
 
         if ($tableReady) {
             $query = DiscountMaster::query()
@@ -47,8 +49,7 @@ class DiscountMasterController extends Controller
                     'group',
                     'customer.user_details',
                     'schemeStock',
-                ])
-                ->orderByDesc('id');
+                ]);
 
             if ($filters['search'] !== '') {
                 $like = '%' . $filters['search'] . '%';
@@ -102,10 +103,57 @@ class DiscountMasterController extends Controller
                 });
             }
 
+            $allowedSorts = [
+                'applied_on', 'sku', 'variant', 'batch', 'mfg_date', 'stock_role', 'role_key',
+                'qty_slab', 'discount_code', 'batchwise', 'productwise', 'pointwise',
+                'amount_wise', 'scheme', 'from_date',
+            ];
+            $requestedSort = (string) $request->get('sort_by', '');
+            $sortBy = in_array($requestedSort, $allowedSorts, true) ? $requestedSort : '';
+            $sortDir = strtolower((string) $request->get('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+            $this->applyDiscountMasterSort($query, $sortBy, $sortDir);
+
             $discounts = $query->paginate(15)->withQueryString();
         }
 
-        return view('backend.marketing.discount_master.index', compact('discounts', 'filters', 'tableReady'));
+        return view('backend.marketing.discount_master.index', compact('discounts', 'filters', 'tableReady', 'sortBy', 'sortDir'));
+    }
+
+    private function applyDiscountMasterSort($query, string $sortBy, string $sortDir): void
+    {
+        $dir = $sortDir === 'asc' ? 'asc' : 'desc';
+        $columns = [
+            'applied_on' => 'discount_masters.applied_on',
+            'stock_role' => 'discount_masters.role_key',
+            'role_key' => 'discount_masters.role_key',
+            'qty_slab' => 'discount_masters.qty_slab_from',
+            'discount_code' => 'discount_masters.discount_code',
+            'batchwise' => 'discount_masters.value_amount',
+            'productwise' => 'discount_masters.value_amount',
+            'pointwise' => 'discount_masters.earn',
+            'amount_wise' => 'discount_masters.invoice_amount',
+            'scheme' => 'discount_masters.scheme_free_qty',
+            'from_date' => 'discount_masters.from_date',
+        ];
+
+        if ($sortBy === '') {
+            $query->orderByDesc('discount_masters.id');
+            return;
+        }
+        if (isset($columns[$sortBy])) {
+            $query->orderBy($columns[$sortBy], $dir)->orderByDesc('discount_masters.id');
+            return;
+        }
+        if ($sortBy === 'sku') {
+            $query->orderByRaw('(select sku from product_stocks where product_stocks.id = discount_masters.product_stock_id limit 1) ' . $dir);
+        } elseif ($sortBy === 'variant') {
+            $query->orderByRaw('(select variant from product_stocks where product_stocks.id = discount_masters.product_stock_id limit 1) ' . $dir);
+        } elseif ($sortBy === 'batch') {
+            $query->orderByRaw("COALESCE((select batch from product_batches where product_batches.id = discount_masters.batch_id limit 1), (select name from categories where categories.id = discount_masters.category_id limit 1), (select name from groups where groups.id = discount_masters.group_id limit 1), (select name from users where users.id = discount_masters.customer_id limit 1)) " . $dir);
+        } elseif ($sortBy === 'mfg_date') {
+            $query->orderByRaw('COALESCE((select manufacturing_date from product_batches where product_batches.id = discount_masters.batch_id limit 1), (select manufacturing_date from product_batches where product_batches.product_stock_id = discount_masters.product_stock_id order by product_batches.id desc limit 1)) ' . $dir);
+        }
+        $query->orderByDesc('discount_masters.id');
     }
 
     public function create()

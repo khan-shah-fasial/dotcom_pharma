@@ -127,20 +127,45 @@
         {{ translate('Company Type') }} <span class="text-danger">*</span>
     </label>
     <div class="col-md-9">
+        @php
+            $selectedCompanyType = (string) old('company_type', $company->company_type ?? '');
+            $companyTypeIsManual = $selectedCompanyType !== '' && !in_array($selectedCompanyType, $companyTypes instanceof \Illuminate\Support\Collection ? $companyTypes->all() : (array) $companyTypes, true);
+        @endphp
         <select id="company_type" name="company_type"
             class="form-control aiz-selectpicker @error('company_type') is-invalid @enderror"
             data-live-search="true" required>
             <option value="">{{ translate('Select Company Type') }}</option>
             @foreach ($companyTypes as $companyType)
-                <option value="{{ $companyType }}"
-                    @selected(old('company_type', $company->company_type ?? '') === $companyType)>
+                <option value="{{ $companyType }}" @selected(!$companyTypeIsManual && $selectedCompanyType === $companyType)>
                     {{ translate($companyType) }}
                 </option>
             @endforeach
+            <option value="__not_in_list__" @selected($companyTypeIsManual)>{{ translate('Not In List') }}</option>
         </select>
+        <div id="company_type_manual_wrap" class="mt-2 {{ $companyTypeIsManual ? '' : 'd-none' }}">
+            <input type="text" id="company_type_manual" name="company_type_manual" maxlength="100"
+                class="form-control"
+                value="{{ old('company_type_manual', $companyTypeIsManual ? $selectedCompanyType : '') }}"
+                placeholder="{{ translate('Add company type manually') }}">
+        </div>
         @error('company_type') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.jQuery) {
+            return;
+        }
+        jQuery('#company_type').on('changed.bs.select', function () {
+            var manual = jQuery('#company_type_manual_wrap');
+            if (jQuery(this).val() === '__not_in_list__') {
+                manual.removeClass('d-none');
+            } else {
+                manual.addClass('d-none');
+            }
+        });
+    });
+</script>
 
 <div class="form-group row">
     <label class="col-md-3 col-form-label">

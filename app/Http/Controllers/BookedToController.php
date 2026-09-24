@@ -18,7 +18,30 @@ class BookedToController extends Controller
     public function index(Request $request)
     {
         $sort_search = $request->search;
-        $booked_to = BookedTo::with(['transport', 'creator', 'scannerUpload'])->orderBy('created_at', 'desc');
+        $allowedSorts = [
+            'transport', 'location', 'branch_name', 'branch_address', 'branch_code', 'branch_gst_number',
+            'branch_mobile_number', 'branch_alternate_mobile_number', 'contact_incharge', 'branch_email',
+            'scanner', 'created_by', 'status',
+        ];
+        $sortBy = in_array((string) $request->get('sort_by'), $allowedSorts, true) ? (string) $request->get('sort_by') : '';
+        $sortDir = strtolower((string) $request->get('sort_dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $filters = [
+            'transport' => trim((string) $request->get('transport', '')),
+            'location' => trim((string) $request->get('location', '')),
+            'branch_name' => trim((string) $request->get('branch_name', '')),
+            'branch_address' => trim((string) $request->get('branch_address', '')),
+            'branch_code' => trim((string) $request->get('branch_code', '')),
+            'branch_gst_number' => trim((string) $request->get('branch_gst_number', '')),
+            'branch_mobile_number' => trim((string) $request->get('branch_mobile_number', '')),
+            'branch_alternate_mobile_number' => trim((string) $request->get('branch_alternate_mobile_number', '')),
+            'contact_incharge' => trim((string) $request->get('contact_incharge', '')),
+            'branch_email' => trim((string) $request->get('branch_email', '')),
+            'scanner' => (string) $request->get('scanner', ''),
+            'created_by' => trim((string) $request->get('created_by', '')),
+            'status' => (string) $request->get('status', ''),
+        ];
+
+        $booked_to = BookedTo::with(['transport', 'creator', 'scannerUpload']);
 
         if ($sort_search) {
             $booked_to->where(function ($query) use ($sort_search) {
@@ -37,9 +60,63 @@ class BookedToController extends Controller
             });
         }
 
-        $booked_to = $booked_to->paginate(15);
+        $likeColumns = [
+            'location' => 'booked_to.name',
+            'branch_name' => 'booked_to.branch_name',
+            'branch_address' => 'booked_to.branch_address',
+            'branch_code' => 'booked_to.branch_code',
+            'branch_gst_number' => 'booked_to.branch_gst_number',
+            'branch_mobile_number' => 'booked_to.branch_mobile_number',
+            'branch_alternate_mobile_number' => 'booked_to.branch_alternate_mobile_number',
+            'contact_incharge' => 'booked_to.contact_incharge',
+            'branch_email' => 'booked_to.branch_email',
+        ];
+        foreach ($likeColumns as $key => $column) {
+            if ($filters[$key] !== '') {
+                $booked_to->where($column, 'like', '%' . $filters[$key] . '%');
+            }
+        }
+        if ($filters['transport'] !== '') {
+            $transportName = $filters['transport'];
+            $booked_to->whereHas('transport', function ($query) use ($transportName) {
+                $query->where('name', 'like', '%' . $transportName . '%');
+            });
+        }
+        if ($filters['created_by'] !== '') {
+            $createdBy = $filters['created_by'];
+            $booked_to->whereHas('creator', function ($query) use ($createdBy) {
+                $query->where('name', 'like', '%' . $createdBy . '%');
+            });
+        }
+        if ($filters['scanner'] === '1') {
+            $booked_to->whereNotNull('booked_to.scanner')->where('booked_to.scanner', '!=', '');
+        } elseif ($filters['scanner'] === '0') {
+            $booked_to->where(function ($query) {
+                $query->whereNull('booked_to.scanner')->orWhere('booked_to.scanner', '');
+            });
+        }
+        if (in_array($filters['status'], ['active', 'inactive'], true)) {
+            $booked_to->where('booked_to.status', $filters['status']);
+        }
 
-        return view('backend.setup_configurations.transport.booked_to.index', compact('booked_to', 'sort_search'));
+        if ($sortBy === 'transport') {
+            $booked_to->orderByRaw('(select name from transports where transports.id = booked_to.transport_id limit 1) ' . $sortDir);
+        } elseif ($sortBy === 'location') {
+            $booked_to->orderBy('booked_to.name', $sortDir);
+        } elseif ($sortBy === 'created_by') {
+            $booked_to->orderByRaw('(select name from users where users.id = booked_to.created_by limit 1) ' . $sortDir);
+        } elseif ($sortBy === 'scanner') {
+            $booked_to->orderByRaw("case when booked_to.scanner is null or booked_to.scanner = '' then 1 else 0 end " . $sortDir);
+        } elseif ($sortBy !== '') {
+            $booked_to->orderBy('booked_to.' . $sortBy, $sortDir);
+        } else {
+            $booked_to->orderBy('booked_to.created_at', 'desc');
+        }
+        $booked_to->orderBy('booked_to.id', 'desc');
+
+        $booked_to = $booked_to->paginate(15)->appends($request->query());
+
+        return view('backend.setup_configurations.transport.booked_to.index', compact('booked_to', 'sort_search', 'filters', 'sortBy', 'sortDir'));
     }
 
     public function create()

@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\UserDetails;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,6 +24,7 @@ class CompanyRequest extends FormRequest
             'whatsapp',
             'email',
             'company_type',
+            'company_type_manual',
         ];
 
         $data = [];
@@ -32,6 +32,11 @@ class CompanyRequest extends FormRequest
             $value = trim((string) $this->input($field));
             $data[$field] = $value === '' ? null : $value;
         }
+
+        if (($data['company_type'] ?? null) === '__not_in_list__') {
+            $data['company_type'] = $data['company_type_manual'];
+        }
+        unset($data['company_type_manual']);
 
         $this->merge($data);
     }
@@ -54,7 +59,7 @@ class CompanyRequest extends FormRequest
             'mobile' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+()\-\s.]+$/'],
             'whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+()\-\s.]+$/'],
             'email' => ['nullable', 'email:rfc', 'max:255'],
-            'company_type' => ['required', Rule::in(UserDetails::CUSTOMER_TYPES)],
+            'company_type' => ['required', 'string', 'max:100'],
             'logo' => ['nullable', 'integer', 'exists:uploads,id'],
             'stamp' => ['nullable', 'integer', 'exists:uploads,id'],
             'sign' => ['nullable', 'integer', 'exists:uploads,id'],

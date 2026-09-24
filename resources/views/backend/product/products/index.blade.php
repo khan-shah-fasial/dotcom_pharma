@@ -56,6 +56,17 @@
 
             return false;
         };
+        $sortBy = (string) request('sort_by', '');
+        $sortDir = strtolower((string) request('sort_dir', request('sort_order', 'asc'))) === 'desc' ? 'desc' : 'asc';
+        $productRoute = Route::currentRouteName();
+        $productRouteParams = $productRoute === 'products.seller'
+            ? ['product_type' => request()->route('product_type')]
+            : [];
+        $filtersApplied = filled($sort_search ?? null)
+            || filled($selected_category_id ?? null)
+            || filled($seller_id ?? null)
+            || (isset($published_status) && $published_status !== null && $published_status !== '' && $published_status !== 'All')
+            || filled(request('type'));
     @endphp
 
     <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -79,10 +90,12 @@
     <br>
 
     <div class="card">
-        <form class="" id="sort_products" action="" method="GET">
             <div class="card-header row gutters-5">
                 <div class="col">
                     <h5 class="mb-md-0 h6">{{ translate('All Product') }}</h5>
+                    @if ($filtersApplied)
+                        <span class="badge badge-info">{{ translate('Filters applied') }}</span>
+                    @endif
                 </div>
 
                 @can('product_delete')
@@ -97,95 +110,15 @@
                     </div>
                 @endcan
 
-                @if ($type == 'Seller')
-                    <div class="col-md-2 ml-auto">
-                        <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0" id="user_id"
-                            name="user_id" onchange="sort_products()">
-                            <option value="">{{ translate('All Sellers') }}</option>
-                            @foreach (App\Models\User::where('user_type', '=', 'seller')->get() as $key => $seller)
-                                <option value="{{ $seller->id }}" @if ($seller->id == $seller_id) selected @endif>
-                                    {{ $seller->shop->name }} ({{ $seller->name }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
-                @if ($type == 'All' && get_setting('vendor_system_activation') == 1)
-                    <div class="col-md-2 ml-auto">
-                        <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0" id="user_id"
-                            name="user_id" onchange="sort_products()">
-                            <option value="">{{ translate('All Sellers') }}</option>
-                            @foreach (App\Models\User::where('user_type', '=', 'admin')->orWhere('user_type', '=', 'seller')->get() as $key => $seller)
-                                <option value="{{ $seller->id }}" @if ($seller->id == $seller_id) selected @endif>
-                                    {{ $seller->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endif
-                <div class="col-md-2">
-                    <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0"
-                        name="category_id" id="category_id" data-live-search="true"
-                        onchange="sort_products()">
-                        <option value="">{{ translate('All Categories') }}</option>
-                        @foreach ($categories as $category)
-                            <option value="{{ $category->id }}" @selected((string) $selected_category_id === (string) $category->id)>
-                                {{ $category->getTranslation('name') }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2 ml-auto">
-                    <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0" name="type" id="type"
-                        onchange="sort_products()">
-                        <option value="">{{ translate('Sort By') }}</option>
-                        <option value="rating,desc"
-                            @isset($col_name, $query) @if ($col_name == 'rating' && $query == 'desc') selected @endif @endisset>
-                            {{ translate('Rating (High > Low)') }}</option>
-                        <option value="rating,asc"
-                            @isset($col_name, $query) @if ($col_name == 'rating' && $query == 'asc') selected @endif @endisset>
-                            {{ translate('Rating (Low > High)') }}</option>
-                        <option value="num_of_sale,desc"
-                            @isset($col_name, $query) @if ($col_name == 'num_of_sale' && $query == 'desc') selected @endif @endisset>
-                            {{ translate('Num of Sale (High > Low)') }}</option>
-                        <option value="num_of_sale,asc"
-                            @isset($col_name, $query) @if ($col_name == 'num_of_sale' && $query == 'asc') selected @endif @endisset>
-                            {{ translate('Num of Sale (Low > High)') }}</option>
-                        <option value="unit_price,desc"
-                            @isset($col_name, $query) @if ($col_name == 'unit_price' && $query == 'desc') selected @endif @endisset>
-                            {{ translate('Base Price (High > Low)') }}</option>
-                        <option value="unit_price,asc"
-                            @isset($col_name, $query) @if ($col_name == 'unit_price' && $query == 'asc') selected @endif @endisset>
-                            {{ translate('Base Price (Low > High)') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group mb-0">
-                        <input type="text" class="form-control form-control-sm" id="search"
-                            name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset
-                            placeholder="{{ translate('Search by Name, Drug, Role, Attribute, SKU, Brand, Category, Attribute or Schedule') }}">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-control form-control-sm aiz-selectpicker mb-2 mb-md-0" name="published_status" id="published_status" onchange="sort_products()">
-                        <option value="">{{ translate('Filter By Status') }}</option>
-                        <option value="1"
-                            @isset($published_status) @if ($published_status == '1') selected @endif @endisset>
-                            {{ translate('Published') }}</option>
-                        <option value="0"
-                            @isset($published_status) @if ($published_status == '0') selected @endif @endisset>
-                            {{ translate('Unpublished') }}</option>
-                    </select>
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-sm btn-primary mb-2 mb-md-0">
-                        {{ translate('Search') }}
+                <div class="col-auto ml-auto">
+                    <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#productFilterModal">
+                        {{ translate('Open Filters') }}
                     </button>
-                    <a href="{{ url()->current() }}" class="btn btn-sm btn-soft-secondary mb-2 mb-md-0">
-                        {{ translate('Reset') }}
-                    </a>
+                    <a href="{{ url()->current() }}" class="btn btn-danger">{{ translate('Reset') }}</a>
                 </div>
             </div>
 
+        <form class="" id="sort_products" action="" method="GET">
             <div class="card-body">
                 <table class="table aiz-table mb-0">
                     <thead>
@@ -203,34 +136,24 @@
                                 </th>
                             @endif
                             <th>{{ translate('Sr No.') }}</th>
-                            <th>
-                                <a href="{{ url()->current() . '?' . http_build_query(array_merge(request()->except('page', 'type'), [
-                                    'sort_by' => 'sku',
-                                    'sort_order' => request('sort_by') === 'sku' && request('sort_order') === 'asc' ? 'desc' : 'asc',
-                                ])) }}">
-                                    {{ translate('SKU') }}
-                                    @if (request('sort_by') === 'sku')
-                                        <i class="las la-sort-amount-{{ request('sort_order') === 'asc' ? 'up' : 'down' }}"></i>
-                                    @endif
-                                </a>
-                            </th>
-                            <th>{{ translate('Product Name') }}</th>
+                            @include('backend.inc.sortable_th', ['column' => 'sku', 'label' => translate('SKU'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'name', 'label' => translate('Product Name'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             {{-- @if ($type == 'Seller' || $type == 'All')
                                 <th data-breakpoints="lg">{{ translate('Added By') }}</th>
                             @endif
                             <th data-breakpoints="sm">{{ translate('Info') }}</th> --}}
-                            <th>{{ translate('Category') }}</th>
-                            <th data-breakpoints="md">{{ translate('Total Stock') }}</th>
-                            <th>{{ translate('Brand') }}</th>
-                            <th>{{ translate('Role Prices') }}</th>
-                            <th>{{ translate('Group') }}</th>
-                            <th>{{ translate('Schedule') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Todays Deal') }}</th>
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Published') }}</th>
+                            @include('backend.inc.sortable_th', ['column' => 'category', 'label' => translate('Category'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'stock', 'label' => translate('Total Stock'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'brand', 'label' => translate('Brand'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'role_price', 'label' => translate('Role Prices'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'group', 'label' => translate('Group'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'schedule', 'label' => translate('Schedule'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'todays_deal', 'label' => translate('Todays Deal'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                            @include('backend.inc.sortable_th', ['column' => 'published', 'label' => translate('Published'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
                             @if (get_setting('product_approve_by_admin') == 1 && $type == 'Seller')
-                                <th data-breakpoints="lg">{{ translate('Approved') }}</th>
+                                @include('backend.inc.sortable_th', ['column' => 'approved', 'label' => translate('Approved'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
                             @endif
-                            <th data-breakpoints="xs sm md lg xl">{{ translate('Featured') }}</th>
+                            @include('backend.inc.sortable_th', ['column' => 'featured', 'label' => translate('Featured'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
                             <th data-breakpoints="sm" class="">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
@@ -609,6 +532,89 @@
     @include('modals.delete_modal')
     <!-- Bulk Delete modal -->
     @include('modals.bulk_delete_modal')
+
+    <form action="{{ url()->current() }}" method="GET">
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+        <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
+        <div class="modal fade" id="productFilterModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ translate('Filter Products') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row gutters-5">
+                            <div class="col-md-12 mb-3">
+                                <label>{{ translate('Search') }}</label>
+                                <input type="text" class="form-control" name="search" value="{{ $sort_search ?? '' }}"
+                                    placeholder="{{ translate('Search by Name, Drug, Role, Attribute, SKU, Brand, Category, Attribute or Schedule') }}">
+                            </div>
+                            @if ($type == 'Seller')
+                                <div class="col-md-6 mb-3">
+                                    <label>{{ translate('Seller') }}</label>
+                                    <select class="form-control" name="user_id">
+                                        <option value="">{{ translate('All Sellers') }}</option>
+                                        @foreach (App\Models\User::where('user_type', '=', 'seller')->get() as $seller)
+                                            <option value="{{ $seller->id }}" @selected($seller->id == ($seller_id ?? null))>
+                                                {{ optional($seller->shop)->name }} ({{ $seller->name }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                            @if ($type == 'All' && get_setting('vendor_system_activation') == 1)
+                                <div class="col-md-6 mb-3">
+                                    <label>{{ translate('Seller') }}</label>
+                                    <select class="form-control" name="user_id">
+                                        <option value="">{{ translate('All Sellers') }}</option>
+                                        @foreach (App\Models\User::where('user_type', '=', 'admin')->orWhere('user_type', '=', 'seller')->get() as $seller)
+                                            <option value="{{ $seller->id }}" @selected($seller->id == ($seller_id ?? null))>{{ $seller->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Category') }}</label>
+                                <select class="form-control" name="category_id">
+                                    <option value="">{{ translate('All Categories') }}</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->id }}" @selected((string) ($selected_category_id ?? '') === (string) $category->id)>
+                                            {{ $category->getTranslation('name') }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Published') }}</label>
+                                <select class="form-control" name="published_status">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="1" @selected(($published_status ?? '') == '1')>{{ translate('Published') }}</option>
+                                    <option value="0" @selected(($published_status ?? '') == '0')>{{ translate('Unpublished') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Sort By') }}</label>
+                                <select class="form-control" name="type">
+                                    <option value="">{{ translate('Default') }}</option>
+                                    <option value="rating,desc" @selected(($col_name ?? null) == 'rating' && ($query ?? null) == 'desc')>{{ translate('Rating (High > Low)') }}</option>
+                                    <option value="rating,asc" @selected(($col_name ?? null) == 'rating' && ($query ?? null) == 'asc')>{{ translate('Rating (Low > High)') }}</option>
+                                    <option value="num_of_sale,desc" @selected(($col_name ?? null) == 'num_of_sale' && ($query ?? null) == 'desc')>{{ translate('Num of Sale (High > Low)') }}</option>
+                                    <option value="num_of_sale,asc" @selected(($col_name ?? null) == 'num_of_sale' && ($query ?? null) == 'asc')>{{ translate('Num of Sale (Low > High)') }}</option>
+                                    <option value="unit_price,desc" @selected(($col_name ?? null) == 'unit_price' && ($query ?? null) == 'desc')>{{ translate('Base Price (High > Low)') }}</option>
+                                    <option value="unit_price,asc" @selected(($col_name ?? null) == 'unit_price' && ($query ?? null) == 'asc')>{{ translate('Base Price (Low > High)') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ url()->current() }}" class="btn btn-danger">{{ translate('Reset') }}</a>
+                        <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 @endsection
 
 

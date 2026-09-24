@@ -173,13 +173,8 @@
 
 
                                     <div class="col-xxl-12 col-xl-12">
-                                        <!-- Product Name -->
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Name')}} <span class="text-danger">*</span></label>
-                                            <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="{{translate('Product Name')}}" value="{{ $product->getTranslation('name', $lang) }}" required>
-                                            </div>
-                                        </div>
+                                        @include('backend.product.products.partials.brand_product_name')
+                                        @include('backend.product.products.partials.company_attribution')
 
                                         <!-- GEM portal link -->
                                         <div class="form-group row">

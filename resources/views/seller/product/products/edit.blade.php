@@ -44,14 +44,8 @@
                     @endforeach
                 </ul>
                 <div class="card-body">
-                    <div class="form-group row">
-                        <label class="col-lg-3 col-from-label">{{translate('Product Name')}} <i class="las la-language text-danger" title="{{translate('Translatable')}}"></i></label>
-                        <div class="col-lg-8">
-                            <input type="text" class="form-control" name="name"
-                                placeholder="{{translate('Product Name')}}" value="{{$product->getTranslation('name',$lang)}}"
-                                required>
-                        </div>
-                    </div>
+                    @include('backend.product.products.partials.brand_product_name')
+                    @include('backend.product.products.partials.company_attribution')
                     <div class="form-group row" id="brand">
                         <label class="col-lg-3 col-from-label">{{translate('Brand')}}</label>
                         <div class="col-lg-8">

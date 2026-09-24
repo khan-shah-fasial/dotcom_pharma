@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CompanyRequest;
 use App\Models\Category;
 use App\Models\Company;
-use App\Models\UserDetails;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +73,7 @@ class CompanyController extends Controller
 
         $companies = $companies->paginate(15)->appends($request->query());
         $categories = $this->allCategories();
-        $companyTypes = UserDetails::CUSTOMER_TYPES;
+        $companyTypes = $this->companyTypeOptions();
 
         return view('backend.company.index', compact(
             'companies',
@@ -202,8 +201,16 @@ class CompanyController extends Controller
                 ->with('childrenCategories')
                 ->orderBy('name')
                 ->get(),
-            'companyTypes' => UserDetails::CUSTOMER_TYPES,
+            'companyTypes' => $this->companyTypeOptions(),
         ];
+    }
+
+    private function companyTypeOptions()
+    {
+        return collect(Company::COMPANY_TYPES)
+            ->merge(Company::query()->whereNotNull('company_type')->where('company_type', '!=', '')->distinct()->orderBy('company_type')->pluck('company_type'))
+            ->unique()
+            ->values();
     }
 
     private function allCategories()

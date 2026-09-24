@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QA Report — Gift list and category discount — 24 Sep 2026</title>
+<style>
+  :root { --ink:#1c2430; --muted:#5c6b7a; --line:#d8dee6; --bg:#f4f6f8; --card:#fff; --pass:#1b7f4e; --fail:#b42318; --high:#c2410c; --med:#b45309; --low:#1d4ed8; --nt:#64748b; --blocked:#c2410c; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 "Segoe UI", Arial, sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:#142033; color:#fff; padding:28px 32px 22px; }
+  header h1 { margin:0 0 6px; font-size:26px; font-weight:650; }
+  header p { margin:0; color:#c5d0dc; }
+  .wrap { max-width:1180px; margin:0 auto; padding:24px 20px 48px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:650; color:#fff; }
+  .pass { background:var(--pass); } .fail { background:var(--fail); } .high { background:var(--high); } .med { background:var(--med); } .low { background:var(--low); }
+  .nt, .blocked { background:var(--nt); } .open { background:var(--fail); } .crit { background:#7f1d1d; }
+  .status-pill { display:inline-block; margin-top:12px; padding:6px 12px; border-radius:8px; background:#f59e0b; color:#1c1917; font-weight:700; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:18px 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .card b { display:block; font-size:22px; }
+  .card span { color:var(--muted); font-size:13px; }
+  h2 { margin:28px 0 10px; font-size:20px; }
+  p { margin:8px 0; }
+  table { width:100%; border-collapse:collapse; background:#fff; margin:8px 0 16px; font-size:14px; }
+  th, td { border:1px solid var(--line); padding:8px 10px; vertical-align:top; text-align:left; }
+  th { background:#e8eef5; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  code, .path { font-family:Consolas, "Courier New", monospace; font-size:12.5px; }
+  .note { color:var(--muted); }
+  footer { margin-top:28px; color:var(--muted); font-size:13px; }
+  @media print { body { background:#fff; } header { -webkit-print-color-adjust:exact; print-color-adjust:exact; } .wrap { max-width:none; } }
+  @media (max-width:700px) { header, .wrap { padding-left:12px; padding-right:12px; } table { display:block; overflow-x:auto; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Software testing report</h1>
+  <p>Pharm Vet Easy — gift list and Set Category Wise Product Discount</p>
+  <p>24 September 2026 · Local app at http://127.0.0.1:8000 · Chrome via the IDE browser · Live database dotcom_pharma, read only</p>
+  <div class="status-pill">Passed with Minor Issues · 94.8%</div>
+</header>
+<div class="wrap">
+
+<h2>1. Project Information</h2>
+<table>
+  <tr><th>Item</th><th>Detail</th></tr>
+  <tr><td>Project</td><td>Pharm Vet Easy (dotcom_pharma), admin gift list and category-wise product discount</td></tr>
+  <tr><td>Scope</td><td>The features listed for this audit: gift description, one filter, sorting, photo enlarge; category filter, sorting, saved discount display, icon enlarge, and the existing Set action. Database-change policy for today’s work.</td></tr>
+  <tr><td>Build under test</td><td>Commit b733b28, 24 Sep 2026, “image prev, category wise product filters and gifts filters”</td></tr>
+  <tr><td>Environment</td><td>Local Laravel app, APP_ENV=local, APP_DEBUG on, MySQL database dotcom_pharma. One live gift (LED TV) and 62 categories.</td></tr>
+  <tr><td>Method</td><td>Code inspection, read-only SQL, rendered admin pages while an admin session was already signed in, and browser clicks for filters, sort links, photo/icon enlarge, and the Set confirmation. The Set confirmation was cancelled. No discount was saved.</td></tr>
+</table>
+
+<h2>2. Testing Summary</h2>
+<div class="cards">
+  <div class="card"><b>94.8%</b><span>Overall score</span></div>
+  <div class="card"><b>21 / 23</b><span>Functional passed</span></div>
+  <div class="card"><b>2</b><span>Open issues</span></div>
+  <div class="card"><b>0</b><span>Critical issues</span></div>
+  <div class="card"><b>1</b><span>High issue</span></div>
+</div>
+<table>
+  <tr><th>Testing Type</th><th>Total</th><th>Passed</th><th>Failed</th><th>Status</th></tr>
+  <tr><td>Functional Testing</td><td>23</td><td>21</td><td>2</td><td>Failed</td></tr>
+  <tr><td>Security Testing</td><td>6</td><td>4</td><td>0</td><td>Incomplete</td></tr>
+  <tr><td>UI/UX Testing</td><td>3</td><td>3</td><td>0</td><td>Passed</td></tr>
+  <tr><td>Performance Testing</td><td>1</td><td>0</td><td>0</td><td>Not Tested</td></tr>
+  <tr><td>SEO Testing</td><td>1</td><td>0</td><td>0</td><td>Not Applicable</td></tr>
+  <tr><td>Content Testing</td><td>2</td><td>2</td><td>0</td><td>Passed</td></tr>
+  <tr><td>Compatibility Testing</td><td>7</td><td>2</td><td>0</td><td>Incomplete</td></tr>
+  <tr><td>API Testing</td><td>1</td><td>0</td><td>0</td><td>Not Tested</td></tr>
+  <tr><td>Database Testing</td><td>3</td><td>3</td><td>0</td><td>Passed</td></tr>
+  <tr><td>Production / Deployment Testing</td><td>1</td><td>0</td><td>0</td><td>Not Tested</td></tr>
+</table>
+<p class="note">Passed and failed counts exclude Not Tested and Not Applicable rows. Those rows are listed in the section tables and are not in the Passed or Failed numbers above.</p>
+
+<h2>3. Functional Testing</h2>
+<table>
+  <tr><th>ID</th><th>Module</th><th>Test Case</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr>
+  <tr><td>FT-001</td><td>Gifts</td><td>Gift list shows a description. Live row LED TV shows the plain product text, with the stored HTML removed.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-002</td><td>Gifts</td><td>Search sits behind one Open Filters button and covers name, description, cost, stock, updated date, and status.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-003</td><td>Gifts</td><td>Name filter keeps LED and drops a name that is not on the gift.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-004</td><td>Gifts</td><td>Description filter keeps a word from the LED TV text and drops an unknown word.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-005</td><td>Gifts</td><td>Cost 10000 to 10000 keeps the gift. Cost 20000 to 30000 returns no gifts.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-006</td><td>Gifts</td><td>Stock 2 to 2 keeps the gift. Stock 9 to 9 returns no gifts.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-007</td><td>Gifts</td><td>Updated date 24 Sep 2026 keeps the gift. 1–2 Jan 2020 returns no gifts.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-008</td><td>Gifts</td><td>Status Active keeps the gift. Status Inactive returns no gifts.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-009</td><td>Gifts</td><td>Cost From 50000 and Cost To 1 still returns LED TV and shows Filters applied.</td><td><span class="badge fail">Fail</span></td><td>Medium</td><td><span class="path">GiftController.php → index() cost, stock, and updated-date range checks → When the start is after the end, keep the range out of the result or tell the user the range was not applied. The same pattern is in CategoryController.php → categoriesWiseProductDiscount() for discount and date ranges.</span></td></tr>
+  <tr><td>FT-010</td><td>Gifts</td><td>List is sortable by updated date, name, cost, description, and stock. Clicking Name opened /admin/gifts?sort_by=name&amp;sort_dir=asc.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-011</td><td>Gifts</td><td>A sort column that is not on the allow-list falls back to updated date.</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+  <tr><td>FT-012</td><td>Gifts</td><td>Gift photo is 72px in the list. Clicking it opens a 480px view of the 500px image.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-013</td><td>Gifts</td><td>Live data: one active gift, LED TV, cost 10000, stock 2, updated 24 Sep 2026, photo loaded from storage.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-014</td><td>Database policy</td><td>Today’s commit changes six files and no migration. The migrations table’s latest row is still 2026_08_10.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-015</td><td>Database policy</td><td>Future database changes are written as plain SQL for the user to run. The working rule forbids migrate and SQL execution from here.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-016</td><td>Category discount</td><td>One Open Filters button covers name, parent category, discount, and discount dates.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-017</td><td>Category discount</td><td>Name Instruments returns four matching categories. An unknown name returns no categories.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-018</td><td>Category discount</td><td>Parent Human returns only Beauty Instrument, Equipment, Instruments, Oral, and Surgicals, each with parent Human.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-019</td><td>Category discount</td><td>Discount 5 to 5 returns ten categories, each showing Current 5%, and no 0% row.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-020</td><td>Category discount</td><td>Sort by name, parent category, discount, and discount start date changes order against the live categories. Name A–Z starts at API. Discount high to low starts at 5% then 2.5%.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-021</td><td>Category discount</td><td>The discount and date range already saved on products are shown for each category.</td><td><span class="badge fail">Fail</span></td><td>High</td><td><span class="path">CategoryController.php → categoriesWiseProductDiscount() discountSummary → Stop taking MAX(discount), MAX(discount_start_date), and MAX(discount_end_date) as one saved offer. Show the min and max discount, or the discount and dates from the same product. set_discount.blade.php → Current discount and date lines.</span></td></tr>
+  <tr><td>FT-022</td><td>Category discount</td><td>Category icons are 72px in the list. Clicking Instruments opens a 480px view of a 1254px icon.</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>FT-023</td><td>Category discount</td><td>Set still opens “Are you sure you want to set this discount?” with Cancel and Confirm. Cancel closes it. The post still targets set-product-discount with category id, discount, date range, and seller flag. That function was not changed in today’s commit. Confirm was not clicked, so no product row was updated.</td><td><span class="badge pass">Pass</span></td><td>Critical</td><td>-</td></tr>
+</table>
+<p class="note">Gift sorting was executed, and the Name link changed the live URL. Only one gift exists, so the gift rows cannot be seen to reorder. Category sorting was checked with many rows.</p>
+
+<h2>4. Bug / Issue Report</h2>
+<table>
+  <tr><th>Bug ID</th><th>Module</th><th>Issue</th><th>Severity</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>BUG-001</td><td>Category discount</td><td>Confirmed issue. Instruments under Human (category 119) displays Current 5% and 19-01-2026 17:44 to 01-01-2027 05:29. Its products are three at 2% for that date range, and one at 5% for 01-09-2025 to 31-10-2025. No product has 5% with the 2026–2027 dates. Thirteen categories have products with more than one discount or date range, so a single combined maximum does not describe every product.</td><td><span class="badge high">High</span></td><td><span class="badge open">Open</span></td><td><span class="path">CategoryController.php → categoriesWiseProductDiscount() → Replace the three independent MAX() values with one product’s discount and dates, or show the spread (lowest to highest) and each date window.</span></td></tr>
+  <tr><td>BUG-002</td><td>Gifts and category discount</td><td>Confirmed issue. A reversed range is skipped and the list stays unfiltered, while the page still shows Filters applied. Reproduced for gift cost from 50000 to 1, which still returned LED TV. The same skip exists for gift stock and updated dates, and for category discount and discount dates.</td><td><span class="badge med">Medium</span></td><td><span class="badge open">Open</span></td><td><span class="path">GiftController.php → index() → Validate or swap reversed ranges before querying. Apply the same check in CategoryController.php → categoriesWiseProductDiscount().</span></td></tr>
+</table>
+
+<h2>5. Security Testing</h2>
+<table>
+  <tr><th>ID</th><th>Security Check</th><th>Status</th><th>Severity</th><th>Recommendation</th></tr>
+  <tr><td>SEC-001</td><td>Sort column allow-list on the gift list</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>SEC-002</td><td>Filter values go through the query builder rather than a raw sort or filter string</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>SEC-003</td><td>Set discount post still sends the CSRF token</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+  <tr><td>SEC-004</td><td>Gift description HTML is stripped and escaped in the list</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+  <tr><td>SEC-005</td><td>Logged-out access to the admin URLs</td><td><span class="badge nt">Not Tested</span></td><td>High</td><td>-</td></tr>
+  <tr><td>SEC-006</td><td>Security headers, rate limiting, and a full authorization review</td><td><span class="badge nt">Not Tested</span></td><td>Medium</td><td>-</td></tr>
+</table>
+
+<h2>6. UI/UX Testing</h2>
+<table>
+  <tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>UI-001</td><td>Gift filters</td><td>Open Filters shows one dialog with name, description, cost, stock, updated dates, status, Reset, and Apply Filters.</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  <tr><td>UI-002</td><td>Photos and icons</td><td>List images are small. Clicking a gift photo or a category icon opens a large dialog and the image loads.</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  <tr><td>UI-003</td><td>Mobile width</td><td>At 390px the category table keeps the first columns on screen and scrolls sideways to discount, dates, and Set.</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+</table>
+
+<h2>7. Performance Testing</h2>
+<table>
+  <tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr>
+  <tr><td>PF-001</td><td>Category discount page</td><td>Not Tested - Measurement unavailable as a pass or fail. One local request showed about 1.6 seconds in the debug bar while APP_DEBUG was on. That figure is not a production measurement.</td><td><span class="badge nt">Not Tested</span></td><td>Low</td><td>-</td></tr>
+</table>
+
+<h2>8. SEO Testing</h2>
+<table>
+  <tr><th>ID</th><th>SEO Check</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>SEO-001</td><td>Public page metadata</td><td><span class="badge nt">Not Applicable</span></td><td>These screens are admin pages, not public catalog pages.</td></tr>
+</table>
+
+<h2>9. Content Testing</h2>
+<table>
+  <tr><th>ID</th><th>Content Check</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>CT-001</td><td>Gift description text is readable and is not raw HTML</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  <tr><td>CT-002</td><td>Filter and column labels match the requested fields</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+</table>
+
+<h2>10. Browser &amp; Device Testing</h2>
+<table>
+  <tr><th>Browser / Device</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>Chrome Desktop</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  <tr><td>Chrome, 390px wide viewport</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  <tr><td>Firefox Desktop</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+  <tr><td>Edge Desktop</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+  <tr><td>Safari</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+  <tr><td>Android Mobile</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+  <tr><td>iPhone</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+</table>
+
+<h2>11. API Testing</h2>
+<table>
+  <tr><th>ID</th><th>API / Feature</th><th>Test</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>API-001</td><td>POST /admin/set-product-discount</td><td>Saving a category discount</td><td><span class="badge nt">Not Tested</span></td><td>The confirm dialog was opened and cancelled so the live product discounts would not change. The request body in the page script is unchanged from the previous commit.</td></tr>
+</table>
+
+<h2>12. Database Testing</h2>
+<table>
+  <tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>DB-001</td><td>Today’s commit does not add or edit a migration</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  <tr><td>DB-002</td><td>migrations table latest row remains 2026_08_10_000001_add_company_assets_opening_balance_and_transport_mode</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  <tr><td>DB-003</td><td>This audit only ran SELECT queries and GET pages. Set was cancelled.</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+</table>
+<p>Not Applicable for insert, update, and delete checks. Those were intentionally not run.</p>
+
+<h2>13. Production / Deployment Testing</h2>
+<table>
+  <tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>DP-001</td><td>Production host, HTTPS, and production database</td><td><span class="badge nt">Not Tested</span></td><td>Testing was on the local app and the local database only.</td></tr>
+</table>
+
+<h2>14. Overall Score</h2>
+<table>
+  <tr><th>Category</th><th>Weight</th><th>Score</th><th>Used in overall</th></tr>
+  <tr><td>Functional</td><td>30%</td><td>91.3% (21 / 23)</td><td>Yes</td></tr>
+  <tr><td>UI/UX</td><td>15%</td><td>100% (3 / 3)</td><td>Yes</td></tr>
+  <tr><td>Content</td><td>5%</td><td>100% (2 / 2)</td><td>Yes</td></tr>
+  <tr><td>Security</td><td>20%</td><td>Spot check only</td><td>Excluded</td></tr>
+  <tr><td>Performance</td><td>15%</td><td>Not Tested</td><td>Excluded</td></tr>
+  <tr><td>SEO</td><td>10%</td><td>Not Applicable</td><td>Excluded</td></tr>
+  <tr><td>Compatibility</td><td>5%</td><td>Chrome only</td><td>Excluded</td></tr>
+</table>
+<p>Overall = (91.3 × 30 + 100 × 15 + 100 × 5) / 50 = <strong>94.8%</strong>.</p>
+<p>Database checks passed and are reported above. They are not in the default weight table, so they are not part of this percentage.</p>
+<table>
+  <tr><th>Score</th><th>Rating</th><th>Recommendation</th></tr>
+  <tr><td>94.8%</td><td>Good</td><td>Production with minor fixes</td></tr>
+</table>
+
+<h2>15. Final Status</h2>
+<p><strong>Passed with Minor Issues</strong></p>
+<p><strong>Recommendation.</strong> The gift list is ready: description, one filter, the five sorts, and small-to-large photos all worked against the live LED TV gift. The category page filter, sorts, small-to-large icons, and the existing Set confirmation are in place. Two fixes should land before anyone trusts the “current” discount column: Instruments under Human shows a 5% offer and a 2026–2027 date range that no product in that category has, and a reversed filter range is ignored while the page says filters are applied. Retest those two cases after the fix. No Critical issue is open. Today’s work did not change the database, and this audit did not either.</p>
+
+<h2>16. Testing Limitations</h2>
+<ul>
+  <li>Only one gift exists, so gift sort order cannot be seen to change. The sort links and the allow-list were checked.</li>
+  <li>Set discount was not confirmed, so the save into products was not executed.</li>
+  <li>The seller copy of this page was not part of today’s change and was not retested. It still has the old name box, small icons, and no saved-discount line.</li>
+  <li>Firefox, Edge, Safari, Android, and iPhone were not used.</li>
+  <li>Logged-out access, security headers, and production hosting were not tested.</li>
+  <li>Performance was not measured with debug mode off.</li>
+  <li>Gift description sorting uses the stored HTML, not the plain text on screen. With one gift this could not be shown as a wrong order.</li>
+</ul>
+
+<footer>Report generated 24 September 2026. Evidence is from the local admin session, read-only queries, and the files named in the recommendation column. No passwords or tokens are included.</footer>
+</div>
+</body>
+</html>

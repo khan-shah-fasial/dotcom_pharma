@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Wishlist;
 use App\Utility\ProductUtility;
 use Combinations;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class ProductService
@@ -229,6 +230,8 @@ class ProductService
             $data['published'] = 0;
         }
 
+        $data = $this->applyCompanyAttribution($data);
+
         return Product::create($data);
     }
 
@@ -429,10 +432,75 @@ class ProductService
         if ($data['unit_price'] == 0) {
             $data['published'] = 0;
         }
+
+        $data = $this->applyCompanyAttribution($data);
         
         $product->update($data);
 
         return $product;
+    }
+
+    private function applyCompanyAttribution(array $data): array
+    {
+        $manualNames = function (?string $value): array {
+            return collect(explode(',', (string) $value))
+                ->map(fn ($name) => trim($name))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+        };
+
+        if (($data['marketed_by_id'] ?? null) === '__not_in_list__') {
+            $data['marketed_by_id'] = null;
+        } elseif (!empty($data['marketed_by_id'])) {
+            $data['marketed_by_name'] = null;
+        }
+
+        if (array_key_exists('manufactured_by_manual', $data)) {
+            $data['manufactured_by_names'] = $manualNames($data['manufactured_by_manual']);
+        }
+        if (array_key_exists('import_by_manual', $data)) {
+            $data['import_by_names'] = $manualNames($data['import_by_manual']);
+        }
+        if (array_key_exists('product_company_fields', $data)) {
+            $data['manufactured_by_hidden'] = !empty($data['manufactured_by_hidden']) ? 1 : 0;
+            $data['import_by_hidden'] = !empty($data['import_by_hidden']) ? 1 : 0;
+        }
+
+        $columns = [
+            'marketed_by_id',
+            'marketed_by_name',
+            'manufactured_by_ids',
+            'manufactured_by_names',
+            'manufactured_by_hidden',
+            'import_by_ids',
+            'import_by_names',
+            'import_by_hidden',
+        ];
+        foreach ($columns as $column) {
+            if (!array_key_exists($column, $data)) {
+                continue;
+            }
+            if (!Schema::hasColumn('products', $column)) {
+                unset($data[$column]);
+                continue;
+            }
+            if (in_array($column, ['manufactured_by_ids', 'import_by_ids'], true)) {
+                $ids = collect($data[$column] ?? [])->filter(fn ($id) => $id !== null && $id !== '')->map(fn ($id) => (int) $id)->unique()->values()->all();
+                $data[$column] = json_encode($ids);
+            }
+            if (in_array($column, ['manufactured_by_names', 'import_by_names'], true) && is_array($data[$column])) {
+                $data[$column] = json_encode(array_values($data[$column]));
+            }
+            if ($column === 'marketed_by_id' && ($data[$column] === '' || $data[$column] === null)) {
+                $data[$column] = null;
+            }
+        }
+
+        unset($data['manufactured_by_manual'], $data['import_by_manual'], $data['product_company_fields']);
+
+        return $data;
     }
     
     public function product_duplicate_store($product)

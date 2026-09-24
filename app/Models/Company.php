@@ -22,6 +22,36 @@ class Company extends Model
         'created_by',
     ];
 
+    public const COMPANY_TYPES = [
+        'Manufacturer',
+        'Third Party Manufacturer',
+        'C & F Agent',
+        'Authorised Distributor',
+        'Distributor',
+        'Wholesaler',
+        'Undercutter',
+        'Retailer',
+        'Hospital',
+        'Clinic',
+        'Doctor',
+        'Practiner',
+        'Govt.Supplier',
+        'Broker',
+        'Mediater',
+        'Supplier/Vendor',
+        'Self User',
+        'Farmer',
+        'Dairy',
+        'NGO',
+        'Milk Federation',
+        'Govt.Institutes',
+        'Medical College',
+        'R & D Center',
+        'Marketed By',
+        'Manufactured By',
+        'Import By',
+    ];
+
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'company_category')->withTimestamps();

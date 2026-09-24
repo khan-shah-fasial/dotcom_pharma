@@ -85,4 +85,23 @@ class DirectoryContact extends Model
     {
         return $this->belongsTo(ContactClassification::class, 'purpose_id');
     }
+
+    public function socialValue(string $platform): string
+    {
+        $needles = $platform === 'linkedin' ? ['linkedin'] : ['insta', 'instagram'];
+
+        foreach ($this->social_media_ids ?? [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $key = strtolower((string) ($row['key'] ?? ''));
+            foreach ($needles as $needle) {
+                if ($key !== '' && str_contains($key, $needle)) {
+                    return (string) ($row['value'] ?? '');
+                }
+            }
+        }
+
+        return '';
+    }
 }

@@ -15,15 +15,53 @@ class TransportController extends Controller
     public function index(Request $request)
     {
         $sort_search = $request->search;
-        $transports = Transport::with('creator')->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+        $allowedSorts = ['name', 'mode', 'url', 'created_by', 'status'];
+        $sortBy = in_array((string) $request->get('sort_by'), $allowedSorts, true) ? (string) $request->get('sort_by') : '';
+        $sortDir = strtolower((string) $request->get('sort_dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $filters = [
+            'name' => trim((string) $request->get('name', '')),
+            'mode' => (string) $request->get('mode', ''),
+            'url' => trim((string) $request->get('url', '')),
+            'created_by' => trim((string) $request->get('created_by', '')),
+            'status' => (string) $request->get('status', ''),
+        ];
+
+        $transports = Transport::with('creator');
 
         if ($sort_search) {
             $transports->where('name', 'like', '%' . $sort_search . '%');
         }
+        if ($filters['name'] !== '') {
+            $transports->where('transports.name', 'like', '%' . $filters['name'] . '%');
+        }
+        if (in_array($filters['mode'], ['surface', 'sea', 'air'], true)) {
+            $transports->where('transports.mode', $filters['mode']);
+        }
+        if ($filters['url'] !== '') {
+            $transports->where('transports.url', 'like', '%' . $filters['url'] . '%');
+        }
+        if ($filters['created_by'] !== '') {
+            $createdBy = $filters['created_by'];
+            $transports->whereHas('creator', function ($query) use ($createdBy) {
+                $query->where('name', 'like', '%' . $createdBy . '%');
+            });
+        }
+        if (in_array($filters['status'], ['active', 'inactive'], true)) {
+            $transports->where('transports.status', $filters['status']);
+        }
 
-        $transports = $transports->paginate(15);
+        if ($sortBy === 'created_by') {
+            $transports->orderByRaw('(select name from users where users.id = transports.created_by limit 1) ' . $sortDir);
+        } elseif ($sortBy !== '') {
+            $transports->orderBy('transports.' . $sortBy, $sortDir);
+        } else {
+            $transports->orderBy('transports.created_at', 'desc');
+        }
+        $transports->orderBy('transports.id', 'desc');
 
-        return view('backend.setup_configurations.transport.transports.index', compact('transports', 'sort_search'));
+        $transports = $transports->paginate(15)->appends($request->query());
+
+        return view('backend.setup_configurations.transport.transports.index', compact('transports', 'sort_search', 'filters', 'sortBy', 'sortDir'));
     }
 
     public function create()

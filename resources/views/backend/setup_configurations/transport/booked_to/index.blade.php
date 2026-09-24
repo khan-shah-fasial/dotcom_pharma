@@ -1,6 +1,14 @@
 @extends('backend.layouts.app')
 
 @section('content')
+@php
+    $filters = $filters ?? [];
+    $sortBy = $sortBy ?? '';
+    $sortDir = $sortDir ?? 'asc';
+    $filtersApplied = filled($sort_search) || collect($filters)->contains(function ($value) {
+        return $value !== null && $value !== '';
+    });
+@endphp
 <div class="aiz-titlebar text-left mt-2 mb-3">
     <div class="row align-items-center">
         <div class="col-md-6"><h1 class="h3">{{ translate('Booked To') }}</h1></div>
@@ -9,12 +17,16 @@
 </div>
 
 <div class="card">
-    <div class="card-header row gutters-5">
-        <div class="col text-center text-md-left"><h5 class="mb-md-0 h6">{{ translate('Booked To List') }}</h5></div>
-        <div class="col-md-4">
-            <form action="" method="GET">
-                <input type="text" class="form-control form-control-sm" name="search" value="{{ $sort_search }}" placeholder="{{ translate('Type location / branch / contact & Enter') }}">
-            </form>
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+        <div class="mb-2">
+            <h5 class="mb-md-0 h6">{{ translate('Booked To List') }}</h5>
+            @if ($filtersApplied)
+                <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+            @endif
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#bookedToFilterModal">{{ translate('Open Filters') }}</button>
+            <a href="{{ route('booked-to.index') }}" class="btn btn-danger mb-2">{{ translate('Reset') }}</a>
         </div>
     </div>
     <div class="card-body">
@@ -22,19 +34,19 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>{{ translate('Transport') }}</th>
-                    <th>{{ translate('Location') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Branch Name') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Branch Address') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Branch Code') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Branch GST Number') }}</th>
-                    <th>{{ translate('Branch Mobile Number') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Branch Alternate Mobile Number') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Contact - Incharge') }}</th>
-                    <th>{{ translate('Branch Email ID') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Scanner') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Created By') }}</th>
-                    <th>{{ translate('Status') }}</th>
+                    @include('backend.inc.sortable_th', ['column' => 'transport', 'label' => translate('Transport'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'location', 'label' => translate('Location'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'branch_name', 'label' => translate('Branch Name'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'branch_address', 'label' => translate('Branch Address'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'branch_code', 'label' => translate('Branch Code'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'branch_gst_number', 'label' => translate('Branch GST Number'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'branch_mobile_number', 'label' => translate('Branch Mobile Number'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'branch_alternate_mobile_number', 'label' => translate('Branch Alternate Mobile Number'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'contact_incharge', 'label' => translate('Contact - Incharge'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'branch_email', 'label' => translate('Branch Email ID'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'scanner', 'label' => translate('Scanner'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'created_by', 'label' => translate('Created By'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'status', 'label' => translate('Status'), 'routeName' => 'booked-to.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                     <th class="text-right">{{ translate('Options') }}</th>
                 </tr>
             </thead>
@@ -104,6 +116,66 @@
 
 @section('modal')
     @include('modals.delete_modal')
+    <form action="{{ route('booked-to.index') }}" method="GET">
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+        <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
+        <div class="modal fade" id="bookedToFilterModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ translate('Filter Booked To') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row gutters-5">
+                            <div class="col-md-12 mb-3">
+                                <label>{{ translate('Search') }}</label>
+                                <input type="text" class="form-control" name="search" value="{{ $sort_search }}" placeholder="{{ translate('Location, branch, or contact') }}">
+                            </div>
+                            @foreach ([
+                                'transport' => 'Transport',
+                                'location' => 'Location',
+                                'branch_name' => 'Branch Name',
+                                'branch_address' => 'Branch Address',
+                                'branch_code' => 'Branch Code',
+                                'branch_gst_number' => 'Branch GST Number',
+                                'branch_mobile_number' => 'Branch Mobile Number',
+                                'branch_alternate_mobile_number' => 'Branch Alternate Mobile Number',
+                                'contact_incharge' => 'Contact - Incharge',
+                                'branch_email' => 'Branch Email ID',
+                                'created_by' => 'Created By',
+                            ] as $field => $label)
+                                <div class="col-md-6 mb-3">
+                                    <label>{{ translate($label) }}</label>
+                                    <input type="text" class="form-control" name="{{ $field }}" value="{{ $filters[$field] ?? '' }}">
+                                </div>
+                            @endforeach
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Scanner') }}</label>
+                                <select name="scanner" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="1" @selected(($filters['scanner'] ?? '') === '1')>{{ translate('Has file') }}</option>
+                                    <option value="0" @selected(($filters['scanner'] ?? '') === '0')>{{ translate('No file') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Status') }}</label>
+                                <select name="status" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="active" @selected(($filters['status'] ?? '') === 'active')>{{ translate('Active') }}</option>
+                                    <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>{{ translate('Inactive') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route('booked-to.index') }}" class="btn btn-danger">{{ translate('Reset') }}</a>
+                        <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 @endsection
 
 @section('script')

@@ -9,6 +9,7 @@ use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class DirectoryContactController extends Controller
@@ -23,27 +24,49 @@ class DirectoryContactController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only([
-            'search',
-            'group_id',
-            'industry_id',
-            'department_id',
-            'tags',
-        ]);
+        $hasRegion = Schema::hasColumn('directory_contacts', 'region');
+        $textFilters = [
+            'search', 'name', 'company_name', 'designation', 'phone', 'whatsapp_number',
+            'alternate_mobile_number', 'email', 'instagram', 'linkedin', 'district', 'post', 'tags',
+        ];
+        if ($hasRegion) {
+            $textFilters[] = 'region';
+        }
+        $idFilters = [
+            'group_id', 'category_id', 'subcategory_id', 'type_id', 'subject_id',
+            'industry_id', 'work_profile_id', 'department_id', 'purpose_id', 'country_id', 'state_id',
+        ];
+        $filters = [];
+        foreach (array_merge($textFilters, $idFilters) as $field) {
+            $filters[$field] = trim((string) $request->input($field, ''));
+        }
 
         $contacts = DirectoryContact::query()
             ->select([
                 'directory_contacts.id',
                 'directory_contacts.contact_no',
                 'directory_contacts.name',
+                'directory_contacts.company_name',
+                'directory_contacts.designation',
                 'directory_contacts.email',
                 'directory_contacts.phone',
                 'directory_contacts.alternate_mobile_number',
                 'directory_contacts.whatsapp_number',
-                'directory_contacts.company_name',
+                'directory_contacts.social_media_ids',
+                'directory_contacts.country_id',
+                'directory_contacts.state_id',
+                'directory_contacts.district',
+                'directory_contacts.post',
+                'directory_contacts.tags',
                 'directory_contacts.group_id',
+                'directory_contacts.category_id',
+                'directory_contacts.subcategory_id',
+                'directory_contacts.type_id',
+                'directory_contacts.subject_id',
                 'directory_contacts.industry_id',
+                'directory_contacts.work_profile_id',
                 'directory_contacts.department_id',
+                'directory_contacts.purpose_id',
                 'directory_contacts.created_by',
                 'directory_contacts.updated_by',
                 'directory_contacts.created_at',
@@ -51,14 +74,25 @@ class DirectoryContactController extends Controller
             ])
             ->with([
                 'group:id,name',
+                'category:id,name',
+                'subcategory:id,name',
+                'type:id,name',
+                'subject:id,name',
                 'industry:id,name',
+                'workProfile:id,name',
                 'department:id,name',
+                'purpose:id,name',
+                'country:id,name',
+                'state:id,name',
                 'creator:id,name',
                 'updater:id,name',
             ]);
+        if ($hasRegion) {
+            $contacts->addSelect('directory_contacts.region');
+        }
 
-        if ($request->filled('search')) {
-            $search = trim((string) $request->search);
+        if ($filters['search'] !== '') {
+            $search = $filters['search'];
             $contacts->where(function ($query) use ($search) {
                 $query->where('contact_no', 'like', "%{$search}%")
                     ->orWhere('name', 'like', "%{$search}%")
@@ -70,25 +104,93 @@ class DirectoryContactController extends Controller
             });
         }
 
-        foreach (['group_id', 'industry_id', 'department_id'] as $field) {
-            if ($request->filled($field)) {
-                $contacts->where($field, $request->input($field));
+        foreach ([
+            'name' => 'directory_contacts.name',
+            'company_name' => 'directory_contacts.company_name',
+            'designation' => 'directory_contacts.designation',
+            'phone' => 'directory_contacts.phone',
+            'whatsapp_number' => 'directory_contacts.whatsapp_number',
+            'alternate_mobile_number' => 'directory_contacts.alternate_mobile_number',
+            'email' => 'directory_contacts.email',
+            'district' => 'directory_contacts.district',
+            'post' => 'directory_contacts.post',
+        ] as $filter => $column) {
+            if ($filters[$filter] !== '') {
+                $contacts->where($column, 'like', '%' . $filters[$filter] . '%');
             }
         }
-
-        if ($request->filled('tags')) {
-            $tag = trim((string) $request->tags);
+        if ($hasRegion && ($filters['region'] ?? '') !== '') {
+            $contacts->where('directory_contacts.region', 'like', '%' . $filters['region'] . '%');
+        }
+        if ($filters['instagram'] !== '') {
+            $this->whereSocialPlatform($contacts, ['insta', 'instagram'], $filters['instagram']);
+        }
+        if ($filters['linkedin'] !== '') {
+            $this->whereSocialPlatform($contacts, ['linkedin'], $filters['linkedin']);
+        }
+        foreach ($idFilters as $field) {
+            if ($filters[$field] !== '') {
+                $contacts->where('directory_contacts.' . $field, $filters[$field]);
+            }
+        }
+        if ($filters['tags'] !== '') {
+            $tag = $filters['tags'];
             $contacts->where(function ($query) use ($tag) {
                 $query->whereJsonContains('tags', $tag)
                     ->orWhere('tags', 'like', '%' . $tag . '%');
             });
         }
 
-        $contacts = $contacts->latest('directory_contacts.created_at')->paginate(20);
+        $allowedSorts = [
+            'name' => 'directory_contacts.name',
+            'company_name' => 'directory_contacts.company_name',
+            'designation' => 'directory_contacts.designation',
+            'group' => '(select name from contact_classifications where contact_classifications.id = directory_contacts.group_id limit 1)',
+            'category' => '(select name from contact_classifications where contact_classifications.id = directory_contacts.category_id limit 1)',
+            'subcategory' => '(select name from contact_classifications where contact_classifications.id = directory_contacts.subcategory_id limit 1)',
+            'type' => '(select name from contact_classifications where contact_classifications.id = directory_contacts.type_id limit 1)',
+            'subject' => '(select name from contact_classifications where contact_classifications.id = directory_contacts.subject_id limit 1)',
+            'industry' => '(select name from contact_classifications where contact_classifications.id = directory_contacts.industry_id limit 1)',
+            'work_profile' => '(select name from contact_classifications where contact_classifications.id = directory_contacts.work_profile_id limit 1)',
+            'department' => '(select name from contact_classifications where contact_classifications.id = directory_contacts.department_id limit 1)',
+            'purpose' => '(select name from contact_classifications where contact_classifications.id = directory_contacts.purpose_id limit 1)',
+            'phone' => 'directory_contacts.phone',
+            'whatsapp_number' => 'directory_contacts.whatsapp_number',
+            'alternate_mobile_number' => 'directory_contacts.alternate_mobile_number',
+            'email' => 'directory_contacts.email',
+            'instagram' => 'directory_contacts.social_media_ids',
+            'linkedin' => 'directory_contacts.social_media_ids',
+            'country' => '(select name from countries where countries.id = directory_contacts.country_id limit 1)',
+            'state' => '(select name from states where states.id = directory_contacts.state_id limit 1)',
+            'district' => 'directory_contacts.district',
+            'post' => 'directory_contacts.post',
+            'tags' => 'directory_contacts.tags',
+        ];
+        if ($hasRegion) {
+            $allowedSorts['region'] = 'directory_contacts.region';
+        }
+        $sortBy = array_key_exists((string) $request->input('sort_by'), $allowedSorts) ? (string) $request->input('sort_by') : '';
+        $sortDir = strtolower((string) $request->input('sort_dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+        if ($sortBy !== '') {
+            $expression = $allowedSorts[$sortBy];
+            if (str_starts_with($expression, '(')) {
+                $contacts->orderByRaw($expression . ' ' . $sortDir);
+            } else {
+                $contacts->orderBy($expression, $sortDir);
+            }
+            $contacts->orderBy('directory_contacts.id', 'desc');
+        } else {
+            $contacts->latest('directory_contacts.created_at');
+        }
+
+        $contacts = $contacts->paginate(20)->appends($request->query());
 
         return view('backend.contact_management.index', $this->indexData() + [
             'contacts' => $contacts,
             'filters' => $filters,
+            'sortBy' => $sortBy,
+            'sortDir' => $sortDir,
+            'hasRegion' => $hasRegion,
         ]);
     }
 
@@ -176,6 +278,7 @@ class DirectoryContactController extends Controller
             'district' => $this->nullableTrimmedInput($request->input('district')),
             'post' => $this->nullableTrimmedInput($request->input('post')),
             'tags' => $this->nullableTrimmedInput($request->input('tags')),
+            'region' => $this->nullableTrimmedInput($request->input('region')),
         ]);
 
         $phoneRules = ['nullable', 'string', 'max:50', 'regex:/^\+?[0-9\s().-]{7,20}$/'];
@@ -212,6 +315,7 @@ class DirectoryContactController extends Controller
             'address' => 'nullable|string|max:500',
             'country_id' => 'nullable|integer|exists:countries,id',
             'state_id' => 'nullable|integer|exists:states,id',
+            'region' => 'nullable|string|max:255',
             'district' => 'nullable|string|max:255',
             'post' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
@@ -242,6 +346,9 @@ class DirectoryContactController extends Controller
         unset($data['social_media_keys'], $data['social_media_values']);
 
         $data['tags'] = $this->parseTags($data['tags'] ?? null);
+        if (!Schema::hasColumn('directory_contacts', 'region')) {
+            unset($data['region']);
+        }
 
         foreach (array_keys(ContactClassification::CONTACT_COLUMNS) as $kind) {
             $column = ContactClassification::CONTACT_COLUMNS[$kind];
@@ -353,12 +460,35 @@ class DirectoryContactController extends Controller
     protected function indexData(): array
     {
         $classifications = $this->classificationOptions();
+        $active = function (string $kind) use ($classifications) {
+            return $classifications->where('kind', $kind)->where('status', 1)->sortBy('name')->values();
+        };
 
         return [
-            'groups' => $classifications->where('kind', 'group')->where('status', 1)->sortBy('name')->values(),
-            'industries' => $classifications->where('kind', 'industry')->where('status', 1)->sortBy('name')->values(),
-            'departments' => $classifications->where('kind', 'department')->where('status', 1)->sortBy('name')->values(),
+            'groups' => $active('group'),
+            'categories' => $active('category'),
+            'subcategories' => $active('subcategory'),
+            'types' => $active('type'),
+            'subjects' => $active('subject'),
+            'industries' => $active('industry'),
+            'workProfiles' => $active('work_profile'),
+            'departments' => $active('department'),
+            'purposes' => $active('purpose'),
+            'countries' => Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']),
+            'states' => State::query()->orderBy('name')->get(['id', 'name']),
         ];
+    }
+
+    protected function whereSocialPlatform($query, array $needles, string $value): void
+    {
+        $query->where(function ($outer) use ($needles, $value) {
+            foreach ($needles as $needle) {
+                $outer->orWhere(function ($inner) use ($needle, $value) {
+                    $inner->where('directory_contacts.social_media_ids', 'like', '%' . $needle . '%')
+                        ->where('directory_contacts.social_media_ids', 'like', '%' . $value . '%');
+                });
+            }
+        });
     }
 
     protected function classificationOptions()

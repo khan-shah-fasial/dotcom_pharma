@@ -88,7 +88,7 @@ class ProductController extends Controller
 
         $products = $this->applyBackendCategoryFilter($products, $selected_category_id);
 
-        if ($request->type != null && $request->get('sort_by') !== 'sku') {
+        if ($request->type != null && !$this->usesListingColumnSort($request)) {
             $var = explode(",", $request->type);
             $col_name = $var[0];
             $query = $var[1];
@@ -99,15 +99,16 @@ class ProductController extends Controller
             $sort_search = $request->search;
             $products = $this->applyBackendSearchFilters($products, $sort_search);
         }
+        [$products, $published_status] = $this->applyBackendPublishedFilter($products, $request);
 
-        $products = $this->applyBackendSkuSorting($products, $request)
+        $products = $this->applyBackendListingSort($products, $request)
             ->where('digital', 0)
             ->with(['categories', 'main_category', 'main_group', 'brand', 'stocks.batches'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         $categories = $this->backendProductCategories();
 
-        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'sort_search', 'categories', 'selected_category_id'));
+        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'sort_search', 'published_status', 'categories', 'selected_category_id'));
     }
 
     /**
@@ -132,15 +133,16 @@ class ProductController extends Controller
             $sort_search = $request->search;
             $products = $this->applyBackendSearchFilters($products, $sort_search);
         }
-        if ($request->type != null && $request->get('sort_by') !== 'sku') {
+        if ($request->type != null && !$this->usesListingColumnSort($request)) {
             $var = explode(",", $request->type);
             $col_name = $var[0];
             $query = $var[1];
             $products = $products->orderBy($col_name, $query);
             $sort_type = $request->type;
         }
+        [$products, $published_status] = $this->applyBackendPublishedFilter($products, $request);
         $products = $product_type == 'physical' ? $products->where('digital', 0) : $products->where('digital', 1);
-        $products = $this->applyBackendSkuSorting($products, $request)
+        $products = $this->applyBackendListingSort($products, $request)
             ->with(['categories', 'main_category', 'main_group', 'brand', 'stocks.batches'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -150,7 +152,7 @@ class ProductController extends Controller
         if ($product_type == 'digital') {
             return view('backend.product.digital_products.index', compact('products', 'sort_search', 'type'));
         }
-        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'categories', 'selected_category_id'));
+        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id'));
     }
 
     public function all_products(Request $request)
@@ -175,7 +177,7 @@ class ProductController extends Controller
             $products = $this->applyBackendSearchFilters($products, $sort_search);
         }
         
-        if ($request->type != null && $request->get('sort_by') !== 'sku') {
+        if ($request->type != null && !$this->usesListingColumnSort($request)) {
             $var = explode(",", $request->type);
             $col_name = $var[0];
             $query = $var[1];
@@ -183,14 +185,14 @@ class ProductController extends Controller
             $sort_type = $request->type;
         }
 
-        if ($request->published_status != null) {
+        if ($request->published_status != null && $request->published_status !== '') {
             $products = $products->where('published', $request->published_status);
             $published_status = $request->published_status;
         } else {
             $published_status = 'All';
         }
 
-        $products = $this->applyBackendSkuSorting($products, $request)
+        $products = $this->applyBackendListingSort($products, $request)
             ->with(['categories', 'main_category', 'main_group', 'brand', 'stocks.batches'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -214,17 +216,63 @@ class ProductController extends Controller
         });
     }
 
-    private function applyBackendSkuSorting($products, Request $request)
+    private function usesListingColumnSort(Request $request): bool
     {
-        if ($request->get('sort_by') !== 'sku') {
+        return in_array((string) $request->get('sort_by'), [
+            'sku', 'name', 'category', 'stock', 'brand', 'role_price', 'group',
+            'schedule', 'todays_deal', 'published', 'approved', 'featured',
+        ], true);
+    }
+
+    private function applyBackendPublishedFilter($products, Request $request): array
+    {
+        if ($request->published_status === null || $request->published_status === '') {
+            return [$products, null];
+        }
+
+        return [$products->where('published', $request->published_status), $request->published_status];
+    }
+
+    private function applyBackendListingSort($products, Request $request)
+    {
+        if (!$this->usesListingColumnSort($request)) {
             return $products;
         }
 
-        $direction = strtolower((string) $request->get('sort_order')) === 'desc' ? 'desc' : 'asc';
+        $sortBy = (string) $request->get('sort_by');
+        $direction = strtolower((string) ($request->get('sort_dir') ?: $request->get('sort_order'))) === 'desc' ? 'desc' : 'asc';
+        $columns = [
+            'name' => 'products.name',
+            'role_price' => 'products.unit_price',
+            'schedule' => 'products.schedule',
+            'todays_deal' => 'products.todays_deal',
+            'published' => 'products.published',
+            'approved' => 'products.approved',
+            'featured' => 'products.featured',
+        ];
 
-        return $products->orderByRaw(
-            "(SELECT MIN(LOWER(TRIM(product_stocks.sku))) FROM product_stocks WHERE product_stocks.product_id = products.id AND TRIM(product_stocks.sku) <> '') {$direction}"
-        );
+        if ($sortBy === 'sku') {
+            return $products->orderByRaw(
+                "(SELECT MIN(LOWER(TRIM(product_stocks.sku))) FROM product_stocks WHERE product_stocks.product_id = products.id AND TRIM(product_stocks.sku) <> '') {$direction}"
+            );
+        }
+        if ($sortBy === 'category') {
+            return $products->orderByRaw('(select name from categories where categories.id = products.category_id limit 1) ' . $direction);
+        }
+        if ($sortBy === 'stock') {
+            return $products->orderByRaw('(select coalesce(sum(coalesce((select sum(product_batches.qty) from product_batches where product_batches.product_stock_id = product_stocks.id), product_stocks.qty)), 0) from product_stocks where product_stocks.product_id = products.id) ' . $direction);
+        }
+        if ($sortBy === 'brand') {
+            return $products->orderByRaw('(select name from brands where brands.id = products.brand_id limit 1) ' . $direction);
+        }
+        if ($sortBy === 'group') {
+            return $products->orderByRaw('(select name from groups where groups.id = products.group_id limit 1) ' . $direction);
+        }
+        if (isset($columns[$sortBy])) {
+            return $products->orderBy($columns[$sortBy], $direction);
+        }
+
+        return $products;
     }
 
     private function backendProductCategories()

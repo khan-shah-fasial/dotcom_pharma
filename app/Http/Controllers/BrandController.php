@@ -15,7 +15,7 @@ class BrandController extends Controller
     public function __construct() {
         // Staff Permission Check
         $this->middleware(['permission:view_all_brands'])->only('index');
-        $this->middleware(['permission:add_brand'])->only('create');
+        $this->middleware(['permission:add_brand'])->only('create', 'store');
         $this->middleware(['permission:edit_brand'])->only('edit');
         $this->middleware(['permission:delete_brand'])->only('destroy');
     }
@@ -26,15 +26,20 @@ class BrandController extends Controller
      */
     public function index(Request $request)
     {
-        $sort_search = null;
-        $brands = Brand::query()
-            ->with([
-                'company.categories',
-            ])
-            ->orderBy('name', 'asc');
+        $allowedSorts = ['name', 'company_name', 'company_type', 'deals_in'];
+        $sortBy = in_array((string) $request->get('sort_by'), $allowedSorts, true) ? (string) $request->get('sort_by') : 'name';
+        $sortDir = strtolower((string) $request->get('sort_dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+        $filters = [
+            'brand_name' => trim((string) $request->get('brand_name', '')),
+            'company_name' => trim((string) $request->get('company_name', '')),
+            'company_type' => trim((string) $request->get('company_type', '')),
+            'deals_in' => trim((string) $request->get('deals_in', '')),
+        ];
+        $sort_search = $request->filled('search') ? trim((string) $request->search) : null;
 
-        if ($request->filled('search')) {
-            $sort_search = trim((string) $request->search);
+        $brands = Brand::query()->with(['company.categories']);
+
+        if ($sort_search) {
             $brands->where(function ($query) use ($sort_search) {
                 $query->where('name', 'like', '%' . $sort_search . '%')
                     ->orWhereHas('company', function ($companyQuery) use ($sort_search) {
@@ -50,12 +55,52 @@ class BrandController extends Controller
                     });
             });
         }
+        if ($filters['brand_name'] !== '') {
+            $brandName = $filters['brand_name'];
+            $brands->where(function ($query) use ($brandName) {
+                $query->where('brands.name', 'like', '%' . $brandName . '%')
+                    ->orWhereHas('brand_translations', function ($translation) use ($brandName) {
+                        $translation->where('name', 'like', '%' . $brandName . '%');
+                    });
+            });
+        }
+        if ($filters['company_name'] !== '') {
+            $companyName = $filters['company_name'];
+            $brands->whereHas('company', function ($query) use ($companyName) {
+                $query->where('company_name', 'like', '%' . $companyName . '%');
+            });
+        }
+        if ($filters['company_type'] !== '') {
+            $companyType = $filters['company_type'];
+            $brands->whereHas('company', function ($query) use ($companyType) {
+                $query->where('company_type', 'like', '%' . $companyType . '%');
+            });
+        }
+        if ($filters['deals_in'] !== '') {
+            $dealsIn = $filters['deals_in'];
+            $brands->whereHas('company.categories', function ($query) use ($dealsIn) {
+                $query->where('categories.name', 'like', '%' . $dealsIn . '%')
+                    ->orWhereHas('category_translations', function ($translation) use ($dealsIn) {
+                        $translation->where('name', 'like', '%' . $dealsIn . '%');
+                    });
+            });
+        }
 
-        $brands = $brands->paginate(15);
-        $companies = Company::orderBy('company_name')->get(['id', 'company_name']);
+        if ($sortBy === 'company_name') {
+            $brands->orderByRaw('(select company_name from companies where companies.id = brands.company_id limit 1) ' . $sortDir);
+        } elseif ($sortBy === 'company_type') {
+            $brands->orderByRaw('(select company_type from companies where companies.id = brands.company_id limit 1) ' . $sortDir);
+        } elseif ($sortBy === 'deals_in') {
+            $brands->orderByRaw('(select min(categories.name) from categories inner join company_category on company_category.category_id = categories.id where company_category.company_id = brands.company_id) ' . $sortDir);
+        } else {
+            $brands->orderBy('brands.name', $sortDir);
+        }
+        $brands->orderBy('brands.id');
+
+        $brands = $brands->paginate(15)->appends($request->query());
         $categories = Category::orderBy('name')->get(['id', 'name', 'parent_id']);
 
-        return view('backend.product.brands.index', compact('brands', 'sort_search', 'companies', 'categories'));
+        return view('backend.product.brands.index', compact('brands', 'sort_search', 'categories', 'filters', 'sortBy', 'sortDir'));
     }
 
     /**
@@ -65,6 +110,9 @@ class BrandController extends Controller
      */
     public function create()
     {
+        $companies = Company::orderBy('company_name')->get(['id', 'company_name']);
+
+        return view('backend.product.brands.create', compact('companies'));
     }
 
     /**

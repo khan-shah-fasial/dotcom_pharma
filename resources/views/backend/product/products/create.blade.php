@@ -183,13 +183,8 @@ margin-left: 42px;
 
                                     
                                     <div class="col-xxl-12 col-xl-12">
-                                        <!-- Product Name -->
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product Name')}} <span class="text-danger h5">*</span></label>
-                                            <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" placeholder="{{ translate('Product Name') }}" onchange="update_sku()" required>
-                                            </div>
-                                        </div>
+                                        @include('backend.product.products.partials.brand_product_name')
+                                        @include('backend.product.products.partials.company_attribution')
 
                                         <!-- GEM portal link -->
                                         <div class="form-group row">

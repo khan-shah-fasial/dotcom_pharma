@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Software Testing Report — Pharm Vet Easy — 2026-09-25</title>
+<style>
+  :root { --ink:#1d2430; --muted:#5c6778; --line:#e3e8ef; --bg:#f6f8fb; --card:#fff; --pass:#1f7a4d; --fail:#b42318; --high:#c2410c; --med:#b45309; --low:#475569; --nt:#64748b; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 Segoe UI, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:#142033; color:#fff; padding:28px 32px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; color:#c9d4e3; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
+  h2 { margin:28px 0 12px; font-size:20px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; }
+  .pass { background:var(--pass); } .fail { background:var(--fail); } .high { background:var(--high); } .med { background:var(--med); } .low { background:var(--low); } .nt { background:var(--nt); } .open { background:var(--fail); }
+  .cards { display:flex; flex-wrap:wrap; gap:12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; min-width:140px; }
+  .card strong { display:block; font-size:22px; }
+  table { width:100%; border-collapse:collapse; background:#fff; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#eef2f7; }
+  tr:nth-child(even) td { background:#fbfcfe; }
+  code { font-family:Consolas, monospace; font-size:12px; }
+  .rec { font-size:13px; }
+  @media print { body { background:#fff; } header { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Software Testing Report</h1>
+  <p>Pharm Vet Easy / dotcom_pharma — local admin walkthrough of the 24 Sep 2026 correction list. Series Master was excluded on request.</p>
+</header>
+<main>
+  <h2>1. Project Information</h2>
+  <table>
+    <tr><th>Project</th><td>Pharm Vet Easy (dotcom_pharma)</td></tr>
+    <tr><th>Date</th><td>25 September 2026</td></tr>
+    <tr><th>Environment</th><td>http://127.0.0.1:8000 — Chrome via Cursor browser, signed in as the provided admin account</td></tr>
+    <tr><th>Scope</th><td>Correction-list items 1–15, 17, and 18. Series Master was not tested.</td></tr>
+    <tr><th>Overall</th><td><span class="badge med">Needs Fixes and Retesting</span> — Functional score 86%</td></tr>
+  </table>
+
+  <h2>2. Testing Summary</h2>
+  <div class="cards">
+    <div class="card"><strong>86%</strong>Functional</div>
+    <div class="card"><strong>18</strong>Passed</div>
+    <div class="card"><strong>3</strong>Failed</div>
+    <div class="card"><strong>3</strong>Open issues</div>
+  </div>
+  <table>
+    <thead><tr><th>Testing Type</th><th>Total</th><th>Passed</th><th>Failed</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Functional Testing</td><td>21</td><td>18</td><td>3</td><td>Needs fixes</td></tr>
+      <tr><td>Security Testing</td><td>1</td><td>0</td><td>0</td><td>Not Tested</td></tr>
+      <tr><td>UI/UX Testing</td><td>2</td><td>2</td><td>0</td><td>Pass</td></tr>
+      <tr><td>Performance Testing</td><td>1</td><td>0</td><td>0</td><td>Not Tested</td></tr>
+      <tr><td>SEO Testing</td><td>1</td><td>0</td><td>0</td><td>Not Tested</td></tr>
+      <tr><td>Content Testing</td><td>1</td><td>0</td><td>0</td><td>Not Tested</td></tr>
+      <tr><td>Compatibility Testing</td><td>1</td><td>0</td><td>0</td><td>Not Tested</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. Functional Testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Module</th><th>Test Case</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>FT-001</td><td>Login</td><td>Sign in with the provided admin account and reach /admin</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-002</td><td>Financial Archive</td><td>Add New Archive on a customer page includes Type “Other Documents”</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-003</td><td>Financial Archive</td><td>Open /admin/financial-archives</td><td><span class="badge fail">Fail</span></td><td>Medium</td><td class="rec"><code>routes/admin.php</code> resource registers index/create, and <code>FinancialArchiveController</code> has neither method. Direct URL returns HTTP 500. The working screen is <code>/admin/financial-archives/customer/{user}</code>.</td></tr>
+      <tr><td>FT-004</td><td>Business customers</td><td>Ban Status sits under Sr.No. First header was “Sr.No Ban Status”; first cell was “1 Active”.</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-005</td><td>Business customers</td><td>File No sits under Passport No. Header was “IEC.No Passport.No File No”.</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-006</td><td>Medical Groups</td><td>Open Filters opens the dialog (modal class “show”, display block)</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-007</td><td>Medical Groups</td><td>Name sort URL loads. The groups table has 0 rows, so the list correctly says nothing found.</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td class="rec">-</td></tr>
+      <tr><td>FT-008</td><td>All Orders</td><td>Page 200 with Open Filters, filter dialog, and order-code sort link</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-009</td><td>Staffs</td><td>Page 200 with Open Filters, filter dialog, and name sort link. Status script is present.</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-010</td><td>Discount Master</td><td>Page 200 with Open Filters and discount-code sort link</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-011</td><td>All Products</td><td>Page 200 with Open Filters, filter dialog, and Bulk Action</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-012</td><td>Transports</td><td>Page 200 with Open Filters, filter dialog, and name sort</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-013</td><td>Booked To</td><td>Page 200 with Open Filters, filter dialog, and location sort</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-014</td><td>Brands</td><td>Listing has Open Filters and sorts. Add New Brand goes to /admin/brands/create, which has its own form.</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-015</td><td>Leads</td><td>All titles are sortable. Sorting Lead No ascending showed LD-00001; descending showed LD-01518. View, edit, and delete are on the row. Row height about 111px.</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-016</td><td>Contacts</td><td>Open Filters includes the requested titles through Tags, including Insta ID and LinkedIn ID. Create link is present. Directory has 0 contacts.</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-017</td><td>Contacts</td><td>Region is a requested title. The add-contact form does not include a region field.</td><td><span class="badge fail">Fail</span></td><td>High</td><td class="rec"><code>directory_contacts</code> has no region column, so the form and list hide it. Run the region ALTER from the previous note, then retest <code>resources/views/backend/contact_management/_form.blade.php</code>.</td></tr>
+      <tr><td>FT-018</td><td>Product edit</td><td>Brand Name/Product Name kept the existing name “Stethoscope” and selected Not in List.</td><td><span class="badge pass">Pass</span></td><td>Critical</td><td class="rec">-</td></tr>
+      <tr><td>FT-019</td><td>Product general</td><td>Marketed By, Manufactured By, Import By, and Hide are on the form. The page warns they are not saved.</td><td><span class="badge fail">Fail</span></td><td>High</td><td class="rec"><code>products</code> is missing marketed_by_id and the related columns. <code>app/Services/ProductService.php</code> → <code>applyCompanyAttribution()</code> drops those fields until the columns exist. Run the products ALTER, then save a product and reopen it.</td></tr>
+      <tr><td>FT-020</td><td>Company Master</td><td>Open Filters is present. Company Type lists Marketed By, Manufactured By, and Import By. Choosing Not in List showed the manual type box.</td><td><span class="badge pass">Pass</span></td><td>High</td><td class="rec">-</td></tr>
+      <tr><td>FT-021</td><td>Storefront variants</td><td>On /product/ai-sheath-veterinary the two option chips sat on one row (same vertical position). Choose Batch is a normal block, not a stray column.</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td class="rec">-</td></tr>
+      <tr><td>FT-022</td><td>Series Master</td><td>Excluded from this walkthrough</td><td><span class="badge nt">Not Tested</span></td><td>Medium</td><td class="rec">-</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Bug / Issue Report</h2>
+  <table>
+    <thead><tr><th>Bug ID</th><th>Module</th><th>Issue</th><th>Severity</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>BUG-001</td><td>Financial Archive</td><td>/admin/financial-archives returns HTTP 500: FinancialArchiveController::index does not exist. /admin/financial-archives/create also 500s. The customer Add New Archive screen works and includes Other Documents.</td><td><span class="badge med">Medium</span></td><td><span class="badge open">Open</span></td><td class="rec"><code>routes/admin.php</code> → financial-archives resource → stop registering index and create, or add those methods so the URL does not 500.</td></tr>
+      <tr><td>BUG-002</td><td>Contacts</td><td>Region is not on the contact form, filter, or list.</td><td><span class="badge high">High</span></td><td><span class="badge open">Open</span></td><td class="rec">Add <code>directory_contacts.region</code>, then retest <code>DirectoryContactController</code> and <code>contact_management/_form.blade.php</code>.</td></tr>
+      <tr><td>BUG-003</td><td>Product general</td><td>Marketed By, Manufactured By, and Import By are visible, and the form says they are not stored. Confirmed on product 1011 edit.</td><td><span class="badge high">High</span></td><td><span class="badge open">Open</span></td><td class="rec">Add the product company columns, then save and reopen a product. <code>ProductService.php</code> → <code>applyCompanyAttribution()</code>.</td></tr>
+    </tbody>
+  </table>
+  <p>Observation, not logged as a separate failure: Not In List was confirmed on Company Type and Brand Name/Product Name. It was not checked on every other admin dropdown. Category, country, and unit selects were left as existing-record dropdowns.</p>
+
+  <h2>5. Security Testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Security Check</th><th>Status</th><th>Severity</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>SEC-001</td><td>Security suite</td><td><span class="badge nt">Not Tested</span></td><td>-</td><td class="rec">Walkthrough was limited to the correction list. No injection, XSS, or authorization suite was run.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6. UI/UX Testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>UI-001</td><td>Lead list</td><td>First data row height about 111px. Headers match the requested titles. Actions remain usable.</td><td><span class="badge pass">Pass</span></td><td class="rec">-</td></tr>
+      <tr><td>UI-002</td><td>Storefront variants</td><td>Two variant chips render side by side on the AI Sheath product.</td><td><span class="badge pass">Pass</span></td><td class="rec">-</td></tr>
+    </tbody>
+  </table>
+
+  <h2>7. Performance Testing</h2>
+  <p>Not Tested - Measurement unavailable in current environment.</p>
+
+  <h2>8. SEO Testing</h2>
+  <p>Not Tested. The storefront product title is extremely long (keyword-stuffed). That was observed and not scored.</p>
+
+  <h2>9. Content Testing</h2>
+  <p>Not Tested as a content audit. One label on the business customer list still reads “Wahtsup”.</p>
+
+  <h2>10. Browser &amp; Device Testing</h2>
+  <table>
+    <thead><tr><th>Browser / Device</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>Chrome Desktop (Cursor browser)</td><td>Tested for the cases above</td><td class="rec">-</td></tr>
+      <tr><td>Firefox, Edge, Safari, Android, iPhone, Tablet</td><td><span class="badge nt">Not Tested</span></td><td class="rec">-</td></tr>
+    </tbody>
+  </table>
+
+  <h2>11. API Testing</h2>
+  <p>Not Tested.</p>
+
+  <h2>12. Database Testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>DB-001</td><td>Row counts used only to interpret empty lists</td><td>Checked</td><td class="rec">groups=0, directory_contacts=0, leads=1495, brands=2, staff=17, orders=1. No writes were made.</td></tr>
+      <tr><td>DB-002</td><td>region and product company columns</td><td><span class="badge fail">Fail</span></td><td class="rec">Columns are not present, which matches BUG-002 and BUG-003.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>13. Production / Deployment Testing</h2>
+  <p>Not Tested. This was the local server only. Debug mode is on (debug bar visible on admin pages).</p>
+
+  <h2>14. Overall Score</h2>
+  <p>Functional score = 18 passed / 21 applicable = 86%. Series Master was excluded. Security, performance, SEO, content, and compatibility were not scored. Weighted overall for the tested functional and UI checks remains in the mid-80s.</p>
+  <table>
+    <thead><tr><th>Score</th><th>Rating</th></tr></thead>
+    <tbody><tr><td>86%</td><td>Average — fix the open items before calling the correction list done</td></tr>
+  </table>
+
+  <h2>15. Final Status</h2>
+  <p><strong>Needs Fixes and Retesting</strong></p>
+  <p>The listing filters, sorts, brand page split, company type Not In List, preserved product names, archive “Other Documents”, and the storefront variant row were confirmed in the browser. Region and the three product company fields do not store data until the SQL is applied. The financial-archive index URL returns 500. Series Master was not tested.</p>
+
+  <h2>16. Testing Limitations</h2>
+  <ul>
+    <li>Series Master was left out on request.</li>
+    <li>No archive, product, or company record was saved, so create/update persistence was not proven except by reading the existing product name.</li>
+    <li>Medical groups and the contact directory have no rows, so sort order could not be judged on those lists.</li>
+    <li>Only Chrome in the Cursor browser was used.</li>
+    <li>The password is not recorded in this report.</li>
+  </ul>
+  <p>Report generated 25 September 2026.</p>
+</main>
+</body>
+</html>

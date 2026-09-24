@@ -15,6 +15,7 @@ use App\Http\Controllers\CarrierController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\SeriesMasterController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ConversationController;
@@ -357,6 +358,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
     // Company Master
     Route::resource('companies', CompanyController::class);
+    Route::get('series/destroy/{seriesMaster}', [SeriesMasterController::class, 'destroy'])->name('series.destroy');
+    Route::resource('series', SeriesMasterController::class)->parameters(['series' => 'seriesMaster'])->except(['show', 'destroy']);
 
     Route::middleware(['auth','can:admin'])->group(function () {
         Route::get('/request-docs', [RequestDocController::class, 'adminIndex'])->name('customers.request-doc.index');

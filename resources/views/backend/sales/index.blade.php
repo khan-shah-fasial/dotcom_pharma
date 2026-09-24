@@ -2,11 +2,24 @@
 
 @section('content')
 
+@php
+    $orderFilters = $orderFilters ?? [];
+    $sortBy = $sortBy ?? '';
+    $sortDir = $sortDir ?? 'desc';
+    $orderRoute = Route::currentRouteName();
+    $filtersApplied = filled($sort_search) || filled($delivery_status) || filled($payment_status) || filled($date) || filled($order_type)
+        || collect($orderFilters)->contains(function ($value) {
+            return $value !== null && $value !== '';
+        });
+@endphp
+
     <div class="card">
-        <form class="" action="" id="sort_orders" method="GET">
             <div class="card-header row gutters-5">
                 <div class="col">
                     <h5 class="mb-md-0 h6">{{ translate('All Orders') }}</h5>
+                    @if ($filtersApplied)
+                        <span class="badge badge-info">{{ translate('Filters applied') }}</span>
+                    @endif
                 </div>
 
                 @canany(['delete_order', 'export_order'])
@@ -27,67 +40,15 @@
                         </div>
                     </div>
                 @endcan
-                @if(Route::currentRouteName() == 'offline_payment_orders.index')
-                    <div class="col-lg-2 ml-auto">
-                        <select class="form-control aiz-selectpicker" name="order_type" id="order_type">
-                            <option value="">{{ translate('Filter by Order Type') }}</option>
-                            <option value="inhouse_orders" @if ($order_type == 'inhouse_orders') selected @endif>{{ translate('Inhouse Orders') }}</option>
-                            <option value="seller_orders" @if ($order_type == 'seller_orders') selected @endif>{{ translate('Seller Orders') }}</option>
-                        </select>
-                    </div>
-                @endif
-
-                <div class="col-lg-2 ml-auto">
-                    <select class="form-control aiz-selectpicker" name="delivery_status" id="delivery_status">
-                        <option value="">{{ translate('Filter by Delivery Status') }}</option>
-                        <option value="pending" @if ($delivery_status == 'pending') selected @endif>{{ translate('Pending') }}
-                        </option>
-                        <option value="confirmed" @if ($delivery_status == 'confirmed') selected @endif>
-                            {{ translate('Confirmed') }}</option>
-                        <option value="picked_up" @if ($delivery_status == 'picked_up') selected @endif>
-                            {{ translate('Picked Up') }}</option>
-                        <option value="on_the_way" @if ($delivery_status == 'on_the_way') selected @endif>
-                            {{ translate('On The Way') }}</option>
-                        <option value="delivered" @if ($delivery_status == 'delivered') selected @endif>
-                            {{ translate('Delivered') }}</option>
-                        <option value="cancelled" @if ($delivery_status == 'cancelled') selected @endif>
-                            {{ translate('Cancel') }}</option>
-                    </select>
-                </div>
-                @if(Route::currentRouteName() != 'unpaid_orders.index')
-                    <div class="col-lg-2 ml-auto">
-                        <select class="form-control aiz-selectpicker" name="payment_status" id="payment_status">
-                            <option value="">{{ translate('Filter by Payment Status') }}</option>
-                            <option value="paid"
-                                @isset($payment_status) @if ($payment_status == 'paid') selected @endif @endisset>
-                                {{ translate('Paid') }}</option>
-                            <option value="unpaid"
-                                @isset($payment_status) @if ($payment_status == 'unpaid') selected @endif @endisset>
-                                {{ translate('Unpaid') }}</option>
-                        </select>
-                    </div>
-                @endif
-                <div class="col-lg-1">
-                    <div class="form-group mb-0">
-                        <input type="text" class="aiz-date-range form-control" value="{{ $date }}"
-                            name="date" placeholder="{{ translate('Filter by date') }}" data-format="DD-MM-Y"
-                            data-separator=" to " data-advanced-range="true" autocomplete="off">
-                    </div>
-                </div>
-                <div class="col-lg-2">
-                    <div class="form-group mb-0">
-                        <input type="text" class="form-control" id="search"
-                            name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset
-                            placeholder="{{ translate('Type Order code & hit Enter') }}">
-                    </div>
-                </div>
-                <div class="col-auto">
-                    <div class="form-group mb-0">
-                        <button type="submit" class="btn btn-primary">{{ translate('Filter') }}</button>
-                    </div>
+                <div class="col-auto ml-auto">
+                    <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#allOrdersFilterModal">
+                        {{ translate('Open Filters') }}
+                    </button>
+                    <a href="{{ route($orderRoute) }}" class="btn btn-danger">{{ translate('Reset') }}</a>
                 </div>
             </div>
 
+        <form class="" action="" id="sort_orders" method="GET">
             <div class="card-body">
                 <table class="table aiz-table mb-0">
                     <thead>
@@ -107,21 +68,21 @@
                                 <th data-breakpoints="lg">#</th>
                             @endif
 
-                            <th>{{ translate('Order Code') }}</th>
-                            <th data-breakpoints="md">{{ translate('Num. of Products') }}</th>
-                            <th data-breakpoints="md">{{ translate('Customer') }}</th>
-                            <th data-breakpoints="md">{{ translate('Seller') }}</th>
-                            <th data-breakpoints="md">{{ translate('Amount') }}</th>
-                            <th data-breakpoints="md">{{ translate('Currency') }}</th>
-                            <th data-breakpoints="md">{{ translate('Exchange Rate') }}</th>
-                            <th data-breakpoints="md">{{ translate('Delivery Status') }}</th>
-                            <th data-breakpoints="md">{{ translate('Payment method') }}</th>
-                            <th data-breakpoints="md">{{ translate('Payment Status') }}</th>
-                            <th data-breakpoints="md">{{ translate('Tracking') }}</th>
-                            <th data-breakpoints="md">{{ translate('Shipping Method') }}</th>
-                            <th data-breakpoints="md">{{ translate('Shipping Type') }}</th>
+                            @include('backend.inc.sortable_th', ['column' => 'code', 'label' => translate('Order Code'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'products', 'label' => translate('Num. of Products'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'customer', 'label' => translate('Customer'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'seller', 'label' => translate('Seller'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'amount', 'label' => translate('Amount'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'currency', 'label' => translate('Currency'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'exchange_rate', 'label' => translate('Exchange Rate'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'delivery_status', 'label' => translate('Delivery Status'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'payment_method', 'label' => translate('Payment method'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'payment_status', 'label' => translate('Payment Status'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'tracking', 'label' => translate('Tracking'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'shipping_method', 'label' => translate('Shipping Method'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', ['column' => 'shipping_type', 'label' => translate('Shipping Type'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
                             @if (addon_is_activated('refund_request'))
-                                <th>{{ translate('Refund') }}</th>
+                                @include('backend.inc.sortable_th', ['column' => 'refund', 'label' => translate('Refund'), 'routeName' => $orderRoute, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @endif
                             <th class="text-right" width="15%">{{ translate('options') }}</th>
                         </tr>
@@ -331,6 +292,130 @@
             </div>
         </div>
     </div>
+
+    <form action="{{ route($orderRoute) }}" method="GET">
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+        <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
+        <div class="modal fade" id="allOrdersFilterModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ translate('Filter Orders') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row gutters-5">
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Order Code') }}</label>
+                                <input type="text" class="form-control" name="search" value="{{ $sort_search }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Num. of Products From') }}</label>
+                                <input type="number" min="0" class="form-control" name="products_from" value="{{ $orderFilters['products_from'] ?? '' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Num. of Products To') }}</label>
+                                <input type="number" min="0" class="form-control" name="products_to" value="{{ $orderFilters['products_to'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Customer') }}</label>
+                                <input type="text" class="form-control" name="customer" value="{{ $orderFilters['customer'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Seller') }}</label>
+                                <input type="text" class="form-control" name="seller" value="{{ $orderFilters['seller'] ?? '' }}" placeholder="{{ translate('Shop name or Inhouse') }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Amount From') }}</label>
+                                <input type="number" step="0.01" class="form-control" name="amount_from" value="{{ $orderFilters['amount_from'] ?? '' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Amount To') }}</label>
+                                <input type="number" step="0.01" class="form-control" name="amount_to" value="{{ $orderFilters['amount_to'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Currency') }}</label>
+                                <input type="text" class="form-control" name="currency" value="{{ $orderFilters['currency'] ?? '' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Exchange Rate From') }}</label>
+                                <input type="number" step="0.01" class="form-control" name="exchange_from" value="{{ $orderFilters['exchange_from'] ?? '' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Exchange Rate To') }}</label>
+                                <input type="number" step="0.01" class="form-control" name="exchange_to" value="{{ $orderFilters['exchange_to'] ?? '' }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>{{ translate('Delivery Status') }}</label>
+                                <select name="delivery_status" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    @foreach (['pending' => 'Pending', 'confirmed' => 'Confirmed', 'picked_up' => 'Picked Up', 'on_the_way' => 'On The Way', 'delivered' => 'Delivered', 'cancelled' => 'Cancel'] as $value => $label)
+                                        <option value="{{ $value }}" @selected($delivery_status == $value)>{{ translate($label) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>{{ translate('Payment method') }}</label>
+                                <input type="text" class="form-control" name="payment_method" value="{{ $orderFilters['payment_method'] ?? '' }}">
+                            </div>
+                            @if($orderRoute != 'unpaid_orders.index')
+                                <div class="col-md-4 mb-3">
+                                    <label>{{ translate('Payment Status') }}</label>
+                                    <select name="payment_status" class="form-control">
+                                        <option value="">{{ translate('All') }}</option>
+                                        <option value="paid" @selected($payment_status == 'paid')>{{ translate('Paid') }}</option>
+                                        <option value="unpaid" @selected($payment_status == 'unpaid')>{{ translate('Unpaid') }}</option>
+                                    </select>
+                                </div>
+                            @endif
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Tracking') }}</label>
+                                <input type="text" class="form-control" name="tracking" value="{{ $orderFilters['tracking'] ?? '' }}" placeholder="{{ translate('AWB or courier') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Date') }}</label>
+                                <input type="text" class="aiz-date-range form-control" value="{{ $date }}"
+                                    name="date" placeholder="{{ translate('Filter by date') }}" data-format="DD-MM-Y"
+                                    data-separator=" to " data-advanced-range="true" autocomplete="off">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Shipping Method') }}</label>
+                                <input type="text" class="form-control" name="shipping_method" value="{{ $orderFilters['shipping_method'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Shipping Type') }}</label>
+                                <input type="text" class="form-control" name="shipping_type" value="{{ $orderFilters['shipping_type'] ?? '' }}">
+                            </div>
+                            @if($orderRoute == 'offline_payment_orders.index')
+                                <div class="col-md-6 mb-3">
+                                    <label>{{ translate('Order Type') }}</label>
+                                    <select name="order_type" class="form-control">
+                                        <option value="">{{ translate('All') }}</option>
+                                        <option value="inhouse_orders" @selected($order_type == 'inhouse_orders')>{{ translate('Inhouse Orders') }}</option>
+                                        <option value="seller_orders" @selected($order_type == 'seller_orders')>{{ translate('Seller Orders') }}</option>
+                                    </select>
+                                </div>
+                            @endif
+                            @if (addon_is_activated('refund_request'))
+                                <div class="col-md-6 mb-3">
+                                    <label>{{ translate('Refund') }}</label>
+                                    <select name="refund" class="form-control">
+                                        <option value="">{{ translate('All') }}</option>
+                                        <option value="1" @selected(($orderFilters['refund'] ?? '') === '1')>{{ translate('Has refund') }}</option>
+                                        <option value="0" @selected(($orderFilters['refund'] ?? '') === '0')>{{ translate('No refund') }}</option>
+                                    </select>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route($orderRoute) }}" class="btn btn-danger">{{ translate('Reset') }}</a>
+                        <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 
 @endsection
 

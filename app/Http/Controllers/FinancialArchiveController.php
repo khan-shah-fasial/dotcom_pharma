@@ -22,6 +22,7 @@ class FinancialArchiveController extends Controller
         'account_statement' => 'Account Statement',
         'purchased_history' => 'Purchased History',
         'performa_invoice' => 'Performa Invoice',
+        'other_documents' => 'Other Documents',
         // 'product_purchased' => 'Product Purchased',
         // 'ledger_statement' => 'Ledger Statement',
         // 'lr_copy' => 'LR Copy',

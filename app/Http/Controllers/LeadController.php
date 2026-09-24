@@ -162,13 +162,28 @@ class LeadController extends Controller
             });
         }
 
-        $sortBy = $request->input('sort_by');
-        $sortOrder = strtolower((string) $request->input('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
+        $allowedSorts = [
+            'lead_no' => 'leads.lead_no',
+            'name' => 'leads.name',
+            'company' => 'leads.company_name',
+            'customer_type' => 'leads.customer_type',
+            'status' => '(select name from lead_statuses where lead_statuses.id = leads.status_id limit 1)',
+            'source' => '(select name from lead_sources where lead_sources.id = leads.source_id limit 1)',
+            'created_by' => '(select name from users where users.id = leads.created_by limit 1)',
+            'value' => '(' . $this->latestActivityExpectedValueSql() . ')',
+            'next_followup' => '(select next_followup from lead_activities where lead_activities.lead_id = leads.id order by lead_activities.id desc limit 1)',
+            'last_activity_created_at' => '(' . $this->latestActivityCreatedAtSql() . ')',
+            'description' => '(select description from lead_activities where lead_activities.lead_id = leads.id order by lead_activities.id desc limit 1)',
+        ];
+        $sortBy = (string) $request->input('sort_by', '');
+        $directionInput = $request->filled('sort_dir') ? $request->input('sort_dir') : $request->input('sort_order', 'desc');
+        $sortDir = strtolower((string) $directionInput) === 'asc' ? 'asc' : 'desc';
 
-        if ($sortBy === 'last_activity_created_at') {
-            $leads->orderByRaw('(' . $this->latestActivityCreatedAtSql() . ') ' . $sortOrder)
-                ->orderBy('leads.created_at', 'desc');
+        if (isset($allowedSorts[$sortBy])) {
+            $leads->orderByRaw($allowedSorts[$sortBy] . ' ' . $sortDir)
+                ->orderBy('leads.id', 'desc');
         } else {
+            $sortBy = '';
             $leads->latest('leads.created_at');
         }
 
@@ -179,6 +194,8 @@ class LeadController extends Controller
         return view('backend.leads.index', $this->indexData() + [
             'leads' => $leads,
             'filters' => $filters,
+            'sortBy' => $sortBy,
+            'sortDir' => $sortDir,
         ]);
     }
 

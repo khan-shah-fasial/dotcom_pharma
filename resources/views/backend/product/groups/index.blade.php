@@ -5,6 +5,13 @@
 @php
     CoreComponentRepository::instantiateShopRepository();
     CoreComponentRepository::initializeCache();
+    $sortBy = $sortBy ?? 'order_level';
+    $sortDir = $sortDir ?? 'desc';
+    $filters = $filters ?? [];
+    $filtersApplied = collect($filters)->contains(function ($value) {
+        return $value !== null && $value !== '';
+    });
+    $showCommission = get_setting('seller_commission_type') == 'category_based';
 @endphp
 
 <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -22,31 +29,35 @@
     </div>
 </div>
 <div class="card">
-    <div class="card-header d-block d-md-flex">
-        <h5 class="mb-0 h6">{{ translate('Medical Groups') }}</h5>
-        <form class="" id="sort_groups" action="" method="GET">
-            <div class="box-inline pad-rgt pull-left">
-                <div class="" style="min-width: 200px;">
-                    <input type="text" class="form-control" id="search" name="search"@isset($sort_search) value="{{ $sort_search }}" @endisset placeholder="{{ translate('Type name & Enter') }}">
-                </div>
-            </div>
-        </form>
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+        <div class="mb-2">
+            <h5 class="mb-0 h6">{{ translate('Medical Groups') }}</h5>
+            @if ($filtersApplied)
+                <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+            @endif
+        </div>
+        <div class="d-flex flex-wrap align-items-center">
+            <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#medicalGroupFilterModal">
+                {{ translate('Open Filters') }}
+            </button>
+            <a href="{{ route('groups.index') }}" class="btn btn-danger mb-2">{{ translate('Reset') }}</a>
+        </div>
     </div>
     <div class="card-body">
         <table class="table aiz-table mb-0">
             <thead>
                 <tr>
                     <th data-breakpoints="lg">#</th>
-                    <th>{{translate('Name')}}</th>
-                    <th data-breakpoints="lg">{{ translate('Parent Group') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Order Level') }}</th>
-                    <th data-breakpoints="lg">{{ translate('Level') }}</th>
-                    <th data-breakpoints="lg">{{translate('Banner')}}</th>
-                    <th data-breakpoints="lg">{{translate('Icon')}}</th>
-                    <th data-breakpoints="lg">{{translate('Cover Image')}}</th>
-                    <th data-breakpoints="lg">{{translate('Featured')}}</th>
-                    @if(get_setting('seller_commission_type') == 'category_based')
-                        <th data-breakpoints="lg">{{translate('Commission')}}</th>
+                    @include('backend.inc.sortable_th', ['column' => 'name', 'label' => translate('Name'), 'routeName' => 'groups.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'parent', 'label' => translate('Parent Group'), 'routeName' => 'groups.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'order_level', 'label' => translate('Order Level'), 'routeName' => 'groups.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'level', 'label' => translate('Level'), 'routeName' => 'groups.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'banner', 'label' => translate('Banner'), 'routeName' => 'groups.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'icon', 'label' => translate('Icon'), 'routeName' => 'groups.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'cover_image', 'label' => translate('Cover Image'), 'routeName' => 'groups.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'featured', 'label' => translate('Featured'), 'routeName' => 'groups.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @if($showCommission)
+                        @include('backend.inc.sortable_th', ['column' => 'commision_rate', 'label' => translate('Commission'), 'routeName' => 'groups.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
                     @endif
                     <th width="10%" class="text-right">{{translate('Options')}}</th>
                 </tr>
@@ -63,7 +74,7 @@
                          </td>
                         <td>
                             @php
-                                $parent = \App\Models\Group::where('id', $group->parent_id)->first();
+                                $parent = $group->parentGroup;
                             @endphp
                             @if ($parent != null)
                                 {{ $parent->getTranslation('name') }}
@@ -102,7 +113,7 @@
                                 <span></span>
                             </label>
                         </td>
-                        @if(get_setting('seller_commission_type') == 'category_based')
+                        @if($showCommission)
                             <td>{{ $group->commision_rate }} %</td>
                         @endif
                         <td class="text-right">
@@ -131,6 +142,94 @@
 
 @section('modal')
     @include('modals.delete_modal')
+    <form action="{{ route('groups.index') }}" method="GET">
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+        <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
+        <div class="modal fade" id="medicalGroupFilterModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ translate('Filter Medical Groups') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row gutters-5">
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Name') }}</label>
+                                <input type="text" class="form-control" name="name" value="{{ $filters['name'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Parent Group') }}</label>
+                                <input type="text" class="form-control" name="parent" value="{{ $filters['parent'] ?? '' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Order Level From') }}</label>
+                                <input type="number" class="form-control" name="order_level_from" value="{{ $filters['order_level_from'] ?? '' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Order Level To') }}</label>
+                                <input type="number" class="form-control" name="order_level_to" value="{{ $filters['order_level_to'] ?? '' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Level From') }}</label>
+                                <input type="number" class="form-control" name="level_from" value="{{ $filters['level_from'] ?? '' }}">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>{{ translate('Level To') }}</label>
+                                <input type="number" class="form-control" name="level_to" value="{{ $filters['level_to'] ?? '' }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>{{ translate('Banner') }}</label>
+                                <select name="banner" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="1" @selected(($filters['banner'] ?? '') === '1')>{{ translate('Has image') }}</option>
+                                    <option value="0" @selected(($filters['banner'] ?? '') === '0')>{{ translate('No image') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>{{ translate('Icon') }}</label>
+                                <select name="icon" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="1" @selected(($filters['icon'] ?? '') === '1')>{{ translate('Has image') }}</option>
+                                    <option value="0" @selected(($filters['icon'] ?? '') === '0')>{{ translate('No image') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>{{ translate('Cover Image') }}</label>
+                                <select name="cover_image" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="1" @selected(($filters['cover_image'] ?? '') === '1')>{{ translate('Has image') }}</option>
+                                    <option value="0" @selected(($filters['cover_image'] ?? '') === '0')>{{ translate('No image') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>{{ translate('Featured') }}</label>
+                                <select name="featured" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="1" @selected(($filters['featured'] ?? '') === '1')>{{ translate('Yes') }}</option>
+                                    <option value="0" @selected(($filters['featured'] ?? '') === '0')>{{ translate('No') }}</option>
+                                </select>
+                            </div>
+                            @if($showCommission)
+                                <div class="col-md-4 mb-3">
+                                    <label>{{ translate('Commission From') }}</label>
+                                    <input type="number" step="0.01" class="form-control" name="commission_from" value="{{ $filters['commission_from'] ?? '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>{{ translate('Commission To') }}</label>
+                                    <input type="number" step="0.01" class="form-control" name="commission_to" value="{{ $filters['commission_to'] ?? '' }}">
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route('groups.index') }}" class="btn btn-danger">{{ translate('Reset') }}</a>
+                        <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 @endsection
 
 

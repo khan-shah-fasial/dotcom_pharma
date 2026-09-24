@@ -2,11 +2,28 @@
 
 @section('content')
 <style>
+    .lead-list-table {
+        min-width: 1480px;
+    }
+    .lead-list-table th,
+    .lead-list-table td {
+        vertical-align: top;
+        white-space: normal;
+    }
+    .lead-col-name { min-width: 160px; max-width: 220px; }
+    .lead-col-company { min-width: 150px; max-width: 210px; }
+    .lead-col-status { min-width: 130px; max-width: 180px; }
+    .lead-col-activity { min-width: 150px; max-width: 210px; }
+    .lead-stack-gap {
+        border: 0;
+        border-top: 1px solid #eef0f2;
+        margin: 6px 0;
+    }
     .lead-description-clamp {
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
-        max-width: 280px;
+        max-width: 220px;
         overflow: hidden;
         white-space: normal;
         cursor: help;
@@ -163,32 +180,27 @@
 
     <div class="card-body">
         @php
-            $lastActivitySortActive = request('sort_by') === 'last_activity_created_at';
-            $lastActivitySortOrder = strtolower((string) request('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
-            $lastActivityNextSortOrder = $lastActivitySortActive && $lastActivitySortOrder === 'asc' ? 'desc' : 'asc';
+            $sortBy = $sortBy ?? '';
+            $sortDir = $sortDir ?? 'desc';
         @endphp
-        <table class="table aiz-table mb-0">
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+        <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
+        <div class="table-responsive">
+        <table class="table aiz-table mb-0 lead-list-table">
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>{{ translate('Lead No') }}</th>
-                    <th>{{ translate('Name') }}</th>
-                    <th>{{ translate('Company') }}</th>
-                    <th>{{ translate('Customer Type') }}</th>
-                    <th>{{ translate('Status') }}</th>
-                    <th>{{ translate('Source') }}</th>
-                    <th>{{ translate('Created By') }}</th>
-                    <th>{{ translate('Value') }}</th>
-                    <th>{{ translate('Next Follow-up') }}</th>
-                    <th>
-                        <a href="{{ route('leads.index', array_merge(request()->except('page'), ['sort_by' => 'last_activity_created_at', 'sort_order' => $lastActivityNextSortOrder])) }}">
-                            {{ translate('Last Activity') }}
-                            @if ($lastActivitySortActive)
-                                <i class="las la-sort-amount-{{ $lastActivitySortOrder === 'asc' ? 'up' : 'down' }}"></i>
-                            @endif
-                        </a>
-                    </th>
-                    <th>{{ translate('Description') }}</th>
+                    @include('backend.inc.sortable_th', ['column' => 'lead_no', 'label' => translate('Lead No'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'name', 'label' => translate('Name'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'thClass' => 'lead-col-name'])
+                    @include('backend.inc.sortable_th', ['column' => 'company', 'label' => translate('Company'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'thClass' => 'lead-col-company'])
+                    @include('backend.inc.sortable_th', ['column' => 'customer_type', 'label' => translate('Customer Type'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'status', 'label' => translate('Status'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'thClass' => 'lead-col-status'])
+                    @include('backend.inc.sortable_th', ['column' => 'source', 'label' => translate('Source'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'created_by', 'label' => translate('Created By'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'value', 'label' => translate('Value'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'next_followup', 'label' => translate('Next Follow-up'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'last_activity_created_at', 'label' => translate('Last Activity'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'thClass' => 'lead-col-activity'])
+                    @include('backend.inc.sortable_th', ['column' => 'description', 'label' => translate('Description'), 'routeName' => 'leads.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                     <th class="text-right">{{ translate('Options') }}</th>
                 </tr>
             </thead>
@@ -205,7 +217,7 @@
                         <td class="fw-700">{{ $lead->lead_no }}</td>
                         <td>
                             <div>{{ $lead->name }}</div>
-                            <hr>
+                            <hr class="lead-stack-gap">
                             <small class="text-muted">
                                 @if ($lead->email)
                                     <a href="mailto:{{ $lead->email }}" class="text-muted">{{ $lead->email }}</a>
@@ -229,7 +241,7 @@
                         <td>
                             <div>{{ $lead->company_name ?? '-' }}</div>
                             @if($lead->country || $lead->state || $lead->city)
-                            <hr>
+                            <hr class="lead-stack-gap">
                                 <ul class="list-unstyled mb-0 mt-1 text-muted small">
                                     @if($lead->country)
                                         <li>{{ $lead->country->name }}</li>
@@ -256,7 +268,7 @@
                         <td>
                             <div>{{ optional($lead->creator)->name ?? '-' }}</div>
                             @if(optional($lead->assignedUser)->name)
-                            <hr>
+                            <hr class="lead-stack-gap">
                             <small class="d-block text-muted">{{ translate('Assign to') }}: {{ optional($lead->assignedUser)->name ?? '-' }}</small>
                             @endif
                         </td>
@@ -322,6 +334,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
         <div class="aiz-pagination">
             {{ $leads->appends(request()->input())->links() }}
         </div>

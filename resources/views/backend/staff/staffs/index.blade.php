@@ -2,6 +2,15 @@
 
 @section('content')
 
+@php
+    $filters = $filters ?? [];
+    $sortBy = $sortBy ?? '';
+    $sortDir = $sortDir ?? 'asc';
+    $filtersApplied = collect($filters)->contains(function ($value) {
+        return $value !== null && $value !== '';
+    });
+@endphp
+
 <div class="aiz-titlebar text-left mt-2 mb-3">
 	<div class="row align-items-center">
 		<div class="col-md-6">
@@ -18,22 +27,33 @@
 </div>
 
 <div class="card">
-    <div class="card-header">
-        <h5 class="mb-0 h6">{{translate('Staffs')}}</h5>
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+        <div class="mb-2">
+            <h5 class="mb-0 h6">{{translate('Staffs')}}</h5>
+            @if ($filtersApplied)
+                <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+            @endif
+        </div>
+        <div class="d-flex flex-wrap align-items-center">
+            <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#staffFilterModal">
+                {{ translate('Open Filters') }}
+            </button>
+            <a href="{{ route('staffs.index') }}" class="btn btn-danger mb-2">{{ translate('Reset') }}</a>
+        </div>
     </div>
     <div class="card-body">
         <table class="table aiz-table mb-0">
             <thead>
                 <tr>
                     <th data-breakpoints="lg" width="10%">#</th>
-                    <th data-breakpoints="lg">{{translate('Photo')}}</th>
-                    <th>{{translate('Name')}}</th>
-                    <th data-breakpoints="lg">{{translate('Email')}}</th>
-                    <th data-breakpoints="lg">{{translate('Phone')}}</th>
-                    <th data-breakpoints="lg">{{translate('Role')}}</th>
-                    <th data-breakpoints="lg">{{translate('Designation')}}</th>
-                    <th data-breakpoints="lg">{{translate('Status')}}</th>
-                    <th data-breakpoints="lg">{{translate('Area Assign')}}</th>
+                    @include('backend.inc.sortable_th', ['column' => 'photo', 'label' => translate('Photo'), 'routeName' => 'staffs.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'name', 'label' => translate('Name'), 'routeName' => 'staffs.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'email', 'label' => translate('Email'), 'routeName' => 'staffs.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'phone', 'label' => translate('Phone'), 'routeName' => 'staffs.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'role', 'label' => translate('Role'), 'routeName' => 'staffs.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'designation', 'label' => translate('Designation'), 'routeName' => 'staffs.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'status', 'label' => translate('Status'), 'routeName' => 'staffs.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                    @include('backend.inc.sortable_th', ['column' => 'area', 'label' => translate('Area Assign'), 'routeName' => 'staffs.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
                     <th width="10%" class="text-right">{{translate('Options')}}</th>
                 </tr>
             </thead>
@@ -135,6 +155,68 @@
 
 @section('modal')
     @include('modals.delete_modal')
+    <form action="{{ route('staffs.index') }}" method="GET">
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+        <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
+        <div class="modal fade" id="staffFilterModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ translate('Filter Staffs') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row gutters-5">
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Name') }}</label>
+                                <input type="text" class="form-control" name="name" value="{{ $filters['name'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Email') }}</label>
+                                <input type="text" class="form-control" name="email" value="{{ $filters['email'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Phone') }}</label>
+                                <input type="text" class="form-control" name="phone" value="{{ $filters['phone'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Role') }}</label>
+                                <input type="text" class="form-control" name="role" value="{{ $filters['role'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Designation') }}</label>
+                                <input type="text" class="form-control" name="designation" value="{{ $filters['designation'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Area Assign') }}</label>
+                                <input type="text" class="form-control" name="area" value="{{ $filters['area'] ?? '' }}" placeholder="{{ translate('Country, state, or district') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Photo') }}</label>
+                                <select name="photo" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="1" @selected(($filters['photo'] ?? '') === '1')>{{ translate('Has photo') }}</option>
+                                    <option value="0" @selected(($filters['photo'] ?? '') === '0')>{{ translate('No photo') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Status') }}</label>
+                                <select name="status" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="1" @selected(($filters['status'] ?? '') === '1')>{{ translate('Active') }}</option>
+                                    <option value="0" @selected(($filters['status'] ?? '') === '0')>{{ translate('Inactive') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route('staffs.index') }}" class="btn btn-danger">{{ translate('Reset') }}</a>
+                        <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 @endsection
 
 @section('script')

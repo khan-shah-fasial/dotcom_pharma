@@ -1,6 +1,14 @@
 @extends('backend.layouts.app')
 
 @section('content')
+@php
+    $filters = $filters ?? [];
+    $sortBy = $sortBy ?? '';
+    $sortDir = $sortDir ?? 'asc';
+    $filtersApplied = filled($sort_search) || collect($filters)->contains(function ($value) {
+        return $value !== null && $value !== '';
+    });
+@endphp
 <div class="aiz-titlebar text-left mt-2 mb-3">
     <div class="row align-items-center">
         <div class="col-md-6">
@@ -15,14 +23,18 @@
 </div>
 
 <div class="card">
-    <div class="card-header row gutters-5">
-        <div class="col text-center text-md-left">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+        <div class="mb-2">
             <h5 class="mb-md-0 h6">{{ translate('Transport List') }}</h5>
+            @if ($filtersApplied)
+                <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+            @endif
         </div>
-        <div class="col-md-4">
-            <form action="" method="GET">
-                <input type="text" class="form-control form-control-sm" name="search" value="{{ $sort_search }}" placeholder="{{ translate('Type name & Enter') }}">
-            </form>
+        <div class="d-flex flex-wrap align-items-center">
+            <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#transportFilterModal">
+                {{ translate('Open Filters') }}
+            </button>
+            <a href="{{ route('transports.index') }}" class="btn btn-danger mb-2">{{ translate('Reset') }}</a>
         </div>
     </div>
     <div class="card-body">
@@ -30,11 +42,11 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>{{ translate('Name') }}</th>
-                    <th>{{ translate('Mode') }}</th>
-                    <th>{{ translate('URL') }}</th>
-                    <th>{{ translate('Created By') }}</th>
-                    <th>{{ translate('Status') }}</th>
+                    @include('backend.inc.sortable_th', ['column' => 'name', 'label' => translate('Name'), 'routeName' => 'transports.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'mode', 'label' => translate('Mode'), 'routeName' => 'transports.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'url', 'label' => translate('URL'), 'routeName' => 'transports.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'created_by', 'label' => translate('Created By'), 'routeName' => 'transports.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                    @include('backend.inc.sortable_th', ['column' => 'status', 'label' => translate('Status'), 'routeName' => 'transports.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                     <th class="text-right">{{ translate('Options') }}</th>
                 </tr>
             </thead>
@@ -79,6 +91,57 @@
 
 @section('modal')
     @include('modals.delete_modal')
+    <form action="{{ route('transports.index') }}" method="GET">
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+        <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
+        <div class="modal fade" id="transportFilterModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ translate('Filter Transports') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row gutters-5">
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Name') }}</label>
+                                <input type="text" class="form-control" name="search" value="{{ $sort_search }}" placeholder="{{ translate('Type name') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Mode') }}</label>
+                                <select name="mode" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    @foreach (['surface' => 'Surface', 'sea' => 'Sea', 'air' => 'Air'] as $value => $label)
+                                        <option value="{{ $value }}" @selected(($filters['mode'] ?? '') === $value)>{{ translate($label) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('URL') }}</label>
+                                <input type="text" class="form-control" name="url" value="{{ $filters['url'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Created By') }}</label>
+                                <input type="text" class="form-control" name="created_by" value="{{ $filters['created_by'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Status') }}</label>
+                                <select name="status" class="form-control">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="active" @selected(($filters['status'] ?? '') === 'active')>{{ translate('Active') }}</option>
+                                    <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>{{ translate('Inactive') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="{{ route('transports.index') }}" class="btn btn-danger">{{ translate('Reset') }}</a>
+                        <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 @endsection
 
 @section('script')

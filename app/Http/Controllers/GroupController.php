@@ -28,14 +28,64 @@ class GroupController extends Controller
      */
     public function index(Request $request)
     {
-        $sort_search = null;
-        $groups = Group::orderBy('order_level', 'desc');
-        if ($request->has('search')) {
-            $sort_search = $request->search;
-            $groups = $groups->where('name', 'like', '%' . $sort_search . '%');
+        $allowedSorts = ['name', 'parent', 'order_level', 'level', 'banner', 'icon', 'cover_image', 'featured', 'commision_rate'];
+        $sortBy = $request->get('sort_by', 'order_level');
+        if (!in_array($sortBy, $allowedSorts, true)) {
+            $sortBy = 'order_level';
         }
-        $groups = $groups->paginate(15);
-        return view('backend.product.groups.index', compact('groups', 'sort_search'));
+        $sortDir = strtolower((string) $request->get('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $filters = [
+            'name' => trim((string) $request->get('name', $request->get('search', ''))),
+            'parent' => trim((string) $request->get('parent', '')),
+            'order_level_from' => $request->get('order_level_from'),
+            'order_level_to' => $request->get('order_level_to'),
+            'level_from' => $request->get('level_from'),
+            'level_to' => $request->get('level_to'),
+            'featured' => (string) $request->get('featured', ''),
+            'banner' => (string) $request->get('banner', ''),
+            'icon' => (string) $request->get('icon', ''),
+            'cover_image' => (string) $request->get('cover_image', ''),
+            'commission_from' => $request->get('commission_from'),
+            'commission_to' => $request->get('commission_to'),
+        ];
+
+        $groups = Group::query()->with('parentGroup');
+
+        if ($filters['name'] !== '') {
+            $name = $filters['name'];
+            $groups->where('groups.name', 'like', '%' . $name . '%');
+        }
+        if ($filters['parent'] !== '') {
+            $parent = $filters['parent'];
+            $groups->whereHas('parentGroup', function ($query) use ($parent) {
+                $query->where('name', 'like', '%' . $parent . '%');
+            });
+        }
+
+        $this->applyGroupRange($groups, 'groups.order_level', $filters['order_level_from'], $filters['order_level_to']);
+        $this->applyGroupRange($groups, 'groups.level', $filters['level_from'], $filters['level_to']);
+        $this->applyGroupRange($groups, 'groups.commision_rate', $filters['commission_from'], $filters['commission_to']);
+
+        if (in_array($filters['featured'], ['0', '1'], true)) {
+            $groups->where('groups.featured', (int) $filters['featured']);
+        }
+        foreach (['banner', 'icon', 'cover_image'] as $imageColumn) {
+            $this->applyGroupPresence($groups, 'groups.' . $imageColumn, $filters[$imageColumn]);
+        }
+
+        if ($sortBy === 'parent') {
+            $groups->leftJoin('groups as parent_groups', 'parent_groups.id', '=', 'groups.parent_id')
+                ->select('groups.*')
+                ->orderBy('parent_groups.name', $sortDir);
+        } else {
+            $groups->orderBy('groups.' . $sortBy, $sortDir);
+        }
+        $groups->orderBy('groups.id', 'desc');
+
+        $groups = $groups->paginate(15)->appends($request->query());
+
+        return view('backend.product.groups.index', compact('groups', 'sortBy', 'sortDir', 'filters'));
     }
 
     /**
@@ -223,5 +273,31 @@ class GroupController extends Controller
             ->get();
 
         return view('backend.product.groups.groups_option', compact('groups'));
+    }
+
+    private function applyGroupRange($query, string $column, $from, $to): void
+    {
+        $fromFilled = $from !== null && $from !== '';
+        $toFilled = $to !== null && $to !== '';
+        if ($fromFilled && $toFilled && is_numeric($from) && is_numeric($to) && (float) $from > (float) $to) {
+            [$from, $to] = [$to, $from];
+        }
+        if ($fromFilled && is_numeric($from)) {
+            $query->where($column, '>=', $from);
+        }
+        if ($toFilled && is_numeric($to)) {
+            $query->where($column, '<=', $to);
+        }
+    }
+
+    private function applyGroupPresence($query, string $column, string $value): void
+    {
+        if ($value === '1') {
+            $query->whereNotNull($column)->where($column, '!=', '');
+        } elseif ($value === '0') {
+            $query->where(function ($inner) use ($column) {
+                $inner->whereNull($column)->orWhere($column, '');
+            });
+        }
     }
 }

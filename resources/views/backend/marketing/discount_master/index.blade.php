@@ -33,6 +33,8 @@
 @endif
 
 @php
+    $sortBy = $sortBy ?? '';
+    $sortDir = $sortDir ?? 'desc';
     $filtersApplied = collect($filters)->contains(function ($value) {
         return $value !== null && $value !== '';
     });
@@ -60,21 +62,21 @@
             <table class="table table-bordered aiz-table mb-0 dm-listing">
                 <thead>
                     <tr>
-                        <th>{{ translate('Discount Applied On') }}</th>
-                        <th>{{ translate('SKU Product') }}</th>
-                        <th>{{ translate('Full Variant') }}</th>
-                        <th>{{ translate('Same as') }}<br>{{ translate('Batch / Lot.No') }}<br>{{ translate('Stock Available') }}</th>
-                        <th>{{ translate('Mfg.Date') }}<br>{{ translate('Expiry Date') }}<br>{{ translate('COA Document') }}</th>
-                        <th>{{ translate('Stock Value As Per') }}<br>{{ translate('PTS / PTR / PTD / Govt. / Export / B2C / M.R.P') }}</th>
-                        <th>{{ translate('Rolewise Price') }}</th>
-                        <th>{{ translate('Qty Slab') }}<br>{{ translate('Rate') }}<br>{{ translate('Amount') }}<br>{{ translate('Effective Rate') }}</th>
-                        <th>{{ translate('Discount Type') }}<br>{{ translate('Discount ID') }}</th>
-                        <th>{{ translate('Batchwise') }}<br>{{ translate('Type / Amount Or % / % Or Amount') }}</th>
-                        <th>{{ translate('Productwise') }}<br>{{ translate('Type / Amount Or % / % Or Amount') }}</th>
-                        <th>{{ translate('Pointwise Earn') }}<br>{{ translate('Earn / Amount Or % / % Or Amount') }}</th>
-                        <th>{{ translate('Amount wise') }}<br>{{ translate('Invoice Amount / Type / Amount Or %') }}</th>
-                        <th>{{ translate('Schemewise') }}<br>{{ translate('Free Qty / Scheme % / Scheme Value') }}</th>
-                        <th>{{ translate('From Date') }}<br>{{ translate('To Date') }}<br>{{ translate('Offer Active') }}<br>{{ translate('Date Of Add / Edit') }}</th>
+                        @include('backend.inc.sortable_th', ['column' => 'applied_on', 'label' => translate('Discount Applied On'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'sku', 'label' => translate('SKU Product'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'variant', 'label' => translate('Full Variant'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'batch', 'labelHtml' => e(translate('Same as')) . '<br>' . e(translate('Batch / Lot.No')) . '<br>' . e(translate('Stock Available')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'mfg_date', 'labelHtml' => e(translate('Mfg.Date')) . '<br>' . e(translate('Expiry Date')) . '<br>' . e(translate('COA Document')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'stock_role', 'labelHtml' => e(translate('Stock Value As Per')) . '<br>' . e(translate('PTS / PTR / PTD / Govt. / Export / B2C / M.R.P')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'role_key', 'label' => translate('Rolewise Price'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'qty_slab', 'labelHtml' => e(translate('Qty Slab')) . '<br>' . e(translate('Rate')) . '<br>' . e(translate('Amount')) . '<br>' . e(translate('Effective Rate')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'discount_code', 'labelHtml' => e(translate('Discount Type')) . '<br>' . e(translate('Discount ID')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'batchwise', 'labelHtml' => e(translate('Batchwise')) . '<br>' . e(translate('Type / Amount Or % / % Or Amount')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'productwise', 'labelHtml' => e(translate('Productwise')) . '<br>' . e(translate('Type / Amount Or % / % Or Amount')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'pointwise', 'labelHtml' => e(translate('Pointwise Earn')) . '<br>' . e(translate('Earn / Amount Or % / % Or Amount')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'amount_wise', 'labelHtml' => e(translate('Amount wise')) . '<br>' . e(translate('Invoice Amount / Type / Amount Or %')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'scheme', 'labelHtml' => e(translate('Schemewise')) . '<br>' . e(translate('Free Qty / Scheme % / Scheme Value')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'from_date', 'labelHtml' => e(translate('From Date')) . '<br>' . e(translate('To Date')) . '<br>' . e(translate('Offer Active')) . '<br>' . e(translate('Date Of Add / Edit')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         <th class="text-right">{{ translate('Actions') }}</th>
                     </tr>
                 </thead>
@@ -253,6 +255,8 @@
     @include('modals.delete_modal')
 
     <form action="{{ route('discount_masters.index') }}" method="GET" id="discount-master-filters">
+        <input type="hidden" name="sort_by" value="{{ $sortBy }}">
+        <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
         <div class="modal fade" id="discountMasterFilterModal" tabindex="-1" role="dialog" aria-labelledby="discountMasterFilterModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">

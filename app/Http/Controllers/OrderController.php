@@ -131,9 +131,172 @@ class OrderController extends Controller
             $orders = $orders->where('created_at', '>=', date('Y-m-d', strtotime(explode(" to ", $date)[0])) . '  00:00:00')
                 ->where('created_at', '<=', date('Y-m-d', strtotime(explode(" to ", $date)[1])) . '  23:59:59');
         }
+
+        $orderFilters = [
+            'customer' => trim((string) $request->get('customer', '')),
+            'seller' => trim((string) $request->get('seller', '')),
+            'amount_from' => $request->get('amount_from'),
+            'amount_to' => $request->get('amount_to'),
+            'currency' => trim((string) $request->get('currency', '')),
+            'exchange_from' => $request->get('exchange_from'),
+            'exchange_to' => $request->get('exchange_to'),
+            'payment_method' => trim((string) $request->get('payment_method', '')),
+            'tracking' => trim((string) $request->get('tracking', '')),
+            'shipping_method' => trim((string) $request->get('shipping_method', '')),
+            'shipping_type' => trim((string) $request->get('shipping_type', '')),
+            'products_from' => $request->get('products_from'),
+            'products_to' => $request->get('products_to'),
+            'refund' => (string) $request->get('refund', ''),
+        ];
+
+        if ($orderFilters['customer'] !== '') {
+            $customerName = $orderFilters['customer'];
+            $orders->whereHas('user', function ($query) use ($customerName) {
+                $query->where('name', 'like', '%' . $customerName . '%');
+            });
+        }
+        if ($orderFilters['seller'] !== '') {
+            $sellerName = $orderFilters['seller'];
+            $orders->where(function ($query) use ($sellerName) {
+                $query->whereHas('shop', function ($shop) use ($sellerName) {
+                    $shop->where('name', 'like', '%' . $sellerName . '%');
+                });
+                if (stripos($sellerName, 'inhouse') !== false) {
+                    $query->orWhereDoesntHave('shop');
+                }
+            });
+        }
+        if ($orderFilters['currency'] !== '') {
+            $orders->where('orders.quote_currency_code', 'like', '%' . $orderFilters['currency'] . '%');
+        }
+        if ($orderFilters['payment_method'] !== '') {
+            $orders->where('orders.payment_type', 'like', '%' . $orderFilters['payment_method'] . '%');
+        }
+        if ($orderFilters['shipping_method'] !== '') {
+            $orders->where('orders.shipping_choice', 'like', '%' . $orderFilters['shipping_method'] . '%');
+        }
+        if ($orderFilters['shipping_type'] !== '') {
+            $shippingType = $orderFilters['shipping_type'];
+            $orders->where(function ($query) use ($shippingType) {
+                $query->where('orders.shipping_by', 'like', '%' . $shippingType . '%')
+                    ->orWhereHas('transport', function ($transport) use ($shippingType) {
+                        $transport->where('name', 'like', '%' . $shippingType . '%');
+                    })
+                    ->orWhereHas('localDeliveryPartner', function ($partner) use ($shippingType) {
+                        $partner->where('name', 'like', '%' . $shippingType . '%');
+                    })
+                    ->orWhereHas('bookedTo', function ($booked) use ($shippingType) {
+                        $booked->where('name', 'like', '%' . $shippingType . '%');
+                    });
+            });
+        }
+        if ($orderFilters['tracking'] !== '') {
+            $tracking = $orderFilters['tracking'];
+            $orders->whereHas('shipment', function ($query) use ($tracking) {
+                $query->where('shipping_id', 'like', '%' . $tracking . '%')
+                    ->orWhere('shipping_type', 'like', '%' . $tracking . '%');
+            });
+        }
+        if ($orderFilters['refund'] === '1') {
+            $orders->has('refund_requests');
+        } elseif ($orderFilters['refund'] === '0') {
+            $orders->doesntHave('refund_requests');
+        }
+
+        [$amountFrom, $amountTo] = $this->orderedNumericBounds($orderFilters['amount_from'], $orderFilters['amount_to']);
+        if ($amountFrom !== null) {
+            $orders->where('orders.grand_total', '>=', $amountFrom);
+        }
+        if ($amountTo !== null) {
+            $orders->where('orders.grand_total', '<=', $amountTo);
+        }
+        [$exchangeFrom, $exchangeTo] = $this->orderedNumericBounds($orderFilters['exchange_from'], $orderFilters['exchange_to']);
+        if ($exchangeFrom !== null) {
+            $orders->where('orders.quote_grand_total', '>=', $exchangeFrom);
+        }
+        if ($exchangeTo !== null) {
+            $orders->where('orders.quote_grand_total', '<=', $exchangeTo);
+        }
+        [$productsFrom, $productsTo] = $this->orderedNumericBounds($orderFilters['products_from'], $orderFilters['products_to']);
+        if ($productsFrom !== null) {
+            $orders->whereRaw('(select count(*) from order_details where order_details.order_id = orders.id) >= ?', [(int) $productsFrom]);
+        }
+        if ($productsTo !== null) {
+            $orders->whereRaw('(select count(*) from order_details where order_details.order_id = orders.id) <= ?', [(int) $productsTo]);
+        }
+
+        $allowedSorts = [
+            'code', 'products', 'customer', 'seller', 'amount', 'currency', 'exchange_rate',
+            'delivery_status', 'payment_method', 'payment_status', 'tracking',
+            'shipping_method', 'shipping_type', 'refund',
+        ];
+        $sortBy = (string) $request->get('sort_by', '');
+        if (!in_array($sortBy, $allowedSorts, true)) {
+            $sortBy = '';
+        }
+        $sortDir = strtolower((string) $request->get('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        if ($sortBy !== '') {
+            $orders->reorder();
+            if ($sortBy === 'code') {
+                $orders->orderBy('orders.code', $sortDir);
+            } elseif ($sortBy === 'products') {
+                $orders->withCount('orderDetails')->orderBy('order_details_count', $sortDir);
+            } elseif ($sortBy === 'customer') {
+                $orders->orderByRaw('(select name from users where users.id = orders.user_id limit 1) ' . $sortDir);
+            } elseif ($sortBy === 'seller') {
+                $orders->orderByRaw('(select name from shops where shops.user_id = orders.seller_id limit 1) ' . $sortDir);
+            } elseif ($sortBy === 'amount') {
+                $orders->orderBy('orders.grand_total', $sortDir);
+            } elseif ($sortBy === 'currency') {
+                $orders->orderBy('orders.quote_currency_code', $sortDir);
+            } elseif ($sortBy === 'exchange_rate') {
+                $orders->orderBy('orders.quote_grand_total', $sortDir);
+            } elseif ($sortBy === 'delivery_status') {
+                $orders->orderBy('orders.delivery_status', $sortDir);
+            } elseif ($sortBy === 'payment_method') {
+                $orders->orderBy('orders.payment_type', $sortDir);
+            } elseif ($sortBy === 'payment_status') {
+                $orders->orderBy('orders.payment_status', $sortDir);
+            } elseif ($sortBy === 'tracking') {
+                $orders->orderByRaw('(select shipping_id from order_shipments where order_shipments.order_id = orders.id limit 1) ' . $sortDir);
+            } elseif ($sortBy === 'shipping_method') {
+                $orders->orderBy('orders.shipping_choice', $sortDir);
+            } elseif ($sortBy === 'shipping_type') {
+                $orders->orderBy('orders.shipping_by', $sortDir);
+            } elseif ($sortBy === 'refund') {
+                $orders->withCount('refund_requests')->orderBy('refund_requests_count', $sortDir);
+            }
+            $orders->orderBy('orders.id', 'desc');
+        }
+
         $orders = $orders->paginate(15);
         $unpaid_order_payment_notification = get_notification_type('complete_unpaid_order_payment', 'type');
-        return view('backend.sales.index', compact('orders', 'sort_search', 'order_type', 'payment_status', 'delivery_status', 'date', 'unpaid_order_payment_notification'));
+        return view('backend.sales.index', compact(
+            'orders',
+            'sort_search',
+            'order_type',
+            'payment_status',
+            'delivery_status',
+            'date',
+            'unpaid_order_payment_notification',
+            'orderFilters',
+            'sortBy',
+            'sortDir'
+        ));
+    }
+
+    private function orderedNumericBounds($from, $to): array
+    {
+        $fromOk = $from !== null && $from !== '' && is_numeric($from);
+        $toOk = $to !== null && $to !== '' && is_numeric($to);
+        $fromValue = $fromOk ? (float) $from : null;
+        $toValue = $toOk ? (float) $to : null;
+        if ($fromValue !== null && $toValue !== null && $fromValue > $toValue) {
+            return [$toValue, $fromValue];
+        }
+
+        return [$fromValue, $toValue];
     }
 
     public function show($id)

@@ -4,6 +4,11 @@
         opacity: 0.5;
     }
 
+    .product-variant-choices .aiz-megabox {
+        width: auto;
+        margin: 0 8px 8px 0;
+    }
+
     .combined-discount-pill {
         display: inline-flex;
         align-items: center;
@@ -330,6 +335,44 @@
     <h2 class="mb-1">
         {{ $detailedProduct->getTranslation('name') }}
     </h2>
+    @php
+        $showProductCompanies = \Illuminate\Support\Facades\Schema::hasColumn('products', 'marketed_by_id');
+    @endphp
+    @if ($showProductCompanies)
+        @php
+            $marketedName = $detailedProduct->marketed_by_name;
+            if (!$marketedName && !empty($detailedProduct->marketed_by_id)) {
+                $marketedName = optional(\App\Models\Company::find($detailedProduct->marketed_by_id))->company_name;
+            }
+            $manufacturedNames = json_decode($detailedProduct->manufactured_by_names ?? '[]', true) ?: [];
+            if (empty($detailedProduct->manufactured_by_hidden)) {
+                $manufacturedIds = json_decode($detailedProduct->manufactured_by_ids ?? '[]', true) ?: [];
+                if ($manufacturedIds) {
+                    $manufacturedNames = array_merge($manufacturedNames, \App\Models\Company::whereIn('id', $manufacturedIds)->orderBy('company_name')->pluck('company_name')->all());
+                }
+            } else {
+                $manufacturedNames = [];
+            }
+            $importNames = json_decode($detailedProduct->import_by_names ?? '[]', true) ?: [];
+            if (empty($detailedProduct->import_by_hidden)) {
+                $importIds = json_decode($detailedProduct->import_by_ids ?? '[]', true) ?: [];
+                if ($importIds) {
+                    $importNames = array_merge($importNames, \App\Models\Company::whereIn('id', $importIds)->orderBy('company_name')->pluck('company_name')->all());
+                }
+            } else {
+                $importNames = [];
+            }
+        @endphp
+        @if ($marketedName)
+            <div class="text-secondary fs-13 mb-1">{{ translate('Marketed By') }}: {{ $marketedName }}</div>
+        @endif
+        @if (!empty($manufacturedNames))
+            <div class="text-secondary fs-13 mb-1">{{ translate('Manufactured By') }}: {{ implode(', ', array_unique($manufacturedNames)) }}</div>
+        @endif
+        @if (!empty($importNames))
+            <div class="text-secondary fs-13 mb-1">{{ translate('Import By') }}: {{ implode(', ', array_unique($importNames)) }}</div>
+        @endif
+    @endif
 
 
 
@@ -617,7 +660,7 @@
                                 @continue($visibleValues->isEmpty())
                                 <!--<div class="row no-gutters mb-3">--> <!--old code-->
                                 <div
-                                    class="row no-gutters mt-md-2 mt-2 @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
+                                    class="row no-gutters mt-md-2 mt-2 product-variant-choices @if (strtolower(get_single_attribute_name($choice->attribute_id)) == 'role') div_disable @endif">
                                     <!--hiding 1st attribute ROLE [by nexgeno]-->
                                     <div class="col-sm-12">
                                         <div class="text-dark fs-14 fw-500 mt-0 mb-2">
@@ -625,7 +668,7 @@
                                         </div>
                                     </div>
                                     <div class="col-sm-12">
-                                        <div class="aiz-radio-inline">
+                                        <div class="aiz-radio-inline d-flex flex-wrap align-items-center">
                                             @php
                                                 $sortedValues = $visibleValues
                                                     ->sortBy(function ($val) {
@@ -695,7 +738,7 @@
 
 
                         <!-- Batch Selection Section -->
-                        <div class="col-4 pl-0 pb-0 mt-md-3 mt-2" id="batch-selection-section" style="display: none;">
+                        <div class="mt-md-3 mt-2" id="batch-selection-section" style="display: none; max-width: 320px;">
                             <div class="fw-500 fs-14 text-dark mb-2">{{ translate('Choose Batch') }}:</div>
                             <select id="batch-dropdown" class="form-control form-control-sm" data-placeholder="{{ translate('Search batch code') }}">
                                 <option value="">{{ translate('Choose Batch') }}</option>

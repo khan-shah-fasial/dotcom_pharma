@@ -326,7 +326,10 @@
             <div class="card-body">
                 @php
                     $columnGroups = [
-                        [['sr_no', 'Sr.No']],
+                        [
+                            ['sr_no', 'Sr.No'],
+                            ['ban_status', 'Ban Status'],
+                        ],
                         [
                             ['crm_id', 'Account Number'],
                             ['city', 'City'],
@@ -366,7 +369,6 @@
                             ['approval_status', 'Approval Status'],
                             ['customer_role', 'Customer Role'],
                             ['current_status', 'Current Status'],
-                            ['ban_status', 'Ban Status'],
                         ],
                         [
                             ['credit_status', 'Credit Status'],
@@ -381,6 +383,7 @@
                         [
                             ['iec_no', 'IEC.No'],
                             ['passport_no', 'Passport.No'],
+                            ['record_file_no', 'File No'],
                         ],
                         [
                             ['dl1', 'Drug / Pharmacy Licence No 1'],
@@ -451,7 +454,16 @@
                                         ]);
                                     @endphp
                                     <tr>
-                                        <td>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</td>
+                                        <td>
+                                            <div>{{ $key + 1 + ($users->currentPage() - 1) * $users->perPage() }}</div>
+                                            <div>
+                                                @if ($user->banned == 1)
+                                                    <span class="badge badge-inline badge-danger">{{ translate('Banned') }}</span>
+                                                @else
+                                                    <span class="badge badge-inline badge-success">{{ translate('Active') }}</span>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td>
                                             <div>
                                                 @if($consolidatedReportUrl)
@@ -516,13 +528,6 @@
                                             <div>{{ $user->approval_status == 1 ? translate('Verified') : translate('Unverified') }}</div>
                                             <div>{{ $user->user_subtype ?: translate('Customer') }}</div>
                                             <div>{{ $details->current_status ?? '-' }}</div>
-                                            <div>
-                                                @if ($user->banned == 1)
-                                                    <span class="badge badge-inline badge-danger">{{ translate('Banned') }}</span>
-                                                @else
-                                                    <span class="badge badge-inline badge-success">{{ translate('Active') }}</span>
-                                                @endif
-                                            </div>
                                         </td>
                                         <td>
                                             <div>{{ $user->credit_status == 1 ? translate('Active') : translate('Deactive') }}</div>
@@ -537,6 +542,7 @@
                                         <td>
                                             <div>{{ $details->iec_no ?? '-' }}</div>
                                             <div>{{ $details->passport_no ?? '-' }}</div>
+                                            <div>{{ $details->record_file_no ?? '-' }}</div>
                                         </td>
                                         <td>
                                             <div>{{ $details->d_l_no_1 ?? '-' }}</div>

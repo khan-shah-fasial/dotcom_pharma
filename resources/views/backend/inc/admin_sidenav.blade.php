@@ -286,6 +286,12 @@
                                         <span class="aiz-side-nav-text">{{ translate('Company Master') }}</span>
                                     </a>
                                 </li>
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('series.index') }}"
+                                        class="aiz-side-nav-link {{ areActiveRoutes(['series.index', 'series.create', 'series.edit']) }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Series Master') }}</span>
+                                    </a>
+                                </li>
                             @endcan
                             @canany(['view_all_brands', 'brand_bulk_upload'])
                                 <li class="aiz-side-nav-item">

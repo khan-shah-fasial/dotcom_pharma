@@ -39,13 +39,8 @@
                             <h5 class="mb-0 h6">{{ translate('Product Information') }}</h5>
                         </div>
                         <div class="card-body">
-                            <div class="form-group row">
-                                <label class="col-md-3 col-from-label">{{ translate('Product Name') }} <span class="text-danger">*</span></label>
-                                <div class="col-md-8">
-                                    <input type="text" class="form-control" name="name"
-                                        placeholder="{{ translate('Product Name') }}" onchange="update_sku()" required>
-                                </div>
-                            </div>
+                            @include('backend.product.products.partials.brand_product_name')
+                            @include('backend.product.products.partials.company_attribution')
                             <div class="form-group row" id="brand">
                                 <label class="col-md-3 col-from-label">{{ translate('Brand') }}</label>
                                 <div class="col-md-8">

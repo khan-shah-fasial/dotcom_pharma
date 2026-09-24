@@ -237,7 +237,7 @@
         </select>
         @error('country_id') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
-    <label class="col-md-1 col-form-label">{{ translate('State/Region') }}</label>
+    <label class="col-md-1 col-form-label">{{ translate('State') }}</label>
     <div class="col-md-4">
         <select name="state_id" id="contact_state_id" class="form-control aiz-selectpicker" data-live-search="true">
             <option value="">{{ translate('Select State') }}</option>
@@ -248,6 +248,15 @@
         @error('state_id') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
 </div>
+@if (\Illuminate\Support\Facades\Schema::hasColumn('directory_contacts', 'region'))
+<div class="form-group row">
+    <label class="col-md-2 col-form-label">{{ translate('Region') }}</label>
+    <div class="col-md-9">
+        <input type="text" name="region" class="form-control" value="{{ old('region', $contact->region ?? '') }}">
+        @error('region') <span class="text-danger small">{{ $message }}</span> @enderror
+    </div>
+</div>
+@endif
 <div class="form-group row">
     <label class="col-md-2 col-form-label">{{ translate('District') }}</label>
     <div class="col-md-4">

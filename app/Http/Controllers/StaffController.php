@@ -28,10 +28,98 @@ class StaffController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $staffs = Staff::with('user', 'role')->paginate(10);
-        return view('backend.staff.staffs.index', compact('staffs'));
+        $allowedSorts = ['name', 'email', 'phone', 'role', 'designation', 'status', 'photo', 'area'];
+        $sortBy = (string) $request->get('sort_by', '');
+        if (!in_array($sortBy, $allowedSorts, true)) {
+            $sortBy = '';
+        }
+        $sortDir = strtolower((string) $request->get('sort_dir', 'asc')) === 'desc' ? 'desc' : 'asc';
+
+        $filters = [
+            'name' => trim((string) $request->get('name', '')),
+            'email' => trim((string) $request->get('email', '')),
+            'phone' => trim((string) $request->get('phone', '')),
+            'role' => trim((string) $request->get('role', '')),
+            'designation' => trim((string) $request->get('designation', '')),
+            'status' => (string) $request->get('status', ''),
+            'photo' => (string) $request->get('photo', ''),
+            'area' => trim((string) $request->get('area', '')),
+        ];
+
+        $staffs = Staff::query()->with('user', 'role')->whereHas('user');
+
+        if ($filters['name'] !== '') {
+            $name = $filters['name'];
+            $staffs->whereHas('user', function ($query) use ($name) {
+                $query->where('name', 'like', '%' . $name . '%');
+            });
+        }
+        if ($filters['email'] !== '') {
+            $email = $filters['email'];
+            $staffs->whereHas('user', function ($query) use ($email) {
+                $query->where('email', 'like', '%' . $email . '%');
+            });
+        }
+        if ($filters['phone'] !== '') {
+            $phone = $filters['phone'];
+            $staffs->whereHas('user', function ($query) use ($phone) {
+                $query->where('phone', 'like', '%' . $phone . '%');
+            });
+        }
+        if ($filters['role'] !== '') {
+            $role = $filters['role'];
+            $staffs->whereHas('role', function ($query) use ($role) {
+                $query->where('roles.name', 'like', '%' . $role . '%')
+                    ->orWhereHas('role_translations', function ($translation) use ($role) {
+                        $translation->where('name', 'like', '%' . $role . '%');
+                    });
+            });
+        }
+        if ($filters['designation'] !== '') {
+            $staffs->where('staff.designation', 'like', '%' . $filters['designation'] . '%');
+        }
+        if (in_array($filters['status'], ['0', '1'], true)) {
+            $staffs->where('staff.status', (int) $filters['status']);
+        }
+        if ($filters['photo'] === '1') {
+            $staffs->whereHas('user', function ($query) {
+                $query->whereNotNull('avatar_original')->where('avatar_original', '!=', '');
+            });
+        } elseif ($filters['photo'] === '0') {
+            $staffs->whereHas('user', function ($query) {
+                $query->where(function ($inner) {
+                    $inner->whereNull('avatar_original')->orWhere('avatar_original', '');
+                });
+            });
+        }
+        if ($filters['area'] !== '') {
+            $this->applyStaffAreaNameFilter($staffs, $filters['area']);
+        }
+
+        if ($sortBy === 'name') {
+            $staffs->orderByRaw('(select name from users where users.id = staff.user_id limit 1) ' . $sortDir);
+        } elseif ($sortBy === 'email') {
+            $staffs->orderByRaw('(select email from users where users.id = staff.user_id limit 1) ' . $sortDir);
+        } elseif ($sortBy === 'phone') {
+            $staffs->orderByRaw('(select phone from users where users.id = staff.user_id limit 1) ' . $sortDir);
+        } elseif ($sortBy === 'role') {
+            $staffs->orderByRaw('(select name from roles where roles.id = staff.role_id limit 1) ' . $sortDir);
+        } elseif ($sortBy === 'designation') {
+            $staffs->orderBy('staff.designation', $sortDir);
+        } elseif ($sortBy === 'status') {
+            $staffs->orderBy('staff.status', $sortDir);
+        } elseif ($sortBy === 'photo') {
+            $staffs->orderByRaw('(select case when avatar_original is null or avatar_original = \'\' then 1 else 0 end from users where users.id = staff.user_id limit 1) ' . $sortDir);
+        } elseif ($sortBy === 'area') {
+            $staffs->orderBy('staff.area_assignments', $sortDir);
+        }
+        $staffs->orderBy('staff.id', 'desc');
+
+        $staffs = $staffs->paginate(10)->appends($request->query());
+
+        return view('backend.staff.staffs.index', compact('staffs', 'filters', 'sortBy', 'sortDir'));
     }
 
     /**
@@ -393,5 +481,45 @@ class StaffController extends Controller
 
         $ifscCode = trim((string) $request->input('bank_ifsc_code'));
         $staff->bank_ifsc_code = $ifscCode === '' ? null : strtoupper($ifscCode);
+    }
+
+    private function applyStaffAreaNameFilter($query, string $area): void
+    {
+        $like = '%' . $area . '%';
+        $countryIds = DB::table('countries')->where('name', 'like', $like)->pluck('id');
+        $stateIds = DB::table('states')->where('name', 'like', $like)->pluck('id');
+        $cityIds = DB::table('cities')->where('name', 'like', $like)->pluck('id');
+
+        $query->where(function ($inner) use ($countryIds, $stateIds, $cityIds, $area) {
+            $matched = false;
+            foreach ($countryIds as $id) {
+                $matched = true;
+                $this->orWhereStaffAreaId($inner, 'country_id', (int) $id);
+            }
+            foreach ($stateIds as $id) {
+                $matched = true;
+                $this->orWhereStaffAreaId($inner, 'state_id', (int) $id);
+            }
+            foreach ($cityIds as $id) {
+                $matched = true;
+                $this->orWhereStaffAreaId($inner, 'district_id', (int) $id);
+            }
+            if (stripos('all districts', strtolower($area)) !== false) {
+                $matched = true;
+                $inner->orWhere('staff.area_assignments', 'like', '%"all_districts":true%')
+                    ->orWhere('staff.area_assignments', 'like', '%"all_districts": true%');
+            }
+            if (!$matched) {
+                $inner->whereRaw('1 = 0');
+            }
+        });
+    }
+
+    private function orWhereStaffAreaId($query, string $key, int $id): void
+    {
+        $query->orWhere('staff.area_assignments', 'like', '%"' . $key . '":' . $id . ',%')
+            ->orWhere('staff.area_assignments', 'like', '%"' . $key . '":' . $id . '}%')
+            ->orWhere('staff.area_assignments', 'like', '%"' . $key . '": ' . $id . ',%')
+            ->orWhere('staff.area_assignments', 'like', '%"' . $key . '": ' . $id . '}%');
     }
 }
