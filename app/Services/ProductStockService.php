@@ -387,10 +387,20 @@ class ProductStockService
                 $productStock->case_width = request()->get('case_width_' . str_replace('.', '_', $str), null);
                 $productStock->case_height = request()->get('case_height_' . str_replace('.', '_', $str), null);
 
-                $productStock->sku = $productStock->is_hidden
-                    ? '-'
-                    : request()->get('sku_' . $variantInputKey, $productStock->sku ?? '');
-                $productStock->image = request()->get('img_' . $variantInputKey, $productStock->image ?? null);
+                $postedSku = request()->input('sku_' . $variantInputKey);
+                if ($productStock->is_hidden) {
+                    $productStock->sku = '-';
+                } elseif ($productStock->exists && trim((string) $postedSku) === '') {
+                    // A saved SKU can be replaced, and it cannot be cleared.
+                } elseif ($postedSku !== null) {
+                    $productStock->sku = $postedSku;
+                }
+                $postedImage = request()->input('img_' . $variantInputKey);
+                if ($postedImage === null || $postedImage === '') {
+                    $productStock->image = $productStock->image ?: null;
+                } else {
+                    $productStock->image = $postedImage;
+                }
                 $productStock->save();
                 $this->syncBatchesUpdateFromRequest($productStock, $str, $product);
 
@@ -638,18 +648,6 @@ class ProductStockService
 
         if (!is_array($batchesInput) || count($batchesInput) === 0) {
             return;
-        }
-
-        $submittedIds = [];
-        foreach ($batchesInput as $row) {
-            if (!empty($row['id'])) {
-                $submittedIds[] = (int) $row['id'];
-            }
-        }
-
-        // Remove batches that belong to this stock but were not in the request (user removed those rows)
-        if (count($submittedIds) > 0) {
-            $stock->batches()->whereNotIn('id', $submittedIds)->delete();
         }
 
         $totalQty = 0;

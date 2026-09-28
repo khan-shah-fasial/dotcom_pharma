@@ -1401,6 +1401,9 @@
     }
 
     $('input[name="colors_active"]').on('change', function() {
+        if (lockedColors.length) {
+            $(this).prop('checked', true);
+        }
         if(!$('input[name="colors_active"]').is(':checked')){
             $('#colors').prop('disabled', true);
             AIZ.plugins.bootstrapSelect('refresh');
@@ -1413,16 +1416,102 @@
     });
 
     $(document).on("change", ".attribute_choice",function() {
+        restoreLockedAttributes();
         update_sku();
     });
 
     $('#colors').on('change', function() {
+        restoreLockedAttributes();
         update_sku();
     });
 
     function delete_row(em){
         $(em).closest('.form-group').remove();
         update_sku();
+    }
+
+    var lockedAttributeIds = @json(array_map('strval', json_decode($product->attributes ?? '[]', true) ?: []));
+    var lockedAttributeValues = @json(collect(json_decode($product->choice_options ?? '[]', true) ?: [])->mapWithKeys(function ($item) {
+        $item = (array) $item;
+        return [(string) ($item['attribute_id'] ?? '') => array_values(array_map('strval', (array) ($item['values'] ?? [])))];
+    }));
+    var lockedColors = @json(array_map('strval', json_decode($product->colors ?? '[]', true) ?: []));
+    var restoringVariantLocks = false;
+
+    function restoreLockedAttributes() {
+        if (restoringVariantLocks) {
+            return;
+        }
+        restoringVariantLocks = true;
+        var $attr = $('#choice_attributes');
+        var selected = $attr.val() || [];
+        if (!Array.isArray(selected)) {
+            selected = [selected];
+        }
+        lockedAttributeIds.forEach(function (id) {
+            if (selected.indexOf(String(id)) === -1) {
+                selected.push(String(id));
+            }
+        });
+        $attr.val(selected);
+
+        Object.keys(lockedAttributeValues || {}).forEach(function (id) {
+            if (!id) {
+                return;
+            }
+            var $sel = $('select[name="choice_options_' + id + '[]"]');
+            if (!$sel.length) {
+                return;
+            }
+            var current = $sel.val() || [];
+            if (!Array.isArray(current)) {
+                current = [current];
+            }
+            (lockedAttributeValues[id] || []).forEach(function (value) {
+                if (current.indexOf(String(value)) === -1) {
+                    current.push(String(value));
+                }
+            });
+            $sel.val(current);
+        });
+
+        if (lockedColors.length) {
+            var $colors = $('#colors');
+            var colors = $colors.val() || [];
+            if (!Array.isArray(colors)) {
+                colors = [colors];
+            }
+            lockedColors.forEach(function (color) {
+                if (colors.indexOf(String(color)) === -1) {
+                    colors.push(String(color));
+                }
+            });
+            $colors.prop('disabled', false).val(colors);
+            $('input[name="colors_active"]').prop('checked', true);
+        }
+        AIZ.plugins.bootstrapSelect('refresh');
+        restoringVariantLocks = false;
+    }
+
+    function lockSavedSkuPhotos() {
+        $('.sku-photo-locked').each(function () {
+            var saved = String($(this).attr('data-saved-photo') || '');
+            var $box = $(this).parent();
+            $box.find('.remove-attachment').remove();
+            var $input = $(this).find('input.selected-files');
+            if (saved !== '' && String($input.val() || '') === '') {
+                $input.val(saved);
+            }
+        });
+    }
+
+    function lockSavedSkuValues() {
+        $('.variant-sku-input[data-saved-sku]').each(function () {
+            var saved = String($(this).attr('data-saved-sku') || '');
+            if (saved !== '' && String($(this).val() || '').trim() === '') {
+                $(this).val(saved);
+            }
+        });
     }
 
     function delete_variant(em){
@@ -1438,12 +1527,18 @@
                 $('#sku_combination').html(data);
                 setTimeout(() => {
                         AIZ.uploader.previewGenerate();
+                        lockSavedSkuPhotos();
+                        lockSavedSkuValues();
                 }, "2000");
                 if (data.trim().length > 1) {
                     AIZ.plugins.sectionFooTable('#sku_combination');
                 }
                 else {
                 }
+                setTimeout(function () {
+                    lockSavedSkuPhotos();
+                    lockSavedSkuValues();
+                }, 2300);
            }
         });
     }
@@ -1453,12 +1548,20 @@
     $(document).ready(function(){
         update_sku();
 
+        $('#choice_form').on('submit', function () {
+            lockSavedSkuValues();
+            lockSavedSkuPhotos();
+        });
+
+        $(document).on('input blur', '.variant-sku-input[data-saved-sku]', lockSavedSkuValues);
+
         $('.remove-files').on('click', function(){
             $(this).parents(".col-md-4").remove();
         });
     });
 
     $('#choice_attributes').on('change', function() {
+        restoreLockedAttributes();
         $.each($("#choice_attributes option:selected"), function(j, attribute){
             flag = false;
             $('input[name="choice_no[]"]').each(function(i, choice_no) {

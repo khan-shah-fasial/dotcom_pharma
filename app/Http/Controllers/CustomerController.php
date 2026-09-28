@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Country;
+use App\Models\Company;
+use App\Models\TaxMaster;
 use App\Models\UserDetails;
 use App\Models\Lead;
 use App\Models\State;
@@ -17,6 +19,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Hash;
 use Illuminate\Support\Str;
@@ -547,8 +550,9 @@ class CustomerController extends Controller
         $transports = $this->activeTransportsWithBookedTo();
         $currentStatuses = UserDetails::CURRENT_STATUSES;
         $customerTypes = UserDetails::CUSTOMER_TYPES;
+        $registrationExtras = $this->customerRegistrationExtras();
 
-        return view('backend.customer.customers.create_business', compact(
+        return view('backend.customer.customers.create_business', array_merge(compact(
             'user',
             'details',
             'countries',
@@ -556,7 +560,7 @@ class CustomerController extends Controller
             'transports',
             'currentStatuses',
             'customerTypes',
-        ));
+        ), $registrationExtras));
     }
 
     private function activeTransportsWithBookedTo()
@@ -727,7 +731,13 @@ class CustomerController extends Controller
             'const_of_business' => ['nullable', 'string', 'max:255'],
             'con_person_name' => ['nullable', 'string', 'max:50'],
             'company_name' => ['nullable', 'string', 'max:150'],
-            'customer_type' => ['nullable', Rule::in(UserDetails::CUSTOMER_TYPES)],
+            'customer_type' => ['nullable', Rule::in(array_merge(UserDetails::CUSTOMER_TYPES, ['__not_in_list__']))],
+            'customer_type_custom' => ['nullable', 'required_if:customer_type,__not_in_list__', 'string', 'max:255'],
+            'account_type' => ['nullable', Rule::in(array_merge(UserDetails::ACCOUNT_TYPES, ['__not_in_list__']))],
+            'account_type_custom' => ['nullable', 'required_if:account_type,__not_in_list__', 'string', 'max:255'],
+            'territory' => ['nullable', 'string', 'max:255'],
+            'territory_custom' => ['nullable', 'required_if:territory,__not_in_list__', 'string', 'max:255'],
+            'international_tax_choice' => ['nullable', Rule::in(['lut', 'igst'])],
             'current_status' => ['nullable', Rule::in(UserDetails::CURRENT_STATUSES)],
             'street_add_first_business' => ['nullable', 'string', 'max:150'],
             'street_add_sec_business' => ['nullable', 'string', 'max:150'],
@@ -962,7 +972,7 @@ class CustomerController extends Controller
             $details = new UserDetails(['user_id' => $user->id]);
             $transportSelection = $this->resolveTransportSelection($request);
             $orderPreferences = $this->customerOrderPreferenceFlags($request);
-            $details->fill([
+            $details->fill(array_merge([
                 'type_option' => $typeOption,
                 'crm_id' => $validated['crm_id'],
                 'opening_balance' => $validated['opening_balance'] ?? 0,
@@ -993,7 +1003,7 @@ class CustomerController extends Controller
                 'uin_current_status' => $typeOption === 'international' ? ($validated['uin_current_status'] ?? null) : null,
                 'con_person_name' => $businessRequired ? ($validated['con_person_name'] ?? null) : null,
                 'company_name' => $businessRequired ? ($validated['company_name'] ?? null) : null,
-                'customer_type' => $businessRequired ? ($validated['customer_type'] ?? null) : null,
+                'customer_type' => $businessRequired ? $this->resolvedCustomerType($request) : null,
                 'current_status' => $validated['current_status'] ?? null,
                 'street_add_first_business' => $businessRequired ? ($validated['street_add_first_business'] ?? null) : null,
                 'street_add_sec_business' => $businessRequired ? ($validated['street_add_sec_business'] ?? null) : null,
@@ -1101,7 +1111,7 @@ class CustomerController extends Controller
                 'cc_mdl_reg_no_file' => $licenseFiles['cc_mdl_reg_no_file'],
                 'other_reg_no' => $validated['other_reg_no'] ?? null,
                 'other_reg_no_file' => $licenseFiles['other_reg_no_file'],
-            ]);
+            ], $this->accountProfileInput($request)));
             $details->save();
 
             sync_business_addresses_to_address_book($user, $details);
@@ -1183,15 +1193,16 @@ class CustomerController extends Controller
         $transports = $this->activeTransportsWithBookedTo();
         $currentStatuses = UserDetails::CURRENT_STATUSES;
         $customerTypes = UserDetails::CUSTOMER_TYPES;
+        $registrationExtras = $this->customerRegistrationExtras();
 
-        return view('backend.customer.customers.edit', compact(
+        return view('backend.customer.customers.edit', array_merge(compact(
             'user',
             'details',
             'countries',
             'transports',
             'currentStatuses',
             'customerTypes',
-        ));
+        ), $registrationExtras));
     }
 
     /**
@@ -1342,7 +1353,13 @@ class CustomerController extends Controller
             'opening_balance'      => ['nullable', 'numeric', 'between:-99999999999999999.999,99999999999999999.999'],
             'religion'             => ['nullable', 'string', 'max:150'],
             'anniversary'          => ['nullable', 'date'],
-            'customer_type'        => ['nullable', Rule::in(UserDetails::CUSTOMER_TYPES)],
+            'customer_type'        => ['nullable', Rule::in(array_merge(UserDetails::CUSTOMER_TYPES, ['__not_in_list__']))],
+            'customer_type_custom' => ['nullable', 'required_if:customer_type,__not_in_list__', 'string', 'max:255'],
+            'account_type' => ['nullable', Rule::in(array_merge(UserDetails::ACCOUNT_TYPES, ['__not_in_list__']))],
+            'account_type_custom' => ['nullable', 'required_if:account_type,__not_in_list__', 'string', 'max:255'],
+            'territory' => ['nullable', 'string', 'max:255'],
+            'territory_custom' => ['nullable', 'required_if:territory,__not_in_list__', 'string', 'max:255'],
+            'international_tax_choice' => ['nullable', Rule::in(['lut', 'igst'])],
             // 'prim_email_business'  => ['nullable', 'email'],
             'phone_personal'       => ['required', 'regex:/^[\\d\\s\\-\\+]+$/', 'min:5', 'max:15'],
             'default_shipping_method' => ['nullable', Rule::in(['courier', 'transport', 'local'])],
@@ -1476,7 +1493,7 @@ class CustomerController extends Controller
 
         $transportSelection = $this->resolveTransportSelection($request, $details);
         $orderPreferences = $this->customerOrderPreferenceFlags($request, $details);
-        $details->fill([
+        $details->fill(array_merge([
             'type_option' => $typeOption,
             'crm_id' => $request->input('crm_id', $details->crm_id ?? null),
             'opening_balance' => $validated['opening_balance'] ?? $details->opening_balance ?? 0,
@@ -1512,7 +1529,7 @@ class CustomerController extends Controller
             'uin_current_status' => $typeOption === 'international' ? ($validated['uin_current_status'] ?? $details->uin_current_status) : null,
             'con_person_name' => $businessRequired ? ($validated['con_person_name'] ?? $details->con_person_name) : $details->con_person_name,
             'company_name' => $businessRequired ? ($validated['company_name'] ?? $details->company_name) : $details->company_name,
-            'customer_type' => $businessRequired ? ($validated['customer_type'] ?? null) : $details->customer_type,
+            'customer_type' => $businessRequired ? $this->resolvedCustomerType($request) : $details->customer_type,
             'current_status' => $validated['current_status'] ?? null,
             'street_add_first_business' => $businessRequired ? ($validated['street_add_first_business'] ?? $details->street_add_first_business) : $details->street_add_first_business,
             'street_add_sec_business' => $businessRequired ? ($validated['street_add_sec_business'] ?? $details->street_add_sec_business) : $details->street_add_sec_business,
@@ -1621,7 +1638,7 @@ class CustomerController extends Controller
             'cc_mdl_reg_no_file' => $licenseFiles['cc_mdl_reg_no_file'],
             'other_reg_no' => isset($removeLicense['other_reg_no']) ? null : ($request->filled('other_reg_no') ? $validated['other_reg_no'] : ($request->has('other_reg_no') ? null : $details->other_reg_no)),
             'other_reg_no_file' => $licenseFiles['other_reg_no_file'],
-        ]);
+        ], $this->accountProfileInput($request)));
         $details->save();
         if ($details->wasChanged('current_status')) {
             $this->syncLeadCurrentStatus($details);
@@ -2434,6 +2451,71 @@ class CustomerController extends Controller
             'villages'  => $villages,
             'location'  => $location,
         ]);
+    }
+
+    private function customerRegistrationExtras(): array
+    {
+        $taxRows = [];
+        if (TaxMaster::tableReady()) {
+            $taxRows = TaxMaster::query()
+                ->where('status', 1)
+                ->get(['tax_code', 'description', 'kind', 'sale_tax', 'sale_cgst', 'sale_sgst', 'sale_igst'])
+                ->toArray();
+        }
+
+        return [
+            'territoryStates' => State::query()->orderBy('name')->get(['id', 'name']),
+            'sellerCompanies' => Company::query()->orderBy('company_name')->get(['id', 'company_name', 'full_address']),
+            'taxMasterRows' => $taxRows,
+            'accountColumnsReady' => Schema::hasTable('user_details')
+                && Schema::hasColumn('user_details', 'account_type')
+                && Schema::hasColumn('user_details', 'territory')
+                && Schema::hasColumn('user_details', 'international_tax_choice'),
+        ];
+    }
+
+    private function resolvedCustomerType(Request $request): ?string
+    {
+        $value = trim((string) $request->input('customer_type', ''));
+        if ($value === '__not_in_list__') {
+            $custom = trim((string) $request->input('customer_type_custom', ''));
+
+            return $custom === '' ? null : $custom;
+        }
+
+        return $value === '' ? null : $value;
+    }
+
+    private function accountProfileInput(Request $request): array
+    {
+        if (!Schema::hasTable('user_details')) {
+            return [];
+        }
+
+        $data = [];
+        $accountType = trim((string) $request->input('account_type', ''));
+        $accountCustom = trim((string) $request->input('account_type_custom', ''));
+        $territory = trim((string) $request->input('territory', ''));
+        $territoryCustom = trim((string) $request->input('territory_custom', ''));
+        $taxChoice = trim((string) $request->input('international_tax_choice', ''));
+
+        if (Schema::hasColumn('user_details', 'account_type')) {
+            $data['account_type'] = $accountType === '__not_in_list__' || $accountType === '' ? null : $accountType;
+        }
+        if (Schema::hasColumn('user_details', 'account_type_custom')) {
+            $data['account_type_custom'] = $accountType === '__not_in_list__' && $accountCustom !== '' ? $accountCustom : null;
+        }
+        if (Schema::hasColumn('user_details', 'territory')) {
+            $data['territory'] = $territory === '__not_in_list__' || $territory === '' ? null : $territory;
+        }
+        if (Schema::hasColumn('user_details', 'territory_custom')) {
+            $data['territory_custom'] = $territory === '__not_in_list__' && $territoryCustom !== '' ? $territoryCustom : null;
+        }
+        if (Schema::hasColumn('user_details', 'international_tax_choice')) {
+            $data['international_tax_choice'] = in_array($taxChoice, ['lut', 'igst'], true) ? $taxChoice : null;
+        }
+
+        return $data;
     }
 }
 

@@ -40,24 +40,30 @@
                 <table class="table aiz-table mb-0">
                     <thead>
                         <tr>
-                            <th>{{ translate('Sr.No') }}</th>
+                            @include('backend.inc.sortable_th', ['column' => 'id', 'label' => translate('ID'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'name', 'label' => translate('Name'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'code', 'label' => translate('Code'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'description', 'label' => translate('Description'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'status', 'label' => translate('Status'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'created_at', 'label' => translate('Created'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'updated_at', 'label' => translate('Updated'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             <th class="text-right">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($series as $key => $item)
                             <tr>
-                                <td>{{ $series->firstItem() + $key }}</td>
+                                <td>{{ $item->id }}</td>
                                 <td>{{ $item->name }}</td>
                                 <td>{{ $item->code ?: '-' }}</td>
+                                <td>{{ $item->description ? \Illuminate\Support\Str::limit($item->description, 80) : '-' }}</td>
                                 <td>
                                     <span class="badge badge-inline {{ $item->status ? 'badge-success' : 'badge-secondary' }}">
                                         {{ $item->status ? translate('Active') : translate('Inactive') }}
                                     </span>
                                 </td>
+                                <td>{{ optional($item->created_at)->format('d-m-Y H:i') }}</td>
+                                <td>{{ optional($item->updated_at)->format('d-m-Y H:i') }}</td>
                                 <td class="text-right">
                                     @can('view_all_customers')
                                         <a class="btn btn-soft-primary btn-icon btn-circle btn-sm" href="{{ route('series.edit', $item) }}" title="{{ translate('Edit') }}">
@@ -72,7 +78,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="text-center">{{ translate('No series found') }}</td></tr>
+                            <tr><td colspan="8" class="text-center">{{ translate('No series found') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -98,6 +104,10 @@
                         </div>
                         <div class="modal-body">
                             <div class="form-group">
+                                <label>{{ translate('ID') }}</label>
+                                <input type="number" min="1" class="form-control" name="id" value="{{ $filters['id'] ?? '' }}">
+                            </div>
+                            <div class="form-group">
                                 <label>{{ translate('Name') }}</label>
                                 <input type="text" class="form-control" name="name" value="{{ $filters['name'] ?? '' }}">
                             </div>
@@ -105,13 +115,37 @@
                                 <label>{{ translate('Code') }}</label>
                                 <input type="text" class="form-control" name="code" value="{{ $filters['code'] ?? '' }}">
                             </div>
-                            <div class="form-group mb-0">
+                            <div class="form-group">
+                                <label>{{ translate('Description') }}</label>
+                                <input type="text" class="form-control" name="description" value="{{ $filters['description'] ?? '' }}">
+                            </div>
+                            <div class="form-group">
                                 <label>{{ translate('Status') }}</label>
                                 <select class="form-control" name="status">
                                     <option value="">{{ translate('All') }}</option>
                                     <option value="1" @selected(($filters['status'] ?? '') === '1')>{{ translate('Active') }}</option>
                                     <option value="0" @selected(($filters['status'] ?? '') === '0')>{{ translate('Inactive') }}</option>
                                 </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>{{ translate('Created from') }}</label>
+                                    <input type="date" class="form-control" name="created_from" value="{{ $filters['created_from'] ?? '' }}">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>{{ translate('Created to') }}</label>
+                                    <input type="date" class="form-control" name="created_to" value="{{ $filters['created_to'] ?? '' }}">
+                                </div>
+                            </div>
+                            <div class="form-row mb-0">
+                                <div class="form-group col-md-6 mb-0">
+                                    <label>{{ translate('Updated from') }}</label>
+                                    <input type="date" class="form-control" name="updated_from" value="{{ $filters['updated_from'] ?? '' }}">
+                                </div>
+                                <div class="form-group col-md-6 mb-0">
+                                    <label>{{ translate('Updated to') }}</label>
+                                    <input type="date" class="form-control" name="updated_to" value="{{ $filters['updated_to'] ?? '' }}">
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">

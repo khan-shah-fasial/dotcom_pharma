@@ -30,23 +30,47 @@ class SeriesMasterController extends Controller
         }
 
         $filters = [
+            'id' => trim((string) $request->input('id', '')),
             'name' => trim((string) $request->input('name', '')),
             'code' => trim((string) $request->input('code', '')),
+            'description' => trim((string) $request->input('description', '')),
             'status' => (string) $request->input('status', ''),
+            'created_from' => trim((string) $request->input('created_from', '')),
+            'created_to' => trim((string) $request->input('created_to', '')),
+            'updated_from' => trim((string) $request->input('updated_from', '')),
+            'updated_to' => trim((string) $request->input('updated_to', '')),
         ];
-        $allowedSorts = ['name', 'code', 'status'];
+        $allowedSorts = ['id', 'name', 'code', 'description', 'status', 'created_at', 'updated_at'];
         $sortBy = in_array((string) $request->input('sort_by'), $allowedSorts, true) ? (string) $request->input('sort_by') : 'name';
         $sortDir = strtolower((string) $request->input('sort_dir', 'asc')) === 'desc' ? 'desc' : 'asc';
 
         $series = SeriesMaster::query();
+        if ($filters['id'] !== '' && ctype_digit($filters['id'])) {
+            $series->where('id', (int) $filters['id']);
+        }
         if ($filters['name'] !== '') {
             $series->where('name', 'like', '%' . $filters['name'] . '%');
         }
         if ($filters['code'] !== '') {
             $series->where('code', 'like', '%' . $filters['code'] . '%');
         }
+        if ($filters['description'] !== '') {
+            $series->where('description', 'like', '%' . $filters['description'] . '%');
+        }
         if ($filters['status'] !== '') {
             $series->where('status', $filters['status'] === '1' ? 1 : 0);
+        }
+        if ($filters['created_from'] !== '') {
+            $series->whereDate('created_at', '>=', $filters['created_from']);
+        }
+        if ($filters['created_to'] !== '') {
+            $series->whereDate('created_at', '<=', $filters['created_to']);
+        }
+        if ($filters['updated_from'] !== '') {
+            $series->whereDate('updated_at', '>=', $filters['updated_from']);
+        }
+        if ($filters['updated_to'] !== '') {
+            $series->whereDate('updated_at', '<=', $filters['updated_to']);
         }
         $series = $series->orderBy($sortBy, $sortDir)->orderBy('id')->paginate(15)->appends($request->query());
 

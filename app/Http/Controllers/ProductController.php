@@ -616,7 +616,7 @@ class ProductController extends Controller
 
 
 
-        if ($request->has('reset_variant_prices')) {
+        if ($request->has('reset_variant_prices') && !$product->stocks()->exists()) {
 
             // Delete product batches linked to stocks, then product stock
             $stockIds = $product->stocks()->pluck('id');

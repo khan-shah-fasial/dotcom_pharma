@@ -146,8 +146,12 @@
                                                 name="sku_{{ $str }}"
                                                 value="{{ request('sku_'.$str, (($stock->is_hidden ?? false) ? '-' : ($stock->sku ?? ''))) }}"
                                                 class="form-control variant-sku-input"
+                                                @if($stock && trim((string) ($stock->sku ?? '')) !== '' && !($stock->is_hidden ?? false)) data-saved-sku="{{ $stock->sku }}" @endif
                                                 required
                                             >
+                                            @if($stock && trim((string) ($stock->sku ?? '')) !== '')
+                                                <small class="text-muted">{{ translate('This SKU can be edited. It cannot be deleted.') }}</small>
+                                            @endif
                                         </div>
 
                                         <div class="col-sm-12 mb-2">
@@ -231,7 +235,7 @@
 
                                             <div class="col-md-6 col-lg-4">
                                                 <label class="form-label mb-1">{{ translate('Photo') }}</label>
-                                                <div class="input-group" data-toggle="aizuploader" data-type="image">
+                                                <div class="input-group {{ ($stock && $stock->image) ? 'sku-photo-locked' : '' }}" data-toggle="aizuploader" data-type="image" @if($stock && $stock->image) data-saved-photo="{{ $stock->image }}" @endif>
                                                     <div class="input-group-prepend">
                                                         <div class="input-group-text bg-soft-secondary font-weight-medium">
                                                             {{ translate('Browse') }}</div>
@@ -246,6 +250,9 @@
                                                     >
                                                 </div>
                                                 <div class="file-preview box sm"></div>
+                                                @if($stock && $stock->image)
+                                                    <small class="text-muted">{{ translate('Replace this photo by choosing another file. It cannot be removed.') }}</small>
+                                                @endif
                                             </div>
 
                                         </div>
@@ -667,9 +674,13 @@
                                                                     @endif
                                                                 </td>
                                                                 <td class="text-center">
-                                                                    <button type="button" class="btn btn-xs btn-soft-danger" onclick="removeBatchRow(this)" title="{{ translate('Remove') }}">
-                                                                        <i class="las la-trash"></i>
-                                                                    </button>
+                                                                    @if (empty($batch->id))
+                                                                        <button type="button" class="btn btn-xs btn-soft-danger" onclick="removeBatchRow(this)" title="{{ translate('Remove') }}">
+                                                                            <i class="las la-trash"></i>
+                                                                        </button>
+                                                                    @else
+                                                                        <span class="badge badge-inline badge-soft-secondary">{{ translate('Saved') }}</span>
+                                                                    @endif
                                                                 </td>
                                                             </tr>
                                                         @endforeach
@@ -976,6 +987,9 @@
 
     function removeBatchRow(el) {
         var $row = $(el).closest('tr.batch-row');
+        if ($row.find('input[name$="[id]"]').length) {
+            return;
+        }
         var $tbody = $row.parent();
         
         // Check if this is the last row

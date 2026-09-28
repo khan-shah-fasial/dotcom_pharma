@@ -93,6 +93,7 @@
                         </div>
                     </div>
                 </div>
+                @include('backend.customer.customers.partials.account_type_territory')
                 {{-- Type --}}
                 <div class="customer-collapsible-section">
                     <div class="row customer-section-heading">
@@ -355,14 +356,20 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label class="form-label" for="customer_type">{{ translate('Customer Type') }}</label>
-                            <select id="customer_type" name="customer_type" class="form-control aiz-selectpicker" data-live-search="true">
+                            @php
+                                $postedCustomerType = old('customer_type', $details?->customer_type);
+                                $customerTypeIsCustom = $postedCustomerType === '__not_in_list__' || ($postedCustomerType && !in_array($postedCustomerType, $customerTypes, true));
+                            @endphp
+                            <select id="customer_type" name="customer_type" class="form-control aiz-selectpicker js-not-in-list" data-live-search="true" data-custom-input="#customer_type_custom">
                                 <option value="">{{ translate('Select Customer Type') }}</option>
                                 @foreach ($customerTypes as $customerType)
-                                    <option value="{{ $customerType }}" @selected(old('customer_type', $details?->customer_type) === $customerType)>
+                                    <option value="{{ $customerType }}" @selected(!$customerTypeIsCustom && $postedCustomerType === $customerType)>
                                         {{ $customerType }}
                                     </option>
                                 @endforeach
+                                <option value="__not_in_list__" @selected($customerTypeIsCustom)>{{ translate('Not In List') }}</option>
                             </select>
+                            <input type="text" id="customer_type_custom" name="customer_type_custom" class="form-control mt-2 {{ $customerTypeIsCustom ? '' : 'd-none' }}" value="{{ old('customer_type_custom', $customerTypeIsCustom ? ($postedCustomerType === '__not_in_list__' ? '' : $postedCustomerType) : '') }}" placeholder="{{ translate('Enter customer type') }}" maxlength="255">
                             @error('customer_type')
                                 <div class="text-danger small">{{ $message }}</div>
                             @enderror
@@ -1129,6 +1136,7 @@
 @endsection
 
 @section('script')
+    @include('backend.customer.customers.partials.account_type_territory_script')
     <script>
         const locationStatesRoute = "{{ route('get-state') }}";
         const locationCitiesRoute = "{{ route('get-city') }}";

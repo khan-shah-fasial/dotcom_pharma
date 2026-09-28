@@ -238,6 +238,7 @@ class ProductService
     public function update(array $data, Product $product)
     {
         $collection = collect($data);
+        $this->preserveSavedVariantChoices($product, $collection);
 
 
 
@@ -594,5 +595,53 @@ class ProductService
             'discount_end_date' => $discount_end_date,
         ]);
         return 1;
+    }
+
+    /**
+     * Saved attribute values and colors stay on the product. New values can still be added.
+     */
+    private function preserveSavedVariantChoices(Product $product, $collection): void
+    {
+        $savedChoices = json_decode($product->choice_options ?? '[]', true);
+        if (is_array($savedChoices)) {
+            $choiceNo = array_map('strval', (array) $collection->get('choice_no', []));
+            foreach ($savedChoices as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $attributeId = (string) ($item['attribute_id'] ?? '');
+                if ($attributeId === '') {
+                    continue;
+                }
+                if (!in_array($attributeId, $choiceNo, true)) {
+                    $choiceNo[] = $attributeId;
+                }
+                $key = 'choice_options_' . $attributeId;
+                $posted = array_map('strval', (array) $collection->get($key, []));
+                foreach ((array) ($item['values'] ?? []) as $value) {
+                    $value = (string) $value;
+                    if ($value !== '' && !in_array($value, $posted, true)) {
+                        $posted[] = $value;
+                    }
+                }
+                $collection->put($key, $posted);
+            }
+            if (count($choiceNo) > 0) {
+                $collection->put('choice_no', $choiceNo);
+            }
+        }
+
+        $savedColors = json_decode($product->colors ?? '[]', true);
+        if (is_array($savedColors) && count($savedColors) > 0) {
+            $colors = array_map('strval', (array) $collection->get('colors', []));
+            foreach ($savedColors as $color) {
+                $color = (string) $color;
+                if ($color !== '' && !in_array($color, $colors, true)) {
+                    $colors[] = $color;
+                }
+            }
+            $collection->put('colors', $colors);
+            $collection->put('colors_active', 1);
+        }
     }
 }

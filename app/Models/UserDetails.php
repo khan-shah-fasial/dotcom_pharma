@@ -23,6 +23,13 @@ class UserDetails extends Model
         'Delay payment',
     ];
 
+    public const ACCOUNT_TYPES = [
+        'Customers',
+        'Customers and Suppliers',
+        'Suppliers',
+        'Service Providers',
+    ];
+
     public const CUSTOMER_TYPES = [
         'Manufacturer',
         'Third Party Manufacturer',
@@ -118,6 +125,11 @@ class UserDetails extends Model
         'bank_name_business',
         'account_no_business',
         'account_name_business',
+        'account_type',
+        'account_type_custom',
+        'territory',
+        'territory_custom',
+        'international_tax_choice',
         'branch_code_business',
         'branch_name_business',
         'branch_address_business',
