@@ -30,6 +30,13 @@ class UserDetails extends Model
         'Service Providers',
     ];
 
+    public const TERRITORY_CLASSES = [
+        'Inter-State',
+        'Intra-State',
+        'UT',
+        'International',
+    ];
+
     public const CUSTOMER_TYPES = [
         'Manufacturer',
         'Third Party Manufacturer',

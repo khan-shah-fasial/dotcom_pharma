@@ -510,8 +510,12 @@ span#picker-info-stock-badge {
             .product-composition-item { grid-column: auto; grid-template-columns: minmax(105px, 42%) minmax(0, 1fr); }
         }
     </style>
+    <div class="aiz-titlebar text-left mt-2 mb-3">
+        <h1 class="h3">{{ translate($orderEntryTitle) }}</h1>
+    </div>
     <form id="backend-order-form" action="{{ route('orders.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
+        <input type="hidden" name="entry" value="{{ $orderEntry }}">
         @if ($errors->any())
             <div class="alert alert-danger">
                 <div class="fw-600 mb-1">{{ translate('The order could not be created. Please correct the following fields:') }}</div>
@@ -535,13 +539,25 @@ span#picker-info-stock-badge {
                     <div class="card-body">
                         <div class="row gutters-5">
                             <input type="hidden" name="order_code_letter" id="order-code-letter" value="S">
+                            <div class="col-md-6 form-group">
+                                @include('backend.sales.partials.document_type_field', ['documentTypeRequired' => true, 'documentTypes' => $documentTypes])
+                            </div>
+                            <div class="col-md-6 form-group" id="domestic-invoice-fields">
+                                <label>{{ translate('Reverse Charges') }}</label>
+                                <select class="form-control" name="reverse_charge">
+                                    <option value="" @selected(old('reverse_charge', '') === '' || old('reverse_charge') === null)>{{ translate('None') }}</option>
+                                    <option value="0" @selected((string) old('reverse_charge') === '0')>{{ translate('No') }}</option>
+                                    <option value="1" @selected((string) old('reverse_charge') === '1')>{{ translate('Yes') }}</option>
+                                </select>
+                                @error('reverse_charge') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
                             <div class="col-md-4 form-group order-details-company-group">
                                 <label for="order-company-id">{{ translate('Company') }} <span class="text-danger">*</span></label>
                                 <span class="order-number-part-label">&nbsp;</span>
                                 <select class="form-control aiz-selectpicker" name="company_id" id="order-company-id" data-live-search="true" title="{{ translate('Select Company') }}" required>
                                     <option value="">{{ translate('Select Company') }}</option>
                                     @foreach ($companies as $company)
-                                        <option value="{{ $company->id }}" data-code="{{ $company->code }}" @selected((string) old('company_id') === (string) $company->id)>
+                                        <option value="{{ $company->id }}" data-code="{{ $company->code }}" @selected((string) old('company_id', optional($selectedCompany)->id) === (string) $company->id)>
                                             {{ $company->company_name }} ({{ $company->code }})
                                         </option>
                                     @endforeach
@@ -580,15 +596,6 @@ span#picker-info-stock-badge {
                                 <label>{{ translate('Order Time') }} <span class="text-danger">*</span></label>
                                 <input type="time" class="form-control" name="order_time" value="{{ old('order_time', now()->format('H:i')) }}" required>
                                 @error('order_time') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="col-md-6 form-group" id="domestic-invoice-fields">
-                                <label>{{ translate('Reverse Charges') }}</label>
-                                <select class="form-control" name="reverse_charge">
-                                    <option value="" @selected(old('reverse_charge', '') === '' || old('reverse_charge') === null)>{{ translate('None') }}</option>
-                                    <option value="0" @selected((string) old('reverse_charge') === '0')>{{ translate('No') }}</option>
-                                    <option value="1" @selected((string) old('reverse_charge') === '1')>{{ translate('Yes') }}</option>
-                                </select>
-                                @error('reverse_charge') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                         </div>
                     </div>

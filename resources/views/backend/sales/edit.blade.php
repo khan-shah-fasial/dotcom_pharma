@@ -101,8 +101,13 @@
                                         <input type="text" class="form-control" value="{{ ucfirst(str_replace('_', ' ', $shippingChoice)) }}" readonly>
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        @include('backend.sales.partials.document_type_field', ['order' => $order])
+                                    </div>
+                                </div>
                                 @if(!$isInternational)
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{ translate('Reverse Charges') }}</label>
                                             @php

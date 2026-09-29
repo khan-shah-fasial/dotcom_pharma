@@ -2343,7 +2343,8 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
         initActiveMenu: function () {
             $('[data-toggle="aiz-side-menu"] a').each(function () {
                 var pageUrl = window.location.href.split(/[?#]/)[0];
-                if (this.href == pageUrl || $(this).hasClass("active")) {
+                var matchUrl = this.hasAttribute("data-nav-exact") ? false : this.href == pageUrl;
+                if (matchUrl || $(this).hasClass("active")) {
                     $(this).addClass("active");
                     $(this).closest(".aiz-side-nav-item").addClass("mm-active");
                     $(this)

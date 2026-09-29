@@ -41,6 +41,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Support\DocumentType;
 use App\Support\InvoiceType;
 use App\Support\ShippingPath;
 use App\Services\OrderPlacementService;
@@ -355,8 +356,14 @@ class OrderController extends Controller
         extract($this->orderFormStaffOptions([
             'sales' => Auth::id(),
         ]));
-        $selectedCompany = $companies->firstWhere('id', (int) old('company_id'));
+        $defaultCompany = $companies->first(function ($company) {
+            return strcasecmp(trim((string) $company->company_name), 'DOTCOM PHARMA') === 0;
+        });
+        $selectedCompany = $companies->firstWhere('id', (int) old('company_id', optional($defaultCompany)->id));
         $orderNumberParts = financial_year_order_code_parts(old('order_date', now()->toDateString()), 'S');
+        $orderEntry = DocumentType::entry(old('entry', request()->input('entry')));
+        $documentTypes = DocumentType::typesFor($orderEntry);
+        $orderEntryTitle = DocumentType::titleFor($orderEntry);
 
         return view('backend.sales.create', compact(
             'countries',
@@ -373,7 +380,10 @@ class OrderController extends Controller
             'billingStaff',
             'defaultBillingBy',
             'selectedCompany',
-            'orderNumberParts'
+            'orderNumberParts',
+            'orderEntry',
+            'documentTypes',
+            'orderEntryTitle'
         ));
     }
 
@@ -963,6 +973,9 @@ class OrderController extends Controller
             $request->validate([
                 'customer_id' => ['required', 'integer'],
                 'company_id' => ['required', 'integer', 'exists:companies,id'],
+                'document_type' => ['required', Rule::in(array_merge(array_keys(DocumentType::typesFor(DocumentType::entry($request->input('entry')))), ['__not_in_list__']))],
+                'entry' => ['nullable', Rule::in(array_keys(DocumentType::ENTRIES))],
+                'document_type_custom' => ['nullable', 'required_if:document_type,__not_in_list__', 'string', 'max:255'],
                 'payment_type' => ['required', Rule::in(array_keys(InvoiceType::paymentTerms($invoiceType)))],
                 'order_no_preview' => ['nullable', 'string', 'max:191'],
                 'order_code_letter' => ['required', 'string', 'size:1', 'regex:/^[A-Za-z]$/'],
@@ -1702,6 +1715,8 @@ class OrderController extends Controller
             'shipping_cost_type' => ['required', Rule::in(['by_seller', 'free_shipping'])],
             'sell_amount' => ['required_if:shipping_cost_type,by_seller', 'nullable', 'numeric', 'min:0', 'max:99999999999.99'],
             'reverse_charge' => [InvoiceType::isDomestic($invoiceType) ? 'nullable' : 'prohibited', 'boolean'],
+            'document_type' => ['nullable', Rule::in(array_merge(array_keys(DocumentType::TYPES), ['__not_in_list__']))],
+            'document_type_custom' => ['nullable', 'required_if:document_type,__not_in_list__', 'string', 'max:255'],
             'loading_location_type' => [$usesPortLogistics ? 'required' : 'nullable', Rule::in(['sea', 'air'])],
             'loading_sea_port_id' => [$usesPortLogistics && $request->input('loading_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],
             'loading_airport_id' => [$usesPortLogistics && $request->input('loading_location_type') === 'air' ? 'required' : 'nullable', 'integer', Rule::exists('airports', 'id')],
@@ -1912,6 +1927,11 @@ class OrderController extends Controller
                 $lockedOrder->reverse_charge = InvoiceType::isDomestic($invoiceType)
                     ? $this->nullableBoolean($validated['reverse_charge'] ?? null)
                     : null;
+                if (Schema::hasColumn($lockedOrder->getTable(), 'document_type')) {
+                    $storedDocumentType = DocumentType::store($validated['document_type'] ?? null, $validated['document_type_custom'] ?? null);
+                    $lockedOrder->document_type = $storedDocumentType['document_type'];
+                    $lockedOrder->document_type_custom = $storedDocumentType['document_type_custom'];
+                }
                 $lockedOrder->loading_location_type = $usesPortLogistics ? ($validated['loading_location_type'] ?? null) : null;
                 $lockedOrder->loading_sea_port_id = $usesPortLogistics && ($validated['loading_location_type'] ?? null) === 'sea'
                     ? ($validated['loading_sea_port_id'] ?? null)

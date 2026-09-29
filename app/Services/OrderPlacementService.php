@@ -18,6 +18,7 @@ use App\Models\ShippingMethod;
 use App\Models\Transport;
 use App\Models\Airport;
 use App\Models\SeaPort;
+use App\Support\DocumentType;
 use App\Support\InvoiceType;
 use App\Support\ShippingPath;
 use App\Models\User;
@@ -335,6 +336,11 @@ class OrderPlacementService
         $order->reverse_charge = $isBackendOrder && !$isInternational
             ? $this->nullableBoolean($request->input('reverse_charge'))
             : null;
+        if ($isBackendOrder && Schema::hasColumn($order->getTable(), 'document_type')) {
+            $storedDocumentType = DocumentType::store($request->input('document_type'), $request->input('document_type_custom'));
+            $order->document_type = $storedDocumentType['document_type'];
+            $order->document_type_custom = $storedDocumentType['document_type_custom'];
+        }
         $order->loading_location_type = $usesPortLogistics ? $request->input('loading_location_type') : null;
         $order->loading_sea_port_id = $usesPortLogistics && $request->input('loading_location_type') === 'sea'
             ? $request->input('loading_sea_port_id')

@@ -185,23 +185,46 @@
         }
     }
 
+    function territoryClass() {
+        var config = readConfig();
+        var seller = detectSeller(config);
+        var buyerState = selectedText('#state_id_business');
+        if (!buyerState || norm(buyerState).indexOf('select') === 0) {
+            buyerState = '';
+        }
+        var buyerCountryName = buyerCountry();
+        if (norm(buyerCountryName) !== '' && norm(buyerCountryName) !== 'india') {
+            return 'International';
+        }
+        if (!buyerState) {
+            return '';
+        }
+        var sameState = seller.state && norm(seller.state) === norm(buyerState);
+        var sellerIsUt = (config.utgstStates || []).indexOf(norm(seller.state)) !== -1;
+        if (sameState) {
+            return 'Intra-State';
+        }
+        if (sellerIsUt) {
+            return 'UT';
+        }
+        return 'Inter-State';
+    }
+
     function syncTerritoryFromState(force) {
         var territory = document.getElementById('territory');
-        var stateText = selectedText('#state_id_business');
-        if (!territory || !stateText || territory.value === '__not_in_list__') {
+        if (!territory || territory.value === '__not_in_list__') {
             return;
         }
         if (!force && territory.value) {
             return;
         }
-        var matched = false;
-        Array.prototype.forEach.call(territory.options, function (option) {
-            if (norm(option.value) === norm(stateText)) {
-                territory.value = option.value;
-                matched = true;
-            }
-        });
-        if (matched && window.jQuery && window.jQuery.fn.selectpicker) {
+        var value = territoryClass();
+        if (!value) {
+            return;
+        }
+        territory.value = value;
+        syncNotInList(territory);
+        if (window.jQuery && window.jQuery.fn.selectpicker) {
             window.jQuery(territory).selectpicker('refresh');
         }
     }
@@ -246,7 +269,7 @@
         if (target.classList && target.classList.contains('js-not-in-list')) {
             syncNotInList(target);
         }
-        if (target.id === 'state_id_business') {
+        if (target.id === 'state_id_business' || target.id === 'country_id_business') {
             syncTerritoryFromState(true);
         }
         if (target.id === 'state_id_business' || target.id === 'country_id_business' || target.name === 'international_tax_choice') {

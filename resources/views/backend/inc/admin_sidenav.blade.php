@@ -628,6 +628,54 @@
                     @endcanany
                 @endif
 
+                @can('add_order')
+                    <li class="aiz-side-nav-item">
+                        <a href="#" class="aiz-side-nav-link">
+                            <i class="las la-file-invoice aiz-side-nav-icon"></i>
+                            <span class="aiz-side-nav-text">{{ translate('Entry') }}</span>
+                            <span class="aiz-side-nav-arrow"></span>
+                        </a>
+                        <ul class="aiz-side-nav-list level-2">
+                            <li class="aiz-side-nav-item">
+                                <a href="javascript:void(0);" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text">{{ translate('Sales') }}</span>
+                                    <span class="aiz-side-nav-arrow"></span>
+                                </a>
+                                <ul class="aiz-side-nav-list level-3">
+                                    <li class="aiz-side-nav-item">
+                                        <a href="{{ route('orders.create', ['entry' => 'sales']) }}" class="aiz-side-nav-link {{ request()->routeIs('orders.create') && request('entry') === 'sales' ? 'active' : '' }}">
+                                            <span class="aiz-side-nav-text">{{ translate('Sales Entry') }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="aiz-side-nav-item">
+                                        <a href="{{ route('orders.create', ['entry' => 'sales_return']) }}" class="aiz-side-nav-link {{ request()->routeIs('orders.create') && request('entry') === 'sales_return' ? 'active' : '' }}">
+                                            <span class="aiz-side-nav-text">{{ translate('Sales Return') }}</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="javascript:void(0);" class="aiz-side-nav-link">
+                                    <span class="aiz-side-nav-text">{{ translate('Purchase') }}</span>
+                                    <span class="aiz-side-nav-arrow"></span>
+                                </a>
+                                <ul class="aiz-side-nav-list level-3">
+                                    <li class="aiz-side-nav-item">
+                                        <a href="{{ route('orders.create', ['entry' => 'purchase']) }}" class="aiz-side-nav-link {{ request()->routeIs('orders.create') && request('entry') === 'purchase' ? 'active' : '' }}">
+                                            <span class="aiz-side-nav-text">{{ translate('Purchase Entry') }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="aiz-side-nav-item">
+                                        <a href="{{ route('orders.create', ['entry' => 'purchase_return']) }}" class="aiz-side-nav-link {{ request()->routeIs('orders.create') && request('entry') === 'purchase_return' ? 'active' : '' }}">
+                                            <span class="aiz-side-nav-text">{{ translate('Purchase Return') }}</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                @endcan
+
                 <!-- Sale -->
                 @canany(['add_order', 'view_all_orders', 'view_inhouse_orders','view_seller_orders','view_pickup_point_orders', 'view_pending_in_carts'])
                     <li class="aiz-side-nav-item">
@@ -654,7 +702,7 @@
                             @endcan
                             @can('add_order')
                                 <li class="aiz-side-nav-item">
-                                    <a href="{{ route('orders.create') }}" class="aiz-side-nav-link {{ areActiveRoutes(['orders.create'])}}">
+                                    <a href="{{ route('orders.create') }}" data-nav-exact class="aiz-side-nav-link {{ request()->routeIs('orders.create') && !request('entry') ? 'active' : '' }}">
                                         <span class="aiz-side-nav-text">{{translate('Add Order')}}</span>
                                     </a>
                                 </li>

@@ -205,6 +205,14 @@ class CustomerController extends Controller
         $personalVillage   = $request->input('personal_village');
 
         $filter_transport  = $request->transport ?? null;
+        $accountTypeFilter = trim((string) $request->input('account_type', ''));
+        $territoryFilter = trim((string) $request->input('territory', ''));
+        if (!in_array($accountTypeFilter, array_merge(UserDetails::ACCOUNT_TYPES, ['__not_in_list__']), true)) {
+            $accountTypeFilter = '';
+        }
+        if (!in_array($territoryFilter, array_merge(UserDetails::TERRITORY_CLASSES, ['__not_in_list__']), true)) {
+            $territoryFilter = '';
+        }
         $staffAreaAssignments = $this->currentStaffAreaAssignments();
 
         // Base query. Details are eager-loaded after pagination so we do not
@@ -336,6 +344,26 @@ class CustomerController extends Controller
             });
         }
 
+        if ($accountTypeFilter === '__not_in_list__') {
+            $users->whereHas('details', function ($q) {
+                $q->whereNotNull('account_type_custom')->where('account_type_custom', '!=', '');
+            });
+        } elseif ($accountTypeFilter !== '') {
+            $users->whereHas('details', function ($q) use ($accountTypeFilter) {
+                $q->where('account_type', $accountTypeFilter);
+            });
+        }
+
+        if ($territoryFilter === '__not_in_list__') {
+            $users->whereHas('details', function ($q) {
+                $q->whereNotNull('territory_custom')->where('territory_custom', '!=', '');
+            });
+        } elseif ($territoryFilter !== '') {
+            $users->whereHas('details', function ($q) use ($territoryFilter) {
+                $q->where('territory', $territoryFilter);
+            });
+        }
+
         $transportList = Cache::remember('business_customer_transport_list', 600, function () {
             return UserDetails::query()
                 ->whereNotNull('transport')
@@ -378,6 +406,8 @@ class CustomerController extends Controller
             'company_name' => ['column' => 'sort_details.company_name', 'joins' => ['details'], 'empty_last' => true],
             'person_name' => ['column' => DB::raw('COALESCE(sort_details.name, users.name)'), 'joins' => ['details'], 'empty_last' => true],
             'customer_type' => ['column' => 'sort_details.customer_type', 'joins' => ['details'], 'empty_last' => true],
+            'account_type' => ['column' => DB::raw("COALESCE(NULLIF(TRIM(sort_details.account_type_custom), ''), sort_details.account_type)"), 'joins' => ['details'], 'empty_last' => true],
+            'territory' => ['column' => DB::raw("COALESCE(NULLIF(TRIM(sort_details.territory_custom), ''), sort_details.territory)"), 'joins' => ['details'], 'empty_last' => true],
             'village' => ['column' => DB::raw('COALESCE(sort_details.village_business, sort_details.village)'), 'joins' => ['details'], 'empty_last' => true],
             'post' => ['column' => DB::raw('COALESCE(sort_details.post_business, sort_details.post)'), 'joins' => ['details'], 'empty_last' => true],
             'district' => ['column' => DB::raw('COALESCE(sort_details.district_business, sort_details.district)'), 'joins' => ['details'], 'empty_last' => true],
@@ -491,6 +521,8 @@ class CustomerController extends Controller
             'ban_status',
             'filter_transport',
             'account_number',
+            'accountTypeFilter',
+            'territoryFilter',
             'sortBy',
             'sortOrder',
             'transportList',
@@ -735,7 +767,7 @@ class CustomerController extends Controller
             'customer_type_custom' => ['nullable', 'required_if:customer_type,__not_in_list__', 'string', 'max:255'],
             'account_type' => ['nullable', Rule::in(array_merge(UserDetails::ACCOUNT_TYPES, ['__not_in_list__']))],
             'account_type_custom' => ['nullable', 'required_if:account_type,__not_in_list__', 'string', 'max:255'],
-            'territory' => ['nullable', 'string', 'max:255'],
+            'territory' => ['nullable', Rule::in(array_merge(UserDetails::TERRITORY_CLASSES, ['__not_in_list__']))],
             'territory_custom' => ['nullable', 'required_if:territory,__not_in_list__', 'string', 'max:255'],
             'international_tax_choice' => ['nullable', Rule::in(['lut', 'igst'])],
             'current_status' => ['nullable', Rule::in(UserDetails::CURRENT_STATUSES)],
@@ -1357,7 +1389,7 @@ class CustomerController extends Controller
             'customer_type_custom' => ['nullable', 'required_if:customer_type,__not_in_list__', 'string', 'max:255'],
             'account_type' => ['nullable', Rule::in(array_merge(UserDetails::ACCOUNT_TYPES, ['__not_in_list__']))],
             'account_type_custom' => ['nullable', 'required_if:account_type,__not_in_list__', 'string', 'max:255'],
-            'territory' => ['nullable', 'string', 'max:255'],
+            'territory' => ['nullable', Rule::in(array_merge(UserDetails::TERRITORY_CLASSES, ['__not_in_list__']))],
             'territory_custom' => ['nullable', 'required_if:territory,__not_in_list__', 'string', 'max:255'],
             'international_tax_choice' => ['nullable', Rule::in(['lut', 'igst'])],
             // 'prim_email_business'  => ['nullable', 'email'],
@@ -2034,6 +2066,10 @@ class CustomerController extends Controller
             'company_name',
             'name',
             'customer_type',
+            'account_type',
+            'account_type_custom',
+            'territory',
+            'territory_custom',
             'current_status',
             'village_business',
             'village',

@@ -90,7 +90,7 @@
             <input type="hidden" name="sort_by" value="{{ $sortBy }}">
             <input type="hidden" name="sort_order" value="{{ $sortOrder }}">
             @php
-                $filtersApplied = $sort_search || $company_name || $account_number || $gst_no || $verification_status || ($ban_status && $ban_status !== 'active') || $filter_transport || $hasBusinessLocationFilters || $hasPersonalLocationFilters;
+                $filtersApplied = $sort_search || $company_name || $account_number || $gst_no || $verification_status || ($ban_status && $ban_status !== 'active') || $filter_transport || $accountTypeFilter || $territoryFilter || $hasBusinessLocationFilters || $hasPersonalLocationFilters;
             @endphp
             <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
                 <div class="mb-2">
@@ -138,6 +138,26 @@
                                     <input type="text" class="form-control" id="account_number"
                                         name="account_number" value="{{ $account_number ?? '' }}"
                                         placeholder="{{ translate('Account Number') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="account_type">{{ translate('Account Type') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="account_type" name="account_type" data-live-search="true">
+                                        <option value="">{{ translate('All') }}</option>
+                                        @foreach (\App\Models\UserDetails::ACCOUNT_TYPES as $accountTypeOption)
+                                            <option value="{{ $accountTypeOption }}" @selected(($accountTypeFilter ?? '') === $accountTypeOption)>{{ translate($accountTypeOption) }}</option>
+                                        @endforeach
+                                        <option value="__not_in_list__" @selected(($accountTypeFilter ?? '') === '__not_in_list__')>{{ translate('Not In List') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="territory">{{ translate('Territory') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="territory" name="territory" data-live-search="true">
+                                        <option value="">{{ translate('All') }}</option>
+                                        @foreach (\App\Models\UserDetails::TERRITORY_CLASSES as $territoryOption)
+                                            <option value="{{ $territoryOption }}" @selected(($territoryFilter ?? '') === $territoryOption)>{{ translate($territoryOption) }}</option>
+                                        @endforeach
+                                        <option value="__not_in_list__" @selected(($territoryFilter ?? '') === '__not_in_list__')>{{ translate('Not In List') }}</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label" for="gst_no">{{ translate('GST / IEC / Aadhaar / Passport / PAN') }}</label>
@@ -323,17 +343,31 @@
         </div>
     </div>
 
+            <div class="px-3 pt-3 border-bottom">
+                <ul class="nav nav-tabs border-0">
+                    @foreach (array_merge(['' => translate('All')], array_combine(\App\Models\UserDetails::ACCOUNT_TYPES, array_map(fn ($label) => translate($label), \App\Models\UserDetails::ACCOUNT_TYPES))) as $tabValue => $tabLabel)
+                        <li class="nav-item">
+                            <a class="nav-link {{ ($accountTypeFilter ?? '') === $tabValue ? 'active' : '' }}"
+                               href="{{ route('customers.business', array_merge(request()->except(['page', 'account_type']), $tabValue === '' ? [] : ['account_type' => $tabValue])) }}">
+                                {{ $tabLabel }}
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+
             <div class="card-body">
                 @php
                     $columnGroups = [
                         [
                             ['sr_no', 'Sr.No'],
                             ['ban_status', 'Ban Status'],
+                            ['performa_invoice', 'Performa Invoice'],
                         ],
                         [
                             ['crm_id', 'Account Number'],
-                            ['city', 'City'],
-                            ['performa_invoice', 'Performa Invoice'],
+                            ['account_type', 'Account Type'],
+                            ['territory', 'Territory'],
                         ],
                         [
                             ['company_name', 'Company Name'],
@@ -343,11 +377,14 @@
                         [
                             ['village', 'Village'],
                             ['post', 'Post'],
-                            ['district', 'District'],
+                            ['city', 'City'],
                         ],
                         [
+                            ['district', 'District'],
                             ['state', 'State'],
                             ['pincode', 'Pincode'],
+                        ],
+                        [
                             ['country', 'Country'],
                         ],
                         [
@@ -436,7 +473,7 @@
                             @foreach ($users as $key => $user)
                                 @if ($user != null)
                                     @php
-                                        $details = $user->details;
+                                        $details = $user->details ?: new \App\Models\UserDetails();
                                         $stateId = $details?->state_id_business ?? $details?->state_id;
                                         $cityId = $details?->city_id_business ?? $details?->city_id;
                                         $countryId = $details?->country_id_business ?? $details?->country_id;
@@ -444,6 +481,12 @@
                                         $cityName = $cityId ? ($cityNames[$cityId] ?? $cityId) : null;
                                         $countryName = $countryId ? ($countryNames[$countryId] ?? $countryId) : null;
                                         $accountNumber = $details?->crm_id;
+                                        $accountTypeLabel = filled($details?->account_type_custom)
+                                            ? $details->account_type_custom
+                                            : ($details?->account_type ?: '-');
+                                        $territoryLabel = filled($details?->territory_custom)
+                                            ? $details->territory_custom
+                                            : ($details?->territory ?: '-');
                                         $consolidatedReportUrl = filled($accountNumber)
                                             ? route('admin.purchase_history.consolidated', ['account' => $accountNumber])
                                             : null;
@@ -463,6 +506,14 @@
                                                     <span class="badge badge-inline badge-success">{{ translate('Active') }}</span>
                                                 @endif
                                             </div>
+                                            <div>
+                                                <a href="{{ $performaInvoiceUrl }}"
+                                                   target="_blank"
+                                                   rel="noopener"
+                                                   title="{{ translate('Open Performa Invoice') }}">
+                                                    {{ translate('Performa Invoice') }}
+                                                </a>
+                                            </div>
                                         </td>
                                         <td>
                                             <div>
@@ -478,15 +529,8 @@
                                                     -
                                                 @endif
                                             </div>
-                                            <div>{{ $cityName ?? '-' }}</div>
-                                            <div>
-                                                <a href="{{ $performaInvoiceUrl }}"
-                                                   target="_blank"
-                                                   rel="noopener"
-                                                   title="{{ translate('Open Performa Invoice') }}">
-                                                    {{ translate('Performa Invoice') }}
-                                                </a>
-                                            </div>
+                                            <div>{{ $accountTypeLabel }}</div>
+                                            <div>{{ $territoryLabel }}</div>
                                         </td>
                                         <td>
                                             <div>
@@ -502,11 +546,14 @@
                                         <td>
                                             <div>{{ $details->village_business ?? ($details->village ?? '-') }}</div>
                                             <div>{{ $details->post_business ?? ($details->post ?? '-') }}</div>
-                                            <div>{{ $details->district_business ?? ($details->district ?? '-') }}</div>
+                                            <div>{{ $cityName ?? '-' }}</div>
                                         </td>
                                         <td>
+                                            <div>{{ $details->district_business ?? ($details->district ?? '-') }}</div>
                                             <div>{{ $stateName ?? '-' }}</div>
                                             <div>{{ $details->pincode_business ?? ($details->pincode ?? '-') }}</div>
+                                        </td>
+                                        <td>
                                             <div>{{ $countryName ?? '-' }}</div>
                                         </td>
                                         <td class="business-customer-mobile-col">

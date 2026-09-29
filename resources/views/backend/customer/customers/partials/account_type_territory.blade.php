@@ -10,9 +10,9 @@
 
     $territoryValue = old('territory', $details->territory ?? '');
     $territoryCustom = old('territory_custom', $details->territory_custom ?? '');
-    $territoryNames = collect($territoryStates ?? [])->pluck('name')->all();
+    $territoryClasses = \App\Models\UserDetails::TERRITORY_CLASSES;
     $territoryIsCustom = $territoryValue === '__not_in_list__';
-    if (!$territoryIsCustom && $territoryValue !== '' && !in_array($territoryValue, $territoryNames, true)) {
+    if (!$territoryIsCustom && $territoryValue !== '' && !in_array($territoryValue, $territoryClasses, true)) {
         $territoryIsCustom = true;
         $territoryCustom = $territoryCustom !== '' ? $territoryCustom : $territoryValue;
         $territoryValue = '__not_in_list__';
@@ -62,13 +62,13 @@
         <label class="form-label" for="territory">{{ translate('Territory') }}</label>
         <select id="territory" name="territory" class="form-control aiz-selectpicker js-not-in-list" data-live-search="true" data-custom-input="#territory_custom">
             <option value="">{{ translate('Select Territory') }}</option>
-            @foreach ($territoryStates ?? [] as $state)
-                <option value="{{ $state->name }}" @selected(!$territoryIsCustom && $territoryValue === $state->name)>{{ $state->name }}</option>
+            @foreach ($territoryClasses as $territoryClass)
+                <option value="{{ $territoryClass }}" @selected(!$territoryIsCustom && $territoryValue === $territoryClass)>{{ translate($territoryClass) }}</option>
             @endforeach
             <option value="__not_in_list__" @selected($territoryIsCustom)>{{ translate('Not In List') }}</option>
         </select>
         <input type="text" id="territory_custom" name="territory_custom" class="form-control mt-2 {{ $territoryIsCustom ? '' : 'd-none' }}" value="{{ $territoryCustom }}" placeholder="{{ translate('Enter territory') }}" maxlength="255">
-        <small class="text-muted">{{ translate('Auto-selected from the business state. You can change it.') }}</small>
+        <small class="text-muted">{{ translate('Auto-selected from the business state and country. You can change it.') }}</small>
         @error('territory') <div class="text-danger small">{{ $message }}</div> @enderror
         @error('territory_custom') <div class="text-danger small">{{ $message }}</div> @enderror
     </div>
