@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use App\Utility\NgeniusUtility;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -46,6 +47,10 @@ class Handler extends ExceptionHandler
             return redirect()->back();
         }
 
+        if ($e instanceof NotFoundHttpException && $this->isStaticAssetRequest($request)) {
+            return response('', 404);
+        }
+
         if($this->isHttpException($e))
         {
             if ($request->is('customer-products/admin')) {
@@ -58,5 +63,15 @@ class Handler extends ExceptionHandler
         {
             return parent::render($request, $e);
         }
+    }
+
+    protected function isStaticAssetRequest($request): bool
+    {
+        $extension = strtolower(pathinfo((string) $request->path(), PATHINFO_EXTENSION));
+
+        return in_array($extension, [
+            'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'css', 'js', 'map',
+            'woff', 'woff2', 'ttf', 'eot', 'ico',
+        ], true);
     }
 }

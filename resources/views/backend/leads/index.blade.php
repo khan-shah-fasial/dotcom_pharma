@@ -72,6 +72,41 @@
             </div>
         </div>
 
+        <div class="px-3 pt-3 border-bottom">
+            <div class="row gutters-5">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label" for="lead_customer_type">{{ translate('Customer Type') }}</label>
+                    <select id="lead_customer_type" name="customer_type" class="form-control aiz-selectpicker" data-live-search="true">
+                        <option value="">{{ translate('All Customer Types') }}</option>
+                        @foreach (\App\Models\UserDetails::CUSTOMER_TYPES as $customerType)
+                            <option value="{{ $customerType }}" @selected(($filters['customer_type'] ?? '') === $customerType)>{{ $customerType }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label" for="lead_status_id">{{ translate('Status') }}</label>
+                    <select id="lead_status_id" name="status_id" class="form-control aiz-selectpicker" data-live-search="true">
+                        <option value="">{{ translate('All Statuses') }}</option>
+                        @foreach ($statuses as $status)
+                            <option value="{{ $status->id }}" @selected((string) ($filters['status_id'] ?? '') === (string) $status->id)>{{ $status->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label" for="lead_source_id">{{ translate('Source') }}</label>
+                    <select id="lead_source_id" name="source_id" class="form-control aiz-selectpicker" data-live-search="true">
+                        <option value="">{{ translate('All Sources') }}</option>
+                        @foreach ($sources as $source)
+                            <option value="{{ $source->id }}" @selected((string) ($filters['source_id'] ?? '') === (string) $source->id)>{{ $source->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">{{ translate('Apply') }}</button>
+                </div>
+            </div>
+        </div>
+
         <div class="modal fade" id="leadFilterModal" tabindex="-1" role="dialog" aria-labelledby="leadFilterModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
@@ -93,24 +128,6 @@
                                     <option value="">{{ translate('All Assignees') }}</option>
                                     @foreach ($assignees as $user)
                                         <option value="{{ $user->id }}" @if(($filters['assigned_to'] ?? '') == $user->id) selected @endif>{{ $user->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label" for="lead_source_id">{{ translate('Source') }}</label>
-                                <select id="lead_source_id" name="source_id" class="form-control aiz-selectpicker" data-live-search="true">
-                                    <option value="">{{ translate('All Sources') }}</option>
-                                    @foreach ($sources as $source)
-                                        <option value="{{ $source->id }}" @if(($filters['source_id'] ?? '') == $source->id) selected @endif>{{ $source->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label" for="lead_status_id">{{ translate('Status') }}</label>
-                                <select id="lead_status_id" name="status_id" class="form-control aiz-selectpicker" data-live-search="true">
-                                    <option value="">{{ translate('All Statuses') }}</option>
-                                    @foreach ($statuses as $status)
-                                        <option value="{{ $status->id }}" @if(($filters['status_id'] ?? '') == $status->id) selected @endif>{{ $status->name }}</option>
                                     @endforeach
                                 </select>
                             </div>

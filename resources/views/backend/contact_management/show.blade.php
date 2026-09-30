@@ -4,7 +4,13 @@
 @php
     $phoneHref = $contact->phone ? preg_replace('/\s+/', '', $contact->phone) : null;
     $whatsappHref = $contact->whatsapp_number ? preg_replace('/\D+/', '', $contact->whatsapp_number) : null;
+    $activitiesEnabled = $activitiesEnabled ?? false;
+    $hasVisitingCards = $hasVisitingCards ?? false;
+    $visitingCards = $visitingCards ?? collect();
 @endphp
+<style>
+    .js-contact-visiting-card { cursor: zoom-in; }
+</style>
 <div class="aiz-titlebar text-left mt-2 mb-3">
     <div class="row align-items-center">
         <div class="col-md-6"><h1 class="h3">{{ translate('Contact Details') }} {{ $contact->contact_no ? '- '.$contact->contact_no : '' }}</h1></div>
@@ -17,9 +23,11 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Contact Information') }}</h5></div>
-    <div class="card-body">
+<div class="row">
+    <div class="{{ $activitiesEnabled ? 'col-lg-8' : 'col-lg-12' }}">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0 h6">{{ translate('Contact Information') }}</h5></div>
+            <div class="card-body">
         <table class="table table-bordered mb-0">
             <tr><th width="25%">{{ translate('Contact No') }}</th><td>{{ $contact->contact_no ?? '-' }}</td></tr>
             <tr>
@@ -32,6 +40,23 @@
                     @endif
                 </td>
             </tr>
+            @if ($hasVisitingCards)
+                <tr>
+                    <th>{{ translate('Visiting Card') }}</th>
+                    <td>
+                        @if ($visitingCards->isNotEmpty())
+                            @php $card = $visitingCards->first(); @endphp
+                            <a href="{{ uploaded_asset($card->id) }}"
+                                class="js-contact-visiting-card size-80px border overflow-hidden d-inline-block"
+                                data-contact-id="{{ $contact->id }}">
+                                <img src="{{ uploaded_asset($card->id) }}" alt="{{ $contact->name }}" class="img-fit h-80px w-80px">
+                            </a>
+                        @else
+                            -
+                        @endif
+                    </td>
+                </tr>
+            @endif
             <tr><th>{{ translate('Full Name') }}</th><td>{{ $contact->name }}</td></tr>
             <tr><th>{{ translate('Company Name') }}</th><td>{{ $contact->company_name ?? '-' }}</td></tr>
             <tr><th>{{ translate('Designation') }}</th><td>{{ $contact->designation ?? '-' }}</td></tr>
@@ -117,6 +142,31 @@
             <tr><th>{{ translate('Updated By') }}</th><td>{{ optional($contact->updater)->name ?? '-' }}</td></tr>
             <tr><th>{{ translate('Update Date') }}</th><td>{{ $contact->updated_at ? $contact->updated_at->format('d-m-Y h:i A') : '-' }}</td></tr>
         </table>
+            </div>
+        </div>
+        @if ($activitiesEnabled)
+            @include('backend.contact_management._activities')
+        @endif
     </div>
+    @if ($activitiesEnabled)
+        <div class="col-lg-4">
+            @can('edit_contact_directory')
+                <div class="card">
+                    <div class="card-header"><h5 class="mb-0 h6">{{ translate('Add Activity') }}</h5></div>
+                    <div class="card-body">
+                        @include('backend.contact_management._activity_form')
+                    </div>
+                </div>
+            @endcan
+        </div>
+    @endif
 </div>
+@endsection
+
+@section('modal')
+    @include('modals.delete_modal')
+@endsection
+
+@section('script')
+    @include('backend.contact_management._visiting_card_slider')
 @endsection

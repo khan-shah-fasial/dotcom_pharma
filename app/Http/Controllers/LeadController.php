@@ -43,6 +43,11 @@ class LeadController extends Controller
 
     public function index(Request $request)
     {
+        $customerType = trim((string) $request->input('customer_type', ''));
+        if (!in_array($customerType, UserDetails::CUSTOMER_TYPES, true)) {
+            $customerType = '';
+        }
+
         $filters = $request->only([
             'search',
             'source_id',
@@ -56,6 +61,7 @@ class LeadController extends Controller
             'next_followup_to',
             'activity_type_id',
         ]);
+        $filters['customer_type'] = $customerType;
 
         $leads = Lead::query()
             ->select([
@@ -127,6 +133,10 @@ class LeadController extends Controller
             if ($request->filled($field)) {
                 $leads->where($field, $request->input($field));
             }
+        }
+
+        if ($customerType !== '') {
+            $leads->where('leads.customer_type', $customerType);
         }
 
         if ($request->filled('expected_value_min')) {

@@ -86,6 +86,31 @@ class DirectoryContact extends Model
         return $this->belongsTo(ContactClassification::class, 'purpose_id');
     }
 
+    public function activities()
+    {
+        return $this->hasMany(DirectoryContactActivity::class);
+    }
+
+    public function visitingCardIds(): array
+    {
+        $raw = $this->getAttribute('visiting_cards');
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+
+        return collect(explode(',', (string) $raw))
+            ->map(fn ($id) => (int) trim($id))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function visitingCardId(): ?int
+    {
+        return $this->visitingCardIds()[0] ?? null;
+    }
+
     public function socialValue(string $platform): string
     {
         $needles = $platform === 'linkedin' ? ['linkedin'] : ['insta', 'instagram'];

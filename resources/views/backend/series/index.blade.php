@@ -19,6 +19,11 @@
         {{ translate('Series Master is installed in the admin menu. Add the series_masters table from the SQL note, then this list, its filters, and its sorting will open.') }}
     </div>
 @else
+    @if (!empty($billColumnsMissing))
+        <div class="alert alert-warning">
+            {{ translate('Payment Type, Total No of Bills, From Bill No, and To Bill No need the extra series_masters columns. Run the SQL note, then these fields will save, filter, and sort.') }}
+        </div>
+    @endif
     @php
         $filtersApplied = collect($filters)->contains(fn ($value) => $value !== null && $value !== '');
     @endphp
@@ -43,6 +48,17 @@
                             @include('backend.inc.sortable_th', ['column' => 'id', 'label' => translate('ID'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'name', 'label' => translate('Name'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'code', 'label' => translate('Code'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @if (empty($billColumnsMissing))
+                                @include('backend.inc.sortable_th', ['column' => 'payment_type', 'label' => translate('Payment Type'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                                @include('backend.inc.sortable_th', ['column' => 'total_bills', 'label' => translate('Total No of Bills'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                                @include('backend.inc.sortable_th', ['column' => 'from_bill_no', 'label' => translate('From Bill No.'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                                @include('backend.inc.sortable_th', ['column' => 'to_bill_no', 'label' => translate('To Bill No.'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @else
+                                <th>{{ translate('Payment Type') }}</th>
+                                <th>{{ translate('Total No of Bills') }}</th>
+                                <th>{{ translate('From Bill No.') }}</th>
+                                <th>{{ translate('To Bill No.') }}</th>
+                            @endif
                             @include('backend.inc.sortable_th', ['column' => 'description', 'label' => translate('Description'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'status', 'label' => translate('Status'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'created_at', 'label' => translate('Created'), 'routeName' => 'series.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
@@ -56,6 +72,10 @@
                                 <td>{{ $item->id }}</td>
                                 <td>{{ $item->name }}</td>
                                 <td>{{ $item->code ?: '-' }}</td>
+                                <td>{{ $item->paymentTypeLabel() }}</td>
+                                <td>{{ $item->total_bills === null || $item->total_bills === '' ? '-' : $item->total_bills }}</td>
+                                <td>{{ $item->from_bill_no ?: '-' }}</td>
+                                <td>{{ $item->to_bill_no ?: '-' }}</td>
                                 <td>{{ $item->description ? \Illuminate\Support\Str::limit($item->description, 80) : '-' }}</td>
                                 <td>
                                     <span class="badge badge-inline {{ $item->status ? 'badge-success' : 'badge-secondary' }}">
@@ -78,7 +98,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="8" class="text-center">{{ translate('No series found') }}</td></tr>
+                            <tr><td colspan="12" class="text-center">{{ translate('No series found') }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -114,6 +134,29 @@
                             <div class="form-group">
                                 <label>{{ translate('Code') }}</label>
                                 <input type="text" class="form-control" name="code" value="{{ $filters['code'] ?? '' }}">
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Payment Type') }}</label>
+                                <select class="form-control" name="payment_type">
+                                    <option value="">{{ translate('All') }}</option>
+                                    <option value="cash" @selected(($filters['payment_type'] ?? '') === 'cash')>{{ translate('Cash') }}</option>
+                                    <option value="credit" @selected(($filters['payment_type'] ?? '') === 'credit')>{{ translate('Credit') }}</option>
+                                    <option value="__not_in_list__" @selected(($filters['payment_type'] ?? '') === '__not_in_list__')>{{ translate('Not in List') }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Total No of Bills') }}</label>
+                                <input type="number" min="0" class="form-control" name="total_bills" value="{{ $filters['total_bills'] ?? '' }}">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>{{ translate('From Bill No.') }}</label>
+                                    <input type="text" class="form-control" name="from_bill_no" value="{{ $filters['from_bill_no'] ?? '' }}">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>{{ translate('To Bill No.') }}</label>
+                                    <input type="text" class="form-control" name="to_bill_no" value="{{ $filters['to_bill_no'] ?? '' }}">
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>{{ translate('Description') }}</label>

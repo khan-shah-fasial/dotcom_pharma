@@ -1,6 +1,12 @@
 @php
     $contact = $contact ?? null;
     $photoValue = old('photo', $contact->photo ?? '');
+    $hasVisitingCards = \Illuminate\Support\Facades\Schema::hasColumn('directory_contacts', 'visiting_cards');
+    $storedVisitingCard = collect(explode(',', (string) (optional($contact)->visiting_cards ?? '')))
+        ->map(fn ($id) => (int) trim($id))
+        ->filter()
+        ->first();
+    $visitingCardsValue = old('visiting_cards', $storedVisitingCard ?? '');
     $oldSocialKeys = old('social_media_keys');
     $socialMediaRows = collect();
 
@@ -54,6 +60,22 @@
         @error('photo') <span class="text-danger small">{{ $message }}</span> @enderror
     </div>
 </div>
+@if ($hasVisitingCards)
+    <div class="form-group row">
+        <label class="col-md-2 col-form-label">{{ translate('Visiting Card') }}</label>
+        <div class="col-md-9">
+            <div class="input-group" data-toggle="aizuploader" data-type="image">
+                <div class="input-group-prepend">
+                    <div class="input-group-text bg-soft-secondary">{{ translate('Browse') }}</div>
+                </div>
+                <div class="form-control file-amount">{{ translate('Choose File') }}</div>
+                <input type="hidden" name="visiting_cards" class="selected-files" value="{{ $visitingCardsValue }}">
+            </div>
+            <div class="file-preview box sm"></div>
+            @error('visiting_cards') <span class="text-danger small">{{ $message }}</span> @enderror
+        </div>
+    </div>
+@endif
 <div class="form-group row">
     <label class="col-md-2 col-form-label">{{ translate('Company Name') }}</label>
     <div class="col-md-9">

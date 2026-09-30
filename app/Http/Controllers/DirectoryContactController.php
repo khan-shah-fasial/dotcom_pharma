@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\ContactClassification;
 use App\Models\Country;
 use App\Models\DirectoryContact;
+use App\Models\DirectoryContactActivity;
 use App\Models\State;
+use App\Models\Upload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,13 @@ class DirectoryContactController extends Controller
     {
         $this->middleware(['permission:view_contact_directory'])->only(['index', 'show']);
         $this->middleware(['permission:add_contact_directory'])->only(['create', 'store']);
-        $this->middleware(['permission:edit_contact_directory'])->only(['edit', 'update']);
+        $this->middleware(['permission:edit_contact_directory'])->only([
+            'edit',
+            'update',
+            'storeActivity',
+            'updateActivity',
+            'destroyActivity',
+        ]);
         $this->middleware(['permission:delete_contact_directory'])->only('destroy');
     }
 
@@ -89,6 +97,10 @@ class DirectoryContactController extends Controller
             ]);
         if ($hasRegion) {
             $contacts->addSelect('directory_contacts.region');
+        }
+        $hasVisitingCards = Schema::hasColumn('directory_contacts', 'visiting_cards');
+        if ($hasVisitingCards) {
+            $contacts->addSelect('directory_contacts.visiting_cards');
         }
 
         if ($filters['search'] !== '') {
@@ -183,14 +195,17 @@ class DirectoryContactController extends Controller
             $contacts->latest('directory_contacts.created_at');
         }
 
+        $visitingCardSlides = $hasVisitingCards ? $this->visitingCardSlides(clone $contacts) : [];
         $contacts = $contacts->paginate(20)->appends($request->query());
 
-        return view('backend.contact_management.index', $this->indexData() + [
+        return view('backend.contact_management.index', $this->indexData() + $this->activityFormData() + [
             'contacts' => $contacts,
             'filters' => $filters,
             'sortBy' => $sortBy,
             'sortDir' => $sortDir,
             'hasRegion' => $hasRegion,
+            'hasVisitingCards' => $hasVisitingCards,
+            'visitingCardSlides' => $visitingCardSlides,
         ]);
     }
 
@@ -217,9 +232,10 @@ class DirectoryContactController extends Controller
         return redirect()->route('contact-directory.show', $contact->id);
     }
 
-    public function show(DirectoryContact $directoryContact)
+    public function show(Request $request, DirectoryContact $directoryContact)
     {
-        $directoryContact->load([
+        $activitySortOrder = 'desc';
+        $relations = [
             'photoUpload',
             'country',
             'state',
@@ -234,10 +250,29 @@ class DirectoryContactController extends Controller
             'workProfile',
             'department',
             'purpose',
-        ]);
+        ];
 
-        return view('backend.contact_management.show', [
+        if ($this->activitiesEnabled()) {
+            $activitySortOrder = strtolower((string) $request->input('activity_sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
+            $relations['activities'] = function ($query) use ($activitySortOrder) {
+                $query->orderBy('created_at', $activitySortOrder)
+                    ->orderBy('id', $activitySortOrder);
+            };
+            $relations[] = 'activities.creator';
+            $relations[] = 'activities.activityType';
+            $relations[] = 'activities.subStatus';
+        }
+
+        $directoryContact->load($relations);
+
+        $hasVisitingCards = Schema::hasColumn('directory_contacts', 'visiting_cards');
+
+        return view('backend.contact_management.show', $this->activityFormData() + [
             'contact' => $directoryContact,
+            'activitySortOrder' => $activitySortOrder,
+            'hasVisitingCards' => $hasVisitingCards,
+            'visitingCards' => $this->visitingCardUploads($directoryContact),
+            'visitingCardSlides' => $hasVisitingCards ? $this->directoryVisitingCardSlides() : [],
         ]);
     }
 
@@ -266,6 +301,55 @@ class DirectoryContactController extends Controller
         return redirect()->route('contact-directory.index');
     }
 
+    public function storeActivity(Request $request, DirectoryContact $directoryContact)
+    {
+        abort_unless($this->activitiesEnabled(), 404);
+
+        $data = $this->validatedActivityData($request);
+        $data['attachments'] = $this->storeActivityAttachments($request);
+        $data['directory_contact_id'] = $directoryContact->id;
+        $data['created_by'] = auth()->id();
+
+        DirectoryContactActivity::create($data);
+
+        flash(translate('Contact activity has been added successfully'))->success();
+
+        return back();
+    }
+
+    public function updateActivity(Request $request, DirectoryContact $directoryContact, DirectoryContactActivity $directoryContactActivity)
+    {
+        abort_unless($this->activitiesEnabled(), 404);
+        abort_unless((int) $directoryContactActivity->directory_contact_id === (int) $directoryContact->id, 404);
+
+        $data = $this->validatedActivityData($request);
+        unset($data['attachments']);
+        $attachments = $this->storeActivityAttachments($request);
+
+        if ($attachments) {
+            $data['attachments'] = $this->mergeAttachmentIds($directoryContactActivity->attachments, $attachments);
+        }
+
+        $directoryContactActivity->update($data);
+
+        flash(translate('Contact activity has been updated successfully'))->success();
+
+        return back();
+    }
+
+    public function destroyActivity(DirectoryContact $directoryContact, DirectoryContactActivity $directoryContactActivity)
+    {
+        abort_unless($this->activitiesEnabled(), 404);
+        abort_unless((int) $directoryContactActivity->directory_contact_id === (int) $directoryContact->id, 404);
+        abort_unless($this->currentUserIsSuperAdmin(), 403);
+
+        $directoryContactActivity->delete();
+
+        flash(translate('Contact activity has been deleted successfully'))->success();
+
+        return back();
+    }
+
     protected function validatedContactData(Request $request, ?DirectoryContact $contact = null): array
     {
         $request->merge([
@@ -288,6 +372,7 @@ class DirectoryContactController extends Controller
             'company_name' => 'nullable|string|max:255',
             'designation' => 'nullable|string|max:255',
             'photo' => 'nullable|integer|exists:uploads,id',
+            'visiting_cards' => 'nullable|string',
             'email' => [
                 'nullable',
                 'email',
@@ -348,6 +433,12 @@ class DirectoryContactController extends Controller
         $data['tags'] = $this->parseTags($data['tags'] ?? null);
         if (!Schema::hasColumn('directory_contacts', 'region')) {
             unset($data['region']);
+        }
+        if (Schema::hasColumn('directory_contacts', 'visiting_cards')) {
+            $cardIds = $this->visitingCardIdsFromRequest($request);
+            $data['visiting_cards'] = empty($cardIds) ? null : (string) $cardIds[0];
+        } else {
+            unset($data['visiting_cards']);
         }
 
         foreach (array_keys(ContactClassification::CONTACT_COLUMNS) as $kind) {
@@ -541,5 +632,233 @@ class DirectoryContactController extends Controller
         }
 
         return empty($rows) ? null : $rows;
+    }
+
+    protected function activitiesEnabled(): bool
+    {
+        return Schema::hasTable('directory_contact_activities');
+    }
+
+    protected function activityFormData(): array
+    {
+        if (!$this->activitiesEnabled()) {
+            return [
+                'activitiesEnabled' => false,
+                'activityTypes' => collect(),
+                'activitySubStatuses' => collect(),
+            ];
+        }
+
+        return [
+            'activitiesEnabled' => true,
+            'activityTypes' => $this->activityTypeOptions(),
+            'activitySubStatuses' => auth()->user()?->can('edit_contact_directory')
+                ? $this->activitySubStatusOptions()
+                : collect(),
+        ];
+    }
+
+    protected function activityTypeOptions()
+    {
+        if (!Schema::hasTable('lead_activity_types')) {
+            return collect();
+        }
+
+        return DB::table('lead_activity_types')
+            ->select(['id', 'title'])
+            ->where('status', 1)
+            ->orderBy('title')
+            ->get();
+    }
+
+    protected function activitySubStatusOptions()
+    {
+        if (!Schema::hasTable('lead_activity_sub_statuses')) {
+            return collect();
+        }
+
+        return DB::table('lead_activity_sub_statuses')
+            ->select(['id', 'title'])
+            ->where('status', 1)
+            ->orderBy('title')
+            ->get();
+    }
+
+    protected function validatedActivityData(Request $request): array
+    {
+        return $request->validate([
+            'activity_type_id' => [
+                'required',
+                'integer',
+                Rule::exists('lead_activity_types', 'id')->where(fn ($query) => $query->where('status', 1)),
+            ],
+            'sub_status_id' => [
+                'required',
+                'integer',
+                Rule::exists('lead_activity_sub_statuses', 'id')->where(fn ($query) => $query->where('status', 1)),
+            ],
+            'expected_value' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string',
+            'next_followup' => 'nullable|date',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,gif,webp,bmp,svg,pdf,doc,docx,xls,xlsx,csv,txt,xml,zip,rar,7z|max:20480',
+        ]);
+    }
+
+    protected function storeActivityAttachments(Request $request): ?string
+    {
+        if (!$request->hasFile('attachments')) {
+            return null;
+        }
+
+        $ids = collect($request->file('attachments'))
+            ->filter()
+            ->map(fn ($file) => $this->storeFileToUploads($file))
+            ->filter()
+            ->values();
+
+        return $ids->isEmpty() ? null : $ids->implode(',');
+    }
+
+    protected function storeFileToUploads($file): int
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        $storedPath = $file->store('uploads/all/' . date('Y/m'), 'local');
+
+        $upload = new Upload();
+        $upload->file_original_name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $upload->extension = $extension;
+        $upload->file_size = $file->getSize();
+        $upload->user_id = auth()->id();
+        $upload->type = $this->uploadTypeFromExtension($extension);
+        $upload->file_name = $storedPath;
+        $upload->disk = 'local';
+        $upload->save();
+
+        return $upload->id;
+    }
+
+    protected function uploadTypeFromExtension(string $extension): string
+    {
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'svg', 'webp', 'gif', 'bmp'], true)) {
+            return 'image';
+        }
+
+        if (in_array($extension, ['mp4', 'mpg', 'mpeg', 'webm', 'ogg', 'avi', 'mov', 'flv', 'swf', 'mkv', 'wmv'], true)) {
+            return 'video';
+        }
+
+        if (in_array($extension, ['wma', 'aac', 'wav', 'mp3'], true)) {
+            return 'audio';
+        }
+
+        if (in_array($extension, ['zip', 'rar', '7z'], true)) {
+            return 'archive';
+        }
+
+        return 'document';
+    }
+
+    protected function mergeAttachmentIds(?string $current, ?string $additional): ?string
+    {
+        $ids = collect(array_merge(
+            $current ? explode(',', $current) : [],
+            $additional ? explode(',', $additional) : []
+        ))
+            ->map(fn ($id) => (int) trim($id))
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $ids->isEmpty() ? null : $ids->implode(',');
+    }
+
+    protected function visitingCardIdsFromRequest(Request $request): array
+    {
+        $ids = collect(explode(',', (string) $request->input('visiting_cards', '')))
+            ->map(fn ($id) => (int) trim($id))
+            ->filter()
+            ->unique()
+            ->take(1)
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        $validIds = Upload::query()
+            ->whereIn('id', $ids->all())
+            ->where('type', 'image')
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id);
+
+        if ($ids->diff($validIds)->isNotEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'visiting_cards' => translate('Please choose valid visiting card images'),
+            ]);
+        }
+
+        return $ids->all();
+    }
+
+    protected function directoryVisitingCardSlides(): array
+    {
+        return $this->visitingCardSlides(
+            DirectoryContact::query()->latest('directory_contacts.created_at')->orderBy('directory_contacts.id', 'desc')
+        );
+    }
+
+    protected function visitingCardSlides($query): array
+    {
+        $rows = (clone $query)
+            ->setEagerLoads([])
+            ->select([
+                'directory_contacts.id',
+                'directory_contacts.name',
+                'directory_contacts.visiting_cards',
+            ])
+            ->whereNotNull('directory_contacts.visiting_cards')
+            ->where('directory_contacts.visiting_cards', '!=', '')
+            ->get();
+
+        $slides = [];
+        foreach ($rows as $row) {
+            $uploadId = $row->visitingCardId();
+            if (!$uploadId) {
+                continue;
+            }
+
+            $slides[] = [
+                'contactId' => (int) $row->id,
+                'title' => (string) $row->name,
+                'src' => uploaded_asset($uploadId),
+            ];
+        }
+
+        return $slides;
+    }
+
+    protected function visitingCardUploads(DirectoryContact $contact)
+    {
+        if (!Schema::hasColumn('directory_contacts', 'visiting_cards')) {
+            return collect();
+        }
+
+        $ids = array_slice($contact->visitingCardIds(), 0, 1);
+        if ($ids === []) {
+            return collect();
+        }
+
+        return Upload::query()
+            ->whereIn('id', $ids)
+            ->where('type', 'image')
+            ->get()
+            ->sortBy(fn ($upload) => array_search((int) $upload->id, $ids, true))
+            ->values();
+    }
+
+    protected function currentUserIsSuperAdmin(): bool
+    {
+        return auth()->check() && auth()->user()->hasRole('Super Admin');
     }
 }

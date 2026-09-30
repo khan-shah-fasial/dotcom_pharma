@@ -2596,47 +2596,56 @@ if (!function_exists('renderStarRating')) {
 
 function translate($key, $lang = null, $addslashes = false)
 {
+    // Loaded once per request. Calling Cache on every label was re-reading
+    // the full translation table hundreds of times on each page.
+    static $bundles = [];
+
     if ($lang == null) {
         $lang = App::getLocale();
     }
-    
+
     $key = $key ?? '';
     $lang_key = preg_replace('/[^A-Za-z0-9\_]/', '', str_replace(' ', '_', strtolower($key)));
 
-    $translations_en = Cache::rememberForever('translations-en', function () {
-        return Translation::where('lang', 'en')->pluck('lang_value', 'lang_key')->toArray();
-    });
+    if (!array_key_exists('en', $bundles)) {
+        $bundles['en'] = Cache::rememberForever('translations-en', function () {
+            return Translation::where('lang', 'en')->pluck('lang_value', 'lang_key')->toArray();
+        });
+    }
 
-    if (!isset($translations_en[$lang_key])) {
+    if (!isset($bundles['en'][$lang_key])) {
         $translation_def = new Translation;
         $translation_def->lang = 'en';
         $translation_def->lang_key = $lang_key;
         $translation_def->lang_value = str_replace(array("\r", "\n", "\r\n"), "", $key);
         $translation_def->save();
         Cache::forget('translations-en');
+        $bundles['en'][$lang_key] = $translation_def->lang_value;
     }
 
-    // return user session lang
-    $translation_locale = Cache::rememberForever("translations-{$lang}", function () use ($lang) {
-        return Translation::where('lang', $lang)->pluck('lang_value', 'lang_key')->toArray();
-    });
-    if (isset($translation_locale[$lang_key])) {
-        return $addslashes ? addslashes(trim($translation_locale[$lang_key])) : trim($translation_locale[$lang_key]);
+    if (!array_key_exists($lang, $bundles)) {
+        $bundles[$lang] = Cache::rememberForever("translations-{$lang}", function () use ($lang) {
+            return Translation::where('lang', $lang)->pluck('lang_value', 'lang_key')->toArray();
+        });
+    }
+    if (isset($bundles[$lang][$lang_key])) {
+        return $addslashes ? addslashes(trim($bundles[$lang][$lang_key])) : trim($bundles[$lang][$lang_key]);
     }
 
-    // return default lang if session lang not found
-    $translations_default = Cache::rememberForever('translations-' . env('DEFAULT_LANGUAGE', 'en'), function () {
-        return Translation::where('lang', env('DEFAULT_LANGUAGE', 'en'))->pluck('lang_value', 'lang_key')->toArray();
-    });
-    if (isset($translations_default[$lang_key])) {
-        return $addslashes ? addslashes(trim($translations_default[$lang_key])) : trim($translations_default[$lang_key]);
+    $defaultLang = env('DEFAULT_LANGUAGE', 'en');
+    if (!array_key_exists($defaultLang, $bundles)) {
+        $bundles[$defaultLang] = Cache::rememberForever('translations-' . $defaultLang, function () use ($defaultLang) {
+            return Translation::where('lang', $defaultLang)->pluck('lang_value', 'lang_key')->toArray();
+        });
+    }
+    if (isset($bundles[$defaultLang][$lang_key])) {
+        return $addslashes ? addslashes(trim($bundles[$defaultLang][$lang_key])) : trim($bundles[$defaultLang][$lang_key]);
     }
 
-    // fallback to en lang
-    if (!isset($translations_en[$lang_key])) {
+    if (!isset($bundles['en'][$lang_key])) {
         return trim($key);
     }
-    return $addslashes ? addslashes(trim($translations_en[$lang_key])) : trim($translations_en[$lang_key]);
+    return $addslashes ? addslashes(trim($bundles['en'][$lang_key])) : trim($bundles['en'][$lang_key]);
 }
 
 function remove_invalid_charcaters($str)
@@ -3373,9 +3382,12 @@ if (!function_exists('isUnique')) {
 if (!function_exists('get_setting')) {
     function get_setting($key, $default = null, $lang = false)
     {
-        $settings = Cache::remember('business_settings', 86400, function () {
-            return BusinessSetting::all();
-        });
+        static $settings = null;
+        if ($settings === null) {
+            $settings = Cache::remember('business_settings', 86400, function () {
+                return BusinessSetting::all();
+            });
+        }
 
         if ($lang == false) {
             $setting = $settings->where('type', $key)->first();
@@ -6240,24 +6252,44 @@ if (! function_exists('getLocationFromIP')) {
                 $ip = '49.37.0.1'; // Example Indian IP
             }
 
-            //$url = "https://ipapi.co/{$ip}/json/";
-            $url = "https://ipwhois.app/json/{$ip}";
-
-            $response = @file_get_contents($url);
-
-            if (!$response) {
-                return [
-                    'status' => false,
-                    'message' => 'API request failed'
-                ];
+            $cacheKey = 'ip_location_' . $ip;
+            $cached = Cache::get($cacheKey);
+            if (is_array($cached)) {
+                return $cached;
             }
 
-            $data = json_decode($response, true);
+            $failed = [
+                'status' => false,
+                'message' => 'API request failed',
+            ];
 
-            return $data ?? [];
+            try {
+                $response = Http::timeout(3)->connectTimeout(2)->acceptJson()->get('https://ipwhois.app/json/' . $ip);
+            } catch (\Throwable $e) {
+                Cache::put($cacheKey, $failed, now()->addMinutes(10));
+                return $failed;
+            }
+
+            if (!$response->successful()) {
+                Cache::put($cacheKey, $failed, now()->addMinutes(10));
+                return $failed;
+            }
+
+            $data = $response->json() ?? [];
+            if ($data === []) {
+                Cache::put($cacheKey, $failed, now()->addMinutes(10));
+                return $failed;
+            }
+
+            Cache::put($cacheKey, $data, now()->addHours(6));
+
+            return $data;
 
         } catch (\Exception $e) {
-
+            return [
+                'status' => false,
+                'message' => 'API request failed',
+            ];
         }
     }
 }

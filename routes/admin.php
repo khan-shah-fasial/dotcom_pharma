@@ -439,6 +439,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/contact-directory/{directoryContact}', 'show')->name('contact-directory.show');
         Route::get('/contact-directory/{directoryContact}/edit', 'edit')->name('contact-directory.edit');
         Route::post('/contact-directory/{directoryContact}/update', 'update')->name('contact-directory.update');
+        Route::post('/contact-directory/{directoryContact}/activities', 'storeActivity')->name('contact-directory.activities.store');
+        Route::post('/contact-directory/{directoryContact}/activities/{directoryContactActivity}/update', 'updateActivity')->name('contact-directory.activities.update');
+        Route::get('/contact-directory/{directoryContact}/activities/{directoryContactActivity}/destroy', 'destroyActivity')->name('contact-directory.activities.destroy');
     });
 
     // Newsletter

@@ -5,6 +5,7 @@
     $sortBy = $sortBy ?? '';
     $sortDir = $sortDir ?? 'asc';
     $hasRegion = $hasRegion ?? false;
+    $hasVisitingCards = $hasVisitingCards ?? false;
     $filtersApplied = collect($filters)->contains(function ($value) {
         return $value !== null && $value !== '';
     });
@@ -165,6 +166,9 @@
                     <tr>
                         <th>#</th>
                         <th>{{ translate('Contact No') }}</th>
+                        @if ($hasVisitingCards)
+                            <th>{{ translate('Visiting Card') }}</th>
+                        @endif
                         @foreach ($columns as $column => $label)
                             @include('backend.inc.sortable_th', ['column' => $column, 'label' => translate($label), 'routeName' => 'contact-directory.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @endforeach
@@ -178,6 +182,19 @@
                         <tr>
                             <td>{{ $contacts->firstItem() + $key }}</td>
                             <td class="fw-700">{{ $contact->contact_no }}</td>
+                            @if ($hasVisitingCards)
+                                <td>
+                                    @if ($contact->visitingCardId())
+                                        <a href="{{ uploaded_asset($contact->visitingCardId()) }}"
+                                            class="js-contact-visiting-card size-50px border overflow-hidden d-inline-block"
+                                            data-contact-id="{{ $contact->id }}">
+                                            <img src="{{ uploaded_asset($contact->visitingCardId()) }}" alt="{{ $contact->name }}" class="img-fit">
+                                        </a>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                            @endif
                             <td class="contact-wrap">{{ $contact->name }}</td>
                             <td class="contact-wrap">{{ $contact->company_name ?: '-' }}</td>
                             <td>{{ $contact->designation ?: '-' }}</td>
@@ -210,6 +227,15 @@
                                 <a href="{{ route('contact-directory.show', $contact->id) }}" class="btn btn-soft-primary btn-icon btn-circle btn-sm" title="{{ translate('View') }}">
                                     <i class="las la-eye"></i>
                                 </a>
+                                @if (($activitiesEnabled ?? false) && auth()->user()->can('edit_contact_directory'))
+                                    <button type="button"
+                                        class="btn btn-soft-success btn-icon btn-circle btn-sm js-add-contact-activity"
+                                        data-action="{{ route('contact-directory.activities.store', $contact->id) }}"
+                                        data-contact="{{ $contact->contact_no ?: $contact->name }}"
+                                        title="{{ translate('Add Activity') }}">
+                                        <i class="las la-plus"></i>
+                                    </button>
+                                @endif
                                 @can('edit_contact_directory')
                                     <a href="{{ route('contact-directory.edit', $contact->id) }}" class="btn btn-soft-info btn-icon btn-circle btn-sm" title="{{ translate('Edit') }}">
                                         <i class="las la-edit"></i>
@@ -224,7 +250,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ count($columns) + 5 }}" class="text-center">{{ translate('No contacts found') }}</td>
+                            <td colspan="{{ count($columns) + ($hasVisitingCards ? 6 : 5) }}" class="text-center">{{ translate('No contacts found') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -236,6 +262,67 @@
         </div>
     </form>
 </div>
+
+@if (($activitiesEnabled ?? false) && auth()->user()->can('edit_contact_directory'))
+    <div class="modal fade" id="quickContactActivityModal" tabindex="-1" role="dialog" aria-labelledby="quickContactActivityModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="quickContactActivityForm" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="quickContactActivityModalLabel">{{ translate('Add Activity') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-soft-info" id="quickContactActivityContact"></div>
+                        <div class="form-group">
+                            <label for="quick_contact_activity_type">{{ translate('Activity Type') }} <span class="text-danger">*</span></label>
+                            <select id="quick_contact_activity_type" name="activity_type_id" class="form-control aiz-selectpicker" data-live-search="true" required>
+                                @foreach ($activityTypes as $type)
+                                    <option value="{{ $type->id }}">{{ $type->title }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick_contact_activity_sub_status">{{ translate('Sub-status') }} <span class="text-danger">*</span></label>
+                            <select id="quick_contact_activity_sub_status" name="sub_status_id" class="form-control aiz-selectpicker" data-live-search="true" required>
+                                @foreach ($activitySubStatuses as $subStatus)
+                                    <option value="{{ $subStatus->id }}">{{ $subStatus->title }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick_contact_activity_expected_value">{{ translate('Expected Value') }}</label>
+                            <input id="quick_contact_activity_expected_value" type="number" step="0.01" min="0" name="expected_value" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="quick_contact_activity_description">{{ translate('Description') }}</label>
+                            <textarea id="quick_contact_activity_description" name="description" rows="4" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick_contact_activity_next_followup">{{ translate('Next Follow-up') }}</label>
+                            <input id="quick_contact_activity_next_followup" type="text" name="next_followup"
+                                class="form-control aiz-date-time-picker" data-past-disable="true"
+                                placeholder="{{ translate('Select date and time') }}" autocomplete="off" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick_contact_activity_attachments">{{ translate('Attachments') }}</label>
+                            <input id="quick_contact_activity_attachments" type="file" name="attachments[]" class="form-control" multiple
+                                accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.xml,.zip,.rar,.7z,image/*">
+                            <small class="text-muted d-block mt-1">{{ translate('You can upload multiple images or documents.') }}</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Close') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ translate('Add Activity') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
 @endsection
 
 @section('modal')
@@ -248,5 +335,24 @@
         $('#contactFilterModal').modal('hide');
         $('#sort_contacts').submit();
     });
+
+    $(document).on('click', '.js-add-contact-activity', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var $button = $(this);
+        $('#quickContactActivityForm').attr('action', $button.data('action'));
+        $('#quickContactActivityContact').text($button.data('contact'));
+        $('#quick_contact_activity_description').val('');
+        $('#quick_contact_activity_next_followup').val('');
+        $('#quick_contact_activity_attachments').val('');
+        $('#quick_contact_activity_expected_value').val('');
+        $('#quick_contact_activity_type').prop('selectedIndex', 0);
+        $('#quick_contact_activity_sub_status').prop('selectedIndex', 0);
+        $('#quick_contact_activity_type, #quick_contact_activity_sub_status').selectpicker('refresh');
+
+        $('#quickContactActivityModal').modal('show');
+    });
 </script>
+@include('backend.contact_management._visiting_card_slider')
 @endsection
