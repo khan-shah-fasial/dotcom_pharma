@@ -78,7 +78,7 @@
         @can('add_customer')
             <div class="col text-right">
                 <a href="{{ route('customers.business.create') }}" class="btn btn-circle btn-info">
-                    <span>{{ translate('Add New Customer') }}</span>
+                    <span>{{ translate('Add New Account') }}</span>
                 </a>
             </div>
         @endcan

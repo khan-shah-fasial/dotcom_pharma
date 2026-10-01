@@ -131,7 +131,7 @@
         .delivery-term-tooltip {
             position: fixed;
             z-index: 4000;
-            max-width: 280px;
+            max-width: 420px;
             padding: 6px 10px;
             color: #fff;
             background: #1f2937;
@@ -1159,10 +1159,10 @@ span#picker-info-stock-badge {
                             <label id="terms-of-delivery-label">{{ translate('Terms Of Delivery') }}</label>
                             <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="terms-of-delivery" data-live-search="true" data-hide-disabled="true" title="{{ translate('Select Terms Of Delivery') }}">
                                 @foreach(\App\Support\InvoiceType::DOMESTIC_DELIVERY_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::deliveryTermFullForm($value) }}" @selected(old('transport_delivery_type') === $value)>{{ translate($label) }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::deliveryTermTooltip($value) }}" @selected(old('transport_delivery_type') === $value)>{{ translate($label) }}</option>
                                 @endforeach
                                 @foreach(\App\Support\InvoiceType::INTERNATIONAL_DELIVERY_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::deliveryTermFullForm($value) }}" @selected(old('transport_delivery_type') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::deliveryTermTooltip($value) }}" @selected(old('transport_delivery_type') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
@@ -1238,10 +1238,10 @@ span#picker-info-stock-badge {
                             <label>{{ translate('Payment Terms') }}</label>
                             <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="payment-terms" data-live-search="true" data-hide-disabled="true" title="{{ translate('Select Payment Terms') }}">
                                 @foreach(\App\Support\InvoiceType::DOMESTIC_PAYMENT_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::paymentTermFullForm($value) }}" @selected(old('payment_type') === $value)>{{ translate($label) }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::paymentTermTooltip($value) }}" @selected(old('payment_type') === $value)>{{ translate($label) }}</option>
                                 @endforeach
                                 @foreach(\App\Support\InvoiceType::INTERNATIONAL_PAYMENT_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::paymentTermFullForm($value) }}" @selected(old('payment_type') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::paymentTermTooltip($value) }}" @selected(old('payment_type') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror

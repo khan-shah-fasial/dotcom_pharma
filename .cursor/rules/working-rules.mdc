@@ -5,6 +5,7 @@ alwaysApply: true
 
 # Working Rules
 
+
 ## 1. Never write or run database migrations
 
 - Do not create, edit, or generate Laravel migration files.

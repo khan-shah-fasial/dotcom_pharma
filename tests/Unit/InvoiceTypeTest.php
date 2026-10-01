@@ -53,5 +53,9 @@ class InvoiceTypeTest extends TestCase
         $this->assertSame('Letter of Credit', InvoiceType::paymentTermFullForm('letter_of_credit'));
         $this->assertNull(InvoiceType::deliveryTermLabel('fob', InvoiceType::DOMESTIC));
         $this->assertNull(InvoiceType::paymentTermLabel('credit', InvoiceType::INTERNATIONAL));
+        $this->assertSame('Cash On Delivery', InvoiceType::paymentTermTooltip('cash_on_delivery'));
+        $this->assertSame('Door Delivery', InvoiceType::deliveryTermTooltip('door_delivery'));
+        $this->assertStringContainsString('bank guarantees payment', strtolower(InvoiceType::paymentTermTooltip('letter_of_credit')));
+        $this->assertStringContainsString('sea freight only', strtolower(InvoiceType::deliveryTermTooltip('fob')));
     }
 }

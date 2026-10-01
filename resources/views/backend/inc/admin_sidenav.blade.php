@@ -877,6 +877,28 @@
                     @endcanany
                 @endif
 
+                <!-- Account Master -->
+                @can('view_all_customers')
+                    <li class="aiz-side-nav-item">
+                        <a href="#" class="aiz-side-nav-link">
+                            <div class="aiz-side-nav-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                                    <path id="Path_40769_account_master" data-name="Path 40769 Account Master" d="M8,10.667A2.667,2.667,0,1,1,10.667,8,2.667,2.667,0,0,1,8,10.667Zm0-4A1.333,1.333,0,1,0,9.333,8,1.333,1.333,0,0,0,8,6.667Zm4,8.667a4,4,0,1,0-8,0,.667.667,0,0,0,1.333,0,2.667,2.667,0,1,1,5.333,0,.667.667,0,0,0,1.333,0Zm0-10a2.667,2.667,0,1,1,2.667-2.667A2.667,2.667,0,0,1,12,5.333Zm0-4a1.333,1.333,0,1,0,1.333,1.333A1.333,1.333,0,0,0,12,1.333ZM16,10a4,4,0,0,0-4-4,.667.667,0,0,0,0,1.333A2.667,2.667,0,0,1,14.667,10,.667.667,0,1,0,16,10ZM4,5.333A2.667,2.667,0,1,1,6.667,2.667,2.667,2.667,0,0,1,4,5.333Zm0-4A1.333,1.333,0,1,0,5.333,2.667,1.333,1.333,0,0,0,4,1.333ZM1.333,10A2.667,2.667,0,0,1,4,7.333.667.667,0,0,0,4,6a4,4,0,0,0-4,4,.667.667,0,0,0,1.333,0Z" fill="#575b6a"/>
+                                </svg>
+                            </div>
+                            <span class="aiz-side-nav-text">{{ translate('Account Master') }}</span>
+                            <span class="aiz-side-nav-arrow"></span>
+                        </a>
+                        <ul class="aiz-side-nav-list level-2">
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('customers.business', ['sort_by' => 'crm_id', 'sort_order' => 'desc']) }}" class="aiz-side-nav-link {{ areActiveRoutes(['customers.business', 'customers.business.create', 'customers.edit']) }}">
+                                    <span class="aiz-side-nav-text">{{ translate('Add Account') }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                @endcan
+
                 <!-- Customers -->
                 @canany(['view_all_customers','view_classified_products','view_classified_packages'])
                     <li class="aiz-side-nav-item">
@@ -894,13 +916,6 @@
                                 <li class="aiz-side-nav-item">
                                     <a href="{{ route('customers.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['customers.create'])}}">
                                         <span class="aiz-side-nav-text">{{ translate('Normal Customer list') }}</span>
-                                    </a>
-                                </li>
-                            @endcan
-                            @can('view_all_customers')
-                                <li class="aiz-side-nav-item">
-                                    <a href="{{ route('customers.business', ['sort_by' => 'crm_id', 'sort_order' => 'desc']) }}" class="aiz-side-nav-link">
-                                        <span class="aiz-side-nav-text">{{ translate('Business Customer list') }}</span>
                                     </a>
                                 </li>
                             @endcan

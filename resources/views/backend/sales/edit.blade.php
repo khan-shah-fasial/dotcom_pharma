@@ -49,7 +49,7 @@
         .delivery-term-tooltip {
             position: fixed;
             z-index: 4000;
-            max-width: 280px;
+            max-width: 420px;
             padding: 6px 10px;
             color: #fff;
             background: #1f2937;
@@ -129,7 +129,7 @@
                                 <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="edit-payment-terms" data-live-search="true">
                                     <option value="">{{ translate('Select Payment Terms') }}</option>
                                     @foreach(\App\Support\InvoiceType::paymentTerms($invoiceType) as $value => $label)
-                                        <option value="{{ $value }}" data-fullform="{{ \App\Support\InvoiceType::paymentTermFullForm($value) }}" @selected(old('payment_type', $order->payment_type) === $value)>{{ translate($label) }}</option>
+                                        <option value="{{ $value }}" data-fullform="{{ \App\Support\InvoiceType::paymentTermTooltip($value) }}" @selected(old('payment_type', $order->payment_type) === $value)>{{ translate($label) }}</option>
                                     @endforeach
                                 </select>
                                 @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
@@ -253,7 +253,7 @@
                                 <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="edit-terms-of-delivery" data-live-search="true" data-hide-disabled="true">
                                     <option value="">{{ translate('Select Delivery Type') }}</option>
                                     @foreach(\App\Support\InvoiceType::deliveryTerms($invoiceType) as $value => $label)
-                                        <option value="{{ $value }}" data-fullform="{{ \App\Support\InvoiceType::deliveryTermFullForm($value) }}" @selected(old('transport_delivery_type', $order->transport_delivery_type) === $value)>{{ translate($label) }}</option>
+                                        <option value="{{ $value }}" data-fullform="{{ \App\Support\InvoiceType::deliveryTermTooltip($value) }}" @selected(old('transport_delivery_type', $order->transport_delivery_type) === $value)>{{ translate($label) }}</option>
                                     @endforeach
                                 </select>
                                 @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
