@@ -231,6 +231,56 @@ class FinancialArchiveController extends Controller
     }
 
     /**
+     * Stream a PDF from this site so the preview can show it.
+     * Remote files are fetched from their public URL because the browser
+     * will not draw a PDF that lives on another site inside the preview.
+     */
+    public function preview(FinancialArchive $archive)
+    {
+        $upload = $archive->upload;
+        $extension = strtolower((string) ($upload->extension ?? ''));
+        if (!$upload || $extension !== 'pdf' || empty($upload->file_name)) {
+            abort(404);
+        }
+
+        $name = trim((string) $upload->file_original_name);
+        $name = $name !== '' ? $name : 'document';
+        $name = preg_replace('/[^A-Za-z0-9\-\. ]+/', '', $name) ?: 'document';
+        if (!str_ends_with(strtolower($name), '.pdf')) {
+            $name .= '.pdf';
+        }
+
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $name . '"',
+        ];
+
+        $disk = $upload->disk ?: config('filesystems.default');
+        if ($disk === 'local') {
+            $absolute = public_path($upload->file_name);
+            abort_unless(is_file($absolute), 404);
+
+            return response()->file($absolute, $headers);
+        }
+
+        $source = $upload->external_link ?: my_asset($upload->file_name);
+        abort_unless(filter_var($source, FILTER_VALIDATE_URL), 404);
+
+        return response()->stream(function () use ($source) {
+            $output = fopen('php://output', 'wb');
+            $curl = curl_init($source);
+            curl_setopt_array($curl, [
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_FILE => $output,
+                CURLOPT_FAILONERROR => true,
+            ]);
+            curl_exec($curl);
+            curl_close($curl);
+            fclose($output);
+        }, 200, $headers);
+    }
+
+    /**
      * Rename the linked upload's display name. The stored file path stays the same.
      */
     public function rename(Request $request, FinancialArchive $archive)

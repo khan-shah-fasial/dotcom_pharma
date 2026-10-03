@@ -105,6 +105,9 @@
                             $fileName = $upload->file_original_name ?? '';
                             $extension = strtolower((string) ($upload->extension ?? ''));
                             $fileUrl = $upload ? uploaded_asset($archive->upload_id) : '';
+                            $previewUrl = ($upload && $extension === 'pdf')
+                                ? route('financial-archives.preview', $archive->id, false)
+                                : $fileUrl;
                             $iconClass = 'las la-file';
                             $kind = 'file';
                             if ($upload) {
@@ -137,7 +140,7 @@
                                         class="btn btn-link p-0 archive-preview-trigger"
                                         data-index="{{ $previewIndex }}"
                                         data-kind="{{ $kind }}"
-                                        data-url="{{ $fileUrl }}"
+                                        data-url="{{ $previewUrl }}"
                                         data-name="{{ $fileName }}"
                                         data-ext="{{ $extension }}"
                                         data-icon="{{ $iconClass }}"
@@ -235,11 +238,20 @@
             height: auto;
             transform-origin: center center;
         }
-        .archive-preview-stage iframe {
+        .archive-preview-stage.is-pdf {
+            display: block;
+            background: #525659;
+        }
+        .archive-pdf-pages {
             width: 100%;
-            height: 70vh;
-            border: 0;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .archive-pdf-page {
+            display: block;
+            margin: 0 auto 12px;
             background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
         }
         .archive-preview-file {
             color: #fff;
@@ -373,7 +385,7 @@
                         </button>
                         <div class="archive-preview-stage flex-grow-1" id="archive-preview-stage">
                             <img src="" alt="" id="archive-preview-image" class="d-none">
-                            <iframe id="archive-preview-frame" class="d-none" title="{{ translate('Preview') }}"></iframe>
+                            <div id="archive-pdf-pages" class="archive-pdf-pages d-none"></div>
                             <div id="archive-preview-file" class="archive-preview-file d-none">
                                 <div><i id="archive-preview-file-icon" class="las la-file"></i></div>
                                 <p class="mt-3 mb-3" id="archive-preview-file-name"></p>
@@ -398,6 +410,89 @@
             var previewItems = [];
             var previewIndex = 0;
             var zoom = 1;
+            var pdfScale = 1;
+            var pdfRenderToken = 0;
+            var pdfjsLoading = null;
+
+            function loadPdfJs() {
+                if (window.pdfjsLib) {
+                    return Promise.resolve(window.pdfjsLib);
+                }
+                if (pdfjsLoading) {
+                    return pdfjsLoading;
+                }
+                pdfjsLoading = new Promise(function (resolve, reject) {
+                    var script = document.createElement('script');
+                    script.src = new URL('{{ static_asset('assets/js/pdfjs/pdf.min.js') }}', window.location.href).pathname;
+                    script.onload = function () {
+                        window.pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('{{ static_asset('assets/js/pdfjs/pdf.worker.min.js') }}', window.location.href).pathname;
+                        resolve(window.pdfjsLib);
+                    };
+                    script.onerror = function () {
+                        pdfjsLoading = null;
+                        reject();
+                    };
+                    document.head.appendChild(script);
+                });
+                return pdfjsLoading;
+            }
+
+            function renderPdf(url) {
+                var token = ++pdfRenderToken;
+                var host = document.getElementById('archive-pdf-pages');
+                host.innerHTML = '<div class="text-center text-white py-5">{{ translate('Loading preview') }}</div>';
+                host.classList.remove('d-none');
+
+                return loadPdfJs().then(function (pdfjsLib) {
+                    return pdfjsLib.getDocument({ url: url, withCredentials: true }).promise;
+                }).then(function (pdf) {
+                    if (token !== pdfRenderToken) {
+                        return;
+                    }
+                    host.innerHTML = '';
+                    var pageCount = Math.min(pdf.numPages, 25);
+                    var chain = Promise.resolve();
+                    for (var pageNum = 1; pageNum <= pageCount; pageNum++) {
+                        (function (num) {
+                            chain = chain.then(function () {
+                                if (token !== pdfRenderToken) {
+                                    return;
+                                }
+                                return pdf.getPage(num).then(function (page) {
+                                    if (token !== pdfRenderToken) {
+                                        return;
+                                    }
+                                    var unscaled = page.getViewport({ scale: 1 });
+                                    var fitWidth = Math.max(host.clientWidth - 32, 320);
+                                    var viewport = page.getViewport({ scale: (fitWidth / unscaled.width) * pdfScale });
+                                    var canvas = document.createElement('canvas');
+                                    canvas.className = 'archive-pdf-page';
+                                    canvas.width = viewport.width;
+                                    canvas.height = viewport.height;
+                                    host.appendChild(canvas);
+                                    return page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+                                });
+                            });
+                        })(pageNum);
+                    }
+                    return chain.then(function () {
+                        if (token !== pdfRenderToken) {
+                            return;
+                        }
+                        if (pdf.numPages > pageCount) {
+                            var note = document.createElement('p');
+                            note.className = 'text-center text-white mb-0';
+                            note.textContent = '{{ translate('Showing the first 25 pages') }}';
+                            host.appendChild(note);
+                        }
+                    });
+                }).catch(function () {
+                    if (token !== pdfRenderToken) {
+                        return;
+                    }
+                    host.innerHTML = '<div class="archive-preview-file"><p>{{ translate('Could not show this PDF.') }}</p><a class="btn btn-primary" target="_blank" rel="noopener" href="' + url + '">{{ translate('Download') }}</a></div>';
+                });
+            }
 
             function collectPreviewItems() {
                 previewItems = [];
@@ -417,35 +512,53 @@
                 img.style.transform = 'scale(' + zoom + ')';
             }
 
-            function showPreview(index) {
-                if (!previewItems.length) {
-                    return;
-                }
-                previewIndex = (index + previewItems.length) % previewItems.length;
-                var item = previewItems[previewIndex];
+            function previewTitle(item) {
                 var title = item.name || '{{ translate('Preview') }}';
                 if (item.ext) {
                     title += '.' + item.ext;
                 }
-                $('#archive-preview-title').text(title);
-                $('#archive-preview-count').text((previewIndex + 1) + ' / ' + previewItems.length);
+                return title;
+            }
+
+            function paintPreview(item, keepScale) {
+                var title = previewTitle(item);
+                pdfRenderToken++;
+                $('#archive-preview-stage').toggleClass('is-pdf', item.kind === 'pdf');
                 $('#archive-preview-image').addClass('d-none').attr('src', '');
-                $('#archive-preview-frame').addClass('d-none').attr('src', '');
+                $('#archive-pdf-pages').addClass('d-none').empty();
                 $('#archive-preview-file').addClass('d-none');
-                $('#archive-zoom-in, #archive-zoom-out').toggleClass('d-none', item.kind !== 'image');
-                zoom = 1;
-                applyZoom();
+                $('#archive-zoom-in, #archive-zoom-out').toggleClass('d-none', item.kind !== 'image' && item.kind !== 'pdf');
+                if (!keepScale) {
+                    zoom = 1;
+                    pdfScale = 1;
+                    applyZoom();
+                }
 
                 if (item.kind === 'image') {
                     $('#archive-preview-image').removeClass('d-none').attr('src', item.url).attr('alt', title);
                 } else if (item.kind === 'pdf') {
-                    $('#archive-preview-frame').removeClass('d-none').attr('src', item.url);
+                    renderPdf(item.url);
                 } else {
                     $('#archive-preview-file-icon').attr('class', item.icon);
                     $('#archive-preview-file-name').text(title);
                     $('#archive-preview-download').attr('href', item.url);
                     $('#archive-preview-file').removeClass('d-none');
                 }
+            }
+
+            function showPreview(index) {
+                if (!previewItems.length) {
+                    return;
+                }
+                previewIndex = (index + previewItems.length) % previewItems.length;
+                var item = previewItems[previewIndex];
+                $('#archive-preview-title').text(previewTitle(item));
+                $('#archive-preview-count').text((previewIndex + 1) + ' / ' + previewItems.length);
+
+                if (item.kind === 'pdf' && !$('#archive-preview-modal').hasClass('show')) {
+                    return;
+                }
+                paintPreview(item);
             }
 
             $('#sort_select').on('change', function () {
@@ -506,16 +619,35 @@
                 showPreview(previewIndex + 1);
             });
             $('#archive-zoom-in').on('click', function () {
+                var item = previewItems[previewIndex];
+                if (item && item.kind === 'pdf') {
+                    pdfScale = Math.min(2.5, Math.round((pdfScale + 0.25) * 100) / 100);
+                    paintPreview(item, true);
+                    return;
+                }
                 zoom = Math.min(4, Math.round((zoom + 0.25) * 100) / 100);
                 applyZoom();
             });
             $('#archive-zoom-out').on('click', function () {
+                var item = previewItems[previewIndex];
+                if (item && item.kind === 'pdf') {
+                    pdfScale = Math.max(0.75, Math.round((pdfScale - 0.25) * 100) / 100);
+                    paintPreview(item, true);
+                    return;
+                }
                 zoom = Math.max(1, Math.round((zoom - 0.25) * 100) / 100);
                 applyZoom();
             });
 
+            $('#archive-preview-modal').on('shown.bs.modal', function () {
+                if (previewItems[previewIndex]) {
+                    paintPreview(previewItems[previewIndex]);
+                }
+            });
+
             $('#archive-preview-modal').on('hidden.bs.modal', function () {
-                $('#archive-preview-frame').attr('src', '');
+                pdfRenderToken++;
+                $('#archive-pdf-pages').empty();
                 $('#archive-preview-image').attr('src', '');
             });
 

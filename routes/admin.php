@@ -296,6 +296,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/financial-archives/destroy/{id}', 'destroy')->name('financial-archives.destroy');
         Route::get('/financial-archives/customer/{user}', 'customerArchives')->name('financial-archives.customer');
         Route::post('/financial-archives/customer/store/{user}', 'storeForUser')->name('financial-archives.customer.store');
+        Route::get('/financial-archives/{archive}/preview', 'preview')->name('financial-archives.preview');
         Route::post('/financial-archives/{archive}/rename', 'rename')->name('financial-archives.rename');
         Route::post('/financial-archives/{archive}/move', 'move')->name('financial-archives.move');
     });
