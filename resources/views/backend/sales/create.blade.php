@@ -538,7 +538,7 @@ span#picker-info-stock-badge {
                     </div>
                     <div class="card-body">
                         <div class="row gutters-5">
-                            <input type="hidden" name="order_code_letter" id="order-code-letter" value="S">
+                            <input type="hidden" name="order_code_letter" id="order-code-letter" value="{{ $orderSeriesCode }}">
                             <div class="col-md-6 form-group">
                                 @include('backend.sales.partials.document_type_field', ['documentTypeRequired' => true, 'documentTypes' => $documentTypes])
                             </div>
@@ -573,7 +573,7 @@ span#picker-info-stock-badge {
                                     </div>
                                     <div>
                                         <span class="order-number-part-label">{{ translate('Code (Series)') }}</span>
-                                        <input type="text" class="form-control" id="order-series" value="S" readonly>
+                                        <input type="text" class="form-control" id="order-series" value="{{ $orderSeriesCode }}" readonly>
                                     </div>
                                     <div>
                                         <span class="order-number-part-label">{{ translate('Financial Year') }}</span>
@@ -586,6 +586,7 @@ span#picker-info-stock-badge {
                                 </div>
                                 <input type="hidden" name="order_no_preview" id="order-no-preview" value="">
                                 <small class="text-muted">{{ translate('Preview only. The final sequential number is reserved when the order is saved.') }}</small>
+                                @error('order_code_letter') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6 form-group">
                                 <label>{{ translate('Order Date') }} <span class="text-danger">*</span></label>
@@ -1385,6 +1386,7 @@ span#picker-info-stock-badge {
         (function () {
             var customerSearchUrl = @json(route('orders.create.customers'));
             var orderNumberPreviewUrl = @json(route('orders.create.number_preview'));
+            var documentSeriesCodes = @json($documentSeriesCodes ?? []);
             var customerAddressUrlTemplate = @json(route('orders.create.customer_addresses', ['customer' => '__ID__']));
             var productSearchUrl = @json(route('orders.create.products'));
             var productQuoteUrl = @json(route('orders.create.product_quote'));
@@ -1524,9 +1526,24 @@ span#picker-info-stock-badge {
                 $('#manual-cbm-display').text(cbm.toFixed(6) + ' CBM');
             }
 
+            function seriesCodeForInvoiceType() {
+                var type = String($('#document-type').val() || '');
+                if (type === '__not_in_list__') {
+                    return 'OT';
+                }
+                return documentSeriesCodes[type] || '';
+            }
+
+            function applyDocumentSeries() {
+                var series = seriesCodeForInvoiceType();
+                $('#order-code-letter').val(series);
+                $('#order-series').val(series);
+                updateOrderCodePreview();
+            }
+
             function updateOrderCodePreview() {
                 var $code = $('#order-code-letter');
-                var letter = String($code.val() || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 1);
+                var letter = String($code.val() || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
                 var companyId = $('#order-company-id').val();
                 var companyCode = $('#order-company-id option:selected').data('code') || '';
                 var dateParts = String($('input[name="order_date"]').val() || '').split('-');
@@ -1555,15 +1572,16 @@ span#picker-info-stock-badge {
                         method: 'GET',
                         data: {
                             order_date: $('input[name="order_date"]').val(),
-                            company_id: companyId
+                            company_id: companyId,
+                            document_type: $('#document-type').val() || '',
+                            document_type_custom: $('#document-type-custom').val() || ''
                         }
                     }).done(function (response) {
-                        if (!response.code) return;
-                        $('#order-company-code').val(response.company_code || '');
+                        $('#order-company-code').val(response.company_code || companyCode);
                         $('#order-series').val(response.series || letter);
                         $('#order-financial-year').val(response.financial_year || '');
                         $('#order-sequence-number').val(response.number || '');
-                        $('#order-no-preview').val(response.code);
+                        $('#order-no-preview').val(response.code || '');
                     }).always(function () {
                         orderNumberPreviewRequest = null;
                     });
@@ -2848,8 +2866,14 @@ span#picker-info-stock-badge {
             $('#length-cm,#width-cm,#height-cm').on('input change', updateManualCbm);
             updateWeightDisplay();
             updateManualCbm();
-            $('#order-company-id,#order-code-letter,input[name="order_date"]').on('input change', updateOrderCodePreview);
-            updateOrderCodePreview();
+            $('#order-company-id,#order-code-letter,#document-type,#document-type-custom,input[name="order_date"]').on('input change', function () {
+                if (this.id === 'document-type' || this.id === 'document-type-custom') {
+                    applyDocumentSeries();
+                    return;
+                }
+                updateOrderCodePreview();
+            });
+            applyDocumentSeries();
 
             $(document).on('blur', '.auto-capitalize-first', function () {
                 $(this).val(capitalizeFirst($(this).val()));

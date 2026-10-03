@@ -15,6 +15,20 @@
             display: block;
             margin-bottom: 4px;
         }
+        .listing-stack-line {
+            line-height: 1.35;
+        }
+        .listing-flag-fallback {
+            display: none;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+        }
+        @media (max-width: 1199.98px) {
+            .listing-flag-fallback {
+                display: block;
+            }
+        }
     </style>
 
     @php
@@ -67,6 +81,64 @@
             || filled($seller_id ?? null)
             || (isset($published_status) && $published_status !== null && $published_status !== '' && $published_status !== 'All')
             || filled(request('type'));
+        $listingDiscounts = $listingDiscounts ?? [];
+        $listingCoupons = $listingCoupons ?? [];
+        $listingCompanies = $listingCompanies ?? [];
+        $companyColumnsReady = $companyColumnsReady ?? false;
+        $listingSortUrl = function ($column) use ($productRoute, $productRouteParams, $sortBy, $sortDir) {
+            $nextDir = ($sortBy === $column && $sortDir === 'asc') ? 'desc' : 'asc';
+
+            return route($productRoute, array_merge($productRouteParams, request()->except('page'), [
+                'sort_by' => $column,
+                'sort_dir' => $nextDir,
+            ]));
+        };
+        $listingSortIcon = function ($column) use ($sortBy, $sortDir) {
+            if ($sortBy !== $column) {
+                return 'la-sort text-muted';
+            }
+
+            return 'la-sort-amount-' . ($sortDir === 'asc' ? 'up' : 'down');
+        };
+        $listingValue = function ($value) {
+            $text = trim((string) $value);
+
+            return $text === '' ? '-' : $text;
+        };
+        $companyNamesFor = function ($product, $kind) use ($companyColumnsReady, $listingCompanies) {
+            if (!$companyColumnsReady) {
+                return '-';
+            }
+
+            if ($kind === 'marketed') {
+                $manual = trim((string) ($product->marketed_by_name ?? ''));
+                if ($manual !== '') {
+                    return $manual;
+                }
+                $companyId = (int) ($product->marketed_by_id ?? 0);
+
+                return $listingCompanies[$companyId] ?? '-';
+            }
+
+            $idColumn = $kind === 'manufactured' ? 'manufactured_by_ids' : 'import_by_ids';
+            $nameColumn = $kind === 'manufactured' ? 'manufactured_by_names' : 'import_by_names';
+            $names = [];
+            foreach (json_decode($product->{$idColumn} ?? '[]', true) ?: [] as $companyId) {
+                $companyName = $listingCompanies[(int) $companyId] ?? null;
+                if ($companyName) {
+                    $names[] = $companyName;
+                }
+            }
+            foreach (json_decode($product->{$nameColumn} ?? '[]', true) ?: [] as $companyName) {
+                $companyName = trim((string) $companyName);
+                if ($companyName !== '') {
+                    $names[] = $companyName;
+                }
+            }
+            $names = array_values(array_unique($names));
+
+            return $names ? implode(', ', $names) : '-';
+        };
     @endphp
 
     <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -137,23 +209,49 @@
                             @endif
                             <th>{{ translate('Sr No.') }}</th>
                             @include('backend.inc.sortable_th', ['column' => 'sku', 'label' => translate('SKU'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                            @include('backend.inc.sortable_th', ['column' => 'name', 'label' => translate('Product Name'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                            {{-- @if ($type == 'Seller' || $type == 'All')
-                                <th data-breakpoints="lg">{{ translate('Added By') }}</th>
-                            @endif
-                            <th data-breakpoints="sm">{{ translate('Info') }}</th> --}}
-                            @include('backend.inc.sortable_th', ['column' => 'category', 'label' => translate('Category'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'name', 'labelHtml' => e(translate('Product / Brand Name')).'<br>'.e(translate('Drug Name')).'<br>'.e(translate('Drug Role')), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'product_type', 'labelHtml' => e(translate('Product Type')).'<br>'.e(translate('Schedule')), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'stock', 'label' => translate('Total Stock'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'md'])
-                            @include('backend.inc.sortable_th', ['column' => 'brand', 'label' => translate('Brand'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'role_price', 'label' => translate('Role Prices'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                            @include('backend.inc.sortable_th', ['column' => 'group', 'label' => translate('Group'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                            @include('backend.inc.sortable_th', ['column' => 'schedule', 'label' => translate('Schedule'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                            @include('backend.inc.sortable_th', ['column' => 'todays_deal', 'label' => translate('Todays Deal'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
-                            @include('backend.inc.sortable_th', ['column' => 'published', 'label' => translate('Published'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
-                            @if (get_setting('product_approve_by_admin') == 1 && $type == 'Seller')
-                                @include('backend.inc.sortable_th', ['column' => 'approved', 'label' => translate('Approved'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
-                            @endif
-                            @include('backend.inc.sortable_th', ['column' => 'featured', 'label' => translate('Featured'), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir, 'breakpoints' => 'lg'])
+                            <th>{{ translate('Discounts') }}<br>{{ translate('Scheme') }}<br>{{ translate('Coupon') }}<br>{{ translate('Pointwise') }}</th>
+                            <th>{{ translate('Product wise') }}<br>{{ translate('Batchwise') }}<br>{{ translate('Amount wise') }}</th>
+                            <th>
+                                <a href="{{ $listingSortUrl('category') }}" class="text-reset d-inline-flex align-items-end">
+                                    <span>{{ translate('Category') }}</span>
+                                    <i class="las {{ $listingSortIcon('category') }} ml-1"></i>
+                                </a>
+                                <br>
+                                <a href="{{ $listingSortUrl('group') }}" class="text-reset d-inline-flex align-items-end">
+                                    <span>{{ translate('Group') }}</span>
+                                    <i class="las {{ $listingSortIcon('group') }} ml-1"></i>
+                                </a>
+                            </th>
+                            <th>{{ translate('Company') }}<br>{{ translate('Marketed By') }}<br>{{ translate('Manufactured By') }}<br>{{ translate('Imported By') }}</th>
+                            @include('backend.inc.sortable_th', ['column' => 'hsn', 'labelHtml' => e(translate('HSN Code')).'<br>'.e(translate('HS Code')).'<br>'.e(translate('Origin')).'<br>'.e(translate('Shipping Days')), 'routeName' => $productRoute, 'routeParams' => $productRouteParams, 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            <th data-breakpoints="lg">{{ translate('COD') }}<br>{{ translate('Free Shipping') }}<br>{{ translate('Warranty') }}<br>{{ translate('Refundable') }}</th>
+                            <th data-breakpoints="lg">
+                                <a href="{{ $listingSortUrl('todays_deal') }}" class="text-reset d-inline-flex align-items-end">
+                                    <span>{{ translate('Todays Deal') }}</span>
+                                    <i class="las {{ $listingSortIcon('todays_deal') }} ml-1"></i>
+                                </a>
+                                <br>
+                                <a href="{{ $listingSortUrl('published') }}" class="text-reset d-inline-flex align-items-end">
+                                    <span>{{ translate('Published') }}</span>
+                                    <i class="las {{ $listingSortIcon('published') }} ml-1"></i>
+                                </a>
+                                <br>
+                                <a href="{{ $listingSortUrl('featured') }}" class="text-reset d-inline-flex align-items-end">
+                                    <span>{{ translate('Featured') }}</span>
+                                    <i class="las {{ $listingSortIcon('featured') }} ml-1"></i>
+                                </a>
+                                @if (get_setting('product_approve_by_admin') == 1 && $type == 'Seller')
+                                    <br>
+                                    <a href="{{ $listingSortUrl('approved') }}" class="text-reset d-inline-flex align-items-end">
+                                        <span>{{ translate('Approved') }}</span>
+                                        <i class="las {{ $listingSortIcon('approved') }} ml-1"></i>
+                                    </a>
+                                @endif
+                            </th>
                             <th data-breakpoints="sm" class="">{{ translate('Options') }}</th>
                         </tr>
                     </thead>
@@ -204,80 +302,16 @@
                                                 class="size-50px img-fit">
                                         </div>
                                         <div class="col">
-                                            <span
-                                                class="text-muted text-truncate-2">{{ $product->getTranslation('name') }}</span>
-                                            <small class="d-block text-muted mt-1">
-                                                {{ translate('Drug Name') }}: {{ $product->drug_name ?: '-' }}
-                                            </small>
+                                            <span class="text-muted text-truncate-2">{{ $product->getTranslation('name') }}</span>
+                                            <div class="listing-stack-line"><span class="text-muted">{{ translate('Brand') }}:</span> {{ $listingValue(optional($product->brand)->getTranslation('name')) }}</div>
+                                            <div class="listing-stack-line"><span class="text-muted">{{ translate('Drug Name') }}:</span> {{ $listingValue($product->drug_name) }}</div>
+                                            <div class="listing-stack-line"><span class="text-muted">{{ translate('Drug Role') }}:</span> {{ $listingValue($product->role_label) }}</div>
                                         </div>
                                     </div>
                                 </td>
-                                {{-- @if ($type == 'Seller' || $type == 'All')
-                                    <td>{{ optional($product->user)->name }}</td>
-                                @endif
                                 <td>
-                                    <strong>{{ translate('Num of Sale') }}:</strong> {{ $product->num_of_sale }}
-                                    {{ translate('times') }} </br>
-                                    <strong>{{ translate('Base Price') }}:</strong>
-                                    {{ single_price($product->unit_price) }} </br>
-                                    <strong>{{ translate('Rating') }}:</strong> {{ $product->rating }} </br>
-                                </td> --}}
-                                {{-- <td>
-                                    @if ($product->digital == 1)
-                                        <span
-                                            class="badge badge-inline badge-info">{{ translate('Digital Product') }}</span>
-                                    @else
-                                        @php
-                                            $qty = 0;
-                                            if ($product->variant_product) {
-                                                foreach ($product->stocks as $key => $stock) {
-                                                    $qty += $stock->qty;
-                                                    echo $stock->variant . ' - ' . $stock->qty . '<br>';
-                                                }
-                                            } else {
-                                                //$qty = $product->current_stock;
-                                                $qty = optional($product->stocks->first())->qty;
-                                                echo $qty;
-                                            }
-                                        @endphp
-                                        @if ($qty <= $product->low_stock_quantity)
-                                            <span class="badge badge-inline badge-danger">{{ translate('Low') }}</span>
-                                        @endif
-                                    @endif
-
-                                </td> --}}
-                                <td>
-                                    @php
-                                        $productCategories = $product->categories;
-                                        if ($product->main_category && !$productCategories->contains('id', $product->main_category->id)) {
-                                            $productCategories = $productCategories->prepend($product->main_category);
-                                        }
-                                        $productCategories = $productCategories->unique('id')->values();
-                                        $leafCategories = $productCategories->reject(function ($category) use ($productCategories, $categoryIsAncestorOfSelected) {
-                                            return $categoryIsAncestorOfSelected($category, $productCategories);
-                                        })->values();
-
-                                        if ($leafCategories->isEmpty()) {
-                                            $leafCategories = $productCategories;
-                                        }
-                                    @endphp
-                                    @forelse ($leafCategories as $category)
-                                        <div class="product-category-hierarchy">
-                                            @foreach ($categoryPath($category) as $pathCategory)
-                                                <span class="product-category-item">
-                                                    <span class="badge badge-inline {{ (int) $pathCategory->id === (int) $product->category_id ? 'badge-primary' : 'badge-soft-secondary' }}"
-                                                        @if ((int) $pathCategory->id === (int) $product->category_id) title="{{ translate('Main Category') }}" @endif>
-                                                        {{ $pathCategory->getTranslation('name') }}
-                                                        @if ((int) $pathCategory->id === (int) $product->category_id)
-                                                            ({{ translate('Main') }})
-                                                        @endif
-                                                    </span>
-                                                </span>
-                                            @endforeach
-                                        </div>
-                                    @empty
-                                        -
-                                    @endforelse
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Product Type') }}:</span> {{ $listingValue($product->product_type) }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Schedule') }}:</span> {{ $listingValue($product->schedule) }}</div>
                                 </td>
                                 <td>
                                     @if ($product->digital == 1)
@@ -336,7 +370,6 @@
                                         @endif
                                     @endif
                                 </td>
-                                <td>{{ optional($product->brand)->getTranslation('name') ?? '-' }}</td>
                                 <td>
                                     @php
                                         $rolePriceValues = collect();
@@ -390,45 +423,83 @@
                                         -
                                     @endforelse
                                 </td>
-                                <td>{{ optional($product->main_group)->getTranslation('name') ?? '-' }}</td>
-                                <td>{{ $product->schedule ?: '-' }}</td>
+                                @php
+                                    $productDiscountCodes = $listingDiscounts[$product->id] ?? [];
+                                    $discountCodeText = function ($type) use ($productDiscountCodes) {
+                                        $codes = array_values(array_filter($productDiscountCodes[$type] ?? []));
+
+                                        return $codes ? implode(', ', $codes) : '-';
+                                    };
+                                    $couponCodeText = implode(', ', array_filter($listingCoupons[$product->id] ?? []));
+                                @endphp
                                 <td>
-                                    <label class="aiz-switch aiz-switch-success mb-0">
-                                        <input onchange="update_todays_deal(this)" value="{{ $product->id }}"
-                                            type="checkbox" <?php if ($product->todays_deal == 1) {
-                                                echo 'checked';
-                                            } ?>>
-                                        <span class="slider round"></span>
-                                    </label>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Scheme') }}:</span> {{ $discountCodeText('schemewise') }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Coupon') }}:</span> {{ $couponCodeText !== '' ? $couponCodeText : '-' }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Pointwise') }}:</span> {{ $discountCodeText('pointwise') }}</div>
                                 </td>
                                 <td>
-                                    <label class="aiz-switch aiz-switch-success mb-0">
-                                        <input onchange="update_published(this)" value="{{ $product->id }}"
-                                            type="checkbox" <?php if ($product->published == 1) {
-                                                echo 'checked';
-                                            } ?>>
-                                        <span class="slider round"></span>
-                                    </label>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Product wise') }}:</span> {{ $discountCodeText('productwise') }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Batchwise') }}:</span> {{ $discountCodeText('batchwise') }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Amount wise') }}:</span> {{ $discountCodeText('amount_wise') }}</div>
                                 </td>
-                                @if (get_setting('product_approve_by_admin') == 1 && $type == 'Seller')
-                                    <td>
-                                        <label class="aiz-switch aiz-switch-success mb-0">
-                                            <input onchange="update_approved(this)" value="{{ $product->id }}"
-                                                type="checkbox" <?php if ($product->approved == 1) {
-                                                    echo 'checked';
-                                                } ?>>
-                                            <span class="slider round"></span>
-                                        </label>
-                                    </td>
-                                @endif
                                 <td>
-                                    <label class="aiz-switch aiz-switch-success mb-0">
-                                        <input onchange="update_featured(this)" value="{{ $product->id }}"
-                                            type="checkbox" <?php if ($product->featured == 1) {
-                                                echo 'checked';
-                                            } ?>>
-                                        <span class="slider round"></span>
-                                    </label>
+                                    @php
+                                        $productCategories = $product->categories;
+                                        if ($product->main_category && !$productCategories->contains('id', $product->main_category->id)) {
+                                            $productCategories = $productCategories->prepend($product->main_category);
+                                        }
+                                        $productCategories = $productCategories->unique('id')->values();
+                                        $leafCategories = $productCategories->reject(function ($category) use ($productCategories, $categoryIsAncestorOfSelected) {
+                                            return $categoryIsAncestorOfSelected($category, $productCategories);
+                                        })->values();
+
+                                        if ($leafCategories->isEmpty()) {
+                                            $leafCategories = $productCategories;
+                                        }
+                                    @endphp
+                                    @forelse ($leafCategories as $category)
+                                        <div class="product-category-hierarchy">
+                                            @foreach ($categoryPath($category) as $pathCategory)
+                                                <span class="product-category-item">
+                                                    <span class="badge badge-inline {{ (int) $pathCategory->id === (int) $product->category_id ? 'badge-primary' : 'badge-soft-secondary' }}"
+                                                        @if ((int) $pathCategory->id === (int) $product->category_id) title="{{ translate('Main Category') }}" @endif>
+                                                        {{ $pathCategory->getTranslation('name') }}
+                                                        @if ((int) $pathCategory->id === (int) $product->category_id)
+                                                            ({{ translate('Main') }})
+                                                        @endif
+                                                    </span>
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @empty
+                                        -
+                                    @endforelse
+                                    <div class="listing-stack-line mt-1"><span class="text-muted">{{ translate('Group') }}:</span> {{ $listingValue(optional($product->main_group)->getTranslation('name')) }}</div>
+                                </td>
+                                <td>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Marketed By') }}:</span> {{ $companyNamesFor($product, 'marketed') }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Manufactured By') }}:</span> {{ $companyNamesFor($product, 'manufactured') }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Imported By') }}:</span> {{ $companyNamesFor($product, 'imported') }}</div>
+                                </td>
+                                <td>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('HSN Code') }}:</span> {{ $listingValue($product->product_hsn) }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('HS Code') }}:</span> {{ $listingValue($product->product_hs) }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Origin') }}:</span> {{ $listingValue($product->product_origin) }}</div>
+                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Shipping Days') }}:</span> {{ $listingValue($product->est_shipping_days) }}</div>
+                                </td>
+                                <td>
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('COD'), 'field' => 'cash_on_delivery', 'checked' => $product->cash_on_delivery == 1, 'onchange' => 'update_listing_flag(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Free Shipping'), 'field' => 'free_shipping', 'checked' => $product->shipping_type == 'free', 'onchange' => 'update_listing_flag(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Warranty'), 'field' => 'has_warranty', 'checked' => $product->has_warranty == 1, 'onchange' => 'update_listing_flag(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Refundable'), 'field' => 'refundable', 'checked' => $product->refundable == 1, 'onchange' => 'update_listing_flag(this)'])
+                                </td>
+                                <td>
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Todays Deal'), 'field' => 'todays_deal', 'checked' => $product->todays_deal == 1, 'onchange' => 'update_todays_deal(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Published'), 'field' => 'published', 'checked' => $product->published == 1, 'onchange' => 'update_published(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Featured'), 'field' => 'featured', 'checked' => $product->featured == 1, 'onchange' => 'update_featured(this)'])
+                                    @if (get_setting('product_approve_by_admin') == 1 && $type == 'Seller')
+                                        @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Approved'), 'field' => 'approved', 'checked' => $product->approved == 1, 'onchange' => 'update_approved(this)'])
+                                    @endif
                                 </td>
                                 <td class="text-right drop-down-text-icon">
                                    <div class="dropdown">
@@ -437,6 +508,18 @@
     </button>
 
                                         <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="productActionDropdown{{ $product->id }}">
+                                            <div class="listing-flag-fallback text-left">
+                                                @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('COD'), 'field' => 'cash_on_delivery', 'checked' => $product->cash_on_delivery == 1, 'onchange' => 'update_listing_flag(this)'])
+                                                @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Free Shipping'), 'field' => 'free_shipping', 'checked' => $product->shipping_type == 'free', 'onchange' => 'update_listing_flag(this)'])
+                                                @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Warranty'), 'field' => 'has_warranty', 'checked' => $product->has_warranty == 1, 'onchange' => 'update_listing_flag(this)'])
+                                                @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Refundable'), 'field' => 'refundable', 'checked' => $product->refundable == 1, 'onchange' => 'update_listing_flag(this)'])
+                                                @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Todays Deal'), 'field' => 'todays_deal', 'checked' => $product->todays_deal == 1, 'onchange' => 'update_todays_deal(this)'])
+                                                @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Published'), 'field' => 'published', 'checked' => $product->published == 1, 'onchange' => 'update_published(this)'])
+                                                @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Featured'), 'field' => 'featured', 'checked' => $product->featured == 1, 'onchange' => 'update_featured(this)'])
+                                                @if (get_setting('product_approve_by_admin') == 1 && $type == 'Seller')
+                                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Approved'), 'field' => 'approved', 'checked' => $product->approved == 1, 'onchange' => 'update_approved(this)'])
+                                                @endif
+                                            </div>
                                             <!-- View -->
                                             <a class="btn"
                                             href="{{ route('product', $product->slug) }}" target="_blank"
@@ -638,7 +721,42 @@
             //$('#container').removeClass('mainnav-lg').addClass('mainnav-sm');
         });
 
+        function sync_listing_flag(el) {
+            var key = el.getAttribute('data-flag-sync');
+            if (!key) {
+                return;
+            }
+            document.querySelectorAll('[data-flag-sync="' + key + '"]').forEach(function(other) {
+                if (other !== el) {
+                    other.checked = el.checked;
+                }
+            });
+        }
+
+        function update_listing_flag(el) {
+            sync_listing_flag(el);
+
+            if ('{{ env('DEMO_MODE') }}' == 'On') {
+                AIZ.plugins.notify('info', '{{ translate('Data can not change in demo mode.') }}');
+                return;
+            }
+
+            $.post('{{ route('products.listing_flag') }}', {
+                _token: '{{ csrf_token() }}',
+                id: el.value,
+                field: el.getAttribute('data-field'),
+                status: el.checked ? 1 : 0
+            }, function(data) {
+                if (data == 1) {
+                    AIZ.plugins.notify('success', '{{ translate('Product updated successfully') }}');
+                } else {
+                    AIZ.plugins.notify('danger', '{{ translate('Something went wrong') }}');
+                }
+            });
+        }
+
         function update_todays_deal(el) {
+            sync_listing_flag(el);
 
             if ('{{ env('DEMO_MODE') }}' == 'On') {
                 AIZ.plugins.notify('info', '{{ translate('Data can not change in demo mode.') }}');
@@ -664,6 +782,7 @@
         }
 
         function update_published(el) {
+            sync_listing_flag(el);
 
             if ('{{ env('DEMO_MODE') }}' == 'On') {
                 AIZ.plugins.notify('info', '{{ translate('Data can not change in demo mode.') }}');
@@ -689,6 +808,7 @@
         }
 
         function update_approved(el) {
+            sync_listing_flag(el);
 
             if ('{{ env('DEMO_MODE') }}' == 'On') {
                 AIZ.plugins.notify('info', '{{ translate('Data can not change in demo mode.') }}');
@@ -714,6 +834,7 @@
         }
 
         function update_featured(el) {
+            sync_listing_flag(el);
             if ('{{ env('DEMO_MODE') }}' == 'On') {
                 AIZ.plugins.notify('info', '{{ translate('Data can not change in demo mode.') }}');
                 return;

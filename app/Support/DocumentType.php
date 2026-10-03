@@ -21,6 +21,23 @@ class DocumentType
         'purchase_return' => 'Purchase Return',
     ];
 
+    public const SERIES_CODES = [
+        'quotation' => 'QT',
+        'performa_invoice' => 'PI',
+        'order_entry' => 'OE',
+        'sales_invoice' => 'SI',
+        'bill_of_supply' => 'BS',
+        'e_invoice' => 'EI',
+        'commercial_invoice' => 'CI',
+        'international_invoice' => 'II',
+        'sales_return' => 'SR',
+        'inquiry' => 'IQ',
+        'counter_offer' => 'CO',
+        'purchase_order' => 'PO',
+        'purchase_invoice' => 'PU',
+        'purchase_return' => 'PR',
+    ];
+
     public const ENTRIES = [
         'sales' => [
             'title' => 'Sales Entry',
@@ -116,5 +133,27 @@ class DocumentType
         }
 
         return self::TYPES[$type] ?? '—';
+    }
+
+    public static function seriesCode($type, $custom = null): string
+    {
+        $type = trim((string) $type);
+        if ($type === '__not_in_list__' || (trim((string) $custom) !== '' && !isset(self::SERIES_CODES[$type]))) {
+            return 'OT';
+        }
+
+        return self::SERIES_CODES[$type] ?? '';
+    }
+
+    public static function seriesCodesFor(array $documentTypes): array
+    {
+        $map = [];
+        foreach (array_keys($documentTypes) as $key) {
+            if (isset(self::SERIES_CODES[$key])) {
+                $map[$key] = self::SERIES_CODES[$key];
+            }
+        }
+
+        return $map;
     }
 }

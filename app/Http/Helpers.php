@@ -6408,7 +6408,7 @@ if (!function_exists('financial_year_order_code_parts')) {
             $brand = preg_replace('/[^A-Z0-9]/', '', $configuredBrand) ?: 'DP';
         }
         $configuredDocument = strtoupper(trim((string) ($documentCode ?: get_setting('order_document_code', 'O'))));
-        $document = substr(preg_replace('/[^A-Z]/', '', $configuredDocument) ?: 'O', 0, 1);
+        $document = substr(preg_replace('/[^A-Z0-9]/', '', $configuredDocument) ?: 'O', 0, 5);
         $segment = substr((string) $start, -2) . '-' . substr((string) $end, -2);
 
         return [
@@ -6534,7 +6534,7 @@ if (!function_exists('issuing_company_code_from_order_code')) {
     function issuing_company_code_from_order_code(?string $code): ?string
     {
         $code = trim((string) $code);
-        if ($code === '' || !preg_match('/^(.+)-([A-Za-z])-(\d{2}-\d{2})-(\d+)$/', $code, $matches)) {
+        if ($code === '' || !preg_match('/^(.+)-([A-Za-z0-9]{1,5})-(\d{2}-\d{2})-(\d+)$/', $code, $matches)) {
             return null;
         }
 

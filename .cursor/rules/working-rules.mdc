@@ -1,24 +1,59 @@
 ---
-description: Core working rules — no migrations, no regressions, always include reproduce steps
+description: Global working rules for this live ecommerce CMS
 alwaysApply: true
 ---
 
-# Working Rules
+# Working rules
 
+This is a live ecommerce CMS. Preserve current features, add-ons, routes, views, and data flows.
 
-## 1. Never write or run database migrations
+## Safety
+
+- Prefer the smallest change that solves the request. Reuse existing helpers, components, and patterns.
+- Do not refactor, rename, or restyle neighboring code as part of an unrelated fix.
+- Before finishing, check related pages and shared state: empty lists, validation errors, guest vs logged-in, and admin vs seller when both use the same flow.
+- Do not leave debug probes in the tree (`file_put_contents` to `debug-*.log`, `#region agent log`, temporary `try/catch` loggers).
+
+## Database
 
 - Do not create, edit, or generate Laravel migration files.
 - Do not run `php artisan migrate`, `migrate:fresh`, `migrate:refresh`, `migrate:rollback`, `db:seed`, or any SQL/schema change against the live or local database.
-- Prefer application-level fixes, config, and code paths that work with the existing schema.
-- When a change still needs a table or column, do the application work and put the raw SQL at the end of the reply for the user to run. Do not execute that SQL.
+- Prefer code that works with the existing schema. When a model already has `tableReady()`, keep that guard.
+- If a change still needs a table or column, do the application work and put the raw SQL at the end of the reply for the user to run. Do not execute that SQL.
 
-## 2. Do not break existing work
+## Laravel
 
-- Treat this as a live ecommerce CMS. Preserve current features, add-ons, routes, views, and data flows.
-- Prefer the smallest change that solves the request. Reuse existing patterns, helpers, and components.
-- Before finishing a fix or feature, check related pages, shared state, and edge cases (empty, error, logged-in vs guest) so the change does not regress other flows.
+Follow the masters already in this app (tax, batch, discount, product). Do not introduce a new layer.
 
-## 3. Always end with reproduce steps
+- Admin controllers: permission middleware in the constructor, validate with an existing `FormRequest` when one exists, then `flash(translate('...'))` and redirect.
+- Put create/update writes in the existing service when the feature already has one (`ProductService`, `OrderService`, `CartService`). Do not add a service for a one-off change.
+- Listing filters, sort maps, and `tableReady()` belong on the model when that model already owns them (`applyListingFilters`, `resolveSort`).
+- Gate optional features with `addon_is_activated('...')`. Do not assume an add-on is on.
+- User-facing strings go through `translate()`.
 
-Every completed change must finish with a numbered list of steps a person can follow to see the change in effect (URLs, clicks, expected result). Include any local server start command if relevant.
+## Admin and storefront UI
+
+- Backend screens live under `resources/views/backend/...`. Copy the nearest sibling `index`, `create`, or `edit` blade instead of inventing a layout.
+- Sidebar links use `aiz-side-nav-link` and `areActiveRoutes([...])`. Place a new item in the menu section the user named; do not rebuild the nav.
+- Change only the label, tooltip, filter, or column that was requested. Keep existing filter query params and pagination (`withQueryString()`).
+- Storefront and admin must stay consistent when they share a model, route name, or helper (`translate`, `static_asset`, `my_asset`).
+- After a UI change, check the empty state, a validation error, and both a wide and a narrow viewport when the layout moved.
+
+## Verify, then report
+
+- For UI, layout, routing, or rendered data, exercise the changed flow in the browser before calling it done: click, type, submit, and open every page that shares the state.
+- If the browser is unavailable, use the closest substitute (a request against the local server) and say what was not verified.
+- Every completed change ends with a numbered list a person can follow: URL, clicks, and the expected result. Include the local server start command when one is needed.
+
+## Git
+
+- Do not commit, push, or open a pull request unless the user asks.
+- Never commit `.env`, credentials, `vendor/`, `public/uploads`, or `debug-*.log`.
+- When asked to commit, use a short message about why, in the same plain style as recent history (for example `entry side bar menu, product forms fix`).
+
+## EOD Work list
+- when EOD worklist is requested repond with a simple plain list of tasks completed today, no jargon.
+
+## Token ethics
+- use only the required flex for work
+- if a rule added task like testing or browser walk through is estimated to consume high amount of tokens suggest a manual work around

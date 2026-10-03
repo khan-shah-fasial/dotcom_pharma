@@ -36,6 +36,10 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use App\Models\ProductStock;
 use App\Models\ProductBatch;
+use App\Models\DiscountMaster;
+use App\Models\Coupon;
+use App\Models\Company;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -107,8 +111,12 @@ class ProductController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         $categories = $this->backendProductCategories();
+        $listingExtras = $this->productListingExtras($products);
 
-        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'sort_search', 'published_status', 'categories', 'selected_category_id'));
+        return view('backend.product.products.index', array_merge(
+            compact('products', 'type', 'col_name', 'query', 'sort_search', 'published_status', 'categories', 'selected_category_id'),
+            $listingExtras
+        ));
     }
 
     /**
@@ -152,7 +160,12 @@ class ProductController extends Controller
         if ($product_type == 'digital') {
             return view('backend.product.digital_products.index', compact('products', 'sort_search', 'type'));
         }
-        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id'));
+        $listingExtras = $this->productListingExtras($products);
+
+        return view('backend.product.products.index', array_merge(
+            compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id'),
+            $listingExtras
+        ));
     }
 
     public function all_products(Request $request)
@@ -198,8 +211,12 @@ class ProductController extends Controller
             ->paginate(10);
         $type = 'All';
         $categories = $this->backendProductCategories();
+        $listingExtras = $this->productListingExtras($products);
 
-        return view('backend.product.products.index', compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id'));
+        return view('backend.product.products.index', array_merge(
+            compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id'),
+            $listingExtras
+        ));
     }
 
     private function applyBackendCategoryFilter($products, $categoryId)
@@ -220,7 +237,7 @@ class ProductController extends Controller
     {
         return in_array((string) $request->get('sort_by'), [
             'sku', 'name', 'category', 'stock', 'brand', 'role_price', 'group',
-            'schedule', 'todays_deal', 'published', 'approved', 'featured',
+            'schedule', 'product_type', 'hsn', 'todays_deal', 'published', 'approved', 'featured',
         ], true);
     }
 
@@ -245,6 +262,8 @@ class ProductController extends Controller
             'name' => 'products.name',
             'role_price' => 'products.unit_price',
             'schedule' => 'products.schedule',
+            'product_type' => 'products.product_type',
+            'hsn' => 'products.product_hsn',
             'todays_deal' => 'products.todays_deal',
             'published' => 'products.published',
             'approved' => 'products.approved',
@@ -273,6 +292,121 @@ class ProductController extends Controller
         }
 
         return $products;
+    }
+
+    private function productListingExtras($products): array
+    {
+        $pageProducts = $products->getCollection();
+        $productIds = $pageProducts->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $discountTypes = ['schemewise', 'pointwise', 'productwise', 'batchwise', 'amount_wise'];
+        $listingDiscounts = [];
+        $listingCoupons = [];
+        foreach ($productIds as $productId) {
+            $listingDiscounts[$productId] = array_fill_keys($discountTypes, []);
+            $listingCoupons[$productId] = [];
+        }
+
+        if ($productIds !== [] && Schema::hasTable('discount_masters')) {
+            $today = now()->toDateString();
+            $categoryIds = $pageProducts->flatMap(function ($product) {
+                return $product->categories->pluck('id')->push($product->category_id);
+            })->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
+            $groupIds = $pageProducts->pluck('group_id')->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
+
+            $rows = DiscountMaster::query()
+                ->where('status', 1)
+                ->where(function ($query) use ($today) {
+                    $query->whereNull('from_date')->orWhereDate('from_date', '<=', $today);
+                })
+                ->where(function ($query) use ($today) {
+                    $query->whereNull('to_date')->orWhereDate('to_date', '>=', $today);
+                })
+                ->where(function ($query) use ($productIds, $categoryIds, $groupIds) {
+                    $query->whereIn('product_id', $productIds);
+                    if ($categoryIds !== []) {
+                        $query->orWhere(function ($categoryQuery) use ($categoryIds) {
+                            $categoryQuery->where('applied_on', 'category')->whereIn('category_id', $categoryIds);
+                        });
+                    }
+                    if ($groupIds !== []) {
+                        $query->orWhere(function ($groupQuery) use ($groupIds) {
+                            $groupQuery->where('applied_on', 'group')->whereIn('group_id', $groupIds);
+                        });
+                    }
+                })
+                ->get(['product_id', 'category_id', 'group_id', 'applied_on', 'discount_type', 'discount_code']);
+
+            foreach ($pageProducts as $product) {
+                $productCategoryIds = $product->categories->pluck('id')->push($product->category_id)->filter()->map(fn ($id) => (int) $id)->all();
+                $productGroupId = (int) $product->group_id;
+                foreach ($rows as $row) {
+                    $matchesProduct = (int) $row->product_id === (int) $product->id;
+                    $matchesCategory = $row->applied_on === 'category' && in_array((int) $row->category_id, $productCategoryIds, true);
+                    $matchesGroup = $row->applied_on === 'group' && $productGroupId && (int) $row->group_id === $productGroupId;
+                    if (!$matchesProduct && !$matchesCategory && !$matchesGroup) {
+                        continue;
+                    }
+                    $type = (string) $row->discount_type;
+                    $code = trim((string) $row->discount_code);
+                    if ($code === '' || !isset($listingDiscounts[$product->id][$type]) || in_array($code, $listingDiscounts[$product->id][$type], true)) {
+                        continue;
+                    }
+                    $listingDiscounts[$product->id][$type][] = $code;
+                }
+            }
+        }
+
+        if ($productIds !== []) {
+            $todayStamp = strtotime(date('d-m-Y'));
+            $couponRows = Coupon::query()
+                ->where('type', 'product_base')
+                ->where('status', 1)
+                ->where('start_date', '<=', $todayStamp)
+                ->where('end_date', '>=', $todayStamp)
+                ->get(['code', 'details']);
+            $productIdLookup = array_flip($productIds);
+            foreach ($couponRows as $coupon) {
+                $details = json_decode($coupon->details, true);
+                if (!is_array($details)) {
+                    continue;
+                }
+                $code = trim((string) $coupon->code);
+                if ($code === '') {
+                    continue;
+                }
+                foreach ($details as $detail) {
+                    $couponProductId = (int) (is_array($detail) ? ($detail['product_id'] ?? 0) : 0);
+                    if ($couponProductId && isset($productIdLookup[$couponProductId]) && !in_array($code, $listingCoupons[$couponProductId], true)) {
+                        $listingCoupons[$couponProductId][] = $code;
+                    }
+                }
+            }
+        }
+
+        $companyColumnsReady = Schema::hasColumn('products', 'marketed_by_id')
+            && Schema::hasColumn('products', 'manufactured_by_ids')
+            && Schema::hasColumn('products', 'import_by_ids');
+        $listingCompanies = [];
+        if ($companyColumnsReady && Schema::hasTable('companies') && $productIds !== []) {
+            $companyIds = [];
+            foreach ($pageProducts as $product) {
+                if (!empty($product->marketed_by_id)) {
+                    $companyIds[] = (int) $product->marketed_by_id;
+                }
+                foreach (json_decode($product->manufactured_by_ids ?? '[]', true) ?: [] as $companyId) {
+                    $companyIds[] = (int) $companyId;
+                }
+                foreach (json_decode($product->import_by_ids ?? '[]', true) ?: [] as $companyId) {
+                    $companyIds[] = (int) $companyId;
+                }
+            }
+            $companyIds = array_values(array_unique(array_filter($companyIds)));
+            if ($companyIds !== []) {
+                $listingCompanies = Company::query()->whereIn('id', $companyIds)->pluck('company_name', 'id')->all();
+            }
+        }
+
+        return compact('listingDiscounts', 'listingCoupons', 'listingCompanies', 'companyColumnsReady');
     }
 
     private function backendProductCategories()
@@ -910,6 +1044,27 @@ class ProductController extends Controller
             return 1;
         }
         return 0;
+    }
+
+    public function updateListingFlag(Request $request)
+    {
+        $product = Product::findOrFail($request->id);
+        $status = $request->status ? 1 : 0;
+        $field = (string) $request->field;
+
+        if (in_array($field, ['cash_on_delivery', 'refundable', 'has_warranty'], true)) {
+            $product->{$field} = $status;
+        } elseif ($field === 'free_shipping') {
+            $product->shipping_type = $status ? 'free' : 'flat_rate';
+            if ($status) {
+                $product->shipping_cost = 0;
+            }
+        } else {
+            return 0;
+        }
+
+        $product->save();
+        return 1;
     }
 
     public function sku_combination(Request $request)

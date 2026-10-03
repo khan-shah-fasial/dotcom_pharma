@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FinancialArchive;
 use App\Models\Upload;
 use App\Models\User;
+use App\Models\UserDetails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -191,24 +192,105 @@ class FinancialArchiveController extends Controller
     }
 
     /**
-     * Customer-specific listing with inline add form.
+     * Customer-specific listing. Add form opens from a separate button.
      */
     public function customerArchives(Request $request, User $user)
     {
         $user->loadMissing('details');
-        $archives = $this->filteredArchivesQuery($request)
-            ->where('user_id', $user->id)
-            ->latest()
+        [$sortBy, $sortOrder] = $this->archiveSort($request);
+
+        $archives = $this->sortedArchivesQuery(
+            $this->filteredArchivesQuery($request)->where('financial_archive.user_id', $user->id),
+            $sortBy,
+            $sortOrder
+        )
             ->paginate(15)
             ->appends($request->query());
+
+        $extensions = Upload::query()
+            ->whereIn('id', FinancialArchive::where('user_id', $user->id)->pluck('upload_id'))
+            ->whereNotNull('extension')
+            ->where('extension', '!=', '')
+            ->pluck('extension')
+            ->map(fn ($extension) => strtolower($extension))
+            ->unique()
+            ->sort()
+            ->values();
 
         return view('backend.financial_archives.customer', [
             'user' => $user,
             'archives' => $archives,
             'types' => self::TYPES,
+            'extensions' => $extensions,
             'filterType' => $request->type,
             'filterSearch' => $request->search,
+            'filterExtension' => $request->extension,
+            'sortBy' => $sortBy,
+            'sortOrder' => $sortOrder,
         ]);
+    }
+
+    /**
+     * Rename the linked upload's display name. The stored file path stays the same.
+     */
+    public function rename(Request $request, FinancialArchive $archive)
+    {
+        $request->validate([
+            'new_name' => 'required|string|max:190',
+        ]);
+
+        $upload = $archive->upload;
+        if (!$upload) {
+            flash(translate('File missing'))->error();
+
+            return back();
+        }
+
+        $baseName = trim(pathinfo($request->input('new_name'), PATHINFO_FILENAME));
+        if ($baseName === '') {
+            flash(translate('A valid file name is required.'))->error();
+
+            return back();
+        }
+
+        $upload->file_original_name = $baseName;
+        $upload->save();
+
+        flash(translate('File renamed successfully.'))->success();
+
+        return back();
+    }
+
+    /**
+     * Move this archive to another business customer by account number.
+     */
+    public function move(Request $request, FinancialArchive $archive)
+    {
+        $request->validate([
+            'account_no' => 'required|string|max:20',
+        ]);
+
+        $accountNo = trim($request->input('account_no'));
+        $details = UserDetails::where('account_no_business', $accountNo)->first();
+
+        if (!$details || !$details->user_id) {
+            flash(translate('No customer found for that account number.'))->error();
+
+            return back();
+        }
+
+        if ((int) $details->user_id === (int) $archive->user_id) {
+            flash(translate('This archive already belongs to that account.'))->error();
+
+            return back();
+        }
+
+        $archive->user_id = $details->user_id;
+        $archive->save();
+
+        flash(translate('Archive moved to the other account.'))->success();
+
+        return back();
     }
 
     /**
@@ -259,7 +341,13 @@ class FinancialArchiveController extends Controller
     {
         return FinancialArchive::with('upload')
             ->when($request->filled('type'), function ($q) use ($request) {
-                $q->where('type', $request->type);
+                $q->where('financial_archive.type', $request->type);
+            })
+            ->when($request->filled('extension'), function ($q) use ($request) {
+                $extension = strtolower(trim($request->extension));
+                $q->whereHas('upload', function ($uq) use ($extension) {
+                    $uq->whereRaw('LOWER(extension) = ?', [$extension]);
+                });
             })
             ->when($request->filled('search'), function ($q) use ($request) {
                 $search = trim($request->search);
@@ -267,5 +355,40 @@ class FinancialArchiveController extends Controller
                     $uq->where('file_original_name', 'like', '%' . $search . '%');
                 });
             });
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    protected function archiveSort(Request $request): array
+    {
+        $sortBy = $request->input('sort_by', 'created_at');
+        $allowed = ['created_at', 'type', 'name', 'extension'];
+        if (!in_array($sortBy, $allowed, true)) {
+            $sortBy = 'created_at';
+        }
+
+        $sortOrder = $request->input('sort_order') === 'asc' ? 'asc' : 'desc';
+        if ($sortBy !== 'created_at' && !$request->filled('sort_order')) {
+            $sortOrder = 'asc';
+        }
+
+        return [$sortBy, $sortOrder];
+    }
+
+    protected function sortedArchivesQuery($query, string $sortBy, string $sortOrder)
+    {
+        if (in_array($sortBy, ['name', 'extension'], true)) {
+            $column = $sortBy === 'name' ? 'uploads.file_original_name' : 'uploads.extension';
+
+            return $query
+                ->leftJoin('uploads', 'uploads.id', '=', 'financial_archive.upload_id')
+                ->select('financial_archive.*')
+                ->orderBy($column, $sortOrder);
+        }
+
+        $column = $sortBy === 'type' ? 'financial_archive.type' : 'financial_archive.created_at';
+
+        return $query->orderBy($column, $sortOrder);
     }
 }

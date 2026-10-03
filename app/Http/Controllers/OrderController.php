@@ -360,10 +360,21 @@ class OrderController extends Controller
             return strcasecmp(trim((string) $company->company_name), 'DOTCOM PHARMA') === 0;
         });
         $selectedCompany = $companies->firstWhere('id', (int) old('company_id', optional($defaultCompany)->id));
-        $orderNumberParts = financial_year_order_code_parts(old('order_date', now()->toDateString()), 'S');
         $orderEntry = DocumentType::entry(old('entry', request()->input('entry')));
         $documentTypes = DocumentType::typesFor($orderEntry);
         $orderEntryTitle = DocumentType::titleFor($orderEntry);
+        $documentSeriesCodes = DocumentType::seriesCodesFor($documentTypes);
+        $initialDocumentType = old('document_type', '');
+        $initialDocumentTypeCustom = old('document_type_custom', '');
+        if ($initialDocumentType === '' && count($documentTypes) === 1) {
+            $initialDocumentType = array_key_first($documentTypes);
+        }
+        $orderSeriesCode = DocumentType::seriesCode($initialDocumentType, $initialDocumentTypeCustom);
+        $orderNumberParts = financial_year_order_code_parts(
+            old('order_date', now()->toDateString()),
+            $orderSeriesCode !== '' ? $orderSeriesCode : null,
+            optional($selectedCompany)->code
+        );
 
         return view('backend.sales.create', compact(
             'countries',
@@ -381,6 +392,8 @@ class OrderController extends Controller
             'defaultBillingBy',
             'selectedCompany',
             'orderNumberParts',
+            'orderSeriesCode',
+            'documentSeriesCodes',
             'orderEntry',
             'documentTypes',
             'orderEntryTitle'
@@ -738,11 +751,28 @@ class OrderController extends Controller
         $validated = $request->validate([
             'order_date' => ['required', 'date'],
             'company_id' => ['required', 'integer', 'exists:companies,id'],
+            'document_type' => ['nullable', 'string', 'max:255'],
+            'document_type_custom' => ['nullable', 'string', 'max:255'],
         ]);
 
         $company = Company::findOrFail($validated['company_id']);
-        $parts = financial_year_order_code_parts($validated['order_date'], 'S', $company->code);
-        $code = preview_financial_year_order_code($validated['order_date'], 'S', $company->code);
+        $series = DocumentType::seriesCode(
+            $validated['document_type'] ?? '',
+            $validated['document_type_custom'] ?? ''
+        );
+        $parts = financial_year_order_code_parts($validated['order_date'], $series !== '' ? $series : null, $company->code);
+
+        if ($series === '') {
+            return response()->json([
+                'code' => '',
+                'company_code' => $parts['brand'],
+                'series' => '',
+                'financial_year' => $parts['segment'],
+                'number' => '',
+            ]);
+        }
+
+        $code = preview_financial_year_order_code($validated['order_date'], $series, $company->code);
 
         return response()->json([
             'code' => $code,
@@ -949,7 +979,11 @@ class OrderController extends Controller
             $customer = app(OrderPlacementService::class)->resolveApprovedCustomer($request->input('customer_id'));
             $invoiceType = InvoiceType::forUser($customer);
             $isInternational = $invoiceType === InvoiceType::INTERNATIONAL;
-            $request->merge(['order_code_letter' => 'S']);
+            $resolvedSeries = DocumentType::seriesCode(
+                $request->input('document_type'),
+                $request->input('document_type_custom')
+            );
+            $request->merge(['order_code_letter' => $resolvedSeries]);
             $this->normalizeOtherLookupSelects($request);
 
             if ($request->hasFile('cc_attachments')) {
@@ -978,7 +1012,7 @@ class OrderController extends Controller
                 'document_type_custom' => ['nullable', 'required_if:document_type,__not_in_list__', 'string', 'max:255'],
                 'payment_type' => ['required', Rule::in(array_keys(InvoiceType::paymentTerms($invoiceType)))],
                 'order_no_preview' => ['nullable', 'string', 'max:191'],
-                'order_code_letter' => ['required', 'string', 'size:1', 'regex:/^[A-Za-z]$/'],
+                'order_code_letter' => ['required', 'string', 'max:5', 'regex:/^[A-Za-z0-9]{1,5}$/'],
                 'order_date' => ['required', 'date'],
                 'order_time' => ['required', 'date_format:H:i'],
                 'cases' => ['nullable', 'integer', 'min:0'],

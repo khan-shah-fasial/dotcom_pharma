@@ -208,6 +208,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/products/todays_deal', 'updateTodaysDeal')->name('products.todays_deal');
         Route::post('/products/featured', 'updateFeatured')->name('products.featured');
         Route::post('/products/published', 'updatePublished')->name('products.published');
+        Route::post('/products/listing-flag', 'updateListingFlag')->name('products.listing_flag');
         Route::post('/products/approved', 'updateProductApproval')->name('products.approved');
         Route::post('/products/get_products_by_subcategory', 'get_products_by_subcategory')->name('products.get_products_by_subcategory');
         Route::get('/products/duplicate/{id}', 'duplicate')->name('products.duplicate');
@@ -295,6 +296,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/financial-archives/destroy/{id}', 'destroy')->name('financial-archives.destroy');
         Route::get('/financial-archives/customer/{user}', 'customerArchives')->name('financial-archives.customer');
         Route::post('/financial-archives/customer/store/{user}', 'storeForUser')->name('financial-archives.customer.store');
+        Route::post('/financial-archives/{archive}/rename', 'rename')->name('financial-archives.rename');
+        Route::post('/financial-archives/{archive}/move', 'move')->name('financial-archives.move');
     });
 
     // Seller
