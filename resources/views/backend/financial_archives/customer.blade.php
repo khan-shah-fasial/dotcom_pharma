@@ -9,6 +9,7 @@
             return 'las la-sort';
         };
         $sortValue = ($sortBy ?? 'created_at') . '|' . ($sortOrder ?? 'desc');
+        $filtersApplied = filled($filterType) || filled($filterExtension) || filled($filterSearch);
     @endphp
 
     <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -41,41 +42,74 @@
         <form id="archive-filters" method="GET">
             <input type="hidden" name="sort_by" id="sort_by" value="{{ $sortBy }}">
             <input type="hidden" name="sort_order" id="sort_order" value="{{ $sortOrder }}">
-            <div class="card-header row gutters-5 align-items-center">
-                <div class="col-md-2">
-                    <select name="type" class="form-control form-control-xs aiz-selectpicker" data-live-search="true">
-                        <option value="">{{ translate('All Types') }}</option>
-                        @foreach ($types as $value => $label)
-                            <option value="{{ $value }}" @selected($filterType == $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+                <div class="mb-2">
+                    <h5 class="mb-0 h6">{{ translate('Archive List') }}</h5>
+                    @if ($filtersApplied)
+                        <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+                    @endif
                 </div>
-                <div class="col-md-2">
-                    <select name="extension" class="form-control form-control-xs aiz-selectpicker" data-live-search="true">
-                        <option value="">{{ translate('All extensions') }}</option>
-                        @foreach ($extensions as $extension)
-                            <option value="{{ $extension }}" @selected(strtolower((string) $filterExtension) === $extension)>.{{ $extension }}</option>
-                        @endforeach
-                    </select>
+                <div class="d-flex flex-wrap align-items-center">
+                    <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#archiveFilterModal">
+                        {{ translate('Open Filters') }}
+                    </button>
+                    <a class="btn btn-danger mb-2" href="{{ route('financial-archives.customer', $user->id) }}">{{ translate('Reset') }}</a>
                 </div>
-                <div class="col-md-2">
-                    <select id="sort_select" class="form-control form-control-xs aiz-selectpicker">
-                        <option value="created_at|desc" @selected($sortValue === 'created_at|desc')>{{ translate('Newest first') }}</option>
-                        <option value="created_at|asc" @selected($sortValue === 'created_at|asc')>{{ translate('Oldest first') }}</option>
-                        <option value="type|asc" @selected($sortValue === 'type|asc')>{{ translate('Type A-Z') }}</option>
-                        <option value="type|desc" @selected($sortValue === 'type|desc')>{{ translate('Type Z-A') }}</option>
-                        <option value="name|asc" @selected($sortValue === 'name|asc')>{{ translate('Name A-Z') }}</option>
-                        <option value="name|desc" @selected($sortValue === 'name|desc')>{{ translate('Name Z-A') }}</option>
-                        <option value="extension|asc" @selected($sortValue === 'extension|asc')>{{ translate('Extension A-Z') }}</option>
-                        <option value="extension|desc" @selected($sortValue === 'extension|desc')>{{ translate('Extension Z-A') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="search" class="form-control form-control-xs" value="{{ $filterSearch }}" placeholder="{{ translate('Search by file name') }}">
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-primary">{{ translate('Filter') }}</button>
-                    <button type="button" class="btn btn-secondary" id="reset-archive-filters">{{ translate('Reset') }}</button>
+            </div>
+
+            <div class="modal fade" id="archiveFilterModal" tabindex="-1" role="dialog" aria-labelledby="archiveFilterModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="archiveFilterModalLabel">{{ translate('Filter Archives') }}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row gutters-5">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="archive-filter-type">{{ translate('Type') }}</label>
+                                    <select id="archive-filter-type" name="type" class="form-control aiz-selectpicker" data-live-search="true" data-container="body">
+                                        <option value="">{{ translate('All Types') }}</option>
+                                        @foreach ($types as $value => $label)
+                                            <option value="{{ $value }}" @selected($filterType == $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="archive-filter-extension">{{ translate('Extension') }}</label>
+                                    <select id="archive-filter-extension" name="extension" class="form-control aiz-selectpicker" data-live-search="true" data-container="body">
+                                        <option value="">{{ translate('All extensions') }}</option>
+                                        @foreach ($extensions as $extension)
+                                            <option value="{{ $extension }}" @selected(strtolower((string) $filterExtension) === $extension)>.{{ $extension }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="sort_select">{{ translate('Sort') }}</label>
+                                    <select id="sort_select" class="form-control aiz-selectpicker" data-container="body">
+                                        <option value="created_at|desc" @selected($sortValue === 'created_at|desc')>{{ translate('Newest first') }}</option>
+                                        <option value="created_at|asc" @selected($sortValue === 'created_at|asc')>{{ translate('Oldest first') }}</option>
+                                        <option value="type|asc" @selected($sortValue === 'type|asc')>{{ translate('Type A-Z') }}</option>
+                                        <option value="type|desc" @selected($sortValue === 'type|desc')>{{ translate('Type Z-A') }}</option>
+                                        <option value="name|asc" @selected($sortValue === 'name|asc')>{{ translate('Name A-Z') }}</option>
+                                        <option value="name|desc" @selected($sortValue === 'name|desc')>{{ translate('Name Z-A') }}</option>
+                                        <option value="extension|asc" @selected($sortValue === 'extension|asc')>{{ translate('Extension A-Z') }}</option>
+                                        <option value="extension|desc" @selected($sortValue === 'extension|desc')>{{ translate('Extension Z-A') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="archive-filter-search">{{ translate('File name') }}</label>
+                                    <input type="text" id="archive-filter-search" name="search" class="form-control" value="{{ $filterSearch }}" placeholder="{{ translate('Search by file name') }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Close') }}</button>
+                            <button type="button" class="btn btn-primary" id="apply-archive-filters">{{ translate('Apply Filters') }}</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -561,11 +595,20 @@
                 paintPreview(item);
             }
 
-            $('#sort_select').on('change', function () {
-                var parts = String($(this).val() || 'created_at|desc').split('|');
+            function applyArchiveSortFromSelect() {
+                var parts = String($('#sort_select').val() || 'created_at|desc').split('|');
                 $('#sort_by').val(parts[0]);
                 $('#sort_order').val(parts[1] || 'desc');
+            }
+
+            $('#apply-archive-filters').on('click', function () {
+                applyArchiveSortFromSelect();
+                $('#archiveFilterModal').modal('hide');
                 $('#archive-filters').trigger('submit');
+            });
+
+            $('#archiveFilterModal').on('shown.bs.modal', function () {
+                $(this).find('.aiz-selectpicker').selectpicker('refresh');
             });
 
             $('.table-sort-trigger').on('click', function (e) {
@@ -578,15 +621,6 @@
                 }
                 $('#sort_by').val(column);
                 $('#sort_order').val(order);
-                $('#archive-filters').trigger('submit');
-            });
-
-            $('#reset-archive-filters').on('click', function () {
-                $('#archive-filters').find('[name="type"]').val('');
-                $('#archive-filters').find('[name="extension"]').val('');
-                $('#archive-filters').find('[name="search"]').val('');
-                $('#sort_by').val('created_at');
-                $('#sort_order').val('desc');
                 $('#archive-filters').trigger('submit');
             });
 
