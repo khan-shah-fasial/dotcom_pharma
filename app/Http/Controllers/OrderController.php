@@ -364,6 +364,7 @@ class OrderController extends Controller
         $documentTypes = DocumentType::typesFor($orderEntry);
         $orderEntryTitle = DocumentType::titleFor($orderEntry);
         $documentSeriesCodes = DocumentType::seriesCodesFor($documentTypes);
+        $seriesCodesByName = \App\Models\SeriesMaster::codesByName();
         $initialDocumentType = old('document_type', '');
         $initialDocumentTypeCustom = old('document_type_custom', '');
         if ($initialDocumentType === '' && count($documentTypes) === 1) {
@@ -394,6 +395,7 @@ class OrderController extends Controller
             'orderNumberParts',
             'orderSeriesCode',
             'documentSeriesCodes',
+            'seriesCodesByName',
             'orderEntry',
             'documentTypes',
             'orderEntryTitle'
@@ -751,15 +753,19 @@ class OrderController extends Controller
         $validated = $request->validate([
             'order_date' => ['required', 'date'],
             'company_id' => ['required', 'integer', 'exists:companies,id'],
+            'order_code_letter' => ['nullable', 'string', 'max:5'],
             'document_type' => ['nullable', 'string', 'max:255'],
             'document_type_custom' => ['nullable', 'string', 'max:255'],
         ]);
 
         $company = Company::findOrFail($validated['company_id']);
-        $series = DocumentType::seriesCode(
-            $validated['document_type'] ?? '',
-            $validated['document_type_custom'] ?? ''
-        );
+        $series = \App\Models\SeriesMaster::normalizeCode($validated['order_code_letter'] ?? '');
+        if ($series === '') {
+            $series = DocumentType::seriesCode(
+                $validated['document_type'] ?? '',
+                $validated['document_type_custom'] ?? ''
+            );
+        }
         $parts = financial_year_order_code_parts($validated['order_date'], $series !== '' ? $series : null, $company->code);
 
         if ($series === '') {
@@ -983,7 +989,8 @@ class OrderController extends Controller
                 $request->input('document_type'),
                 $request->input('document_type_custom')
             );
-            $request->merge(['order_code_letter' => $resolvedSeries]);
+            $postedSeries = \App\Models\SeriesMaster::normalizeCode($request->input('order_code_letter'));
+            $request->merge(['order_code_letter' => $postedSeries !== '' ? $postedSeries : $resolvedSeries]);
             $this->normalizeOtherLookupSelects($request);
 
             if ($request->hasFile('cc_attachments')) {

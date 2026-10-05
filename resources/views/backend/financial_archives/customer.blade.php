@@ -9,7 +9,7 @@
             return 'las la-sort';
         };
         $sortValue = ($sortBy ?? 'created_at') . '|' . ($sortOrder ?? 'desc');
-        $filtersApplied = filled($filterType) || filled($filterExtension) || filled($filterSearch);
+        $filtersApplied = filled($filterType) || filled($filterExtension) || filled($filterSearch) || filled($filterDateFrom) || filled($filterDateTo);
     @endphp
 
     <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -103,6 +103,14 @@
                                     <label class="form-label" for="archive-filter-search">{{ translate('File name') }}</label>
                                     <input type="text" id="archive-filter-search" name="search" class="form-control" value="{{ $filterSearch }}" placeholder="{{ translate('Search by file name') }}">
                                 </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="archive-filter-date-from">{{ translate('Upload date from') }}</label>
+                                    <input type="date" id="archive-filter-date-from" name="date_from" class="form-control" value="{{ $filterDateFrom }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="archive-filter-date-to">{{ translate('Upload date to') }}</label>
+                                    <input type="date" id="archive-filter-date-to" name="date_to" class="form-control" value="{{ $filterDateTo }}">
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -127,6 +135,9 @@
                         </th>
                         <th class="table-sort-trigger c-pointer" data-sort="extension">
                             {{ translate('Extension') }} <i class="{{ $sortIcon('extension') }}"></i>
+                        </th>
+                        <th class="table-sort-trigger c-pointer" data-sort="created_at">
+                            {{ translate('Upload Date') }} <i class="{{ $sortIcon('created_at') }}"></i>
                         </th>
                         <th class="text-right">{{ translate('Actions') }}</th>
                     </tr>
@@ -200,6 +211,7 @@
                                 @endif
                             </td>
                             <td>{{ $extension !== '' ? '.' . $extension : '—' }}</td>
+                            <td>{{ $archive->created_at?->format('d M Y') }}</td>
                             <td class="text-right">
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-soft-secondary btn-icon" type="button" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false" title="{{ translate('Actions') }}">
@@ -232,7 +244,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center">{{ translate('No archives found.') }}</td>
+                            <td colspan="7" class="text-center">{{ translate('No archives found.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

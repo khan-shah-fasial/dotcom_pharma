@@ -91,6 +91,8 @@ class ProductController extends Controller
         $products = Product::where('added_by', 'admin')->where('auction_product', 0)->where('wholesale_product', 0);
 
         $products = $this->applyBackendCategoryFilter($products, $selected_category_id);
+        $listingFilters = $this->listingColumnFilters($request);
+        $products = $this->applyBackendListingColumnFilters($products, $listingFilters);
 
         if ($request->type != null && !$this->usesListingColumnSort($request)) {
             $var = explode(",", $request->type);
@@ -111,10 +113,11 @@ class ProductController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         $categories = $this->backendProductCategories();
+        $listingGroups = Group::query()->orderBy('id')->get();
         $listingExtras = $this->productListingExtras($products);
 
         return view('backend.product.products.index', array_merge(
-            compact('products', 'type', 'col_name', 'query', 'sort_search', 'published_status', 'categories', 'selected_category_id'),
+            compact('products', 'type', 'col_name', 'query', 'sort_search', 'published_status', 'categories', 'selected_category_id', 'listingFilters', 'listingGroups'),
             $listingExtras
         ));
     }
@@ -133,6 +136,8 @@ class ProductController extends Controller
         $selected_category_id = $request->category_id;
         $products = Product::where('added_by', 'seller')->where('auction_product', 0)->where('wholesale_product', 0);
         $products = $this->applyBackendCategoryFilter($products, $selected_category_id);
+        $listingFilters = $this->listingColumnFilters($request);
+        $products = $this->applyBackendListingColumnFilters($products, $listingFilters);
         if ($request->has('user_id') && $request->user_id != null) {
             $products = $products->where('user_id', $request->user_id);
             $seller_id = $request->user_id;
@@ -160,10 +165,11 @@ class ProductController extends Controller
         if ($product_type == 'digital') {
             return view('backend.product.digital_products.index', compact('products', 'sort_search', 'type'));
         }
+        $listingGroups = Group::query()->orderBy('id')->get();
         $listingExtras = $this->productListingExtras($products);
 
         return view('backend.product.products.index', array_merge(
-            compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id'),
+            compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id', 'listingFilters', 'listingGroups'),
             $listingExtras
         ));
     }
@@ -178,6 +184,8 @@ class ProductController extends Controller
         $selected_category_id = $request->category_id;
         $products = Product::where('auction_product', 0)->where('wholesale_product', 0);
         $products = $this->applyBackendCategoryFilter($products, $selected_category_id);
+        $listingFilters = $this->listingColumnFilters($request);
+        $products = $this->applyBackendListingColumnFilters($products, $listingFilters);
         if (get_setting('vendor_system_activation') != 1) {
             $products = $products->where('added_by', 'admin');
         }
@@ -211,10 +219,11 @@ class ProductController extends Controller
             ->paginate(10);
         $type = 'All';
         $categories = $this->backendProductCategories();
+        $listingGroups = Group::query()->orderBy('id')->get();
         $listingExtras = $this->productListingExtras($products);
 
         return view('backend.product.products.index', array_merge(
-            compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id'),
+            compact('products', 'type', 'col_name', 'query', 'seller_id', 'sort_search', 'published_status', 'categories', 'selected_category_id', 'listingFilters', 'listingGroups'),
             $listingExtras
         ));
     }
@@ -248,6 +257,131 @@ class ProductController extends Controller
         }
 
         return [$products->where('published', $request->published_status), $request->published_status];
+    }
+
+    private function listingColumnFilters(Request $request): array
+    {
+        $filters = [];
+        foreach ([
+            'sku', 'product_name', 'brand', 'drug_name', 'drug_role', 'product_type', 'schedule',
+            'group_id', 'marketed_by', 'manufactured_by', 'imported_by',
+            'hsn', 'hs', 'origin', 'shipping_days',
+            'cash_on_delivery', 'free_shipping', 'has_warranty', 'refundable',
+            'todays_deal', 'featured', 'approved',
+        ] as $key) {
+            $filters[$key] = trim((string) $request->input($key, ''));
+        }
+
+        return $filters;
+    }
+
+    private function applyBackendListingColumnFilters($products, array $filters)
+    {
+        if (($filters['sku'] ?? '') !== '') {
+            $like = '%' . $filters['sku'] . '%';
+            $products = $products->whereHas('stocks', function ($query) use ($like) {
+                $query->where('sku', 'like', $like);
+            });
+        }
+        if (($filters['product_name'] ?? '') !== '') {
+            $like = '%' . $filters['product_name'] . '%';
+            $products = $products->where(function ($query) use ($like) {
+                $query->where('name', 'like', $like)
+                    ->orWhereHas('product_translations', function ($translationQuery) use ($like) {
+                        $translationQuery->where('name', 'like', $like);
+                    });
+            });
+        }
+        if (($filters['brand'] ?? '') !== '') {
+            $like = '%' . $filters['brand'] . '%';
+            $products = $products->whereHas('brand', function ($query) use ($like) {
+                $query->where('name', 'like', $like)
+                    ->orWhereHas('brand_translations', function ($translationQuery) use ($like) {
+                        $translationQuery->where('name', 'like', $like);
+                    });
+            });
+        }
+        if (($filters['drug_name'] ?? '') !== '') {
+            $products = $products->where('drug_name', 'like', '%' . $filters['drug_name'] . '%');
+        }
+        if (($filters['drug_role'] ?? '') !== '') {
+            $products = $products->where('role_label', 'like', '%' . $filters['drug_role'] . '%');
+        }
+        if (($filters['product_type'] ?? '') !== '') {
+            $products = $products->where('product_type', 'like', '%' . $filters['product_type'] . '%');
+        }
+        if (($filters['schedule'] ?? '') !== '') {
+            $products = $products->where('schedule', 'like', '%' . $filters['schedule'] . '%');
+        }
+        if (($filters['group_id'] ?? '') !== '') {
+            $groupId = (int) $filters['group_id'];
+            $products = $products->where(function ($query) use ($groupId) {
+                $query->where('group_id', $groupId)
+                    ->orWhereHas('groups', function ($groupQuery) use ($groupId) {
+                        $groupQuery->where('groups.id', $groupId);
+                    });
+            });
+        }
+        if (($filters['marketed_by'] ?? '') !== '' && Schema::hasColumn('products', 'marketed_by_name')) {
+            $like = '%' . $filters['marketed_by'] . '%';
+            $products = $products->where(function ($query) use ($like) {
+                $query->where('marketed_by_name', 'like', $like);
+                if (Schema::hasColumn('products', 'marketed_by_id') && Schema::hasTable('companies')) {
+                    $companyIds = Company::query()->where('company_name', 'like', $like)->pluck('id');
+                    if ($companyIds->isNotEmpty()) {
+                        $query->orWhereIn('marketed_by_id', $companyIds);
+                    }
+                }
+            });
+        }
+        if (($filters['manufactured_by'] ?? '') !== '' && Schema::hasColumn('products', 'manufactured_by_names')) {
+            $like = '%' . $filters['manufactured_by'] . '%';
+            $products = $products->where(function ($query) use ($like) {
+                $query->where('manufactured_by_names', 'like', $like);
+                if (Schema::hasTable('companies')) {
+                    $companyIds = Company::query()->where('company_name', 'like', $like)->pluck('id');
+                    foreach ($companyIds as $companyId) {
+                        $query->orWhere('manufactured_by_ids', 'like', '%' . $companyId . '%');
+                    }
+                }
+            });
+        }
+        if (($filters['imported_by'] ?? '') !== '' && Schema::hasColumn('products', 'import_by_names')) {
+            $like = '%' . $filters['imported_by'] . '%';
+            $products = $products->where(function ($query) use ($like) {
+                $query->where('import_by_names', 'like', $like);
+                if (Schema::hasTable('companies')) {
+                    $companyIds = Company::query()->where('company_name', 'like', $like)->pluck('id');
+                    foreach ($companyIds as $companyId) {
+                        $query->orWhere('import_by_ids', 'like', '%' . $companyId . '%');
+                    }
+                }
+            });
+        }
+        foreach ([
+            'hsn' => 'product_hsn',
+            'hs' => 'product_hs',
+            'origin' => 'product_origin',
+            'shipping_days' => 'est_shipping_days',
+        ] as $filterKey => $column) {
+            if (($filters[$filterKey] ?? '') !== '' && Schema::hasColumn('products', $column)) {
+                $products = $products->where($column, 'like', '%' . $filters[$filterKey] . '%');
+            }
+        }
+        foreach (['cash_on_delivery', 'has_warranty', 'refundable', 'todays_deal', 'featured', 'approved'] as $flag) {
+            if (($filters[$flag] ?? '') === '1' || ($filters[$flag] ?? '') === '0') {
+                $products = $products->where($flag, (int) $filters[$flag]);
+            }
+        }
+        if (($filters['free_shipping'] ?? '') === '1') {
+            $products = $products->where('shipping_type', 'free');
+        } elseif (($filters['free_shipping'] ?? '') === '0') {
+            $products = $products->where(function ($query) {
+                $query->whereNull('shipping_type')->orWhere('shipping_type', '!=', 'free');
+            });
+        }
+
+        return $products;
     }
 
     private function applyBackendListingSort($products, Request $request)

@@ -259,54 +259,74 @@
                         <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
                     @endif
                 </div>
-                <div class="mb-2">
+                <div class="d-flex flex-wrap align-items-center">
+                    <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal"
+                            data-target="#consolidatedPurchaseHistoryFilterModal">
+                        {{ translate('Open Filters') }}
+                    </button>
                     <a href="{{ route('admin.purchase_history.consolidated', ['account' => $account]) }}"
-                       class="btn btn-outline-danger mr-2">
+                       class="btn btn-danger mb-2">
                         {{ translate('Reset') }}
                     </a>
-                    <button type="submit" class="btn btn-primary">
-                        {{ translate('Apply Filters') }}
-                    </button>
                 </div>
             </div>
 
-            <div class="card-body">
-                <div class="row gutters-5">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label" for="bill_date_range">{{ translate('Bill Date') }}</label>
-                        <input type="text" class="form-control aiz-date-range" id="bill_date_range"
-                               name="bill_date_range"
-                               value="{{ $dateRangeValue($billDateFromValue, $billDateToValue) }}"
-                               data-time-picker="false" data-format="DD-MM-YYYY"
-                               data-from-field="#bill_date_from" data-to-field="#bill_date_to"
-                               placeholder="{{ translate('DD-MM-YYYY to DD-MM-YYYY') }}">
-                        <input type="hidden" name="bill_date_from" id="bill_date_from" value="{{ $billDateFromValue }}">
-                        <input type="hidden" name="bill_date_to" id="bill_date_to" value="{{ $billDateToValue }}">
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label" for="product_sku">{{ translate('SKU') }}</label>
-                        <input type="text" class="form-control" id="product_sku" name="product_sku"
-                               value="{{ request('product_sku') }}" placeholder="{{ translate('Enter SKU') }}">
-                    </div>
-                    <div class="col-md-5 mb-3">
-                        <label class="form-label" for="product_name">{{ translate('Product') }}</label>
-                        <input type="text" class="form-control" id="product_name" name="product_name"
-                               value="{{ request('product_name') }}" placeholder="{{ translate('Product') }}">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label" for="sort_by">{{ translate('Sort By') }}</label>
-                        <select class="form-control aiz-selectpicker" id="sort_by" name="sort_by">
-                            @foreach($sortOptions as $value => $label)
-                                <option value="{{ $value }}" @if($sortBy === $value) selected @endif>{{ translate($label) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label" for="sort_dir">{{ translate('Direction') }}</label>
-                        <select class="form-control aiz-selectpicker" id="sort_dir" name="sort_dir">
-                            <option value="asc" @if($sortDir === 'asc') selected @endif>{{ translate('Ascending') }}</option>
-                            <option value="desc" @if($sortDir === 'desc') selected @endif>{{ translate('Descending') }}</option>
-                        </select>
+            <div class="modal fade" id="consolidatedPurchaseHistoryFilterModal" tabindex="-1" role="dialog"
+                 aria-labelledby="consolidatedPurchaseHistoryFilterModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="consolidatedPurchaseHistoryFilterModalLabel">
+                                {{ translate('Filter Consolidated Purchase History') }}
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="{{ translate('Close') }}">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row gutters-5">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="bill_date_range">{{ translate('Bill Date') }}</label>
+                                    <input type="text" class="form-control aiz-date-range" id="bill_date_range"
+                                           name="bill_date_range"
+                                           value="{{ $dateRangeValue($billDateFromValue, $billDateToValue) }}"
+                                           data-time-picker="false" data-format="DD-MM-YYYY"
+                                           data-from-field="#bill_date_from" data-to-field="#bill_date_to"
+                                           placeholder="{{ translate('DD-MM-YYYY to DD-MM-YYYY') }}">
+                                    <input type="hidden" name="bill_date_from" id="bill_date_from" value="{{ $billDateFromValue }}">
+                                    <input type="hidden" name="bill_date_to" id="bill_date_to" value="{{ $billDateToValue }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="product_sku">{{ translate('SKU') }}</label>
+                                    <input type="text" class="form-control" id="product_sku" name="product_sku"
+                                           value="{{ request('product_sku') }}" placeholder="{{ translate('Enter SKU') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="product_name">{{ translate('Product') }}</label>
+                                    <input type="text" class="form-control" id="product_name" name="product_name"
+                                           value="{{ request('product_name') }}" placeholder="{{ translate('Product') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="sort_by">{{ translate('Sort By') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="sort_by" name="sort_by">
+                                        @foreach($sortOptions as $value => $label)
+                                            <option value="{{ $value }}" @if($sortBy === $value) selected @endif>{{ translate($label) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="sort_dir">{{ translate('Direction') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="sort_dir" name="sort_dir">
+                                        <option value="asc" @if($sortDir === 'asc') selected @endif>{{ translate('Ascending') }}</option>
+                                        <option value="desc" @if($sortDir === 'desc') selected @endif>{{ translate('Descending') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Close') }}</button>
+                            <button type="submit" class="btn btn-primary">{{ translate('Apply Filters') }}</button>
+                        </div>
                     </div>
                 </div>
             </div>

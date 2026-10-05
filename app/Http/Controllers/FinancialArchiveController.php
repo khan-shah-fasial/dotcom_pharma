@@ -225,6 +225,8 @@ class FinancialArchiveController extends Controller
             'filterType' => $request->type,
             'filterSearch' => $request->search,
             'filterExtension' => $request->extension,
+            'filterDateFrom' => $request->date_from,
+            'filterDateTo' => $request->date_to,
             'sortBy' => $sortBy,
             'sortOrder' => $sortOrder,
         ]);
@@ -404,7 +406,18 @@ class FinancialArchiveController extends Controller
                 $q->whereHas('upload', function ($uq) use ($search) {
                     $uq->where('file_original_name', 'like', '%' . $search . '%');
                 });
+            })
+            ->when($this->isDateFilter($request->date_from), function ($q) use ($request) {
+                $q->whereDate('financial_archive.created_at', '>=', $request->date_from);
+            })
+            ->when($this->isDateFilter($request->date_to), function ($q) use ($request) {
+                $q->whereDate('financial_archive.created_at', '<=', $request->date_to);
             });
+    }
+
+    protected function isDateFilter($value): bool
+    {
+        return is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1;
     }
 
     /**

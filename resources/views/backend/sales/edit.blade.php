@@ -46,19 +46,56 @@
             border-radius: 6px;
             background: #fff;
         }
-        .delivery-term-tooltip {
-            position: fixed;
-            z-index: 4000;
-            max-width: 420px;
-            padding: 6px 10px;
-            color: #fff;
-            background: #1f2937;
-            border-radius: 6px;
-            font-size: 12px;
-            line-height: 1.35;
-            pointer-events: none;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, .18);
+        .selected-location-hover {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            margin-top: 7px;
         }
+        .selected-location-name {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            padding: 5px 9px;
+            color: #2563eb;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+        }
+        .selected-location-name span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .selected-location-card {
+            display: none;
+            position: absolute;
+            right: 0;
+            z-index: 1080;
+            width: min(420px, 85vw);
+            max-height: 330px;
+            overflow-y: auto;
+            padding: 12px;
+            color: #334155;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, .18);
+        }
+        .selected-location-detail-row {
+            display: grid;
+            grid-template-columns: minmax(105px, 38%) minmax(0, 1fr);
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid #eef2f7;
+            font-size: 12px;
+        }
+        .selected-location-detail-row:last-child { border-bottom: 0; }
+        .selected-location-detail-label { color: #64748b; font-weight: 600; }
+        .term-detail .selected-location-name { cursor: pointer; }
+        .term-detail.is-open .selected-location-card,
+        .term-detail.is-open:hover .selected-location-card,
+        .term-detail.is-open:focus-within .selected-location-card { display: block; }
     </style>
 
     <div class="card">
@@ -126,12 +163,20 @@
 
                             <div class="form-group">
                                 <label>{{ translate('Payment Terms') }}</label>
-                                <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="edit-payment-terms" data-live-search="true">
+                                <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="edit-payment-terms" data-live-search="true" data-term-kind="payment" data-detail-target="edit-payment-terms-detail">
                                     <option value="">{{ translate('Select Payment Terms') }}</option>
                                     @foreach(\App\Support\InvoiceType::paymentTerms($invoiceType) as $value => $label)
-                                        <option value="{{ $value }}" data-fullform="{{ \App\Support\InvoiceType::paymentTermTooltip($value) }}" @selected(old('payment_type', $order->payment_type) === $value)>{{ translate($label) }}</option>
+                                        <option value="{{ $value }}" @selected(old('payment_type', $order->payment_type) === $value)>{{ translate($label) }}</option>
                                     @endforeach
                                 </select>
+                                @if($invoiceType === \App\Support\InvoiceType::INTERNATIONAL)
+                                    <div class="selected-location-hover term-detail d-none mb-2" id="edit-payment-terms-detail" tabindex="0">
+                                        <div class="selected-location-name">
+                                            <i class="las la-info-circle mr-1"></i><span></span>
+                                        </div>
+                                        <div class="selected-location-card"></div>
+                                    </div>
+                                @endif
                                 @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
 
@@ -250,12 +295,20 @@
 
                             <div class="form-group">
                                 <label>{{ translate('Delivery Type') }}</label>
-                                <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="edit-terms-of-delivery" data-live-search="true" data-hide-disabled="true">
+                                <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="edit-terms-of-delivery" data-live-search="true" data-hide-disabled="true" data-term-kind="delivery" data-detail-target="edit-terms-of-delivery-detail">
                                     <option value="">{{ translate('Select Delivery Type') }}</option>
                                     @foreach(\App\Support\InvoiceType::deliveryTerms($invoiceType) as $value => $label)
-                                        <option value="{{ $value }}" data-fullform="{{ \App\Support\InvoiceType::deliveryTermTooltip($value) }}" @selected(old('transport_delivery_type', $order->transport_delivery_type) === $value)>{{ translate($label) }}</option>
+                                        <option value="{{ $value }}" @selected(old('transport_delivery_type', $order->transport_delivery_type) === $value)>{{ translate($label) }}</option>
                                     @endforeach
                                 </select>
+                                @if($invoiceType === \App\Support\InvoiceType::INTERNATIONAL)
+                                    <div class="selected-location-hover term-detail d-none mb-2" id="edit-terms-of-delivery-detail" tabindex="0">
+                                        <div class="selected-location-name">
+                                            <i class="las la-info-circle mr-1"></i><span></span>
+                                        </div>
+                                        <div class="selected-location-card"></div>
+                                    </div>
+                                @endif
                                 @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
 
@@ -578,43 +631,31 @@
                 });
             }
 
-            function bindDeliveryTermTooltips($select) {
-                if (!$select.length) {
+            var internationalTermDetails = @json(\App\Support\InvoiceType::internationalTermDetails());
+
+            function renderInternationalTermDetail($select) {
+                if (!$select || !$select.length || !$select.data('detail-target')) {
                     return;
                 }
-                var $tip = $('#delivery-term-tooltip');
-                if (!$tip.length) {
-                    $tip = $('<div id="delivery-term-tooltip" class="delivery-term-tooltip d-none"></div>').appendTo('body');
+                var kind = $select.data('term-kind');
+                var rows = ((internationalTermDetails[kind] || {})[$select.val()]) || [];
+                var $detail = $('#' + $select.data('detail-target'));
+                if (!$detail.length || !rows.length) {
+                    $detail.addClass('d-none').removeClass('is-open').find('.selected-location-card').empty();
+                    return;
                 }
-                function hideTip() {
-                    $tip.addClass('d-none').text('');
-                }
-                function showTip(text, event) {
-                    if (!text) {
-                        hideTip();
-                        return;
-                    }
-                    $tip.text(text).removeClass('d-none').css({
-                        top: (event.clientY + 14) + 'px',
-                        left: (event.clientX + 14) + 'px'
-                    });
-                }
-                $select.on('shown.bs.select', function () {
-                    var $menu = $(this).closest('.bootstrap-select').find('.dropdown-menu');
-                    $menu.off('.deliveryTermTip');
-                    $menu.on('mousemove.deliveryTermTip', 'li', function (event) {
-                        var index = $(this).data('original-index');
-                        var $opt = typeof index !== 'undefined'
-                            ? $select.find('option').eq(index)
-                            : $select.find('option').filter(function () {
-                                var optionText = $.trim($(event.currentTarget).find('.text').text() || $(event.currentTarget).text());
-                                return !this.disabled && $.trim($(this).text()) === optionText;
-                            }).first();
-                        showTip($opt.data('fullform'), event);
-                    });
-                    $menu.on('mouseleave.deliveryTermTip', hideTip);
+                var html = '';
+                rows.forEach(function (row) {
+                    var value = Array.isArray(row.value)
+                        ? row.value.map(escapeHtml).join('<br>')
+                        : escapeHtml(row.value);
+                    html += '<div class="selected-location-detail-row">'
+                        + '<span class="selected-location-detail-label">' + escapeHtml(row.label) + '</span>'
+                        + '<span>' + value + '</span></div>';
                 });
-                $select.on('hidden.bs.select', hideTip);
+                $detail.removeClass('d-none')
+                    .find('.selected-location-name span').text($.trim($select.find('option:selected').text()));
+                $detail.find('.selected-location-card').html(html);
             }
 
             function loadCourierServices() {
@@ -918,8 +959,17 @@
             });
             syncSurfaceMode();
             syncPortLogistics();
-            bindDeliveryTermTooltips($('#edit-terms-of-delivery'));
-            bindDeliveryTermTooltips($('#edit-payment-terms'));
+            $('#edit-terms-of-delivery, #edit-payment-terms').on('change', function () {
+                renderInternationalTermDetail($(this));
+            });
+            $(document).on('click', '.term-detail .selected-location-name', function (event) {
+                event.preventDefault();
+                var $detail = $(this).closest('.term-detail');
+                $detail.toggleClass('is-open');
+                $(this).attr('aria-expanded', $detail.hasClass('is-open') ? 'true' : 'false');
+            });
+            renderInternationalTermDetail($('#edit-terms-of-delivery'));
+            renderInternationalTermDetail($('#edit-payment-terms'));
         })();
     </script>
 @endsection

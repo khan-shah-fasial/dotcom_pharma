@@ -81,15 +81,7 @@ class PurchaseHistoryReportController extends Controller
 
         $account = trim((string) $request->get('account', ''));
         if ($account !== '') {
-            $prefixLike = $account . '%';
-            $query->where(function ($q) use ($account, $prefixLike) {
-                $q->where('ac_number', $account)
-                    ->orWhere('ac_number', 'like', $prefixLike)
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($account, $prefixLike) {
-                        $customerQuery->where('crm_id', $account)
-                            ->orWhere('crm_id', 'like', $prefixLike);
-                    });
-            });
+            $query->where('ac_number', 'like', $account . '%');
         }
 
         // Optional filters
@@ -148,7 +140,7 @@ class PurchaseHistoryReportController extends Controller
 
         $sortableColumns = [
             'sr_no' => 'id',
-            'ac_number' => 'ac_number',
+            'ac_number' => 'purchase_history.ac_number',
             'account_name' => 'account_name_sort',
             'party_name' => 'party_name_sort',
             'area' => 'area_sort',
@@ -158,16 +150,16 @@ class PurchaseHistoryReportController extends Controller
             'pincode' => 'pincode_sort',
             'country' => 'country_sort',
             'order_date' => 'order_date_sort',
-            'order_number' => 'order_number',
-            'sales_man_name' => 'sales_man_name_sort',
-            'sales_man_code' => 'sales_man_code_sort',
+            'order_number' => 'purchase_history.order_number',
+            'sales_man_name' => 'sales_man_name',
+            'sales_man_code' => 'sales_man_code',
             'invoice_date' => 'invoice_date_sort',
-            'invoice_series' => 'invoice_series_sort',
-            'invoice_number' => 'invoice_number',
-            'product_sku' => 'product_sku',
+            'invoice_series' => 'purchase_history.invoice_series',
+            'invoice_number' => 'purchase_history.invoice_number',
+            'product_sku' => 'purchase_history.product_sku',
             'product_name' => 'product_name_sort',
-            'packing' => 'packing_sort',
-            'batch_number' => 'batch_number',
+            'packing' => 'packing',
+            'batch_number' => 'purchase_history.batch_number',
             'expiry_date' => 'expiry_date_sort',
             'mfd_by' => 'mfd_by_sort',
             'quantity' => 'quantity',
@@ -179,12 +171,12 @@ class PurchaseHistoryReportController extends Controller
             'taxable_amount' => 'taxable_amount',
             'gst_amount' => 'gst_amount',
             'final_amount' => 'final_amount',
-            'tax_code' => 'tax_code',
-            'gst_percentage' => 'gst_percentage',
-            'transport' => 'transport_sort',
-            'book_to' => 'book_to_sort',
-            'case_value' => 'case_sort',
-            'lr_number' => 'lr_number_sort',
+            'tax_code' => 'purchase_history.tax_code',
+            'gst_percentage' => 'purchase_history.gst_percentage',
+            'transport' => 'transport',
+            'book_to' => 'book_to',
+            'case_value' => 'case_value',
+            'lr_number' => 'lr_number',
             'lr_date' => 'lr_date_sort',
             'late_by' => 'late_by',
         ];
@@ -206,15 +198,68 @@ class PurchaseHistoryReportController extends Controller
         $orderDateSql = $this->parsedDateSql('purchase_history.order_date');
         $lrDateSql = $this->parsedDateSql('purchase_history.lr_date');
 
+        $sortJoins = [
+            'account_name' => ['customer', 'user'],
+            'party_name' => ['customer'],
+            'area' => ['customer'],
+            'town' => ['customer', 'city'],
+            'district' => ['customer'],
+            'state' => ['customer', 'state'],
+            'pincode' => ['customer'],
+            'country' => ['customer', 'country'],
+            'product_name' => ['stock', 'product'],
+            'mfd_by' => ['stock', 'product', 'brand'],
+        ];
+        $activeSortJoins = array_fill_keys($sortJoins[$sortBy] ?? [], true);
+
+        if ($activeSortJoins !== []) {
+            if (isset($activeSortJoins['customer']) || isset($activeSortJoins['user']) || isset($activeSortJoins['city']) || isset($activeSortJoins['state']) || isset($activeSortJoins['country'])) {
+                $query->leftJoin('user_details as customer_sort', 'customer_sort.crm_id', '=', 'purchase_history.ac_number');
+            }
+            if (isset($activeSortJoins['user'])) {
+                $query->leftJoin('users as user_sort', 'user_sort.id', '=', 'customer_sort.user_id');
+            }
+            if (isset($activeSortJoins['city'])) {
+                $query->leftJoin('cities as city_sort', 'city_sort.id', '=', 'customer_sort.city_id_business');
+            }
+            if (isset($activeSortJoins['state'])) {
+                $query->leftJoin('states as state_sort', 'state_sort.id', '=', 'customer_sort.state_id_business');
+            }
+            if (isset($activeSortJoins['country'])) {
+                $query->leftJoin('countries as country_sort', 'country_sort.id', '=', 'customer_sort.country_id_business');
+            }
+            if (isset($activeSortJoins['stock']) || isset($activeSortJoins['product']) || isset($activeSortJoins['brand'])) {
+                $query->leftJoin('product_stocks as stock_sort', 'stock_sort.sku', '=', 'purchase_history.product_sku');
+            }
+            if (isset($activeSortJoins['product']) || isset($activeSortJoins['brand'])) {
+                $query->leftJoin('products as product_sort', 'product_sort.id', '=', 'stock_sort.product_id');
+            }
+            if (isset($activeSortJoins['brand'])) {
+                $query->leftJoin('brands as brand_sort', 'brand_sort.id', '=', 'product_sort.brand_id');
+            }
+        }
+
+        $sortExpressions = [
+            'account_name' => 'MIN(user_sort.name) AS account_name_sort',
+            'party_name' => 'MIN(customer_sort.company_name) AS party_name_sort',
+            'area' => 'MIN(customer_sort.post_business) AS area_sort',
+            'town' => 'MIN(city_sort.name) AS town_sort',
+            'district' => 'MIN(customer_sort.district_business) AS district_sort',
+            'state' => 'MIN(state_sort.name) AS state_sort',
+            'pincode' => 'MIN(customer_sort.pincode_business) AS pincode_sort',
+            'country' => 'MIN(country_sort.name) AS country_sort',
+            'product_name' => 'MIN(product_sort.name) AS product_name_sort',
+            'mfd_by' => 'MIN(brand_sort.name) AS mfd_by_sort',
+            'order_date' => "MIN({$orderDateSql}) AS order_date_sort",
+            'invoice_date' => "MIN({$this->parsedDateSql('purchase_history.invoice_date')}) AS invoice_date_sort",
+            'expiry_date' => "MIN({$this->parsedDateSql('purchase_history.expiry_date')}) AS expiry_date_sort",
+            'lr_date' => "MIN({$this->parsedDateSql('purchase_history.lr_date')}) AS lr_date_sort",
+            'sale_rate' => 'MIN(CAST(NULLIF(REPLACE(purchase_history.sale_rate, \',\', \'\'), \'\') AS DECIMAL(20, 4))) AS sale_rate_sort',
+            'discount' => 'MIN(CAST(NULLIF(REPLACE(purchase_history.discount, \',\', \'\'), \'\') AS DECIMAL(20, 4))) AS discount_sort',
+            'mrp_rate' => 'MIN(CAST(NULLIF(REPLACE(purchase_history.mrp_rate, \',\', \'\'), \'\') AS DECIMAL(20, 4))) AS mrp_rate_sort',
+        ];
+
         $purchaseHistory = $query
-            ->leftJoin('user_details as customer_sort', 'customer_sort.crm_id', '=', 'purchase_history.ac_number')
-            ->leftJoin('users as user_sort', 'user_sort.id', '=', 'customer_sort.user_id')
-            ->leftJoin('cities as city_sort', 'city_sort.id', '=', 'customer_sort.city_id_business')
-            ->leftJoin('states as state_sort', 'state_sort.id', '=', 'customer_sort.state_id_business')
-            ->leftJoin('countries as country_sort', 'country_sort.id', '=', 'customer_sort.country_id_business')
-            ->leftJoin('product_stocks as stock_sort', 'stock_sort.sku', '=', 'purchase_history.product_sku')
-            ->leftJoin('products as product_sort', 'product_sort.id', '=', 'stock_sort.product_id')
-            ->leftJoin('brands as brand_sort', 'brand_sort.id', '=', 'product_sort.brand_id')
             ->select([
                 'purchase_history.ac_number',
                 'purchase_history.order_number',
@@ -240,31 +285,9 @@ class PurchaseHistoryReportController extends Controller
             ->selectRaw('MIN(purchase_history.book_to) AS book_to')
             ->selectRaw("MIN(NULLIF(TRIM(purchase_history.lr_number), '')) AS lr_number")
             ->selectRaw("MIN(NULLIF(TRIM(purchase_history.lr_date), '')) AS lr_date")
-            ->selectRaw('MIN(user_sort.name) AS account_name_sort')
-            ->selectRaw('MIN(customer_sort.company_name) AS party_name_sort')
-            ->selectRaw('MIN(customer_sort.post_business) AS area_sort')
-            ->selectRaw('MIN(city_sort.name) AS town_sort')
-            ->selectRaw('MIN(customer_sort.district_business) AS district_sort')
-            ->selectRaw('MIN(state_sort.name) AS state_sort')
-            ->selectRaw('MIN(customer_sort.pincode_business) AS pincode_sort')
-            ->selectRaw('MIN(country_sort.name) AS country_sort')
-            ->selectRaw('MIN(product_sort.name) AS product_name_sort')
-            ->selectRaw("MIN({$orderDateSql}) AS order_date_sort")
-            ->selectRaw("MIN({$this->parsedDateSql('purchase_history.invoice_date')}) AS invoice_date_sort")
-            ->selectRaw('MIN(purchase_history.sales_man_name) AS sales_man_name_sort')
-            ->selectRaw('MIN(purchase_history.sales_man_code) AS sales_man_code_sort')
-            ->selectRaw('MIN(purchase_history.invoice_series) AS invoice_series_sort')
-            ->selectRaw('MIN(purchase_history.packing) AS packing_sort')
-            ->selectRaw("MIN({$this->parsedDateSql('purchase_history.expiry_date')}) AS expiry_date_sort")
-            ->selectRaw('MIN(brand_sort.name) AS mfd_by_sort')
-            ->selectRaw('MIN(CAST(NULLIF(REPLACE(purchase_history.sale_rate, \',\', \'\'), \'\') AS DECIMAL(20, 4))) AS sale_rate_sort')
-            ->selectRaw('MIN(CAST(NULLIF(REPLACE(purchase_history.discount, \',\', \'\'), \'\') AS DECIMAL(20, 4))) AS discount_sort')
-            ->selectRaw('MIN(CAST(NULLIF(REPLACE(purchase_history.mrp_rate, \',\', \'\'), \'\') AS DECIMAL(20, 4))) AS mrp_rate_sort')
-            ->selectRaw('MIN(purchase_history.transport) AS transport_sort')
-            ->selectRaw('MIN(purchase_history.book_to) AS book_to_sort')
-            ->selectRaw('MIN(purchase_history.case_value) AS case_sort')
-            ->selectRaw("MIN(NULLIF(TRIM(purchase_history.lr_number), '')) AS lr_number_sort")
-            ->selectRaw("MIN({$this->parsedDateSql('purchase_history.lr_date')}) AS lr_date_sort")
+            ->when(isset($sortExpressions[$sortBy]), function ($sortQuery) use ($sortExpressions, $sortBy) {
+                $sortQuery->selectRaw($sortExpressions[$sortBy]);
+            })
             ->selectRaw("CASE WHEN MIN({$orderDateSql}) IS NULL OR MIN({$lrDateSql}) IS NULL THEN NULL ELSE DATEDIFF(MIN({$lrDateSql}), MIN({$orderDateSql})) END AS late_by")
             ->selectRaw($this->sumSql('quantity'))
             ->selectRaw($this->sumSql('free'))
@@ -291,7 +314,7 @@ class PurchaseHistoryReportController extends Controller
             ->orderBy('invoice_number')
             ->orderBy('product_sku')
             ->orderBy('batch_number')
-            ->paginate($perPage)
+            ->simplePaginate($perPage)
             ->appends($request->query());
 
         $countries = Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']);
@@ -359,12 +382,7 @@ class PurchaseHistoryReportController extends Controller
         $query = PurchaseHistory::query()
             ->leftJoin('product_stocks as stock_sort', 'stock_sort.sku', '=', 'purchase_history.product_sku')
             ->leftJoin('products as product_sort', 'product_sort.id', '=', 'stock_sort.product_id')
-            ->where(function ($accountQuery) use ($account) {
-                $accountQuery->where('purchase_history.ac_number', $account)
-                    ->orWhereHas('customerDetails', function ($customerQuery) use ($account) {
-                        $customerQuery->where('crm_id', $account);
-                    });
-            });
+            ->where('purchase_history.ac_number', $account);
 
         $billDateSql = "COALESCE({$this->parsedDateSql('purchase_history.invoice_date')}, {$this->parsedDateSql('purchase_history.order_date')})";
         $billDateFrom = trim((string) $request->get('bill_date_from', ''));
@@ -416,11 +434,6 @@ class PurchaseHistoryReportController extends Controller
         if (! in_array($sortDir, ['asc', 'desc'], true)) {
             $sortDir = 'desc';
         }
-
-        $dateBounds = (clone $query)
-            ->selectRaw("MIN({$billDateSql}) AS date_from")
-            ->selectRaw("MAX({$billDateSql}) AS date_to")
-            ->first();
 
         $grossAmountExpression = $this->sumExpression('final_amount');
 
@@ -511,8 +524,8 @@ class PurchaseHistoryReportController extends Controller
             'account'        => $account,
             'customer'       => $customer,
             'contactNumbers' => $contactNumbers,
-            'dateFrom'       => $this->formatReportDate($billDateFrom) ?: $this->formatReportDate($dateBounds?->date_from),
-            'dateTo'         => $this->formatReportDate($billDateTo) ?: $this->formatReportDate($dateBounds?->date_to),
+            'dateFrom'       => $this->formatReportDate($billDateFrom),
+            'dateTo'         => $this->formatReportDate($billDateTo),
             'filterBillDateFrom' => $billDateFrom,
             'filterBillDateTo'   => $billDateTo,
             'reportRows'     => $reportRows,

@@ -202,4 +202,181 @@ class InvoiceType
 
         return self::INTERNATIONAL_DELIVERY_TERM_TOOLTIPS[$value] ?? self::deliveryTermFullForm($value);
     }
+
+    /**
+     * Label/value rows shown after an international term is selected.
+     *
+     * @return array<int, array{label: string, value: string|array<int, string>}>
+     */
+    public static function internationalTermDetailRows(string $kind, ?string $value): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        $catalog = $kind === 'payment'
+            ? self::internationalPaymentTermDetails()
+            : self::internationalDeliveryTermDetails();
+
+        return $catalog[$value] ?? [];
+    }
+
+    /**
+     * @return array<string, array<int, array{label: string, value: string|array<int, string>}>>
+     */
+    public static function internationalTermDetails(): array
+    {
+        return [
+            'payment' => self::internationalPaymentTermDetails(),
+            'delivery' => self::internationalDeliveryTermDetails(),
+        ];
+    }
+
+    private static function internationalPaymentTermDetails(): array
+    {
+        return [
+            'advance_payment' => [
+                ['label' => 'Full Form', 'value' => 'Advance Payment'],
+                ['label' => 'How It Works', 'value' => 'The buyer pays before production or shipment.'],
+                ['label' => 'Best For', 'value' => ['New customers', 'Small export orders', 'High-demand products']],
+                ['label' => 'Example', 'value' => 'A customer in Kenya orders veterinary medicines from Dotcom Pharma and pays the full amount before dispatch.'],
+                ['label' => 'Seller Risk', 'value' => 'Very Low'],
+                ['label' => 'Buyer Risk', 'value' => 'High'],
+            ],
+            'letter_of_credit' => [
+                ['label' => 'Full Form', 'value' => 'Letter of Credit'],
+                ['label' => 'How It Works', 'value' => 'A bank guarantees payment if the seller submits the required shipping documents.'],
+                ['label' => 'Common Documents', 'value' => ['Commercial Invoice', 'Bill of Lading', 'Packing List', 'Certificate of Origin', 'Insurance Certificate (if applicable)']],
+                ['label' => 'Best For', 'value' => ['High-value shipments', 'New international customers']],
+                ['label' => 'Risk', 'value' => 'Low for both parties'],
+            ],
+            'documents_against_payment' => [
+                ['label' => 'Full Form', 'value' => 'Documents Against Payment'],
+                ['label' => 'How It Works', 'value' => 'The bank releases shipping documents only after the buyer makes payment.'],
+                ['label' => 'Cargo Release', 'value' => 'The buyer cannot collect the cargo until payment is made.'],
+            ],
+            'documents_against_acceptance' => [
+                ['label' => 'Full Form', 'value' => 'Documents Against Acceptance'],
+                ['label' => 'How It Works', 'value' => 'The buyer accepts a time draft (promise to pay later).'],
+                ['label' => 'Documents', 'value' => 'The shipping documents are released before payment.'],
+                ['label' => 'Example', 'value' => 'Payment due in 30, 60, or 90 days.'],
+                ['label' => 'Seller Risk', 'value' => 'Higher than under D/P'],
+            ],
+            'open_account' => [
+                ['label' => 'Full Form', 'value' => 'Open Account'],
+                ['label' => 'How It Works', 'value' => 'The seller ships the goods first.'],
+                ['label' => 'Payment', 'value' => 'The buyer pays later according to agreed credit terms.'],
+                ['label' => 'Example', 'value' => ['Net 30', 'Net 60', 'Net 90']],
+                ['label' => 'Typical Use', 'value' => 'Common among long-term trusted customers.'],
+            ],
+            'cash_against_documents' => [
+                ['label' => 'Full Form', 'value' => 'Cash Against Documents'],
+                ['label' => 'How It Works', 'value' => 'The buyer pays when shipping documents arrive through the bank.'],
+                ['label' => 'Comparison', 'value' => 'Similar to D/P, though practices vary by bank and agreement.'],
+            ],
+            'cash_in_advance' => [
+                ['label' => 'Full Form', 'value' => 'Cash in Advance'],
+                ['label' => 'How It Works', 'value' => 'The buyer pays before shipment.'],
+                ['label' => 'Often Used For', 'value' => ['Custom manufacturing', 'Special pharmaceutical formulations', 'OEM production']],
+            ],
+            'telegraphic_transfer' => [
+                ['label' => 'Full Form', 'value' => 'Telegraphic Transfer'],
+                ['label' => 'How It Works', 'value' => 'An electronic bank transfer.'],
+                ['label' => 'Common Structures', 'value' => ['100% advance', '50% advance and 50% before shipment', '30% advance and 70% against shipping documents']],
+                ['label' => 'Typical Use', 'value' => 'One of the most widely used methods in global trade.'],
+            ],
+            'bank_transfer' => [
+                ['label' => 'Full Form', 'value' => 'Wire Transfer'],
+                ['label' => 'How It Works', 'value' => 'An international bank-to-bank electronic transfer.'],
+                ['label' => 'Used For', 'value' => ['Import payments', 'Freight charges', 'Agent commissions', 'Overseas suppliers']],
+            ],
+            'bank_guarantee' => [
+                ['label' => 'Full Form', 'value' => 'Bank Guarantee'],
+                ['label' => 'How It Works', 'value' => 'A bank guarantees payment if the buyer fails to meet contractual obligations.'],
+                ['label' => 'Common For', 'value' => ['Government tenders', 'Infrastructure projects', 'Large commercial contracts']],
+            ],
+            'standby_letter_of_credit' => [
+                ['label' => 'Full Form', 'value' => 'Standby Letter of Credit'],
+                ['label' => 'How It Works', 'value' => 'Acts as a financial safety net.'],
+                ['label' => 'Claim', 'value' => 'The seller can claim payment if the buyer defaults, subject to the SBLC terms.'],
+                ['label' => 'Often Used For', 'value' => ['Large distributors', 'Long-term supply agreements', 'High-value exports']],
+            ],
+            'documentary_collection' => [
+                ['label' => 'Full Form', 'value' => 'Documentary Collection'],
+                ['label' => 'How It Works', 'value' => 'The seller\'s bank forwards shipping documents to the buyer\'s bank for collection according to agreed instructions.'],
+                ['label' => 'It May Be', 'value' => ['D/P (Documents Against Payment)', 'D/A (Documents Against Acceptance)']],
+            ],
+        ];
+    }
+
+    private static function internationalDeliveryTermDetails(): array
+    {
+        return [
+            'exw' => [
+                ['label' => 'Full Form', 'value' => 'Ex Works'],
+                ['label' => 'Best For', 'value' => 'Domestic sales, experienced buyers'],
+                ['label' => 'Seller\'s Responsibility', 'value' => ['Manufactures the goods', 'Packs them', 'Keeps them ready at the factory or warehouse']],
+                ['label' => 'Buyer Arranges', 'value' => ['Pickup', 'Loading', 'Inland transport', 'Export customs', 'Ocean or air freight', 'Insurance', 'Import customs', 'Final delivery']],
+                ['label' => 'Risk Transfer', 'value' => 'As soon as the goods are made available for pickup at the seller\'s premises.'],
+                ['label' => 'Example', 'value' => ['Dotcom Pharma manufactures veterinary injections in Mumbai.', 'The buyer from Kenya sends their own freight forwarder to collect the shipment.', 'From that moment, the buyer bears the risk.']],
+            ],
+            'fca' => [
+                ['label' => 'Full Form', 'value' => 'Free Carrier'],
+                ['label' => 'Best For', 'value' => ['Air cargo', 'Road', 'Rail', 'Courier shipments', 'Express carriers', 'Truck transport']],
+                ['label' => 'Seller', 'value' => 'Delivers the goods to a carrier chosen by the buyer at a named place.'],
+                ['label' => 'Seller Pays', 'value' => 'Until the carrier receives the cargo.'],
+                ['label' => 'Buyer Pays', 'value' => 'From there onward.'],
+            ],
+            'fob' => [
+                ['label' => 'Full Form', 'value' => 'Free On Board'],
+                ['label' => 'Best For', 'value' => 'Sea freight only'],
+                ['label' => 'Seller Pays', 'value' => ['Factory to port', 'Export customs', 'Loading onto the ship']],
+                ['label' => 'Buyer Pays', 'value' => ['Ocean freight', 'Insurance', 'Destination charges', 'Import customs']],
+                ['label' => 'Risk Transfer', 'value' => 'Once the goods are loaded onto the vessel.'],
+                ['label' => 'Example', 'value' => ['Mumbai Port to Dubai.', 'Dotcom Pharma loads a container onto the ship.', 'Once it is on board, the buyer assumes the risk.']],
+            ],
+            'cfr' => [
+                ['label' => 'Full Form', 'value' => 'Cost and Freight'],
+                ['label' => 'Best For', 'value' => 'Sea freight'],
+                ['label' => 'Seller Pays', 'value' => ['Inland transport', 'Export customs', 'Ocean freight']],
+                ['label' => 'Buyer Pays', 'value' => ['Insurance', 'Import clearance', 'Local delivery']],
+                ['label' => 'Risk Transfer', 'value' => 'When the goods are loaded onto the ship, even though the seller pays the freight.'],
+            ],
+            'cif' => [
+                ['label' => 'Full Form', 'value' => 'Cost, Insurance and Freight'],
+                ['label' => 'Best For', 'value' => 'Sea freight'],
+                ['label' => 'How It Works', 'value' => 'Same as CFR, but the seller also purchases marine insurance to the destination port.'],
+                ['label' => 'Seller Pays', 'value' => ['Ocean freight', 'Marine insurance']],
+                ['label' => 'Buyer Pays', 'value' => ['Import duty', 'Customs', 'Local transport']],
+                ['label' => 'Typical Use', 'value' => 'One of the most common Incoterms in international sea trade.'],
+            ],
+            'cpt' => [
+                ['label' => 'Full Form', 'value' => 'Carriage Paid To'],
+                ['label' => 'Best For', 'value' => 'Any transport mode'],
+                ['label' => 'Modes', 'value' => ['Air', 'Sea', 'Road', 'Rail']],
+                ['label' => 'Seller Pays', 'value' => 'Transportation to the named destination.'],
+                ['label' => 'Buyer Pays', 'value' => ['Insurance', 'Import duty', 'Taxes']],
+            ],
+            'cip' => [
+                ['label' => 'Full Form', 'value' => 'Carriage and Insurance Paid To'],
+                ['label' => 'Best For', 'value' => ['Air', 'Courier', 'Multimodal']],
+                ['label' => 'How It Works', 'value' => 'Same as CPT, but the seller also provides insurance.'],
+                ['label' => 'Very Common For', 'value' => ['Pharmaceuticals', 'Medical equipment', 'Veterinary products']],
+            ],
+            'dap' => [
+                ['label' => 'Full Form', 'value' => 'Delivered At Place'],
+                ['label' => 'Best For', 'value' => 'Door delivery'],
+                ['label' => 'How It Works', 'value' => 'The seller pays almost everything until the goods reach the agreed destination. The buyer clears customs.'],
+                ['label' => 'Buyer Pays', 'value' => ['Import duty', 'GST/VAT (if applicable)', 'Customs clearance']],
+                ['label' => 'Example', 'value' => ['Dotcom Pharma delivers veterinary medicines to a distributor\'s warehouse in Nairobi.', 'The seller arranges transport to the warehouse.', 'The buyer handles import clearance and taxes.']],
+            ],
+            'ddp' => [
+                ['label' => 'Full Form', 'value' => 'Delivered Duty Paid'],
+                ['label' => 'Best For', 'value' => 'Complete door-to-door service'],
+                ['label' => 'Seller Handles', 'value' => ['Transport', 'Export clearance', 'Freight', 'Insurance (if arranged)', 'Import customs', 'Duties', 'Taxes', 'Final delivery']],
+                ['label' => 'Buyer', 'value' => 'The buyer simply receives the goods.'],
+                ['label' => 'Note', 'value' => 'Maximum convenience for the buyer, and the greatest responsibility and cost for the seller.'],
+            ],
+        ];
+    }
 }

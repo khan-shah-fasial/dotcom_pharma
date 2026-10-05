@@ -76,11 +76,22 @@
         $productRouteParams = $productRoute === 'products.seller'
             ? ['product_type' => request()->route('product_type')]
             : [];
+        $listingFilters = $listingFilters ?? [
+            'sku' => '', 'product_name' => '', 'brand' => '', 'drug_name' => '', 'drug_role' => '',
+            'product_type' => '', 'schedule' => '', 'group_id' => '', 'marketed_by' => '',
+            'manufactured_by' => '', 'imported_by' => '', 'hsn' => '', 'hs' => '', 'origin' => '',
+            'shipping_days' => '', 'cash_on_delivery' => '', 'free_shipping' => '', 'has_warranty' => '',
+            'refundable' => '', 'todays_deal' => '', 'featured' => '', 'approved' => '',
+        ];
+        $listingGroups = $listingGroups ?? collect();
         $filtersApplied = filled($sort_search ?? null)
             || filled($selected_category_id ?? null)
             || filled($seller_id ?? null)
             || (isset($published_status) && $published_status !== null && $published_status !== '' && $published_status !== 'All')
-            || filled(request('type'));
+            || filled(request('type'))
+            || collect($listingFilters)->contains(function ($value) {
+                return $value !== null && $value !== '';
+            });
         $listingDiscounts = $listingDiscounts ?? [];
         $listingCoupons = $listingCoupons ?? [];
         $listingCompanies = $listingCompanies ?? [];
@@ -303,15 +314,15 @@
                                         </div>
                                         <div class="col">
                                             <span class="text-muted text-truncate-2">{{ $product->getTranslation('name') }}</span>
-                                            <div class="listing-stack-line"><span class="text-muted">{{ translate('Brand') }}:</span> {{ $listingValue(optional($product->brand)->getTranslation('name')) }}</div>
-                                            <div class="listing-stack-line"><span class="text-muted">{{ translate('Drug Name') }}:</span> {{ $listingValue($product->drug_name) }}</div>
-                                            <div class="listing-stack-line"><span class="text-muted">{{ translate('Drug Role') }}:</span> {{ $listingValue($product->role_label) }}</div>
+                                            <div class="listing-stack-line">{{ $listingValue(optional($product->brand)->getTranslation('name')) }}</div>
+                                            <div class="listing-stack-line">{{ $listingValue($product->drug_name) }}</div>
+                                            <div class="listing-stack-line">{{ $listingValue($product->role_label) }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Product Type') }}:</span> {{ $listingValue($product->product_type) }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Schedule') }}:</span> {{ $listingValue($product->schedule) }}</div>
+                                    <div class="listing-stack-line">{{ $listingValue($product->product_type) }}</div>
+                                    <div class="listing-stack-line">{{ $listingValue($product->schedule) }}</div>
                                 </td>
                                 <td>
                                     @if ($product->digital == 1)
@@ -433,14 +444,14 @@
                                     $couponCodeText = implode(', ', array_filter($listingCoupons[$product->id] ?? []));
                                 @endphp
                                 <td>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Scheme') }}:</span> {{ $discountCodeText('schemewise') }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Coupon') }}:</span> {{ $couponCodeText !== '' ? $couponCodeText : '-' }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Pointwise') }}:</span> {{ $discountCodeText('pointwise') }}</div>
+                                    <div class="listing-stack-line">{{ $discountCodeText('schemewise') }}</div>
+                                    <div class="listing-stack-line">{{ $couponCodeText !== '' ? $couponCodeText : '-' }}</div>
+                                    <div class="listing-stack-line">{{ $discountCodeText('pointwise') }}</div>
                                 </td>
                                 <td>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Product wise') }}:</span> {{ $discountCodeText('productwise') }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Batchwise') }}:</span> {{ $discountCodeText('batchwise') }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Amount wise') }}:</span> {{ $discountCodeText('amount_wise') }}</div>
+                                    <div class="listing-stack-line">{{ $discountCodeText('productwise') }}</div>
+                                    <div class="listing-stack-line">{{ $discountCodeText('batchwise') }}</div>
+                                    <div class="listing-stack-line">{{ $discountCodeText('amount_wise') }}</div>
                                 </td>
                                 <td>
                                     @php
@@ -474,31 +485,31 @@
                                     @empty
                                         -
                                     @endforelse
-                                    <div class="listing-stack-line mt-1"><span class="text-muted">{{ translate('Group') }}:</span> {{ $listingValue(optional($product->main_group)->getTranslation('name')) }}</div>
+                                    <div class="listing-stack-line mt-1">{{ $listingValue(optional($product->main_group)->getTranslation('name')) }}</div>
                                 </td>
                                 <td>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Marketed By') }}:</span> {{ $companyNamesFor($product, 'marketed') }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Manufactured By') }}:</span> {{ $companyNamesFor($product, 'manufactured') }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Imported By') }}:</span> {{ $companyNamesFor($product, 'imported') }}</div>
+                                    <div class="listing-stack-line">{{ $companyNamesFor($product, 'marketed') }}</div>
+                                    <div class="listing-stack-line">{{ $companyNamesFor($product, 'manufactured') }}</div>
+                                    <div class="listing-stack-line">{{ $companyNamesFor($product, 'imported') }}</div>
                                 </td>
                                 <td>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('HSN Code') }}:</span> {{ $listingValue($product->product_hsn) }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('HS Code') }}:</span> {{ $listingValue($product->product_hs) }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Origin') }}:</span> {{ $listingValue($product->product_origin) }}</div>
-                                    <div class="listing-stack-line"><span class="text-muted">{{ translate('Shipping Days') }}:</span> {{ $listingValue($product->est_shipping_days) }}</div>
+                                    <div class="listing-stack-line">{{ $listingValue($product->product_hsn) }}</div>
+                                    <div class="listing-stack-line">{{ $listingValue($product->product_hs) }}</div>
+                                    <div class="listing-stack-line">{{ $listingValue($product->product_origin) }}</div>
+                                    <div class="listing-stack-line">{{ $listingValue($product->est_shipping_days) }}</div>
                                 </td>
                                 <td>
-                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('COD'), 'field' => 'cash_on_delivery', 'checked' => $product->cash_on_delivery == 1, 'onchange' => 'update_listing_flag(this)'])
-                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Free Shipping'), 'field' => 'free_shipping', 'checked' => $product->shipping_type == 'free', 'onchange' => 'update_listing_flag(this)'])
-                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Warranty'), 'field' => 'has_warranty', 'checked' => $product->has_warranty == 1, 'onchange' => 'update_listing_flag(this)'])
-                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Refundable'), 'field' => 'refundable', 'checked' => $product->refundable == 1, 'onchange' => 'update_listing_flag(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('COD'), 'showLabel' => false, 'field' => 'cash_on_delivery', 'checked' => $product->cash_on_delivery == 1, 'onchange' => 'update_listing_flag(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Free Shipping'), 'showLabel' => false, 'field' => 'free_shipping', 'checked' => $product->shipping_type == 'free', 'onchange' => 'update_listing_flag(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Warranty'), 'showLabel' => false, 'field' => 'has_warranty', 'checked' => $product->has_warranty == 1, 'onchange' => 'update_listing_flag(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Refundable'), 'showLabel' => false, 'field' => 'refundable', 'checked' => $product->refundable == 1, 'onchange' => 'update_listing_flag(this)'])
                                 </td>
                                 <td>
-                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Todays Deal'), 'field' => 'todays_deal', 'checked' => $product->todays_deal == 1, 'onchange' => 'update_todays_deal(this)'])
-                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Published'), 'field' => 'published', 'checked' => $product->published == 1, 'onchange' => 'update_published(this)'])
-                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Featured'), 'field' => 'featured', 'checked' => $product->featured == 1, 'onchange' => 'update_featured(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Todays Deal'), 'showLabel' => false, 'field' => 'todays_deal', 'checked' => $product->todays_deal == 1, 'onchange' => 'update_todays_deal(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Published'), 'showLabel' => false, 'field' => 'published', 'checked' => $product->published == 1, 'onchange' => 'update_published(this)'])
+                                    @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Featured'), 'showLabel' => false, 'field' => 'featured', 'checked' => $product->featured == 1, 'onchange' => 'update_featured(this)'])
                                     @if (get_setting('product_approve_by_admin') == 1 && $type == 'Seller')
-                                        @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Approved'), 'field' => 'approved', 'checked' => $product->approved == 1, 'onchange' => 'update_approved(this)'])
+                                        @include('backend.product.products.partials.listing_switch', ['product' => $product, 'label' => translate('Approved'), 'showLabel' => false, 'field' => 'approved', 'checked' => $product->approved == 1, 'onchange' => 'update_approved(this)'])
                                     @endif
                                 </td>
                                 <td class="text-right drop-down-text-icon">
@@ -668,6 +679,107 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('SKU') }}</label>
+                                <input type="text" class="form-control" name="sku" value="{{ $listingFilters['sku'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Product / Brand Name') }}</label>
+                                <input type="text" class="form-control" name="product_name" value="{{ $listingFilters['product_name'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Brand') }}</label>
+                                <input type="text" class="form-control" name="brand" value="{{ $listingFilters['brand'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Drug Name') }}</label>
+                                <input type="text" class="form-control" name="drug_name" value="{{ $listingFilters['drug_name'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Drug Role') }}</label>
+                                <input type="text" class="form-control" name="drug_role" value="{{ $listingFilters['drug_role'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Product Type') }}</label>
+                                <input type="text" class="form-control" name="product_type" value="{{ $listingFilters['product_type'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Schedule') }}</label>
+                                <input type="text" class="form-control" name="schedule" value="{{ $listingFilters['schedule'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Group') }}</label>
+                                <select class="form-control" name="group_id">
+                                    <option value="">{{ translate('All Groups') }}</option>
+                                    @foreach ($listingGroups as $group)
+                                        <option value="{{ $group->id }}" @selected((string) $listingFilters['group_id'] === (string) $group->id)>{{ $group->getTranslation('name') }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Marketed By') }}</label>
+                                <input type="text" class="form-control" name="marketed_by" value="{{ $listingFilters['marketed_by'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Manufactured By') }}</label>
+                                <input type="text" class="form-control" name="manufactured_by" value="{{ $listingFilters['manufactured_by'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Imported By') }}</label>
+                                <input type="text" class="form-control" name="imported_by" value="{{ $listingFilters['imported_by'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('HSN Code') }}</label>
+                                <input type="text" class="form-control" name="hsn" value="{{ $listingFilters['hsn'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('HS Code') }}</label>
+                                <input type="text" class="form-control" name="hs" value="{{ $listingFilters['hs'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Origin') }}</label>
+                                <input type="text" class="form-control" name="origin" value="{{ $listingFilters['origin'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>{{ translate('Shipping Days') }}</label>
+                                <input type="text" class="form-control" name="shipping_days" value="{{ $listingFilters['shipping_days'] }}">
+                            </div>
+                            @php
+                                $listingYesNo = function ($name, $label) use ($listingFilters) {
+                                    return [
+                                        'name' => $name,
+                                        'label' => $label,
+                                        'value' => $listingFilters[$name] ?? '',
+                                    ];
+                                };
+                            @endphp
+                            @foreach ([
+                                $listingYesNo('cash_on_delivery', translate('COD')),
+                                $listingYesNo('free_shipping', translate('Free Shipping')),
+                                $listingYesNo('has_warranty', translate('Warranty')),
+                                $listingYesNo('refundable', translate('Refundable')),
+                                $listingYesNo('todays_deal', translate('Todays Deal')),
+                                $listingYesNo('featured', translate('Featured')),
+                            ] as $flagFilter)
+                                <div class="col-md-6 mb-3">
+                                    <label>{{ $flagFilter['label'] }}</label>
+                                    <select class="form-control" name="{{ $flagFilter['name'] }}">
+                                        <option value="">{{ translate('All') }}</option>
+                                        <option value="1" @selected($flagFilter['value'] === '1')>{{ translate('Yes') }}</option>
+                                        <option value="0" @selected($flagFilter['value'] === '0')>{{ translate('No') }}</option>
+                                    </select>
+                                </div>
+                            @endforeach
+                            @if (get_setting('product_approve_by_admin') == 1 && ($type ?? '') == 'Seller')
+                                <div class="col-md-6 mb-3">
+                                    <label>{{ translate('Approved') }}</label>
+                                    <select class="form-control" name="approved">
+                                        <option value="">{{ translate('All') }}</option>
+                                        <option value="1" @selected($listingFilters['approved'] === '1')>{{ translate('Yes') }}</option>
+                                        <option value="0" @selected($listingFilters['approved'] === '0')>{{ translate('No') }}</option>
+                                    </select>
+                                </div>
+                            @endif
                             <div class="col-md-6 mb-3">
                                 <label>{{ translate('Published') }}</label>
                                 <select class="form-control" name="published_status">

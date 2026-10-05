@@ -128,19 +128,6 @@
             align-items: center;
             height: 22px;
         }
-        .delivery-term-tooltip {
-            position: fixed;
-            z-index: 4000;
-            max-width: 420px;
-            padding: 6px 10px;
-            color: #fff;
-            background: #1f2937;
-            border-radius: 6px;
-            font-size: 12px;
-            line-height: 1.35;
-            pointer-events: none;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, .18);
-        }
         .order-number-part-label {
             display: block;
             margin-bottom: 3px;
@@ -494,6 +481,18 @@ span#picker-info-stock-badge {
             color: #64748b;
             font-weight: 600;
         }
+        .term-detail .selected-location-name {
+            cursor: pointer;
+        }
+        .term-detail.selected-location-hover:hover .selected-location-card,
+        .term-detail.selected-location-hover:focus-within .selected-location-card {
+            display: none;
+        }
+        .term-detail.is-open .selected-location-card,
+        .term-detail.is-open:hover .selected-location-card,
+        .term-detail.is-open:focus-within .selected-location-card {
+            display: block;
+        }
 
         .product-info-item.product-final-amount-item span {
     color: #047857;
@@ -538,7 +537,6 @@ span#picker-info-stock-badge {
                     </div>
                     <div class="card-body">
                         <div class="row gutters-5">
-                            <input type="hidden" name="order_code_letter" id="order-code-letter" value="{{ $orderSeriesCode }}">
                             <div class="col-md-6 form-group">
                                 @include('backend.sales.partials.document_type_field', ['documentTypeRequired' => true, 'documentTypes' => $documentTypes])
                             </div>
@@ -573,7 +571,7 @@ span#picker-info-stock-badge {
                                     </div>
                                     <div>
                                         <span class="order-number-part-label">{{ translate('Code (Series)') }}</span>
-                                        <input type="text" class="form-control" id="order-series" value="{{ $orderSeriesCode }}" readonly>
+                                        <input type="text" class="form-control" name="order_code_letter" id="order-series" value="{{ old('order_code_letter', $orderSeriesCode) }}" maxlength="5" autocomplete="off">
                                     </div>
                                     <div>
                                         <span class="order-number-part-label">{{ translate('Financial Year') }}</span>
@@ -1158,14 +1156,20 @@ span#picker-info-stock-badge {
 
                         <div class="form-group">
                             <label id="terms-of-delivery-label">{{ translate('Terms Of Delivery') }}</label>
-                            <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="terms-of-delivery" data-live-search="true" data-hide-disabled="true" title="{{ translate('Select Terms Of Delivery') }}">
+                            <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="terms-of-delivery" data-live-search="true" data-hide-disabled="true" data-term-kind="delivery" data-detail-target="terms-of-delivery-detail" title="{{ translate('Select Terms Of Delivery') }}">
                                 @foreach(\App\Support\InvoiceType::DOMESTIC_DELIVERY_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::deliveryTermTooltip($value) }}" @selected(old('transport_delivery_type') === $value)>{{ translate($label) }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="domestic" @selected(old('transport_delivery_type') === $value)>{{ translate($label) }}</option>
                                 @endforeach
                                 @foreach(\App\Support\InvoiceType::INTERNATIONAL_DELIVERY_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::deliveryTermTooltip($value) }}" @selected(old('transport_delivery_type') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="international" @selected(old('transport_delivery_type') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <div class="selected-location-hover term-detail d-none mb-2" id="terms-of-delivery-detail" tabindex="0">
+                                <div class="selected-location-name">
+                                    <i class="las la-info-circle mr-1"></i><span></span>
+                                </div>
+                                <div class="selected-location-card"></div>
+                            </div>
                             @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
 
@@ -1237,14 +1241,20 @@ span#picker-info-stock-badge {
                     <div class="card-body">
                         <div class="form-group">
                             <label>{{ translate('Payment Terms') }}</label>
-                            <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="payment-terms" data-live-search="true" data-hide-disabled="true" title="{{ translate('Select Payment Terms') }}">
+                            <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="payment-terms" data-live-search="true" data-hide-disabled="true" data-term-kind="payment" data-detail-target="payment-terms-detail" title="{{ translate('Select Payment Terms') }}">
                                 @foreach(\App\Support\InvoiceType::DOMESTIC_PAYMENT_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="domestic" data-fullform="{{ \App\Support\InvoiceType::paymentTermTooltip($value) }}" @selected(old('payment_type') === $value)>{{ translate($label) }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="domestic" @selected(old('payment_type') === $value)>{{ translate($label) }}</option>
                                 @endforeach
                                 @foreach(\App\Support\InvoiceType::INTERNATIONAL_PAYMENT_TERMS as $value => $label)
-                                    <option value="{{ $value }}" data-invoice-type="international" data-fullform="{{ \App\Support\InvoiceType::paymentTermTooltip($value) }}" @selected(old('payment_type') === $value)>{{ $label }}</option>
+                                    <option value="{{ $value }}" data-invoice-type="international" @selected(old('payment_type') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <div class="selected-location-hover term-detail d-none mb-2" id="payment-terms-detail" tabindex="0">
+                                <div class="selected-location-name">
+                                    <i class="las la-info-circle mr-1"></i><span></span>
+                                </div>
+                                <div class="selected-location-card"></div>
+                            </div>
                             @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                         <div class="form-group">
@@ -1387,6 +1397,7 @@ span#picker-info-stock-badge {
             var customerSearchUrl = @json(route('orders.create.customers'));
             var orderNumberPreviewUrl = @json(route('orders.create.number_preview'));
             var documentSeriesCodes = @json($documentSeriesCodes ?? []);
+            var seriesCodesByName = @json($seriesCodesByName ?? []);
             var customerAddressUrlTemplate = @json(route('orders.create.customer_addresses', ['customer' => '__ID__']));
             var productSearchUrl = @json(route('orders.create.products'));
             var productQuoteUrl = @json(route('orders.create.product_quote'));
@@ -1529,27 +1540,26 @@ span#picker-info-stock-badge {
             function seriesCodeForInvoiceType() {
                 var type = String($('#document-type').val() || '');
                 if (type === '__not_in_list__') {
-                    return 'OT';
+                    var custom = String($('#document-type-custom').val() || '').trim().toLowerCase();
+                    return seriesCodesByName[custom] || '';
                 }
                 return documentSeriesCodes[type] || '';
             }
 
             function applyDocumentSeries() {
                 var series = seriesCodeForInvoiceType();
-                $('#order-code-letter').val(series);
                 $('#order-series').val(series);
                 updateOrderCodePreview();
             }
 
             function updateOrderCodePreview() {
-                var $code = $('#order-code-letter');
+                var $code = $('#order-series');
                 var letter = String($code.val() || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
                 var companyId = $('#order-company-id').val();
                 var companyCode = $('#order-company-id option:selected').data('code') || '';
                 var dateParts = String($('input[name="order_date"]').val() || '').split('-');
                 $code.val(letter);
                 $('#order-company-code').val(companyCode);
-                $('#order-series').val(letter);
                 $('#order-sequence-number').val('');
                 $('#order-no-preview').val('');
 
@@ -1574,7 +1584,8 @@ span#picker-info-stock-badge {
                             order_date: $('input[name="order_date"]').val(),
                             company_id: companyId,
                             document_type: $('#document-type').val() || '',
-                            document_type_custom: $('#document-type-custom').val() || ''
+                            document_type_custom: $('#document-type-custom').val() || '',
+                            order_code_letter: letter
                         }
                     }).done(function (response) {
                         $('#order-company-code').val(response.company_code || companyCode);
@@ -1785,41 +1796,34 @@ span#picker-info-stock-badge {
                 if ($select.data('selectpicker') && $.fn.selectpicker) {
                     $select.selectpicker('refresh');
                 }
+                renderInternationalTermDetail($select);
             }
 
-            function bindDeliveryTermTooltips($select) {
-                var $tip = $('#delivery-term-tooltip');
-                if (!$tip.length) {
-                    $tip = $('<div id="delivery-term-tooltip" class="delivery-term-tooltip d-none"></div>').appendTo('body');
+            var internationalTermDetails = @json(\App\Support\InvoiceType::internationalTermDetails());
+
+            function renderInternationalTermDetail($select) {
+                if (!$select || !$select.length || !$select.data('detail-target')) {
+                    return;
                 }
-                function hideTip() {
-                    $tip.addClass('d-none').text('');
+                var kind = $select.data('term-kind');
+                var rows = ((internationalTermDetails[kind] || {})[$select.val()]) || [];
+                var $detail = $('#' + $select.data('detail-target'));
+                if (!rows.length) {
+                    $detail.addClass('d-none').removeClass('is-open').find('.selected-location-card').empty();
+                    return;
                 }
-                function showTip(text, event) {
-                    if (!text) {
-                        hideTip();
-                        return;
-                    }
-                    $tip.text(text).removeClass('d-none').css({
-                        top: (event.clientY + 14) + 'px',
-                        left: (event.clientX + 14) + 'px'
-                    });
-                }
-                $select.on('shown.bs.select', function () {
-                    var $menu = $(this).closest('.bootstrap-select').find('.dropdown-menu');
-                    $menu.off('.deliveryTermTip');
-                    $menu.on('mousemove.deliveryTermTip', 'li', function (event) {
-                        var index = $(this).data('original-index');
-                        var $opt = typeof index !== 'undefined'
-                            ? $select.find('option').eq(index)
-                            : $select.find('option').filter(function () {
-                                return !this.disabled && $.trim($(this).text()) === $.trim($(event.currentTarget).find('.text').text() || $(event.currentTarget).text());
-                            }).first();
-                        showTip($opt.data('fullform'), event);
-                    });
-                    $menu.on('mouseleave.deliveryTermTip', hideTip);
+                var html = '';
+                rows.forEach(function (row) {
+                    var value = Array.isArray(row.value)
+                        ? row.value.map(escapeHtml).join('<br>')
+                        : escapeHtml(row.value);
+                    html += '<div class="selected-location-detail-row">'
+                        + '<span class="selected-location-detail-label">' + escapeHtml(row.label) + '</span>'
+                        + '<span>' + value + '</span></div>';
                 });
-                $select.on('hidden.bs.select', hideTip);
+                $detail.removeClass('d-none')
+                    .find('.selected-location-name span').text($.trim($select.find('option:selected').text()));
+                $detail.find('.selected-location-card').html(html);
             }
 
             function locationCountryKey(location) {
@@ -2866,7 +2870,7 @@ span#picker-info-stock-badge {
             $('#length-cm,#width-cm,#height-cm').on('input change', updateManualCbm);
             updateWeightDisplay();
             updateManualCbm();
-            $('#order-company-id,#order-code-letter,#document-type,#document-type-custom,input[name="order_date"]').on('input change', function () {
+            $('#order-company-id,#order-series,#document-type,#document-type-custom,input[name="order_date"]').on('input change', function () {
                 if (this.id === 'document-type' || this.id === 'document-type-custom') {
                     applyDocumentSeries();
                     return;
@@ -3396,8 +3400,15 @@ span#picker-info-stock-badge {
             });
 
             applyCustomerInvoiceType({type_option: 'domestic'});
-            bindDeliveryTermTooltips($('#terms-of-delivery'));
-            bindDeliveryTermTooltips($('#payment-terms'));
+            $('#terms-of-delivery, #payment-terms').on('change', function () {
+                renderInternationalTermDetail($(this));
+            });
+            $(document).on('click', '.term-detail .selected-location-name', function (event) {
+                event.preventDefault();
+                var $detail = $(this).closest('.term-detail');
+                $detail.toggleClass('is-open');
+                $(this).attr('aria-expanded', $detail.hasClass('is-open') ? 'true' : 'false');
+            });
             $('#shipping-method').trigger('change');
             $('#transport-id').trigger('change');
         })();
