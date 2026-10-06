@@ -1801,6 +1801,13 @@
                             <span class="aiz-side-nav-arrow"></span>
                         </a>
                         <ul class="aiz-side-nav-list level-2">
+                            @can('general_settings')
+                                <li class="aiz-side-nav-item">
+                                    <a href="{{ route('company_configuration.edit') }}" class="aiz-side-nav-link {{ areActiveRoutes(['company_configuration.edit', 'company_configuration.update']) }}">
+                                        <span class="aiz-side-nav-text">{{ translate('Company Configuration') }}</span>
+                                    </a>
+                                </li>
+                            @endcan
                             @can('features_activation')
                                 <li class="aiz-side-nav-item">
                                     <a href="{{route('activation.index')}}" class="aiz-side-nav-link">

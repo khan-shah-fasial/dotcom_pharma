@@ -1,8 +1,9 @@
 @php
-    $selectedCategoryIds = collect(old(
-        'deal_in_category_ids',
-        isset($company) ? $company->categories->pluck('id')->all() : []
-    ))->map(fn ($id) => (string) $id)->values()->all();
+    $savedCategoryIds = (isset($company) && $company->exists) ? $company->categories->pluck('id')->all() : [];
+    $selectedCategoryIds = collect(old('deal_in_category_ids', $savedCategoryIds))
+        ->map(fn ($id) => (string) $id)
+        ->values()
+        ->all();
 @endphp
 
 <style>
@@ -52,10 +53,16 @@
         {{ translate('Company Name') }} <span class="text-danger">*</span>
     </label>
     <div class="col-md-9">
-        <input type="text" id="company_name" name="company_name"
-            class="form-control @error('company_name') is-invalid @enderror"
-            value="{{ old('company_name', $company->company_name ?? '') }}" maxlength="255" required>
-        @error('company_name') <span class="invalid-feedback">{{ $message }}</span> @enderror
+        @if (!empty($lockCompanyName))
+            <input type="text" id="company_name" class="form-control" maxlength="255"
+                value="{{ \App\Models\CompanyConfiguration::BILLING_NAME }}" disabled>
+            <small class="text-muted">{{ translate('Billing company name is locked.') }}</small>
+        @else
+            <input type="text" id="company_name" name="company_name"
+                class="form-control @error('company_name') is-invalid @enderror"
+                value="{{ old('company_name', $company->company_name ?? '') }}" maxlength="255" required>
+            @error('company_name') <span class="invalid-feedback">{{ $message }}</span> @enderror
+        @endif
     </div>
 </div>
 
@@ -70,6 +77,81 @@
         @error('full_address') <span class="invalid-feedback">{{ $message }}</span> @enderror
     </div>
 </div>
+
+@if (!empty($locationReady))
+    @php
+        $selectedCountry = (string) old('country_id', $company->country_id ?? '');
+        $selectedState = (string) old('state_id', $company->state_id ?? '');
+        $selectedCity = (string) old('city_id', $company->city_id ?? '');
+        $selectedDistrict = (string) old('district', $company->district ?? '');
+        $selectedPost = (string) old('post', $company->post ?? '');
+        $selectedVillage = (string) old('village', $company->village ?? '');
+        $selectedPincode = (string) old('pincode', $company->pincode ?? '');
+    @endphp
+    <div class="form-group row">
+        <label class="col-md-3 col-form-label">{{ translate('Location') }}</label>
+        <div class="col-md-9">
+            <div class="row gutters-5">
+                <div class="col-md-4 mb-3">
+                    <label for="company_country_id">{{ translate('Country') }} <span class="text-danger">*</span></label>
+                    <select name="country_id" id="company_country_id" class="form-control aiz-selectpicker" data-live-search="true" required>
+                        <option value="">{{ translate('Select Country') }}</option>
+                        @foreach ($countries as $country)
+                            <option value="{{ $country->id }}" @selected($selectedCountry === (string) $country->id)>{{ $country->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('country_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="company_state_id">{{ translate('State') }} <span class="text-danger">*</span></label>
+                    <select name="state_id" id="company_state_id" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ $selectedState }}" required>
+                        <option value="">{{ translate('Select State') }}</option>
+                    </select>
+                    @error('state_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="company_district">{{ translate('District') }} <span class="text-danger">*</span></label>
+                    <select name="district" id="company_district" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ $selectedDistrict }}" required>
+                        <option value="">{{ translate('Select District') }}</option>
+                    </select>
+                    @error('district') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="company_city_id">{{ translate('City') }} <span class="text-danger">*</span></label>
+                    <select name="city_id" id="company_city_id" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ $selectedCity }}" required>
+                        <option value="">{{ translate('Select City') }}</option>
+                    </select>
+                    @error('city_id') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="company_post">{{ translate('Post') }} <span class="text-danger">*</span></label>
+                    <select name="post" id="company_post" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ $selectedPost }}" required>
+                        <option value="">{{ translate('Select Post') }}</option>
+                    </select>
+                    @error('post') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="company_village">{{ translate('Village') }} <span class="text-danger">*</span></label>
+                    <select name="village" id="company_village" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ $selectedVillage }}" required>
+                        <option value="">{{ translate('Select Village') }}</option>
+                    </select>
+                    @error('village') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="company_pincode">{{ translate('Pincode') }} <span class="text-danger">*</span></label>
+                    <select name="pincode" id="company_pincode" class="form-control aiz-selectpicker" data-live-search="true" data-selected="{{ $selectedPincode }}" required>
+                        <option value="">{{ translate('Select Pincode') }}</option>
+                    </select>
+                    @error('pincode') <span class="text-danger small">{{ $message }}</span> @enderror
+                </div>
+            </div>
+        </div>
+    </div>
+@else
+    <div class="alert alert-soft-warning">
+        {{ translate('Location fields are waiting for the database update. Run the company location SQL, then reload this page.') }}
+    </div>
+@endif
 
 <div class="row">
     <div class="col-lg-6">
@@ -218,4 +300,156 @@
             });
         });
     </script>
+    @if (!empty($locationReady))
+        <script>
+            $(document).ready(function () {
+                const locationPlaceholder = @json(translate('Select'));
+                const locationUrl = @json(route('companies.location.options'));
+
+                function refreshCompanyPicker($el) {
+                    if (window.AIZ && AIZ.plugins && typeof AIZ.plugins.bootstrapSelect === 'function') {
+                        AIZ.plugins.bootstrapSelect('refresh');
+                    } else if ($.fn.selectpicker) {
+                        $el.selectpicker('refresh');
+                    }
+                }
+
+                function setCompanyLocationOptions(field, options, selected) {
+                    const $select = $('#company_' + field);
+                    const finalSelected = selected === undefined || selected === null ? '' : String(selected);
+                    const list = (options || []).slice();
+
+                    if (finalSelected !== '' && !list.some(function (opt) { return String(opt.id) === String(finalSelected); })) {
+                        list.push({ id: finalSelected, name: finalSelected });
+                    }
+
+                    $select.empty();
+                    $select.append('<option value="">' + locationPlaceholder + '</option>');
+                    list.forEach(function (opt) {
+                        $select.append($('<option>', { value: opt.id, text: opt.name }));
+                    });
+
+                    if (finalSelected !== '') {
+                        $select.val(String(finalSelected));
+                    }
+
+                    $select.data('selected', '');
+                    refreshCompanyPicker($select);
+                }
+
+                function populateCompanyPincodes(preserveSelected) {
+                    const village = $('#company_village').val();
+                    if (!village) {
+                        setCompanyLocationOptions('pincode', [], '');
+                        return;
+                    }
+
+                    $.get(locationUrl, companyLocationParams()).done(function (resp) {
+                        const selected = preserveSelected ? $('#company_pincode').data('selected') : '';
+                        setCompanyLocationOptions('pincode', resp.pincodes || [], selected);
+                    });
+                }
+
+                function populateCompanyVillages(preserveSelected) {
+                    const post = $('#company_post').val();
+                    if (!post) {
+                        setCompanyLocationOptions('village', [], '');
+                        setCompanyLocationOptions('pincode', [], '');
+                        return;
+                    }
+
+                    $.get(locationUrl, companyLocationParams()).done(function (resp) {
+                        const selected = preserveSelected ? $('#company_village').data('selected') : '';
+                        setCompanyLocationOptions('village', resp.villages || [], selected);
+                        populateCompanyPincodes(preserveSelected);
+                    });
+                }
+
+                function populateCompanyPosts(preserveSelected) {
+                    const district = $('#company_district').val();
+                    const cityId = $('#company_city_id').val();
+                    if (!district || !cityId) {
+                        setCompanyLocationOptions('post', [], '');
+                        setCompanyLocationOptions('village', [], '');
+                        setCompanyLocationOptions('pincode', [], '');
+                        return;
+                    }
+
+                    $.get(locationUrl, companyLocationParams()).done(function (resp) {
+                        const selected = preserveSelected ? $('#company_post').data('selected') : '';
+                        setCompanyLocationOptions('post', resp.posts || [], selected);
+                        populateCompanyVillages(preserveSelected);
+                    });
+                }
+
+                function populateCompanyDistricts(preserveSelected) {
+                    const stateId = $('#company_state_id').val();
+                    if (!stateId) {
+                        setCompanyLocationOptions('district', [], '');
+                        setCompanyLocationOptions('city_id', [], '');
+                        setCompanyLocationOptions('post', [], '');
+                        setCompanyLocationOptions('village', [], '');
+                        setCompanyLocationOptions('pincode', [], '');
+                        return;
+                    }
+
+                    $.get(locationUrl, companyLocationParams()).done(function (resp) {
+                        const selectedDistrict = preserveSelected ? $('#company_district').data('selected') : '';
+                        const selectedCity = preserveSelected ? $('#company_city_id').data('selected') : '';
+                        setCompanyLocationOptions('district', resp.districts || [], selectedDistrict);
+                        setCompanyLocationOptions('city_id', resp.cities || [], selectedCity);
+                        populateCompanyPosts(preserveSelected);
+                    });
+                }
+
+                function populateCompanyStates(preserveSelected) {
+                    const countryId = $('#company_country_id').val();
+                    if (!countryId) {
+                        setCompanyLocationOptions('state_id', [], '');
+                        setCompanyLocationOptions('district', [], '');
+                        setCompanyLocationOptions('city_id', [], '');
+                        setCompanyLocationOptions('post', [], '');
+                        setCompanyLocationOptions('village', [], '');
+                        setCompanyLocationOptions('pincode', [], '');
+                        return;
+                    }
+
+                    $.get(locationUrl, { country_id: countryId }).done(function (resp) {
+                        const selected = preserveSelected ? $('#company_state_id').data('selected') : '';
+                        setCompanyLocationOptions('state_id', resp.states || [], selected);
+                        populateCompanyDistricts(preserveSelected);
+                    });
+                }
+
+                function companyLocationParams() {
+                    return {
+                        country_id: $('#company_country_id').val() || '',
+                        state: $('#company_state_id').val() || '',
+                        district: $('#company_district').val() || '',
+                        city: $('#company_city_id').val() || '',
+                        post: $('#company_post').val() || '',
+                        village: $('#company_village').val() || ''
+                    };
+                }
+
+                populateCompanyStates(true);
+
+                $('#company_country_id').on('change', function () {
+                    populateCompanyStates(false);
+                });
+                $('#company_state_id').on('change', function () {
+                    populateCompanyDistricts(false);
+                });
+                $('#company_district, #company_city_id').on('change', function () {
+                    populateCompanyPosts(false);
+                });
+                $('#company_post').on('change', function () {
+                    populateCompanyVillages(false);
+                });
+                $('#company_village').on('change', function () {
+                    populateCompanyPincodes(false);
+                });
+            });
+        </script>
+    @endif
 @endpush

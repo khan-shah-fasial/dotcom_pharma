@@ -15,6 +15,7 @@ use App\Http\Controllers\CarrierController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CompanyConfigurationController;
 use App\Http\Controllers\SeriesMasterController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\ContactController;
@@ -361,7 +362,13 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     });
 
     // Company Master
+    Route::get('companies/location-options', [CompanyController::class, 'locationOptions'])->name('companies.location.options');
     Route::resource('companies', CompanyController::class);
+
+    Route::controller(CompanyConfigurationController::class)->group(function () {
+        Route::get('/company-configuration', 'edit')->name('company_configuration.edit');
+        Route::post('/company-configuration', 'update')->name('company_configuration.update');
+    });
     Route::get('series/destroy/{seriesMaster}', [SeriesMasterController::class, 'destroy'])->name('series.destroy');
     Route::resource('series', SeriesMasterController::class)->parameters(['series' => 'seriesMaster'])->except(['show', 'destroy']);
 

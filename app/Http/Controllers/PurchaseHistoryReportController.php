@@ -396,6 +396,11 @@ class PurchaseHistoryReportController extends Controller
 
         $this->applyConsolidatedFilters($query, $request, $billDateSql, $billDateFrom, $billDateTo);
 
+        $activeTab = (string) $request->get('tab', 'detailed');
+        if (! in_array($activeTab, ['detailed', 'compact'], true)) {
+            $activeTab = 'detailed';
+        }
+
         $priceSortLabels = [
             'pts' => 'PTS',
             'ptr' => 'PTR',
@@ -419,20 +424,50 @@ class PurchaseHistoryReportController extends Controller
             'mrp_rate' => 'purchase_history.mrp_rate',
             'gross_amount' => 'gross_amount',
         ];
+        $compactSortKeys = [
+            'product_sku',
+            'product_name',
+            'packing',
+            'quantity',
+            'sale_rate',
+            'gst_amount',
+            'mrp_rate',
+            'gross_amount',
+            'bill_count',
+            'bill_year',
+            'pts',
+            'ptr',
+            'ptd',
+            'govt',
+            'export',
+            'customer_price',
+            'current_mrp',
+        ];
         $sortAliases = [
             'invoice_series' => 'bill_series',
             'sku' => 'product_sku',
             'product' => 'product_name',
             'pack' => 'packing',
         ];
-        $sortBy = (string) $request->get('sort_by', 'bill_series');
-        $sortBy = $sortAliases[$sortBy] ?? $sortBy;
-        if (! array_key_exists($sortBy, $sortableColumns) && ! array_key_exists($sortBy, $priceSortLabels)) {
-            $sortBy = 'bill_series';
+        $requestedSortBy = $sortAliases[(string) $request->get('sort_by', '')] ?? (string) $request->get('sort_by', '');
+        $requestedSortDir = strtolower((string) $request->get('sort_dir', ''));
+        if (! in_array($requestedSortDir, ['asc', 'desc'], true)) {
+            $requestedSortDir = '';
         }
-        $sortDir = strtolower((string) $request->get('sort_dir', 'desc'));
-        if (! in_array($sortDir, ['asc', 'desc'], true)) {
-            $sortDir = 'desc';
+
+        if ($activeTab === 'compact') {
+            $sortBy = in_array($requestedSortBy, $compactSortKeys, true) ? $requestedSortBy : 'product_sku';
+            $sortDir = $requestedSortDir !== '' && $sortBy === $requestedSortBy ? $requestedSortDir : 'asc';
+            $detailedSortBy = 'bill_series';
+            $detailedSortDir = 'desc';
+        } else {
+            $sortBy = $requestedSortBy !== '' ? $requestedSortBy : 'bill_series';
+            if (! array_key_exists($sortBy, $sortableColumns) && ! array_key_exists($sortBy, $priceSortLabels)) {
+                $sortBy = 'bill_series';
+            }
+            $sortDir = $requestedSortDir !== '' ? $requestedSortDir : 'desc';
+            $detailedSortBy = $sortBy;
+            $detailedSortDir = $sortDir;
         }
 
         $grossAmountExpression = $this->sumExpression('final_amount');
@@ -475,8 +510,8 @@ class PurchaseHistoryReportController extends Controller
             ])
             ->groupByRaw("CASE WHEN COALESCE(TRIM(purchase_history.invoice_number), '') = '' THEN purchase_history.id ELSE 0 END");
 
-        $databaseSortColumn = $sortableColumns[$sortBy] ?? 'purchase_history.invoice_series';
-        $reportQuery->orderBy($databaseSortColumn, isset($priceSortLabels[$sortBy]) ? 'desc' : $sortDir);
+        $databaseSortColumn = $sortableColumns[$detailedSortBy] ?? 'purchase_history.invoice_series';
+        $reportQuery->orderBy($databaseSortColumn, isset($priceSortLabels[$detailedSortBy]) ? 'desc' : $detailedSortDir);
 
         foreach ([
             'bill_date_sort',
@@ -494,7 +529,7 @@ class PurchaseHistoryReportController extends Controller
         $reportRows = $reportQuery->get();
         $currentPriceMap = $this->buildCurrentPriceMap($reportRows);
 
-        if (isset($priceSortLabels[$sortBy])) {
+        if ($activeTab === 'detailed' && isset($priceSortLabels[$sortBy])) {
             $priceLabel = $priceSortLabels[$sortBy];
             $priceValue = function ($row) use ($currentPriceMap, $priceLabel) {
                 $currentSkuPrice = $currentPriceMap[$row->product_sku] ?? null;
@@ -513,12 +548,35 @@ class PurchaseHistoryReportController extends Controller
             $reportRows = ($sortDir === 'asc' ? $reportRows->sortBy($priceValue) : $reportRows->sortByDesc($priceValue))->values();
         }
 
+        $compactRows = $this->buildCompactRows($reportRows, $currentPriceMap);
+        if ($activeTab === 'compact') {
+            $compactRows = $this->sortCompactRows($compactRows, $sortBy, $sortDir);
+        }
+
         $contactNumbers = collect([
             $customer?->prim_mobile_no_business,
             $customer?->prim_whats_app_no_business,
             $customer?->prim_mobile_no,
             $customer?->prim_whats_app_no,
         ])->filter(fn ($value) => filled($value))->unique()->values();
+
+        $countries = Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']);
+        $states = collect();
+        $cities = collect();
+        if ($request->filled('country_id')) {
+            $states = State::query()
+                ->where('status', 1)
+                ->where('country_id', (int) $request->get('country_id'))
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        }
+        if ($request->filled('state_id')) {
+            $cities = City::query()
+                ->where('status', 1)
+                ->where('state_id', (int) $request->get('state_id'))
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        }
 
         return view('backend.purchase_history.consolidated', [
             'account'        => $account,
@@ -529,9 +587,15 @@ class PurchaseHistoryReportController extends Controller
             'filterBillDateFrom' => $billDateFrom,
             'filterBillDateTo'   => $billDateTo,
             'reportRows'     => $reportRows,
+            'compactRows'    => $compactRows,
             'currentPriceMap' => $currentPriceMap,
             'sortBy'         => $sortBy,
             'sortDir'        => $sortDir,
+            'activeTab'      => $activeTab,
+            'compactSortKeys' => $compactSortKeys,
+            'countries'      => $countries,
+            'states'         => $states,
+            'cities'         => $cities,
         ]);
     }
 
@@ -1155,6 +1219,211 @@ class PurchaseHistoryReportController extends Controller
     private function sumExpression(string $column): string
     {
         return "COALESCE(SUM(CAST(NULLIF(REPLACE(purchase_history.{$column}, ',', ''), '') AS DECIMAL(20, 4))), 0)";
+    }
+
+    private function buildCompactRows($reportRows, array $currentPriceMap)
+    {
+        $groups = [];
+
+        foreach ($reportRows->values() as $index => $row) {
+            $sku = trim((string) ($row->product_sku ?? ''));
+            $key = $sku !== '' ? $sku : 'row:' . $row->id;
+            $serial = $index + 1;
+
+            if (! isset($groups[$key])) {
+                $groups[$key] = [
+                    'sku' => $sku,
+                    'sr_from' => $serial,
+                    'sr_to' => $serial,
+                    'names' => [],
+                    'packs' => [],
+                    'bill_count' => 0,
+                    'total_qty' => 0.0,
+                    'total_tax' => 0.0,
+                    'total_gross' => 0.0,
+                    'sale_rates' => [],
+                    'mrps' => [],
+                    'earliest_ts' => null,
+                    'earliest_series' => '',
+                    'latest_ts' => null,
+                    'latest_series' => '',
+                    'years' => [],
+                ];
+            }
+
+            $groups[$key]['sr_from'] = min($groups[$key]['sr_from'], $serial);
+            $groups[$key]['sr_to'] = max($groups[$key]['sr_to'], $serial);
+            $groups[$key]['bill_count']++;
+            $groups[$key]['total_qty'] += $this->numericAmount($row->quantity);
+            $groups[$key]['total_tax'] += $this->numericAmount($row->gst_amount);
+            $groups[$key]['total_gross'] += $this->numericAmount($row->gross_amount);
+
+            $saleRate = $this->normalizePrice($row->sale_rate);
+            if ($saleRate !== null) {
+                $groups[$key]['sale_rates'][] = $saleRate;
+            }
+            $mrp = $this->normalizePrice($row->mrp_rate);
+            if ($mrp !== null) {
+                $groups[$key]['mrps'][] = $mrp;
+            }
+
+            $productName = $this->consolidatedProductName($row);
+            if ($productName !== '' && ! in_array($productName, $groups[$key]['names'], true)) {
+                $groups[$key]['names'][] = $productName;
+            }
+            $pack = trim((string) ($row->packing ?? ''));
+            if ($pack !== '' && ! in_array($pack, $groups[$key]['packs'], true)) {
+                $groups[$key]['packs'][] = $pack;
+            }
+
+            $billTimestamp = $this->reportDateTimestamp($row->bill_date);
+            $series = trim((string) ($row->invoice_series ?? ''));
+            if ($billTimestamp !== null) {
+                $groups[$key]['years'][] = (int) date('Y', $billTimestamp);
+                if ($groups[$key]['earliest_ts'] === null || $billTimestamp < $groups[$key]['earliest_ts']) {
+                    $groups[$key]['earliest_ts'] = $billTimestamp;
+                    $groups[$key]['earliest_series'] = $series;
+                }
+                if ($groups[$key]['latest_ts'] === null || $billTimestamp > $groups[$key]['latest_ts']) {
+                    $groups[$key]['latest_ts'] = $billTimestamp;
+                    $groups[$key]['latest_series'] = $series;
+                }
+            }
+        }
+
+        return collect($groups)->map(function (array $group) use ($currentPriceMap) {
+            $prices = collect($currentPriceMap[$group['sku']]['default'] ?? [])
+                ->mapWithKeys(fn ($line) => [(string) ($line['label'] ?? '') => (string) ($line['value'] ?? '-')]);
+            $years = collect($group['years'])->filter();
+            $yearStart = $years->min();
+            $yearEnd = $years->max();
+            $saleRates = collect($group['sale_rates']);
+            $mrps = collect($group['mrps']);
+            $priceNumber = function (string $label) use ($prices) {
+                return (float) preg_replace('/[^0-9.\-]/', '', str_replace(',', '', (string) $prices->get($label, '0')));
+            };
+
+            return (object) [
+                'sku' => $group['sku'],
+                'sr_label' => $group['sr_from'] === $group['sr_to']
+                    ? (string) $group['sr_from']
+                    : $group['sr_from'] . '-' . $group['sr_to'],
+                'sr_from' => $group['sr_from'],
+                'bill_year_label' => ($yearStart && $yearEnd && $yearStart !== $yearEnd)
+                    ? $yearStart . '-' . $yearEnd
+                    : (string) ($yearStart ?: ''),
+                'bill_year_start' => (int) ($yearStart ?: 0),
+                'bill_series_label' => $this->seriesRangeLabel($group['earliest_series'], $group['latest_series']),
+                'bill_count' => $group['bill_count'],
+                'product_name' => implode(' / ', $group['names']),
+                'pack' => implode(' / ', $group['packs']),
+                'total_qty' => $group['total_qty'],
+                'sale_rate_label' => $this->numberRangeLabel($saleRates),
+                'sale_rate_min' => $saleRates->isEmpty() ? 0 : (float) $saleRates->min(),
+                'total_tax' => $group['total_tax'],
+                'mrp_label' => $this->numberRangeLabel($mrps),
+                'mrp_min' => $mrps->isEmpty() ? 0 : (float) $mrps->min(),
+                'total_gross' => $group['total_gross'],
+                'prices' => $prices,
+                'pts' => $priceNumber('PTS'),
+                'ptr' => $priceNumber('PTR'),
+                'ptd' => $priceNumber('PTD'),
+                'govt' => $priceNumber('Govt.'),
+                'export_price' => $priceNumber('Exp'),
+                'customer_price' => $priceNumber('Customer'),
+                'current_mrp' => $priceNumber('M.R.P'),
+            ];
+        })->values();
+    }
+
+    private function sortCompactRows($rows, string $sortBy, string $sortDir)
+    {
+        $value = function ($row) use ($sortBy) {
+            return match ($sortBy) {
+                'product_name' => strtolower((string) $row->product_name),
+                'packing' => strtolower((string) $row->pack),
+                'quantity' => $row->total_qty,
+                'sale_rate' => $row->sale_rate_min,
+                'gst_amount' => $row->total_tax,
+                'mrp_rate' => $row->mrp_min,
+                'gross_amount' => $row->total_gross,
+                'bill_count' => $row->bill_count,
+                'bill_year' => $row->bill_year_start,
+                'pts' => $row->pts,
+                'ptr' => $row->ptr,
+                'ptd' => $row->ptd,
+                'govt' => $row->govt,
+                'export' => $row->export_price,
+                'customer_price' => $row->customer_price,
+                'current_mrp' => $row->current_mrp,
+                default => strtolower((string) $row->sku),
+            };
+        };
+
+        $sorted = $sortDir === 'desc' ? $rows->sortByDesc($value) : $rows->sortBy($value);
+
+        return $sorted->values();
+    }
+
+    private function consolidatedProductName($row): string
+    {
+        $productName = trim((string) ($row->product_name ?: $row->product_sku));
+        $variant = trim((string) ($row->product_variant ?? ''));
+        if ($variant !== '' && ! str_contains($productName, $variant)) {
+            $productName = trim($productName . ' ' . $variant);
+        }
+
+        return $productName;
+    }
+
+    private function seriesRangeLabel(string $from, string $to): string
+    {
+        if ($from === '' && $to === '') {
+            return '';
+        }
+        if ($from === '' || $to === '' || $from === $to) {
+            return $from !== '' ? $from : $to;
+        }
+
+        return $from . ' To ' . $to;
+    }
+
+    private function numberRangeLabel($values): string
+    {
+        $numbers = collect($values)
+            ->map(fn ($value) => $this->normalizePrice($value))
+            ->filter(fn ($value) => $value !== null);
+
+        if ($numbers->isEmpty()) {
+            return '';
+        }
+
+        $minimum = number_format((float) $numbers->min(), 2, '.', '');
+        $maximum = number_format((float) $numbers->max(), 2, '.', '');
+
+        return $minimum . ' to ' . $maximum;
+    }
+
+    private function numericAmount($value): float
+    {
+        return $this->normalizePrice($value) ?? 0.0;
+    }
+
+    private function reportDateTimestamp($value): ?int
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        foreach (['Y-m-d H:i:s', 'Y-m-d', 'd-m-Y', 'd/m/Y'] as $format) {
+            $date = \DateTimeImmutable::createFromFormat('!' . $format, $value);
+            if ($date && $date->format($format) === $value) {
+                return $date->getTimestamp();
+            }
+        }
+
+        return null;
     }
 
     private function buildCurrentPriceMap($reportRows): array

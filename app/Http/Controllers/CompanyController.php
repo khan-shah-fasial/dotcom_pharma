@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CompanyRequest;
 use App\Models\Category;
 use App\Models\Company;
+use App\Models\Country;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ class CompanyController extends Controller
         $this->middleware(['permission:view_all_customers'])->only(['edit', 'update']);
         $this->middleware(['permission:add_customer'])->only(['create', 'store']);
         $this->middleware(['permission:delete_customer'])->only(['destroy']);
+        $this->middleware(['permission:view_all_companies|add_customer|view_all_customers|general_settings'])->only(['locationOptions']);
     }
 
     public function index(Request $request)
@@ -109,10 +111,29 @@ class CompanyController extends Controller
 
     public function show(Company $company)
     {
-        $company->load(['categories', 'creator']);
+        $relations = ['categories', 'creator'];
+        $locationReady = Company::locationColumnsReady();
+        if ($locationReady) {
+            $relations = array_merge($relations, ['country', 'state', 'city']);
+        }
+        $company->load($relations);
         $categories = $this->allCategories();
 
-        return view('backend.company.show', compact('company', 'categories'));
+        return view('backend.company.show', compact('company', 'categories', 'locationReady'));
+    }
+
+    public function locationOptions(Request $request)
+    {
+        $validated = $request->validate([
+            'country_id' => 'nullable|integer|exists:countries,id',
+            'state' => 'nullable|integer|exists:states,id',
+            'district' => 'nullable|string|max:255',
+            'city' => 'nullable|integer|exists:cities,id',
+            'post' => 'nullable|string|max:255',
+            'village' => 'nullable|string|max:255',
+        ]);
+
+        return response()->json(Company::locationChoices($validated));
     }
 
     public function edit(Company $company)
@@ -202,6 +223,9 @@ class CompanyController extends Controller
                 ->orderBy('name')
                 ->get(),
             'companyTypes' => $this->companyTypeOptions(),
+            'countries' => Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']),
+            'locationReady' => Company::locationColumnsReady(),
+            'lockCompanyName' => false,
         ];
     }
 

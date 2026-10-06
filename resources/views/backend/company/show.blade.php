@@ -62,6 +62,23 @@
                     <div class="font-weight-bold" style="white-space: pre-line;">{{ $company->full_address }}</div>
                 </div>
 
+                @if (!empty($locationReady))
+                    @foreach ([
+                        'Country' => optional($company->country)->name,
+                        'State' => optional($company->state)->name,
+                        'District' => $company->district,
+                        'City' => optional($company->city)->name,
+                        'Post' => $company->post,
+                        'Village' => $company->village,
+                        'Pincode' => $company->pincode,
+                    ] as $label => $value)
+                        <div class="col-md-4 mb-3">
+                            <div class="text-muted fs-12">{{ translate($label) }}</div>
+                            <div class="font-weight-bold">{{ $value ?: '-' }}</div>
+                        </div>
+                    @endforeach
+                @endif
+
                 <div class="col-12 mb-3">
                     <div class="text-muted fs-12">{{ translate('Deal In Category') }}</div>
                     <div class="mt-2">

@@ -2,11 +2,12 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Company;
+use App\Models\CompanyConfiguration;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
-class CompanyRequest extends FormRequest
+class CompanyConfigurationRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -17,7 +18,6 @@ class CompanyRequest extends FormRequest
     {
         $fields = [
             'code',
-            'company_name',
             'full_address',
             'district',
             'post',
@@ -30,6 +30,7 @@ class CompanyRequest extends FormRequest
             'email',
             'company_type',
             'company_type_manual',
+            'security_password',
         ];
 
         $data = [];
@@ -43,19 +44,20 @@ class CompanyRequest extends FormRequest
         }
         unset($data['company_type_manual']);
 
+        $data['company_name'] = CompanyConfiguration::BILLING_NAME;
+
         $this->merge($data);
     }
 
     public function rules(): array
     {
-        $company = $this->route('company');
+        $existing = CompanyConfiguration::tableReady() ? CompanyConfiguration::current() : null;
 
         $rules = [
             'code' => [
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('companies', 'code')->ignore($company),
             ],
             'company_name' => ['required', 'string', 'max:255'],
             'full_address' => ['required', 'string', 'max:5000'],
@@ -70,9 +72,11 @@ class CompanyRequest extends FormRequest
             'sign' => ['nullable', 'integer', 'exists:uploads,id'],
             'deal_in_category_ids' => ['required', 'array', 'min:1'],
             'deal_in_category_ids.*' => ['required', 'integer', 'distinct', 'exists:categories,id'],
+            'security_password' => ['required', 'string', 'max:255'],
         ];
 
-        if (Company::locationColumnsReady()) {
+        if (CompanyConfiguration::tableReady()) {
+            $rules['code'][] = Rule::unique('company_configurations', 'code')->ignore($existing);
             $rules['country_id'] = ['required', 'integer', 'exists:countries,id'];
             $rules['state_id'] = ['required', 'integer', 'exists:states,id'];
             $rules['city_id'] = ['required', 'integer', 'exists:cities,id'];
@@ -83,6 +87,35 @@ class CompanyRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $expected = (string) config('app.billing_company_password');
+            $given = (string) $this->input('security_password');
+
+            if ($expected === '') {
+                $validator->errors()->add(
+                    'security_password',
+                    translate('Billing company password is not configured.')
+                );
+
+                return;
+            }
+
+            if ($given === '') {
+                return;
+            }
+
+            $matches = strlen($expected) === strlen($given) && hash_equals($expected, $given);
+            if (!$matches) {
+                $validator->errors()->add(
+                    'security_password',
+                    translate('Security password is incorrect.')
+                );
+            }
+        });
     }
 
     public function messages(): array
