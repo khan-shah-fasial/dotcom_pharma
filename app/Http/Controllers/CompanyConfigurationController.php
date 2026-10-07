@@ -6,6 +6,7 @@ use App\Http\Requests\CompanyConfigurationRequest;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\CompanyConfiguration;
+use App\Models\CompanyFile;
 use App\Models\Country;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -24,8 +25,14 @@ class CompanyConfigurationController extends Controller
             ? (CompanyConfiguration::current() ?? new CompanyConfiguration())
             : new CompanyConfiguration();
 
+        $filesReady = CompanyFile::tableReady();
         if ($tableReady && $company->exists) {
-            $company->load('categories');
+            $relations = ['categories'];
+            if ($filesReady) {
+                $relations[] = 'certificates.upload';
+                $relations[] = 'documents.upload';
+            }
+            $company->load($relations);
         }
 
         return view('backend.setup_configurations.company_configuration.edit', array_merge(
@@ -34,6 +41,7 @@ class CompanyConfigurationController extends Controller
                 'company' => $company,
                 'tableReady' => $tableReady,
                 'locationReady' => $tableReady,
+                'filesReady' => $filesReady,
                 'lockCompanyName' => true,
             ]
         ));
@@ -47,7 +55,7 @@ class CompanyConfigurationController extends Controller
             return back()->withInput();
         }
 
-        $data = $request->safe()->except(['deal_in_category_ids', 'security_password']);
+        $data = $request->safe()->except(['deal_in_category_ids', 'security_password', 'certificates', 'documents']);
         $data['company_name'] = CompanyConfiguration::BILLING_NAME;
 
         try {
@@ -57,6 +65,7 @@ class CompanyConfigurationController extends Controller
                 if ($existing) {
                     $existing->update($data);
                     $existing->categories()->sync($request->validated('deal_in_category_ids'));
+                    $this->syncFiles($existing, $request);
 
                     return $existing;
                 }
@@ -65,6 +74,7 @@ class CompanyConfigurationController extends Controller
                 $data['created_by'] = auth()->id();
                 $company = CompanyConfiguration::create($data);
                 $company->categories()->sync($request->validated('deal_in_category_ids'));
+                $this->syncFiles($company, $request);
 
                 return $company;
             });
@@ -81,6 +91,20 @@ class CompanyConfigurationController extends Controller
         flash(translate('Billing company has been saved successfully'))->success();
 
         return redirect()->route('company_configuration.edit');
+    }
+
+    private function syncFiles(CompanyConfiguration $company, CompanyConfigurationRequest $request): void
+    {
+        if (!CompanyFile::tableReady()) {
+            return;
+        }
+
+        CompanyFile::replaceFor(
+            CompanyFile::OWNER_BILLING,
+            $company->id,
+            $request->validated('certificates') ?? [],
+            $request->validated('documents') ?? []
+        );
     }
 
     private function formData(): array

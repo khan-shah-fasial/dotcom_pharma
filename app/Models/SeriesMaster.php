@@ -74,6 +74,40 @@ class SeriesMaster extends Model
         return '';
     }
 
+    public static function invoiceTypeOptions(): array
+    {
+        if (!Schema::hasTable('series_masters')) {
+            return [];
+        }
+
+        $query = static::query()->whereRaw("TRIM(COALESCE(name, '')) <> ''")->orderBy('name');
+        if (Schema::hasColumn('series_masters', 'status')) {
+            $query->where('status', 1);
+        }
+
+        $options = [];
+        $seen = [];
+        foreach ($query->get(['name', 'code']) as $row) {
+            $name = trim((string) $row->name);
+            $key = strtolower($name);
+            if ($name === '' || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $options[] = [
+                'name' => $name,
+                'code' => self::normalizeCode($row->code),
+            ];
+        }
+
+        return $options;
+    }
+
+    public static function invoiceTypeNames(): array
+    {
+        return array_column(self::invoiceTypeOptions(), 'name');
+    }
+
     public static function codeForInvoiceType($documentType, $custom = null): string
     {
         $documentType = trim((string) $documentType);
@@ -85,6 +119,13 @@ class SeriesMaster extends Model
 
         if ($documentType !== '' && isset(DocumentType::TYPES[$documentType])) {
             return self::codeForName(DocumentType::TYPES[$documentType]);
+        }
+
+        if ($documentType !== '') {
+            $fromName = self::codeForName($documentType);
+            if ($fromName !== '') {
+                return $fromName;
+            }
         }
 
         if ($custom !== '') {

@@ -95,15 +95,33 @@ class DocumentType
             ];
         }
 
-        if (!array_key_exists($type, self::TYPES)) {
+        if (array_key_exists($type, self::TYPES)) {
             return [
-                'document_type' => null,
+                'document_type' => $type,
                 'document_type_custom' => null,
             ];
         }
 
+        $labels = [];
+        foreach (self::TYPES as $key => $label) {
+            $labels[strtolower($label)] = $key;
+        }
+        if (isset($labels[strtolower($type)])) {
+            return [
+                'document_type' => $labels[strtolower($type)],
+                'document_type_custom' => null,
+            ];
+        }
+
+        if ($type !== '') {
+            return [
+                'document_type' => null,
+                'document_type_custom' => $type,
+            ];
+        }
+
         return [
-            'document_type' => $type,
+            'document_type' => null,
             'document_type_custom' => null,
         ];
     }
@@ -115,7 +133,16 @@ class DocumentType
             return $custom;
         }
 
-        return self::TYPES[$type] ?? '—';
+        return self::TYPES[$type] ?? ($type !== '' ? $type : '—');
+    }
+
+    public static function selectableValues(): array
+    {
+        return array_values(array_unique(array_merge(
+            array_keys(self::TYPES),
+            \App\Models\SeriesMaster::invoiceTypeNames(),
+            ['__not_in_list__']
+        )));
     }
 
     public static function seriesCode($type, $custom = null): string

@@ -12,7 +12,7 @@
     </div>
 </div>
 
-<form action="{{ route('batch_masters.update', $batch->id) }}" method="POST" id="batch-master-form">
+<form action="{{ route('batch_masters.update', $batch->id) }}" method="POST" id="batch-master-form" enctype="multipart/form-data">
     @csrf
     @method('PUT')
     @include('backend.product.batch_master._form', ['batch' => $batch])

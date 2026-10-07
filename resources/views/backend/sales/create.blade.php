@@ -538,7 +538,7 @@ span#picker-info-stock-badge {
                     <div class="card-body">
                         <div class="row gutters-5">
                             <div class="col-md-6 form-group">
-                                @include('backend.sales.partials.document_type_field', ['documentTypeRequired' => true, 'documentTypes' => $documentTypes])
+                                @include('backend.sales.partials.document_type_field', ['documentTypeRequired' => true, 'invoiceTypeOptions' => $invoiceTypeOptions])
                             </div>
                             <div class="col-md-6 form-group" id="domestic-invoice-fields">
                                 <label>{{ translate('Reverse Charges') }}</label>
@@ -1538,12 +1538,13 @@ span#picker-info-stock-badge {
             }
 
             function seriesCodeForInvoiceType() {
-                var type = String($('#document-type').val() || '');
+                var $selected = $('#document-type option:selected');
+                var type = String($selected.val() || '');
                 if (type === '__not_in_list__') {
                     var custom = String($('#document-type-custom').val() || '').trim().toLowerCase();
                     return seriesCodesByName[custom] || '';
                 }
-                return documentSeriesCodes[type] || '';
+                return String($selected.data('code') || documentSeriesCodes[type] || '');
             }
 
             function applyDocumentSeries() {

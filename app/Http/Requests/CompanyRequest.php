@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Company;
+use App\Models\CompanyFile;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -43,6 +44,11 @@ class CompanyRequest extends FormRequest
         }
         unset($data['company_type_manual']);
 
+        if (CompanyFile::tableReady()) {
+            $data['certificates'] = CompanyFile::normalizeRows($this->input('certificates'));
+            $data['documents'] = CompanyFile::normalizeRows($this->input('documents'));
+        }
+
         $this->merge($data);
     }
 
@@ -71,6 +77,15 @@ class CompanyRequest extends FormRequest
             'deal_in_category_ids' => ['required', 'array', 'min:1'],
             'deal_in_category_ids.*' => ['required', 'integer', 'distinct', 'exists:categories,id'],
         ];
+
+        if (CompanyFile::tableReady()) {
+            foreach (['certificates', 'documents'] as $key) {
+                $rules[$key] = ['nullable', 'array'];
+                $rules[$key . '.*.name'] = ['required', 'string', 'max:255'];
+                $rules[$key . '.*.valid_until'] = ['nullable', 'date'];
+                $rules[$key . '.*.upload_id'] = ['required', 'integer', 'exists:uploads,id'];
+            }
+        }
 
         if (Company::locationColumnsReady()) {
             $rules['country_id'] = ['required', 'integer', 'exists:countries,id'];

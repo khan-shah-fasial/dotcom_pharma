@@ -105,6 +105,24 @@ class Company extends Model
         return $this->hasMany(Brand::class);
     }
 
+    public function certificates()
+    {
+        return $this->hasMany(CompanyFile::class, 'owner_id')
+            ->where('owner_type', CompanyFile::OWNER_COMPANY)
+            ->where('kind', CompanyFile::KIND_CERTIFICATE)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(CompanyFile::class, 'owner_id')
+            ->where('owner_type', CompanyFile::OWNER_COMPANY)
+            ->where('kind', CompanyFile::KIND_DOCUMENT)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
     public static function locationChoices(array $input): array
     {
         $countryId = $input['country_id'] ?? null;

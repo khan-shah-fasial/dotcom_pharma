@@ -242,6 +242,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/batch-masters/lookup/stocks', 'lookupStocks')->name('batch_masters.lookup.stocks');
         Route::get('/batch-masters/lookup/stock', 'lookupStock')->name('batch_masters.lookup.stock');
         Route::post('/batch-masters/update-status', 'updateStatus')->name('batch_masters.update_status');
+        Route::post('/batch-masters/reveal-rate', 'revealRate')->name('batch_masters.reveal_rate');
+        Route::get('/batch-masters/adjust', 'adjust')->name('batch_masters.adjust');
+        Route::post('/batch-masters/adjust/{id}', 'adjustStore')->name('batch_masters.adjust.store');
         Route::get('/batch-masters/{id}/edit', 'edit')->name('batch_masters.edit');
         Route::put('/batch-masters/{id}', 'update')->name('batch_masters.update');
         Route::get('/batch-masters/destroy/{id}', 'destroy')->name('batch_masters.destroy');

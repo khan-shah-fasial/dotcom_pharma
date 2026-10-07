@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\CompanyConfiguration;
+use App\Models\CompanyFile;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -46,6 +47,11 @@ class CompanyConfigurationRequest extends FormRequest
 
         $data['company_name'] = CompanyConfiguration::BILLING_NAME;
 
+        if (CompanyFile::tableReady()) {
+            $data['certificates'] = CompanyFile::normalizeRows($this->input('certificates'));
+            $data['documents'] = CompanyFile::normalizeRows($this->input('documents'));
+        }
+
         $this->merge($data);
     }
 
@@ -74,6 +80,15 @@ class CompanyConfigurationRequest extends FormRequest
             'deal_in_category_ids.*' => ['required', 'integer', 'distinct', 'exists:categories,id'],
             'security_password' => ['required', 'string', 'max:255'],
         ];
+
+        if (CompanyFile::tableReady()) {
+            foreach (['certificates', 'documents'] as $key) {
+                $rules[$key] = ['nullable', 'array'];
+                $rules[$key . '.*.name'] = ['required', 'string', 'max:255'];
+                $rules[$key . '.*.valid_until'] = ['nullable', 'date'];
+                $rules[$key . '.*.upload_id'] = ['required', 'integer', 'exists:uploads,id'];
+            }
+        }
 
         if (CompanyConfiguration::tableReady()) {
             $rules['code'][] = Rule::unique('company_configurations', 'code')->ignore($existing);

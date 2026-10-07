@@ -75,8 +75,13 @@ class TaxBatchMasterListingTest extends TestCase
         $this->actingAs($this->admin())
             ->get('/admin/batch-masters/create')
             ->assertOk()
-            ->assertSee('SKU / Product / Full Variant', false)
+            ->assertSee('Search By SKU - Product Name / Brand Name With Full Variant', false)
             ->assertSee('Live product lots and stock qty are not changed', false);
+
+        $this->actingAs($this->admin())
+            ->get('/admin/batch-masters/adjust')
+            ->assertOk()
+            ->assertSee('Batch Adjustment', false);
     }
 
     public function test_vat_and_tax_page_still_loads(): void

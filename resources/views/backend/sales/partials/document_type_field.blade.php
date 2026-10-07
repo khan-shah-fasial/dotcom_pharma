@@ -1,26 +1,35 @@
 @php
     $currentOrder = $order ?? null;
-    $documentTypeValue = old('document_type', $currentOrder->document_type ?? '');
-    $documentTypeCustom = old('document_type_custom', $currentOrder->document_type_custom ?? '');
-    $documentTypes = $documentTypes ?? \App\Support\DocumentType::TYPES;
-    $knownDocumentType = array_key_exists((string) $documentTypeValue, $documentTypes);
-    $documentTypeIsCustom = $documentTypeValue === '__not_in_list__'
-        || ($documentTypeCustom !== '' && $documentTypeCustom !== null && !$knownDocumentType);
-    if ($documentTypeIsCustom) {
-        $documentTypeValue = '__not_in_list__';
-    } elseif ($documentTypeValue === '' && count($documentTypes) === 1) {
-        $documentTypeValue = array_key_first($documentTypes);
+    $storedType = old('document_type', $currentOrder->document_type ?? '');
+    $storedCustom = old('document_type_custom', $currentOrder->document_type_custom ?? '');
+    $invoiceTypeOptions = $invoiceTypeOptions ?? \App\Models\SeriesMaster::invoiceTypeOptions();
+    $documentTypeIsCustom = (string) $storedType === '__not_in_list__';
+    $selectedInvoiceName = '';
+    if (!$documentTypeIsCustom) {
+        $label = \App\Support\DocumentType::label($storedType, $storedCustom);
+        if ($label === '—') {
+            $label = trim((string) $storedType);
+        }
+        foreach ($invoiceTypeOptions as $option) {
+            if (strcasecmp($option['name'], $label) === 0 || strcasecmp($option['name'], (string) $storedType) === 0) {
+                $selectedInvoiceName = $option['name'];
+                break;
+            }
+        }
+        if ($selectedInvoiceName === '' && (trim((string) $storedType) !== '' || trim((string) $storedCustom) !== '')) {
+            $documentTypeIsCustom = true;
+        }
     }
 @endphp
 <label for="document-type">{{ translate('Invoice Type') }} @if (!empty($documentTypeRequired))<span class="text-danger">*</span>@endif</label>
 <select class="form-control" name="document_type" id="document-type" @if (!empty($documentTypeRequired)) required @endif>
     <option value="">{{ translate('Select Invoice Type') }}</option>
-    @foreach ($documentTypes as $value => $label)
-        <option value="{{ $value }}" @selected((string) $documentTypeValue === (string) $value)>{{ translate($label) }}</option>
+    @foreach ($invoiceTypeOptions as $option)
+        <option value="{{ $option['name'] }}" data-code="{{ $option['code'] }}" @selected(!$documentTypeIsCustom && strcasecmp($selectedInvoiceName, $option['name']) === 0)>{{ $option['name'] }}</option>
     @endforeach
     <option value="__not_in_list__" @selected($documentTypeIsCustom)>{{ translate('Not in List') }}</option>
 </select>
-<input type="text" class="form-control mt-2 {{ $documentTypeIsCustom ? '' : 'd-none' }}" name="document_type_custom" id="document-type-custom" value="{{ $documentTypeIsCustom ? $documentTypeCustom : '' }}" placeholder="{{ translate('Enter invoice type') }}" maxlength="255">
+<input type="text" class="form-control mt-2 {{ $documentTypeIsCustom ? '' : 'd-none' }}" name="document_type_custom" id="document-type-custom" value="{{ $documentTypeIsCustom ? $storedCustom : '' }}" placeholder="{{ translate('Enter invoice type') }}" maxlength="255">
 @error('document_type') <div class="text-danger small">{{ $message }}</div> @enderror
 @error('document_type_custom') <div class="text-danger small">{{ $message }}</div> @enderror
 <script>

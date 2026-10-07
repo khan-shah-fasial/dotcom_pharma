@@ -28,13 +28,15 @@
         <div class="col-md-6">
             <h1 class="h3">{{ translate('Batch / Lot Master') }}</h1>
         </div>
-        @can('add_batch_master')
-            <div class="col-md-6 text-md-right">
+        <div class="col-md-6 text-md-right">
+            <a href="{{ route('batch_masters.index') }}" class="btn btn-soft-secondary btn-sm mr-1">{{ translate('Listing Page') }}</a>
+            <a href="{{ route('batch_masters.adjust') }}" class="btn btn-soft-secondary btn-sm mr-1">{{ translate('Next Tab Batch Adjustment') }}</a>
+            @can('add_batch_master')
                 <a href="{{ route('batch_masters.create') }}" class="btn btn-circle btn-info">
                     <span>{{ translate('Add New Batch / Lot') }}</span>
                 </a>
-            </div>
-        @endcan
+            @endcan
+        </div>
     </div>
 </div>
 
@@ -66,52 +68,70 @@
             <table class="table table-bordered aiz-table mb-0 bm-listing">
                 <thead>
                     <tr>
-                        @include('backend.inc.sortable_th', ['column' => 'sku', 'label' => translate('SKU'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'product_name', 'label' => translate('Product Name'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'variant', 'label' => translate('Full Variant'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'id', 'label' => translate('Batch ID'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'batch_code', 'label' => translate('Batch Code'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'is_non_batch', 'label' => translate('Non-batch'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'manufacturing_date', 'label' => translate('Mfg Month'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'expiry_date', 'label' => translate('Expiry Month'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'mrp_price', 'label' => translate('MRP'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'qty', 'label' => translate('Stock Qty'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'role_price', 'label' => translate('PTS / PTR / PTD / Govt. / Export / B2C'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'created_at', 'label' => translate('Upload Date'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'status', 'labelHtml' => e(translate('Status')) . '<br>' . e(translate('Date Of Add / Edit')), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'sku', 'labelHtml' => e(translate('SKU')) . '<br>' . e(translate('Batch ID')), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'product_name', 'labelHtml' => e(translate('Product Name')) . '<br>' . e(translate('Full Variant')), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'batch_code', 'labelHtml' => e(translate('Batch Code')) . '<br>' . e(translate('Non-batch')), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'manufacturing_date', 'labelHtml' => e(translate('Mfg Date')) . '<br>' . e(translate('Expiry Date')), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'qty', 'label' => translate('Qty + Scheme'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'mrp_price', 'labelHtml' => e(translate('P-Rate')) . '<br>' . e(translate('MRP')), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        <th>{{ translate('Tax') }}<br>{{ translate('Amount') }}</th>
+                        @include('backend.inc.sortable_th', ['column' => 'role_price', 'label' => translate('PTS-PTR-PTD-GOVT.-EXPORT-CUSTOMER (B2C)'), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        <th>{{ translate('Batchwise Discount') }}</th>
+                        <th>{{ translate('Productwise Discount') }}</th>
+                        <th>{{ translate('Schemewise Discount') }}</th>
+                        <th>{{ translate('COA Image') }}</th>
+                        @include('backend.inc.sortable_th', ['column' => 'created_at', 'labelHtml' => e(translate('Upload Date')) . '<br>' . e(translate('Date Of Add / Edit')) . '<br>' . e(translate('Status')), 'routeName' => 'batch_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         <th class="text-right">{{ translate('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if ($tableReady && $batches && $batches->count())
                         @foreach ($batches as $row)
-                            @php $prices = $row->rolePrices(); @endphp
+                            @php
+                                $money = function ($value) {
+                                    return $value === null ? '—' : $value;
+                                };
+                            @endphp
                             <tr>
-                                <td>{{ $cell(optional($row->stock)->sku) }}</td>
-                                <td>{{ $cell(optional($row->product)->name) }}</td>
-                                <td>{{ $cell(optional($row->stock)->variant) }}</td>
-                                <td>{{ $row->id }}</td>
-                                <td>{{ $cell($row->batch_code) }}</td>
-                                <td>{{ $row->is_non_batch ? 'Y' : 'N' }}</td>
-                                <td>{{ $month($row->manufacturing_date) }}</td>
-                                <td>{{ $month($row->expiry_date) }}</td>
-                                <td>{{ $row->mrp_price === null ? '—' : $row->mrp_price }}</td>
-                                <td>{{ $row->qty }}</td>
-                                <td class="fs-12">
-                                    {{ translate('PTS') }} {{ $prices['pts'] ?? '—' }} /
-                                    {{ translate('PTR') }} {{ $prices['ptr'] ?? '—' }} /
-                                    {{ translate('PTD') }} {{ $prices['ptd'] ?? '—' }}<br>
-                                    {{ translate('Govt.') }} {{ $prices['gov'] ?? '—' }} /
-                                    {{ translate('Export') }} {{ $prices['expo'] ?? '—' }} /
-                                    {{ translate('B2C') }} {{ $prices['customer'] ?? '—' }}
-                                </td>
-                                <td>{{ optional($row->created_at)->format('d-m-Y') }}</td>
+                                <td>{{ $cell(optional($row->stock)->sku) }}<br><span class="text-muted">{{ $row->id }}</span></td>
+                                <td>{{ $cell(optional($row->product)->name) }}<br><span class="text-muted">{{ $cell(optional($row->stock)->variant) }}</span></td>
+                                <td>{{ $cell($row->batch_code) }}<br>{{ $row->is_non_batch ? 'Y' : 'N' }}</td>
+                                <td>{{ $month($row->manufacturing_date) }}<br>{{ $month($row->expiry_date) }}</td>
+                                <td>{{ $row->qty }}<br>{{ $money($row->scheme) }}</td>
                                 <td>
+                                    @if (!empty($showPurchaseRate))
+                                        {{ $money($row->purchase_rate) }}
+                                    @else
+                                        ••••
+                                    @endif
+                                    <br>{{ $money($row->mrp_price) }}
+                                </td>
+                                <td>{{ $money($row->tax_percent) }}<br>{{ $money($row->lineAmount()) }}</td>
+                                <td class="fs-12">
+                                    {{ translate('PTS') }} {{ $money($row->roleLineValue('pts')) }} /
+                                    {{ translate('PTR') }} {{ $money($row->roleLineValue('ptr')) }} /
+                                    {{ translate('PTD') }} {{ $money($row->roleLineValue('ptd')) }}<br>
+                                    {{ translate('Govt.') }} {{ $money($row->roleLineValue('gov')) }} /
+                                    {{ translate('Export') }} {{ $money($row->roleLineValue('expo')) }} /
+                                    {{ translate('B2C') }} {{ $money($row->roleLineValue('customer')) }}
+                                </td>
+                                <td>{{ $money($row->batch_discount_percent) }}</td>
+                                <td>{{ $money($row->product_discount_percent) }}</td>
+                                <td>{{ $money($row->scheme_discount_percent) }}</td>
+                                <td>
+                                    @if ($row->coa)
+                                        <a href="{{ uploaded_asset($row->coa) }}" target="_blank">{{ translate('Zoom') }}</a>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td>
+                                    {{ optional($row->created_at)->format('d-m-Y') }}
+                                    <div class="text-muted fs-11">{{ optional($row->updated_at)->format('d-m-Y H:i') }}</div>
                                     <label class="aiz-switch aiz-switch-success mb-0">
                                         <input type="checkbox" onchange="updateBatchMasterStatus(this)" value="{{ $row->id }}" {{ $row->status ? 'checked' : '' }} @cannot('edit_batch_master') disabled @endcannot>
                                         <span class="slider round"></span>
                                     </label>
-                                    <div class="text-muted fs-11">{{ optional($row->updated_at)->format('d-m-Y H:i') }}</div>
                                 </td>
                                 <td class="text-right">
                                     @can('edit_batch_master')

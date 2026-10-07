@@ -78,7 +78,12 @@
         }
         .party-consolidated-table.compact-report-table th,
         .party-consolidated-table.compact-report-table td {
+            text-align: right;
             white-space: nowrap;
+        }
+        .party-consolidated-table.compact-report-table th.compact-left,
+        .party-consolidated-table.compact-report-table td.compact-left {
+            text-align: left;
         }
         .party-consolidated-table.compact-report-table .compact-heading,
         .party-consolidated-table.compact-report-table .compact-heading a {
@@ -267,7 +272,7 @@
             'product_sku' => 'SKU', 'product_name' => 'Product Name', 'packing' => 'Pack',
             'quantity' => 'Total QTY', 'sale_rate' => 'S.Rate Range', 'gst_amount' => 'Total Tax',
             'mrp_rate' => 'M R P Range', 'gross_amount' => 'Total Gross amount',
-            'bill_count' => 'Total No Of Bills', 'bill_year' => 'Bill Date From-To',
+            'bill_count' => 'Total No Of Bills', 'bill_year' => 'Bill Date',
             'pts' => 'PTS', 'ptr' => 'PTR', 'ptd' => 'PTD', 'govt' => 'Govt.', 'export' => 'Exg',
             'customer_price' => 'Customer', 'current_mrp' => 'MRP',
         ];
@@ -323,6 +328,17 @@
                     @endif
                 </div>
                 <div class="d-flex flex-wrap align-items-center">
+                    <div class="d-flex align-items-center mr-3 mb-2">
+                        <label class="mb-0 mr-2 text-nowrap" for="report_years">{{ translate('Report For') }}</label>
+                        <select class="form-control" id="report_years" name="report_years" style="width: 190px;">
+                            <option value="">{{ translate('All') }}</option>
+                            @foreach([10, 8, 5, 3, 2, 1] as $reportYearOption)
+                                <option value="{{ $reportYearOption }}" @if((int) ($reportYears ?? request('report_years')) === $reportYearOption) selected @endif>
+                                    {{ translate('Last') }} {{ $reportYearOption }} {{ translate($reportYearOption === 1 ? 'Year' : 'Years') }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                     <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal"
                             data-target="#consolidatedPurchaseHistoryFilterModal">
                         {{ translate('Open Filters') }}
@@ -469,7 +485,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label" for="bill_date_range">{{ translate('Bill Date') }}</label>
+                                    <label class="form-label" for="bill_date_range">{{ translate('Date Range') }}</label>
                                     <input type="text" class="form-control aiz-date-range" id="bill_date_range"
                                            name="bill_date_range"
                                            value="{{ $dateRangeValue($billDateFromValue, $billDateToValue) }}"
@@ -611,8 +627,8 @@
                 <div class="table-responsive">
                     <table class="table table-bordered mb-0 party-consolidated-table compact-report-table">
                         <colgroup>
-                            <col style="width: 78px">
-                            <col style="width: 100px">
+                            <col style="width: 56px">
+                            <col style="width: 210px">
                             <col style="width: 180px">
                             <col style="width: 78px">
                             <col style="width: 110px">
@@ -633,12 +649,12 @@
                         </colgroup>
                         <thead>
                         <tr>
-                            <th class="compact-heading">{{ translate('Sr No.') }}<br>{{ translate('From-To') }}</th>
-                            <th class="compact-heading">{!! $sortHeadingHtml('bill_year', e(translate('Bill Date')).'<br>'.e(translate('From-To'))) !!}</th>
+                            <th class="compact-heading">{{ translate('Sr No.') }}</th>
+                            <th class="compact-heading">{!! $sortHeading('bill_year', translate('Bill Date')) !!}</th>
                             <th class="compact-heading">{{ translate('Bill Series') }}<br>{{ translate('From-To') }}</th>
                             <th class="compact-heading">{!! $sortHeadingHtml('bill_count', e(translate('Total No')).'<br>'.e(translate('Of Bills'))) !!}</th>
-                            <th>{!! $sortHeading('product_sku', translate('SKU')) !!}</th>
-                            <th>{!! $sortHeading('product_name', translate('Product Name')) !!}</th>
+                            <th class="compact-left">{!! $sortHeading('product_sku', translate('SKU')) !!}</th>
+                            <th class="compact-left">{!! $sortHeading('product_name', translate('Product Name')) !!}</th>
                             <th>{!! $sortHeading('packing', translate('Pack')) !!}</th>
                             <th class="compact-heading">{!! $sortHeadingHtml('quantity', e(translate('Total')).'<br>'.e(translate('QTY'))) !!}</th>
                             <th class="compact-heading">{!! $sortHeadingHtml('sale_rate', e(translate('S.Rate')).'<br>'.e(translate('Range'))) !!}</th>
@@ -653,18 +669,18 @@
                         <tbody>
                         @forelse($compactRows as $row)
                             <tr>
-                                <td class="text-center">{{ $row->sr_label }}</td>
-                                <td class="text-center">{{ $row->bill_year_label }}</td>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $row->bill_date_label }}</td>
                                 <td>{{ $row->bill_series_label }}</td>
-                                <td class="text-right">{{ $formatQty($row->bill_count) }}</td>
-                                <td>{{ $row->sku }}</td>
-                                <td class="product-cell">{{ $row->product_name }}</td>
+                                <td>{{ $formatQty($row->bill_count) }}</td>
+                                <td class="compact-left">{{ $row->sku }}</td>
+                                <td class="product-cell compact-left">{{ $row->product_name }}</td>
                                 <td class="pack-cell">{{ $row->pack }}</td>
-                                <td class="text-right">{{ $formatQty($row->total_qty) }}</td>
-                                <td class="text-center">{{ $row->sale_rate_label }}</td>
-                                <td class="text-right">{{ $formatAmount($row->total_tax) }}</td>
-                                <td class="text-center">{{ $row->mrp_label }}</td>
-                                <td class="text-right">{{ $formatAmount($row->total_gross) }}</td>
+                                <td>{{ $formatQty($row->total_qty) }}</td>
+                                <td>{{ $row->sale_rate_label }}</td>
+                                <td>{{ $formatAmount($row->total_tax) }}</td>
+                                <td>{{ $row->mrp_label }}</td>
+                                <td>{{ $formatAmount($row->total_gross) }}</td>
                                 @foreach($compactPriceColumns as $priceLabel => $priceColumn)
                                     <td class="text-right">{{ $row->prices->get($priceLabel, '-') }}</td>
                                 @endforeach
@@ -695,6 +711,14 @@
                 fromField.val(parts[0]);
                 toField.val(parts[1]);
             }
+        });
+
+        $('#bill_date_range').on('apply.daterangepicker', function () {
+            $('#report_years').val('');
+        });
+
+        $('#report_years').on('change', function () {
+            this.form.submit();
         });
 
         (function () {

@@ -15,6 +15,18 @@
         </div>
     @endif
 
+    @if (!empty($filesReady) && $company->exists)
+        <div class="mb-3 text-right">
+            @include('backend.company.partials.files_button', [
+                'viewerTitle' => \App\Models\CompanyConfiguration::BILLING_NAME,
+                'viewerCertificates' => $company->certificates,
+                'viewerDocuments' => $company->documents,
+                'viewerKey' => 'billing-company-files',
+            ])
+        </div>
+        @include('backend.company.partials.files_viewer_assets')
+    @endif
+
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0 h6">{{ translate('Billing Company') }}</h5>

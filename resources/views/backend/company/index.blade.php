@@ -157,7 +157,15 @@
                                     @endforelse
                                 </td>
                                 <td>{{ optional($company->created_at)->format('d M Y') }}</td>
-                                <td class="text-right">
+                                <td class="text-right text-nowrap">
+                                    @if (!empty($filesReady))
+                                        @include('backend.company.partials.files_button', [
+                                            'viewerTitle' => $company->company_name,
+                                            'viewerCertificates' => $company->certificates,
+                                            'viewerDocuments' => $company->documents,
+                                            'viewerKey' => 'company-files-' . $company->id,
+                                        ])
+                                    @endif
                                     <a class="btn btn-soft-info btn-icon btn-circle btn-sm"
                                         href="{{ route('companies.show', $company) }}" title="{{ translate('View') }}">
                                         <i class="las la-eye"></i>
@@ -196,6 +204,10 @@
             </div>
         </div>
     </div>
+
+    @if (!empty($filesReady))
+        @include('backend.company.partials.files_viewer_assets')
+    @endif
 @endsection
 
 @section('modal')
@@ -287,6 +299,7 @@
 @endsection
 
 @section('script')
+    @stack('company_scripts')
     <script>
         $('#companyFilterModal').on('shown.bs.modal', function () {
             if (window.AIZ && AIZ.plugins && AIZ.plugins.bootstrapSelect) {

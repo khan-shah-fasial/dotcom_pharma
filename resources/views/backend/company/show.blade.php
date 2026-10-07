@@ -26,6 +26,14 @@
                 <a href="{{ route('companies.index') }}" class="btn btn-soft-secondary">
                     {{ translate('Company Master') }}
                 </a>
+                @if (!empty($filesReady))
+                    @include('backend.company.partials.files_button', [
+                        'viewerTitle' => $company->company_name,
+                        'viewerCertificates' => $company->certificates,
+                        'viewerDocuments' => $company->documents,
+                        'viewerKey' => 'company-files-show-' . $company->id,
+                    ])
+                @endif
                 @can('view_all_customers')
                     <a href="{{ route('companies.edit', $company) }}" class="btn btn-primary">
                         {{ translate('Edit Company') }}
@@ -121,4 +129,12 @@
             </div>
         </div>
     </div>
+
+    @if (!empty($filesReady))
+        @include('backend.company.partials.files_viewer_assets')
+    @endif
+@endsection
+
+@section('script')
+    @stack('company_scripts')
 @endsection

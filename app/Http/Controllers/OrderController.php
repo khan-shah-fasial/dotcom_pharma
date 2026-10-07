@@ -363,13 +363,15 @@ class OrderController extends Controller
         $orderEntry = DocumentType::entry(old('entry', request()->input('entry')));
         $documentTypes = DocumentType::typesFor($orderEntry);
         $orderEntryTitle = DocumentType::titleFor($orderEntry);
-        $documentSeriesCodes = DocumentType::seriesCodesFor($documentTypes);
-        $seriesCodesByName = \App\Models\SeriesMaster::codesByName();
+        $invoiceTypeOptions = \App\Models\SeriesMaster::invoiceTypeOptions();
+        $documentSeriesCodes = [];
+        $seriesCodesByName = [];
+        foreach ($invoiceTypeOptions as $option) {
+            $documentSeriesCodes[$option['name']] = $option['code'];
+            $seriesCodesByName[strtolower($option['name'])] = $option['code'];
+        }
         $initialDocumentType = old('document_type', '');
         $initialDocumentTypeCustom = old('document_type_custom', '');
-        if ($initialDocumentType === '' && count($documentTypes) === 1) {
-            $initialDocumentType = array_key_first($documentTypes);
-        }
         $orderSeriesCode = DocumentType::seriesCode($initialDocumentType, $initialDocumentTypeCustom);
         $orderNumberParts = financial_year_order_code_parts(
             old('order_date', now()->toDateString()),
@@ -396,6 +398,7 @@ class OrderController extends Controller
             'orderSeriesCode',
             'documentSeriesCodes',
             'seriesCodesByName',
+            'invoiceTypeOptions',
             'orderEntry',
             'documentTypes',
             'orderEntryTitle'
@@ -1014,7 +1017,7 @@ class OrderController extends Controller
             $request->validate([
                 'customer_id' => ['required', 'integer'],
                 'company_id' => ['required', 'integer', 'exists:companies,id'],
-                'document_type' => ['required', Rule::in(array_merge(array_keys(DocumentType::typesFor(DocumentType::entry($request->input('entry')))), ['__not_in_list__']))],
+                'document_type' => ['required', Rule::in(DocumentType::selectableValues())],
                 'entry' => ['nullable', Rule::in(array_keys(DocumentType::ENTRIES))],
                 'document_type_custom' => ['nullable', 'required_if:document_type,__not_in_list__', 'string', 'max:255'],
                 'payment_type' => ['required', Rule::in(array_keys(InvoiceType::paymentTerms($invoiceType)))],
@@ -1756,7 +1759,7 @@ class OrderController extends Controller
             'shipping_cost_type' => ['required', Rule::in(['by_seller', 'free_shipping'])],
             'sell_amount' => ['required_if:shipping_cost_type,by_seller', 'nullable', 'numeric', 'min:0', 'max:99999999999.99'],
             'reverse_charge' => [InvoiceType::isDomestic($invoiceType) ? 'nullable' : 'prohibited', 'boolean'],
-            'document_type' => ['nullable', Rule::in(array_merge(array_keys(DocumentType::TYPES), ['__not_in_list__']))],
+            'document_type' => ['nullable', Rule::in(DocumentType::selectableValues())],
             'document_type_custom' => ['nullable', 'required_if:document_type,__not_in_list__', 'string', 'max:255'],
             'loading_location_type' => [$usesPortLogistics ? 'required' : 'nullable', Rule::in(['sea', 'air'])],
             'loading_sea_port_id' => [$usesPortLogistics && $request->input('loading_location_type') === 'sea' ? 'required' : 'nullable', 'integer', Rule::exists('sea_ports', 'id')],

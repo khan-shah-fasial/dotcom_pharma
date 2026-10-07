@@ -393,6 +393,14 @@ class PurchaseHistoryReportController extends Controller
         if ($billDateTo === '') {
             $billDateTo = trim((string) $request->get('order_date_to', ''));
         }
+        $reportYears = (int) $request->get('report_years', 0);
+        if (! in_array($reportYears, [10, 8, 5, 3, 2, 1], true)) {
+            $reportYears = 0;
+        }
+        if ($reportYears > 0) {
+            $billDateTo = now()->format('Y-m-d');
+            $billDateFrom = now()->subYears($reportYears)->format('Y-m-d');
+        }
 
         $this->applyConsolidatedFilters($query, $request, $billDateSql, $billDateFrom, $billDateTo);
 
@@ -591,6 +599,7 @@ class PurchaseHistoryReportController extends Controller
             'currentPriceMap' => $currentPriceMap,
             'sortBy'         => $sortBy,
             'sortDir'        => $sortDir,
+            'reportYears'    => $reportYears,
             'activeTab'      => $activeTab,
             'compactSortKeys' => $compactSortKeys,
             'countries'      => $countries,
@@ -1294,9 +1303,8 @@ class PurchaseHistoryReportController extends Controller
         return collect($groups)->map(function (array $group) use ($currentPriceMap) {
             $prices = collect($currentPriceMap[$group['sku']]['default'] ?? [])
                 ->mapWithKeys(fn ($line) => [(string) ($line['label'] ?? '') => (string) ($line['value'] ?? '-')]);
-            $years = collect($group['years'])->filter();
-            $yearStart = $years->min();
-            $yearEnd = $years->max();
+            $fromDate = $group['earliest_ts'] ? date('d-m-Y', $group['earliest_ts']) : '';
+            $toDate = $group['latest_ts'] ? date('d-m-Y', $group['latest_ts']) : '';
             $saleRates = collect($group['sale_rates']);
             $mrps = collect($group['mrps']);
             $priceNumber = function (string $label) use ($prices) {
@@ -1305,14 +1313,10 @@ class PurchaseHistoryReportController extends Controller
 
             return (object) [
                 'sku' => $group['sku'],
-                'sr_label' => $group['sr_from'] === $group['sr_to']
-                    ? (string) $group['sr_from']
-                    : $group['sr_from'] . '-' . $group['sr_to'],
-                'sr_from' => $group['sr_from'],
-                'bill_year_label' => ($yearStart && $yearEnd && $yearStart !== $yearEnd)
-                    ? $yearStart . '-' . $yearEnd
-                    : (string) ($yearStart ?: ''),
-                'bill_year_start' => (int) ($yearStart ?: 0),
+                'bill_date_label' => ($fromDate !== '' && $toDate !== '' && $fromDate !== $toDate)
+                    ? $fromDate . ' to ' . $toDate
+                    : ($fromDate !== '' ? $fromDate : $toDate),
+                'bill_year_start' => (int) ($group['earliest_ts'] ?: 0),
                 'bill_series_label' => $this->seriesRangeLabel($group['earliest_series'], $group['latest_series']),
                 'bill_count' => $group['bill_count'],
                 'product_name' => implode(' / ', $group['names']),

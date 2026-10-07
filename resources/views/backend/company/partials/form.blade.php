@@ -249,6 +249,8 @@
     });
 </script>
 
+@include('backend.company.partials.files')
+
 <div class="form-group row">
     <label class="col-md-3 col-form-label">
         {{ translate('Deal In Category') }} <span class="text-danger">*</span>

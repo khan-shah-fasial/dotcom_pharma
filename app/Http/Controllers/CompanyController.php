@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CompanyRequest;
 use App\Models\Category;
 use App\Models\Company;
+use App\Models\CompanyFile;
 use App\Models\Country;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -74,6 +75,10 @@ class CompanyController extends Controller
         }
 
         $companies = $companies->paginate(15)->appends($request->query());
+        $filesReady = CompanyFile::tableReady();
+        if ($filesReady) {
+            $companies->load(['certificates.upload', 'documents.upload']);
+        }
         $categories = $this->allCategories();
         $companyTypes = $this->companyTypeOptions();
 
@@ -83,7 +88,8 @@ class CompanyController extends Controller
             'companyTypes',
             'filters',
             'sortBy',
-            'sortOrder'
+            'sortOrder',
+            'filesReady'
         ));
     }
 
@@ -94,12 +100,13 @@ class CompanyController extends Controller
 
     public function store(CompanyRequest $request)
     {
-        $data = $request->safe()->except('deal_in_category_ids');
+        $data = $request->safe()->except(['deal_in_category_ids', 'certificates', 'documents']);
         $data['created_by'] = auth()->id();
 
         $company = DB::transaction(function () use ($data, $request) {
             $company = Company::create($data);
             $company->categories()->sync($request->validated('deal_in_category_ids'));
+            $this->syncFiles($company, $request);
 
             return $company;
         });
@@ -116,10 +123,14 @@ class CompanyController extends Controller
         if ($locationReady) {
             $relations = array_merge($relations, ['country', 'state', 'city']);
         }
+        $filesReady = CompanyFile::tableReady();
+        if ($filesReady) {
+            $relations = array_merge($relations, ['certificates.upload', 'documents.upload']);
+        }
         $company->load($relations);
         $categories = $this->allCategories();
 
-        return view('backend.company.show', compact('company', 'categories', 'locationReady'));
+        return view('backend.company.show', compact('company', 'categories', 'locationReady', 'filesReady'));
     }
 
     public function locationOptions(Request $request)
@@ -138,7 +149,12 @@ class CompanyController extends Controller
 
     public function edit(Company $company)
     {
-        $company->load('categories');
+        $relations = ['categories'];
+        if (CompanyFile::tableReady()) {
+            $relations[] = 'certificates.upload';
+            $relations[] = 'documents.upload';
+        }
+        $company->load($relations);
 
         return view('backend.company.edit', array_merge(
             $this->formData(),
@@ -148,11 +164,12 @@ class CompanyController extends Controller
 
     public function update(CompanyRequest $request, Company $company)
     {
-        $data = $request->safe()->except('deal_in_category_ids');
+        $data = $request->safe()->except(['deal_in_category_ids', 'certificates', 'documents']);
 
         DB::transaction(function () use ($company, $data, $request) {
             $company->update($data);
             $company->categories()->sync($request->validated('deal_in_category_ids'));
+            $this->syncFiles($company, $request);
         });
 
         flash(translate('Company has been updated successfully'))->success();
@@ -164,6 +181,12 @@ class CompanyController extends Controller
     {
         DB::transaction(function () use ($company) {
             $company->categories()->detach();
+            if (CompanyFile::tableReady()) {
+                CompanyFile::query()
+                    ->where('owner_type', CompanyFile::OWNER_COMPANY)
+                    ->where('owner_id', $company->id)
+                    ->delete();
+            }
             $company->delete();
         });
 
@@ -225,6 +248,7 @@ class CompanyController extends Controller
             'companyTypes' => $this->companyTypeOptions(),
             'countries' => Country::query()->isEnabled()->orderBy('name')->get(['id', 'name']),
             'locationReady' => Company::locationColumnsReady(),
+            'filesReady' => CompanyFile::tableReady(),
             'lockCompanyName' => false,
         ];
     }
@@ -235,6 +259,20 @@ class CompanyController extends Controller
             ->merge(Company::query()->whereNotNull('company_type')->where('company_type', '!=', '')->distinct()->orderBy('company_type')->pluck('company_type'))
             ->unique()
             ->values();
+    }
+
+    private function syncFiles(Company $company, CompanyRequest $request): void
+    {
+        if (!CompanyFile::tableReady()) {
+            return;
+        }
+
+        CompanyFile::replaceFor(
+            CompanyFile::OWNER_COMPANY,
+            $company->id,
+            $request->validated('certificates') ?? [],
+            $request->validated('documents') ?? []
+        );
     }
 
     private function allCategories()
