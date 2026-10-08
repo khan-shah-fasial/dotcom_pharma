@@ -28,61 +28,31 @@
                     <a class="dropdown-item confirm-alert" href="javascript:void(0)"  data-target="#bulk-delete-modal"> {{translate('Delete selection')}}</a>
                 </div>
             </div>
-            <div class="col-auto ml-auto">
-                <button type="button" class="btn border" id="toggle-upload-filters">
-                    <i class="las la-filter"></i> {{ translate('Filters') }}
+            @php
+                $filtersApplied = collect([
+                    $search,
+                    $typeFilter ?? null,
+                    $extension ?? null,
+                    $sizeMin ?? null,
+                    $sizeMax ?? null,
+                    request('date_from'),
+                    request('date_to'),
+                ])->contains(fn ($value) => $value !== null && $value !== '')
+                    || (($sortBy ?? 'created_at') !== 'created_at')
+                    || (($sortOrder ?? 'desc') !== 'desc')
+                    || ((int) ($perPage ?? 60) !== 60);
+            @endphp
+            <div class="col-auto ml-auto d-flex flex-wrap align-items-center">
+                @if($filtersApplied)
+                    <span class="badge badge-info mr-2 mb-2">{{ translate('Filters applied') }}</span>
+                @endif
+                <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#uploadedFilesFilterModal">
+                    {{ translate('Open Filters') }}
                 </button>
+                <a href="{{ route('seller.uploaded-files.index') }}" class="btn btn-danger mb-2">{{ translate('Reset') }}</a>
             </div>
         </div>
-        @php
-            $filtersOpen = ($search ?? '') !== '' || ($typeFilter ?? '') !== '' || (($sortBy ?? 'created_at') !== 'created_at') || (($sortOrder ?? 'desc') !== 'desc');
-        @endphp
-        <input type="hidden" name="sort_by" id="sort_by" value="{{ $sortBy ?? 'created_at' }}">
-        <input type="hidden" name="sort_order" id="sort_order" value="{{ $sortOrder ?? 'desc' }}">
-        <div id="upload-filters-panel" class="px-3 pb-3 border-bottom {{ $filtersOpen ? '' : 'd-none' }}">
-            <div class="row gutters-5 align-items-center">
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <select id="type_filter" class="form-control form-control-xs aiz-selectpicker" name="type" data-live-search="true">
-                        <option value="">{{ translate('All types') }}</option>
-                        @foreach([
-                            'image' => translate('Images'),
-                            'video' => translate('Videos'),
-                            'audio' => translate('Audio'),
-                            'pdf' => translate('PDF'),
-                            'doc' => translate('Word / Doc'),
-                            'docx' => translate('Word / Docx'),
-                            'excel' => translate('Excel'),
-                            'xls' => translate('Excel (XLS)'),
-                            'xlsx' => translate('Excel (XLSX)'),
-                            'csv' => translate('CSV'),
-                            'archive' => translate('Archive'),
-                            'document' => translate('Documents'),
-                        ] as $value => $label)
-                            <option value="{{ $value }}" @selected(($typeFilter ?? null) === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <select id="sort_select" class="form-control form-control-xs aiz-selectpicker">
-                        <option value="created_at|desc" @selected(($sortBy ?? 'created_at') === 'created_at' && ($sortOrder ?? 'desc') === 'desc')>{{ translate('Newest first') }}</option>
-                        <option value="created_at|asc" @selected(($sortBy ?? 'created_at') === 'created_at' && ($sortOrder ?? 'desc') === 'asc')>{{ translate('Oldest first') }}</option>
-                        <option value="name|asc" @selected(($sortBy ?? '') === 'name' && ($sortOrder ?? '') === 'asc')>{{ translate('Name A-Z') }}</option>
-                        <option value="name|desc" @selected(($sortBy ?? '') === 'name' && ($sortOrder ?? '') === 'desc')>{{ translate('Name Z-A') }}</option>
-                        <option value="size|desc" @selected(($sortBy ?? '') === 'size' && ($sortOrder ?? '') === 'desc')>{{ translate('Size large-small') }}</option>
-                        <option value="size|asc" @selected(($sortBy ?? '') === 'size' && ($sortOrder ?? '') === 'asc')>{{ translate('Size small-large') }}</option>
-                        <option value="type|asc" @selected(($sortBy ?? '') === 'type' && ($sortOrder ?? '') === 'asc')>{{ translate('Type A-Z') }}</option>
-                        <option value="type|desc" @selected(($sortBy ?? '') === 'type' && ($sortOrder ?? '') === 'desc')>{{ translate('Type Z-A') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <input type="text" class="form-control form-control-xs" name="search" placeholder="{{ translate('Search your files') }}" value="{{ $search }}">
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-primary mr-2">{{ translate('Apply') }}</button>
-                    <button type="button" class="btn btn-secondary" id="reset-filters">{{ translate('Reset') }}</button>
-                </div>
-            </div>
-        </div>
+        @include('backend.uploaded_files.partials.filter_modal', ['showUploader' => false])
     
 		<div class="card-body">
 			<div class="form-group">
@@ -218,29 +188,6 @@
         function sort_uploads(el){
             $('#sort_uploads').submit();
         }
-
-        $('#toggle-upload-filters').on('click', function () {
-            $('#upload-filters-panel').toggleClass('d-none');
-            if (!$('#upload-filters-panel').hasClass('d-none') && $.fn.selectpicker) {
-                $('#upload-filters-panel .aiz-selectpicker').selectpicker('refresh');
-            }
-        });
-
-        $('#sort_select').on('change', function () {
-            var parts = $(this).val().split('|');
-            $('#sort_by').val(parts[0]);
-            $('#sort_order').val(parts[1]);
-            $('#sort_uploads').submit();
-        });
-
-        $('#reset-filters').on('click', function () {
-            $('input[name="search"]').val('');
-            $('#type_filter').val('');
-            $('#sort_by').val('created_at');
-            $('#sort_order').val('desc');
-            $('#sort_select').val('created_at|desc');
-            $('#sort_uploads').submit();
-        });
 
 		$(document).on("change", ".check-all", function() {
 			if(this.checked) {

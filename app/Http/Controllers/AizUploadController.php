@@ -28,15 +28,29 @@ class AizUploadController extends Controller
 
         $search        = $request->search;
         $typeFilter    = $request->get('type');
+        $extension     = strtolower(ltrim(trim((string) $request->get('extension', '')), '.'));
+        $sizeMin       = $request->get('size_min');
+        $sizeMax       = $request->get('size_max');
+        $dateFrom      = $this->parseFilterDate($request->get('date_from'));
+        $dateTo        = $this->parseFilterDate($request->get('date_to'));
+        $uploader      = trim((string) $request->get('uploader', ''));
         $sortByInput   = $request->get('sort_by');
         $sortOrder     = $request->get('sort_order', 'desc');
         $legacySort    = $request->get('sort'); // keep support for existing select
         $perPage       = (int) $request->get('per_page', 60);
+        $perPage       = in_array($perPage, [30, 60, 120, 240], true) ? $perPage : 60;
         $viewMode      = $request->get('view', $request->session()->get('uploads_view', 'grid'));
 
         $request->session()->put('uploads_view', $viewMode);
 
-        $this->applyUploadFilters($all_uploads, $search, $typeFilter);
+        $this->applyUploadFilters($all_uploads, $search, $typeFilter, [
+            'extension' => $extension,
+            'size_min' => $sizeMin,
+            'size_max' => $sizeMax,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'uploader' => auth()->user()->user_type == 'seller' ? '' : $uploader,
+        ]);
 
         $foldersReady = UploadFolder::ready() && auth()->user()->user_type != 'seller';
         $currentFolder = null;
@@ -57,16 +71,25 @@ class AizUploadController extends Controller
                 $all_uploads->whereNull('folder_id');
             }
 
-            $childFolders = UploadFolder::query()
-                ->when($currentFolder, function ($query) use ($currentFolder) {
-                    $query->where('parent_id', $currentFolder->id);
-                }, function ($query) {
-                    $query->whereNull('parent_id');
-                })
-                ->when($search, function ($query) use ($search) {
-                    $query->where('name', 'like', '%' . $search . '%');
-                })
-                ->get();
+            $fileOnlyFilter = $typeFilter || $extension !== '' || ($sizeMin !== null && $sizeMin !== '') || ($sizeMax !== null && $sizeMax !== '') || $uploader !== '';
+            $childFolders = $fileOnlyFilter
+                ? collect()
+                : UploadFolder::query()
+                    ->when($currentFolder, function ($query) use ($currentFolder) {
+                        $query->where('parent_id', $currentFolder->id);
+                    }, function ($query) {
+                        $query->whereNull('parent_id');
+                    })
+                    ->when($search, function ($query) use ($search) {
+                        $query->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->when($dateFrom, function ($query) use ($dateFrom) {
+                        $query->whereDate('created_at', '>=', $dateFrom);
+                    })
+                    ->when($dateTo, function ($query) use ($dateTo) {
+                        $query->whereDate('created_at', '<=', $dateTo);
+                    })
+                    ->get();
 
             $folderOptions = UploadFolder::flatTree();
         }
@@ -78,7 +101,11 @@ class AizUploadController extends Controller
             $sortOrder = in_array($legacySort, ['oldest', 'smallest']) ? 'asc' : 'desc';
         }
 
-        $sortBy = in_array($sortBy, ['name', 'type', 'size', 'created_at']) ? $sortBy : 'created_at';
+        $allowedSorts = ['name', 'extension', 'type', 'size', 'created_at', 'updated_at', 'user'];
+        $sortBy = in_array($sortBy, $allowedSorts, true) ? $sortBy : 'created_at';
+        if ($sortBy === 'user' && auth()->user()->user_type == 'seller') {
+            $sortBy = 'created_at';
+        }
         $sortOrder = $sortOrder === 'asc' ? 'asc' : 'desc';
         $childFolders = $this->sortFolders($childFolders, $sortBy, $sortOrder);
 
@@ -86,11 +113,22 @@ class AizUploadController extends Controller
             case 'name':
                 $all_uploads->orderBy('file_original_name', $sortOrder);
                 break;
+            case 'extension':
+                $all_uploads->orderBy('extension', $sortOrder);
+                break;
             case 'type':
                 $all_uploads->orderBy('type', $sortOrder);
                 break;
             case 'size':
                 $all_uploads->orderBy('file_size', $sortOrder);
+                break;
+            case 'updated_at':
+                $all_uploads->orderBy('updated_at', $sortOrder);
+                break;
+            case 'user':
+                $all_uploads->leftJoin('users', 'users.id', '=', 'uploads.user_id')
+                    ->select('uploads.*')
+                    ->orderBy('users.name', $sortOrder);
                 break;
             case 'created_at':
             default:
@@ -107,6 +145,13 @@ class AizUploadController extends Controller
             'sortOrder'   => $sortOrder,
             'sort_by'     => $sortBy, // backward compatibility with existing blade
             'typeFilter'  => $typeFilter,
+            'extension'   => $extension,
+            'sizeMin'     => $sizeMin,
+            'sizeMax'     => $sizeMax,
+            'dateFrom'    => $request->get('date_from'),
+            'dateTo'      => $request->get('date_to'),
+            'uploader'    => $uploader,
+            'perPage'     => $perPage,
             'viewMode'    => $viewMode,
             'foldersReady' => $foldersReady,
             'currentFolder' => $currentFolder,
@@ -929,7 +974,14 @@ class AizUploadController extends Controller
             }
 
             $fileQuery = Upload::query();
-            $this->applyUploadFilters($fileQuery, $request->input('search'), $request->input('type'));
+            $this->applyUploadFilters($fileQuery, $request->input('search'), $request->input('type'), [
+                'extension' => $request->input('extension'),
+                'size_min' => $request->input('size_min'),
+                'size_max' => $request->input('size_max'),
+                'date_from' => $this->parseFilterDate($request->input('date_from')),
+                'date_to' => $this->parseFilterDate($request->input('date_to')),
+                'uploader' => $request->input('uploader'),
+            ]);
             if ($sourceId) {
                 $fileQuery->where('folder_id', $sourceId);
             } else {
@@ -1044,12 +1096,13 @@ class AizUploadController extends Controller
             ->exists();
     }
 
-    protected function applyUploadFilters($query, $search, $typeFilter)
+    protected function applyUploadFilters($query, $search, $typeFilter, array $extra = [])
     {
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('file_original_name', 'like', '%' . $search . '%')
-                    ->orWhere('extension', 'like', '%' . $search . '%');
+                    ->orWhere('extension', 'like', '%' . $search . '%')
+                    ->orWhere('file_name', 'like', '%' . $search . '%');
             });
         }
 
@@ -1062,7 +1115,10 @@ class AizUploadController extends Controller
                     'doc'   => ['doc', 'docx'],
                     'docx'  => ['doc', 'docx'],
                     'excel' => ['xls', 'xlsx', 'ods', 'csv'],
+                    'xls'   => ['xls'],
+                    'xlsx'  => ['xlsx'],
                     'csv'   => ['csv'],
+                    'zip'   => ['zip', 'rar', '7z'],
                 ];
                 if (in_array($normalized, $typeBuckets, true)) {
                     $q->where('type', $normalized);
@@ -1074,7 +1130,52 @@ class AizUploadController extends Controller
             });
         }
 
+        $extension = strtolower(ltrim(trim((string) ($extra['extension'] ?? '')), '.'));
+        if ($extension !== '') {
+            $query->where('extension', $extension);
+        }
+
+        if (isset($extra['size_min']) && $extra['size_min'] !== null && $extra['size_min'] !== '' && is_numeric($extra['size_min'])) {
+            $query->where('file_size', '>=', (int) round(((float) $extra['size_min']) * 1024));
+        }
+
+        if (isset($extra['size_max']) && $extra['size_max'] !== null && $extra['size_max'] !== '' && is_numeric($extra['size_max'])) {
+            $query->where('file_size', '<=', (int) round(((float) $extra['size_max']) * 1024));
+        }
+
+        if (!empty($extra['date_from'])) {
+            $query->whereDate('created_at', '>=', $extra['date_from']);
+        }
+
+        if (!empty($extra['date_to'])) {
+            $query->whereDate('created_at', '<=', $extra['date_to']);
+        }
+
+        $uploader = trim((string) ($extra['uploader'] ?? ''));
+        if ($uploader !== '') {
+            $query->whereHas('user', function ($userQuery) use ($uploader) {
+                $userQuery->where('name', 'like', '%' . $uploader . '%');
+            });
+        }
+
         return $query;
+    }
+
+    protected function parseFilterDate($value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        foreach (['Y-m-d', 'd-m-Y'] as $format) {
+            $date = \DateTime::createFromFormat($format, $value);
+            if ($date && $date->format($format) === $value) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        return null;
     }
 
     protected function sortFolders($folders, string $sortBy, string $sortOrder)
@@ -1082,8 +1183,8 @@ class AizUploadController extends Controller
         $descending = $sortOrder === 'desc';
 
         return $folders->sortBy(function ($folder) use ($sortBy) {
-            if ($sortBy === 'created_at') {
-                return optional($folder->created_at)->timestamp ?? 0;
+            if (in_array($sortBy, ['created_at', 'updated_at'], true)) {
+                return optional($folder->{$sortBy})->timestamp ?? 0;
             }
 
             return strtolower((string) $folder->name);

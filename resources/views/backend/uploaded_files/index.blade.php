@@ -72,97 +72,66 @@
 
 <div class="card">
     <form id="sort_uploads" action="" method="GET">
-        <input type="hidden" name="sort_by" id="sort_by" value="{{ $sortBy ?? 'created_at' }}">
-        <input type="hidden" name="sort_order" id="sort_order" value="{{ $sortOrder ?? 'desc' }}">
         <input type="hidden" name="view" id="view_mode_input" value="{{ $viewMode ?? 'grid' }}">
         @if($foldersReady ?? false)
             <input type="hidden" name="folder" value="{{ $currentFolder->id ?? '' }}">
         @endif
 
-        <div class="card-header row gutters-5 align-items-center">
-            {{-- <div class="col">
-                <h5 class="mb-0 h6" style="font-size: 18px; font-weight: 600; color: #2b56a1;">{{ translate('All files') }}</h5>
-            </div> --}}
-            <div class="dropdown mb-2 mb-md-0">
-                <button class="btn border dropdown-toggle" type="button" data-toggle="dropdown" style="font-size: 14px; font-weight: 500;">
-                    {{ translate('Bulk Action') }}
-                </button>
-                <div class="dropdown-menu dropdown-menu-right">
-                    @if($foldersReady ?? false)
-                        <a class="dropdown-item open-move-modal" href="javascript:void(0)">
-                            {{ translate('Move selected') }}
+        @php
+            $filtersApplied = collect([
+                $search,
+                $typeFilter ?? null,
+                $extension ?? null,
+                $sizeMin ?? null,
+                $sizeMax ?? null,
+                request('date_from'),
+                request('date_to'),
+                ($uploader ?? null),
+            ])->contains(fn ($value) => $value !== null && $value !== '')
+                || (($sortBy ?? 'created_at') !== 'created_at')
+                || (($sortOrder ?? 'desc') !== 'desc')
+                || ((int) ($perPage ?? 60) !== 60);
+        @endphp
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+            <div class="mb-2">
+                <h5 class="mb-0 h6">{{ translate('All files') }}</h5>
+                @if($filtersApplied)
+                    <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+                @endif
+            </div>
+            <div class="d-flex flex-wrap align-items-center">
+                <div class="dropdown mb-2 mr-2">
+                    <button class="btn border dropdown-toggle" type="button" data-toggle="dropdown">
+                        {{ translate('Bulk Action') }}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        @if($foldersReady ?? false)
+                            <a class="dropdown-item open-move-modal" href="javascript:void(0)">
+                                {{ translate('Move selected') }}
+                            </a>
+                        @endif
+                        <a class="dropdown-item confirm-alert" href="javascript:void(0)" data-target="#bulk-delete-modal">
+                            {{ translate('Delete selection') }}
                         </a>
-                    @endif
-                    <a class="dropdown-item confirm-alert" href="javascript:void(0)" data-target="#bulk-delete-modal">
-                        {{ translate('Delete selection') }}
-                    </a>
+                    </div>
                 </div>
-            </div>
-            @php
-                $filtersOpen = ($search ?? '') !== '' || ($typeFilter ?? '') !== '' || (($sortBy ?? 'created_at') !== 'created_at') || (($sortOrder ?? 'desc') !== 'desc');
-                $typeOptions = [
-                    'image' => translate('Images'),
-                    'video' => translate('Videos'),
-                    'audio' => translate('Audio'),
-                    'pdf' => translate('PDF'),
-                    'doc' => translate('Word / Doc'),
-                    'docx' => translate('Word / Docx'),
-                    'excel' => translate('Excel'),
-                    'xls' => translate('Excel (XLS)'),
-                    'xlsx' => translate('Excel (XLSX)'),
-                    'csv' => translate('CSV'),
-                    'archive' => translate('Archive'),
-                    'document' => translate('Documents'),
-                ];
-            @endphp
-            <div class="col-auto">
-                <button type="button" class="btn border" id="toggle-upload-filters" style="font-size: 14px; font-weight: 500;">
-                    <i class="las la-filter"></i> {{ translate('Filters') }}
+                <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#uploadedFilesFilterModal">
+                    {{ translate('Open Filters') }}
                 </button>
-            </div>
-            <div class="col-auto ml-auto">
-                <div class="btn-group btn-group-sm" role="group" aria-label="View Mode">
-                    <button type="button" class="btn btn-outline-secondary view-toggle" data-view="grid" style="font-size: 14px; font-weight: 500; padding: 8px 16px;">
+                <a href="{{ route('uploaded-files.index', array_filter(['folder' => $currentFolder->id ?? null, 'view' => $viewMode ?? null])) }}" class="btn btn-danger mr-2 mb-2">
+                    {{ translate('Reset') }}
+                </a>
+                <div class="btn-group btn-group-sm mb-2" role="group" aria-label="View Mode">
+                    <button type="button" class="btn btn-outline-secondary view-toggle" data-view="grid">
                         <i class="las la-th-large"></i> {{ translate('Grid') }}
                     </button>
-                    <button type="button" class="btn btn-outline-secondary view-toggle" data-view="list" style="font-size: 14px; font-weight: 500; padding: 8px 16px;">
+                    <button type="button" class="btn btn-outline-secondary view-toggle" data-view="list">
                         <i class="las la-list"></i> {{ translate('List') }}
                     </button>
                 </div>
             </div>
         </div>
-
-        <div id="upload-filters-panel" class="px-3 pb-3 border-bottom {{ $filtersOpen ? '' : 'd-none' }}">
-            <div class="row gutters-5 align-items-center">
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <select id="type_filter" class="form-control form-control-xs aiz-selectpicker" name="type" data-live-search="true" style="font-size: 14px;">
-                        <option value="">{{ translate('All types') }}</option>
-                        @foreach($typeOptions as $value => $label)
-                            <option value="{{ $value }}" @selected(($typeFilter ?? null) === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <select id="sort_select" class="form-control form-control-xs aiz-selectpicker" style="font-size: 14px;">
-                        <option value="created_at|desc" @selected(($sortBy ?? 'created_at') === 'created_at' && ($sortOrder ?? 'desc') === 'desc')>{{ translate('Newest first') }}</option>
-                        <option value="created_at|asc" @selected(($sortBy ?? 'created_at') === 'created_at' && ($sortOrder ?? 'desc') === 'asc')>{{ translate('Oldest first') }}</option>
-                        <option value="name|asc" @selected(($sortBy ?? '') === 'name' && ($sortOrder ?? '') === 'asc')>{{ translate('Name A-Z') }}</option>
-                        <option value="name|desc" @selected(($sortBy ?? '') === 'name' && ($sortOrder ?? '') === 'desc')>{{ translate('Name Z-A') }}</option>
-                        <option value="size|desc" @selected(($sortBy ?? '') === 'size' && ($sortOrder ?? '') === 'desc')>{{ translate('Size large-small') }}</option>
-                        <option value="size|asc" @selected(($sortBy ?? '') === 'size' && ($sortOrder ?? '') === 'asc')>{{ translate('Size small-large') }}</option>
-                        <option value="type|asc" @selected(($sortBy ?? '') === 'type' && ($sortOrder ?? '') === 'asc')>{{ translate('Type A-Z') }}</option>
-                        <option value="type|desc" @selected(($sortBy ?? '') === 'type' && ($sortOrder ?? '') === 'desc')>{{ translate('Type Z-A') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <input type="text" class="form-control form-control-xs" name="search" placeholder="{{ translate('Search by name or extension') }}" value="{{ $search }}" style="font-size: 14px;">
-                </div>
-                <div class="col-auto d-flex align-items-center">
-                    <button type="submit" class="btn btn-primary mr-2" style="font-size: 14px; font-weight: 500;">{{ translate('Apply') }}</button>
-                    <button type="button" class="btn btn-secondary" id="reset-filters" style="font-size: 14px; font-weight: 500;">{{ translate('Reset') }}</button>
-                </div>
-            </div>
-        </div>
+        @include('backend.uploaded_files.partials.filter_modal', ['showUploader' => true])
 
         <div class="card-body">
             <div class="form-group mb-2">
@@ -904,24 +873,10 @@
                 applyView($(this).data('view'));
             });
 
-            $('#toggle-upload-filters').on('click', function () {
-                $('#upload-filters-panel').toggleClass('d-none');
-                if (!$('#upload-filters-panel').hasClass('d-none') && $.fn.selectpicker) {
-                    $('#upload-filters-panel .aiz-selectpicker').selectpicker('refresh');
-                }
-            });
-
             var defaultDeleteMessage = "{{ translate('Are you sure to delete this?') }}";
             $(document).on('click', '.confirm-delete', function () {
                 var message = $(this).data('message') || defaultDeleteMessage;
                 $('#delete-modal .modal-body p').text(message);
-            });
-
-            $('#sort_select').on('change', function () {
-                var parts = $(this).val().split('|');
-                $('#sort_by').val(parts[0]);
-                $('#sort_order').val(parts[1]);
-                $('#sort_uploads').submit();
             });
 
             $('.table-sort-trigger').on('click', function (e) {
@@ -934,17 +889,6 @@
                 }
                 $('#sort_by').val(column);
                 $('#sort_order').val(order);
-                $('#sort_uploads').submit();
-            });
-
-            $('#reset-filters').on('click', function () {
-                $('input[name="search"]').val('');
-                $('#type_filter').val('').change();
-                $('#sort_by').val('created_at');
-                $('#sort_order').val('desc');
-                $('#sort_select').val('created_at|desc').change();
-                applyView('grid');
-                localStorage.removeItem('aiz_upload_view');
                 $('#sort_uploads').submit();
             });
 
@@ -1015,8 +959,14 @@
                 var box = $('<div>');
                 box.append($('<input>', { type: 'hidden', name: 'move_all', value: '1' }));
                 box.append($('<input>', { type: 'hidden', name: 'source_id', value: $('input[name="folder"]').val() || '' }));
-                box.append($('<input>', { type: 'hidden', name: 'search', value: $('input[name="search"]').val() || '' }));
+                box.append($('<input>', { type: 'hidden', name: 'search', value: $('#upload_search').val() || '' }));
                 box.append($('<input>', { type: 'hidden', name: 'type', value: $('#type_filter').val() || '' }));
+                box.append($('<input>', { type: 'hidden', name: 'extension', value: $('#upload_extension').val() || '' }));
+                box.append($('<input>', { type: 'hidden', name: 'size_min', value: $('#size_min').val() || '' }));
+                box.append($('<input>', { type: 'hidden', name: 'size_max', value: $('#size_max').val() || '' }));
+                box.append($('<input>', { type: 'hidden', name: 'date_from', value: $('#date_from').val() || '' }));
+                box.append($('<input>', { type: 'hidden', name: 'date_to', value: $('#date_to').val() || '' }));
+                box.append($('<input>', { type: 'hidden', name: 'uploader', value: $('#upload_uploader').val() || '' }));
                 $('#move-selection-inputs').empty().append(box.children());
                 $('#move-modal .modal-title').text("{{ translate('Move everything here') }}");
                 $('#move-save-btn').text("{{ translate('Move everything here') }}");
