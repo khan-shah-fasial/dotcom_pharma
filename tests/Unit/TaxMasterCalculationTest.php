@@ -191,6 +191,32 @@ class TaxMasterCalculationTest extends TestCase
         }
     }
 
+    public function test_normalize_keeps_hsn_and_applied_on_labels(): void
+    {
+        $normalized = TaxMaster::normalize([
+            'kind' => 'taxable',
+            'tax_code' => 'G5',
+            'hsn_code' => '3004',
+            'hs_code' => '3004.90',
+            'applied_on_category' => 'Tablets',
+            'applied_on_sku' => 'SKU-1',
+            'applied_on_product' => 'Dotistrol',
+            'applied_on_variant' => '10ml',
+            'purchase_tax' => 5,
+            'purchase_cgst' => 2.5,
+            'purchase_sgst' => 2.5,
+            'purchase_igst' => 0,
+            'sale_same_as_purchase' => 1,
+        ]);
+
+        $this->assertSame('3004', $normalized['hsn_code']);
+        $this->assertSame('3004.90', $normalized['hs_code']);
+        $this->assertSame('Tablets', $normalized['applied_on_category']);
+        $this->assertSame('SKU-1', $normalized['applied_on_sku']);
+        $this->assertSame('Dotistrol', $normalized['applied_on_product']);
+        $this->assertSame('10ml', $normalized['applied_on_variant']);
+    }
+
     public function test_sortable_columns_and_resolve_sort(): void
     {
         $columns = TaxMaster::sortableColumns();

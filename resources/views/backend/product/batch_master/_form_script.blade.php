@@ -131,20 +131,90 @@
         }
         renumber();
         refreshAmounts();
+        filterCompanySelects();
+    }
+
+    function pv(price, value, hide) {
+        if (hide) {
+            return '<div class="bm-pv"><div>{{ translate('Price') }}: ••••</div><div class="text-muted">{{ translate('Value') }}: ••••</div></div>';
+        }
+        return '<div class="bm-pv"><div>{{ translate('Price') }}: ' + dash(price) + '</div><div class="text-muted">{{ translate('Value') }}: ' + dash(value) + '</div></div>';
+    }
+
+    function selectedMfgIds() {
+        var values = $('#manufactured_by_ids').val();
+        if (!values) {
+            return [];
+        }
+        return $.isArray(values) ? values.map(String) : [String(values)];
+    }
+
+    function filterCompanySelects() {
+        var ids = selectedMfgIds();
+        $('#batch-rows-body .company-select').each(function () {
+            var $sel = $(this);
+            var current = String($sel.val() || '');
+            $sel.find('option').each(function () {
+                var val = String($(this).val());
+                if (val === '') {
+                    return;
+                }
+                $(this).prop('hidden', ids.length > 0 && ids.indexOf(val) === -1);
+            });
+            if (ids.length === 1 && (!current || (ids.indexOf(current) === -1))) {
+                $sel.val(ids[0]);
+            }
+        });
     }
 
     function renderLots(lots) {
-        var $body = $('#live-lots-body').empty();
-        var $values = $('#live-values-body').empty();
+        var $wrap = $('#live-lots-blocks').empty();
         (lots || []).forEach(function (lot) {
-            var coa = lot.coa_url ? '<a href="' + lot.coa_url + '" target="_blank">{{ translate('Zoom') }}</a>' : '—';
-            var prateCell = showPurchaseRate ? dash(lot.purchase_rate) : '••••';
-            $body.append('<tr><td>' + dash(lot.batch) + '</td><td>' + dash(lot.manufacturing_date) + '</td><td>' + dash(lot.expiry_date) + '</td><td>' + dash(lot.qty) + '</td><td>' + dash(lot.scheme) + '</td><td>' + dash(lot.mrp_price) + '</td><td class="bm-prate">' + prateCell + '</td><td>' + dash(lot.tax_percent) + '</td><td>' + dash(lot.amount) + '</td><td>' + dash(lot.company_id) + '</td><td>' + coa + '</td><td>' + dash(lot.upload_date) + '</td><td>' + (lot.status ? '{{ translate('On') }}' : '{{ translate('Off') }}') + '</td></tr>');
+            var prices = lot.prices || {};
             var values = lot.values || {};
             var discounts = lot.discounts || {};
-            var prateValue = showPurchaseRate ? dash(values.prate) : '••••';
-            $values.append('<tr><td class="bm-prate">' + prateValue + '</td><td>' + dash(values.pts) + '</td><td>' + dash(values.ptr) + '</td><td>' + dash(values.ptd) + '</td><td>' + dash(values.gov) + '</td><td>' + dash(values.expo) + '</td><td>' + dash(values.customer) + '</td><td>' + dash(discounts.batchwise) + '</td><td>' + dash(discounts.productwise) + '</td><td>' + dash(discounts.schemewise) + '</td></tr>');
+            var coa = lot.coa_url ? '<a href="' + lot.coa_url + '" target="_blank">{{ translate('Zoom') }}</a>' : '—';
+            var $block = $('<div class="bm-live-lot"></div>');
+            $block.append(
+                '<div class="table-responsive"><table class="table table-sm table-bordered">' +
+                '<thead><tr>' +
+                '<th>{{ translate('Batch') }}</th><th>{{ translate('Mfg.') }}</th><th>{{ translate('Expiry') }}</th><th>{{ translate('Qty') }}</th>' +
+                '<th>{{ translate('Scheme') }}</th><th>{{ translate('MRP') }}</th><th class="bm-prate">{{ translate('P-Rate') }}</th>' +
+                '<th>{{ translate('Tax') }}</th><th>{{ translate('Amount') }}</th><th>{{ translate('Company Code') }}</th>' +
+                '<th>{{ translate('COA Image') }}</th><th>{{ translate('Upload Date') }}</th><th>{{ translate('Status') }}</th>' +
+                '</tr></thead><tbody><tr>' +
+                '<td>' + dash(lot.batch) + '</td><td>' + dash(lot.manufacturing_date) + '</td><td>' + dash(lot.expiry_date) + '</td>' +
+                '<td>' + dash(lot.qty) + '</td><td>' + dash(lot.scheme) + '</td><td>' + dash(lot.mrp_price) + '</td>' +
+                '<td class="bm-prate">' + (showPurchaseRate ? dash(lot.purchase_rate) : '••••') + '</td>' +
+                '<td>' + dash(lot.tax_percent) + '</td><td>' + dash(lot.amount) + '</td><td>' + dash(lot.company_id) + '</td>' +
+                '<td>' + coa + '</td><td>' + dash(lot.upload_date) + '</td><td>' + (lot.status ? '{{ translate('On') }}' : '{{ translate('Off') }}') + '</td>' +
+                '</tr></tbody></table></div>'
+            );
+            $block.append(
+                '<div class="bm-live-lot-values table-responsive"><table class="table table-sm table-bordered">' +
+                '<thead><tr>' +
+                '<th class="bm-prate">{{ translate('P-Rate') }}</th><th>{{ translate('PTS') }}</th><th>{{ translate('PTR') }}</th>' +
+                '<th>{{ translate('PTD') }}</th><th>{{ translate('Govt.') }}</th><th>{{ translate('Export') }}</th>' +
+                '<th>{{ translate('Customer (B2C)') }}</th><th>{{ translate('Batchwise Discount') }}</th>' +
+                '<th>{{ translate('Productwise Discount') }}</th><th>{{ translate('Schemewise Discount') }}</th>' +
+                '</tr></thead><tbody><tr>' +
+                '<td class="bm-prate">' + pv(prices.prate, values.prate, !showPurchaseRate) + '</td>' +
+                '<td>' + pv(prices.pts, values.pts) + '</td>' +
+                '<td>' + pv(prices.ptr, values.ptr) + '</td>' +
+                '<td>' + pv(prices.ptd, values.ptd) + '</td>' +
+                '<td>' + pv(prices.gov, values.gov) + '</td>' +
+                '<td>' + pv(prices.expo, values.expo) + '</td>' +
+                '<td>' + pv(prices.customer, values.customer) + '</td>' +
+                '<td>' + (discounts.batchwise === null || discounts.batchwise === undefined || discounts.batchwise === '' ? '—' : dash(discounts.batchwise) + '%') + '</td>' +
+                '<td>' + (discounts.productwise === null || discounts.productwise === undefined || discounts.productwise === '' ? '—' : dash(discounts.productwise) + '%') + '</td>' +
+                '<td>' + (discounts.schemewise === null || discounts.schemewise === undefined || discounts.schemewise === '' ? '—' : dash(discounts.schemewise) + '%') + '</td>' +
+                '</tr></tbody></table></div>'
+            );
+            $wrap.append($block);
         });
+        if (!(lots || []).length) {
+            $wrap.append('<p class="text-muted mb-0">{{ translate('No live lots for this SKU.') }}</p>');
+        }
     }
 
     function selectIds(selector, ids) {
@@ -186,6 +256,7 @@
                 applyNonBatch();
             }
             renderLots(data.live_lots || []);
+            filterCompanySelects();
             $('#live-lots-wrap').removeClass('d-none');
         });
     }
@@ -222,6 +293,7 @@
     }
 
     $('#is_non_batch').on('change', applyNonBatch);
+    $('#manufactured_by_ids').on('change', filterCompanySelects);
     $('#batch-rows-body').on('input', '.qty-input, .rate-input', refreshAmounts);
     $('#toggle-live-lots').on('click', function () {
         $('#live-lots-wrap').toggleClass('d-none');
@@ -247,6 +319,7 @@
     });
 
     refreshAmounts();
+    filterCompanySelects();
     if (!isEdit) {
         renumber();
     }

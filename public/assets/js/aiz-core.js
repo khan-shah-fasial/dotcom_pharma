@@ -1773,8 +1773,13 @@ $.fn.toggleAttr = function (attr, attr1, attr2) {
                         },
                     },
                 });
+                var uploadEndpoint = AIZ.data.appUrl + "/aiz-uploader/upload";
+                var uploadFolderId = $("#aiz-upload-files").data("folder-id");
+                if (uploadFolderId) {
+                    uploadEndpoint += "?folder_id=" + encodeURIComponent(uploadFolderId);
+                }
                 uppy.use(Uppy.XHRUpload, {
-                    endpoint: AIZ.data.appUrl + "/aiz-uploader/upload",
+                    endpoint: uploadEndpoint,
                     fieldName: "aiz_file",
                     formData: true,
                     headers: {

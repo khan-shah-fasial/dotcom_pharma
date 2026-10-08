@@ -34,6 +34,8 @@ class TaxBatchMasterListingTest extends TestCase
         $response->assertSee('Tax Master', false);
         $response->assertSee('sort_by=tax_code', false);
         $response->assertSee('Filter Tax Master', false);
+        $response->assertSee('HSN Code', false);
+        $response->assertSee('Applied On', false);
         $response->assertSee('Purchase Tax % from', false);
         $response->assertSee('Same as purchase', false);
         $response->assertSee('Date Of Add / Edit from', false);
@@ -50,6 +52,8 @@ class TaxBatchMasterListingTest extends TestCase
             ->get('/admin/tax-masters/create')
             ->assertOk()
             ->assertSee('Sale tax same as purchase?', false)
+            ->assertSee('HSN Code', false)
+            ->assertSee('Applied On', false)
             ->assertSee('Taxable = GST extra', false)
             ->assertSee('Tax % must equal CGST + SGST + IGST.', false);
     }
@@ -59,6 +63,9 @@ class TaxBatchMasterListingTest extends TestCase
         $response = $this->actingAs($this->admin())->get('/admin/batch-masters');
         $response->assertOk();
         $response->assertSee('Batch / Lot Master', false);
+        $response->assertSee('Add New Batch / Lot', false);
+        $response->assertSee('Listing Page', false);
+        $response->assertSee('Next Tab Batch Adjustment', false);
         $response->assertSee('sort_by=sku', false);
         $response->assertSee('Filter Batch / Lot Master', false);
         $response->assertSee('Non-batch', false);
@@ -76,12 +83,18 @@ class TaxBatchMasterListingTest extends TestCase
             ->get('/admin/batch-masters/create')
             ->assertOk()
             ->assertSee('Search By SKU - Product Name / Brand Name With Full Variant', false)
+            ->assertSee('Add New Batch / Lot', false)
+            ->assertSee('Listing Page', false)
+            ->assertSee('Next Tab Batch Adjustment', false)
+            ->assertSee('Current live lots (read only)', false)
             ->assertSee('Live product lots and stock qty are not changed', false);
 
         $this->actingAs($this->admin())
             ->get('/admin/batch-masters/adjust')
             ->assertOk()
-            ->assertSee('Batch Adjustment', false);
+            ->assertSee('Batch Adjustment', false)
+            ->assertSee('Convert', false)
+            ->assertSee('Biowaste certificate', false);
     }
 
     public function test_vat_and_tax_page_still_loads(): void

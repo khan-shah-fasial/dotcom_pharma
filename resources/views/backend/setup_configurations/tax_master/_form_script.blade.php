@@ -133,6 +133,24 @@
         }
     });
 
+    var hsnMap = {
+        @foreach ($hsnOptions ?? [] as $opt)
+            @if (!empty($opt->product_hsn))
+                {!! json_encode((string) $opt->product_hsn) !!}: {!! json_encode((string) ($opt->product_hs ?? '')) !!},
+            @endif
+        @endforeach
+    };
+
+    function fillHsCode() {
+        var hsn = $('#hsn_code').val();
+        if (hsnMap[hsn]) {
+            $('#hs_code').val(hsnMap[hsn]);
+        }
+    }
+
+    $('#hsn_code').on('input change', fillHsCode);
+    fillHsCode();
+
     syncForm();
 })();
 </script>

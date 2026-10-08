@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TaxMasterRequest;
+use App\Models\Category;
 use App\Models\TaxMaster;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class TaxMasterController extends Controller
 {
@@ -31,6 +33,9 @@ class TaxMasterController extends Controller
             'sale_tax_to' => trim((string) $request->input('sale_tax_to')),
             'date_from' => trim((string) $request->input('date_from')),
             'date_to' => trim((string) $request->input('date_to')),
+            'hsn_code' => trim((string) $request->input('hsn_code')),
+            'hs_code' => trim((string) $request->input('hs_code')),
+            'applied_on' => trim((string) $request->input('applied_on')),
         ];
 
         [$sortBy, $sortDir, $sortColumn] = TaxMaster::resolveSort(
@@ -39,6 +44,7 @@ class TaxMasterController extends Controller
         );
 
         $tableReady = TaxMaster::tableReady();
+        $hsnReady = TaxMaster::hsnColumnsReady();
         $taxes = null;
 
         if ($tableReady) {
@@ -55,6 +61,7 @@ class TaxMasterController extends Controller
             'taxes',
             'filters',
             'tableReady',
+            'hsnReady',
             'sortBy',
             'sortDir'
         ));
@@ -68,9 +75,7 @@ class TaxMasterController extends Controller
             return redirect()->route('tax_masters.index');
         }
 
-        return view('backend.setup_configurations.tax_master.create', [
-            'tax' => null,
-        ]);
+        return view('backend.setup_configurations.tax_master.create', $this->formData(null));
     }
 
     public function store(TaxMasterRequest $request)
@@ -100,7 +105,7 @@ class TaxMasterController extends Controller
 
         $tax = TaxMaster::findOrFail($id);
 
-        return view('backend.setup_configurations.tax_master.edit', compact('tax'));
+        return view('backend.setup_configurations.tax_master.edit', $this->formData($tax));
     }
 
     public function update(TaxMasterRequest $request, $id)
@@ -135,6 +140,32 @@ class TaxMasterController extends Controller
 
     private function payloadFromRequest(TaxMasterRequest $request): array
     {
-        return TaxMaster::normalize($request->validated());
+        $payload = TaxMaster::normalize($request->validated());
+        if (!TaxMaster::hsnColumnsReady()) {
+            foreach (TaxMaster::HSN_COLUMNS as $column) {
+                unset($payload[$column]);
+            }
+        }
+
+        return $payload;
+    }
+
+    private function formData($tax): array
+    {
+        $categories = collect();
+        try {
+            if (Schema::hasTable('categories')) {
+                $categories = Category::query()->orderBy('name')->get(['id', 'name']);
+            }
+        } catch (\Throwable $e) {
+            $categories = collect();
+        }
+
+        return [
+            'tax' => $tax,
+            'hsnReady' => TaxMaster::hsnColumnsReady(),
+            'hsnOptions' => TaxMaster::hsnOptions(),
+            'categories' => $categories,
+        ];
     }
 }

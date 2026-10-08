@@ -8,6 +8,7 @@
     };
     $sortBy = $sortBy ?? 'id';
     $sortDir = $sortDir ?? 'desc';
+    $hsnReady = $hsnReady ?? false;
     $filtersApplied = collect($filters)->contains(function ($value) {
         return $value !== null && $value !== '';
     });
@@ -31,6 +32,10 @@
 @if (!$tableReady)
     <div class="alert alert-warning">
         {{ translate('Tax Master table is not ready yet.') }}
+    </div>
+@elseif (empty($hsnReady))
+    <div class="alert alert-warning">
+        {{ translate('HSN / HS Code / Applied On columns are not on the table yet. Run sqlupdates/tax_master_hsn.sql.') }}
     </div>
 @endif
 
@@ -57,12 +62,24 @@
                 <thead>
                     <tr>
                         @include('backend.inc.sortable_th', ['column' => 'id', 'label' => translate('Tax ID'), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @if (!empty($hsnReady))
+                            @include('backend.inc.sortable_th', ['column' => 'hsn_code', 'label' => translate('HSN Code'), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'hs_code', 'label' => translate('HS Code'), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @else
+                            <th>{{ translate('HSN Code') }}</th>
+                            <th>{{ translate('HS Code') }}</th>
+                        @endif
                         @include('backend.inc.sortable_th', ['column' => 'kind', 'label' => translate('Tax Type'), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @include('backend.inc.sortable_th', ['column' => 'tax_code', 'label' => translate('Tax Code'), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @include('backend.inc.sortable_th', ['column' => 'description', 'label' => translate('Description'), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @include('backend.inc.sortable_th', ['column' => 'purchase_tax', 'labelHtml' => e(translate('Purchase Tax')) . '<br>' . e(translate('Tax % / CGST % / SGST % / IGST % / TOTAL GST%')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @include('backend.inc.sortable_th', ['column' => 'sale_same_as_purchase', 'labelHtml' => e(translate('Same as purchase')) . '<br>Y/N', 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @include('backend.inc.sortable_th', ['column' => 'sale_tax', 'labelHtml' => e(translate('Sale Tax')) . '<br>' . e(translate('Tax % / CGST % / SGST % / IGST % / TOTAL GST%')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @if (!empty($hsnReady))
+                            @include('backend.inc.sortable_th', ['column' => 'applied_on_category', 'labelHtml' => e(translate('Applied On')) . '<br>' . e(translate('Category / SKU / Product Name / Variant')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @else
+                            <th>{{ translate('Applied On') }}<br>{{ translate('Category / SKU / Product Name / Variant') }}</th>
+                        @endif
                         @include('backend.inc.sortable_th', ['column' => 'status', 'labelHtml' => e(translate('Status')) . '<br>' . e(translate('Date Of Add / Edit')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         <th class="text-right">{{ translate('Actions') }}</th>
                     </tr>
@@ -72,6 +89,8 @@
                         @foreach ($taxes as $tax)
                             <tr>
                                 <td>{{ $tax->id }}</td>
+                                <td>{{ !empty($hsnReady) ? ($tax->hsn_code ?: '—') : '—' }}</td>
+                                <td>{{ !empty($hsnReady) ? ($tax->hs_code ?: '—') : '—' }}</td>
                                 <td>
                                     <span class="badge badge-inline badge-soft-secondary">{{ translate($tax->kindLabel()) }}</span>
                                 </td>
@@ -88,6 +107,7 @@
                                     <div>{{ translate('CGST') }} {{ $rate($tax->sale_cgst) }} / {{ translate('SGST') }} {{ $rate($tax->sale_sgst) }} / {{ translate('IGST') }} {{ $rate($tax->sale_igst) }}</div>
                                     <div class="text-muted">{{ translate('TOTAL') }}: {{ $rate($tax->saleTotal()) }}</div>
                                 </td>
+                                <td class="fs-12">{{ !empty($hsnReady) ? $tax->appliedOnSummary() : '—' }}</td>
                                 <td>
                                     <label class="aiz-switch aiz-switch-success mb-0">
                                         <input type="checkbox" onchange="updateTaxMasterStatus(this)" value="{{ $tax->id }}" {{ $tax->status ? 'checked' : '' }} @cannot('edit_tax_master') disabled @endcannot>
@@ -111,7 +131,7 @@
                         @endforeach
                     @else
                         <tr>
-                            <td colspan="9" class="text-center text-muted">{{ translate('No tax master entries found.') }}</td>
+                            <td colspan="12" class="text-center text-muted">{{ translate('No tax master entries found.') }}</td>
                         </tr>
                     @endif
                 </tbody>
@@ -172,6 +192,18 @@
                             <div class="col-md-6 mb-3">
                                 <label for="tm_description">{{ translate('Description') }}</label>
                                 <input type="text" class="form-control" id="tm_description" name="description" value="{{ $filters['description'] }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="tm_hsn">{{ translate('HSN Code') }}</label>
+                                <input type="text" class="form-control" id="tm_hsn" name="hsn_code" value="{{ $filters['hsn_code'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="tm_hs">{{ translate('HS Code') }}</label>
+                                <input type="text" class="form-control" id="tm_hs" name="hs_code" value="{{ $filters['hs_code'] ?? '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="tm_applied">{{ translate('Applied On') }}</label>
+                                <input type="text" class="form-control" id="tm_applied" name="applied_on" value="{{ $filters['applied_on'] ?? '' }}" placeholder="{{ translate('Category, SKU, Product Name, Variant') }}">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="tm_same">{{ translate('Same as purchase') }}</label>

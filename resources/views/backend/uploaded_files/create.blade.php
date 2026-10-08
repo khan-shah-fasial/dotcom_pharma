@@ -7,7 +7,7 @@
 			<h1 class="h3">{{translate('Upload New File')}}</h1>
 		</div>
 		<div class="col-md-6 text-md-right">
-			<a href="{{ route('uploaded-files.index') }}" class="btn btn-link text-reset">
+			<a href="{{ route('uploaded-files.index', request('folder') ? ['folder' => request('folder')] : []) }}" class="btn btn-link text-reset">
 				<i class="las la-angle-left"></i>
 				<span>{{translate('Back to uploaded files')}}</span>
 			</a>
@@ -19,7 +19,7 @@
         <h5 class="mb-0 h6">{{translate('Drag & drop your files')}}</h5>
     </div>
     <div class="card-body">
-    	<div id="aiz-upload-files" class="h-420px" style="min-height: 65vh">
+    	<div id="aiz-upload-files" class="h-420px" style="min-height: 65vh" @if(request('folder')) data-folder-id="{{ (int) request('folder') }}" @endif>
     		
     	</div>
     </div>

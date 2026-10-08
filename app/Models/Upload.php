@@ -17,7 +17,7 @@ class Upload extends Model
     * @var array
     */
     protected $fillable = [
-        'file_original_name', 'file_name', 'user_id', 'extension', 'type', 'file_size',
+        'file_original_name', 'file_name', 'user_id', 'folder_id', 'extension', 'type', 'file_size',
     ];
 
     protected static function booted()
@@ -30,5 +30,10 @@ class Upload extends Model
     public function user()
     {
     	return $this->belongsTo(User::class);
+    }
+
+    public function folder()
+    {
+        return $this->belongsTo(UploadFolder::class, 'folder_id');
     }
 }

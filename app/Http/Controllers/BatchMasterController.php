@@ -652,6 +652,15 @@ class BatchMasterController extends Controller
                     'coa_url' => $lot->coa ? uploaded_asset($lot->coa) : null,
                     'upload_date' => optional($lot->created_at)->format('d-m-Y'),
                     'status' => ((float) $lot->qty) > 0,
+                    'prices' => [
+                        'prate' => $rate,
+                        'pts' => $prices['pts'] ?? null,
+                        'ptr' => $prices['ptr'] ?? null,
+                        'ptd' => $prices['ptd'] ?? null,
+                        'gov' => $prices['gov'] ?? null,
+                        'expo' => $prices['expo'] ?? null,
+                        'customer' => $prices['customer'] ?? null,
+                    ],
                     'values' => [
                         'prate' => BatchMaster::amountFrom($lot->qty, $rate),
                         'pts' => BatchMaster::amountFrom($lot->qty, $prices['pts'] ?? null),

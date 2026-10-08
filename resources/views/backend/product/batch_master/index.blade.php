@@ -23,22 +23,7 @@
     });
 @endphp
 
-<div class="aiz-titlebar text-left mt-2 mb-3">
-    <div class="row align-items-center">
-        <div class="col-md-6">
-            <h1 class="h3">{{ translate('Batch / Lot Master') }}</h1>
-        </div>
-        <div class="col-md-6 text-md-right">
-            <a href="{{ route('batch_masters.index') }}" class="btn btn-soft-secondary btn-sm mr-1">{{ translate('Listing Page') }}</a>
-            <a href="{{ route('batch_masters.adjust') }}" class="btn btn-soft-secondary btn-sm mr-1">{{ translate('Next Tab Batch Adjustment') }}</a>
-            @can('add_batch_master')
-                <a href="{{ route('batch_masters.create') }}" class="btn btn-circle btn-info">
-                    <span>{{ translate('Add New Batch / Lot') }}</span>
-                </a>
-            @endcan
-        </div>
-    </div>
-</div>
+@include('backend.product.batch_master._tabs', ['activeTab' => 'listing'])
 
 @if (!$tableReady)
     <div class="alert alert-warning">
@@ -108,12 +93,9 @@
                                 </td>
                                 <td>{{ $money($row->tax_percent) }}<br>{{ $money($row->lineAmount()) }}</td>
                                 <td class="fs-12">
-                                    {{ translate('PTS') }} {{ $money($row->roleLineValue('pts')) }} /
-                                    {{ translate('PTR') }} {{ $money($row->roleLineValue('ptr')) }} /
-                                    {{ translate('PTD') }} {{ $money($row->roleLineValue('ptd')) }}<br>
-                                    {{ translate('Govt.') }} {{ $money($row->roleLineValue('gov')) }} /
-                                    {{ translate('Export') }} {{ $money($row->roleLineValue('expo')) }} /
-                                    {{ translate('B2C') }} {{ $money($row->roleLineValue('customer')) }}
+                                    @foreach (['pts' => 'PTS', 'ptr' => 'PTR', 'ptd' => 'PTD', 'gov' => 'Govt.', 'expo' => 'Export', 'customer' => 'B2C'] as $roleKey => $roleLabel)
+                                        <div>{{ translate($roleLabel) }} {{ $money($row->rolePrice($roleKey)) }} / {{ translate('Value') }} {{ $money($row->roleLineValue($roleKey)) }}</div>
+                                    @endforeach
                                 </td>
                                 <td>{{ $money($row->batch_discount_percent) }}</td>
                                 <td>{{ $money($row->product_discount_percent) }}</td>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Upload;
+use App\Models\UploadFolder;
 use Response;
 use Auth;
 use Illuminate\Support\Facades\Storage;
@@ -35,32 +36,39 @@ class AizUploadController extends Controller
 
         $request->session()->put('uploads_view', $viewMode);
 
-        if ($search) {
-            $all_uploads->where(function ($q) use ($search) {
-                $q->where('file_original_name', 'like', '%' . $search . '%')
-                    ->orWhere('extension', 'like', '%' . $search . '%');
-            });
-        }
+        $this->applyUploadFilters($all_uploads, $search, $typeFilter);
 
-        if ($typeFilter) {
-            $all_uploads->where(function ($q) use ($typeFilter) {
-                $normalized = strtolower($typeFilter);
-                $typeBuckets = ['image', 'video', 'audio', 'archive', 'document'];
-                $extensionGroups = [
-                    'pdf'   => ['pdf'],
-                    'doc'   => ['doc', 'docx'],
-                    'docx'  => ['doc', 'docx'],
-                    'excel' => ['xls', 'xlsx', 'ods', 'csv'],
-                    'csv'   => ['csv'],
-                ];
-                if (in_array($normalized, $typeBuckets, true)) {
-                    $q->where('type', $normalized);
-                } elseif (isset($extensionGroups[$normalized])) {
-                    $q->whereIn('extension', $extensionGroups[$normalized]);
-                } else {
-                    $q->where('extension', $normalized);
-                }
-            });
+        $foldersReady = UploadFolder::ready() && auth()->user()->user_type != 'seller';
+        $currentFolder = null;
+        $childFolders = collect();
+        $breadcrumbs = [];
+        $folderOptions = [];
+
+        if ($foldersReady) {
+            $requestedFolder = (int) $request->get('folder');
+            if ($requestedFolder > 0) {
+                $currentFolder = UploadFolder::find($requestedFolder);
+            }
+
+            if ($currentFolder) {
+                $all_uploads->where('folder_id', $currentFolder->id);
+                $breadcrumbs = $currentFolder->breadcrumb();
+            } else {
+                $all_uploads->whereNull('folder_id');
+            }
+
+            $childFolders = UploadFolder::query()
+                ->when($currentFolder, function ($query) use ($currentFolder) {
+                    $query->where('parent_id', $currentFolder->id);
+                }, function ($query) {
+                    $query->whereNull('parent_id');
+                })
+                ->when($search, function ($query) use ($search) {
+                    $query->where('name', 'like', '%' . $search . '%');
+                })
+                ->get();
+
+            $folderOptions = UploadFolder::flatTree();
         }
 
         // Normalize sorting
@@ -72,6 +80,7 @@ class AizUploadController extends Controller
 
         $sortBy = in_array($sortBy, ['name', 'type', 'size', 'created_at']) ? $sortBy : 'created_at';
         $sortOrder = $sortOrder === 'asc' ? 'asc' : 'desc';
+        $childFolders = $this->sortFolders($childFolders, $sortBy, $sortOrder);
 
         switch ($sortBy) {
             case 'name':
@@ -99,6 +108,11 @@ class AizUploadController extends Controller
             'sort_by'     => $sortBy, // backward compatibility with existing blade
             'typeFilter'  => $typeFilter,
             'viewMode'    => $viewMode,
+            'foldersReady' => $foldersReady,
+            'currentFolder' => $currentFolder,
+            'childFolders' => $childFolders,
+            'breadcrumbs' => $breadcrumbs,
+            'folderOptions' => $folderOptions,
         ];
 
         return (auth()->user()->user_type == 'seller')
@@ -440,6 +454,12 @@ class AizUploadController extends Controller
                 $upload->extension = $extension;
                 $upload->file_name = $path;
                 $upload->user_id = Auth::user()->id;
+                if (UploadFolder::ready() && auth()->user()->user_type != 'seller') {
+                    $folderId = (int) $request->input('folder_id');
+                    if ($folderId > 0 && UploadFolder::where('id', $folderId)->exists()) {
+                        $upload->folder_id = $folderId;
+                    }
+                }
                 $upload->type = $type[$upload->extension];
                 $upload->file_size = $size;
                 $upload->is_hidden = $request->boolean('is_hidden', false);
@@ -458,31 +478,7 @@ class AizUploadController extends Controller
     public function get_uploaded_files(Request $request)
     {
         $uploads = Upload::where('user_id', Auth::user()->id);
-        if ($request->search != null) {
-            $uploads->where(function ($q) use ($request) {
-                $q->where('file_original_name', 'like', '%' . $request->search . '%')
-                    ->orWhere('extension', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        if ($request->filled('type')) {
-            $typeFilter = strtolower($request->type);
-            $typeBuckets = ['image', 'video', 'audio', 'archive', 'document'];
-            $extensionGroups = [
-                'pdf'   => ['pdf'],
-                'doc'   => ['doc', 'docx'],
-                'docx'  => ['doc', 'docx'],
-                'excel' => ['xls', 'xlsx', 'ods', 'csv'],
-                'csv'   => ['csv'],
-            ];
-            if (in_array($typeFilter, $typeBuckets, true)) {
-                $uploads->where('type', $typeFilter);
-            } elseif (isset($extensionGroups[$typeFilter])) {
-                $uploads->whereIn('extension', $extensionGroups[$typeFilter]);
-            } else {
-                $uploads->where('extension', $typeFilter);
-            }
-        }
+        $this->applyUploadFilters($uploads, $request->search, $request->input('type'));
 
         $sortBy    = $request->get('sort_by');
         $sortOrder = $request->get('sort_order', 'desc');
@@ -518,8 +514,9 @@ class AizUploadController extends Controller
     public function destroy($id)
     {
         $upload = Upload::findOrFail($id);
+        $result = $this->deleteStoredUpload($upload);
 
-        if ($this->uploadInUse($upload->id)) {
+        if ($result === 'blocked') {
             $message = translate('File is in use and cannot be deleted.');
             if (request()->ajax()) {
                 return response()->json(['status' => false, 'message' => $message], 409);
@@ -528,10 +525,29 @@ class AizUploadController extends Controller
             return back();
         }
 
-        if (auth()->user()->user_type == 'seller' && $upload->user_id != auth()->user()->id) {
+        if ($result === 'forbidden') {
             flash(translate("You don't have permission for deleting this!"))->error();
             return back();
         }
+
+        flash(translate('File deleted successfully'))->success();
+        return back();
+    }
+
+    /**
+     * Delete the stored file and its upload row.
+     * Returns deleted, blocked, or forbidden.
+     */
+    protected function deleteStoredUpload(Upload $upload): string
+    {
+        if ($this->uploadInUse($upload->id)) {
+            return 'blocked';
+        }
+
+        if (auth()->user()->user_type == 'seller' && $upload->user_id != auth()->user()->id) {
+            return 'forbidden';
+        }
+
         try {
             if (env('FILESYSTEM_DRIVER') != 'local') {
                 $diskName = env('FILESYSTEM_DRIVER') == 's3' ? 's3' : env('FILESYSTEM_DRIVER');
@@ -542,13 +558,13 @@ class AizUploadController extends Controller
             } else {
                 unlink(public_path() . '/' . $upload->file_name);
             }
-            $upload->delete();
-            flash(translate('File deleted successfully'))->success();
         } catch (\Exception $e) {
-            $upload->delete();
-            flash(translate('File deleted successfully'))->success();
+            // The record is still removed when the file is already missing.
         }
-        return back();
+
+        $upload->delete();
+
+        return 'deleted';
     }
 
     /**
@@ -767,5 +783,321 @@ class AizUploadController extends Controller
                 'full_path' => my_asset($upload->file_name),
             ],
         ]);
+    }
+
+    public function storeFolder(Request $request)
+    {
+        if ($denied = $this->folderDenied()) {
+            return $denied;
+        }
+
+        $name = trim((string) $request->input('name'));
+        $parentId = $this->nullableFolderId($request->input('parent_id'));
+
+        if ($name === '' || strlen($name) > 190) {
+            flash(translate('Enter a folder name.'))->error();
+            return back();
+        }
+
+        if ($parentId && !UploadFolder::where('id', $parentId)->exists()) {
+            flash(translate('That folder was not found.'))->error();
+            return back();
+        }
+
+        if ($this->folderNameTaken($name, $parentId)) {
+            flash(translate('A folder with this name already exists here.'))->error();
+            return back();
+        }
+
+        UploadFolder::create([
+            'name' => $name,
+            'parent_id' => $parentId,
+            'user_id' => auth()->id(),
+        ]);
+
+        flash(translate('Folder created successfully'))->success();
+        return back();
+    }
+
+    public function renameFolder(Request $request, UploadFolder $folder)
+    {
+        if ($denied = $this->folderDenied()) {
+            return $denied;
+        }
+
+        $name = trim((string) $request->input('name'));
+        if ($name === '' || strlen($name) > 190) {
+            flash(translate('Enter a folder name.'))->error();
+            return back();
+        }
+
+        if ($this->folderNameTaken($name, $folder->parent_id, $folder->id)) {
+            flash(translate('A folder with this name already exists here.'))->error();
+            return back();
+        }
+
+        $folder->name = $name;
+        $folder->save();
+
+        flash(translate('Folder renamed successfully'))->success();
+        return back();
+    }
+
+    public function destroyFolder(Request $request, $id)
+    {
+        if ($denied = $this->folderDenied()) {
+            return $denied;
+        }
+
+        $folder = UploadFolder::findOrFail($id);
+
+        if (!$request->boolean('with_files')) {
+            $parentId = $folder->parent_id;
+            UploadFolder::where('parent_id', $folder->id)->update(['parent_id' => $parentId]);
+            Upload::withoutGlobalScope('not_hidden')
+                ->withTrashed()
+                ->where('folder_id', $folder->id)
+                ->update(['folder_id' => $parentId]);
+            $folder->delete();
+
+            flash(translate('Folder removed. Anything inside was moved up one level.'))->success();
+            return back();
+        }
+
+        $folderIds = $this->descendantFolderIds($folder->id);
+        Upload::withoutGlobalScope('not_hidden')
+            ->onlyTrashed()
+            ->whereIn('folder_id', $folderIds)
+            ->update(['folder_id' => null]);
+
+        $deleted = 0;
+        $blocked = 0;
+        $files = Upload::withoutGlobalScope('not_hidden')->whereIn('folder_id', $folderIds)->get();
+        foreach ($files as $file) {
+            $result = $this->deleteStoredUpload($file);
+            if ($result === 'deleted') {
+                $deleted++;
+            } else {
+                $blocked++;
+            }
+        }
+
+        $pending = $folderIds;
+        $guard = 0;
+        while ($pending && $guard < 1000) {
+            $guard++;
+            $progress = false;
+            foreach ($pending as $key => $folderId) {
+                $hasChild = UploadFolder::where('parent_id', $folderId)->whereIn('id', $pending)->exists();
+                $hasFiles = Upload::withoutGlobalScope('not_hidden')->where('folder_id', $folderId)->exists();
+                if ($hasChild || $hasFiles) {
+                    continue;
+                }
+                UploadFolder::where('id', $folderId)->delete();
+                unset($pending[$key]);
+                $progress = true;
+            }
+            if (!$progress) {
+                break;
+            }
+        }
+
+        if ($blocked > 0) {
+            flash(translate('Deleted') . ' ' . $deleted . ' ' . translate('files. Files that are in use were kept, along with their folder.'))->warning();
+        } else {
+            flash(translate('Folder and its files were deleted.'))->success();
+        }
+
+        return back();
+    }
+
+    public function moveItems(Request $request)
+    {
+        if ($denied = $this->folderDenied()) {
+            return $denied;
+        }
+
+        $destinationId = $this->nullableFolderId($request->input('destination_id'));
+        $fileIds = array_values(array_unique(array_filter((array) $request->input('id', []))));
+        $folderIds = array_values(array_unique(array_filter((array) $request->input('folder_ids', []))));
+
+        if ($request->boolean('move_all')) {
+            $sourceId = $this->nullableFolderId($request->input('source_id'));
+            if ($sourceId === $destinationId) {
+                flash(translate('Those files are already in this folder.'))->warning();
+                return back();
+            }
+
+            $fileQuery = Upload::query();
+            $this->applyUploadFilters($fileQuery, $request->input('search'), $request->input('type'));
+            if ($sourceId) {
+                $fileQuery->where('folder_id', $sourceId);
+            } else {
+                $fileQuery->whereNull('folder_id');
+            }
+            $fileIds = $fileQuery->pluck('id')->all();
+
+            $folderIds = [];
+            if (!$request->filled('type')) {
+                $folderQuery = UploadFolder::query();
+                if ($sourceId) {
+                    $folderQuery->where('parent_id', $sourceId);
+                } else {
+                    $folderQuery->whereNull('parent_id');
+                }
+                if ($request->filled('search')) {
+                    $folderQuery->where('name', 'like', '%' . $request->input('search') . '%');
+                }
+                $folderIds = $folderQuery->pluck('id')->all();
+            }
+        }
+
+        if ($fileIds === [] && $folderIds === []) {
+            flash($request->boolean('move_all')
+                ? translate('Nothing to move.')
+                : translate('Select files or folders to move.'))->warning();
+            return back();
+        }
+
+        if ($destinationId && !UploadFolder::where('id', $destinationId)->exists()) {
+            flash(translate('That folder was not found.'))->error();
+            return back();
+        }
+
+        $destination = $destinationId ? UploadFolder::find($destinationId) : null;
+        $skipped = false;
+
+        if ($fileIds !== []) {
+            Upload::whereIn('id', $fileIds)->update(['folder_id' => $destinationId]);
+        }
+
+        foreach ($folderIds as $folderId) {
+            $folder = UploadFolder::find($folderId);
+            if (!$folder) {
+                continue;
+            }
+
+            if ($destination && ($destination->id === $folder->id || $folder->containsFolder($destination->id))) {
+                $skipped = true;
+                continue;
+            }
+
+            if ($this->folderNameTaken($folder->name, $destinationId, $folder->id)) {
+                $skipped = true;
+                continue;
+            }
+
+            $folder->parent_id = $destinationId;
+            $folder->save();
+        }
+
+        if ($skipped) {
+            flash(translate('Some folders were not moved because the destination is inside them or the name is already used there.'))->warning();
+        } else {
+            flash(translate('Moved successfully'))->success();
+        }
+
+        return back();
+    }
+
+    protected function folderDenied()
+    {
+        if (!UploadFolder::ready()) {
+            flash(translate('Folders are not ready yet. Run the folder SQL first.'))->error();
+            return back();
+        }
+
+        if (env('DEMO_MODE') == 'On') {
+            flash(translate('Data can not change in demo mode.'))->info();
+            return back();
+        }
+
+        if (auth()->user()->user_type == 'seller') {
+            flash(translate("You don't have permission for this."))->error();
+            return back();
+        }
+
+        return null;
+    }
+
+    protected function nullableFolderId($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (int) $value;
+    }
+
+    protected function folderNameTaken(string $name, ?int $parentId, ?int $ignoreId = null): bool
+    {
+        return UploadFolder::query()
+            ->where('name', $name)
+            ->when($parentId, function ($query) use ($parentId) {
+                $query->where('parent_id', $parentId);
+            }, function ($query) {
+                $query->whereNull('parent_id');
+            })
+            ->when($ignoreId, function ($query) use ($ignoreId) {
+                $query->where('id', '!=', $ignoreId);
+            })
+            ->exists();
+    }
+
+    protected function applyUploadFilters($query, $search, $typeFilter)
+    {
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('file_original_name', 'like', '%' . $search . '%')
+                    ->orWhere('extension', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($typeFilter) {
+            $query->where(function ($q) use ($typeFilter) {
+                $normalized = strtolower($typeFilter);
+                $typeBuckets = ['image', 'video', 'audio', 'archive', 'document'];
+                $extensionGroups = [
+                    'pdf'   => ['pdf'],
+                    'doc'   => ['doc', 'docx'],
+                    'docx'  => ['doc', 'docx'],
+                    'excel' => ['xls', 'xlsx', 'ods', 'csv'],
+                    'csv'   => ['csv'],
+                ];
+                if (in_array($normalized, $typeBuckets, true)) {
+                    $q->where('type', $normalized);
+                } elseif (isset($extensionGroups[$normalized])) {
+                    $q->whereIn('extension', $extensionGroups[$normalized]);
+                } else {
+                    $q->where('extension', $normalized);
+                }
+            });
+        }
+
+        return $query;
+    }
+
+    protected function sortFolders($folders, string $sortBy, string $sortOrder)
+    {
+        $descending = $sortOrder === 'desc';
+
+        return $folders->sortBy(function ($folder) use ($sortBy) {
+            if ($sortBy === 'created_at') {
+                return optional($folder->created_at)->timestamp ?? 0;
+            }
+
+            return strtolower((string) $folder->name);
+        }, SORT_REGULAR, $descending)->values();
+    }
+
+    protected function descendantFolderIds(int $folderId): array
+    {
+        $ids = [$folderId];
+        $children = UploadFolder::where('parent_id', $folderId)->pluck('id');
+        foreach ($children as $childId) {
+            $ids = array_merge($ids, $this->descendantFolderIds((int) $childId));
+        }
+
+        return $ids;
     }
 }

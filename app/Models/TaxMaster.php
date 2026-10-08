@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class TaxMaster extends Model
@@ -22,12 +23,27 @@ class TaxMaster extends Model
         'delete_tax_master',
     ];
 
+    public const HSN_COLUMNS = [
+        'hsn_code',
+        'hs_code',
+        'applied_on_category',
+        'applied_on_sku',
+        'applied_on_product',
+        'applied_on_variant',
+    ];
+
     protected $table = 'tax_masters';
 
     protected $fillable = [
         'kind',
         'tax_code',
         'description',
+        'hsn_code',
+        'hs_code',
+        'applied_on_category',
+        'applied_on_sku',
+        'applied_on_product',
+        'applied_on_variant',
         'purchase_tax',
         'purchase_cgst',
         'purchase_sgst',
@@ -55,7 +71,57 @@ class TaxMaster extends Model
 
     public static function tableReady(): bool
     {
-        return Schema::hasTable('tax_masters');
+        try {
+            return Schema::hasTable('tax_masters');
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    public static function hsnColumnsReady(): bool
+    {
+        static $ready = null;
+        if ($ready !== null) {
+            return $ready;
+        }
+
+        try {
+            if (!self::tableReady()) {
+                return $ready = false;
+            }
+
+            foreach (self::HSN_COLUMNS as $column) {
+                if (!Schema::hasColumn('tax_masters', $column)) {
+                    return $ready = false;
+                }
+            }
+
+            return $ready = true;
+        } catch (\Throwable $e) {
+            return $ready = false;
+        }
+    }
+
+    public static function hsnOptions()
+    {
+        try {
+            if (!Schema::hasTable('products') || !Schema::hasColumn('products', 'product_hsn')) {
+                return collect();
+            }
+
+            $query = DB::table('products')
+                ->whereNotNull('product_hsn')
+                ->where('product_hsn', '!=', '')
+                ->orderBy('product_hsn');
+
+            if (Schema::hasColumn('products', 'product_hs')) {
+                return $query->select('product_hsn', 'product_hs')->distinct()->get();
+            }
+
+            return $query->select('product_hsn')->distinct()->get();
+        } catch (\Throwable $e) {
+            return collect();
+        }
     }
 
     public static function toDecimal($value): float
@@ -230,10 +296,22 @@ class TaxMaster extends Model
             }
         }
 
+        $blank = function ($value) {
+            $text = trim((string) ($value ?? ''));
+
+            return $text === '' ? null : $text;
+        };
+
         return array_merge([
             'kind' => $kind,
             'tax_code' => $taxCode,
             'description' => $description === '' ? null : $description,
+            'hsn_code' => $blank($input['hsn_code'] ?? null),
+            'hs_code' => $blank($input['hs_code'] ?? null),
+            'applied_on_category' => $blank($input['applied_on_category'] ?? null),
+            'applied_on_sku' => $blank($input['applied_on_sku'] ?? null),
+            'applied_on_product' => $blank($input['applied_on_product'] ?? null),
+            'applied_on_variant' => $blank($input['applied_on_variant'] ?? null),
             'sale_same_as_purchase' => $same,
             'status' => $status,
         ], $purchase, $sale);
@@ -256,7 +334,7 @@ class TaxMaster extends Model
 
     public static function sortableColumns(): array
     {
-        return [
+        $columns = [
             'id' => 'tax_masters.id',
             'kind' => 'tax_masters.kind',
             'tax_code' => 'tax_masters.tax_code',
@@ -266,7 +344,30 @@ class TaxMaster extends Model
             'sale_tax' => 'tax_masters.sale_tax',
             'status' => 'tax_masters.status',
             'updated_at' => 'tax_masters.updated_at',
+            'hsn_code' => 'tax_masters.hsn_code',
+            'hs_code' => 'tax_masters.hs_code',
+            'applied_on_category' => 'tax_masters.applied_on_category',
         ];
+
+        return $columns;
+    }
+
+    public function appliedOnSummary(): string
+    {
+        $parts = [];
+        foreach ([
+            'applied_on_category' => 'Category',
+            'applied_on_sku' => 'SKU',
+            'applied_on_product' => 'Product Name',
+            'applied_on_variant' => 'Variant',
+        ] as $column => $label) {
+            $value = trim((string) ($this->getAttribute($column) ?? ''));
+            if ($value !== '') {
+                $parts[] = $label . ': ' . $value;
+            }
+        }
+
+        return $parts ? implode(' / ', $parts) : '—';
     }
 
     public static function resolveSort(string $sortBy, string $sortDir): array
@@ -288,6 +389,15 @@ class TaxMaster extends Model
                 $nested->where('tax_code', 'like', $like)
                     ->orWhere('description', 'like', $like);
 
+                if (self::hsnColumnsReady()) {
+                    $nested->orWhere('hsn_code', 'like', $like)
+                        ->orWhere('hs_code', 'like', $like)
+                        ->orWhere('applied_on_category', 'like', $like)
+                        ->orWhere('applied_on_sku', 'like', $like)
+                        ->orWhere('applied_on_product', 'like', $like)
+                        ->orWhere('applied_on_variant', 'like', $like);
+                }
+
                 if (ctype_digit($filters['search'])) {
                     $nested->orWhere('id', (int) $filters['search']);
                 }
@@ -304,6 +414,24 @@ class TaxMaster extends Model
 
         if (($filters['description'] ?? '') !== '') {
             $query->where('description', 'like', '%' . $filters['description'] . '%');
+        }
+
+        if (self::hsnColumnsReady()) {
+            if (($filters['hsn_code'] ?? '') !== '') {
+                $query->where('hsn_code', 'like', '%' . $filters['hsn_code'] . '%');
+            }
+            if (($filters['hs_code'] ?? '') !== '') {
+                $query->where('hs_code', 'like', '%' . $filters['hs_code'] . '%');
+            }
+            if (($filters['applied_on'] ?? '') !== '') {
+                $likeApplied = '%' . $filters['applied_on'] . '%';
+                $query->where(function ($nested) use ($likeApplied) {
+                    $nested->where('applied_on_category', 'like', $likeApplied)
+                        ->orWhere('applied_on_sku', 'like', $likeApplied)
+                        ->orWhere('applied_on_product', 'like', $likeApplied)
+                        ->orWhere('applied_on_variant', 'like', $likeApplied);
+                });
+            }
         }
 
         if (($filters['sale_same_as_purchase'] ?? '') === '1' || ($filters['sale_same_as_purchase'] ?? '') === '0') {

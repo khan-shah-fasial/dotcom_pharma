@@ -328,14 +328,24 @@ class BatchMaster extends Model
         return round((float) $this->qty * (float) $this->purchase_rate, 4);
     }
 
-    public function roleLineValue(string $key): ?float
+    public function rolePrice(string $key): ?float
     {
         $price = $this->rolePrices()[$key] ?? null;
+        if ($price === null || $price === '') {
+            return null;
+        }
+
+        return round((float) $price, 4);
+    }
+
+    public function roleLineValue(string $key): ?float
+    {
+        $price = $this->rolePrice($key);
         if ($price === null) {
             return null;
         }
 
-        return round((float) $this->qty * (float) $price, 4);
+        return round((float) $this->qty * $price, 4);
     }
 
     public static function amountFrom($qty, $rate): ?float

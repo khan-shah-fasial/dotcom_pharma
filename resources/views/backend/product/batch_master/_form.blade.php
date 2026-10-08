@@ -44,19 +44,32 @@
     $selectedImport = collect(old('import_by_ids', $b ? (json_decode((string) ($b->import_by_ids ?? '[]'), true) ?: []) : []))->map(fn ($id) => (string) $id);
     $selectedMfg = collect(old('manufactured_by_ids', $b ? (json_decode((string) ($b->manufactured_by_ids ?? '[]'), true) ?: []) : []))->map(fn ($id) => (string) $id);
     $companyOptions = function ($selected) use ($companies) {
+        $selectedIds = collect(is_array($selected) ? $selected : [$selected])->map(fn ($id) => (string) $id)->filter(fn ($id) => $id !== '');
         $html = '<option value="">' . e(translate('Select')) . '</option>';
         foreach ($companies as $company) {
             $label = trim(($company->code ? $company->code . ' — ' : '') . $company->company_name);
-            $html .= '<option value="' . e($company->id) . '" ' . ((string) $selected === (string) $company->id ? 'selected' : '') . '>' . e($label) . '</option>';
+            $html .= '<option value="' . e($company->id) . '" ' . ($selectedIds->contains((string) $company->id) ? 'selected' : '') . '>' . e($label) . '</option>';
         }
         return $html;
     };
 @endphp
 
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0 h6">{{ translate('Batch / Lot Master') }}</h5>
-        <p class="text-muted mb-0 fs-12">{{ translate('This screen saves to Batch / Lot Master only. Live product lots and stock qty are not changed.') }}</p>
+<div class="card bm-add-card">
+    <div class="card-header py-2">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0 h6">{{ $isEdit ? translate('Edit Batch / Lot') : translate('Add New Batch / Lot') }}</h5>
+                <p class="text-muted mb-0 fs-12">{{ translate('This screen saves to Batch / Lot Master only. Live product lots and stock qty are not changed.') }}</p>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="mr-2 fs-12">{{ translate('Status') }}</span>
+                <label class="aiz-switch aiz-switch-success mb-0">
+                    <input type="hidden" name="status" value="0">
+                    <input type="checkbox" name="status" value="1" {{ $status ? 'checked' : '' }}>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
     </div>
     <div class="card-body">
         @if (!$extended)
@@ -82,76 +95,68 @@
         <input type="hidden" name="manufactured_by_names" id="manufactured_by_names" value="{{ old('manufactured_by_names', optional($b)->manufactured_by_names) }}">
         <input type="hidden" name="purchase_date" id="purchase_date" value="{{ old('purchase_date') }}">
 
-        <div class="row">
-            <div class="col-md-4">
-                <div class="form-group">
-                    <label>{{ translate('Search By SKU - Product Name / Brand Name With Full Variant') }} <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="sku_search" value="{{ old('sku_search', $skuLabel) }}" placeholder="{{ translate('Search SKU, product, brand, or variant') }}" autocomplete="off" {{ $isEdit ? 'readonly' : '' }}>
-                    <div class="list-group" id="sku_results"></div>
-                    <small class="text-muted" id="drug_name_label">{{ old('drug_name', optional($b)->drug_name) }}</small>
-                </div>
-            </div>
-            <div class="col-md-1">
-                <div class="form-group">
-                    <label>{{ translate('SKU') }}</label>
-                    <input type="text" class="form-control" id="sku_display" value="{{ optional($stock)->sku }}" readonly>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('Full Detailed Variant') }}</label>
-                    <input type="text" class="form-control" id="variant_display" value="{{ optional($stock)->variant }}" readonly>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('Marketed By') }}</label>
-                    <input type="text" class="form-control" id="marketed_by_name" name="marketed_by_name" value="{{ old('marketed_by_name', optional($b)->marketed_by_name) }}" readonly>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('Import By') }}</label>
-                    <select class="form-control" name="import_by_ids[]" id="import_by_ids" multiple>
-                        {!! $companyOptions($selectedImport->first()) !!}
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-1">
-                <div class="form-group">
-                    <label>{{ translate('Mfg. By') }}</label>
-                    <select class="form-control" name="manufactured_by_ids[]" id="manufactured_by_ids">
-                        {!! $companyOptions($selectedMfg->first()) !!}
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label class="mb-0">
-                <input type="hidden" name="is_non_batch" value="0">
-                <input type="checkbox" name="is_non_batch" id="is_non_batch" value="1" {{ $isNonBatch ? 'checked' : '' }}>
-                {{ translate('Non-batch') }}
-            </label>
-            <small class="text-muted d-block">{{ translate('If checked and the batch code is empty, the code follows the purchase date, for example 01-10-2026 becomes 20261001. Manufacturing date follows the purchase date. Expiry is left as it is.') }}</small>
+        <div class="table-responsive mb-3">
+            <table class="table table-bordered table-sm mb-0 bm-header-grid">
+                <thead>
+                    <tr>
+                        <th style="width:26%">{{ translate('Search By SKU - Product Name / Brand Name With Full Variant') }} <span class="text-danger">*</span></th>
+                        <th style="width:10%">{{ translate('SKU') }}</th>
+                        <th style="width:14%">{{ translate('Full Detailed Variant') }}</th>
+                        <th style="width:12%">{{ translate('Marketed By') }}</th>
+                        <th style="width:14%">{{ translate('Import By') }}</th>
+                        <th style="width:14%">{{ translate('Mfg. By') }}</th>
+                        <th style="width:10%">{{ translate('Non-batch') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="bm-sku-cell">
+                            <input type="text" class="form-control form-control-sm" id="sku_search" value="{{ old('sku_search', $skuLabel) }}" placeholder="{{ translate('Search SKU, product, brand, or variant') }}" autocomplete="off" {{ $isEdit ? 'readonly' : '' }}>
+                            <div class="list-group" id="sku_results"></div>
+                            <small class="text-muted d-block mt-1" id="drug_name_label">{{ old('drug_name', optional($b)->drug_name) }}</small>
+                        </td>
+                        <td><input type="text" class="form-control form-control-sm" id="sku_display" value="{{ optional($stock)->sku }}" readonly></td>
+                        <td><input type="text" class="form-control form-control-sm" id="variant_display" value="{{ optional($stock)->variant }}" readonly></td>
+                        <td><input type="text" class="form-control form-control-sm" id="marketed_by_name" name="marketed_by_name" value="{{ old('marketed_by_name', optional($b)->marketed_by_name) }}" readonly></td>
+                        <td>
+                            <select class="form-control form-control-sm" name="import_by_ids[]" id="import_by_ids" multiple>
+                                {!! $companyOptions($selectedImport->all()) !!}
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-control form-control-sm" name="manufactured_by_ids[]" id="manufactured_by_ids" multiple>
+                                {!! $companyOptions($selectedMfg->all()) !!}
+                            </select>
+                        </td>
+                        <td>
+                            <label class="mb-1 d-block">
+                                <input type="hidden" name="is_non_batch" value="0">
+                                <input type="checkbox" name="is_non_batch" id="is_non_batch" value="1" {{ $isNonBatch ? 'checked' : '' }}>
+                                {{ translate('Checked if product is non-batch') }}
+                            </label>
+                            <small class="text-muted d-block fs-11">{{ translate('Empty batch code follows purchase date, for example 01-10-2026 becomes 20261001. The checkbox is remembered. Manufacturing date follows the purchase date. Expiry is left as it is.') }}</small>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
         <div class="table-responsive">
             <table class="table table-bordered table-sm mb-2" id="batch-rows-table">
                 <thead>
                     <tr>
-                        <th style="width:8%">{{ translate('Sr.No') }}</th>
-                        <th style="width:10%">{{ translate('Batch Code') }} *</th>
+                        <th style="width:6%">{{ translate('Sr.No') }}</th>
+                        <th style="width:11%">{{ translate('Batch Code') }} *</th>
                         <th style="width:8%">{{ translate('Mfg.') }}</th>
                         <th style="width:8%">{{ translate('Expiry') }}</th>
                         <th style="width:7%">{{ translate('Qty') }}</th>
                         <th style="width:7%">{{ translate('Free') }}</th>
-                        <th style="width:9%">{{ translate('MRP') }}</th>
-                        <th style="width:9%">{{ translate('P-Rate') }}</th>
-                        <th style="width:8%">{{ translate('Tax') }}</th>
+                        <th style="width:8%">{{ translate('MRP') }}</th>
+                        <th style="width:8%">{{ translate('P-Rate') }}</th>
+                        <th style="width:7%">{{ translate('Tax') }}</th>
                         <th style="width:8%">{{ translate('Amount') }}</th>
                         <th style="width:12%">{{ translate('C-Code (Mfg By)') }}</th>
-                        <th style="width:6%">{{ translate('COA Upload') }}</th>
+                        <th style="width:10%">{{ translate('COA Upload') }}</th>
                     </tr>
                 </thead>
                 <tbody id="batch-rows-body">
@@ -193,7 +198,7 @@
                             <td><input type="text" name="{{ $field('tax_percent') }}" class="form-control form-control-sm" value="{{ $row['tax_percent'] ?? '' }}" readonly></td>
                             <td><input type="text" class="form-control form-control-sm amount-output" value="{{ $amount }}" readonly></td>
                             <td>
-                                <select name="{{ $field('company_id') }}" class="form-control form-control-sm">
+                                <select name="{{ $field('company_id') }}" class="form-control form-control-sm company-select">
                                     {!! $companyOptions($row['company_id'] ?? '') !!}
                                 </select>
                             </td>
@@ -207,70 +212,23 @@
             </table>
         </div>
 
-        @if (!$isEdit)
-            <button type="button" class="btn btn-soft-primary btn-sm mb-3" id="add-batch-row">{{ translate('Add Batch') }}</button>
-        @endif
-
-        <p class="text-muted fs-12">{{ translate('All data is copied from the purchase entry. You can change it here. Later changes stay on this screen.') }}</p>
-
-        <div class="form-group">
-            <label>{{ translate('Status') }}</label>
-            <div>
-                <label class="aiz-switch aiz-switch-success mb-0">
-                    <input type="hidden" name="status" value="0">
-                    <input type="checkbox" name="status" value="1" {{ $status ? 'checked' : '' }}>
-                    <span class="slider round"></span>
-                </label>
-            </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="text-muted fs-12 mb-0">{{ translate('All data is copied from the purchase entry. You can change it here. Later changes stay on this screen.') }}</p>
+            @if (!$isEdit)
+                <button type="button" class="btn btn-soft-primary btn-sm" id="add-batch-row">{{ translate('Add Batch') }}</button>
+            @endif
         </div>
 
-        <div class="mb-3">
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-live-lots">{{ translate('Open/Close') }}</button>
-            <div id="live-lots-wrap" class="d-none mt-2">
-                <h6>{{ translate('Current live lots (read only)') }}</h6>
-                <p class="text-muted fs-12 mb-1">{{ translate('Shown from existing product lots. Saving here does not change them.') }}</p>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-2">
-                        <thead>
-                            <tr>
-                                <th>{{ translate('Batch') }}</th>
-                                <th>{{ translate('Mfg.') }}</th>
-                                <th>{{ translate('Expiry') }}</th>
-                                <th>{{ translate('Qty') }}</th>
-                                <th>{{ translate('Scheme') }}</th>
-                                <th>{{ translate('MRP') }}</th>
-                                <th class="bm-prate">{{ translate('P-Rate') }}</th>
-                                <th>{{ translate('Tax') }}</th>
-                                <th>{{ translate('Amount') }}</th>
-                                <th>{{ translate('Company Code') }}</th>
-                                <th>{{ translate('COA Image') }}</th>
-                                <th>{{ translate('Upload Date') }}</th>
-                                <th>{{ translate('Status') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody id="live-lots-body"></tbody>
-                    </table>
+        <div class="bm-live-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <h6 class="mb-0">{{ translate('Current live lots (read only)') }}</h6>
+                    <p class="text-muted fs-12 mb-0">{{ translate('Display purpose only. Shown from existing product lots.') }}</p>
                 </div>
-                <h6 class="fs-13">{{ translate('Batchwise Rate And Value Of The Live Stock As Per Role') }}</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0">
-                        <thead>
-                            <tr>
-                                <th class="bm-prate">{{ translate('P-Rate') }}</th>
-                                <th>{{ translate('PTS') }}</th>
-                                <th>{{ translate('PTR') }}</th>
-                                <th>{{ translate('PTD') }}</th>
-                                <th>{{ translate('Govt.') }}</th>
-                                <th>{{ translate('Export') }}</th>
-                                <th>{{ translate('Customer (B2C)') }}</th>
-                                <th>{{ translate('Batchwise Discount') }}</th>
-                                <th>{{ translate('Productwise Discount') }}</th>
-                                <th>{{ translate('Schemewise Discount') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody id="live-values-body"></tbody>
-                    </table>
-                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-live-lots">{{ translate('Open/Close') }}</button>
+            </div>
+            <div id="live-lots-wrap" class="d-none">
+                <div id="live-lots-blocks"></div>
                 @if (!$showPurchaseRate)
                     <button type="button" class="btn btn-sm btn-light mt-2" id="reveal-prate">{{ translate('Show P-Rate') }}</button>
                     <div class="mt-2 d-none" id="reveal-prate-box">
@@ -281,7 +239,7 @@
             </div>
         </div>
 
-        <div class="text-right">
+        <div class="text-right mt-3">
             <button type="submit" class="btn btn-primary" {{ $extended ? '' : 'disabled' }}>{{ translate('Save') }}</button>
         </div>
     </div>
@@ -326,3 +284,16 @@
         </td>
     </tr>
 </template>
+
+<style>
+    .bm-header-grid th { background: #f3f6f9; font-size: 12px; white-space: normal; vertical-align: bottom; }
+    .bm-header-grid td { vertical-align: top; }
+    .bm-header-grid select[multiple] { min-height: 78px; }
+    .bm-sku-cell { position: relative; }
+    #sku_results { position: absolute; z-index: 30; left: 8px; right: 8px; max-height: 220px; overflow: auto; }
+    .bm-live-lot { border: 1px solid #e3e6ea; margin-bottom: 14px; background: #fff; }
+    .bm-live-lot table { margin-bottom: 0; }
+    .bm-live-lot-values { background: #fafbfc; border-top: 1px solid #e3e6ea; }
+    .bm-live-lot th, .bm-live-lot td { font-size: 12px; white-space: nowrap; }
+    .bm-pv { line-height: 1.25; }
+</style>

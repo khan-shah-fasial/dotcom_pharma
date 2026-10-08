@@ -945,6 +945,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/uploaded-files/{upload}/rename', 'rename')->name('uploaded-files.rename');
         Route::get('/uploaded-files/destroy/{id}', 'destroy')->name('uploaded-files.destroy');
         Route::post('/bulk-uploaded-files-delete', 'bulk_uploaded_files_delete')->name('bulk-uploaded-files-delete');
+        Route::post('/uploaded-files/folders', 'storeFolder')->name('uploaded-files.folders.store');
+        Route::post('/uploaded-files/folders/{folder}/rename', 'renameFolder')->name('uploaded-files.folders.rename');
+        Route::get('/uploaded-files/folders/destroy/{id}', 'destroyFolder')->name('uploaded-files.folders.destroy');
+        Route::post('/uploaded-files/move', 'moveItems')->name('uploaded-files.move');
         Route::get('/all-file', 'all_file');
     });
 
