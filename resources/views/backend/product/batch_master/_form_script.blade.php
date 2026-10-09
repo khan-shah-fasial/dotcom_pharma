@@ -4,6 +4,7 @@
     var stockUrl = '{{ route('batch_masters.lookup.stock') }}';
     var revealUrl = '{{ route('batch_masters.reveal_rate') }}';
     var searchTimer = null;
+    var lastPurchase = {};
     var isEdit = {{ isset($batch) && $batch ? 'true' : 'false' }};
     var showPurchaseRate = {{ !empty($showPurchaseRate) ? 'true' : 'false' }};
     var companyOptions = $('#batch-row-template .company-select').html() || '';
@@ -40,6 +41,22 @@
         });
     }
 
+    function purchaseMonth(dateValue) {
+        if (!dateValue) {
+            return '';
+        }
+        var text = String(dateValue).substring(0, 10);
+        var parts = text.split('-');
+        if (parts.length === 3 && parts[0].length === 4) {
+            return parts[0] + '-' + parts[1];
+        }
+        if (parts.length === 3 && parts[2] && parts[2].length === 4) {
+            var month = parts[1].length === 1 ? '0' + parts[1] : parts[1];
+            return parts[2] + '-' + month;
+        }
+        return '';
+    }
+
     function purchaseCode(dateValue) {
         if (!dateValue) {
             return '';
@@ -59,13 +76,13 @@
     function applyNonBatch() {
         var checked = $('#is_non_batch').is(':checked');
         try {
-            sessionStorage.setItem('bm_non_batch', checked ? '1' : '0');
+            localStorage.setItem('bm_non_batch', checked ? '1' : '0');
         } catch (e) {}
         if (!checked) {
             return;
         }
         var code = purchaseCode($('#purchase_date').val());
-        var month = $('#purchase_date').val() ? String($('#purchase_date').val()).substring(0, 7) : '';
+        var month = purchaseMonth($('#purchase_date').val());
         $('#batch-rows-body tr').each(function () {
             var $code = $(this).find('.batch-code');
             if (!$code.val() && code) {
@@ -128,6 +145,8 @@
         $('#batch-rows-body').append($tr);
         if (row) {
             fillRow($tr, row);
+        } else if (lastPurchase && (lastPurchase.mrp_price || lastPurchase.purchase_rate)) {
+            fillRow($tr, lastPurchase);
         }
         renumber();
         refreshAmounts();
@@ -173,7 +192,7 @@
             var prices = lot.prices || {};
             var values = lot.values || {};
             var discounts = lot.discounts || {};
-            var coa = lot.coa_url ? '<a href="' + lot.coa_url + '" target="_blank">{{ translate('Zoom') }}</a>' : '—';
+            var coa = lot.coa_url ? '<a href="#" class="bm-coa-zoom" data-src="' + lot.coa_url + '">{{ translate('Zoom') }}</a>' : '—';
             var $block = $('<div class="bm-live-lot"></div>');
             $block.append(
                 '<div class="table-responsive"><table class="table table-sm table-bordered">' +
@@ -186,7 +205,7 @@
                 '<td>' + dash(lot.batch) + '</td><td>' + dash(lot.manufacturing_date) + '</td><td>' + dash(lot.expiry_date) + '</td>' +
                 '<td>' + dash(lot.qty) + '</td><td>' + dash(lot.scheme) + '</td><td>' + dash(lot.mrp_price) + '</td>' +
                 '<td class="bm-prate">' + (showPurchaseRate ? dash(lot.purchase_rate) : '••••') + '</td>' +
-                '<td>' + dash(lot.tax_percent) + '</td><td>' + dash(lot.amount) + '</td><td>' + dash(lot.company_id) + '</td>' +
+                '<td>' + dash(lot.tax_percent) + '</td><td>' + dash(lot.amount) + '</td><td>' + dash(lot.company_code || lot.company_id) + '</td>' +
                 '<td>' + coa + '</td><td>' + dash(lot.upload_date) + '</td><td>' + (lot.status ? '{{ translate('On') }}' : '{{ translate('Off') }}') + '</td>' +
                 '</tr></tbody></table></div>'
             );
@@ -240,6 +259,12 @@
             $('#marketed_by_id').val(data.marketed_by_id || '');
             $('#marketed_by_name').val(data.marketed_by_name || '');
             $('#purchase_date').val(data.purchase_date || '');
+            lastPurchase = {
+                mrp_price: data.last_mrp || '',
+                purchase_rate: data.last_rate || '',
+                tax_percent: data.last_tax_percent || '',
+                tax_code: data.last_tax_code || ''
+            };
             selectIds('#import_by_ids', data.import_by_ids);
             selectIds('#manufactured_by_ids', data.manufactured_by_ids);
             $('#import_by_names').val(data.import_by_names || '');
@@ -286,8 +311,9 @@
         });
 
         try {
-            if (sessionStorage.getItem('bm_non_batch') === '1' && !$('#is_non_batch').is(':checked')) {
+            if (localStorage.getItem('bm_non_batch') === '1' && !$('#is_non_batch').is(':checked')) {
                 $('#is_non_batch').prop('checked', true);
+                applyNonBatch();
             }
         } catch (e) {}
     }
@@ -297,6 +323,11 @@
     $('#batch-rows-body').on('input', '.qty-input, .rate-input', refreshAmounts);
     $('#toggle-live-lots').on('click', function () {
         $('#live-lots-wrap').toggleClass('d-none');
+    });
+    $(document).on('click', '.bm-coa-zoom', function (e) {
+        e.preventDefault();
+        $('#bm-coa-preview').attr('src', $(this).data('src'));
+        $('#bmCoaModal').modal('show');
     });
     $('#reveal-prate').on('click', function () {
         $('#reveal-prate-box').removeClass('d-none');

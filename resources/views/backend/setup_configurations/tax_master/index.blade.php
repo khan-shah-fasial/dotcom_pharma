@@ -9,6 +9,7 @@
     $sortBy = $sortBy ?? 'id';
     $sortDir = $sortDir ?? 'desc';
     $hsnReady = $hsnReady ?? false;
+    $utReady = $utReady ?? false;
     $filtersApplied = collect($filters)->contains(function ($value) {
         return $value !== null && $value !== '';
     });
@@ -33,10 +34,17 @@
     <div class="alert alert-warning">
         {{ translate('Tax Master table is not ready yet.') }}
     </div>
-@elseif (empty($hsnReady))
-    <div class="alert alert-warning">
-        {{ translate('HSN / HS Code / Applied On columns are not on the table yet. Run sqlupdates/tax_master_hsn.sql.') }}
-    </div>
+@else
+    @if (empty($hsnReady))
+        <div class="alert alert-warning">
+            {{ translate('HSN / HS Code / Applied On columns are not on the table yet. Run sqlupdates/tax_master_hsn.sql.') }}
+        </div>
+    @endif
+    @if (empty($utReady))
+        <div class="alert alert-warning">
+            {{ translate('UT GST columns are not on the table yet. Run sqlupdates/tax_master_utgst.sql.') }}
+        </div>
+    @endif
 @endif
 
 <div class="card">
@@ -72,9 +80,9 @@
                         @include('backend.inc.sortable_th', ['column' => 'kind', 'label' => translate('Tax Type'), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @include('backend.inc.sortable_th', ['column' => 'tax_code', 'label' => translate('Tax Code'), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @include('backend.inc.sortable_th', ['column' => 'description', 'label' => translate('Description'), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'purchase_tax', 'labelHtml' => e(translate('Purchase Tax')) . '<br>' . e(translate('Tax % / CGST % / SGST % / IGST % / TOTAL GST%')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'purchase_tax', 'labelHtml' => e(translate('Purchase Tax')) . '<br>' . e(translate('Tax % / State CGST+SGST / UT CGST+UTGST / IGST')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @include('backend.inc.sortable_th', ['column' => 'sale_same_as_purchase', 'labelHtml' => e(translate('Same as purchase')) . '<br>Y/N', 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'sale_tax', 'labelHtml' => e(translate('Sale Tax')) . '<br>' . e(translate('Tax % / CGST % / SGST % / IGST % / TOTAL GST%')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        @include('backend.inc.sortable_th', ['column' => 'sale_tax', 'labelHtml' => e(translate('Sale Tax')) . '<br>' . e(translate('Tax % / State CGST+SGST / UT CGST+UTGST / IGST')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @if (!empty($hsnReady))
                             @include('backend.inc.sortable_th', ['column' => 'applied_on_category', 'labelHtml' => e(translate('Applied On')) . '<br>' . e(translate('Category / SKU / Product Name / Variant')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @else
@@ -98,14 +106,20 @@
                                 <td>{{ $tax->description ?: '—' }}</td>
                                 <td class="fs-12">
                                     <div>{{ translate('Tax') }}: {{ $rate($tax->purchase_tax) }}</div>
-                                    <div>{{ translate('CGST') }} {{ $rate($tax->purchase_cgst) }} / {{ translate('SGST') }} {{ $rate($tax->purchase_sgst) }} / {{ translate('IGST') }} {{ $rate($tax->purchase_igst) }}</div>
-                                    <div class="text-muted">{{ translate('TOTAL') }}: {{ $rate($tax->purchaseTotal()) }}</div>
+                                    <div>{{ translate('State') }} {{ $rate($tax->purchase_cgst) }} / {{ $rate($tax->purchase_sgst) }}</div>
+                                    @if (!empty($utReady))
+                                        <div>{{ translate('UT') }} {{ $rate($tax->purchase_ut_cgst) }} / {{ $rate($tax->purchase_utgst) }}</div>
+                                    @endif
+                                    <div>{{ translate('IGST') }} {{ $rate($tax->purchase_igst) }}</div>
                                 </td>
                                 <td>{{ $tax->sale_same_as_purchase ? 'Y' : 'N' }}</td>
                                 <td class="fs-12">
                                     <div>{{ translate('Tax') }}: {{ $rate($tax->sale_tax) }}</div>
-                                    <div>{{ translate('CGST') }} {{ $rate($tax->sale_cgst) }} / {{ translate('SGST') }} {{ $rate($tax->sale_sgst) }} / {{ translate('IGST') }} {{ $rate($tax->sale_igst) }}</div>
-                                    <div class="text-muted">{{ translate('TOTAL') }}: {{ $rate($tax->saleTotal()) }}</div>
+                                    <div>{{ translate('State') }} {{ $rate($tax->sale_cgst) }} / {{ $rate($tax->sale_sgst) }}</div>
+                                    @if (!empty($utReady))
+                                        <div>{{ translate('UT') }} {{ $rate($tax->sale_ut_cgst) }} / {{ $rate($tax->sale_utgst) }}</div>
+                                    @endif
+                                    <div>{{ translate('IGST') }} {{ $rate($tax->sale_igst) }}</div>
                                 </td>
                                 <td class="fs-12">{{ !empty($hsnReady) ? $tax->appliedOnSummary() : '—' }}</td>
                                 <td>

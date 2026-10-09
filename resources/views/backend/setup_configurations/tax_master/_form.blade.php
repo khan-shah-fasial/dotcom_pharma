@@ -9,18 +9,19 @@
     }
     $status = old('status', optional($t)->status ?? true);
     $hsnReady = $hsnReady ?? false;
-    $hsnOptions = $hsnOptions ?? collect();
+    $utReady = $utReady ?? false;
     $categories = $categories ?? collect();
     $rate = function ($field, $default = 0) use ($t) {
         $value = old($field, optional($t)->$field ?? $default);
         return \App\Models\TaxMaster::formatRate($value);
     };
+    $taxPercent = $rate('purchase_tax');
 @endphp
 
 <div class="card">
     <div class="card-header">
         <h5 class="mb-0 h6">{{ translate('Tax Master') }}</h5>
-        <p class="text-muted mb-0 fs-12">{{ translate('TOTAL GST% is CGST + SGST + IGST and must equal Tax %.') }}</p>
+        <p class="text-muted mb-0 fs-12">{{ translate('TOTAL GST% equals State CGST + SGST, or UT CGST + UTGST, or IGST.') }}</p>
     </div>
     <div class="card-body">
         @if ($errors->any())
@@ -38,30 +39,34 @@
                 {{ translate('HSN / HS Code / Applied On columns are not on the table yet. Run sqlupdates/tax_master_hsn.sql before saving those fields.') }}
             </div>
         @endif
+        @if (empty($utReady))
+            <div class="alert alert-warning">
+                {{ translate('UT GST columns are not on the table yet. Run sqlupdates/tax_master_utgst.sql before saving UT CGST and UTGST.') }}
+            </div>
+        @endif
 
-        <div class="table-responsive mb-3">
+        <div class="table-responsive mb-3 tm-identity-wrap">
             <table class="table table-bordered table-sm mb-0 tm-identity-grid">
                 <thead>
                     <tr>
                         <th style="width:8%">{{ translate('Tax ID') }}</th>
-                        <th style="width:14%">{{ translate('HSN Code') }}</th>
-                        <th style="width:12%">{{ translate('HS Code') }}</th>
-                        <th style="width:16%">{{ translate('Tax Type') }} *</th>
+                        <th style="width:16%">{{ translate('Search HSN Code') }}</th>
+                        <th style="width:10%">{{ translate('HS Code') }}</th>
+                        <th style="width:18%">{{ translate('Tax Type') }} *</th>
+                        <th style="width:10%">{{ translate('Tax %') }}</th>
                         <th style="width:12%">{{ translate('Tax Code') }} *</th>
-                        <th>{{ translate('Full Description') }}</th>
+                        <th>{{ translate('Description') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><input type="text" class="form-control form-control-sm" value="{{ optional($t)->id }}" readonly></td>
+                        <td><input type="text" class="form-control form-control-sm" value="{{ optional($t)->id ?: translate('Auto') }}" readonly></td>
                         <td>
-                            <input type="text" list="hsn-list" name="hsn_code" id="hsn_code" class="form-control form-control-sm" value="{{ old('hsn_code', optional($t)->hsn_code) }}" maxlength="50" {{ empty($hsnReady) ? 'disabled' : '' }}>
-                            <datalist id="hsn-list">
-                                @foreach ($hsnOptions ?? [] as $opt)
-                                    <option value="{{ $opt->product_hsn }}" data-hs="{{ $opt->product_hs ?? '' }}">{{ $opt->product_hsn }}</option>
-                                @endforeach
-                            </datalist>
-                            <small class="text-muted d-block">{{ translate('Dropdown from products. Free API is also available.') }}</small>
+                            <div class="tm-hsn-wrap">
+                                <input type="text" name="hsn_code" id="hsn_code" class="form-control form-control-sm" value="{{ old('hsn_code', optional($t)->hsn_code) }}" maxlength="50" autocomplete="off" placeholder="{{ translate('Code or description') }}">
+                                <div id="hsn-results" class="tm-hsn-results" hidden></div>
+                            </div>
+                            <small class="text-muted d-block">{{ translate('Official GST HSN list. Type a code that is not listed to add it.') }}</small>
                         </td>
                         <td>
                             <input type="text" name="hs_code" id="hs_code" class="form-control form-control-sm" value="{{ old('hs_code', optional($t)->hs_code) }}" maxlength="50" readonly>
@@ -72,10 +77,13 @@
                                     <option value="{{ $key }}" @selected($kind === $key)>{{ translate($label) }}</option>
                                 @endforeach
                             </select>
-                            <small class="text-muted d-block">{{ translate('Taxable = GST extra. Inclusive = GST already in price. Exempted = no tax (all rates 0).') }}</small>
+                            <small class="text-muted d-block">{{ translate('Taxable = GST extra. Inclusive = GST already in price. Exempted = no tax (all rates 0). LUT = no tax (all rates 0), for international customers only.') }}</small>
                         </td>
                         <td>
-                            <input type="text" name="tax_code" id="tax_code" class="form-control form-control-sm @error('tax_code') is-invalid @enderror" value="{{ old('tax_code', optional($t)->tax_code) }}" maxlength="20" placeholder="G5">
+                            <input type="number" lang="en" step="0.0001" min="0" max="100" id="tax_percent" class="form-control form-control-sm" value="{{ $taxPercent }}">
+                        </td>
+                        <td>
+                            <input type="text" name="tax_code" id="tax_code" class="form-control form-control-sm @error('tax_code') is-invalid @enderror" value="{{ old('tax_code', optional($t)->tax_code) }}" maxlength="20" placeholder="G5" data-auto="{{ $t || old('tax_code') ? '0' : '1' }}" data-ignore-id="{{ optional($t)->id }}">
                         </td>
                         <td>
                             <input type="text" name="description" id="description" class="form-control form-control-sm" value="{{ old('description', optional($t)->description) }}" maxlength="255">
@@ -85,107 +93,74 @@
             </table>
         </div>
 
-        <h6 class="mt-2 mb-3">{{ translate('Purchase Tax') }}</h6>
-        <div class="row tm-rate-row" data-side="purchase">
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('Tax %') }}</label>
-                    <input type="number" lang="en" step="0.0001" min="0" max="100" name="purchase_tax" id="purchase_tax" class="form-control tm-tax @error('purchase_tax') is-invalid @enderror" value="{{ $rate('purchase_tax') }}">
-                </div>
+        @foreach (['purchase' => 'Purchase Tax', 'sale' => 'Sale Tax'] as $side => $heading)
+            <h6 class="mt-2 mb-2">{{ translate($heading) }}</h6>
+            <div class="table-responsive mb-2">
+                <table class="table table-bordered table-sm mb-0 tm-rate-grid" data-side="{{ $side }}">
+                    <thead>
+                        <tr>
+                            <th>{{ translate('Total Tax') }}</th>
+                            <th colspan="2">{{ translate('State Tax') }}</th>
+                            <th colspan="2">{{ translate('UT Tax') }}</th>
+                            <th>{{ translate('Central Tax') }}</th>
+                        </tr>
+                        <tr>
+                            <th>{{ translate('Tax %') }}</th>
+                            <th>{{ translate('CGST %') }}</th>
+                            <th>{{ translate('SGST %') }}</th>
+                            <th>{{ translate('CGST %') }}</th>
+                            <th>{{ translate('UTGST %') }}</th>
+                            <th>{{ translate('IGST %') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="number" lang="en" step="0.0001" min="0" max="100" name="{{ $side }}_tax" id="{{ $side }}_tax" class="form-control form-control-sm tm-tax" value="{{ $rate($side . '_tax') }}" readonly></td>
+                            <td><input type="number" lang="en" step="0.0001" min="0" max="100" name="{{ $side }}_cgst" id="{{ $side }}_cgst" class="form-control form-control-sm" value="{{ $rate($side . '_cgst') }}" readonly></td>
+                            <td><input type="number" lang="en" step="0.0001" min="0" max="100" name="{{ $side }}_sgst" id="{{ $side }}_sgst" class="form-control form-control-sm" value="{{ $rate($side . '_sgst') }}" readonly></td>
+                            <td><input type="number" lang="en" step="0.0001" min="0" max="100" name="{{ $side }}_ut_cgst" id="{{ $side }}_ut_cgst" class="form-control form-control-sm tm-ut" value="{{ $rate($side . '_ut_cgst') }}"></td>
+                            <td><input type="number" lang="en" step="0.0001" min="0" max="100" name="{{ $side }}_utgst" id="{{ $side }}_utgst" class="form-control form-control-sm tm-ut" value="{{ $rate($side . '_utgst') }}"></td>
+                            <td><input type="number" lang="en" step="0.0001" min="0" max="100" name="{{ $side }}_igst" id="{{ $side }}_igst" class="form-control form-control-sm" value="{{ $rate($side . '_igst') }}" readonly></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('CGST %') }}</label>
-                    <input type="number" lang="en" step="0.0001" min="0" max="100" name="purchase_cgst" id="purchase_cgst" class="form-control tm-split" value="{{ $rate('purchase_cgst') }}">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('SGST %') }}</label>
-                    <input type="number" lang="en" step="0.0001" min="0" max="100" name="purchase_sgst" id="purchase_sgst" class="form-control tm-split" value="{{ $rate('purchase_sgst') }}">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('IGST %') }}</label>
-                    <input type="number" lang="en" step="0.0001" min="0" max="100" name="purchase_igst" id="purchase_igst" class="form-control tm-split" value="{{ $rate('purchase_igst') }}">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('TOTAL GST%') }}</label>
-                    <input type="text" id="purchase_total" class="form-control" value="{{ $t ? \App\Models\TaxMaster::formatRate($t->purchaseTotal()) : '0' }}" readonly>
-                    <small class="text-danger tm-mismatch d-none" data-side="purchase">{{ translate('Tax % must equal CGST + SGST + IGST.') }}</small>
-                </div>
-            </div>
-        </div>
-
-        <hr class="mt-1 mb-3">
-        <div class="row">
-            <div class="col-md-5">
-                <div class="form-group">
-                    <label>{{ translate('Sale tax same as purchase?') }}</label>
-                    <div class="mt-1">
-                        <label class="mr-4 mb-0">
-                            <input type="radio" name="sale_same_as_purchase" id="sale_same_as_purchase_y" value="1" {{ $same ? 'checked' : '' }}>
-                            Y
-                        </label>
-                        <label class="mb-0">
-                            <input type="radio" name="sale_same_as_purchase" id="sale_same_as_purchase_n" value="0" {{ !$same ? 'checked' : '' }}>
-                            N
-                        </label>
+            <small class="text-danger tm-mismatch d-none mb-3 d-block" data-side="{{ $side }}">{{ translate('UT CGST % + UTGST % must equal Tax %.') }}</small>
+            @if ($side === 'purchase')
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="form-group mb-2">
+                            <label>{{ translate('Sale tax same as purchase?') }}</label>
+                            <div class="mt-1">
+                                <label class="mr-4 mb-0">
+                                    <input type="radio" name="sale_same_as_purchase" id="sale_same_as_purchase_y" value="1" {{ $same ? 'checked' : '' }}>
+                                    {{ translate('Yes') }}
+                                </label>
+                                <label class="mb-0">
+                                    <input type="radio" name="sale_same_as_purchase" id="sale_same_as_purchase_n" value="0" {{ !$same ? 'checked' : '' }}>
+                                    {{ translate('No') }}
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-1">{{ translate('Yes copies purchase GST into sale. No lets you type the sale Tax %. Default is Yes.') }}</small>
+                        </div>
                     </div>
-                    <small class="text-muted d-block mt-1">{{ translate('Y copies purchase GST into sale. N lets you type sale GST separately.') }}</small>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label>{{ translate('Status') }}</label>
-                    <div class="mt-2">
-                        <label class="aiz-switch aiz-switch-success mb-0">
-                            <input type="hidden" name="status" value="0">
-                            <input type="checkbox" name="status" value="1" {{ $status ? 'checked' : '' }}>
-                            <span class="slider round"></span>
-                        </label>
+                    <div class="col-md-3">
+                        <div class="form-group mb-2">
+                            <label>{{ translate('Status') }}</label>
+                            <div class="mt-2">
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="hidden" name="status" value="0">
+                                    <input type="checkbox" name="status" value="1" {{ $status ? 'checked' : '' }}>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <small class="text-muted d-block">{{ translate('Active / Non-Active') }}</small>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <h6 class="mt-2 mb-3">{{ translate('Sale Tax') }}</h6>
-        <div class="row tm-rate-row" data-side="sale">
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('Tax %') }}</label>
-                    <input type="number" lang="en" step="0.0001" min="0" max="100" name="sale_tax" id="sale_tax" class="form-control tm-tax @error('sale_tax') is-invalid @enderror" value="{{ $rate('sale_tax') }}">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('CGST %') }}</label>
-                    <input type="number" lang="en" step="0.0001" min="0" max="100" name="sale_cgst" id="sale_cgst" class="form-control tm-split" value="{{ $rate('sale_cgst') }}">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('SGST %') }}</label>
-                    <input type="number" lang="en" step="0.0001" min="0" max="100" name="sale_sgst" id="sale_sgst" class="form-control tm-split" value="{{ $rate('sale_sgst') }}">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('IGST %') }}</label>
-                    <input type="number" lang="en" step="0.0001" min="0" max="100" name="sale_igst" id="sale_igst" class="form-control tm-split" value="{{ $rate('sale_igst') }}">
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="form-group">
-                    <label>{{ translate('TOTAL GST%') }}</label>
-                    <input type="text" id="sale_total" class="form-control" value="{{ $t ? \App\Models\TaxMaster::formatRate($t->saleTotal()) : '0' }}" readonly>
-                    <small class="text-danger tm-mismatch d-none" data-side="sale">{{ translate('Tax % must equal CGST + SGST + IGST.') }}</small>
-                </div>
-            </div>
-        </div>
+            @endif
+        @endforeach
+        <small class="text-muted d-block mb-3">{{ translate('State CGST and SGST split Tax % in half. IGST copies Tax %. UT CGST and UTGST start as the same split and stay editable.') }}</small>
 
         <h6 class="mt-2 mb-3">{{ translate('Applied On') }}</h6>
         <div class="table-responsive mb-3">
@@ -201,20 +176,20 @@
                 <tbody>
                     <tr>
                         <td>
-                            <select name="applied_on_category" id="applied_on_category" class="form-control form-control-sm" {{ empty($hsnReady) ? 'disabled' : '' }}>
+                            <select name="applied_on_category" id="applied_on_category" class="form-control form-control-sm">
                                 <option value="">{{ translate('Select') }}</option>
                                 @foreach ($categories ?? [] as $category)
                                     <option value="{{ $category->getTranslation('name') }}" @selected(old('applied_on_category', optional($t)->applied_on_category) === $category->getTranslation('name'))>{{ $category->getTranslation('name') }}</option>
                                 @endforeach
                             </select>
                         </td>
-                        <td><input type="text" name="applied_on_sku" class="form-control form-control-sm" value="{{ old('applied_on_sku', optional($t)->applied_on_sku) }}" maxlength="255" {{ empty($hsnReady) ? 'disabled' : '' }}></td>
-                        <td><input type="text" name="applied_on_product" class="form-control form-control-sm" value="{{ old('applied_on_product', optional($t)->applied_on_product) }}" maxlength="255" {{ empty($hsnReady) ? 'disabled' : '' }}></td>
-                        <td><input type="text" name="applied_on_variant" class="form-control form-control-sm" value="{{ old('applied_on_variant', optional($t)->applied_on_variant) }}" maxlength="255" {{ empty($hsnReady) ? 'disabled' : '' }}></td>
+                        <td><input type="text" name="applied_on_sku" class="form-control form-control-sm" value="{{ old('applied_on_sku', optional($t)->applied_on_sku) }}" maxlength="255"></td>
+                        <td><input type="text" name="applied_on_product" class="form-control form-control-sm" value="{{ old('applied_on_product', optional($t)->applied_on_product) }}" maxlength="255"></td>
+                        <td><input type="text" name="applied_on_variant" class="form-control form-control-sm" value="{{ old('applied_on_variant', optional($t)->applied_on_variant) }}" maxlength="255"></td>
                     </tr>
                 </tbody>
             </table>
-            <small class="text-muted d-block mt-1">{{ translate('Catalog labels only. This does not change live product tax rows.') }}</small>
+            <small class="text-muted d-block mt-1">{{ translate('Tax is applied later from the customer territory. International customers use the customer account form. These labels do not change live product tax rows.') }}</small>
         </div>
 
         <div class="text-right">
@@ -223,6 +198,30 @@
     </div>
 </div>
 <style>
-    .tm-identity-grid th { background: #f3f6f9; font-size: 12px; white-space: normal; }
-    .tm-identity-grid td { vertical-align: top; }
+    .tm-identity-grid th, .tm-rate-grid th { background: #f3f6f9; font-size: 12px; white-space: normal; }
+    .tm-identity-grid td, .tm-rate-grid td { vertical-align: top; }
+    .tm-identity-wrap.table-responsive { overflow: visible; }
+    .tm-hsn-wrap { position: relative; }
+    .tm-hsn-results {
+        position: absolute;
+        z-index: 1050;
+        left: 0;
+        right: 0;
+        max-height: 220px;
+        overflow: auto;
+        background: #fff;
+        border: 1px solid #d8dde6;
+        border-radius: 4px;
+    }
+    .tm-hsn-results button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        border-bottom: 1px solid #eef1f6;
+        background: #fff;
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+    .tm-hsn-results button:hover { background: #f3f6f9; }
 </style>

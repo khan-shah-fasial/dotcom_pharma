@@ -11,7 +11,6 @@ use App\Models\ProductStock;
 use App\Models\Upload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,7 +18,8 @@ class BatchMasterController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['permission:view_all_batch_masters'])->only(['index', 'adjust', 'lookupStocks', 'lookupStock', 'revealRate']);
+        $this->middleware(['permission:view_all_batch_masters'])->only(['index', 'adjust', 'lookupStocks', 'lookupStock']);
+        $this->middleware(['permission:view_all_batch_masters|add_batch_master|edit_batch_master'])->only(['revealRate']);
         $this->middleware(['permission:add_batch_master'])->only(['create', 'store']);
         $this->middleware(['permission:edit_batch_master'])->only(['edit', 'update', 'updateStatus', 'adjustStore']);
         $this->middleware(['permission:delete_batch_master'])->only(['destroy']);
@@ -115,7 +115,13 @@ class BatchMasterController extends Controller
                     ->where('product_stock_id', $stockId)
                     ->pluck('id', 'batch_code');
 
-                BatchMaster::copyMissingForStock($stockId);
+                $handledSources = [];
+                foreach ($request->input('rows', []) as $postedRow) {
+                    if (!empty($postedRow['source_product_batch_id'])) {
+                        $handledSources[] = (int) $postedRow['source_product_batch_id'];
+                    }
+                }
+                BatchMaster::copyMissingForStock($stockId, $handledSources);
 
                 foreach ($request->input('rows', []) as $index => $row) {
                     $payload = $this->rowPayload($request, $row, $index);
@@ -324,6 +330,8 @@ class BatchMasterController extends Controller
                     $new->status = true;
                     $new->save();
                     $newId = $new->id;
+                    $old->status = false;
+                    $old->save();
                 } else {
                     $old->status = false;
                     $old->save();
@@ -358,9 +366,16 @@ class BatchMasterController extends Controller
     public function revealRate(Request $request)
     {
         $request->validate(['password' => ['required', 'string']]);
-        $user = auth()->user();
-        if (!$user || !Hash::check($request->input('password'), $user->password)) {
-            return response()->json(['ok' => false, 'message' => translate('Password does not match.')], 422);
+
+        $expected = $this->billingCompanyPassword();
+        $given = trim((string) $request->input('password'));
+        if ($expected === '') {
+            return response()->json(['ok' => false, 'message' => translate('Billing company password is not configured.')], 422);
+        }
+
+        $matches = strlen($expected) === strlen($given) && hash_equals($expected, $given);
+        if (!$matches) {
+            return response()->json(['ok' => false, 'message' => translate('Security password is incorrect.')], 422);
         }
 
         session(['batch_master_prate_until' => time() + 900]);
@@ -416,8 +431,15 @@ class BatchMasterController extends Controller
         $header = BatchMaster::headerFromStock($stock);
         $productName = $stock->product ? $stock->product->getTranslation('name') : '';
         $purchases = BatchMaster::latestPurchasesForSku($stock->sku);
-        $latestPurchase = collect($purchases)->sortByDesc('id')->first();
-        $purchaseDate = $latestPurchase ? ($latestPurchase->invoice_date ?: $latestPurchase->order_date) : null;
+        $latestPurchase = collect($purchases)->sortByDesc(function ($row) {
+            $date = BatchMaster::parsePurchaseDate($row->invoice_date ?: $row->order_date);
+            $stamp = $date ? $date->timestamp : 0;
+
+            return sprintf('%010d-%010d', $stamp, (int) $row->id);
+        })->first();
+        $rawPurchaseDate = $latestPurchase ? ($latestPurchase->invoice_date ?: $latestPurchase->order_date) : null;
+        $parsedPurchaseDate = BatchMaster::parsePurchaseDate($rawPurchaseDate);
+        $purchaseDate = $parsedPurchaseDate ? $parsedPurchaseDate->toDateString() : null;
 
         $existingCodes = [];
         $rows = [];
@@ -466,6 +488,10 @@ class BatchMasterController extends Controller
             'manufactured_by_names' => $header['manufactured_by_names'],
             'company_id' => $header['company_id'],
             'purchase_date' => $purchaseDate,
+            'last_mrp' => $latestPurchase->mrp_rate ?? null,
+            'last_rate' => $latestPurchase->sale_rate ?? null,
+            'last_tax_code' => $latestPurchase->tax_code ?? null,
+            'last_tax_percent' => $latestPurchase ? (($taxSnap = BatchMaster::taxSnapshot($latestPurchase->tax_code))['purchase_tax'] ?? ($latestPurchase->gst_percentage ?? null)) : null,
             'rows' => $rows,
             'live_lots' => $this->liveLots($stock, $purchases),
         ]);
@@ -532,6 +558,16 @@ class BatchMasterController extends Controller
         }
 
         return Company::query()->orderBy('company_name')->get(['id', 'company_name', 'code']);
+    }
+
+    private function billingCompanyPassword(): string
+    {
+        $expected = trim((string) config('app.billing_company_password'));
+        if ($expected === '') {
+            $expected = trim((string) env('BILLING_COMPANY_PASSWORD', ''));
+        }
+
+        return $expected;
     }
 
     private function purchaseRateVisible(): bool
@@ -622,18 +658,25 @@ class BatchMasterController extends Controller
     {
         $discounts = BatchMaster::discountPercentsForStock($stock);
         $header = BatchMaster::headerFromStock($stock);
+        $companyCode = null;
+        if (!empty($header['company_id']) && Schema::hasTable('companies')) {
+            $company = Company::find($header['company_id']);
+            if ($company) {
+                $companyCode = $company->code ?: $company->company_name;
+            }
+        }
 
         return ProductBatch::query()
             ->where('product_stock_id', $stock->id)
             ->orderByDesc('id')
             ->limit(10)
             ->get()
-            ->map(function (ProductBatch $lot) use ($purchases, $discounts, $header) {
+            ->map(function (ProductBatch $lot) use ($purchases, $discounts, $header, $companyCode) {
                 $code = trim((string) $lot->batch);
                 $purchase = $purchases[$code] ?? null;
                 $tax = BatchMaster::taxSnapshot($purchase->tax_code ?? null);
                 $prices = BatchMaster::decodeRolePrices($lot->role_price);
-                $rate = $purchase->sale_rate ?? null;
+                $rate = $this->purchaseRateVisible() ? ($purchase->sale_rate ?? null) : null;
                 $taxPercent = $tax['purchase_tax'] ?? ($purchase->gst_percentage ?? null);
 
                 return [
@@ -648,6 +691,7 @@ class BatchMasterController extends Controller
                     'tax_percent' => $taxPercent,
                     'amount' => BatchMaster::amountFrom($lot->qty, $rate),
                     'company_id' => $header['company_id'],
+                    'company_code' => $companyCode,
                     'coa' => $lot->coa,
                     'coa_url' => $lot->coa ? uploaded_asset($lot->coa) : null,
                     'upload_date' => optional($lot->created_at)->format('d-m-Y'),
@@ -672,7 +716,7 @@ class BatchMasterController extends Controller
                     ],
                     'discounts' => $discounts,
                 ];
-            })->values();
+            })->values()->all();
     }
 
     private function storeUpload($file): int

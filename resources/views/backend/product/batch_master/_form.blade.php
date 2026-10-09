@@ -232,7 +232,7 @@
                 @if (!$showPurchaseRate)
                     <button type="button" class="btn btn-sm btn-light mt-2" id="reveal-prate">{{ translate('Show P-Rate') }}</button>
                     <div class="mt-2 d-none" id="reveal-prate-box">
-                        <input type="password" class="form-control form-control-sm d-inline-block" style="max-width:220px" id="reveal-prate-password" placeholder="{{ translate('Your login password') }}">
+                        <input type="password" class="form-control form-control-sm d-inline-block" style="max-width:220px" id="reveal-prate-password" placeholder="{{ translate('Billing company password') }}">
                         <button type="button" class="btn btn-sm btn-primary" id="reveal-prate-submit">{{ translate('Open') }}</button>
                     </div>
                 @endif
@@ -284,6 +284,20 @@
         </td>
     </tr>
 </template>
+
+<div class="modal fade" id="bmCoaModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ translate('COA Image') }}</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="bm-coa-preview" src="" alt="{{ translate('COA Image') }}" style="max-width:100%; max-height:70vh;">
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     .bm-header-grid th { background: #f3f6f9; font-size: 12px; white-space: normal; vertical-align: bottom; }

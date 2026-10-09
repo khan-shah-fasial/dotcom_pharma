@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QA Report — Discount Master — 9 Oct 2026</title>
+<style>
+  :root { --ink:#1c2430; --muted:#5c6b7a; --line:#d8dee6; --bg:#f4f6f8; --card:#fff; --pass:#1b7f4a; --fail:#b42318; --warn:#b54708; --gray:#667085; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:#1c2430; color:#fff; padding:28px 32px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; color:#c5d0dc; }
+  .wrap { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
+  .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:13px; font-weight:600; }
+  .pass { background:#e7f6ee; color:var(--pass); }
+  .fail { background:#fdecea; color:var(--fail); }
+  .fixed { background:#e7f6ee; color:var(--pass); }
+  .open { background:#fdecea; color:var(--fail); }
+  .retest { background:#fff4e5; color:var(--warn); }
+  .accepted { background:#eef2f6; color:#344054; }
+  .nt { background:#eef2f6; color:var(--gray); }
+  .high { background:#fff4e5; color:var(--warn); }
+  .medium { background:#fff8e6; color:#8a6100; }
+  .low { background:#eef2f6; color:#344054; }
+  .critical { background:#fdecea; color:var(--fail); }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px 18px 8px; margin:16px 0; }
+  h2 { margin:0 0 12px; font-size:18px; }
+  h3 { margin:16px 0 8px; font-size:15px; }
+  table { width:100%; border-collapse:collapse; margin:0 0 16px; font-size:14px; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#f8fafc; }
+  tr:nth-child(even) td { background:#fbfcfd; }
+  .cards { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:8px; }
+  .card { flex:1 1 140px; background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:12px; }
+  .card b { display:block; font-size:22px; }
+  code, .path { font-family:Consolas, monospace; font-size:12px; }
+  .note { color:var(--muted); font-size:14px; }
+  footer { color:var(--muted); font-size:13px; margin-top:12px; }
+  @media print { body { background:#fff; } section { break-inside:avoid; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Discount Master — QA and UAT</h1>
+  <p>Pharm Vet Easy · local admin · 9 October 2026 · report 13:53</p>
+</header>
+<div class="wrap">
+
+<section>
+  <h2>1. Project Information</h2>
+  <table>
+    <tr><th>Project</th><td>Pharm Vet Easy — Discount Master screen</td></tr>
+    <tr><th>URL tested</th><td>http://127.0.0.1:8000/admin/discount-masters</td></tr>
+    <tr><th>Environment</th><td>Local Laravel admin, signed in as the nexgeno admin account. Password is not recorded in this report.</td></tr>
+    <tr><th>Scope</th><td>The discount setup screen only. Shop checkout was not part of this work.</td></tr>
+    <tr><th>Browser</th><td>Cursor browser (Chromium), desktop, plus a 390px-wide phone-sized view of the add form.</td></tr>
+  </table>
+  <div class="cards">
+    <div class="card"><span class="note">Overall score</span><b>100%</b><span class="note">of categories actually tested</span></div>
+    <div class="card"><span class="note">Final status</span><b>Passed with minor issues</b></div>
+    <div class="card"><span class="note">Critical open</span><b>0</b></div>
+    <div class="card"><span class="note">High open</span><b>0</b></div>
+  </div>
+  <p class="note">Performance and public-page SEO were not tested, so they were left out of the score. They were not treated as a pass.</p>
+</section>
+
+<section>
+  <h2>2. Testing Summary</h2>
+  <table>
+    <tr><th>Testing Type</th><th>Total</th><th>Passed</th><th>Failed</th><th>Not tested</th><th>Status</th></tr>
+    <tr><td>Functional Testing</td><td>19</td><td>16</td><td>0</td><td>3</td><td><span class="badge pass">Pass</span></td></tr>
+    <tr><td>Security Testing</td><td>3</td><td>3</td><td>0</td><td>0</td><td><span class="badge pass">Pass</span></td></tr>
+    <tr><td>UI/UX Testing</td><td>5</td><td>4</td><td>0</td><td>1</td><td><span class="badge pass">Pass</span></td></tr>
+    <tr><td>Performance Testing</td><td>1</td><td>0</td><td>0</td><td>1</td><td><span class="badge nt">Not Tested</span></td></tr>
+    <tr><td>SEO Testing</td><td>1</td><td>0</td><td>0</td><td>1</td><td><span class="badge nt">Not Tested</span></td></tr>
+    <tr><td>Content Testing</td><td>2</td><td>2</td><td>0</td><td>0</td><td><span class="badge pass">Pass</span></td></tr>
+    <tr><td>Compatibility Testing</td><td>7</td><td>2</td><td>0</td><td>5</td><td><span class="badge pass">Pass</span></td></tr>
+    <tr><td>API Testing</td><td>2</td><td>2</td><td>0</td><td>0</td><td><span class="badge pass">Pass</span></td></tr>
+    <tr><td>Database Testing</td><td>4</td><td>4</td><td>0</td><td>0</td><td><span class="badge pass">Pass</span></td></tr>
+    <tr><td>Production / Deployment</td><td>2</td><td>1</td><td>0</td><td>1</td><td><span class="badge nt">Partial</span></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>3. Functional Testing</h2>
+  <table>
+    <tr><th>ID</th><th>Module</th><th>Test Case</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr>
+    <tr><td>FT-001</td><td>Access</td><td>Opening the add page while signed out sends the person to the login page</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>FT-002</td><td>Access</td><td>Sign in with the given admin account reaches the admin home</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>FT-003</td><td>Add form</td><td>Saving with nothing filled shows plain messages: pick a product, fill the amount, and To Date cannot be before From Date</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>FT-004</td><td>Productwise</td><td>Save a product discount with two quantity rows. Opening it again shows both rows, the product, and stock 10</td><td><span class="badge pass">Pass</span></td><td>Critical</td><td>-</td></tr>
+    <tr><td>FT-005</td><td>Batchwise</td><td>Save a batch discount with the one available batch ticked</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>FT-006</td><td>Scheme</td><td>Quantity 50 and free 5 on rate 2310 gives scheme percent 10, scheme value 11550, and effective rate 2100. Same product hides the other-product box. A different product shows it</td><td><span class="badge pass">Pass</span></td><td>Critical</td><td>-</td></tr>
+    <tr><td>FT-007</td><td>Amountwise</td><td>Two bill ranges: 1000–5000 at 3 percent equals 150; 5001–10000 as a flat 200 equals 2 percent</td><td><span class="badge pass">Pass</span></td><td>Critical</td><td>-</td></tr>
+    <tr><td>FT-008</td><td>Pointwise</td><td>Points are stored as 50 and the label says Points</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>FT-009</td><td>Couponwise</td><td>Coupon number saved, then changed from 500 / 10 percent to 250 / 5 percent. The edit page listed that earlier change</td><td><span class="badge pass">Pass</span></td><td>Critical</td><td>-</td></tr>
+    <tr><td>FT-010</td><td>List</td><td>Searching the coupon number with the coupon type filter returned that coupon row</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>FT-011</td><td>List</td><td>The extra quantity row shows as “+ 10” on the list</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+    <tr><td>FT-012</td><td>List</td><td>Turning the offer switch off for the coupon saved it as off</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>FT-013</td><td>Codes</td><td>New rows received D-PW-001, D-BW-002, D-SW-001, D-AW-001, D-POW-001, and D-CW-001</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+    <tr><td>FT-014</td><td>Purchase rate</td><td>A wrong password is refused and the purchase rate stays hidden</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>FT-015</td><td>Purchase rate</td><td>The correct password reveals the purchase rate</td><td><span class="badge nt">Not Tested</span></td><td>High</td><td>Try the real sign-in password once on a product that has a purchase rate. The wrong-password check already passed.</td></tr>
+    <tr><td>FT-016</td><td>Delete</td><td>The six practice rows were removed. The older batch discount D-BW-001 is still there</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>FT-017</td><td>Phone layout</td><td>At 390px wide the add page does not spill sideways. The price table scrolls inside its own box</td><td><span class="badge pass">Pass</span></td><td>Medium</td><td>-</td></tr>
+    <tr><td>FT-018</td><td>Batchwise</td><td>A product that has two real batches</td><td><span class="badge nt">Not Tested</span></td><td>Medium</td><td>The product used (Mouth Gag) has only one batch. Tick two batches on a product that has them.</td></tr>
+    <tr><td>FT-019</td><td>Checkout</td><td>A saved discount changes the price a customer pays</td><td><span class="badge nt">Not Tested</span></td><td>Critical</td><td>This pass only stores the discount. Checkout was left unchanged on purpose.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>4. Bug / Issue Report</h2>
+  <table>
+    <tr><th>Bug ID</th><th>Module</th><th>Issue</th><th>Severity</th><th>Status</th><th>Recommendation</th></tr>
+    <tr><td>BUG-001</td><td>Add form</td><td>An empty save first said “The applied on field is required.” That wording is not on the form.</td><td><span class="badge medium">Medium</span></td><td><span class="badge fixed">Fixed</span></td><td><span class="path">DiscountMasterRequest.php → applied_on rule → keep that rule optional until a discount type is chosen. Retested: the raw message no longer appears.</span></td></tr>
+    <tr><td>BUG-002</td><td>List</td><td>A second quantity row was saved but the list showed only the first row.</td><td><span class="badge medium">Medium</span></td><td><span class="badge fixed">Fixed</span></td><td><span class="path">index.blade.php → quantity cell → print the extra rows from the saved sheet. Retested: “+ 10” was visible.</span></td></tr>
+    <tr><td>BUG-003</td><td>Search</td><td>Searching a coupon number crashed the list page.</td><td><span class="badge high">High</span></td><td><span class="badge fixed">Fixed</span></td><td><span class="path">DiscountMasterController.php → index search → keep the coupon-number check inside the same query. Retested: the filtered page loaded and showed the coupon row.</span></td></tr>
+    <tr><td>BUG-004</td><td>List</td><td>The coupon number was stored and searchable, but the list did not print it.</td><td><span class="badge low">Low</span></td><td><span class="badge retest">Retest Required</span></td><td><span class="path">index.blade.php → type cell → show coupon_code under the discount id. The practice coupon was removed before this line was looked at on screen.</span></td></tr>
+    <tr><td>BUG-005</td><td>Checkout</td><td>These discounts are saved for staff. They do not yet change a customer order.</td><td><span class="badge high">High</span></td><td><span class="badge accepted">Accepted Risk</span></td><td>Agreed limit of this pass. A later pass must apply the saved discount when an order is priced.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>5. Security Testing</h2>
+  <table>
+    <tr><th>ID</th><th>Security Check</th><th>Status</th><th>Severity</th><th>Recommendation</th></tr>
+    <tr><td>SEC-001</td><td>Signed-out person cannot open the add page</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>SEC-002</td><td>Wrong password does not reveal the purchase rate</td><td><span class="badge pass">Pass</span></td><td>High</td><td>-</td></tr>
+    <tr><td>SEC-003</td><td>The product lookup used by the form does not include the purchase rate</td><td><span class="badge pass">Pass</span></td><td>High</td><td><span class="path">DiscountMasterController.php → lookupTarget() → purchase rate stays on revealPurchaseRate() only.</span></td></tr>
+  </table>
+  <p class="note">SQL injection, file upload, and security headers were not attacked. Those checks are not listed as passes.</p>
+</section>
+
+<section>
+  <h2>6. UI/UX Testing</h2>
+  <table>
+    <tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Recommendation</th></tr>
+    <tr><td>UX-001</td><td>Form order</td><td>Discount type comes first. The matching block, the “same discount” question, then dates, then one Save</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>UX-002</td><td>Empty type</td><td>Before a type is chosen the page says to select a discount type</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>UX-003</td><td>Errors</td><td>Validation sentences are plain and the typed dates stay on the page</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>UX-004</td><td>Narrow screen</td><td>390px wide: page width stays 390; the price table scrolls inside itself</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>UX-005</td><td>List</td><td>Coupon number printed on the list after the display fix</td><td><span class="badge nt">Not Tested</span></td><td>Add one coupon again and confirm the number is visible, then delete that practice row.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>7. Performance Testing</h2>
+  <table>
+    <tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr>
+    <tr><td>PF-001</td><td>Page speed</td><td>Load time of the discount list</td><td><span class="badge nt">Not Tested</span></td><td>Low</td><td>Not Tested - Measurement unavailable in current environment.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>8. SEO Testing</h2>
+  <table>
+    <tr><th>ID</th><th>SEO Check</th><th>Status</th><th>Recommendation</th></tr>
+    <tr><td>SEO-001</td><td>Public shop pages</td><td><span class="badge nt">Not Tested</span></td><td>This run covered the admin discount screen only.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>9. Content Testing</h2>
+  <table>
+    <tr><th>ID</th><th>Content Check</th><th>Status</th><th>Recommendation</th></tr>
+    <tr><td>CN-001</td><td>The six type names match the sheet: Productwise, Batchwise, Scheme, Amountwise, Pointwise, Couponwise</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>CN-002</td><td>Drug name “NA” and blank Marketed By, Import By, and Mfg By match the product record used</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>10. Browser &amp; Device Testing</h2>
+  <table>
+    <tr><th>Browser / Device</th><th>Status</th><th>Recommendation</th></tr>
+    <tr><td>Chrome-family desktop (Cursor browser)</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>Phone-sized width 390px, same browser</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>Firefox Desktop</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+    <tr><td>Edge Desktop</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+    <tr><td>Safari</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+    <tr><td>Android Mobile</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+    <tr><td>iPhone</td><td><span class="badge nt">Not Tested</span></td><td>-</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>11. API Testing</h2>
+  <table>
+    <tr><th>ID</th><th>API / Feature</th><th>Test</th><th>Status</th><th>Recommendation</th></tr>
+    <tr><td>API-001</td><td>Product lookup</td><td>Choosing Mouth Gag / DPI-M5 filled name, sku, stock 10, and MRP 2310. Purchase rate was not in that reply</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>API-002</td><td>Reveal purchase rate</td><td>Wrong password returned “Password does not match.”</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>12. Database Testing</h2>
+  <table>
+    <tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr>
+    <tr><td>DB-001</td><td>A product discount stored the first row on the main columns and the second quantity row in the extra sheet</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>DB-002</td><td>Editing the coupon updated the amount and kept one history line: 09-10-2026 13:49, coupon number, amount 250, 5.00 percent</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>DB-003</td><td>The offer switch saved the coupon as off</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>DB-004</td><td>Practice rows 2 to 7 are gone. Row 1, code D-BW-001, remains</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>13. Production / Deployment Testing</h2>
+  <table>
+    <tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr>
+    <tr><td>DP-001</td><td>Admin login on the local site</td><td><span class="badge pass">Pass</span></td><td>-</td></tr>
+    <tr><td>DP-002</td><td>HTTPS, email, payment, and live server</td><td><span class="badge nt">Not Tested</span></td><td>This run used the local address only.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>14. Overall Score</h2>
+  <table>
+    <tr><th>Category</th><th>Weight</th><th>Result</th><th>In the score</th></tr>
+    <tr><td>Functional</td><td>30%</td><td>16 / 16 = 100%</td><td>Yes</td></tr>
+    <tr><td>Security</td><td>20%</td><td>3 / 3 = 100%</td><td>Yes</td></tr>
+    <tr><td>UI/UX</td><td>15%</td><td>4 / 4 = 100%</td><td>Yes</td></tr>
+    <tr><td>Performance</td><td>15%</td><td>Not tested</td><td>Left out</td></tr>
+    <tr><td>SEO</td><td>10%</td><td>Not tested</td><td>Left out</td></tr>
+    <tr><td>Compatibility</td><td>5%</td><td>2 / 2 = 100%</td><td>Yes</td></tr>
+    <tr><td>Content</td><td>5%</td><td>2 / 2 = 100%</td><td>Yes</td></tr>
+  </table>
+  <p>Tested weights add up to 75. Each of those categories passed, so the overall score is <strong>100%</strong> of what was tested. Not-tested rows were left out of each category. They were not counted as passes.</p>
+</section>
+
+<section>
+  <h2>15. Final Status</h2>
+  <p><span class="badge pass">Passed with Minor Issues</span></p>
+  <h3>Recommendation</h3>
+  <p>The discount setup screen saves, edits, lists, searches, switches off, and deletes the six discount kinds. The crashes and the confusing empty-save message found during this run are fixed.</p>
+  <p>Nothing critical is still open. One small display change (print the coupon number on the list) still needs one look on screen. The correct purchase-rate password was not tried again. No product in this data has two batches or a trade price above zero, so those paths were not proven with live numbers. Shop checkout does not use these discounts yet. That was outside this work, so this screen should not be treated as changing what a customer pays.</p>
+  <p>Retest the coupon number on the list. Do not deploy this as the customer price rule until a later pass connects it to the order.</p>
+</section>
+
+<section>
+  <h2>16. Testing Limitations</h2>
+  <ul>
+    <li>Practice discounts were created on the live product Mouth Gag / DPI-M5 and then deleted. The older discount D-BW-001 was not deleted.</li>
+    <li>That product has one batch, code “-”, MRP 2310, and trade prices of 0. A second batch and a non-zero PTS or PTR could not be proven.</li>
+    <li>The correct password for the purchase rate was not submitted again.</li>
+    <li>Checkout, payment, public SEO, page-speed numbers, and other browsers were not tested.</li>
+    <li>Coupon change history keeps the latest 15 lines inside the discount row. There is no separate history table.</li>
+    <li>On a product or batch row, the list “amount” is quantity times rate. The discount amount itself is in the type column.</li>
+  </ul>
+</section>
+
+<footer>Generated 9 October 2026, 13:53. Local admin test. No passwords are stored in this file.</footer>
+</div>
+</body>
+</html>

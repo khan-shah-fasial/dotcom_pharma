@@ -47,11 +47,15 @@ class TaxMasterRequest extends FormRequest
             'purchase_tax' => ['required', 'numeric', 'min:0', 'max:100'],
             'purchase_cgst' => ['required', 'numeric', 'min:0', 'max:100'],
             'purchase_sgst' => ['required', 'numeric', 'min:0', 'max:100'],
+            'purchase_ut_cgst' => ['required', 'numeric', 'min:0', 'max:100'],
+            'purchase_utgst' => ['required', 'numeric', 'min:0', 'max:100'],
             'purchase_igst' => ['required', 'numeric', 'min:0', 'max:100'],
             'sale_same_as_purchase' => ['required', 'boolean'],
             'sale_tax' => ['required', 'numeric', 'min:0', 'max:100'],
             'sale_cgst' => ['required', 'numeric', 'min:0', 'max:100'],
             'sale_sgst' => ['required', 'numeric', 'min:0', 'max:100'],
+            'sale_ut_cgst' => ['required', 'numeric', 'min:0', 'max:100'],
+            'sale_utgst' => ['required', 'numeric', 'min:0', 'max:100'],
             'sale_igst' => ['required', 'numeric', 'min:0', 'max:100'],
             'status' => ['nullable', 'boolean'],
         ];
@@ -62,28 +66,24 @@ class TaxMasterRequest extends FormRequest
         $validator->after(function (Validator $validator) {
             $data = $this->all();
 
-            if (!TaxMaster::totalsMatch(
-                TaxMaster::toDecimal($data['purchase_tax'] ?? 0),
-                TaxMaster::toDecimal($data['purchase_cgst'] ?? 0),
-                TaxMaster::toDecimal($data['purchase_sgst'] ?? 0),
-                TaxMaster::toDecimal($data['purchase_igst'] ?? 0)
-            )) {
-                $validator->errors()->add(
-                    'purchase_tax',
-                    translate('Purchase Tax % must equal CGST + SGST + IGST.')
-                );
-            }
-
-            if (!TaxMaster::totalsMatch(
-                TaxMaster::toDecimal($data['sale_tax'] ?? 0),
-                TaxMaster::toDecimal($data['sale_cgst'] ?? 0),
-                TaxMaster::toDecimal($data['sale_sgst'] ?? 0),
-                TaxMaster::toDecimal($data['sale_igst'] ?? 0)
-            )) {
-                $validator->errors()->add(
-                    'sale_tax',
-                    translate('Sale Tax % must equal CGST + SGST + IGST.')
-                );
+            $checkUt = TaxMaster::utColumnsReady() || !TaxMaster::tableReady();
+            foreach (['purchase', 'sale'] as $side) {
+                if (!TaxMaster::pathsMatch(
+                    TaxMaster::toDecimal($data[$side . '_tax'] ?? 0),
+                    TaxMaster::toDecimal($data[$side . '_cgst'] ?? 0),
+                    TaxMaster::toDecimal($data[$side . '_sgst'] ?? 0),
+                    TaxMaster::toDecimal($data[$side . '_ut_cgst'] ?? 0),
+                    TaxMaster::toDecimal($data[$side . '_utgst'] ?? 0),
+                    TaxMaster::toDecimal($data[$side . '_igst'] ?? 0),
+                    $checkUt
+                )) {
+                    $validator->errors()->add(
+                        $side . '_utgst',
+                        translate($side === 'purchase'
+                            ? 'Purchase UT CGST % + UTGST % must equal Tax %.'
+                            : 'Sale UT CGST % + UTGST % must equal Tax %.')
+                    );
+                }
             }
         });
     }

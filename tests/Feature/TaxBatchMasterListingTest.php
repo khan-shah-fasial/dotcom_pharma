@@ -55,7 +55,8 @@ class TaxBatchMasterListingTest extends TestCase
             ->assertSee('HSN Code', false)
             ->assertSee('Applied On', false)
             ->assertSee('Taxable = GST extra', false)
-            ->assertSee('Tax % must equal CGST + SGST + IGST.', false);
+            ->assertSee('UT CGST % + UTGST % must equal Tax %.', false)
+            ->assertSee('LUT = no tax', false);
     }
 
     public function test_batch_master_index_is_sortable_and_filterable(): void

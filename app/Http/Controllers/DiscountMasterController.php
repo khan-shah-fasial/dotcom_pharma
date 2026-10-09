@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\DiscountMasterRequest;
+use App\Models\BatchMaster;
 use App\Models\Category;
 use App\Models\DiscountMaster;
 use App\Models\Group;
@@ -11,6 +12,7 @@ use App\Models\ProductStock;
 use App\Models\Upload;
 use App\Services\OrderPlacementService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
 class DiscountMasterController extends Controller
@@ -18,6 +20,7 @@ class DiscountMasterController extends Controller
     public function __construct()
     {
         $this->middleware(['permission:view_all_discount_masters'])->only(['index', 'lookupStocks', 'lookupBatches', 'lookupCustomers', 'lookupTarget', 'nextCode']);
+        $this->middleware(['permission:add_discount_master|edit_discount_master'])->only(['revealPurchaseRate']);
         $this->middleware(['permission:add_discount_master'])->only(['create', 'store']);
         $this->middleware(['permission:edit_discount_master'])->only(['edit', 'update', 'updateStatus']);
         $this->middleware(['permission:delete_discount_master'])->only(['destroy']);
@@ -55,6 +58,9 @@ class DiscountMasterController extends Controller
                 $like = '%' . $filters['search'] . '%';
                 $query->where(function ($nested) use ($like) {
                     $nested->where('discount_code', 'like', $like)
+                        ->when(Schema::hasColumn('discount_masters', 'coupon_code'), function ($nested) use ($like) {
+                            $nested->orWhere('coupon_code', 'like', $like);
+                        })
                         ->orWhereHas('stock', function ($stockQuery) use ($like) {
                             $stockQuery->where('sku', 'like', $like)
                                 ->orWhere('variant', 'like', $like);
@@ -170,11 +176,11 @@ class DiscountMasterController extends Controller
         }
 
         $discount = new DiscountMaster();
-        $discount->fill($this->payloadFromRequest($request));
+        $discount->forceFill(array_merge($this->payloadFromRequest($request), $this->extraColumns($request)));
         $discount->discount_code = DiscountMaster::nextCode($discount->discount_type);
         $discount->save();
 
-        flash(translate('Discount Master saved successfully.'))->success();
+        $this->flashSaved($request, 'Discount Master saved successfully.');
 
         return redirect()->route('discount_masters.index');
     }
@@ -212,10 +218,10 @@ class DiscountMasterController extends Controller
             $payload['discount_code'] = DiscountMaster::nextCode($payload['discount_type']);
         }
 
-        $discount->fill($payload);
+        $discount->forceFill(array_merge($payload, $this->extraColumns($request, $this->couponHistory($discount, $request))));
         $discount->save();
 
-        flash(translate('Discount Master updated successfully.'))->success();
+        $this->flashSaved($request, 'Discount Master updated successfully.');
 
         return redirect()->route('discount_masters.index');
     }
@@ -274,6 +280,12 @@ class DiscountMasterController extends Controller
                             ->orWhere('variant', 'like', $like)
                             ->orWhereHas('product', function ($productQuery) use ($like) {
                                 $productQuery->where('name', 'like', $like);
+                                if (Schema::hasColumn('products', 'drug_name')) {
+                                    $productQuery->orWhere('drug_name', 'like', $like);
+                                }
+                            })
+                            ->orWhereHas('product.brand', function ($brandQuery) use ($like) {
+                                $brandQuery->where('name', 'like', $like);
                             });
                     }
                 });
@@ -380,7 +392,6 @@ class DiscountMasterController extends Controller
 
     public function lookupTarget(Request $request)
     {
-        $appliedOn = (string) $request->input('applied_on');
         $stockId = $request->filled('product_stock_id') ? (int) $request->input('product_stock_id') : null;
         $batchId = $request->filled('batch_id') ? (int) $request->input('batch_id') : null;
 
@@ -388,34 +399,69 @@ class DiscountMasterController extends Controller
         $stock = null;
         $product = null;
 
-        if ($appliedOn === 'batch' && $batchId) {
-            $batch = ProductBatch::with(['stock', 'product'])->find($batchId);
-            $stock = $batch?->stock;
-            $product = $batch?->product;
-        } elseif (in_array($appliedOn, ['sku', 'full_variant'], true) && $stockId) {
+        if ($stockId) {
             $stock = ProductStock::with(['product', 'batches'])->find($stockId);
             $product = $stock?->product;
             $batch = $stock?->batches->sortByDesc('id')->first();
+        } elseif ($batchId) {
+            $batch = ProductBatch::with(['stock', 'product'])->find($batchId);
+            $stock = $batch?->stock;
+            $product = $batch?->product ?? $stock?->product;
         }
 
-        $rolePrices = DiscountMaster::decodeRolePrices($batch, $stock, $product);
-        $coa = $batch?->coa ?? $stock?->coa;
+        $header = ($stock && method_exists(BatchMaster::class, 'headerFromStock'))
+            ? BatchMaster::headerFromStock($stock)
+            : [];
+        $batches = $stock ? $stock->batches->sortBy('batch')->values() : collect();
+        if ($batches->isEmpty() && $batch) {
+            $batches = collect([$batch]);
+        }
 
         return response()->json([
             'product_id' => $product?->id,
             'product_stock_id' => $stock?->id,
-            'batch_id' => $batch?->id,
             'sku' => $stock?->sku,
-            'variant' => $stock?->variant,
+            'variant' => $stock ? $stock->expandedVariantLabel() : null,
             'product_name' => $product ? $product->getTranslation('name') : null,
-            'batch' => $batch?->batch,
-            'stock_available' => $batch ? $batch->qty : ($stock?->qty),
-            'manufacturing_date' => $batch?->manufacturing_date,
-            'expiry_date' => $batch?->product_exp_date ?? $stock?->product_exp_date,
-            'coa' => $coa,
-            'coa_label' => $this->coaLabel($coa),
-            'coa_url' => $this->coaUrl($coa),
-            'role_prices' => $rolePrices,
+            'drug_name' => $header['drug_name'] ?? null,
+            'marketed_by' => $header['marketed_by_name'] ?? null,
+            'import_by' => $this->nameList($header['import_by_names'] ?? null),
+            'mfg_by' => $this->nameList($header['manufactured_by_names'] ?? null),
+            'stock_available' => $stock?->qty,
+            'role_prices' => DiscountMaster::decodeRolePrices($batch, $stock, $product),
+            'batches' => $batches->map(function (ProductBatch $row) use ($stock, $product) {
+                return [
+                    'id' => $row->id,
+                    'batch' => $row->batch,
+                    'qty' => $row->qty,
+                    'mfg' => $row->manufacturing_date,
+                    'expiry' => $row->product_exp_date,
+                    'coa_url' => $this->coaUrl($row->coa),
+                    'coa_label' => $this->coaLabel($row->coa),
+                    'role_prices' => DiscountMaster::decodeRolePrices($row, $stock, $product),
+                ];
+            })->values(),
+        ]);
+    }
+
+    public function revealPurchaseRate(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'string'],
+            'product_stock_id' => ['nullable', 'integer'],
+            'batch_id' => ['nullable', 'integer'],
+        ]);
+
+        $user = auth()->user();
+        if (!$user || !Hash::check((string) $request->input('password'), (string) $user->password)) {
+            return response()->json(['message' => translate('Password does not match.')], 422);
+        }
+
+        return response()->json([
+            'purchase_rate' => $this->purchaseRate(
+                $request->filled('product_stock_id') ? (int) $request->input('product_stock_id') : null,
+                $request->filled('batch_id') ? (int) $request->input('batch_id') : null
+            ),
         ]);
     }
 
@@ -438,8 +484,14 @@ class DiscountMasterController extends Controller
 
     private function payloadFromRequest(DiscountMasterRequest $request): array
     {
-        $appliedOn = $request->input('applied_on');
+        $type = (string) $request->input('discount_type');
         $data = $request->validated();
+        foreach ([
+            'roles', 'amounts', 'batch_ids', 'same_discount', 'near_expiry',
+            'scope_products', 'scope_role', 'coupon_code', 'product_label',
+        ] as $extra) {
+            unset($data[$extra]);
+        }
 
         $data['product_id'] = null;
         $data['product_stock_id'] = null;
@@ -448,43 +500,31 @@ class DiscountMasterController extends Controller
         $data['group_id'] = null;
         $data['customer_id'] = null;
 
-        if (in_array($appliedOn, ['sku', 'full_variant'], true)) {
+        if (in_array($type, DiscountMaster::PRODUCT_TYPES, true)) {
             $stock = ProductStock::find($request->input('product_stock_id'));
             $data['product_stock_id'] = $stock?->id;
             $data['product_id'] = $stock?->product_id;
-        } elseif ($appliedOn === 'batch') {
-            $batch = ProductBatch::find($request->input('batch_id'));
-            $data['batch_id'] = $batch?->id;
-            $data['product_stock_id'] = $batch?->product_stock_id;
-            $data['product_id'] = $batch?->product_id;
-        } elseif ($appliedOn === 'category') {
-            $data['category_id'] = $request->input('category_id');
-            $data['role_key'] = null;
-            $data['qty_slab_from'] = null;
-            $data['qty_slab_to'] = null;
-            $data['rate'] = null;
-            $data['amount'] = null;
-        } elseif ($appliedOn === 'group') {
-            $data['group_id'] = $request->input('group_id');
-            $data['role_key'] = null;
-            $data['qty_slab_from'] = null;
-            $data['qty_slab_to'] = null;
-            $data['rate'] = null;
-            $data['amount'] = null;
-        } elseif ($appliedOn === 'customer') {
-            $data['customer_id'] = $request->input('customer_id');
-            $data['role_key'] = null;
-            $data['qty_slab_from'] = null;
-            $data['qty_slab_to'] = null;
-            $data['rate'] = null;
-            $data['amount'] = null;
         }
 
-        $type = $request->input('discount_type');
+        if (in_array($type, DiscountMaster::BATCH_TYPES, true)) {
+            $batch = ProductBatch::find($request->input('batch_id'));
+            $data['batch_id'] = $batch?->id;
+            if ($batch) {
+                $data['product_stock_id'] = $batch->product_stock_id;
+                $data['product_id'] = $batch->product_id;
+            }
+        }
+
+        if ($request->boolean('same_discount')) {
+            $data['category_id'] = $request->input('category_id') ?: null;
+            $data['group_id'] = $request->input('group_id') ?: null;
+            $data['customer_id'] = $request->input('customer_id') ?: null;
+        }
+
         if ($type !== 'pointwise') {
             $data['earn'] = null;
         }
-        if ($type !== 'amount_wise') {
+        if (!in_array($type, DiscountMaster::INVOICE_TYPES, true)) {
             $data['invoice_amount'] = null;
         }
         if ($type !== 'schemewise') {
@@ -496,18 +536,130 @@ class DiscountMasterController extends Controller
         } elseif ($request->boolean('scheme_product_is_same')) {
             $data['scheme_product_stock_id'] = null;
         }
-
-        if (!in_array($type, ['batchwise', 'productwise', 'amount_wise', 'pointwise'], true)) {
-            if ($type !== 'schemewise') {
-                $data['value_type'] = null;
-                $data['value_amount'] = null;
-                $data['value_percent'] = null;
-            }
+        if (!in_array($type, ['productwise', 'batchwise', 'amount_wise', 'pointwise', 'couponwise'], true)) {
+            $data['value_type'] = null;
+            $data['value_amount'] = null;
+            $data['value_percent'] = null;
         }
 
         $data['status'] = $request->boolean('status');
 
         return $data;
+    }
+
+    private function couponHistory(DiscountMaster $discount, DiscountMasterRequest $request): array
+    {
+        if ($request->input('discount_type') !== 'couponwise') {
+            return [];
+        }
+
+        $old = json_decode($discount->getAttributes()['sheet_payload'] ?? '', true) ?: [];
+        $history = $old['history'] ?? [];
+        $history[] = [
+            'at' => now()->format('d-m-Y H:i'),
+            'coupon_code' => (string) $request->input('coupon_code'),
+            'amount' => $request->input('value_amount'),
+            'percent' => $request->input('value_percent'),
+        ];
+
+        return array_slice($history, -15);
+    }
+
+    private function extraColumns(DiscountMasterRequest $request, array $history = []): array
+    {
+        $extra = [];
+        $payload = json_encode([
+            'roles' => $request->input('roles', []),
+            'amounts' => $request->input('amounts', []),
+            'batch_ids' => array_values(array_filter((array) $request->input('batch_ids', []))),
+            'same_discount' => $request->boolean('same_discount'),
+            'near_expiry' => $request->boolean('near_expiry'),
+            'scope_products' => array_values(array_filter((array) $request->input('scope_products', []))),
+            'scope_role' => $request->input('scope_role'),
+            'coupon_code' => $request->input('coupon_code'),
+            'history' => $history,
+        ]);
+
+        if (Schema::hasColumn('discount_masters', 'sheet_payload')) {
+            $extra['sheet_payload'] = $payload;
+        }
+        if (Schema::hasColumn('discount_masters', 'coupon_code')) {
+            $extra['coupon_code'] = $request->input('coupon_code') ?: null;
+        }
+
+        return $extra;
+    }
+
+    private function sheetDataDropped(DiscountMasterRequest $request): bool
+    {
+        if (Schema::hasColumn('discount_masters', 'sheet_payload')) {
+            return false;
+        }
+
+        $roles = (array) $request->input('roles', []);
+        $slabs = (array) ($roles[0]['slabs'] ?? []);
+        $amounts = (array) $request->input('amounts', []);
+        $batches = array_filter((array) $request->input('batch_ids', []));
+
+        return count($roles) > 1
+            || count($slabs) > 1
+            || count($amounts) > 1
+            || count($batches) > 1
+            || ($request->filled('coupon_code') && !Schema::hasColumn('discount_masters', 'coupon_code'));
+    }
+
+    private function flashSaved(DiscountMasterRequest $request, string $message): void
+    {
+        if ($this->sheetDataDropped($request)) {
+            flash(translate('Discount Master saved the first slab only. Extra slabs, extra batches, and the coupon number need the extra columns.'))->warning();
+
+            return;
+        }
+
+        flash(translate($message))->success();
+    }
+
+    private function nameList($value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        if (is_array($value)) {
+            return implode(', ', $value);
+        }
+        $decoded = json_decode((string) $value, true);
+        if (is_array($decoded)) {
+            return implode(', ', $decoded);
+        }
+
+        return (string) $value;
+    }
+
+    private function purchaseRate(?int $stockId, ?int $batchId): ?float
+    {
+        if (!BatchMaster::tableReady() || !Schema::hasColumn('batch_masters', 'purchase_rate')) {
+            return null;
+        }
+
+        $query = BatchMaster::query()->whereNotNull('purchase_rate');
+        if ($batchId) {
+            $batch = ProductBatch::find($batchId);
+            if (!$batch) {
+                return null;
+            }
+            $query->where('product_stock_id', $batch->product_stock_id);
+            if ($batch->batch) {
+                $query->where('batch_code', $batch->batch);
+            }
+        } elseif ($stockId) {
+            $query->where('product_stock_id', $stockId);
+        } else {
+            return null;
+        }
+
+        $rate = $query->orderByDesc('id')->value('purchase_rate');
+
+        return $rate === null ? null : (float) $rate;
     }
 
     private function coaLabel($coa): ?string

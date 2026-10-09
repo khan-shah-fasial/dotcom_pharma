@@ -12,6 +12,7 @@ class TaxMaster extends Model
         'taxable' => 'Taxable',
         'inclusive' => 'Inclusive',
         'exempted' => 'Exempted',
+        'lut' => 'LUT',
     ];
 
     public const EPSILON = 0.01;
@@ -32,6 +33,13 @@ class TaxMaster extends Model
         'applied_on_variant',
     ];
 
+    public const UT_COLUMNS = [
+        'purchase_ut_cgst',
+        'purchase_utgst',
+        'sale_ut_cgst',
+        'sale_utgst',
+    ];
+
     protected $table = 'tax_masters';
 
     protected $fillable = [
@@ -47,11 +55,15 @@ class TaxMaster extends Model
         'purchase_tax',
         'purchase_cgst',
         'purchase_sgst',
+        'purchase_ut_cgst',
+        'purchase_utgst',
         'purchase_igst',
         'sale_same_as_purchase',
         'sale_tax',
         'sale_cgst',
         'sale_sgst',
+        'sale_ut_cgst',
+        'sale_utgst',
         'sale_igst',
         'status',
     ];
@@ -60,10 +72,14 @@ class TaxMaster extends Model
         'purchase_tax' => 'float',
         'purchase_cgst' => 'float',
         'purchase_sgst' => 'float',
+        'purchase_ut_cgst' => 'float',
+        'purchase_utgst' => 'float',
         'purchase_igst' => 'float',
         'sale_tax' => 'float',
         'sale_cgst' => 'float',
         'sale_sgst' => 'float',
+        'sale_ut_cgst' => 'float',
+        'sale_utgst' => 'float',
         'sale_igst' => 'float',
         'sale_same_as_purchase' => 'boolean',
         'status' => 'boolean',
@@ -91,6 +107,30 @@ class TaxMaster extends Model
             }
 
             foreach (self::HSN_COLUMNS as $column) {
+                if (!Schema::hasColumn('tax_masters', $column)) {
+                    return $ready = false;
+                }
+            }
+
+            return $ready = true;
+        } catch (\Throwable $e) {
+            return $ready = false;
+        }
+    }
+
+    public static function utColumnsReady(): bool
+    {
+        static $ready = null;
+        if ($ready !== null) {
+            return $ready;
+        }
+
+        try {
+            if (!self::tableReady()) {
+                return $ready = false;
+            }
+
+            foreach (self::UT_COLUMNS as $column) {
                 if (!Schema::hasColumn('tax_masters', $column)) {
                     return $ready = false;
                 }
@@ -143,9 +183,57 @@ class TaxMaster extends Model
         return round($cgst + $sgst + $igst, 4);
     }
 
+    public static function halfSplit(float $tax): array
+    {
+        $first = round($tax / 2, 4);
+        $second = round($tax - $first, 4);
+
+        return [$first, $second];
+    }
+
+    public static function pathsMatch(
+        float $tax,
+        float $cgst,
+        float $sgst,
+        float $utCgst,
+        float $utgst,
+        float $igst,
+        bool $checkUt = true
+    ): bool {
+        $stateOk = abs($tax - round($cgst + $sgst, 4)) <= self::EPSILON;
+        $centralOk = abs($tax - round($igst, 4)) <= self::EPSILON;
+        if (!$checkUt) {
+            return $stateOk && $centralOk;
+        }
+
+        $utOk = abs($tax - round($utCgst + $utgst, 4)) <= self::EPSILON;
+
+        return $stateOk && $utOk && $centralOk;
+    }
+
     public static function totalsMatch(float $tax, float $cgst, float $sgst, float $igst): bool
     {
         return abs($tax - self::splitTotal($cgst, $sgst, $igst)) <= self::EPSILON;
+    }
+
+    public static function zeroRateKind(string $kind): bool
+    {
+        return in_array($kind, ['exempted', 'lut'], true);
+    }
+
+    public static function hsFromHsn($hsn): ?string
+    {
+        $digits = preg_replace('/\D/', '', (string) $hsn);
+        if ($digits === null || $digits === '') {
+            return null;
+        }
+
+        return strlen($digits) >= 6 ? substr($digits, 0, 6) : $digits;
+    }
+
+    public static function taxCodeBase($taxPercent): string
+    {
+        return 'G' . str_replace('.', '-', self::formatRate($taxPercent));
     }
 
     public static function isTruthy($value): bool
@@ -172,12 +260,16 @@ class TaxMaster extends Model
                 'purchase_tax' => 5,
                 'purchase_cgst' => 2.5,
                 'purchase_sgst' => 2.5,
-                'purchase_igst' => 0,
+                'purchase_ut_cgst' => 2.5,
+                'purchase_utgst' => 2.5,
+                'purchase_igst' => 5,
                 'sale_same_as_purchase' => true,
                 'sale_tax' => 5,
                 'sale_cgst' => 2.5,
                 'sale_sgst' => 2.5,
-                'sale_igst' => 0,
+                'sale_ut_cgst' => 2.5,
+                'sale_utgst' => 2.5,
+                'sale_igst' => 5,
                 'status' => true,
             ],
             [
@@ -187,12 +279,16 @@ class TaxMaster extends Model
                 'purchase_tax' => 18,
                 'purchase_cgst' => 9,
                 'purchase_sgst' => 9,
-                'purchase_igst' => 0,
+                'purchase_ut_cgst' => 9,
+                'purchase_utgst' => 9,
+                'purchase_igst' => 18,
                 'sale_same_as_purchase' => true,
                 'sale_tax' => 18,
                 'sale_cgst' => 9,
                 'sale_sgst' => 9,
-                'sale_igst' => 0,
+                'sale_ut_cgst' => 9,
+                'sale_utgst' => 9,
+                'sale_igst' => 18,
                 'status' => true,
             ],
             [
@@ -200,13 +296,17 @@ class TaxMaster extends Model
                 'tax_code' => 'G28',
                 'description' => null,
                 'purchase_tax' => 28,
-                'purchase_cgst' => 0,
-                'purchase_sgst' => 0,
+                'purchase_cgst' => 14,
+                'purchase_sgst' => 14,
+                'purchase_ut_cgst' => 14,
+                'purchase_utgst' => 14,
                 'purchase_igst' => 28,
                 'sale_same_as_purchase' => true,
                 'sale_tax' => 28,
-                'sale_cgst' => 0,
-                'sale_sgst' => 0,
+                'sale_cgst' => 14,
+                'sale_sgst' => 14,
+                'sale_ut_cgst' => 14,
+                'sale_utgst' => 14,
                 'sale_igst' => 28,
                 'status' => true,
             ],
@@ -217,11 +317,15 @@ class TaxMaster extends Model
                 'purchase_tax' => 0,
                 'purchase_cgst' => 0,
                 'purchase_sgst' => 0,
+                'purchase_ut_cgst' => 0,
+                'purchase_utgst' => 0,
                 'purchase_igst' => 0,
                 'sale_same_as_purchase' => true,
                 'sale_tax' => 0,
                 'sale_cgst' => 0,
                 'sale_sgst' => 0,
+                'sale_ut_cgst' => 0,
+                'sale_utgst' => 0,
                 'sale_igst' => 0,
                 'status' => true,
             ],
@@ -238,62 +342,15 @@ class TaxMaster extends Model
             ? self::isTruthy($input['status'])
             : true;
 
-        $purchaseTaxEmpty = self::isEmptyRate($input['purchase_tax'] ?? null);
-        $saleTaxEmpty = self::isEmptyRate($input['sale_tax'] ?? null);
-
-        $purchase = [
-            'purchase_tax' => self::toDecimal($input['purchase_tax'] ?? 0),
-            'purchase_cgst' => self::toDecimal($input['purchase_cgst'] ?? 0),
-            'purchase_sgst' => self::toDecimal($input['purchase_sgst'] ?? 0),
-            'purchase_igst' => self::toDecimal($input['purchase_igst'] ?? 0),
-        ];
-
-        if ($kind === 'exempted') {
-            $purchase = [
-                'purchase_tax' => 0.0,
-                'purchase_cgst' => 0.0,
-                'purchase_sgst' => 0.0,
-                'purchase_igst' => 0.0,
-            ];
+        if (self::zeroRateKind($kind)) {
+            $purchase = self::zeroBreakup('purchase');
             $same = true;
-            $purchaseTaxEmpty = false;
-            $saleTaxEmpty = false;
-        }
-
-        $purchaseTotal = self::splitTotal(
-            $purchase['purchase_cgst'],
-            $purchase['purchase_sgst'],
-            $purchase['purchase_igst']
-        );
-
-        if ($purchaseTaxEmpty) {
-            $purchase['purchase_tax'] = $purchaseTotal;
-        }
-
-        if ($same) {
-            $sale = [
-                'sale_tax' => $purchase['purchase_tax'],
-                'sale_cgst' => $purchase['purchase_cgst'],
-                'sale_sgst' => $purchase['purchase_sgst'],
-                'sale_igst' => $purchase['purchase_igst'],
-            ];
+            $sale = self::zeroBreakup('sale');
         } else {
-            $sale = [
-                'sale_tax' => self::toDecimal($input['sale_tax'] ?? 0),
-                'sale_cgst' => self::toDecimal($input['sale_cgst'] ?? 0),
-                'sale_sgst' => self::toDecimal($input['sale_sgst'] ?? 0),
-                'sale_igst' => self::toDecimal($input['sale_igst'] ?? 0),
-            ];
-
-            $saleTotal = self::splitTotal(
-                $sale['sale_cgst'],
-                $sale['sale_sgst'],
-                $sale['sale_igst']
-            );
-
-            if ($saleTaxEmpty) {
-                $sale['sale_tax'] = $saleTotal;
-            }
+            $purchase = self::breakupFromInput($input, 'purchase');
+            $sale = $same
+                ? self::copyBreakup($purchase, 'purchase', 'sale')
+                : self::breakupFromInput($input, 'sale');
         }
 
         $blank = function ($value) {
@@ -302,12 +359,27 @@ class TaxMaster extends Model
             return $text === '' ? null : $text;
         };
 
+        $hsn = $blank($input['hsn_code'] ?? null);
+        $hs = $blank($input['hs_code'] ?? null);
+        if ($hs === null) {
+            $hs = self::hsFromHsn($hsn);
+        }
+        if ($description === '') {
+            $official = self::describeHsn($hsn);
+            if ($official !== null) {
+                $description = $official;
+            }
+        }
+        if (mb_strlen($description) > 255) {
+            $description = mb_substr($description, 0, 255);
+        }
+
         return array_merge([
             'kind' => $kind,
             'tax_code' => $taxCode,
             'description' => $description === '' ? null : $description,
-            'hsn_code' => $blank($input['hsn_code'] ?? null),
-            'hs_code' => $blank($input['hs_code'] ?? null),
+            'hsn_code' => $hsn,
+            'hs_code' => $hs,
             'applied_on_category' => $blank($input['applied_on_category'] ?? null),
             'applied_on_sku' => $blank($input['applied_on_sku'] ?? null),
             'applied_on_product' => $blank($input['applied_on_product'] ?? null),
@@ -319,12 +391,12 @@ class TaxMaster extends Model
 
     public function purchaseTotal(): float
     {
-        return self::splitTotal((float) $this->purchase_cgst, (float) $this->purchase_sgst, (float) $this->purchase_igst);
+        return self::toDecimal($this->purchase_tax);
     }
 
     public function saleTotal(): float
     {
-        return self::splitTotal((float) $this->sale_cgst, (float) $this->sale_sgst, (float) $this->sale_igst);
+        return self::toDecimal($this->sale_tax);
     }
 
     public function kindLabel(): string
@@ -462,5 +534,177 @@ class TaxMaster extends Model
         }
 
         return $query;
+    }
+
+    public static function suggestTaxCode($taxPercent, $ignoreId = null): string
+    {
+        $base = self::taxCodeBase($taxPercent);
+        if (!self::tableReady()) {
+            return $base;
+        }
+
+        $candidate = $base;
+        $suffix = 2;
+        while (
+            self::query()
+                ->where('tax_code', $candidate)
+                ->when($ignoreId, function ($query) use ($ignoreId) {
+                    $query->where('id', '!=', $ignoreId);
+                })
+                ->exists()
+        ) {
+            $candidate = $base . '-' . $suffix;
+            $suffix++;
+            if ($suffix > 100) {
+                break;
+            }
+        }
+
+        return $candidate;
+    }
+
+    public static function searchHsnDirectory(string $query, int $limit = 15): array
+    {
+        $query = trim($query);
+        if (mb_strlen($query) < 2) {
+            return [];
+        }
+
+        $prefix = [];
+        $text = [];
+        foreach (self::hsnDirectory() as $row) {
+            $code = (string) ($row[0] ?? '');
+            $description = (string) ($row[1] ?? '');
+            if ($code === '' || !ctype_digit($code)) {
+                continue;
+            }
+
+            if (strpos($code, $query) === 0) {
+                if (count($prefix) < $limit) {
+                    $prefix[] = self::hsnResult($code, $description, (string) ($row[2] ?? 'goods'));
+                }
+            } elseif (count($text) < $limit && mb_stripos($description, $query) !== false) {
+                $text[] = self::hsnResult($code, $description, (string) ($row[2] ?? 'goods'));
+            }
+
+            if (count($prefix) >= $limit) {
+                break;
+            }
+        }
+
+        $rows = count($prefix) ? $prefix : $text;
+        usort($rows, function ($left, $right) use ($query) {
+            $leftExact = $left['code'] === $query ? 0 : 1;
+            $rightExact = $right['code'] === $query ? 0 : 1;
+            if ($leftExact !== $rightExact) {
+                return $leftExact <=> $rightExact;
+            }
+
+            return strlen($left['code']) <=> strlen($right['code']);
+        });
+
+        return array_slice($rows, 0, $limit);
+    }
+
+    public static function describeHsn($hsn): ?string
+    {
+        $code = trim((string) $hsn);
+        if ($code === '') {
+            return null;
+        }
+
+        foreach (self::hsnDirectory() as $row) {
+            if ((string) ($row[0] ?? '') === $code) {
+                $description = trim((string) ($row[1] ?? ''));
+
+                return $description === '' ? null : $description;
+            }
+        }
+
+        return null;
+    }
+
+    private static function hsnDirectory(): array
+    {
+        static $rows = null;
+        if ($rows !== null) {
+            return $rows;
+        }
+
+        $path = resource_path('data/gst_hsn_directory.php');
+        if (!is_file($path)) {
+            return $rows = [];
+        }
+
+        $loaded = require $path;
+
+        return $rows = is_array($loaded) ? $loaded : [];
+    }
+
+    private static function hsnResult(string $code, string $description, string $kind): array
+    {
+        return [
+            'code' => $code,
+            'description' => $description,
+            'hs_code' => self::hsFromHsn($code),
+            'kind' => $kind === 'services' ? 'services' : 'goods',
+        ];
+    }
+
+    private static function zeroBreakup(string $side): array
+    {
+        return [
+            $side . '_tax' => 0.0,
+            $side . '_cgst' => 0.0,
+            $side . '_sgst' => 0.0,
+            $side . '_ut_cgst' => 0.0,
+            $side . '_utgst' => 0.0,
+            $side . '_igst' => 0.0,
+        ];
+    }
+
+    private static function copyBreakup(array $source, string $from, string $to): array
+    {
+        $copy = [];
+        foreach (['tax', 'cgst', 'sgst', 'ut_cgst', 'utgst', 'igst'] as $part) {
+            $copy[$to . '_' . $part] = $source[$from . '_' . $part];
+        }
+
+        return $copy;
+    }
+
+    private static function breakupFromInput(array $input, string $side): array
+    {
+        $taxKey = $side . '_tax';
+        $taxEmpty = self::isEmptyRate($input[$taxKey] ?? null);
+        $tax = self::toDecimal($input[$taxKey] ?? 0);
+
+        if ($taxEmpty) {
+            $state = round(
+                self::toDecimal($input[$side . '_cgst'] ?? 0) + self::toDecimal($input[$side . '_sgst'] ?? 0),
+                4
+            );
+            $igst = self::toDecimal($input[$side . '_igst'] ?? 0);
+            $tax = $state > 0 ? $state : $igst;
+        }
+
+        [$cgst, $sgst] = self::halfSplit($tax);
+        $utCgstIn = $input[$side . '_ut_cgst'] ?? null;
+        $utgstIn = $input[$side . '_utgst'] ?? null;
+        $utProvided = !self::isEmptyRate($utCgstIn) || !self::isEmptyRate($utgstIn);
+        $utCgst = self::toDecimal($utCgstIn);
+        $utgst = self::toDecimal($utgstIn);
+        if (!$utProvided || (round($utCgst + $utgst, 4) == 0.0 && $tax > 0)) {
+            [$utCgst, $utgst] = self::halfSplit($tax);
+        }
+
+        return [
+            $taxKey => $tax,
+            $side . '_cgst' => $cgst,
+            $side . '_sgst' => $sgst,
+            $side . '_ut_cgst' => $utCgst,
+            $side . '_utgst' => $utgst,
+            $side . '_igst' => $tax,
+        ];
     }
 }

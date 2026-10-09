@@ -151,14 +151,28 @@
                                 </td>
                                 <td>{{ $isStock ? $discount->roleKeyLabel() : '—' }}</td>
                                 <td>
+                                    @php
+                                        $sheetRows = json_decode($discount->getAttributes()['sheet_payload'] ?? '', true) ?: [];
+                                        $extraSlabs = array_slice($sheetRows['roles'][0]['slabs'] ?? [], 1);
+                                        $extraAmounts = array_slice($sheetRows['amounts'] ?? [], 1);
+                                    @endphp
                                     {{ $cell($discount->qty_slab_from) }}{{ $discount->qty_slab_to ? ' – ' . $discount->qty_slab_to : '' }}<br>
                                     {{ $cell($discount->rate) }}<br>
                                     {{ $cell($discount->amount) }}<br>
                                     {{ $cell($discount->effective_rate) }}
+                                    @foreach ($extraSlabs as $extraSlab)
+                                        <div class="text-muted">+ {{ $cell($extraSlab['qty'] ?? null) }} / {{ $cell($extraSlab['amount'] ?? null) }} / {{ $cell($extraSlab['effective_rate'] ?? null) }}</div>
+                                    @endforeach
+                                    @foreach ($extraAmounts as $extraAmount)
+                                        <div class="text-muted">+ {{ $cell($extraAmount['from'] ?? null) }}–{{ $cell($extraAmount['to'] ?? null) }} / {{ $cell($extraAmount['amount'] ?? null) }}</div>
+                                    @endforeach
                                 </td>
                                 <td>
                                     {{ translate($discount->discountTypeLabel()) }}<br>
                                     <strong>{{ $discount->discount_code }}</strong>
+                                    @if (!empty($discount->coupon_code))
+                                        <div>{{ $discount->coupon_code }}</div>
+                                    @endif
                                 </td>
                                 <td>
                                     @if ($discount->discount_type === 'batchwise')
@@ -191,6 +205,8 @@
                                 <td>
                                     @if ($discount->discount_type === 'schemewise')
                                         {{ $cell($discount->scheme_free_qty) }} / {{ $cell($discount->scheme_percent) }} / {{ $cell($discount->scheme_value) }}
+                                    @elseif ($discount->discount_type === 'couponwise')
+                                        {{ $discount->value_type }} / {{ $cell($discount->value_amount) }} / {{ $cell($discount->value_percent) }}
                                     @else
                                         —
                                     @endif

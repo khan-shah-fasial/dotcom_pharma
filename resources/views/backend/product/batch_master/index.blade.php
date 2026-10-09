@@ -46,6 +46,9 @@
             <a href="{{ route('batch_masters.index') }}" class="btn btn-danger mb-2">
                 {{ translate('Reset') }}
             </a>
+            @if (empty($showPurchaseRate))
+                <button type="button" class="btn btn-light mb-2 ml-2" id="reveal-prate">{{ translate('Show P-Rate') }}</button>
+            @endif
         </div>
     </div>
     <div class="card-body">
@@ -91,7 +94,7 @@
                                     @endif
                                     <br>{{ $money($row->mrp_price) }}
                                 </td>
-                                <td>{{ $money($row->tax_percent) }}<br>{{ $money($row->lineAmount()) }}</td>
+                                <td>{{ $money($row->tax_percent) }}<br>{{ !empty($showPurchaseRate) ? $money($row->lineAmount()) : '••••' }}</td>
                                 <td class="fs-12">
                                     @foreach (['pts' => 'PTS', 'ptr' => 'PTR', 'ptd' => 'PTD', 'gov' => 'Govt.', 'expo' => 'Export', 'customer' => 'B2C'] as $roleKey => $roleLabel)
                                         <div>{{ translate($roleLabel) }} {{ $money($row->rolePrice($roleKey)) }} / {{ translate('Value') }} {{ $money($row->roleLineValue($roleKey)) }}</div>
@@ -102,7 +105,7 @@
                                 <td>{{ $money($row->scheme_discount_percent) }}</td>
                                 <td>
                                     @if ($row->coa)
-                                        <a href="{{ uploaded_asset($row->coa) }}" target="_blank">{{ translate('Zoom') }}</a>
+                                        <a href="#" class="bm-coa-zoom" data-src="{{ uploaded_asset($row->coa) }}">{{ translate('Zoom') }}</a>
                                     @else
                                         —
                                     @endif
@@ -157,6 +160,38 @@
 
 @section('modal')
     @include('modals.delete_modal')
+    <div class="modal fade" id="bmCoaModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ translate('COA Image') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="bm-coa-preview" src="" alt="{{ translate('COA Image') }}" style="max-width:100%; max-height:70vh;">
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (empty($showPurchaseRate))
+        <div class="modal fade" id="bmRateModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ translate('Show P-Rate') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted fs-13">{{ translate('Enter the billing company password to see the purchase rate.') }}</p>
+                        <input type="password" class="form-control" id="reveal-prate-password" autocomplete="current-password">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="reveal-prate-submit">{{ translate('Open') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
     <form action="{{ route('batch_masters.index') }}" method="GET">
         <input type="hidden" name="sort_by" value="{{ $sortBy }}">
         <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
@@ -276,5 +311,24 @@
             AIZ.plugins.notify('success', '{{ translate('Status updated successfully') }}');
         });
     }
+    $(document).on('click', '.bm-coa-zoom', function (e) {
+        e.preventDefault();
+        $('#bm-coa-preview').attr('src', $(this).data('src'));
+        $('#bmCoaModal').modal('show');
+    });
+    $('#reveal-prate').on('click', function () {
+        $('#bmRateModal').modal('show');
+    });
+    $('#reveal-prate-submit').on('click', function () {
+        $.post('{{ route('batch_masters.reveal_rate') }}', {
+            _token: '{{ csrf_token() }}',
+            password: $('#reveal-prate-password').val()
+        }).done(function () {
+            window.location.reload();
+        }).fail(function (xhr) {
+            var message = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '{{ translate('Password does not match.') }}';
+            AIZ.plugins.notify('danger', message);
+        });
+    });
 </script>
 @endsection

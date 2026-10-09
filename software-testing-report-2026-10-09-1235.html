@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QA report — Batch / Lot Master</title>
+<style>
+  :root { --ink:#1c2430; --muted:#5c6b7a; --line:#d9e0e7; --bg:#f4f7fa; --card:#fff; --pass:#1b7f4a; --fail:#b42318; --low:#3d5a80; --open:#b42318; --fixed:#1b7f4a; --na:#667085; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 Georgia, "Times New Roman", serif; color:var(--ink); background:var(--bg); }
+  header { background:#1c2430; color:#fff; padding:28px 24px 22px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; color:#c9d3de; }
+  .wrap { max-width:1100px; margin:0 auto; padding:20px; }
+  .badge { display:inline-block; padding:4px 10px; border-radius:99px; font:600 13px Arial, sans-serif; background:#e8f6ee; color:var(--pass); }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:16px 0 24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px; }
+  .card b { display:block; font-size:22px; }
+  h2 { margin:28px 0 10px; font-size:20px; }
+  table { width:100%; border-collapse:collapse; background:#fff; margin:8px 0 18px; font:13px/1.4 Arial, sans-serif; }
+  th, td { border:1px solid var(--line); padding:8px; text-align:left; vertical-align:top; }
+  th { background:#eef3f7; }
+  tr:nth-child(even) td { background:#fafbfc; }
+  .pass { color:var(--pass); font-weight:700; }
+  .fail { color:var(--fail); font-weight:700; }
+  .nt { color:var(--na); font-weight:700; }
+  .low { color:var(--low); font-weight:700; }
+  .open { color:var(--open); font-weight:700; }
+  .fixed { color:var(--fixed); font-weight:700; }
+  code { font-family: Consolas, monospace; font-size:12px; }
+  footer { color:var(--muted); font-size:13px; margin:24px 0; }
+  @media print { body { background:#fff; } header { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Batch / Lot Master — QA and UAT</h1>
+    <p>Pharm Vet Easy · 9 October 2026 · local site http://127.0.0.1:8010 · checked in Chrome</p>
+    <p style="margin-top:10px"><span class="badge">Passed with minor issues · 97%</span></p>
+  </div>
+</header>
+<div class="wrap">
+
+<h2>1. Project information</h2>
+<table>
+  <tr><th>Item</th><th>Detail</th></tr>
+  <tr><td>What was checked</td><td>The Batch / Lot Master sheet dated 2 October 2026, against the admin screens for add, list, and batch adjustment.</td></tr>
+  <tr><td>Account</td><td>Admin account supplied for this test. The password is not written here.</td></tr>
+  <tr><td>Environment</td><td>Local Laravel app, MySQL database dotcom_pharma. This is not the public website.</td></tr>
+</table>
+
+<h2>2. Testing summary</h2>
+<table>
+  <tr><th>Testing type</th><th>Total</th><th>Passed</th><th>Failed</th><th>Status</th></tr>
+  <tr><td>Functional testing</td><td>21</td><td>21</td><td>0</td><td>Pass</td></tr>
+  <tr><td>Security testing</td><td>5</td><td>5</td><td>0</td><td>Pass</td></tr>
+  <tr><td>UI/UX testing</td><td>4</td><td>4</td><td>0</td><td>Pass</td></tr>
+  <tr><td>Performance testing</td><td>1</td><td>0</td><td>0</td><td>Not tested</td></tr>
+  <tr><td>SEO testing</td><td>1</td><td>0</td><td>0</td><td>Not applicable</td></tr>
+  <tr><td>Content testing</td><td>2</td><td>1</td><td>1</td><td>Minor wording</td></tr>
+  <tr><td>Compatibility testing</td><td>2</td><td>2</td><td>0</td><td>Pass</td></tr>
+  <tr><td>API testing</td><td>4</td><td>4</td><td>0</td><td>Pass</td></tr>
+  <tr><td>Database testing</td><td>5</td><td>5</td><td>0</td><td>Pass</td></tr>
+  <tr><td>Deployment testing</td><td>2</td><td>1</td><td>0</td><td>Local only</td></tr>
+</table>
+<div class="cards">
+  <div class="card"><b>97%</b>Overall score</div>
+  <div class="card"><b>0</b>Critical issues</div>
+  <div class="card"><b>0</b>High issues</div>
+  <div class="card"><b>1</b>Open low issue</div>
+</div>
+
+<h2>3. Functional testing</h2>
+<table>
+  <tr><th>ID</th><th>Module</th><th>Test case</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr>
+  <tr><td>FT-001</td><td>Login</td><td>Sign in with the supplied admin account</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-002</td><td>List</td><td>List shows SKU, batch id, product, variant, batch code, dates, qty, hidden purchase rate, MRP, tax, amount, role prices, discounts, certificate, dates, on/off, edit and delete</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-003</td><td>Purchase rate</td><td>The rate stays hidden until the person enters the login password</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-004</td><td>Purchase rate</td><td>A wrong password is refused</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-005</td><td>Purchase rate</td><td>The right password shows 12.5 on the test row</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-006</td><td>Add</td><td>Search by product name lists matching SKUs</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-007</td><td>Add</td><td>Choosing ATRODOT / DPVLI-22 fills SKU, variant, and the drug name in small type</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-008</td><td>Live lots</td><td>Current lots are shown for reading only. Purchase rate is masked. Role prices, values, and batch discount show</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-009</td><td>Amount</td><td>Amount is quantity times purchase rate. Example: 2 × 39.2 = 78.4000</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-010</td><td>Tax</td><td>Tax percent is filled from the tax master</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-011</td><td>Non-batch</td><td>Purchase date 2026-07-23 becomes batch code 20260723 and manufacturing month 2026-07. Expiry is left as it was</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-012</td><td>Non-batch</td><td>The checkbox is remembered in this browser for the next visit</td><td class="pass">Pass</td><td>Medium</td><td>-</td></tr>
+  <tr><td>FT-013</td><td>Add</td><td>A new row starts with the last purchase MRP and purchase rate, and both can be changed</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-014</td><td>Add</td><td>Saving with an empty batch code is refused</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-015</td><td>Add</td><td>Saving a test batch did not create a live product lot</td><td class="pass">Pass</td><td>Critical</td><td>-</td></tr>
+  <tr><td>FT-016</td><td>Adjustment</td><td>Convert with the same batch code is refused and the old row stays</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-017</td><td>Adjustment</td><td>Convert to UAT-0910B created batch id 3 and turned id 2 off</td><td class="pass">Pass</td><td>Critical</td><td>-</td></tr>
+  <tr><td>FT-018</td><td>Adjustment</td><td>Destroy without a reason and a biowaste certificate is refused</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-019</td><td>Adjustment</td><td>Search filter shows only the matching rows</td><td class="pass">Pass</td><td>Medium</td><td>-</td></tr>
+  <tr><td>FT-020</td><td>Access</td><td>A visitor who is not logged in is sent to the login page</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>FT-021</td><td>Edit</td><td>Edit opens UAT-0910B, product search is locked, Back is present</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+</table>
+
+<h2>4. Bug / issue report</h2>
+<table>
+  <tr><th>Bug ID</th><th>Module</th><th>Issue</th><th>Severity</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>BUG-001</td><td>Add</td><td>Choosing a product crashed. The live-lot list was returned in the wrong shape, so SKU, drug name, and rows never filled.</td><td>High</td><td class="fixed">Fixed</td><td><code>BatchMasterController.php</code> → <code>liveLots()</code> → return a plain list. Retested: ATRODOT filled correctly.</td></tr>
+  <tr><td>BUG-002</td><td>Non-batch</td><td>A purchase date written as day-month-year was copied into the manufacturing month in a shape the month box cannot use.</td><td>High</td><td class="fixed">Fixed</td><td><code>_form_script.blade.php</code> → <code>purchaseMonth()</code> → build year-month. Retested: 2026-07.</td></tr>
+  <tr><td>BUG-003</td><td>Purchase rate</td><td>The list and the adjustment screen hid the purchase rate but had no place to type the password.</td><td>Medium</td><td class="fixed">Fixed</td><td><code>index.blade.php</code> and <code>adjust.blade.php</code> → Show P-Rate. Retested with a wrong password and the real password.</td></tr>
+  <tr><td>BUG-004</td><td>Adjustment</td><td>Convert made a new batch but left the old one switched on, so both looked active.</td><td>High</td><td class="fixed">Fixed</td><td><code>BatchMasterController.php</code> → <code>adjustStore()</code> → turn the old row off. Retested: id 2 off, id 3 on.</td></tr>
+  <tr><td>BUG-005</td><td>List</td><td>The purchase-rate heading shows “P.Rate” because that is the saved translation. The sheet says “P-Rate”.</td><td class="low">Low</td><td class="open">Open</td><td>Change the translation for P-Rate if the exact sheet wording is required. The field itself works.</td></tr>
+</table>
+
+<h2>5. Security testing</h2>
+<table>
+  <tr><th>ID</th><th>Security check</th><th>Status</th><th>Severity</th><th>Recommendation</th></tr>
+  <tr><td>S-001</td><td>Logged-out person cannot open the batch list</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>S-002</td><td>Purchase rate is masked until the login password is accepted</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>S-003</td><td>Wrong password does not reveal the rate</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>S-004</td><td>Save and convert send the login session token</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+  <tr><td>S-005</td><td>List search uses bound filters, seen in code</td><td class="pass">Pass</td><td>Medium</td><td>-</td></tr>
+</table>
+
+<h2>6. UI/UX testing</h2>
+<table>
+  <tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>U-001</td><td>Add screen</td><td>Search, drug name, companies, non-batch, batch rows, live lots, save, and back are on the page</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>U-002</td><td>Tabs</td><td>Add, listing, and batch adjustment tabs open</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>U-003</td><td>Errors</td><td>Empty batch code says “Please enter Batch Code.”</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>U-004</td><td>Phone width</td><td>At 390px the wide table scrolls sideways and the saved row is still there</td><td class="pass">Pass</td><td>-</td></tr>
+</table>
+
+<h2>7. Performance testing</h2>
+<table>
+  <tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr>
+  <tr><td>P-001</td><td>Page speed</td><td>Timed measurement</td><td class="nt">Not Tested</td><td>Low</td><td>Not Tested - Measurement unavailable in current environment.</td></tr>
+</table>
+
+<h2>8. SEO testing</h2>
+<table>
+  <tr><th>ID</th><th>SEO check</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>SEO-001</td><td>Batch screens are behind login, so they are not public search pages</td><td class="nt">Not Applicable</td><td>-</td></tr>
+</table>
+
+<h2>9. Content testing</h2>
+<table>
+  <tr><th>ID</th><th>Content check</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>C-001</td><td>Add, list, and adjustment headings follow the sheet</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>C-002</td><td>Purchase rate heading text</td><td class="fail">Fail</td><td>The screen says P.Rate. The sheet says P-Rate. See BUG-005.</td></tr>
+</table>
+
+<h2>10. Browser and device testing</h2>
+<table>
+  <tr><th>Browser / device</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>Chrome desktop</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>Chrome phone width (390px)</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>Firefox, Edge, Safari, Android, iPhone</td><td class="nt">Not Tested</td><td>-</td></tr>
+</table>
+
+<h2>11. API testing</h2>
+<table>
+  <tr><th>ID</th><th>API / feature</th><th>Test</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>API-001</td><td>Product search</td><td>Search ATRODOT returns three SKUs</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>API-002</td><td>Stock lookup</td><td>After the fix, DPVLI-22 returns rows, drug name, purchase date, and live lots</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>API-003</td><td>Reveal rate</td><td>Wrong password returns 422</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>API-004</td><td>Reveal rate</td><td>Right password returns ok</td><td class="pass">Pass</td><td>-</td></tr>
+</table>
+
+<h2>12. Database testing</h2>
+<table>
+  <tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>D-001</td><td>A new batch row was saved</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>D-002</td><td>Convert stored a new id and switched the old row off</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>D-003</td><td>Delete hid the test rows and kept them in the table</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>D-004</td><td>The live product lot table for that SKU stayed empty</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>D-005</td><td>The original ATRODOT batch DMP-193 was not changed</td><td class="pass">Pass</td><td>-</td></tr>
+</table>
+
+<h2>13. Production / deployment testing</h2>
+<table>
+  <tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr>
+  <tr><td>DP-001</td><td>Local server and database login</td><td class="pass">Pass</td><td>-</td></tr>
+  <tr><td>DP-002</td><td>Public HTTPS site</td><td class="nt">Not Tested</td><td>This run used the local server only.</td></tr>
+</table>
+
+<h2>14. Overall score</h2>
+<p>Score uses only the groups that were actually tested under the standard weights: functional 30, security 20, screen layout 15, content 5, compatibility 5. Performance and SEO are left out. API and database were tested and passed; they are not in that weight table, so they are reported above and not double-counted.</p>
+<table>
+  <tr><th>Category</th><th>Score</th></tr>
+  <tr><td>Functional</td><td>100%</td></tr>
+  <tr><td>Security</td><td>100%</td></tr>
+  <tr><td>UI/UX</td><td>100%</td></tr>
+  <tr><td>Content</td><td>50%</td></tr>
+  <tr><td>Compatibility</td><td>100%</td></tr>
+  <tr><td>Overall</td><td>97%</td></tr>
+</table>
+<p>97% sits in the Excellent band. One small wording issue is still open, so the result is not marked ready for production without that note.</p>
+
+<h2>15. Final status</h2>
+<p><strong>Passed with minor issues</strong></p>
+<p>Adding a batch, reading live lots, hiding the purchase rate, saving, converting to a new batch id, and blocking a destroy without a certificate all work. The old ATRODOT row was left as it was. The test rows were removed from the list after the check. The only open item is the heading “P.Rate” versus the sheet’s “P-Rate”.</p>
+
+<h2>16. Testing limitations</h2>
+<ul>
+  <li>Checked in Chrome only. Firefox, Edge, Safari, and real phones were not used. A narrow Chrome window was used for the phone width.</li>
+  <li>No certificate file was uploaded, so zoom of a real file and a biowaste file upload were not completed. The destroy button correctly refused to continue without that file.</li>
+  <li>The public website was not tested. Debug mode is on in this local setup, which is expected here.</li>
+  <li>Page speed was not measured.</li>
+  <li>A product that already has many purchase rows was not saved, so that heavy save was not repeated on purpose.</li>
+</ul>
+
+<footer>Report generated 9 October 2026. Passwords are not included.</footer>
+</div>
+</body>
+</html>

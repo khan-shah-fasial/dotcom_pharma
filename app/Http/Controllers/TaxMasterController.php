@@ -15,6 +15,7 @@ class TaxMasterController extends Controller
         $this->middleware(['permission:view_all_tax_masters'])->only(['index']);
         $this->middleware(['permission:add_tax_master'])->only(['create', 'store']);
         $this->middleware(['permission:edit_tax_master'])->only(['edit', 'update', 'updateStatus']);
+        $this->middleware(['permission:add_tax_master|edit_tax_master'])->only(['hsnSearch', 'suggestCode']);
         $this->middleware(['permission:delete_tax_master'])->only(['destroy']);
     }
 
@@ -45,6 +46,7 @@ class TaxMasterController extends Controller
 
         $tableReady = TaxMaster::tableReady();
         $hsnReady = TaxMaster::hsnColumnsReady();
+        $utReady = TaxMaster::utColumnsReady();
         $taxes = null;
 
         if ($tableReady) {
@@ -62,6 +64,7 @@ class TaxMasterController extends Controller
             'filters',
             'tableReady',
             'hsnReady',
+            'utReady',
             'sortBy',
             'sortDir'
         ));
@@ -129,6 +132,25 @@ class TaxMasterController extends Controller
         return redirect()->route('tax_masters.index');
     }
 
+    public function hsnSearch(Request $request)
+    {
+        $query = trim((string) $request->input('q'));
+
+        return response()->json(TaxMaster::searchHsnDirectory($query));
+    }
+
+    public function suggestCode(Request $request)
+    {
+        $ignoreId = $request->input('ignore_id');
+
+        return response()->json([
+            'tax_code' => TaxMaster::suggestTaxCode(
+                TaxMaster::toDecimal($request->input('tax')),
+                $ignoreId !== null && $ignoreId !== '' ? (int) $ignoreId : null
+            ),
+        ]);
+    }
+
     public function updateStatus(Request $request)
     {
         $tax = TaxMaster::findOrFail($request->input('id'));
@@ -143,6 +165,11 @@ class TaxMasterController extends Controller
         $payload = TaxMaster::normalize($request->validated());
         if (!TaxMaster::hsnColumnsReady()) {
             foreach (TaxMaster::HSN_COLUMNS as $column) {
+                unset($payload[$column]);
+            }
+        }
+        if (!TaxMaster::utColumnsReady()) {
+            foreach (TaxMaster::UT_COLUMNS as $column) {
                 unset($payload[$column]);
             }
         }
@@ -164,7 +191,7 @@ class TaxMasterController extends Controller
         return [
             'tax' => $tax,
             'hsnReady' => TaxMaster::hsnColumnsReady(),
-            'hsnOptions' => TaxMaster::hsnOptions(),
+            'utReady' => TaxMaster::utColumnsReady(),
             'categories' => $categories,
         ];
     }

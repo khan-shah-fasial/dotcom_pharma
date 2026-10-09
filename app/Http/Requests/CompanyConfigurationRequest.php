@@ -107,8 +107,11 @@ class CompanyConfigurationRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            $expected = (string) config('app.billing_company_password');
-            $given = (string) $this->input('security_password');
+            $expected = trim((string) config('app.billing_company_password'));
+            if ($expected === '') {
+                $expected = trim((string) env('BILLING_COMPANY_PASSWORD', ''));
+            }
+            $given = trim((string) $this->input('security_password'));
 
             if ($expected === '') {
                 $validator->errors()->add(

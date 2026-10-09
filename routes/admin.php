@@ -565,6 +565,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
     Route::controller(TaxMasterController::class)->group(function () {
         Route::get('/tax-masters', 'index')->name('tax_masters.index');
+        Route::get('/tax-masters/hsn-search', 'hsnSearch')->name('tax_masters.hsn_search');
+        Route::get('/tax-masters/suggest-code', 'suggestCode')->name('tax_masters.suggest_code');
         Route::get('/tax-masters/create', 'create')->name('tax_masters.create');
         Route::post('/tax-masters', 'store')->name('tax_masters.store');
         Route::post('/tax-masters/update-status', 'updateStatus')->name('tax_masters.update_status');
@@ -645,6 +647,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/discount-masters/lookup/customers', 'lookupCustomers')->name('discount_masters.lookup.customers');
         Route::get('/discount-masters/lookup/target', 'lookupTarget')->name('discount_masters.lookup.target');
         Route::get('/discount-masters/next-code', 'nextCode')->name('discount_masters.next_code');
+        Route::post('/discount-masters/reveal-purchase-rate', 'revealPurchaseRate')->name('discount_masters.reveal_purchase_rate');
         Route::post('/discount-masters/update-status', 'updateStatus')->name('discount_masters.update_status');
         Route::get('/discount-masters/{id}/edit', 'edit')->name('discount_masters.edit');
         Route::put('/discount-masters/{id}', 'update')->name('discount_masters.update');

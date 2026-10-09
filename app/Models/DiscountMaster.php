@@ -13,14 +13,31 @@ class DiscountMaster extends Model
         'category' => 'Category (Main)',
         'group' => 'Group',
         'customer' => 'Customer',
+        'invoice' => 'Invoice',
     ];
 
     public const DISCOUNT_TYPES = [
-        'batchwise' => 'Batchwise Discount',
-        'productwise' => 'Productwise Discount',
-        'pointwise' => 'Pointwise Earn',
-        'amount_wise' => 'Amount wise Discount',
-        'schemewise' => 'Schemewise Discount',
+        'productwise' => 'Productwise',
+        'batchwise' => 'Batchwise',
+        'schemewise' => 'Scheme',
+        'amount_wise' => 'Amountwise',
+        'pointwise' => 'Pointwise',
+        'couponwise' => 'Couponwise',
+    ];
+
+    public const PRODUCT_TYPES = ['productwise', 'batchwise', 'schemewise'];
+
+    public const BATCH_TYPES = ['batchwise', 'schemewise'];
+
+    public const INVOICE_TYPES = ['amount_wise', 'pointwise', 'couponwise'];
+
+    public const TYPE_NOTES = [
+        'productwise' => 'Productwise discount applies to all batches of the selected product.',
+        'batchwise' => 'Batchwise discount applies only to the selected batches of the selected product.',
+        'schemewise' => 'Scheme applies only to the selected batches of the selected product.',
+        'amount_wise' => 'Amountwise discount applies to all selected products.',
+        'pointwise' => 'Pointwise discount applies to all selected products.',
+        'couponwise' => 'Couponwise discount applies to all selected products.',
     ];
 
     public const ROLE_KEYS = [
@@ -30,7 +47,7 @@ class DiscountMaster extends Model
         'gov' => 'Govt.',
         'expo' => 'Export',
         'customer' => 'Customers (B2C)',
-        'mrp' => 'M.R.P',
+        'mrp' => 'MRP',
     ];
 
     public const TYPE_PREFIXES = [
@@ -39,6 +56,7 @@ class DiscountMaster extends Model
         'pointwise' => 'D-POW-',
         'amount_wise' => 'D-AW-',
         'schemewise' => 'D-SW-',
+        'couponwise' => 'D-CW-',
     ];
 
     protected $fillable = [

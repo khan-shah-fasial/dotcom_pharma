@@ -637,7 +637,7 @@ class BatchMaster extends Model
         return (int) $copy->id;
     }
 
-    public static function copyMissingForStock(int $stockId): int
+    public static function copyMissingForStock(int $stockId, array $handledSourceBatchIds = []): int
     {
         if (!self::extendedColumnsReady()) {
             return 0;
@@ -656,8 +656,13 @@ class BatchMaster extends Model
             })
             ->all();
 
+        $handledSourceBatchIds = array_map('intval', $handledSourceBatchIds);
         $inserted = 0;
         foreach (self::sourceBundles($stock) as $bundle) {
+            $sourceId = (int) ($bundle['live']['id'] ?? 0);
+            if ($sourceId && in_array($sourceId, $handledSourceBatchIds, true)) {
+                continue;
+            }
             $payload = self::onlyExistingColumns(self::assembleCopy($bundle));
             $code = (string) ($payload['batch_code'] ?? '');
             if ($code === '' || in_array($code, $existing, true)) {
