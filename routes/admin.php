@@ -201,6 +201,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/products/admin', 'admin_products')->name('products.admin');
         Route::get('/products/seller/{product_type}', 'seller_products')->name('products.seller');
         Route::get('/products/all', 'all_products')->name('products.all');
+        Route::get('/products/tax-master-lookup', 'taxMasterLookup')->name('products.tax_master_lookup');
         Route::get('/products/create', 'create')->name('products.create');
         Route::post('/products/store/', 'store')->name('products.store');
         Route::get('/products/admin/{id}/edit', 'admin_product_edit')->name('products.admin.edit');
@@ -566,6 +567,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     Route::controller(TaxMasterController::class)->group(function () {
         Route::get('/tax-masters', 'index')->name('tax_masters.index');
         Route::get('/tax-masters/hsn-search', 'hsnSearch')->name('tax_masters.hsn_search');
+        Route::get('/tax-masters/hsn-chapters', 'hsnChapterSearch')->name('tax_masters.hsn_chapters');
+        Route::get('/tax-masters/by-hsn', 'byHsn')->name('tax_masters.by_hsn');
+        Route::get('/tax-masters/lookup/stocks', 'lookupStocks')->name('tax_masters.lookup.stocks');
         Route::get('/tax-masters/suggest-code', 'suggestCode')->name('tax_masters.suggest_code');
         Route::get('/tax-masters/create', 'create')->name('tax_masters.create');
         Route::post('/tax-masters', 'store')->name('tax_masters.store');

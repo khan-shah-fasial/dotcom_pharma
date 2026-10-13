@@ -84,9 +84,9 @@
                         @include('backend.inc.sortable_th', ['column' => 'sale_same_as_purchase', 'labelHtml' => e(translate('Same as purchase')) . '<br>Y/N', 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @include('backend.inc.sortable_th', ['column' => 'sale_tax', 'labelHtml' => e(translate('Sale Tax')) . '<br>' . e(translate('Tax % / State CGST+SGST / UT CGST+UTGST / IGST')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @if (!empty($hsnReady))
-                            @include('backend.inc.sortable_th', ['column' => 'applied_on_category', 'labelHtml' => e(translate('Applied On')) . '<br>' . e(translate('Category / SKU / Product Name / Variant')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'applied_on_category', 'labelHtml' => e(translate('Applied On')) . '<br>' . e(translate('Category / Group / SKU / Product Name / Variant')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         @else
-                            <th>{{ translate('Applied On') }}<br>{{ translate('Category / SKU / Product Name / Variant') }}</th>
+                            <th>{{ translate('Applied On') }}<br>{{ translate('Category / Group / SKU / Product Name / Variant') }}</th>
                         @endif
                         @include('backend.inc.sortable_th', ['column' => 'status', 'labelHtml' => e(translate('Status')) . '<br>' . e(translate('Date Of Add / Edit')), 'routeName' => 'tax_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         <th class="text-right">{{ translate('Actions') }}</th>
@@ -217,7 +217,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="tm_applied">{{ translate('Applied On') }}</label>
-                                <input type="text" class="form-control" id="tm_applied" name="applied_on" value="{{ $filters['applied_on'] ?? '' }}" placeholder="{{ translate('Category, SKU, Product Name, Variant') }}">
+                                <input type="text" class="form-control" id="tm_applied" name="applied_on" value="{{ $filters['applied_on'] ?? '' }}" placeholder="{{ translate('Category, Group, SKU, Product Name, Variant') }}">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="tm_same">{{ translate('Same as purchase') }}</label>

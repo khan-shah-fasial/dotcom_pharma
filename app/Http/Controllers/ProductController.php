@@ -35,6 +35,7 @@ use App\Exports\ProductStocksExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 use App\Models\ProductStock;
+use App\Models\TaxMaster;
 use App\Models\ProductBatch;
 use App\Models\DiscountMaster;
 use App\Models\Coupon;
@@ -65,6 +66,7 @@ class ProductController extends Controller
 
         // Staff Permission Check
         $this->middleware(['permission:add_new_product'])->only('create');
+        $this->middleware(['permission:add_new_product|product_edit'])->only('taxMasterLookup');
         $this->middleware(['permission:show_all_products'])->only('all_products');
         $this->middleware(['permission:show_in_house_products'])->only('admin_products');
         $this->middleware(['permission:show_seller_products'])->only('seller_products');
@@ -73,6 +75,17 @@ class ProductController extends Controller
         $this->middleware(['permission:product_delete'])->only('destroy');
         $this->middleware(['permission:set_category_wise_discount'])->only('categoriesWiseProductDiscount');
     }
+
+    public function taxMasterLookup(Request $request)
+    {
+        $row = TaxMaster::lookupByHsn(trim((string) $request->input('hsn')));
+        if ($row) {
+            $row['kind_label'] = translate($row['kind_label']);
+        }
+
+        return response()->json($row ?? ['found' => false]);
+    }
+
     /**
      * Display a listing of the resource.
      *

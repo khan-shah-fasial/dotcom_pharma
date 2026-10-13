@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TaxMasterRequest;
 use App\Models\Category;
+use App\Models\Group;
+use App\Models\ProductStock;
 use App\Models\TaxMaster;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +17,7 @@ class TaxMasterController extends Controller
         $this->middleware(['permission:view_all_tax_masters'])->only(['index']);
         $this->middleware(['permission:add_tax_master'])->only(['create', 'store']);
         $this->middleware(['permission:edit_tax_master'])->only(['edit', 'update', 'updateStatus']);
-        $this->middleware(['permission:add_tax_master|edit_tax_master'])->only(['hsnSearch', 'suggestCode']);
+        $this->middleware(['permission:add_tax_master|edit_tax_master'])->only(['hsnSearch', 'hsnChapterSearch', 'byHsn', 'lookupStocks', 'suggestCode']);
         $this->middleware(['permission:delete_tax_master'])->only(['destroy']);
     }
 
@@ -139,6 +141,86 @@ class TaxMasterController extends Controller
         return response()->json(TaxMaster::searchHsnDirectory($query));
     }
 
+    public function hsnChapterSearch(Request $request)
+    {
+        $query = trim((string) $request->input('q'));
+
+        return response()->json(TaxMaster::searchHsnChapters($query));
+    }
+
+    public function byHsn(Request $request)
+    {
+        $row = TaxMaster::lookupByHsn(trim((string) $request->input('hsn')));
+
+        return response()->json($row ?? ['found' => false]);
+    }
+
+    public function lookupStocks(Request $request)
+    {
+        $query = trim((string) $request->input('q'));
+        $mode = (string) $request->input('mode', 'sku');
+        $productId = (int) $request->input('product_id', 0);
+
+        if ($productId <= 0 && $query === '') {
+            return response()->json([]);
+        }
+
+        $stocks = ProductStock::query()
+            ->with('product')
+            ->when($productId > 0, function ($builder) use ($productId) {
+                $builder->where('product_id', $productId);
+            })
+            ->when($productId <= 0 && $query !== '', function ($builder) use ($query, $mode) {
+                $like = '%' . $query . '%';
+                $builder->where(function ($nested) use ($like, $mode) {
+                    if ($mode === 'product') {
+                        $nested->whereHas('product', function ($productQuery) use ($like) {
+                            $productQuery->where('name', 'like', $like);
+                        });
+                    } elseif ($mode === 'variant') {
+                        $nested->where('variant', 'like', $like)
+                            ->orWhere('sku', 'like', $like);
+                    } else {
+                        $nested->where('sku', 'like', $like);
+                    }
+                });
+            })
+            ->orderBy('sku')
+            ->limit($productId > 0 ? 100 : 20)
+            ->get();
+
+        $allParts = [];
+        foreach ($stocks as $stock) {
+            foreach (preg_split('/[-_\/]+/', trim((string) $stock->variant)) ?: [] as $part) {
+                $part = trim($part);
+                if ($part !== '') {
+                    $allParts[] = $part;
+                }
+            }
+        }
+        ProductStock::warmVariantLabelCache($allParts);
+
+        $rows = $stocks->map(function (ProductStock $stock) {
+            $productName = $stock->product ? $stock->product->getTranslation('name') : '';
+            $expanded = $stock->expandedVariantLabel();
+
+            return [
+                'id' => $stock->id,
+                'product_id' => $stock->product_id,
+                'sku' => (string) ($stock->sku ?? ''),
+                'product_name' => $productName,
+                'variant' => $expanded !== '' ? $expanded : (string) ($stock->variant ?? ''),
+                'label' => $stock->fullLookupLabel($stock->product),
+            ];
+        })->values();
+
+        if ($mode === 'product') {
+            $rows = $rows->unique('product_id')->values();
+        }
+
+        return response()->json($rows);
+    }
+
     public function suggestCode(Request $request)
     {
         $ignoreId = $request->input('ignore_id');
@@ -173,6 +255,9 @@ class TaxMasterController extends Controller
                 unset($payload[$column]);
             }
         }
+        if (!TaxMaster::groupColumnReady()) {
+            unset($payload['applied_on_group']);
+        }
 
         return $payload;
     }
@@ -180,19 +265,31 @@ class TaxMasterController extends Controller
     private function formData($tax): array
     {
         $categories = collect();
+        $groups = collect();
+        $groupReady = TaxMaster::groupColumnReady();
         try {
             if (Schema::hasTable('categories')) {
                 $categories = Category::query()->orderBy('name')->get(['id', 'name']);
             }
+            if ($groupReady && Schema::hasTable('groups')) {
+                $groupQuery = Group::query()->orderBy('name');
+                if (Schema::hasColumn('groups', 'digital')) {
+                    $groupQuery->where('digital', 0);
+                }
+                $groups = $groupQuery->get(['id', 'name']);
+            }
         } catch (\Throwable $e) {
             $categories = collect();
+            $groups = collect();
         }
 
         return [
             'tax' => $tax,
             'hsnReady' => TaxMaster::hsnColumnsReady(),
             'utReady' => TaxMaster::utColumnsReady(),
+            'groupReady' => $groupReady,
             'categories' => $categories,
+            'groups' => $groups,
         ];
     }
 }

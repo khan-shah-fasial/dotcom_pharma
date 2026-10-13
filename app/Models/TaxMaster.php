@@ -33,6 +33,14 @@ class TaxMaster extends Model
         'applied_on_variant',
     ];
 
+    public const APPLIED_ALL = [
+        'category' => 'All Category',
+        'group' => 'All Group',
+        'sku' => 'All SKU',
+        'product' => 'All Product',
+        'variant' => 'All Variant',
+    ];
+
     public const UT_COLUMNS = [
         'purchase_ut_cgst',
         'purchase_utgst',
@@ -49,6 +57,7 @@ class TaxMaster extends Model
         'hsn_code',
         'hs_code',
         'applied_on_category',
+        'applied_on_group',
         'applied_on_sku',
         'applied_on_product',
         'applied_on_variant',
@@ -137,6 +146,20 @@ class TaxMaster extends Model
             }
 
             return $ready = true;
+        } catch (\Throwable $e) {
+            return $ready = false;
+        }
+    }
+
+    public static function groupColumnReady(): bool
+    {
+        static $ready = null;
+        if ($ready !== null) {
+            return $ready;
+        }
+
+        try {
+            return $ready = self::tableReady() && Schema::hasColumn('tax_masters', 'applied_on_group');
         } catch (\Throwable $e) {
             return $ready = false;
         }
@@ -381,6 +404,7 @@ class TaxMaster extends Model
             'hsn_code' => $hsn,
             'hs_code' => $hs,
             'applied_on_category' => $blank($input['applied_on_category'] ?? null),
+            'applied_on_group' => $blank($input['applied_on_group'] ?? null),
             'applied_on_sku' => $blank($input['applied_on_sku'] ?? null),
             'applied_on_product' => $blank($input['applied_on_product'] ?? null),
             'applied_on_variant' => $blank($input['applied_on_variant'] ?? null),
@@ -427,12 +451,22 @@ class TaxMaster extends Model
     public function appliedOnSummary(): string
     {
         $parts = [];
-        foreach ([
+        $labels = [
             'applied_on_category' => 'Category',
             'applied_on_sku' => 'SKU',
             'applied_on_product' => 'Product Name',
             'applied_on_variant' => 'Variant',
-        ] as $column => $label) {
+        ];
+        if (self::groupColumnReady()) {
+            $labels = [
+                'applied_on_category' => 'Category',
+                'applied_on_group' => 'Group',
+                'applied_on_sku' => 'SKU',
+                'applied_on_product' => 'Product Name',
+                'applied_on_variant' => 'Variant',
+            ];
+        }
+        foreach ($labels as $column => $label) {
             $value = trim((string) ($this->getAttribute($column) ?? ''));
             if ($value !== '') {
                 $parts[] = $label . ': ' . $value;
@@ -468,6 +502,9 @@ class TaxMaster extends Model
                         ->orWhere('applied_on_sku', 'like', $like)
                         ->orWhere('applied_on_product', 'like', $like)
                         ->orWhere('applied_on_variant', 'like', $like);
+                    if (self::groupColumnReady()) {
+                        $nested->orWhere('applied_on_group', 'like', $like);
+                    }
                 }
 
                 if (ctype_digit($filters['search'])) {
@@ -502,6 +539,9 @@ class TaxMaster extends Model
                         ->orWhere('applied_on_sku', 'like', $likeApplied)
                         ->orWhere('applied_on_product', 'like', $likeApplied)
                         ->orWhere('applied_on_variant', 'like', $likeApplied);
+                    if (self::groupColumnReady()) {
+                        $nested->orWhere('applied_on_group', 'like', $likeApplied);
+                    }
                 });
             }
         }
@@ -572,6 +612,7 @@ class TaxMaster extends Model
 
         $prefix = [];
         $text = [];
+        $digits = preg_replace('/\D/', '', $query) ?? '';
         foreach (self::hsnDirectory() as $row) {
             $code = (string) ($row[0] ?? '');
             $description = (string) ($row[1] ?? '');
@@ -579,7 +620,8 @@ class TaxMaster extends Model
                 continue;
             }
 
-            if (strpos($code, $query) === 0) {
+            $codeHit = $digits !== '' && strpos($code, $digits) === 0;
+            if ($codeHit) {
                 if (count($prefix) < $limit) {
                     $prefix[] = self::hsnResult($code, $description, (string) ($row[2] ?? 'goods'));
                 }
@@ -592,10 +634,11 @@ class TaxMaster extends Model
             }
         }
 
+        $digits = preg_replace('/\D/', '', $query) ?? '';
         $rows = count($prefix) ? $prefix : $text;
-        usort($rows, function ($left, $right) use ($query) {
-            $leftExact = $left['code'] === $query ? 0 : 1;
-            $rightExact = $right['code'] === $query ? 0 : 1;
+        usort($rows, function ($left, $right) use ($query, $digits) {
+            $leftExact = ($left['code'] === $query || ($digits !== '' && $left['code'] === $digits)) ? 0 : 1;
+            $rightExact = ($right['code'] === $query || ($digits !== '' && $right['code'] === $digits)) ? 0 : 1;
             if ($leftExact !== $rightExact) {
                 return $leftExact <=> $rightExact;
             }
@@ -604,6 +647,82 @@ class TaxMaster extends Model
         });
 
         return array_slice($rows, 0, $limit);
+    }
+
+    public static function searchHsnChapters(string $query, int $limit = 15): array
+    {
+        $query = trim($query);
+        if (mb_strlen($query) < 2) {
+            return [];
+        }
+
+        $rows = [];
+        foreach (self::hsnDirectory() as $row) {
+            $code = (string) ($row[0] ?? '');
+            $description = (string) ($row[1] ?? '');
+            if (!ctype_digit($code) || strlen($code) !== 2) {
+                continue;
+            }
+
+            $codeHit = strpos($code, $query) === 0;
+            $textHit = mb_stripos($description, $query) !== false;
+            if (!$codeHit && !$textHit) {
+                continue;
+            }
+
+            $rows[] = self::hsnResult($code, $description, (string) ($row[2] ?? 'goods'));
+            if (count($rows) >= $limit) {
+                break;
+            }
+        }
+
+        return $rows;
+    }
+
+    public static function lookupByHsn(string $hsn): ?array
+    {
+        $hsn = trim($hsn);
+        if ($hsn === '' || !self::tableReady() || !self::hsnColumnsReady()) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D/', '', $hsn) ?? '';
+        $tax = self::query()
+            ->where('status', 1)
+            ->where(function ($query) use ($hsn, $digits) {
+                $query->where('hsn_code', $hsn);
+                if ($digits !== '') {
+                    $query->orWhere('hsn_code', $digits);
+                    $query->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(hsn_code, '.', ''), '-', ''), ' ', '') = ?",
+                        [$digits]
+                    );
+                }
+            })
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$tax) {
+            return null;
+        }
+
+        $same = (bool) $tax->sale_same_as_purchase;
+        $displayTax = $same ? $tax->purchase_tax : $tax->sale_tax;
+
+        return [
+            'found' => true,
+            'id' => $tax->id,
+            'kind' => $tax->kind,
+            'kind_label' => $tax->kindLabel(),
+            'tax_percent' => self::formatRate($tax->purchase_tax),
+            'display_tax_percent' => self::formatRate($displayTax),
+            'tax_code' => $tax->tax_code,
+            'description' => (string) ($tax->description ?? ''),
+            'hs_code' => (string) ($tax->hs_code ?? ''),
+            'hsn_code' => (string) ($tax->hsn_code ?? ''),
+            'sale_same_as_purchase' => $same,
+        ];
     }
 
     public static function describeHsn($hsn): ?string

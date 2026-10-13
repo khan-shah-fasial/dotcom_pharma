@@ -184,7 +184,24 @@ class TaxMasterCalculationTest extends TestCase
         $this->assertSame('300490', TaxMaster::hsFromHsn('30049099'));
         $this->assertSame('3004', TaxMaster::hsFromHsn('3004'));
         $this->assertSame('G18', TaxMaster::taxCodeBase(18));
+        $this->assertSame('G0', TaxMaster::taxCodeBase(0));
         $this->assertSame('G2-5', TaxMaster::taxCodeBase(2.5));
+    }
+
+    public function test_hsn_chapter_search_returns_only_two_digit_chapters(): void
+    {
+        $rows = TaxMaster::searchHsnChapters('LIVE ANIMALS');
+        $this->assertNotEmpty($rows);
+        $this->assertSame('01', $rows[0]['code']);
+        foreach ($rows as $row) {
+            $this->assertSame(2, strlen($row['code']));
+        }
+
+        $horses = TaxMaster::searchHsnChapters('HORSES');
+        foreach ($horses as $row) {
+            $this->assertSame(2, strlen($row['code']));
+            $this->assertNotSame('0101', $row['code']);
+        }
     }
 
     public function test_hsn_directory_search_returns_official_medicine_code(): void
@@ -194,6 +211,10 @@ class TaxMasterCalculationTest extends TestCase
         $this->assertSame('30049099', $rows[0]['code']);
         $this->assertSame('300490', $rows[0]['hs_code']);
         $this->assertSame('goods', $rows[0]['kind']);
+
+        $dotted = TaxMaster::searchHsnDirectory('9018.90.99');
+        $this->assertNotEmpty($dotted);
+        $this->assertSame('90189099', $dotted[0]['code']);
     }
 
     public function test_sortable_columns_and_resolve_sort(): void

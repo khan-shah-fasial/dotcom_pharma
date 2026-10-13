@@ -387,21 +387,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Product HSN / HS Code  -->
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product HSN Code')}} </label>
-                                            <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_hsn') is-invalid @enderror" name="product_hsn" placeholder="{{ translate('Product HSN Code') }}" value="{{ $product->product_hsn }}">
-                                            </div>
-                                        </div>
-
-                                        <!-- Product HSN / HS Code  -->
-                                        <div class="form-group row">
-                                            <label class="col-xxl-3 col-from-label fs-13">{{translate('Product HS Code')}} </label>
-                                            <div class="col-xxl-9">
-                                                <input type="text" class="form-control @error('product_hs') is-invalid @enderror" name="product_hs" placeholder="{{ translate('Product HS Code') }}" value="{{ $product->product_hs }}">
-                                            </div>
-                                        </div>
+                                        @include('backend.product.products._hsn_tax', ['productHsn' => $product->product_hsn, 'productHs' => $product->product_hs])
 
                                     </div>
 
@@ -2073,5 +2059,6 @@ $(document).ready(function () {
     //     }
     // });
 </script>
+@include('backend.product.products._hsn_tax_script')
 
 @endsection

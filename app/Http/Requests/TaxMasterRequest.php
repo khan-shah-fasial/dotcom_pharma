@@ -41,6 +41,7 @@ class TaxMasterRequest extends FormRequest
             'hsn_code' => ['nullable', 'string', 'max:50'],
             'hs_code' => ['nullable', 'string', 'max:50'],
             'applied_on_category' => ['nullable', 'string', 'max:255'],
+            'applied_on_group' => ['nullable', 'string', 'max:255'],
             'applied_on_sku' => ['nullable', 'string', 'max:255'],
             'applied_on_product' => ['nullable', 'string', 'max:255'],
             'applied_on_variant' => ['nullable', 'string', 'max:255'],
