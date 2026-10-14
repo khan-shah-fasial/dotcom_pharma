@@ -728,6 +728,231 @@ class BatchMaster extends Model
         ];
     }
 
+    public static function companyPartiesForStock(ProductStock $stock): array
+    {
+        $product = $stock->relationLoaded('product') ? $stock->product : $stock->product()->first();
+        $fromProduct = self::partiesFromProduct($product);
+        $fromPurchase = self::partiesFromPurchase($stock);
+        $resolved = [];
+
+        foreach (['marketed', 'import', 'manufactured'] as $role) {
+            $purchase = $fromPurchase[$role] ?? self::emptyParty();
+            $fromPage = $fromProduct[$role] ?? self::emptyParty();
+            $chosen = self::partyHasValue($purchase) ? $purchase : $fromPage;
+            $chosen['locked'] = self::partyHasValue($chosen);
+            $chosen['source'] = self::partyHasValue($purchase) ? 'purchase' : (self::partyHasValue($fromPage) ? 'product' : null);
+            $resolved[$role] = $chosen;
+        }
+
+        return $resolved;
+    }
+
+    private static function partiesFromProduct($product): array
+    {
+        if (!$product) {
+            return [
+                'marketed' => self::emptyParty(),
+                'import' => self::emptyParty(),
+                'manufactured' => self::emptyParty(),
+            ];
+        }
+
+        return [
+            'marketed' => self::readParty($product, 'marketed'),
+            'import' => self::readParty($product, 'import'),
+            'manufactured' => self::readParty($product, 'manufactured'),
+        ];
+    }
+
+    private static function partiesFromPurchase(ProductStock $stock): array
+    {
+        $roles = ['marketed', 'import', 'manufactured'];
+        $found = [];
+        foreach ($roles as $role) {
+            $found[$role] = self::emptyParty();
+        }
+
+        $sources = [];
+        $detail = self::latestPurchaseDetail($stock);
+        if ($detail) {
+            $sources[] = $detail;
+            if ($detail->order) {
+                $sources[] = $detail->order;
+            }
+        }
+        if ($stock->sku && Schema::hasTable('purchase_history')) {
+            $history = PurchaseHistory::query()->where('product_sku', $stock->sku)->orderByDesc('id')->first();
+            if ($history) {
+                $sources[] = $history;
+            }
+        }
+
+        foreach ($roles as $role) {
+            foreach ($sources as $source) {
+                $party = self::readParty($source, $role);
+                if (self::partyHasValue($party)) {
+                    $found[$role] = $party;
+                    break;
+                }
+            }
+        }
+
+        return $found;
+    }
+
+    private static function latestPurchaseDetail(ProductStock $stock): ?OrderDetail
+    {
+        if (!$stock->product_id || !Schema::hasTable('orders') || !Schema::hasTable('order_details') || !Schema::hasColumn('orders', 'document_type')) {
+            return null;
+        }
+
+        $types = \App\Support\DocumentType::ENTRIES['purchase']['types'];
+        $query = OrderDetail::query()
+            ->where('product_id', $stock->product_id)
+            ->whereHas('order', function ($order) use ($types) {
+                $order->whereIn('document_type', $types);
+            });
+        $variant = trim((string) $stock->variant);
+        if ($variant !== '' && Schema::hasColumn('order_details', 'variation')) {
+            $query->where('variation', $variant);
+        }
+
+        return $query->with('order')->orderByDesc('id')->first();
+    }
+
+    private static function readParty($record, string $role): array
+    {
+        if (!$record) {
+            return self::emptyParty();
+        }
+
+        $table = $record->getTable();
+        $columns = [
+            'marketed' => [
+                'ids' => ['marketed_by_id'],
+                'names' => ['marketed_by_name', 'marketed_by'],
+            ],
+            'import' => [
+                'ids' => ['import_by_ids', 'import_by_id'],
+                'names' => ['import_by_names', 'import_by'],
+            ],
+            'manufactured' => [
+                'ids' => ['manufactured_by_ids', 'manufactured_by_id'],
+                'names' => ['manufactured_by_names', 'manufactured_by', 'mfd_by'],
+            ],
+        ];
+        $ids = null;
+        foreach ($columns[$role]['ids'] as $column) {
+            if (Schema::hasColumn($table, $column) && $record->{$column} !== null && $record->{$column} !== '') {
+                $ids = $record->{$column};
+                break;
+            }
+        }
+        $names = null;
+        foreach ($columns[$role]['names'] as $column) {
+            if (Schema::hasColumn($table, $column) && $record->{$column} !== null && $record->{$column} !== '') {
+                $names = $record->{$column};
+                break;
+            }
+        }
+
+        return self::normalizeParty($ids, $names);
+    }
+
+    private static function normalizeParty($ids, $names): array
+    {
+        $idList = collect(self::decodeIdList($ids))->map(function ($id) {
+            return (int) $id;
+        })->filter()->unique()->values();
+        $nameList = collect(self::decodeNameList($names))->map(function ($name) {
+            return trim((string) $name);
+        })->filter()->unique()->values();
+
+        $companies = collect();
+        if (Schema::hasTable('companies')) {
+            if ($idList->isNotEmpty()) {
+                $companies = Company::query()->whereIn('id', $idList->all())->get(['id', 'company_name']);
+            } elseif ($nameList->isNotEmpty()) {
+                $companies = Company::query()->whereIn('company_name', $nameList->all())->get(['id', 'company_name']);
+                if ($companies->isNotEmpty()) {
+                    $idList = $companies->pluck('id')->map(function ($id) {
+                        return (int) $id;
+                    })->unique()->values();
+                }
+            }
+        }
+
+        if ($companies->isNotEmpty()) {
+            $byId = $companies->keyBy(function ($company) {
+                return (int) $company->id;
+            });
+            $resolvedNames = $idList->map(function ($id) use ($byId) {
+                return optional($byId->get($id))->company_name;
+            })->filter()->values();
+            if ($resolvedNames->isNotEmpty()) {
+                $nameList = $resolvedNames;
+            }
+        }
+
+        return [
+            'ids' => $idList->values()->all(),
+            'names' => $nameList->implode(', '),
+        ];
+    }
+
+    private static function decodeIdList($value): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+        if (is_numeric($value)) {
+            return [(int) $value];
+        }
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) ? $decoded : [];
+        }
+        if (!is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter($value, function ($id) {
+            return $id !== null && $id !== '' && is_numeric($id);
+        }));
+    }
+
+    private static function decodeNameList($value): array
+    {
+        if ($value === null || $value === '') {
+            return [];
+        }
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $value = $decoded;
+            } else {
+                $value = preg_split('/\s*,\s*/', $value) ?: [];
+            }
+        }
+        if (!is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(function ($name) {
+            return trim((string) $name);
+        }, $value)));
+    }
+
+    private static function emptyParty(): array
+    {
+        return ['ids' => [], 'names' => ''];
+    }
+
+    private static function partyHasValue(array $party): bool
+    {
+        return !empty($party['ids']) || trim((string) ($party['names'] ?? '')) !== '';
+    }
+
     public static function headerFromStock(ProductStock $stock): array
     {
         $product = $stock->product;

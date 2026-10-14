@@ -1,7 +1,7 @@
 @extends('backend.layouts.app')
 
 @section('content')
-@include('backend.product.batch_master._tabs', ['activeTab' => 'listing'])
+@include('backend.product.batch_master._tabs', ['activeTab' => 'listing', 'showAddButton' => false])
 
 <form action="{{ route('batch_masters.update', $batch->id) }}" method="POST" id="batch-master-form" enctype="multipart/form-data">
     @csrf

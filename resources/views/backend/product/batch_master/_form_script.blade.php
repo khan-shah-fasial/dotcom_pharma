@@ -243,21 +243,94 @@
         });
     }
 
+    function partyPayload(data) {
+        if (data && data.parties) {
+            return data.parties;
+        }
+        data = data || {};
+        function pack(ids, names) {
+            if (!$.isArray(ids)) {
+                ids = ids ? [ids] : [];
+            }
+            names = names || '';
+            return {
+                locked: ids.length > 0 || String(names) !== '',
+                ids: ids,
+                names: names
+            };
+        }
+        return {
+            marketed: pack(data.marketed_by_id ? [data.marketed_by_id] : [], data.marketed_by_name),
+            import: pack(data.import_by_ids, data.import_by_names),
+            manufactured: pack(data.manufactured_by_ids, data.manufactured_by_names)
+        };
+    }
+
+    function setParty(role, party) {
+        party = party || { locked: false, ids: [], names: '' };
+        var locked = !!party.locked;
+        var ids = (party.ids || []).map(String).filter(function (id) { return id !== ''; });
+        var names = party.names || '';
+        var $cell = $('.bm-party[data-role="' + role + '"]');
+        $cell.find('.bm-party-locked').val(locked ? '1' : '0');
+        $cell.find('.bm-party-text').val(names).prop('hidden', !locked);
+        var $select = $cell.find('.bm-party-select');
+        $select.prop('hidden', locked).prop('disabled', locked);
+        var $hidden = $cell.find('.bm-party-id-hiddens').empty();
+        if (role === 'marketed') {
+            $('#marketed_by_id').val(ids[0] || '');
+            $('#marketed_by_name').val(names);
+            $select.val(ids[0] || '');
+            return;
+        }
+        var selectId = role === 'import' ? '#import_by_ids' : '#manufactured_by_ids';
+        var namesId = role === 'import' ? '#import_by_names' : '#manufactured_by_names';
+        $(namesId).val(names);
+        selectIds(selectId, ids);
+        if (locked) {
+            var inputName = role === 'import' ? 'import_by_ids[]' : 'manufactured_by_ids[]';
+            ids.forEach(function (id) {
+                $hidden.append($('<input type="hidden">').attr('name', inputName).val(id));
+            });
+        }
+    }
+
+    function applyParties(data) {
+        var parties = partyPayload(data);
+        setParty('marketed', parties.marketed);
+        setParty('import', parties.import);
+        setParty('manufactured', parties.manufactured);
+        filterCompanySelects();
+    }
+
+    function selectedOptionNames($select) {
+        var names = [];
+        $select.find('option:selected').each(function () {
+            var name = $(this).data('name');
+            if (name) {
+                names.push(name);
+            }
+        });
+        return names.join(', ');
+    }
+
     function selectStock(item) {
         $('#product_id').val(item.product_id);
         $('#product_stock_id').val(item.id);
         $('#sku_search').val(item.label);
         $('#sku_display').val(item.sku || '');
-        $('#variant_display').val(item.variant || '');
+        $('#variant_display').val(item.expanded_variant || item.variant || '').attr('title', item.expanded_variant || item.variant || '');
         $('#sku_results').empty();
         $.get(stockUrl, { product_stock_id: item.id }, function (data) {
             if (!data || !data.found) {
                 return;
             }
+            if (data.variant) {
+                $('#variant_display').val(data.variant).attr('title', data.variant);
+            }
             $('#drug_name').val(data.drug_name || '');
             $('#drug_name_label').text(data.drug_name || '');
-            $('#marketed_by_id').val(data.marketed_by_id || '');
-            $('#marketed_by_name').val(data.marketed_by_name || '');
+            applyParties(data);
             $('#purchase_date').val(data.purchase_date || '');
             lastPurchase = {
                 mrp_price: data.last_mrp || '',
@@ -265,10 +338,6 @@
                 tax_percent: data.last_tax_percent || '',
                 tax_code: data.last_tax_code || ''
             };
-            selectIds('#import_by_ids', data.import_by_ids);
-            selectIds('#manufactured_by_ids', data.manufactured_by_ids);
-            $('#import_by_names').val(data.import_by_names || '');
-            $('#manufactured_by_names').val(data.manufactured_by_names || '');
             if (!isEdit) {
                 $('#batch-rows-body').empty();
                 var rows = data.rows || [];
@@ -281,7 +350,6 @@
                 applyNonBatch();
             }
             renderLots(data.live_lots || []);
-            filterCompanySelects();
             $('#live-lots-wrap').removeClass('d-none');
         });
     }
@@ -294,7 +362,15 @@
                 $.get(lookupUrl, { q: q }, function (rows) {
                     var $box = $('#sku_results').empty();
                     (rows || []).forEach(function (row) {
-                        var $a = $('<a href="#" class="list-group-item list-group-item-action"></a>').text(row.label);
+                        var variantText = row.expanded_variant || row.variant || '';
+                        var $a = $('<a href="#" class="list-group-item list-group-item-action"></a>');
+                        $a.append($('<div class="fw-600"></div>').text(row.product_name || row.label || ''));
+                        var detail = [row.brand, row.sku, variantText].filter(function (part) {
+                            return part !== null && part !== undefined && String(part) !== '';
+                        }).join(' / ');
+                        if (detail) {
+                            $a.append($('<small class="text-muted d-block"></small>').text(detail));
+                        }
                         $a.on('click', function (e) {
                             e.preventDefault();
                             selectStock(row);
@@ -319,7 +395,18 @@
     }
 
     $('#is_non_batch').on('change', applyNonBatch);
-    $('#manufactured_by_ids').on('change', filterCompanySelects);
+    $('#marketed_by_select').on('change', function () {
+        var id = $(this).val() || '';
+        $('#marketed_by_id').val(id);
+        $('#marketed_by_name').val(id ? ($(this).find('option:selected').data('name') || '') : '');
+    });
+    $('#import_by_ids').on('change', function () {
+        $('#import_by_names').val(selectedOptionNames($(this)));
+    });
+    $('#manufactured_by_ids').on('change', function () {
+        $('#manufactured_by_names').val(selectedOptionNames($(this)));
+        filterCompanySelects();
+    });
     $('#batch-rows-body').on('input', '.qty-input, .rate-input', refreshAmounts);
     $('#toggle-live-lots').on('click', function () {
         $('#live-lots-wrap').toggleClass('d-none');

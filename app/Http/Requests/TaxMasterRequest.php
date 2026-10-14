@@ -16,12 +16,30 @@ class TaxMasterRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge(TaxMaster::normalize($this->all()));
+        $normalized = TaxMaster::normalize($this->all());
+        if (!$this->route('id')) {
+            $kind = (string) ($normalized['kind'] ?? 'taxable');
+            $percent = $normalized['purchase_tax'] ?? 0;
+            $existing = TaxMaster::findForRate($kind, $percent);
+            if ($existing) {
+                $normalized['tax_code'] = $existing->tax_code;
+            } elseif (($normalized['tax_code'] ?? '') === '') {
+                $normalized['tax_code'] = TaxMaster::taxCodeBase($percent);
+            }
+        }
+
+        $this->merge($normalized);
     }
 
     public function rules(): array
     {
         $id = $this->route('id');
+        if (!$id && TaxMaster::tableReady()) {
+            $existing = TaxMaster::findForRate($this->input('kind'), $this->input('purchase_tax'));
+            if ($existing) {
+                $id = $existing->id;
+            }
+        }
 
         $taxCodeRules = [
             'required',
@@ -31,8 +49,15 @@ class TaxMasterRequest extends FormRequest
         ];
 
         if (TaxMaster::tableReady()) {
-            $taxCodeRules[] = Rule::unique('tax_masters', 'tax_code')->ignore($id);
+            $taxCodeRules[] = Rule::unique('tax_masters', 'tax_code')
+                ->where(function ($query) {
+                    $query->where('kind', (string) $this->input('kind'));
+                })
+                ->ignore($id);
         }
+
+        $appliedLimit = TaxMaster::appliedStorageLimit();
+        $appliedRule = ['nullable', 'string', 'max:' . $appliedLimit];
 
         return [
             'kind' => ['required', Rule::in(array_keys(TaxMaster::KINDS))],
@@ -40,11 +65,14 @@ class TaxMasterRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:255'],
             'hsn_code' => ['nullable', 'string', 'max:50'],
             'hs_code' => ['nullable', 'string', 'max:50'],
-            'applied_on_category' => ['nullable', 'string', 'max:255'],
-            'applied_on_group' => ['nullable', 'string', 'max:255'],
-            'applied_on_sku' => ['nullable', 'string', 'max:255'],
-            'applied_on_product' => ['nullable', 'string', 'max:255'],
-            'applied_on_variant' => ['nullable', 'string', 'max:255'],
+            'applied_on_type' => ['nullable', Rule::in(array_keys(TaxMaster::APPLIED_TYPES))],
+            'applied_targets' => ['nullable', 'array', 'max:200'],
+            'applied_targets.*' => ['nullable', 'string', 'max:100'],
+            'applied_on_category' => $appliedRule,
+            'applied_on_group' => $appliedRule,
+            'applied_on_sku' => $appliedRule,
+            'applied_on_product' => $appliedRule,
+            'applied_on_variant' => $appliedRule,
             'purchase_tax' => ['required', 'numeric', 'min:0', 'max:100'],
             'purchase_cgst' => ['required', 'numeric', 'min:0', 'max:100'],
             'purchase_sgst' => ['required', 'numeric', 'min:0', 'max:100'],
@@ -66,6 +94,20 @@ class TaxMasterRequest extends FormRequest
     {
         $validator->after(function (Validator $validator) {
             $data = $this->all();
+            $id = $this->route('id');
+            if ($id && TaxMaster::tableReady()) {
+                $current = TaxMaster::query()->find($id);
+                $existing = TaxMaster::findForRate($data['kind'] ?? '', $data['purchase_tax'] ?? 0, $id);
+                $alreadyThisRate = $current
+                    && (string) $current->kind === (string) ($data['kind'] ?? '')
+                    && abs(TaxMaster::toDecimal($current->purchase_tax) - TaxMaster::toDecimal($data['purchase_tax'] ?? 0)) < 0.0001;
+                if ($existing && !$alreadyThisRate) {
+                    $validator->errors()->add(
+                        'tax_code',
+                        translate('A tax code for this tax % already exists.')
+                    );
+                }
+            }
 
             $checkUt = TaxMaster::utColumnsReady() || !TaxMaster::tableReady();
             foreach (['purchase', 'sale'] as $side) {
@@ -94,8 +136,13 @@ class TaxMasterRequest extends FormRequest
         return [
             'kind.required' => translate('Please select Tax Type.'),
             'tax_code.required' => translate('Please enter Tax Code.'),
-            'tax_code.unique' => translate('This Tax Code already exists.'),
+            'tax_code.unique' => translate('This Tax Code already exists for this tax type.'),
             'tax_code.regex' => translate('Tax Code may use letters, numbers, hyphen, and underscore only.'),
+            'applied_on_category.max' => translate('Too many Applied On selections for the current column size. Run sqlupdates/tax_master_applied_multi.sql, then save again.'),
+            'applied_on_group.max' => translate('Too many Applied On selections for the current column size. Run sqlupdates/tax_master_applied_multi.sql, then save again.'),
+            'applied_on_sku.max' => translate('Too many Applied On selections for the current column size. Run sqlupdates/tax_master_applied_multi.sql, then save again.'),
+            'applied_on_product.max' => translate('Too many Applied On selections for the current column size. Run sqlupdates/tax_master_applied_multi.sql, then save again.'),
+            'applied_on_variant.max' => translate('Too many Applied On selections for the current column size. Run sqlupdates/tax_master_applied_multi.sql, then save again.'),
         ];
     }
 }

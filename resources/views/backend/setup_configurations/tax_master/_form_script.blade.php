@@ -8,9 +8,14 @@
     var salePanelOpen = !$('#sale-tax-panel').hasClass('d-none');
     var showSaleText = '{{ translate('Show sale tax') }}';
     var hideSaleText = '{{ translate('Hide sale tax') }}';
-    var allSku = @json(\App\Models\TaxMaster::APPLIED_ALL['sku']);
-    var allProduct = @json(\App\Models\TaxMaster::APPLIED_ALL['product']);
-    var allVariant = @json(\App\Models\TaxMaster::APPLIED_ALL['variant']);
+    var appliedConfig = {};
+    try {
+        appliedConfig = JSON.parse(document.getElementById('tm-applied-config').textContent || '{}');
+    } catch (error) {
+        appliedConfig = {};
+    }
+    var appliedSelected = Array.isArray(appliedConfig.selected) ? appliedConfig.selected.slice() : [];
+    var appliedRequest = 0;
 
     function numberValue(selector) {
         var raw = $(selector).val();
@@ -105,18 +110,30 @@
     }
 
     function suggestCode() {
-        if ($('#tax_code').data('auto') !== 1 && $('#tax_code').data('auto') !== '1') {
+        if ($('#tax_code').data('ignore-id')) {
             return;
         }
         clearTimeout(codeTimer);
         codeTimer = setTimeout(function () {
             var tax = numberValue('#tax_percent');
+            var currentKind = kind();
             $.get('{{ route('tax_masters.suggest_code') }}', {
                 tax: tax,
+                kind: currentKind,
                 ignore_id: $('#tax_code').data('ignore-id') || ''
             }).done(function (response) {
+                if (!response || !response.tax_code || numberValue('#tax_percent') !== tax || kind() !== currentKind) {
+                    return;
+                }
+                if (response.existing) {
+                    $('#tax_code').val(response.tax_code).prop('readonly', true);
+                    $('#tax-code-existing').removeClass('d-none');
+                    return;
+                }
+                $('#tax_code').prop('readonly', false);
+                $('#tax-code-existing').addClass('d-none');
                 var stillAuto = $('#tax_code').data('auto') === 1 || $('#tax_code').data('auto') === '1';
-                if (stillAuto && response.tax_code && numberValue('#tax_percent') === tax) {
+                if (stillAuto) {
                     $('#tax_code').val(response.tax_code);
                 }
             });
@@ -314,256 +331,169 @@
         if (!$(event.target).closest('.tm-hsn-wrap').length) {
             hideHsnResults();
             hideChapterResults();
-            hideStockResults();
+            hideAppliedResults();
         }
     });
 
-    function hideStockResults(box) {
-        var $boxes = box ? $(box) : $('.tm-stock-results');
-        $boxes.attr('hidden', true).empty();
+    function appliedType() {
+        return $('#applied_on_type').val() || appliedConfig.type || 'category';
     }
 
-    function syncCombo(selectId) {
-        var $select = $('#' + selectId);
-        var text = $select.find('option:selected').text();
-        $select.closest('.tm-combo').find('.tm-combo-input').val(text);
+    function hideAppliedResults() {
+        $('#applied-results').attr('hidden', true).empty();
+        $('#applied-search').val('');
     }
 
-    function showLocalOptions($combo) {
-        var $box = $combo.find('.tm-stock-results').empty();
-        $combo.find('select option').each(function () {
-            var button = $('<button type="button"></button>');
-            button.text($(this).text());
-            button.attr('data-local', '1');
-            button.attr('data-value', $(this).val());
-            button.attr('data-stock-id', $(this).attr('data-stock-id') || '');
-            $box.append(button);
+    function renderApplied() {
+        var type = appliedType();
+        var $picks = $('#applied-picks').empty();
+        var $hidden = $('#applied-hidden').empty();
+        appliedSelected.forEach(function (item) {
+            var chip = $('<span class="tm-multi-chip"></span>');
+            chip.append($('<span></span>').text(item.label || item.id));
+            var remove = $('<button type="button" aria-label="Remove">&times;</button>');
+            remove.attr('data-id', item.id);
+            chip.append(remove);
+            $picks.append(chip);
+            $hidden.append($('<input type="hidden" name="applied_targets[]">').val(item.id));
         });
-        if (!$box.children().length) {
-            $box.attr('hidden', true);
+        $('#applied-search').attr('placeholder', (appliedConfig.placeholders || {})[type] || '');
+        $('#applied-target-label').text((appliedConfig.labels || {})[type] || '');
+        $('#applied-hint').text((appliedConfig.hints || {})[type] || '');
+        $('#applied-empty-note').text(appliedSelected.length ? '' : ((appliedConfig.emptyNotes || {})[type] || ''));
+    }
+
+    function appliedIsSelected(id) {
+        return appliedSelected.some(function (item) {
+            return String(item.id) === String(id);
+        });
+    }
+
+    function renderAppliedResults(rows) {
+        var $box = $('#applied-results').empty();
+        if (!rows || !rows.length) {
+            $box.append($('<div class="tm-multi-empty"></div>').text(appliedConfig.none || ''));
+            $box.removeAttr('hidden');
             return;
         }
-        $box.removeAttr('hidden');
-    }
-
-    function showStockResults(box, rows) {
-        var $box = $(box).empty();
-        var allLabel = $box.closest('.tm-combo').find('select option:first').text();
-        if (allLabel) {
-            $box.append($('<button type="button"></button>').text(allLabel).attr('data-all', '1'));
-        }
-        (rows || []).forEach(function (row) {
-            var button = $('<button type="button"></button>');
-            button.text(row.label || row.sku || row.product_name || row.variant || '');
-            button.data('row', row);
-            $box.append(button);
-        });
-        if (!$box.children().length) {
-            $box.attr('hidden', true);
-            return;
-        }
-        $box.removeAttr('hidden');
-    }
-
-    var applyingStock = false;
-
-    function stockExtra(row) {
-        return {
-            stockId: row.id || row.stockId || '',
-            productId: row.product_id || row.productId || '',
-            productName: row.product_name || row.productName || '',
-            sku: row.sku || '',
-            variant: row.variant || ''
-        };
-    }
-
-    function replaceAppliedOptions(selectId, allValue, rows, valueKey, selectedStockId) {
-        var $select = $('#' + selectId);
-        $select.find('option').not(':first').remove();
-        var selected = null;
-        (rows || []).forEach(function (row) {
-            var value = row[valueKey] || '';
-            if (!value || value === allValue) {
+        rows.forEach(function (row) {
+            if (!row || row.id === undefined || row.id === null || row.id === '') {
                 return;
             }
-            var extra = stockExtra(row);
-            var option = $('<option></option>').val(value).text(value);
-            option.attr('data-stock-id', extra.stockId);
-            option.attr('data-product-id', extra.productId);
-            option.attr('data-product-name', extra.productName);
-            option.attr('data-sku', extra.sku);
-            option.attr('data-variant', extra.variant);
-            $select.append(option);
-            if (selectedStockId && String(extra.stockId) === String(selectedStockId)) {
-                selected = option;
-            }
+            var button = $('<button type="button"></button>');
+            var label = row.label || String(row.id);
+            var selected = appliedIsSelected(row.id);
+            button.text((selected ? '✓ ' : '') + label);
+            button.attr('data-id', row.id);
+            button.attr('data-label', label);
+            button.toggleClass('tm-multi-on', selected);
+            $box.append(button);
         });
-        if (selected) {
-            selected.prop('selected', true);
-        } else {
-            $select.prop('selectedIndex', 0);
-        }
-        syncCombo(selectId);
-    }
-
-    function selectByStockId(selectId, stockId) {
-        if (!stockId) {
+        if (!$box.children().length) {
+            $box.attr('hidden', true);
             return;
         }
-        var $match = $('#' + selectId).find('option').filter(function () {
-            return String($(this).attr('data-stock-id') || '') === String(stockId);
-        });
-        if ($match.length) {
-            $match.prop('selected', true);
-            syncCombo(selectId);
-        }
+        $box.removeAttr('hidden');
     }
 
-    function applyProductStocks(rows, preferredRow) {
-        rows = rows || [];
-        var productRow = preferredRow || rows[0] || null;
-        var chosenId = preferredRow && preferredRow.id ? preferredRow.id : (rows.length === 1 ? rows[0].id : null);
-        applyingStock = true;
-        if (productRow && productRow.product_name) {
-            replaceAppliedOptions('applied_on_product', allProduct, [productRow], 'product_name', productRow.id);
-        }
-        replaceAppliedOptions('applied_on_sku', allSku, rows, 'sku', chosenId);
-        replaceAppliedOptions('applied_on_variant', allVariant, rows, 'variant', chosenId);
-        applyingStock = false;
-    }
-
-    function loadProductStocks(productId, preferredRow, showSkuList) {
-        $.get('{{ route('tax_masters.lookup.stocks') }}', { product_id: productId, mode: 'sku' }).done(function (rows) {
-            rows = rows || [];
-            var preferred = preferredRow;
-            if (!preferred && rows.length === 1) {
-                preferred = rows[0];
+    function loadAppliedResults(query) {
+        var token = ++appliedRequest;
+        var type = appliedType();
+        $.get(appliedConfig.lookupUrl, { type: type, q: query || '' }).done(function (rows) {
+            if (token !== appliedRequest) {
+                return;
             }
-            applyProductStocks(rows.length ? rows : (preferred ? [preferred] : []), preferred || null);
-            if (showSkuList && rows.length > 1) {
-                showStockResults('#applied-sku-results', rows);
-            }
+            renderAppliedResults(rows);
         });
     }
 
-    $('.tm-combo-input').on('focus', function () {
-        showLocalOptions($(this).closest('.tm-combo'));
-    });
+    function openAppliedResults() {
+        loadAppliedResults($.trim($('#applied-search').val()));
+    }
 
-    $('.tm-combo-caret').on('mousedown', function (event) {
-        event.preventDefault();
-        var $combo = $(this).closest('.tm-combo');
-        var $box = $combo.find('.tm-stock-results');
-        if ($box.attr('hidden')) {
-            showLocalOptions($combo);
-            $combo.find('.tm-combo-input').trigger('focus');
-        } else {
-            hideStockResults($box);
-        }
-    });
-
-    $('.tm-combo-input').on('input', function () {
-        var $input = $(this);
-        var mode = $input.data('mode');
-        var query = $.trim($input.val());
-        var $combo = $input.closest('.tm-combo');
-        var selectedText = $.trim($combo.find('select option:selected').text());
-        clearTimeout(stockTimer);
-        if (!query || query === selectedText) {
-            showLocalOptions($combo);
-            return;
-        }
-        stockTimer = setTimeout(function () {
-            $.get('{{ route('tax_masters.lookup.stocks') }}', { q: query, mode: mode }).done(function (rows) {
-                showStockResults($input.siblings('.tm-stock-results'), rows);
+    function toggleAppliedItem(id, label) {
+        if (appliedIsSelected(id)) {
+            appliedSelected = appliedSelected.filter(function (item) {
+                return String(item.id) !== String(id);
             });
+        } else {
+            appliedSelected.push({ id: String(id), label: label || String(id) });
+        }
+        renderApplied();
+        markAppliedResults();
+    }
+
+    function markAppliedResults() {
+        $('#applied-results button[data-id]').each(function () {
+            var on = appliedIsSelected($(this).attr('data-id'));
+            var label = $(this).attr('data-label') || '';
+            $(this).toggleClass('tm-multi-on', on).text((on ? '✓ ' : '') + label);
+        });
+    }
+
+    $('#applied_on_type').on('change', function () {
+        appliedSelected = [];
+        appliedRequest++;
+        hideAppliedResults();
+        renderApplied();
+    });
+
+    $('#applied-search').on('focus', function () {
+        openAppliedResults();
+    });
+
+    $('#applied-search').on('input', function () {
+        var query = $.trim($(this).val());
+        clearTimeout(stockTimer);
+        stockTimer = setTimeout(function () {
+            loadAppliedResults(query);
         }, 250);
     });
 
-    $('.tm-combo-input').on('blur', function () {
-        var selectId = $(this).data('for');
-        setTimeout(function () {
-            syncCombo(selectId);
-        }, 200);
-    });
-
-    $('.tm-stock-results').on('mousedown', 'button', function (event) {
-        event.preventDefault();
-        var $btn = $(this);
-        var $combo = $btn.closest('.tm-combo');
-        var $select = $combo.find('select');
-        var mode = $combo.find('.tm-combo-input').data('mode');
-        var row = $btn.data('row');
-        hideStockResults();
-        if ($btn.attr('data-all')) {
-            $select.prop('selectedIndex', 0).trigger('change');
-            syncCombo($select.attr('id'));
-            return;
+    $('#applied-search').on('keydown', function (event) {
+        if (event.key === 'Backspace' && $(this).val() === '' && appliedSelected.length) {
+            appliedSelected.pop();
+            renderApplied();
+            markAppliedResults();
         }
-        if ($btn.attr('data-local')) {
-            var stockId = $btn.attr('data-stock-id');
-            var value = $btn.attr('data-value');
-            var $opt = stockId
-                ? $select.find('option').filter(function () {
-                    return String($(this).attr('data-stock-id') || '') === String(stockId);
-                })
-                : $select.find('option').filter(function () {
-                    return $(this).val() === value;
-                });
-            if ($opt.length) {
-                $opt.prop('selected', true);
-                $select.trigger('change');
-                syncCombo($select.attr('id'));
+        if (event.key === 'Escape') {
+            hideAppliedResults();
+        }
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            var $first = $('#applied-results button[data-id]').first();
+            if ($first.length) {
+                toggleAppliedItem($first.attr('data-id'), $first.attr('data-label'));
             }
-            return;
         }
-        if (!row || !row.product_id) {
-            return;
-        }
-        var preferred = mode === 'product' ? null : row;
-        loadProductStocks(row.product_id, preferred, mode === 'product');
     });
 
-    $('#applied_on_sku').on('change', function () {
-        if (applyingStock) {
-            return;
-        }
-        applyingStock = true;
-        if ($(this).val() === allSku) {
-            $('#applied_on_variant').val(allVariant);
-            syncCombo('applied_on_variant');
+    $('#applied-caret').on('mousedown', function (event) {
+        event.preventDefault();
+        var $box = $('#applied-results');
+        if ($box.attr('hidden')) {
+            $('#applied-search').trigger('focus');
+            openAppliedResults();
         } else {
-            selectByStockId('applied_on_variant', $(this).find('option:selected').attr('data-stock-id'));
+            hideAppliedResults();
         }
-        applyingStock = false;
     });
 
-    $('#applied_on_product').on('change', function () {
-        if (applyingStock) {
-            return;
-        }
-        if ($(this).val() === allProduct) {
-            applyingStock = true;
-            replaceAppliedOptions('applied_on_sku', allSku, [], 'sku', null);
-            replaceAppliedOptions('applied_on_variant', allVariant, [], 'variant', null);
-            applyingStock = false;
-            return;
-        }
-        var productId = $(this).find('option:selected').attr('data-product-id');
-        if (!productId) {
-            return;
-        }
-        loadProductStocks(productId, null, true);
+    $('#applied-picks').on('click', 'button', function () {
+        var id = $(this).attr('data-id');
+        appliedSelected = appliedSelected.filter(function (item) {
+            return String(item.id) !== String(id);
+        });
+        renderApplied();
+        markAppliedResults();
     });
 
-    $('#applied_on_variant').on('change', function () {
-        if (applyingStock || $(this).val() === allVariant) {
-            return;
-        }
-        applyingStock = true;
-        selectByStockId('applied_on_sku', $(this).find('option:selected').attr('data-stock-id'));
-        applyingStock = false;
+    $('#applied-results').on('mousedown', 'button', function (event) {
+        event.preventDefault();
+        toggleAppliedItem($(this).attr('data-id'), $(this).attr('data-label'));
     });
+
+    renderApplied();
 
     $('#tax-master-form').on('submit', function (event) {
         syncForm();
@@ -578,9 +508,6 @@
 
     syncForm();
     fitDescription();
-    syncCombo('applied_on_sku');
-    syncCombo('applied_on_product');
-    syncCombo('applied_on_variant');
     if (!$('#tax_code').val()) {
         $('#tax_code').data('auto', 1);
         suggestCode();

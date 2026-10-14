@@ -9,8 +9,14 @@
     $status = old('status', optional($b)->status ?? true);
     $stock = $b ? $b->stock : null;
     $skuLabel = '';
+    $variantLabel = '';
     if ($stock) {
-        $skuLabel = trim(optional($b->product)->name . ' / ' . ($stock->sku ?: $stock->variant));
+        $expandedVariant = $stock->expandedVariantLabel();
+        $variantLabel = $expandedVariant !== '' ? $expandedVariant : trim((string) $stock->variant);
+        $skuLabel = $stock->fullLookupLabel(optional($b)->product);
+        if ($variantLabel !== '' && strpos($skuLabel, $variantLabel) === false) {
+            $skuLabel = trim($skuLabel . ' / ' . $variantLabel);
+        }
     }
     $postedRows = old('rows');
     if (!is_array($postedRows)) {
@@ -48,10 +54,49 @@
         $html = '<option value="">' . e(translate('Select')) . '</option>';
         foreach ($companies as $company) {
             $label = trim(($company->code ? $company->code . ' — ' : '') . $company->company_name);
-            $html .= '<option value="' . e($company->id) . '" ' . ($selectedIds->contains((string) $company->id) ? 'selected' : '') . '>' . e($label) . '</option>';
+            $html .= '<option value="' . e($company->id) . '" data-name="' . e($company->company_name) . '" ' . ($selectedIds->contains((string) $company->id) ? 'selected' : '') . '>' . e($label) . '</option>';
         }
         return $html;
     };
+    $partyNames = function ($ids, $stored) use ($companies) {
+        $idList = collect($ids)->filter(function ($id) {
+            return $id !== null && $id !== '';
+        })->map(function ($id) {
+            return (int) $id;
+        });
+        if ($idList->isNotEmpty()) {
+            $matched = $companies->whereIn('id', $idList->all())->pluck('company_name')->filter()->values();
+            if ($matched->isNotEmpty()) {
+                return $matched->implode(', ');
+            }
+        }
+        if (is_array($stored)) {
+            return implode(', ', array_filter(array_map('trim', $stored)));
+        }
+        $decoded = json_decode((string) $stored, true);
+        if (is_array($decoded)) {
+            return implode(', ', array_filter(array_map(function ($name) {
+                return trim((string) $name);
+            }, $decoded)));
+        }
+
+        return trim((string) $stored);
+    };
+    $marketedText = $partyNames([old('marketed_by_id', optional($b)->marketed_by_id)], old('marketed_by_name', optional($b)->marketed_by_name));
+    $importText = $partyNames($selectedImport, old('import_by_names', optional($b)->import_by_names));
+    $mfgText = $partyNames($selectedMfg, old('manufactured_by_names', optional($b)->manufactured_by_names));
+    $partyLocked = function ($flag, $hasValue) use ($isEdit) {
+        $posted = old($flag);
+        if ($posted !== null) {
+            return (string) $posted === '1';
+        }
+
+        return $isEdit && $hasValue;
+    };
+    $marketedLocked = $partyLocked('marketed_by_locked', $marketedText !== '');
+    $importLocked = $partyLocked('import_by_locked', $importText !== '');
+    $mfgLocked = $partyLocked('manufactured_by_locked', $mfgText !== '');
+    $showPartyChoice = $isEdit || old('product_stock_id') || old('product_id');
 @endphp
 
 <div class="card bm-add-card">
@@ -95,13 +140,13 @@
         <input type="hidden" name="manufactured_by_names" id="manufactured_by_names" value="{{ old('manufactured_by_names', optional($b)->manufactured_by_names) }}">
         <input type="hidden" name="purchase_date" id="purchase_date" value="{{ old('purchase_date') }}">
 
-        <div class="table-responsive mb-3">
+        <div class="table-responsive bm-header-wrap mb-3">
             <table class="table table-bordered table-sm mb-0 bm-header-grid">
                 <thead>
                     <tr>
-                        <th style="width:26%">{{ translate('Search By SKU - Product Name / Brand Name With Full Variant') }} <span class="text-danger">*</span></th>
+                        <th style="width:24%">{{ translate('Search By SKU - Product Name / Brand Name With Full Variant') }} <span class="text-danger">*</span></th>
                         <th style="width:10%">{{ translate('SKU') }}</th>
-                        <th style="width:14%">{{ translate('Full Detailed Variant') }}</th>
+                        <th style="width:16%">{{ translate('Full Detailed Variant') }}</th>
                         <th style="width:12%">{{ translate('Marketed By') }}</th>
                         <th style="width:14%">{{ translate('Import By') }}</th>
                         <th style="width:14%">{{ translate('Mfg. By') }}</th>
@@ -116,15 +161,40 @@
                             <small class="text-muted d-block mt-1" id="drug_name_label">{{ old('drug_name', optional($b)->drug_name) }}</small>
                         </td>
                         <td><input type="text" class="form-control form-control-sm" id="sku_display" value="{{ optional($stock)->sku }}" readonly></td>
-                        <td><input type="text" class="form-control form-control-sm" id="variant_display" value="{{ optional($stock)->variant }}" readonly></td>
-                        <td><input type="text" class="form-control form-control-sm" id="marketed_by_name" name="marketed_by_name" value="{{ old('marketed_by_name', optional($b)->marketed_by_name) }}" readonly></td>
-                        <td>
-                            <select class="form-control form-control-sm" name="import_by_ids[]" id="import_by_ids" multiple>
+                        <td><textarea class="form-control form-control-sm" id="variant_display" rows="2" readonly>{{ $variantLabel }}</textarea></td>
+                        <td class="bm-party" data-role="marketed">
+                            <input type="hidden" name="marketed_by_locked" class="bm-party-locked" value="{{ $marketedLocked ? '1' : '0' }}">
+                            <input type="hidden" name="marketed_by_name" id="marketed_by_name" value="{{ $marketedText }}">
+                            <input type="text" class="form-control form-control-sm bm-party-text" id="marketed_by_text" value="{{ $marketedText }}" readonly @unless($showPartyChoice && $marketedLocked) hidden @endunless>
+                            <select class="form-control form-control-sm bm-party-select" id="marketed_by_select" @unless($showPartyChoice && !$marketedLocked) hidden @endunless>
+                                {!! $companyOptions(old('marketed_by_id', optional($b)->marketed_by_id)) !!}
+                            </select>
+                        </td>
+                        <td class="bm-party" data-role="import">
+                            <input type="hidden" name="import_by_locked" class="bm-party-locked" value="{{ $importLocked ? '1' : '0' }}">
+                            <textarea class="form-control form-control-sm bm-party-text" id="import_by_text" rows="2" readonly @unless($showPartyChoice && $importLocked) hidden @endunless>{{ $importText }}</textarea>
+                            <div class="bm-party-id-hiddens">
+                                @if ($importLocked)
+                                    @foreach ($selectedImport as $importId)
+                                        <input type="hidden" name="import_by_ids[]" value="{{ $importId }}">
+                                    @endforeach
+                                @endif
+                            </div>
+                            <select class="form-control form-control-sm bm-party-select" name="import_by_ids[]" id="import_by_ids" multiple @if($importLocked) disabled @endif @unless($showPartyChoice && !$importLocked) hidden @endunless>
                                 {!! $companyOptions($selectedImport->all()) !!}
                             </select>
                         </td>
-                        <td>
-                            <select class="form-control form-control-sm" name="manufactured_by_ids[]" id="manufactured_by_ids" multiple>
+                        <td class="bm-party" data-role="manufactured">
+                            <input type="hidden" name="manufactured_by_locked" class="bm-party-locked" value="{{ $mfgLocked ? '1' : '0' }}">
+                            <textarea class="form-control form-control-sm bm-party-text" id="manufactured_by_text" rows="2" readonly @unless($showPartyChoice && $mfgLocked) hidden @endunless>{{ $mfgText }}</textarea>
+                            <div class="bm-party-id-hiddens">
+                                @if ($mfgLocked)
+                                    @foreach ($selectedMfg as $mfgId)
+                                        <input type="hidden" name="manufactured_by_ids[]" value="{{ $mfgId }}">
+                                    @endforeach
+                                @endif
+                            </div>
+                            <select class="form-control form-control-sm bm-party-select" name="manufactured_by_ids[]" id="manufactured_by_ids" multiple @if($mfgLocked) disabled @endif @unless($showPartyChoice && !$mfgLocked) hidden @endunless>
                                 {!! $companyOptions($selectedMfg->all()) !!}
                             </select>
                         </td>
@@ -303,8 +373,13 @@
     .bm-header-grid th { background: #f3f6f9; font-size: 12px; white-space: normal; vertical-align: bottom; }
     .bm-header-grid td { vertical-align: top; }
     .bm-header-grid select[multiple] { min-height: 78px; }
+    .table-responsive.bm-header-wrap { overflow: visible; }
     .bm-sku-cell { position: relative; }
-    #sku_results { position: absolute; z-index: 30; left: 8px; right: 8px; max-height: 220px; overflow: auto; }
+    #sku_results { position: absolute; z-index: 30; left: 0; right: 0; max-height: 260px; overflow: auto; background: #fff; border: 1px solid #e3e6ea; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    #sku_results .list-group-item { white-space: normal; line-height: 1.35; }
+    #variant_display { min-height: 52px; resize: vertical; }
+    .bm-party-text, .bm-party-select { width: 100%; }
+    .bm-party-text[hidden], .bm-party-select[hidden] { display: none !important; }
     .bm-live-lot { border: 1px solid #e3e6ea; margin-bottom: 14px; background: #fff; }
     .bm-live-lot table { margin-bottom: 0; }
     .bm-live-lot-values { background: #fafbfc; border-top: 1px solid #e3e6ea; }

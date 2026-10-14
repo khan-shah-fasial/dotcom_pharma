@@ -41,6 +41,22 @@ class TaxMaster extends Model
         'variant' => 'All Variant',
     ];
 
+    public const APPLIED_TYPES = [
+        'category' => 'Category',
+        'group' => 'Group',
+        'sku' => 'SKU',
+        'product' => 'Product',
+        'variant' => 'Variant',
+    ];
+
+    public const APPLIED_COLUMNS = [
+        'category' => 'applied_on_category',
+        'group' => 'applied_on_group',
+        'sku' => 'applied_on_sku',
+        'product' => 'applied_on_product',
+        'variant' => 'applied_on_variant',
+    ];
+
     public const UT_COLUMNS = [
         'purchase_ut_cgst',
         'purchase_utgst',
@@ -163,6 +179,383 @@ class TaxMaster extends Model
         } catch (\Throwable $e) {
             return $ready = false;
         }
+    }
+
+    public static function appliedStorageLimit(): int
+    {
+        static $limit = null;
+        if ($limit !== null) {
+            return $limit;
+        }
+
+        try {
+            if (!self::tableReady()) {
+                return $limit = 60000;
+            }
+
+            foreach (Schema::getColumns('tax_masters') as $column) {
+                if (($column['name'] ?? '') !== 'applied_on_category') {
+                    continue;
+                }
+                $type = strtolower((string) ($column['type_name'] ?? $column['type'] ?? ''));
+                if (str_contains($type, 'text')) {
+                    return $limit = 60000;
+                }
+
+                return $limit = 255;
+            }
+        } catch (\Throwable $e) {
+            return $limit = 255;
+        }
+
+        return $limit = 255;
+    }
+
+    public static function appliedItems($value): array
+    {
+        $text = trim((string) ($value ?? ''));
+        if ($text === '' || in_array($text, self::APPLIED_ALL, true)) {
+            return [];
+        }
+
+        if (str_starts_with($text, '[')) {
+            $decoded = json_decode($text, true);
+            if (is_array($decoded)) {
+                $items = [];
+                $seen = [];
+                foreach ($decoded as $row) {
+                    if (is_array($row)) {
+                        $id = trim((string) ($row['id'] ?? ''));
+                        $label = trim((string) ($row['label'] ?? ''));
+                    } else {
+                        $id = trim((string) $row);
+                        $label = $id;
+                    }
+                    if ($id === '' || isset($seen[$id])) {
+                        continue;
+                    }
+                    $seen[$id] = true;
+                    $items[] = [
+                        'id' => $id,
+                        'label' => $label !== '' ? $label : $id,
+                    ];
+                }
+
+                return $items;
+            }
+        }
+
+        return [['id' => $text, 'label' => $text]];
+    }
+
+    public static function encodeAppliedItems(array $items): ?string
+    {
+        $clean = [];
+        $seen = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                $item = ['id' => $item, 'label' => $item];
+            }
+            $id = trim((string) ($item['id'] ?? ''));
+            if ($id === '' || isset($seen[$id])) {
+                continue;
+            }
+            $seen[$id] = true;
+            $label = trim((string) ($item['label'] ?? ''));
+            $clean[] = [
+                'id' => $id,
+                'label' => $label !== '' ? $label : $id,
+            ];
+        }
+
+        if ($clean === []) {
+            return null;
+        }
+
+        return json_encode($clean, JSON_UNESCAPED_UNICODE);
+    }
+
+    public static function activeAppliedType($tax): string
+    {
+        foreach (['variant', 'sku', 'product', 'group', 'category'] as $type) {
+            $raw = $tax ? $tax->getAttribute(self::APPLIED_COLUMNS[$type]) : null;
+            if (self::appliedItems($raw) !== []) {
+                return $type;
+            }
+        }
+
+        foreach (['category', 'group', 'sku', 'product', 'variant'] as $type) {
+            $raw = trim((string) ($tax ? $tax->getAttribute(self::APPLIED_COLUMNS[$type]) : ''));
+            if ($raw !== '') {
+                return $type;
+            }
+        }
+
+        return 'category';
+    }
+
+    public static function itemsFromTargetIds(string $type, array $ids): array
+    {
+        $clean = [];
+        foreach ($ids as $id) {
+            $id = trim((string) $id);
+            if ($id === '' || isset($clean[$id])) {
+                continue;
+            }
+            $clean[$id] = $id;
+        }
+
+        $labels = self::lookupAppliedLabels($type, array_keys($clean));
+        $items = [];
+        foreach ($clean as $id) {
+            $items[] = [
+                'id' => $id,
+                'label' => $labels[$id] ?? $id,
+            ];
+        }
+
+        return $items;
+    }
+
+    public static function presentAppliedItems(string $type, $raw): array
+    {
+        $items = self::appliedItems($raw);
+        if ($items === [] || !isset(self::APPLIED_COLUMNS[$type])) {
+            return $items;
+        }
+
+        $labels = self::lookupAppliedLabels($type, array_column($items, 'id'));
+        foreach ($items as $index => $item) {
+            if (!empty($labels[$item['id']])) {
+                $items[$index]['label'] = $labels[$item['id']];
+            }
+        }
+
+        return $items;
+    }
+
+    public static function lookupAppliedLabels(string $type, array $ids): array
+    {
+        try {
+            return self::queryAppliedLabels($type, $ids);
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    public static function searchAppliedTargets(string $type, string $query, int $limit = 20): array
+    {
+        try {
+            $query = trim($query);
+            $limit = max(1, min($limit, 30));
+            if (!isset(self::APPLIED_COLUMNS[$type])) {
+                return [];
+            }
+            if ($type === 'group' && !self::groupColumnReady()) {
+                return [];
+            }
+
+            if ($type === 'category') {
+                return self::searchNamedTargets(Category::query(), 'category_translations', $query, $limit);
+            }
+            if ($type === 'group') {
+                $builder = Group::query();
+                if (Schema::hasColumn('groups', 'digital')) {
+                    $builder->where('digital', 0);
+                }
+
+                return self::searchNamedTargets($builder, 'group_translations', $query, $limit);
+            }
+            if ($type === 'product') {
+                return self::searchProductTargets($query, $limit);
+            }
+
+            return self::searchStockTargets($type, $query, $limit);
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    private static function queryAppliedLabels(string $type, array $ids): array
+    {
+        $ids = array_values(array_filter($ids, function ($id) {
+            return ctype_digit((string) $id);
+        }));
+        if ($ids === [] || !isset(self::APPLIED_COLUMNS[$type])) {
+            return [];
+        }
+
+        $labels = [];
+        if ($type === 'category' && Schema::hasTable('categories')) {
+            foreach (Category::query()->whereIn('id', $ids)->get() as $row) {
+                $name = trim((string) $row->getTranslation('name'));
+                if ($name !== '') {
+                    $labels[(string) $row->id] = $name;
+                }
+            }
+        } elseif ($type === 'group' && Schema::hasTable('groups')) {
+            foreach (Group::query()->whereIn('id', $ids)->get() as $row) {
+                $name = trim((string) $row->getTranslation('name'));
+                if ($name !== '') {
+                    $labels[(string) $row->id] = $name;
+                }
+            }
+        } elseif ($type === 'product' && Schema::hasTable('products')) {
+            $products = Product::query()->without(['taxes', 'thumbnail'])->whereIn('id', $ids)->get();
+            foreach ($products as $product) {
+                $name = trim((string) $product->getTranslation('name'));
+                $labels[(string) $product->id] = $name !== '' ? $name : ('#' . $product->id);
+            }
+        } elseif (in_array($type, ['sku', 'variant'], true) && Schema::hasTable('product_stocks')) {
+            $stocks = ProductStock::query()->with('product')->whereIn('id', $ids)->get();
+            self::warmStockVariantLabels($stocks);
+            foreach ($stocks as $stock) {
+                $row = self::stockAppliedRow($stock, $type);
+                if ($row) {
+                    $labels[$row['id']] = $row['label'];
+                }
+            }
+        }
+
+        return $labels;
+    }
+
+    private static function searchNamedTargets($builder, string $relation, string $query, int $limit): array
+    {
+        if ($query !== '') {
+            $like = '%' . $query . '%';
+            $builder->where(function ($nested) use ($like, $relation) {
+                $nested->where('name', 'like', $like)
+                    ->orWhereHas($relation, function ($translation) use ($like) {
+                        $translation->where('name', 'like', $like);
+                    });
+            });
+        }
+
+        return $builder->orderBy('name')->limit($limit)->get()->map(function ($row) {
+            $name = trim((string) $row->getTranslation('name'));
+
+            return [
+                'id' => (string) $row->id,
+                'label' => $name !== '' ? $name : ('#' . $row->id),
+            ];
+        })->all();
+    }
+
+    private static function searchProductTargets(string $query, int $limit): array
+    {
+        if (!Schema::hasTable('products')) {
+            return [];
+        }
+
+        $builder = Product::query()->without(['taxes', 'thumbnail']);
+        if ($query !== '') {
+            $like = '%' . $query . '%';
+            $builder->where(function ($nested) use ($like) {
+                $nested->where('name', 'like', $like)
+                    ->orWhereHas('product_translations', function ($translation) use ($like) {
+                        $translation->where('name', 'like', $like);
+                    });
+            });
+        }
+
+        return $builder->orderBy('name')->limit($limit)->get()->map(function ($product) {
+            $name = trim((string) $product->getTranslation('name'));
+
+            return [
+                'id' => (string) $product->id,
+                'label' => $name !== '' ? $name : ('#' . $product->id),
+            ];
+        })->all();
+    }
+
+    private static function searchStockTargets(string $type, string $query, int $limit): array
+    {
+        if (!Schema::hasTable('product_stocks')) {
+            return [];
+        }
+
+        $builder = ProductStock::query()->with('product');
+        if ($type === 'variant') {
+            $builder->whereNotNull('variant')->where('variant', '!=', '');
+        } else {
+            $builder->whereNotNull('sku')->where('sku', '!=', '');
+        }
+
+        if ($query !== '') {
+            $like = '%' . $query . '%';
+            $builder->where(function ($nested) use ($like, $type) {
+                if ($type === 'variant') {
+                    $nested->where('variant', 'like', $like)->orWhere('sku', 'like', $like);
+                } else {
+                    $nested->where('sku', 'like', $like);
+                }
+                $nested->orWhereHas('product', function ($product) use ($like) {
+                    $product->where('name', 'like', $like);
+                });
+            });
+        }
+
+        $stocks = $builder->orderBy('id', 'desc')->limit($limit)->get();
+        self::warmStockVariantLabels($stocks);
+
+        $rows = [];
+        foreach ($stocks as $stock) {
+            $row = self::stockAppliedRow($stock, $type);
+            if ($row) {
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
+    }
+
+    private static function warmStockVariantLabels($stocks): void
+    {
+        $parts = [];
+        foreach ($stocks as $stock) {
+            foreach (preg_split('/[-_\/]+/', trim((string) $stock->variant)) ?: [] as $part) {
+                $part = trim($part);
+                if ($part !== '') {
+                    $parts[] = $part;
+                }
+            }
+        }
+        if ($parts !== []) {
+            ProductStock::warmVariantLabelCache($parts);
+        }
+    }
+
+    private static function stockAppliedRow(ProductStock $stock, string $type): ?array
+    {
+        $productName = $stock->product ? trim((string) $stock->product->getTranslation('name')) : '';
+        $sku = trim((string) $stock->sku);
+        $variant = trim($stock->expandedVariantLabel());
+        if ($variant === '') {
+            $variant = trim((string) $stock->variant);
+        }
+
+        if ($type === 'sku') {
+            if ($sku === '') {
+                return null;
+            }
+            $label = $productName !== '' ? $sku . ' — ' . $productName : $sku;
+        } elseif ($type === 'variant') {
+            if ($variant === '') {
+                return null;
+            }
+            $label = $productName !== '' ? $productName . ' — ' . $variant : $variant;
+            if ($sku !== '') {
+                $label .= ' (' . $sku . ')';
+            }
+        } else {
+            return null;
+        }
+
+        return [
+            'id' => (string) $stock->id,
+            'label' => $label,
+        ];
     }
 
     public static function hsnOptions()
@@ -397,20 +790,40 @@ class TaxMaster extends Model
             $description = mb_substr($description, 0, 255);
         }
 
+        $appliedType = trim((string) ($input['applied_on_type'] ?? ''));
+        if ($appliedType !== '' && isset(self::APPLIED_COLUMNS[$appliedType])) {
+            $targets = $input['applied_targets'] ?? [];
+            if (!is_array($targets)) {
+                $targets = ($targets === null || $targets === '') ? [] : [$targets];
+            }
+            $encoded = self::encodeAppliedItems(self::itemsFromTargetIds($appliedType, $targets));
+            $applied = [];
+            foreach (self::APPLIED_COLUMNS as $key => $column) {
+                if ($key === $appliedType) {
+                    $applied[$column] = $encoded ?? self::APPLIED_ALL[$key];
+                } else {
+                    $applied[$column] = null;
+                }
+            }
+        } else {
+            $applied = [
+                'applied_on_category' => $blank($input['applied_on_category'] ?? null),
+                'applied_on_group' => $blank($input['applied_on_group'] ?? null),
+                'applied_on_sku' => $blank($input['applied_on_sku'] ?? null),
+                'applied_on_product' => $blank($input['applied_on_product'] ?? null),
+                'applied_on_variant' => $blank($input['applied_on_variant'] ?? null),
+            ];
+        }
+
         return array_merge([
             'kind' => $kind,
             'tax_code' => $taxCode,
             'description' => $description === '' ? null : $description,
             'hsn_code' => $hsn,
             'hs_code' => $hs,
-            'applied_on_category' => $blank($input['applied_on_category'] ?? null),
-            'applied_on_group' => $blank($input['applied_on_group'] ?? null),
-            'applied_on_sku' => $blank($input['applied_on_sku'] ?? null),
-            'applied_on_product' => $blank($input['applied_on_product'] ?? null),
-            'applied_on_variant' => $blank($input['applied_on_variant'] ?? null),
             'sale_same_as_purchase' => $same,
             'status' => $status,
-        ], $purchase, $sale);
+        ], $applied, $purchase, $sale);
     }
 
     public function purchaseTotal(): float
@@ -468,9 +881,18 @@ class TaxMaster extends Model
         }
         foreach ($labels as $column => $label) {
             $value = trim((string) ($this->getAttribute($column) ?? ''));
-            if ($value !== '') {
-                $parts[] = $label . ': ' . $value;
+            if ($value === '') {
+                continue;
             }
+            $items = self::appliedItems($value);
+            if ($items !== []) {
+                $names = array_map(function ($item) {
+                    return $item['label'];
+                }, $items);
+                $parts[] = $label . ': ' . implode(', ', $names);
+                continue;
+            }
+            $parts[] = $label . ': ' . $value;
         }
 
         return $parts ? implode(' / ', $parts) : '—';
@@ -576,31 +998,45 @@ class TaxMaster extends Model
         return $query;
     }
 
-    public static function suggestTaxCode($taxPercent, $ignoreId = null): string
+    public static function findForRate($kind, $taxPercent, $ignoreId = null): ?self
     {
-        $base = self::taxCodeBase($taxPercent);
-        if (!self::tableReady()) {
-            return $base;
+        $kind = (string) $kind;
+        if (!self::tableReady() || !array_key_exists($kind, self::KINDS)) {
+            return null;
         }
 
-        $candidate = $base;
-        $suffix = 2;
-        while (
-            self::query()
-                ->where('tax_code', $candidate)
-                ->when($ignoreId, function ($query) use ($ignoreId) {
-                    $query->where('id', '!=', $ignoreId);
-                })
-                ->exists()
-        ) {
-            $candidate = $base . '-' . $suffix;
-            $suffix++;
-            if ($suffix > 100) {
-                break;
-            }
+        $target = self::toDecimal($taxPercent);
+        $query = self::query()
+            ->where('kind', $kind)
+            ->whereBetween('purchase_tax', [$target - 0.00005, $target + 0.00005])
+            ->orderBy('id');
+
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
         }
 
-        return $candidate;
+        $rows = $query->get();
+        if ($rows->isEmpty()) {
+            return null;
+        }
+
+        $base = self::taxCodeBase($target);
+        $canonical = $rows->first(function ($row) use ($base) {
+            return strtoupper((string) $row->tax_code) === $base;
+        });
+
+        return $canonical ?: $rows->first();
+    }
+
+    public static function suggestTaxCode($taxPercent, $ignoreId = null, $kind = 'taxable'): string
+    {
+        $kind = array_key_exists((string) $kind, self::KINDS) ? (string) $kind : 'taxable';
+        $existing = self::findForRate($kind, $taxPercent, $ignoreId);
+        if ($existing) {
+            return (string) $existing->tax_code;
+        }
+
+        return self::taxCodeBase($taxPercent);
     }
 
     public static function searchHsnDirectory(string $query, int $limit = 15): array

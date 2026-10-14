@@ -175,8 +175,72 @@ class TaxMasterCalculationTest extends TestCase
         $this->assertSame('3004', $normalized['hsn_code']);
         $this->assertSame('3004.90', $normalized['hs_code']);
         $this->assertSame('Tablets', $normalized['applied_on_category']);
+        $this->assertSame('SKU-1', $normalized['applied_on_sku']);
         $this->assertNotSame('', (string) $normalized['description']);
         $this->assertStringContainsString('MEDICAMENTS', (string) $normalized['description']);
+    }
+
+    public function test_applied_on_type_keeps_only_that_kind(): void
+    {
+        $normalized = TaxMaster::normalize([
+            'kind' => 'taxable',
+            'tax_code' => 'G5',
+            'applied_on_type' => 'category',
+            'applied_targets' => ['4', '9', '4'],
+            'applied_on_sku' => 'SKU-1',
+            'applied_on_product' => 'Dotistrol',
+            'purchase_tax' => 5,
+            'sale_same_as_purchase' => 1,
+        ]);
+
+        $items = TaxMaster::appliedItems($normalized['applied_on_category']);
+        $this->assertSame(['4', '9'], array_column($items, 'id'));
+        $this->assertNull($normalized['applied_on_group']);
+        $this->assertNull($normalized['applied_on_sku']);
+        $this->assertNull($normalized['applied_on_product']);
+        $this->assertNull($normalized['applied_on_variant']);
+    }
+
+    public function test_empty_applied_targets_mean_all_of_that_kind(): void
+    {
+        $normalized = TaxMaster::normalize([
+            'kind' => 'taxable',
+            'tax_code' => 'G5',
+            'applied_on_type' => 'product',
+            'applied_targets' => [],
+            'purchase_tax' => 5,
+            'sale_same_as_purchase' => 1,
+        ]);
+
+        $this->assertSame('All Product', $normalized['applied_on_product']);
+        $this->assertNull($normalized['applied_on_category']);
+        $this->assertSame([], TaxMaster::appliedItems('All Product'));
+    }
+
+    public function test_applied_items_round_trip_and_summary(): void
+    {
+        $encoded = TaxMaster::encodeAppliedItems([
+            ['id' => '3', 'label' => 'Tablets'],
+            ['id' => '3', 'label' => 'Duplicate'],
+            ['id' => '8', 'label' => 'Capsules'],
+        ]);
+        $items = TaxMaster::appliedItems($encoded);
+        $this->assertCount(2, $items);
+        $this->assertSame('Tablets', $items[0]['label']);
+        $this->assertSame('Capsules', $items[1]['label']);
+        $this->assertSame([['id' => 'Legacy', 'label' => 'Legacy']], TaxMaster::appliedItems('Legacy'));
+
+        $tax = new TaxMaster();
+        $tax->applied_on_category = 'All Category';
+        $tax->applied_on_product = $encoded;
+        $tax->applied_on_variant = json_encode([
+            ['id' => '15', 'label' => 'Dotistrol — 10ml'],
+        ]);
+
+        $this->assertSame('variant', TaxMaster::activeAppliedType($tax));
+        $summary = $tax->appliedOnSummary();
+        $this->assertStringContainsString('Variant: Dotistrol — 10ml', $summary);
+        $this->assertStringContainsString('Product Name: Tablets, Capsules', $summary);
     }
 
     public function test_hs_code_and_tax_code_base(): void

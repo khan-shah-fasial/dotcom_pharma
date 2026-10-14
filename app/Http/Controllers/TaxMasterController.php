@@ -3,12 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TaxMasterRequest;
-use App\Models\Category;
-use App\Models\Group;
 use App\Models\ProductStock;
 use App\Models\TaxMaster;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 
 class TaxMasterController extends Controller
 {
@@ -17,7 +14,7 @@ class TaxMasterController extends Controller
         $this->middleware(['permission:view_all_tax_masters'])->only(['index']);
         $this->middleware(['permission:add_tax_master'])->only(['create', 'store']);
         $this->middleware(['permission:edit_tax_master'])->only(['edit', 'update', 'updateStatus']);
-        $this->middleware(['permission:add_tax_master|edit_tax_master'])->only(['hsnSearch', 'hsnChapterSearch', 'byHsn', 'lookupStocks', 'suggestCode']);
+        $this->middleware(['permission:add_tax_master|edit_tax_master'])->only(['hsnSearch', 'hsnChapterSearch', 'byHsn', 'lookupStocks', 'lookupTargets', 'suggestCode']);
         $this->middleware(['permission:delete_tax_master'])->only(['destroy']);
     }
 
@@ -91,11 +88,27 @@ class TaxMasterController extends Controller
             return back()->withInput();
         }
 
-        $tax = new TaxMaster();
-        $tax->fill($this->payloadFromRequest($request));
-        $tax->save();
+        $payload = $this->payloadFromRequest($request);
+        $tax = TaxMaster::findForRate($payload['kind'] ?? '', $payload['purchase_tax'] ?? 0);
+        $reused = (bool) $tax;
+        if (!$tax) {
+            $tax = new TaxMaster();
+        }
+        $tax->fill($payload);
+        try {
+            $tax->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ((string) $e->getCode() === '23000') {
+                flash(translate('This tax code needs its own Tax ID. Run sqlupdates/tax_master_code_kind.sql, then save again.'))->error();
 
-        flash(translate('Tax Master saved successfully.'))->success();
+                return back()->withInput();
+            }
+            throw $e;
+        }
+
+        flash(translate($reused
+            ? 'This tax type and tax % already exist, so that Tax ID was updated.'
+            : 'Tax Master saved successfully.'))->success();
 
         return redirect()->route('tax_masters.index');
     }
@@ -221,15 +234,28 @@ class TaxMasterController extends Controller
         return response()->json($rows);
     }
 
+    public function lookupTargets(Request $request)
+    {
+        $type = (string) $request->input('type', 'category');
+        $query = trim((string) $request->input('q'));
+
+        return response()->json(TaxMaster::searchAppliedTargets($type, $query));
+    }
+
     public function suggestCode(Request $request)
     {
         $ignoreId = $request->input('ignore_id');
+        $kind = (string) $request->input('kind', 'taxable');
+        if (!array_key_exists($kind, TaxMaster::KINDS)) {
+            $kind = 'taxable';
+        }
+        $tax = TaxMaster::toDecimal($request->input('tax'));
+        $ignore = $ignoreId !== null && $ignoreId !== '' ? (int) $ignoreId : null;
+        $existing = TaxMaster::findForRate($kind, $tax, $ignore);
 
         return response()->json([
-            'tax_code' => TaxMaster::suggestTaxCode(
-                TaxMaster::toDecimal($request->input('tax')),
-                $ignoreId !== null && $ignoreId !== '' ? (int) $ignoreId : null
-            ),
+            'tax_code' => TaxMaster::suggestTaxCode($tax, $ignore, $kind),
+            'existing' => (bool) $existing,
         ]);
     }
 
@@ -264,32 +290,11 @@ class TaxMasterController extends Controller
 
     private function formData($tax): array
     {
-        $categories = collect();
-        $groups = collect();
-        $groupReady = TaxMaster::groupColumnReady();
-        try {
-            if (Schema::hasTable('categories')) {
-                $categories = Category::query()->orderBy('name')->get(['id', 'name']);
-            }
-            if ($groupReady && Schema::hasTable('groups')) {
-                $groupQuery = Group::query()->orderBy('name');
-                if (Schema::hasColumn('groups', 'digital')) {
-                    $groupQuery->where('digital', 0);
-                }
-                $groups = $groupQuery->get(['id', 'name']);
-            }
-        } catch (\Throwable $e) {
-            $categories = collect();
-            $groups = collect();
-        }
-
         return [
             'tax' => $tax,
             'hsnReady' => TaxMaster::hsnColumnsReady(),
             'utReady' => TaxMaster::utColumnsReady(),
-            'groupReady' => $groupReady,
-            'categories' => $categories,
-            'groups' => $groups,
+            'groupReady' => TaxMaster::groupColumnReady(),
         ];
     }
 }

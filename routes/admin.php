@@ -570,6 +570,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/tax-masters/hsn-chapters', 'hsnChapterSearch')->name('tax_masters.hsn_chapters');
         Route::get('/tax-masters/by-hsn', 'byHsn')->name('tax_masters.by_hsn');
         Route::get('/tax-masters/lookup/stocks', 'lookupStocks')->name('tax_masters.lookup.stocks');
+        Route::get('/tax-masters/lookup/targets', 'lookupTargets')->name('tax_masters.lookup.targets');
         Route::get('/tax-masters/suggest-code', 'suggestCode')->name('tax_masters.suggest_code');
         Route::get('/tax-masters/create', 'create')->name('tax_masters.create');
         Route::post('/tax-masters', 'store')->name('tax_masters.store');

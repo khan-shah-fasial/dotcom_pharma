@@ -11,32 +11,75 @@
     $hsnReady = $hsnReady ?? false;
     $utReady = $utReady ?? false;
     $groupReady = $groupReady ?? false;
-    $categories = $categories ?? collect();
-    $groups = $groups ?? collect();
-    $all = \App\Models\TaxMaster::APPLIED_ALL;
     $rate = function ($field, $default = 0) use ($t) {
         $value = old($field, optional($t)->$field ?? $default);
         return \App\Models\TaxMaster::formatRate($value);
     };
-    $appliedValue = function ($field, $fallback) use ($t) {
-        $value = old($field, optional($t)->$field);
-        if ($value === null || $value === '') {
-            return $fallback;
-        }
-        return $value;
-    };
     $taxPercent = $rate('purchase_tax');
-    $categoryValue = $appliedValue('applied_on_category', $all['category']);
-    $groupValue = $appliedValue('applied_on_group', $all['group']);
-    $skuValue = $appliedValue('applied_on_sku', $all['sku']);
-    $productValue = $appliedValue('applied_on_product', $all['product']);
-    $variantValue = $appliedValue('applied_on_variant', $all['variant']);
-    $categoryNames = $categories->map(function ($category) {
-        return $category->getTranslation('name');
-    })->all();
-    $groupNames = $groups->map(function ($group) {
-        return $group->getTranslation('name');
-    })->all();
+    $appliedTypeOptions = [];
+    foreach (\App\Models\TaxMaster::APPLIED_TYPES as $key => $label) {
+        if ($key === 'group' && empty($groupReady)) {
+            continue;
+        }
+        $appliedTypeOptions[$key] = $label;
+    }
+    $appliedType = old('applied_on_type');
+    if (!is_string($appliedType) || !isset($appliedTypeOptions[$appliedType])) {
+        $appliedType = $t ? \App\Models\TaxMaster::activeAppliedType($t) : 'category';
+        if (!isset($appliedTypeOptions[$appliedType])) {
+            $appliedType = array_key_first($appliedTypeOptions) ?: 'category';
+        }
+    }
+    $postedTargets = old('applied_targets');
+    if (is_array($postedTargets)) {
+        $appliedSelected = \App\Models\TaxMaster::itemsFromTargetIds($appliedType, $postedTargets);
+    } else {
+        $appliedColumn = \App\Models\TaxMaster::APPLIED_COLUMNS[$appliedType] ?? 'applied_on_category';
+        $appliedSelected = $t ? \App\Models\TaxMaster::presentAppliedItems($appliedType, $t->getAttribute($appliedColumn)) : [];
+    }
+    $legacyApplied = [];
+    if ($t && !is_array($postedTargets)) {
+        foreach (\App\Models\TaxMaster::APPLIED_COLUMNS as $key => $column) {
+            if (\App\Models\TaxMaster::appliedItems($t->getAttribute($column)) !== []) {
+                $legacyApplied[] = $key;
+            }
+        }
+    }
+    $appliedPlaceholders = [
+        'category' => translate('Search categories'),
+        'group' => translate('Search groups'),
+        'sku' => translate('Search SKU'),
+        'product' => translate('Search products'),
+        'variant' => translate('Search variants'),
+    ];
+    $appliedHints = [
+        'category' => translate('Categories only. You can select several categories, and nothing else.'),
+        'group' => translate('Groups only. You can select several groups, and nothing else.'),
+        'sku' => translate('SKUs only. You can select several SKUs, and nothing else.'),
+        'product' => translate('Whole products only. You can select several products. Variants are not chosen here.'),
+        'variant' => translate('Variants only, from any product. You can select several variants, and nothing else.'),
+    ];
+    $appliedEmptyNotes = [
+        'category' => translate('None selected, so this tax applies to every category.'),
+        'group' => translate('None selected, so this tax applies to every group.'),
+        'sku' => translate('None selected, so this tax applies to every SKU.'),
+        'product' => translate('None selected, so this tax applies to every product.'),
+        'variant' => translate('None selected, so this tax applies to every variant.'),
+    ];
+    $appliedLabels = [];
+    foreach ($appliedTypeOptions as $key => $label) {
+        $appliedLabels[$key] = translate($label);
+    }
+    $appliedConfig = [
+        'type' => $appliedType,
+        'selected' => $appliedSelected,
+        'placeholders' => $appliedPlaceholders,
+        'hints' => $appliedHints,
+        'emptyNotes' => $appliedEmptyNotes,
+        'labels' => $appliedLabels,
+        'lookupUrl' => route('tax_masters.lookup.targets'),
+        'none' => translate('No matches'),
+    ];
 @endphp
 
 <div class="card">
@@ -118,6 +161,7 @@
                         </td>
                         <td>
                             <input type="text" name="tax_code" id="tax_code" class="form-control form-control-sm @error('tax_code') is-invalid @enderror" value="{{ old('tax_code', optional($t)->tax_code) }}" maxlength="20" placeholder="G5" data-auto="{{ $t || old('tax_code') ? '0' : '1' }}" data-ignore-id="{{ optional($t)->id }}">
+                            <small id="tax-code-existing" class="text-muted d-none">{{ translate('This tax type and tax % already exist. Saving updates that Tax ID. A different tax type keeps this code and gets a new Tax ID.') }}</small>
                         </td>
                         <td>
                             <textarea name="description" id="description" class="form-control form-control-sm tm-description" maxlength="255" rows="3">{{ old('description', optional($t)->description) }}</textarea>
@@ -230,91 +274,48 @@
         <small class="text-muted d-block mb-3">{{ translate('State CGST and SGST split Tax % in half. IGST copies Tax %. UT CGST and UTGST start as the same split and stay editable.') }}</small>
 
         <h6 class="mt-2 mb-3">{{ translate('Applied On') }}</h6>
-        <div class="table-responsive mb-3 tm-applied-wrap">
-            <table class="table table-bordered table-sm mb-0 tm-identity-grid tm-applied-grid">
-                <thead>
-                    <tr>
-                        <th>{{ translate('Category') }}</th>
-                        <th>{{ translate('Group') }}</th>
-                        <th>{{ translate('SKU') }}</th>
-                        <th>{{ translate('Product Name') }}</th>
-                        <th>{{ translate('Variant') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <select name="applied_on_category" id="applied_on_category" class="form-control form-control-sm">
-                                <option value="{{ $all['category'] }}" @selected($categoryValue === $all['category'])>{{ translate('All Category') }}</option>
-                                @foreach ($categories as $category)
-                                    @php $categoryName = $category->getTranslation('name'); @endphp
-                                    <option value="{{ $categoryName }}" @selected($categoryValue === $categoryName)>{{ $categoryName }}</option>
-                                @endforeach
-                                @if ($categoryValue !== $all['category'] && !in_array($categoryValue, $categoryNames, true))
-                                    <option value="{{ $categoryValue }}" selected>{{ $categoryValue }}</option>
-                                @endif
-                            </select>
-                        </td>
-                        <td>
-                            @if (!empty($groupReady))
-                                <select name="applied_on_group" id="applied_on_group" class="form-control form-control-sm">
-                                    <option value="{{ $all['group'] }}" @selected($groupValue === $all['group'])>{{ translate('All Group') }}</option>
-                                    @foreach ($groups as $group)
-                                        @php $groupName = $group->getTranslation('name'); @endphp
-                                        <option value="{{ $groupName }}" @selected($groupValue === $groupName)>{{ $groupName }}</option>
-                                    @endforeach
-                                    @if ($groupValue !== $all['group'] && !in_array($groupValue, $groupNames, true))
-                                        <option value="{{ $groupValue }}" selected>{{ $groupValue }}</option>
-                                    @endif
-                                </select>
-                            @else
-                                <input type="text" class="form-control form-control-sm" value="{{ translate('All Group') }}" readonly>
-                            @endif
-                        </td>
-                        <td>
-                            <div class="tm-combo tm-hsn-wrap">
-                                <select name="applied_on_sku" id="applied_on_sku" class="tm-combo-select" tabindex="-1" aria-hidden="true">
-                                    <option value="{{ $all['sku'] }}" @selected($skuValue === $all['sku'])>{{ translate('All SKU') }}</option>
-                                    @if ($skuValue !== $all['sku'])
-                                        <option value="{{ $skuValue }}" selected>{{ $skuValue }}</option>
-                                    @endif
-                                </select>
-                                <input type="text" class="form-control form-control-sm tm-combo-input" data-mode="sku" data-for="applied_on_sku" placeholder="{{ translate('All SKU') }}" autocomplete="off">
-                                <button type="button" class="tm-combo-caret" tabindex="-1" aria-label="{{ translate('SKU') }}"></button>
-                                <div id="applied-sku-results" class="tm-hsn-results tm-stock-results" hidden></div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="tm-combo tm-hsn-wrap">
-                                <select name="applied_on_product" id="applied_on_product" class="tm-combo-select" tabindex="-1" aria-hidden="true">
-                                    <option value="{{ $all['product'] }}" @selected($productValue === $all['product'])>{{ translate('All Product') }}</option>
-                                    @if ($productValue !== $all['product'])
-                                        <option value="{{ $productValue }}" selected>{{ $productValue }}</option>
-                                    @endif
-                                </select>
-                                <input type="text" class="form-control form-control-sm tm-combo-input" data-mode="product" data-for="applied_on_product" placeholder="{{ translate('All Product') }}" autocomplete="off">
-                                <button type="button" class="tm-combo-caret" tabindex="-1" aria-label="{{ translate('Product Name') }}"></button>
-                                <div id="applied-product-results" class="tm-hsn-results tm-stock-results" hidden></div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="tm-combo tm-hsn-wrap">
-                                <select name="applied_on_variant" id="applied_on_variant" class="tm-combo-select" tabindex="-1" aria-hidden="true">
-                                    <option value="{{ $all['variant'] }}" @selected($variantValue === $all['variant'])>{{ translate('All Variant') }}</option>
-                                    @if ($variantValue !== $all['variant'])
-                                        <option value="{{ $variantValue }}" selected>{{ $variantValue }}</option>
-                                    @endif
-                                </select>
-                                <input type="text" class="form-control form-control-sm tm-combo-input" data-mode="variant" data-for="applied_on_variant" placeholder="{{ translate('All Variant') }}" autocomplete="off">
-                                <button type="button" class="tm-combo-caret" tabindex="-1" aria-label="{{ translate('Variant') }}"></button>
-                                <div id="applied-variant-results" class="tm-hsn-results tm-stock-results" hidden></div>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <small class="text-muted d-block mt-1">{{ translate('Tax is applied later from the customer territory. International customers use the customer account form. These labels do not change live product tax rows.') }}</small>
+        @if (count($legacyApplied) > 1)
+            <div class="alert alert-warning">
+                {{ translate('This tax was saved against more than one kind. Choose one kind and save. The other kinds will be cleared.') }}
+            </div>
+        @endif
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="applied_on_type">{{ translate('Apply on') }}</label>
+                <select name="applied_on_type" id="applied_on_type" class="form-control form-control-sm">
+                    @foreach ($appliedTypeOptions as $key => $label)
+                        <option value="{{ $key }}" @selected($appliedType === $key)>{{ translate($label) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-9">
+                <label for="applied-search" id="applied-target-label">{{ translate($appliedTypeOptions[$appliedType] ?? 'Category') }}</label>
+                <div class="tm-multi tm-hsn-wrap" id="applied-multi">
+                    <div class="tm-multi-control @error('applied_targets') is-invalid @enderror">
+                        <div id="applied-picks" class="tm-multi-picks">
+                            @foreach ($appliedSelected as $item)
+                                <span class="tm-multi-chip">
+                                    <span>{{ $item['label'] }}</span>
+                                    <button type="button" data-id="{{ $item['id'] }}" aria-label="{{ translate('Remove') }}">&times;</button>
+                                </span>
+                            @endforeach
+                        </div>
+                        <input type="text" id="applied-search" class="tm-multi-input" placeholder="{{ $appliedPlaceholders[$appliedType] ?? translate('Search') }}" autocomplete="off">
+                        <button type="button" class="tm-combo-caret" id="applied-caret" tabindex="-1" aria-label="{{ translate('Applied On') }}"></button>
+                    </div>
+                    <div id="applied-results" class="tm-hsn-results tm-multi-results" hidden></div>
+                    <div id="applied-hidden">
+                        @foreach ($appliedSelected as $item)
+                            <input type="hidden" name="applied_targets[]" value="{{ $item['id'] }}">
+                        @endforeach
+                    </div>
+                </div>
+                <small class="text-muted d-block mt-1" id="applied-hint">{{ $appliedHints[$appliedType] ?? '' }}</small>
+                <small class="text-muted d-block" id="applied-empty-note">{{ count($appliedSelected) ? '' : ($appliedEmptyNotes[$appliedType] ?? '') }}</small>
+            </div>
         </div>
+        <small class="text-muted d-block mb-3">{{ translate('Tax is applied later from the customer territory. International customers use the customer account form. These labels do not change live product tax rows.') }}</small>
+        <script type="application/json" id="tm-applied-config">@json($appliedConfig)</script>
 
         <div class="text-right">
             <button type="submit" class="btn btn-primary">{{ translate('Save') }}</button>
@@ -324,11 +325,54 @@
 <style>
     .tm-identity-grid th, .tm-rate-grid th { background: #f3f6f9; font-size: 12px; white-space: normal; }
     .tm-identity-grid td, .tm-rate-grid td { vertical-align: top; }
-    .tm-identity-wrap.table-responsive, .tm-applied-wrap.table-responsive { overflow: visible; }
-    .tm-applied-grid { table-layout: fixed; width: 100%; }
-    .tm-applied-grid select, .tm-applied-grid input { width: 100%; max-width: 100%; }
-    .tm-combo-select { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-    .tm-combo-input { padding-right: 1.6rem; }
+    .tm-identity-wrap.table-responsive { overflow: visible; }
+    .tm-multi-control {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+        min-height: 34px;
+        border: 1px solid #e2e5ec;
+        border-radius: 4px;
+        padding: 3px 28px 3px 4px;
+        background: #fff;
+        position: relative;
+    }
+    .tm-multi-control.is-invalid { border-color: #dc3545; }
+    .tm-multi-picks { display: contents; }
+    .tm-multi-chip {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        background: #eef3f9;
+        border: 1px solid #d5deea;
+        border-radius: 3px;
+        padding: 1px 2px 1px 6px;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+    .tm-multi-chip span { overflow-wrap: anywhere; }
+    .tm-multi-chip button {
+        border: 0;
+        background: transparent;
+        color: #6c757d;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0 4px;
+    }
+    .tm-multi-input {
+        border: 0 !important;
+        box-shadow: none !important;
+        flex: 1 1 140px;
+        min-width: 140px;
+        height: 24px;
+        padding: 0 4px;
+        background: transparent;
+    }
+    .tm-multi .tm-combo-caret { height: 100%; }
+    .tm-multi-results { top: 100%; margin-top: 2px; }
+    .tm-multi-results button.tm-multi-on { background: #e7f1ff; }
+    .tm-multi-empty { padding: 6px 8px; font-size: 12px; color: #6c757d; }
     .tm-combo-caret {
         position: absolute;
         top: 0;

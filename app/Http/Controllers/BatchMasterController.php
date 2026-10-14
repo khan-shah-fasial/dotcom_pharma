@@ -383,6 +383,51 @@ class BatchMasterController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    private function warmStockVariantLabels($stocks): void
+    {
+        $allParts = [];
+        foreach ($stocks as $stock) {
+            foreach (preg_split('/[-_\/]+/', trim((string) $stock->variant)) ?: [] as $part) {
+                $part = trim($part);
+                if ($part !== '') {
+                    $allParts[] = $part;
+                }
+            }
+        }
+        ProductStock::warmVariantLabelCache($allParts);
+    }
+
+    private function stockLookupPayload(ProductStock $stock): array
+    {
+        $product = $stock->product;
+        $productName = $product ? $product->getTranslation('name') : '';
+        $brand = ($product && $product->brand) ? (string) $product->brand->getTranslation('name') : '';
+        $expanded = $stock->expandedVariantLabel();
+        $variant = $expanded !== '' ? $expanded : trim((string) $stock->variant);
+        $parts = array_values(array_filter([
+            $productName,
+            $brand,
+            $stock->sku ? (string) $stock->sku : '',
+            $variant,
+        ], function ($part) {
+            return $part !== null && $part !== '';
+        }));
+        if (!$parts) {
+            $parts[] = '#' . $stock->id;
+        }
+
+        return [
+            'id' => $stock->id,
+            'product_id' => $stock->product_id,
+            'sku' => $stock->sku,
+            'variant' => $variant,
+            'expanded_variant' => $variant,
+            'product_name' => $productName,
+            'brand' => $brand,
+            'label' => implode(' / ', $parts),
+        ];
+    }
+
     public function lookupStocks(Request $request)
     {
         $query = trim((string) $request->input('q'));
@@ -407,29 +452,24 @@ class BatchMasterController extends Controller
             ->limit(20)
             ->get();
 
-        return response()->json($stocks->map(function (ProductStock $stock) {
-            $productName = $stock->product ? $stock->product->getTranslation('name') : '';
+        $this->warmStockVariantLabels($stocks);
 
-            return [
-                'id' => $stock->id,
-                'product_id' => $stock->product_id,
-                'sku' => $stock->sku,
-                'variant' => $stock->variant,
-                'product_name' => $productName,
-                'label' => trim($productName . ' / ' . ($stock->sku ?: $stock->variant ?: ('#' . $stock->id))),
-            ];
+        return response()->json($stocks->map(function (ProductStock $stock) {
+            return $this->stockLookupPayload($stock);
         })->values());
     }
 
     public function lookupStock(Request $request)
     {
-        $stock = ProductStock::with('product')->find((int) $request->input('product_stock_id'));
+        $stock = ProductStock::with('product.brand')->find((int) $request->input('product_stock_id'));
         if (!$stock) {
             return response()->json(['found' => false]);
         }
 
         $header = BatchMaster::headerFromStock($stock);
-        $productName = $stock->product ? $stock->product->getTranslation('name') : '';
+        $parties = BatchMaster::companyPartiesForStock($stock);
+        $picked = $this->stockLookupPayload($stock);
+        $productName = $picked['product_name'];
         $purchases = BatchMaster::latestPurchasesForSku($stock->sku);
         $latestPurchase = collect($purchases)->sortByDesc(function ($row) {
             $date = BatchMaster::parsePurchaseDate($row->invoice_date ?: $row->order_date);
@@ -476,17 +516,21 @@ class BatchMasterController extends Controller
             'found' => true,
             'product_id' => $stock->product_id,
             'product_stock_id' => $stock->id,
-            'sku' => $stock->sku,
-            'variant' => $stock->variant,
+            'sku' => $picked['sku'],
+            'variant' => $picked['variant'],
+            'expanded_variant' => $picked['expanded_variant'],
+            'brand' => $picked['brand'],
+            'label' => $picked['label'],
             'product_name' => $productName,
             'drug_name' => $header['drug_name'],
-            'marketed_by_id' => $header['marketed_by_id'],
-            'marketed_by_name' => $header['marketed_by_name'],
-            'import_by_ids' => json_decode((string) ($header['import_by_ids'] ?? ''), true) ?: [],
-            'import_by_names' => $header['import_by_names'],
-            'manufactured_by_ids' => json_decode((string) ($header['manufactured_by_ids'] ?? ''), true) ?: [],
-            'manufactured_by_names' => $header['manufactured_by_names'],
-            'company_id' => $header['company_id'],
+            'marketed_by_id' => $parties['marketed']['ids'][0] ?? null,
+            'marketed_by_name' => $parties['marketed']['names'],
+            'import_by_ids' => $parties['import']['ids'],
+            'import_by_names' => $parties['import']['names'],
+            'manufactured_by_ids' => $parties['manufactured']['ids'],
+            'manufactured_by_names' => $parties['manufactured']['names'],
+            'parties' => $parties,
+            'company_id' => $parties['manufactured']['ids'][0] ?? ($parties['marketed']['ids'][0] ?? $header['company_id']),
             'purchase_date' => $purchaseDate,
             'last_mrp' => $latestPurchase->mrp_rate ?? null,
             'last_rate' => $latestPurchase->sale_rate ?? null,
