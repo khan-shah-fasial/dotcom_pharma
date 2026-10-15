@@ -79,7 +79,7 @@ class ProductController extends Controller
     public function taxMasterLookup(Request $request)
     {
         $row = TaxMaster::lookupByHsn(trim((string) $request->input('hsn')));
-        if ($row) {
+        if ($row && ($row['kind_label'] ?? '') !== '') {
             $row['kind_label'] = translate($row['kind_label']);
         }
 

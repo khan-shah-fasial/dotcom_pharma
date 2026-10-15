@@ -301,6 +301,7 @@
             return;
         }
         hsnTimer = setTimeout(function () {
+            lookupTaxByHsn(query);
             $.get('{{ route('tax_masters.hsn_search') }}', { q: query }).done(function (rows) {
                 renderHsnResults('#hsn-results', rows);
             });

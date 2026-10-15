@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TaxMasterRequest;
+use App\Models\HsnMaster;
 use App\Models\ProductStock;
 use App\Models\TaxMaster;
 use Illuminate\Http\Request;
@@ -163,7 +164,7 @@ class TaxMasterController extends Controller
 
     public function byHsn(Request $request)
     {
-        $row = TaxMaster::lookupByHsn(trim((string) $request->input('hsn')));
+        $row = HsnMaster::lookupByHsn(trim((string) $request->input('hsn')));
 
         return response()->json($row ?? ['found' => false]);
     }

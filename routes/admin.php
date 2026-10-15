@@ -71,6 +71,7 @@ use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\TaxMasterController;
+use App\Http\Controllers\HsnMasterController;
 use App\Http\Controllers\BatchMasterController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\UpdateController;
@@ -578,6 +579,16 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::get('/tax-masters/{id}/edit', 'edit')->name('tax_masters.edit');
         Route::put('/tax-masters/{id}', 'update')->name('tax_masters.update');
         Route::get('/tax-masters/destroy/{id}', 'destroy')->name('tax_masters.destroy');
+    });
+
+    Route::controller(HsnMasterController::class)->group(function () {
+        Route::get('/hsn-masters', 'index')->name('hsn_masters.index');
+        Route::get('/hsn-masters/create', 'create')->name('hsn_masters.create');
+        Route::post('/hsn-masters', 'store')->name('hsn_masters.store');
+        Route::post('/hsn-masters/update-status', 'updateStatus')->name('hsn_masters.update_status');
+        Route::get('/hsn-masters/{id}/edit', 'edit')->name('hsn_masters.edit');
+        Route::put('/hsn-masters/{id}', 'update')->name('hsn_masters.update');
+        Route::get('/hsn-masters/destroy/{id}', 'destroy')->name('hsn_masters.destroy');
     });
 
     // Language

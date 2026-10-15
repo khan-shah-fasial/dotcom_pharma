@@ -4,7 +4,7 @@
 
     function fillTaxMaster(row, overwriteHs) {
         if (!row || !row.found) {
-            $('#product_tax_type_display, #product_tax_percent_display, #product_tax_code_display').val('');
+            $('#product_tax_type_display, #product_purchase_tax_percent_display, #product_sale_tax_percent_display, #product_tax_code_display').val('');
             $('#product_tax_description_display').text('');
             return;
         }
@@ -12,7 +12,8 @@
             $('#product_hs').val(row.hs_code || '');
         }
         $('#product_tax_type_display').val(row.kind_label || '');
-        $('#product_tax_percent_display').val(row.display_tax_percent || '');
+        $('#product_purchase_tax_percent_display').val(row.tax_percent || '');
+        $('#product_sale_tax_percent_display').val(row.display_tax_percent || '');
         $('#product_tax_code_display').val(row.tax_code || '');
         $('#product_tax_description_display').text(row.description || '');
     }

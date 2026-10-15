@@ -19,8 +19,12 @@
                 <input type="text" class="form-control" id="product_tax_type_display" value="" readonly>
             </div>
             <div class="form-group mb-2">
-                <label class="fs-13">{{ translate('Tax %') }}</label>
-                <input type="text" class="form-control" id="product_tax_percent_display" value="" readonly>
+                <label class="fs-13">{{ translate('Purchase Tax %') }}</label>
+                <input type="text" class="form-control" id="product_purchase_tax_percent_display" value="" readonly>
+            </div>
+            <div class="form-group mb-2">
+                <label class="fs-13">{{ translate('Sale Tax %') }}</label>
+                <input type="text" class="form-control" id="product_sale_tax_percent_display" value="" readonly>
             </div>
             <div class="form-group mb-1">
                 <label class="fs-13">{{ translate('Tax Code') }}</label>
