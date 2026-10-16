@@ -89,6 +89,17 @@
         ? \App\Models\ProductStock::with('product')->whereIn('id', $scopeProductIds)->get()
         : collect();
     $roleOptions = \App\Models\DiscountMaster::ROLE_KEYS;
+    $companies = $companies ?? collect();
+    $sheetReady = $sheetReady ?? true;
+    $companyOptions = function () use ($companies) {
+        $html = '<option value="">' . e(translate('Select')) . '</option>';
+        foreach ($companies as $company) {
+            $label = trim(($company->code ? $company->code . ' — ' : '') . $company->company_name);
+            $html .= '<option value="' . e($company->id) . '" data-name="' . e($company->company_name) . '">' . e($label) . '</option>';
+        }
+
+        return $html;
+    };
 @endphp
 
 <div class="card">
@@ -164,21 +175,30 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group">
+                    <div class="form-group dm-party" data-role="marketed">
                         <label>{{ translate('Marketed By') }}</label>
-                        <input type="text" class="form-control" id="meta_marketed" readonly>
+                        <input type="text" class="form-control dm-party-text" id="meta_marketed" readonly>
+                        <select class="form-control dm-party-select" id="marketed_by_select" hidden>
+                            {!! $companyOptions() !!}
+                        </select>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group">
+                    <div class="form-group dm-party" data-role="import">
                         <label>{{ translate('Import By') }}</label>
-                        <input type="text" class="form-control" id="meta_import" readonly>
+                        <textarea class="form-control dm-party-text" id="meta_import" rows="2" readonly></textarea>
+                        <select class="form-control dm-party-select" id="import_by_ids" multiple hidden>
+                            {!! $companyOptions() !!}
+                        </select>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group">
+                    <div class="form-group dm-party" data-role="manufactured">
                         <label>{{ translate('Mfg. By') }}</label>
-                        <input type="text" class="form-control" id="meta_mfg" readonly>
+                        <textarea class="form-control dm-party-text" id="meta_mfg" rows="2" readonly></textarea>
+                        <select class="form-control dm-party-select" id="manufactured_by_ids" multiple hidden>
+                            {!! $companyOptions() !!}
+                        </select>
                     </div>
                 </div>
             </div>
@@ -306,7 +326,11 @@
                                             <td class="dm-col-scheme"><input type="number" step="0.0001" min="0" class="form-control form-control-sm dm-scheme-value" name="roles[{{ $roleIndex }}][slabs][{{ $slabIndex }}][scheme_value]" value="{{ $slab['scheme_value'] ?? '' }}" readonly></td>
                                             <td class="dm-col-flat"><input type="number" step="0.0001" min="0" class="form-control form-control-sm dm-line-amount-flat" value="{{ $slab['line_amount'] ?? '' }}" readonly></td>
                                             <td><input type="number" step="0.0001" min="0" class="form-control form-control-sm dm-effective" name="roles[{{ $roleIndex }}][slabs][{{ $slabIndex }}][effective_rate]" value="{{ $slab['effective_rate'] ?? '' }}" readonly></td>
-                                            <td><button type="button" class="btn btn-xs btn-soft-danger dm-remove-slab">&times;</button></td>
+                                            <td class="dm-slab-actions text-nowrap">
+                                                @if (!$loop->first)
+                                                    <button type="button" class="btn btn-sm btn-soft-danger dm-remove-slab">{{ translate('Remove Slab') }}</button>
+                                                @endif
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -376,6 +400,7 @@
                             <th>{{ translate('Flat / Percent') }}</th>
                             <th id="invoice-amount-label">{{ translate('Amount') }}</th>
                             <th>{{ translate('%') }}</th>
+                            <th>{{ translate('Effective') }}</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -393,7 +418,12 @@
                                 </td>
                                 <td><input type="number" step="0.0001" min="0" class="form-control form-control-sm dm-amount-value" name="amounts[{{ $index }}][amount]" value="{{ $row['amount'] ?? '' }}"></td>
                                 <td><input type="number" step="0.0001" min="0" max="100" class="form-control form-control-sm dm-amount-percent" name="amounts[{{ $index }}][percent]" value="{{ $row['percent'] ?? '' }}"></td>
-                                <td><button type="button" class="btn btn-xs btn-soft-danger dm-remove-amount">&times;</button></td>
+                                <td><input type="number" step="0.0001" min="0" class="form-control form-control-sm dm-effective-amount" name="amounts[{{ $index }}][effective]" value="{{ $row['effective'] ?? '' }}" readonly></td>
+                                <td class="dm-amount-actions text-nowrap">
+                                    @if (!$loop->first)
+                                        <button type="button" class="btn btn-sm btn-soft-danger dm-remove-amount">{{ translate('Remove Slab') }}</button>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -403,6 +433,11 @@
         </div>
 
         <hr>
+        @if (empty($sheetReady))
+            <div class="alert alert-warning">
+                {{ translate('Extra products for the same discount are kept after the sheet_payload column is added on discount_masters.') }}
+            </div>
+        @endif
         <div class="row align-items-end">
             <div class="col-md-5">
                 <div class="form-group">
@@ -474,7 +509,7 @@
                         <input type="hidden" name="customer_id" id="customer_id" value="{{ old('customer_id', optional($d)->customer_id ?? '') }}">
                     </div>
                 </div>
-                <div class="col-md-4 dm-price-role d-none">
+                <div class="col-md-4 dm-price-role">
                     <div class="form-group">
                         <label>{{ translate('Price Role') }}</label>
                         <select name="scope_role" id="scope_role" class="form-control">

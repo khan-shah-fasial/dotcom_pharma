@@ -55,8 +55,8 @@
     $appliedHints = [
         'category' => translate('Categories only. You can select several categories, and nothing else.'),
         'group' => translate('Groups only. You can select several groups, and nothing else.'),
-        'sku' => translate('SKUs only. You can select several SKUs, and nothing else.'),
-        'product' => translate('Whole products only. You can select several products. Variants are not chosen here.'),
+        'sku' => translate('SKUs only. Each row shows the SKU, its product name, and that variant. You can select several SKUs.'),
+        'product' => translate('Whole products only. Each row shows that product with all of its variants, such as 20/3ml/40ml. You can select several products.'),
         'variant' => translate('Variants only, from any product. You can select several variants, and nothing else.'),
     ];
     $appliedEmptyNotes = [

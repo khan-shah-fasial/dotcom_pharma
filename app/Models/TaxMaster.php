@@ -402,9 +402,8 @@ class TaxMaster extends Model
             }
         } elseif ($type === 'product' && Schema::hasTable('products')) {
             $products = Product::query()->without(['taxes', 'thumbnail'])->whereIn('id', $ids)->get();
-            foreach ($products as $product) {
-                $name = trim((string) $product->getTranslation('name'));
-                $labels[(string) $product->id] = $name !== '' ? $name : ('#' . $product->id);
+            foreach (self::productTargetRows($products) as $row) {
+                $labels[$row['id']] = $row['label'];
             }
         } elseif (in_array($type, ['sku', 'variant'], true) && Schema::hasTable('product_stocks')) {
             $stocks = ProductStock::query()->with('product')->whereIn('id', $ids)->get();
@@ -456,17 +455,65 @@ class TaxMaster extends Model
                     ->orWhereHas('product_translations', function ($translation) use ($like) {
                         $translation->where('name', 'like', $like);
                     });
+                if (Schema::hasTable('product_stocks')) {
+                    $nested->orWhereHas('stocks', function ($stocks) use ($like) {
+                        $stocks->where('variant', 'like', $like);
+                    });
+                }
             });
         }
 
-        return $builder->orderBy('name')->limit($limit)->get()->map(function ($product) {
+        return self::productTargetRows($builder->orderBy('name')->limit($limit)->get());
+    }
+
+    private static function productTargetRows($products): array
+    {
+        $variantsByProduct = self::productVariantLists($products->pluck('id')->all());
+
+        return $products->map(function ($product) use ($variantsByProduct) {
             $name = trim((string) $product->getTranslation('name'));
+            if ($name === '') {
+                $name = '#' . $product->id;
+            }
+            $variants = $variantsByProduct[(int) $product->id] ?? [];
 
             return [
                 'id' => (string) $product->id,
-                'label' => $name !== '' ? $name : ('#' . $product->id),
+                'label' => $variants !== [] ? $name . ' ' . implode('/', $variants) : $name,
             ];
         })->all();
+    }
+
+    private static function productVariantLists(array $ids): array
+    {
+        $ids = array_values(array_filter($ids, function ($id) {
+            return ctype_digit((string) $id);
+        }));
+        if ($ids === [] || !Schema::hasTable('product_stocks')) {
+            return [];
+        }
+
+        $rows = ProductStock::query()
+            ->whereIn('product_id', $ids)
+            ->orderBy('id')
+            ->get(['id', 'product_id', 'variant']);
+
+        $lists = [];
+        foreach ($rows as $row) {
+            $variant = trim((string) $row->variant);
+            if ($variant === '') {
+                continue;
+            }
+            $productId = (int) $row->product_id;
+            if (!isset($lists[$productId])) {
+                $lists[$productId] = [];
+            }
+            if (!in_array($variant, $lists[$productId], true)) {
+                $lists[$productId][] = $variant;
+            }
+        }
+
+        return $lists;
     }
 
     private static function searchStockTargets(string $type, string $query, int $limit): array
@@ -539,7 +586,11 @@ class TaxMaster extends Model
             if ($sku === '') {
                 return null;
             }
-            $label = $productName !== '' ? $sku . ' — ' . $productName : $sku;
+            $variantRaw = trim((string) $stock->variant);
+            $parts = array_values(array_filter([$sku, $productName, $variantRaw], function ($part) {
+                return $part !== '';
+            }));
+            $label = implode(' ', $parts);
         } elseif ($type === 'variant') {
             if ($variant === '') {
                 return null;

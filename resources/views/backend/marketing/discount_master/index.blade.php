@@ -3,12 +3,67 @@
 @section('content')
 
 @php
-    $cell = function ($value) {
-        if ($value === null || $value === '') {
-            return '—';
-        }
-        return $value;
+    $sortBy = $sortBy ?? '';
+    $sortDir = $sortDir ?? 'desc';
+    $tab = $tab ?? 'discount_type';
+    $scopeStocks = $scopeStocks ?? collect();
+    $filtersApplied = collect($filters)->contains(function ($value) {
+        return $value !== null && $value !== '';
+    });
+    $tabUrl = function ($name) {
+        return route('discount_masters.index', array_merge(request()->except('page'), ['tab' => $name]));
     };
+    $renderLines = function ($lines) {
+        $html = '';
+        $lastGroup = null;
+        foreach ($lines as $line) {
+            if ($lastGroup !== null && $line['group'] !== $lastGroup) {
+                $html .= '<div class="mt-1"></div>';
+            }
+            $lastGroup = $line['group'];
+            $html .= '<div>' . e(translate($line['label'])) . ': ' . e($line['value']) . '</div>';
+        }
+
+        return $html !== '' ? $html : '—';
+    };
+    $scopeLine = function ($discount) use ($scopeStocks) {
+        $sheet = $discount->sheetPayload();
+        if (empty($sheet['same_discount'])) {
+            return '';
+        }
+        $bits = [];
+        if ($discount->category) {
+            $bits[] = translate('Category') . ': ' . $discount->category->getTranslation('name');
+        }
+        if ($discount->group) {
+            $bits[] = translate('Group') . ': ' . $discount->group->getTranslation('name');
+        }
+        if ($discount->customer_id) {
+            $bits[] = translate('Customer') . ': ' . $discount->customerDisplayName();
+        }
+        if (!empty($sheet['near_expiry'])) {
+            $bits[] = translate('Near expiry batches');
+        }
+        $scopeRole = $sheet['scope_role'] ?? '';
+        if ($scopeRole !== '' && isset(\App\Models\DiscountMaster::ROLE_KEYS[$scopeRole])) {
+            $bits[] = translate('Price Role') . ': ' . translate(\App\Models\DiscountMaster::ROLE_KEYS[$scopeRole]);
+        }
+        $names = [];
+        foreach ((array) ($sheet['scope_products'] ?? []) as $id) {
+            $stock = $scopeStocks->get((int) $id);
+            if ($stock) {
+                $names[] = optional($stock->product)->getTranslation('name') ?: ('#' . $stock->id);
+            }
+        }
+        if ($names !== []) {
+            $bits[] = translate('Products') . ': ' . implode(', ', $names);
+        }
+
+        return $bits === []
+            ? translate('Same discount')
+            : translate('Same discount') . ' — ' . implode(' | ', $bits);
+    };
+    $colspan = $tab === 'applied_on' ? 9 : 7;
 @endphp
 
 <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -26,19 +81,23 @@
     </div>
 </div>
 
+<div class="nav border-bottom aiz-nav-tabs mb-3">
+    <a class="px-3 py-2 fs-15 text-reset {{ $tab === 'discount_type' ? 'show active font-weight-bold' : '' }}" href="{{ $tabUrl('discount_type') }}">
+        {{ translate('Discount Type') }}
+    </a>
+    <a class="px-3 py-2 fs-15 text-reset {{ $tab === 'role_type' ? 'show active font-weight-bold' : '' }}" href="{{ $tabUrl('role_type') }}">
+        {{ translate('Role Type') }}
+    </a>
+    <a class="px-3 py-2 fs-15 text-reset {{ $tab === 'applied_on' ? 'show active font-weight-bold' : '' }}" href="{{ $tabUrl('applied_on') }}">
+        {{ translate('Applied On') }}
+    </a>
+</div>
+
 @if (!$tableReady)
     <div class="alert alert-warning">
         {{ translate('Discount Master table is not ready yet. Run the discount_masters migration, then reload this page.') }}
     </div>
 @endif
-
-@php
-    $sortBy = $sortBy ?? '';
-    $sortDir = $sortDir ?? 'desc';
-    $filtersApplied = collect($filters)->contains(function ($value) {
-        return $value !== null && $value !== '';
-    });
-@endphp
 
 <div class="card">
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
@@ -52,7 +111,7 @@
             <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#discountMasterFilterModal">
                 {{ translate('Open Filters') }}
             </button>
-            <a href="{{ route('discount_masters.index') }}" class="btn btn-danger mb-2">
+            <a href="{{ route('discount_masters.index', ['tab' => $tab]) }}" class="btn btn-danger mb-2">
                 {{ translate('Reset') }}
             </a>
         </div>
@@ -62,157 +121,118 @@
             <table class="table table-bordered aiz-table mb-0 dm-listing">
                 <thead>
                     <tr>
-                        @include('backend.inc.sortable_th', ['column' => 'applied_on', 'label' => translate('Discount Applied On'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'sku', 'label' => translate('SKU Product'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'variant', 'label' => translate('Full Variant'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'batch', 'labelHtml' => e(translate('Same as')) . '<br>' . e(translate('Batch / Lot.No')) . '<br>' . e(translate('Stock Available')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'mfg_date', 'labelHtml' => e(translate('Mfg.Date')) . '<br>' . e(translate('Expiry Date')) . '<br>' . e(translate('COA Document')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'stock_role', 'labelHtml' => e(translate('Stock Value As Per')) . '<br>' . e(translate('PTS / PTR / PTD / Govt. / Export / B2C / M.R.P')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'role_key', 'label' => translate('Rolewise Price'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'qty_slab', 'labelHtml' => e(translate('Qty Slab')) . '<br>' . e(translate('Rate')) . '<br>' . e(translate('Amount')) . '<br>' . e(translate('Effective Rate')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'discount_code', 'labelHtml' => e(translate('Discount Type')) . '<br>' . e(translate('Discount ID')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'batchwise', 'labelHtml' => e(translate('Batchwise')) . '<br>' . e(translate('Type / Amount Or % / % Or Amount')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'productwise', 'labelHtml' => e(translate('Productwise')) . '<br>' . e(translate('Type / Amount Or % / % Or Amount')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'pointwise', 'labelHtml' => e(translate('Pointwise Earn')) . '<br>' . e(translate('Earn / Amount Or % / % Or Amount')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'amount_wise', 'labelHtml' => e(translate('Amount wise')) . '<br>' . e(translate('Invoice Amount / Type / Amount Or %')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        @include('backend.inc.sortable_th', ['column' => 'scheme', 'labelHtml' => e(translate('Schemewise')) . '<br>' . e(translate('Free Qty / Scheme % / Scheme Value')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                        <th>{{ translate('Product') }}</th>
+                        @if ($tab === 'discount_type')
+                            @include('backend.inc.sortable_th', ['column' => 'discount_code', 'label' => translate('Discount ID'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            <th>{{ translate('Discount Type') }}</th>
+                            <th>{{ translate('Discount') }}</th>
+                        @elseif ($tab === 'role_type')
+                            @include('backend.inc.sortable_th', ['column' => 'role_key', 'label' => translate('Role Type'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            <th>{{ translate('Qty Slab') }}<br>{{ translate('Rate') }}<br>{{ translate('Amount') }}<br>{{ translate('Effective Rate') }}</th>
+                            <th>{{ translate('Stock Value') }} {{ translate('PTS') }} / {{ translate('Value') }}</th>
+                        @else
+                            @include('backend.inc.sortable_th', ['column' => 'applied_on', 'label' => translate('Applied On'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'sku', 'label' => translate('SKU Product'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'variant', 'label' => translate('Full Variant'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            @include('backend.inc.sortable_th', ['column' => 'batch', 'label' => translate('Batch / Lot.No'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
+                            <th>{{ translate('Mfg.Date') }}<br>{{ translate('Expiry Date') }}<br>{{ translate('COA Document') }}</th>
+                        @endif
+                        <th>{{ translate('Total Discount Given') }}</th>
                         @include('backend.inc.sortable_th', ['column' => 'from_date', 'labelHtml' => e(translate('From Date')) . '<br>' . e(translate('To Date')) . '<br>' . e(translate('Offer Active')) . '<br>' . e(translate('Date Of Add / Edit')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                        <th class="text-right">{{ translate('Actions') }}</th>
+                        <th class="text-right dm-actions">{{ translate('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if ($tableReady && $discounts && $discounts->count())
                         @foreach ($discounts as $discount)
                             @php
-                                $isStock = in_array($discount->applied_on, ['sku', 'full_variant', 'batch'], true);
-                                $isBatch = $discount->applied_on === 'batch';
+                                $isProductRow = in_array($discount->discount_type, \App\Models\DiscountMaster::PRODUCT_TYPES, true);
                                 $sourceBatch = $discount->sourceBatch();
-                                $rolePrices = $isStock ? $discount->liveRolePrices() : [];
-                                $coa = $discount->sourceCoa();
-                                $coaUrl = $coa && is_numeric($coa) ? uploaded_asset((int) $coa) : null;
+                                $coaId = $isProductRow ? $discount->sourceCoa() : null;
+                                $coaIsImage = $coaId && function_exists('check_asset_type') && check_asset_type($coaId) === 'image';
+                                $sameScope = $scopeLine($discount);
                             @endphp
                             <tr>
-                                <td>{{ translate($discount->appliedOnLabel()) }}</td>
                                 <td>
-                                    @if ($discount->applied_on === 'sku')
-                                        {{ $cell(optional($discount->stock)->sku) }}
-                                        <div class="text-muted fs-11">{{ optional($discount->product)->name }}</div>
-                                    @else
-                                        —
+                                    {{ optional($discount->product)->getTranslation('name') ?: '—' }}
+                                    @if ($sameScope !== '')
+                                        <div class="text-muted fs-11">{{ $sameScope }}</div>
                                     @endif
                                 </td>
-                                <td>
-                                    @if ($discount->applied_on === 'full_variant')
-                                        {{ $cell(optional($discount->stock)->variant) }}
-                                        <div class="text-muted fs-11">{{ optional($discount->product)->name }}</div>
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($isBatch)
-                                        {{ $cell(optional($sourceBatch)->batch) }}
-                                        <div class="text-muted fs-11">{{ translate('Stock') }}: {{ $cell($discount->sourceQty()) }}</div>
-                                    @elseif ($isStock)
-                                        <div class="text-muted fs-11">{{ translate('Stock') }}: {{ $cell($discount->sourceQty()) }}</div>
-                                    @elseif ($discount->applied_on === 'category')
-                                        {{ optional($discount->category)->name ?: '—' }}
-                                    @elseif ($discount->applied_on === 'group')
-                                        {{ optional($discount->group)->name ?: '—' }}
-                                    @elseif ($discount->applied_on === 'customer')
-                                        {{ $discount->customerDisplayName() }}
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($isStock)
-                                        {{ $cell(optional($sourceBatch)->manufacturing_date) }}<br>
-                                        {{ $cell(optional($sourceBatch)->product_exp_date ?? optional($discount->stock)->product_exp_date) }}<br>
-                                        @if ($coaUrl)
-                                            <a href="{{ $coaUrl }}" target="_blank">{{ translate('COA') }}</a>
+                                @if ($tab === 'discount_type')
+                                    <td>
+                                        <strong>{{ $discount->discount_code }}</strong>
+                                        @if (!empty($discount->coupon_code))
+                                            <div>{{ $discount->coupon_code }}</div>
+                                        @endif
+                                    </td>
+                                    <td>{{ translate($discount->discountTypeLabel()) }}</td>
+                                    <td>{!! $renderLines($discount->discountValueLines()) !!}</td>
+                                @elseif ($tab === 'role_type')
+                                    <td>{{ $discount->role_key ? $discount->roleKeyLabel() : '—' }}</td>
+                                    <td>{!! $renderLines($discount->roleSlabLines()) !!}</td>
+                                    <td class="fs-12">
+                                        @if ($isProductRow)
+                                            @foreach ($discount->stockValueLines() as $stockLine)
+                                                <div class="{{ $discount->role_key === $stockLine['key'] ? 'font-weight-bold text-primary' : '' }}">
+                                                    {{ translate($stockLine['label']) }} {{ $stockLine['price'] }} / {{ translate('Value') }} {{ $stockLine['value'] }}
+                                                </div>
+                                            @endforeach
                                         @else
                                             —
                                         @endif
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td class="fs-11">
-                                    @if ($isStock)
-                                        @foreach (\App\Models\DiscountMaster::ROLE_KEYS as $key => $label)
-                                            <div class="{{ $discount->role_key === $key ? 'font-weight-bold text-primary' : '' }}">
-                                                {{ translate($label) }}: {{ $rolePrices[$key] === null ? '—' : $rolePrices[$key] }}
-                                            </div>
-                                        @endforeach
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td>{{ $isStock ? $discount->roleKeyLabel() : '—' }}</td>
+                                    </td>
+                                @else
+                                    <td>{{ translate($discount->appliedOnLabel()) }}</td>
+                                    <td>{{ optional($discount->stock)->sku ?: '—' }}</td>
+                                    <td>
+                                        @if ($discount->stock)
+                                            {{ $discount->stock->expandedVariantLabel() ?: '—' }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($discount->applied_on === 'batch' || $discount->batch)
+                                            <div>{{ optional($sourceBatch)->batch ?: '—' }}</div>
+                                            <div class="text-muted fs-11">{{ translate('Stock') }}: {{ $discount->sourceQty() ?? '—' }}</div>
+                                        @elseif ($isProductRow)
+                                            <div class="text-muted fs-11">{{ translate('Stock') }}: {{ $discount->sourceQty() ?? '—' }}</div>
+                                        @endif
+                                        @if ($discount->category)
+                                            <div>{{ translate('Category') }}: {{ $discount->category->getTranslation('name') }}</div>
+                                        @endif
+                                        @if ($discount->group)
+                                            <div>{{ translate('Group') }}: {{ $discount->group->getTranslation('name') }}</div>
+                                        @endif
+                                        @if ($discount->customer_id)
+                                            <div>{{ translate('Customer') }}: {{ $discount->customerDisplayName() }}</div>
+                                        @endif
+                                        @if (!$discount->stock && !$discount->category && !$discount->group && !$discount->customer_id && $discount->applied_on !== 'batch')
+                                            —
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($isProductRow)
+                                            <div>{{ optional($sourceBatch)->manufacturing_date ?: '—' }}</div>
+                                            <div>{{ optional($sourceBatch)->product_exp_date ?? optional($discount->stock)->product_exp_date ?: '—' }}</div>
+                                            @if ($coaId && $coaIsImage)
+                                                <a href="#" class="dm-coa-zoom" data-src="{{ uploaded_asset($coaId) }}">
+                                                    <img src="{{ uploaded_asset($coaId) }}" alt="{{ translate('COA Document') }}" class="img-thumbnail mt-1" style="height:42px;width:42px;object-fit:cover;">
+                                                </a>
+                                            @elseif ($coaId)
+                                                <a href="{{ uploaded_asset($coaId) }}" target="_blank">{{ translate('COA') }}</a>
+                                            @else
+                                                <div>—</div>
+                                            @endif
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                @endif
+                                <td>{{ $discount->totalDiscountLabel() }}</td>
                                 <td>
-                                    @php
-                                        $sheetRows = json_decode($discount->getAttributes()['sheet_payload'] ?? '', true) ?: [];
-                                        $extraSlabs = array_slice($sheetRows['roles'][0]['slabs'] ?? [], 1);
-                                        $extraAmounts = array_slice($sheetRows['amounts'] ?? [], 1);
-                                    @endphp
-                                    {{ $cell($discount->qty_slab_from) }}{{ $discount->qty_slab_to ? ' – ' . $discount->qty_slab_to : '' }}<br>
-                                    {{ $cell($discount->rate) }}<br>
-                                    {{ $cell($discount->amount) }}<br>
-                                    {{ $cell($discount->effective_rate) }}
-                                    @foreach ($extraSlabs as $extraSlab)
-                                        <div class="text-muted">+ {{ $cell($extraSlab['qty'] ?? null) }} / {{ $cell($extraSlab['amount'] ?? null) }} / {{ $cell($extraSlab['effective_rate'] ?? null) }}</div>
-                                    @endforeach
-                                    @foreach ($extraAmounts as $extraAmount)
-                                        <div class="text-muted">+ {{ $cell($extraAmount['from'] ?? null) }}–{{ $cell($extraAmount['to'] ?? null) }} / {{ $cell($extraAmount['amount'] ?? null) }}</div>
-                                    @endforeach
-                                </td>
-                                <td>
-                                    {{ translate($discount->discountTypeLabel()) }}<br>
-                                    <strong>{{ $discount->discount_code }}</strong>
-                                    @if (!empty($discount->coupon_code))
-                                        <div>{{ $discount->coupon_code }}</div>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($discount->discount_type === 'batchwise')
-                                        {{ $discount->value_type }} / {{ $cell($discount->value_amount) }} / {{ $cell($discount->value_percent) }}
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($discount->discount_type === 'productwise')
-                                        {{ $discount->value_type }} / {{ $cell($discount->value_amount) }} / {{ $cell($discount->value_percent) }}
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($discount->discount_type === 'pointwise')
-                                        {{ $cell($discount->earn) }} / {{ $cell($discount->value_amount) }} / {{ $cell($discount->value_percent) }}
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($discount->discount_type === 'amount_wise')
-                                        {{ $cell($discount->invoice_amount) }} / {{ $discount->value_type }} / {{ $cell($discount->value_amount) }}
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($discount->discount_type === 'schemewise')
-                                        {{ $cell($discount->scheme_free_qty) }} / {{ $cell($discount->scheme_percent) }} / {{ $cell($discount->scheme_value) }}
-                                    @elseif ($discount->discount_type === 'couponwise')
-                                        {{ $discount->value_type }} / {{ $cell($discount->value_amount) }} / {{ $cell($discount->value_percent) }}
-                                    @else
-                                        —
-                                    @endif
-                                </td>
-                                <td>
-                                    {{ optional($discount->from_date)->format('d-m-Y') }}<br>
+                                    {{ optional($discount->from_date)->format('d-m-Y') ?: '—' }}<br>
                                     {{ optional($discount->to_date)->format('d-m-Y') ?: '—' }}<br>
                                     <label class="aiz-switch aiz-switch-success mb-0">
                                         <input type="checkbox" onchange="updateDiscountMasterStatus(this)" value="{{ $discount->id }}" {{ $discount->status ? 'checked' : '' }} @cannot('edit_discount_master') disabled @endcannot>
@@ -220,7 +240,7 @@
                                     </label>
                                     <div class="text-muted fs-11">{{ $discount->updated_at }}</div>
                                 </td>
-                                <td class="text-right">
+                                <td class="text-right dm-actions">
                                     @can('edit_discount_master')
                                         <a class="btn btn-soft-primary btn-icon btn-circle btn-sm" href="{{ route('discount_masters.edit', $discount->id) }}" title="{{ translate('Edit') }}">
                                             <i class="las la-edit"></i>
@@ -236,7 +256,7 @@
                         @endforeach
                     @else
                         <tr>
-                            <td colspan="16" class="text-center text-muted">{{ translate('No discount master entries found.') }}</td>
+                            <td colspan="{{ $colspan }}" class="text-center text-muted">{{ translate('No discount master entries found.') }}</td>
                         </tr>
                     @endif
                 </tbody>
@@ -259,9 +279,23 @@
         min-width: 110px;
         font-size: 12px;
     }
+    .dm-listing th a { text-decoration: none; }
     .dm-listing td {
         vertical-align: top;
         font-size: 13px;
+    }
+    .dm-listing th.dm-actions,
+    .dm-listing td.dm-actions {
+        position: sticky;
+        right: 0;
+        white-space: nowrap;
+        min-width: 96px;
+        background: #fff;
+        z-index: 2;
+    }
+    .dm-listing thead th.dm-actions {
+        z-index: 3;
+        background: #f7f8fa;
     }
 </style>
 
@@ -270,9 +304,24 @@
 @section('modal')
     @include('modals.delete_modal')
 
+    <div class="modal fade" id="dmCoaModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ translate('COA Image') }}</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="dm-coa-preview" src="" alt="{{ translate('COA Image') }}" style="max-width:100%; max-height:70vh;">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <form action="{{ route('discount_masters.index') }}" method="GET" id="discount-master-filters">
         <input type="hidden" name="sort_by" value="{{ $sortBy }}">
         <input type="hidden" name="sort_dir" value="{{ $sortDir }}">
+        <input type="hidden" name="tab" value="{{ $tab }}">
         <div class="modal fade" id="discountMasterFilterModal" tabindex="-1" role="dialog" aria-labelledby="discountMasterFilterModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
@@ -345,5 +394,10 @@
             AIZ.plugins.notify('success', '{{ translate('Status updated successfully') }}');
         });
     }
+    $(document).on('click', '.dm-coa-zoom', function (e) {
+        e.preventDefault();
+        $('#dm-coa-preview').attr('src', $(this).data('src'));
+        $('#dmCoaModal').modal('show');
+    });
 </script>
 @endsection

@@ -44,7 +44,6 @@
         $('.dm-batch-pick').toggleClass('d-none', !isBatchType(type));
         $('#scheme-same-row').toggleClass('d-none', type !== 'schemewise');
         $('#coupon-head').toggleClass('d-none', type !== 'couponwise');
-        $('.dm-price-role').toggleClass('d-none', ['amount_wise', 'pointwise', 'couponwise'].indexOf(type) === -1);
         $('.dm-col-scheme').toggleClass('d-none', type !== 'schemewise');
         $('.dm-col-flat').toggleClass('d-none', type === 'schemewise');
         $('#invoice-amount-label').text(type === 'pointwise' ? '{{ translate('Points') }}' : '{{ translate('Amount') }}');
@@ -100,6 +99,25 @@
         return ids;
     }
 
+    function appendCoa($gallery, row) {
+        var url = row.coa_url || row.url;
+        if (!url) {
+            return;
+        }
+        var isImage = !!(row.coa_is_image || row.is_image);
+        var label = row.coa_label || row.label || '{{ translate('COA') }}';
+        if (isImage) {
+            var $img = $('<img class="img-thumbnail mr-1 mb-1" style="height:48px;width:48px;object-fit:cover;cursor:pointer;">').attr('src', url).attr('alt', 'COA');
+            $img.on('click', function () {
+                $('#coa-modal-img').attr('src', url);
+                $('#coa-modal').modal('show');
+            });
+            $gallery.append($img);
+            return;
+        }
+        $gallery.append($('<a class="mr-2" target="_blank"></a>').attr('href', url).text(label));
+    }
+
     function paintStock() {
         var type = discountType();
         var rows = loadedBatches;
@@ -131,20 +149,14 @@
         $('#manufacturing_date').val(first.mfg || '');
         $('#expiry_date').val(first.expiry || '');
         var $gallery = $('#coa-gallery').empty();
-        rows.forEach(function (row) {
-            if (!row.coa_url) {
-                return;
-            }
-            if (/\.(png|jpe?g|gif|webp)(\?|$)/i.test(row.coa_url)) {
-                var $img = $('<img class="img-thumbnail mr-1 mb-1" style="height:48px;cursor:pointer;">').attr('src', row.coa_url);
-                $img.on('click', function () {
-                    $('#coa-modal-img').attr('src', row.coa_url);
-                    $('#coa-modal').modal('show');
-                });
-                $gallery.append($img);
-            } else {
-                $gallery.append($('<a class="mr-2" target="_blank"></a>').attr('href', row.coa_url).text(row.coa_label || '{{ translate('COA') }}'));
-            }
+        var coaRows = rows.filter(function (row) {
+            return !!row.coa_url;
+        });
+        if (!coaRows.length && window.dmStockCoa && window.dmStockCoa.url) {
+            coaRows = [window.dmStockCoa];
+        }
+        coaRows.forEach(function (row) {
+            appendCoa($gallery, row);
         });
         if (rows.length && rows[0].role_prices) {
             rolePrices = rows[0].role_prices;
@@ -172,13 +184,16 @@
     }
 
     function fillTarget(res) {
+        window.dmStockCoa = res.stock_coa || null;
         $('#product_id').val(res.product_id || '');
         $('#product_stock_id').val(res.product_stock_id || '');
         $('#meta_sku').val(res.sku || '');
         $('#meta_variant').val(res.variant || '');
-        $('#meta_marketed').val(res.marketed_by || '');
-        $('#meta_import').val(res.import_by || '');
-        $('#meta_mfg').val(res.mfg_by || '');
+        applyParties(res.parties || {
+            marketed: { locked: !!(res.marketed_by), ids: [], names: res.marketed_by || '' },
+            import: { locked: !!(res.import_by), ids: [], names: res.import_by || '' },
+            manufactured: { locked: !!(res.mfg_by), ids: [], names: res.mfg_by || '' }
+        });
         $('#drug_name').text(res.drug_name || '');
         stockQty = parseFloat(res.stock_available || 0) || 0;
         rolePrices = res.role_prices || {};
@@ -216,58 +231,85 @@
 
     function recalcSlab($row) {
         var qty = parseFloat($row.find('.dm-qty').val() || '0');
-        var rate = parseFloat($row.find('.dm-rate').val() || '0');
+        var rateRaw = $row.find('.dm-rate').val();
+        var hasRate = rateRaw !== '' && !isNaN(parseFloat(rateRaw));
+        var rate = hasRate ? parseFloat(rateRaw) : 0;
         var type = discountType();
-        var line = qty > 0 && rate > 0 ? qty * rate : 0;
+        var line = hasRate && qty > 0 ? qty * rate : 0;
         var effective = rate;
 
         if (type === 'schemewise') {
             var free = parseFloat($row.find('.dm-free').val() || '0');
             var schemePercent = qty > 0 ? (free / qty) * 100 : 0;
-            var schemeValue = free * rate;
+            var schemeValue = hasRate ? free * rate : 0;
             $row.find('.dm-scheme-percent').val(schemePercent ? money(schemePercent) : '');
             $row.find('.dm-scheme-value').val(schemeValue ? money(schemeValue) : '');
             $row.find('.dm-line-amount').val(line ? money(line) : '');
-            if ((qty + free) > 0 && rate > 0) {
+            if (hasRate && (qty + free) > 0) {
                 effective = (qty * rate) / (qty + free);
             }
         } else {
-            var mode = $row.find('.dm-value-type').val();
+            var mode = $row.find('.dm-value-type').val() || 'flat';
             var amount = parseFloat($row.find('.dm-amount').val() || '0');
             var percent = parseFloat($row.find('.dm-percent').val() || '0');
             if (mode === 'percent') {
-                amount = rate * percent / 100;
-                $row.find('.dm-amount').val(percent ? money(amount) : '').prop('readonly', true);
+                if (hasRate) {
+                    amount = rate * percent / 100;
+                    $row.find('.dm-amount').val(percent ? money(amount) : '');
+                }
+                $row.find('.dm-amount').prop('readonly', true);
                 $row.find('.dm-percent').prop('readonly', false);
+                if (hasRate) {
+                    effective = rate - (rate * percent / 100);
+                }
             } else {
-                percent = rate > 0 ? (amount / rate) * 100 : 0;
-                $row.find('.dm-percent').val(amount ? money(percent) : '').prop('readonly', true);
+                if (hasRate && rate > 0 && amount) {
+                    percent = (amount / rate) * 100;
+                    $row.find('.dm-percent').val(money(percent));
+                } else if (!amount) {
+                    $row.find('.dm-percent').val('');
+                }
+                $row.find('.dm-percent').prop('readonly', true);
                 $row.find('.dm-amount').prop('readonly', false);
+                if (hasRate) {
+                    effective = rate - amount;
+                }
             }
             $row.find('.dm-line-amount, .dm-line-amount-flat').val(line ? money(line) : '');
-            if (mode === 'percent' && percent > 0) {
-                effective = rate - (rate * percent / 100);
-            } else if (amount > 0) {
-                effective = rate - amount;
-            }
         }
-        $row.find('.dm-effective').val(rate ? money(Math.max(effective, 0)) : '');
+        $row.find('.dm-effective').val(hasRate ? money(Math.max(effective, 0)) : '');
     }
 
     function recalcAmount($row) {
-        var base = parseFloat($row.find('.dm-to').val() || $row.find('.dm-slab-cap').val() || $row.find('.dm-from').val() || '0');
-        var mode = $row.find('.dm-amount-type').val();
+        var baseRaw = $row.find('.dm-to').val();
+        if (baseRaw === '') {
+            baseRaw = $row.find('.dm-slab-cap').val();
+        }
+        if (baseRaw === '') {
+            baseRaw = $row.find('.dm-from').val();
+        }
+        var hasBase = baseRaw !== '' && !isNaN(parseFloat(baseRaw));
+        var base = hasBase ? parseFloat(baseRaw) : 0;
+        var mode = $row.find('.dm-amount-type').val() || 'flat';
         var amount = parseFloat($row.find('.dm-amount-value').val() || '0');
         var percent = parseFloat($row.find('.dm-amount-percent').val() || '0');
+        var net = null;
         if (mode === 'percent') {
-            amount = base * percent / 100;
-            $row.find('.dm-amount-value').val(percent ? money(amount) : '').prop('readonly', true);
+            amount = hasBase ? base * percent / 100 : 0;
+            $row.find('.dm-amount-value').val(hasBase && percent ? money(amount) : '').prop('readonly', true);
             $row.find('.dm-amount-percent').prop('readonly', false);
+            if (hasBase) {
+                net = base - amount;
+            }
         } else {
-            percent = base > 0 ? (amount / base) * 100 : 0;
-            $row.find('.dm-amount-percent').val(amount ? money(percent) : '').prop('readonly', true);
+            percent = hasBase && base > 0 ? (amount / base) * 100 : 0;
+            $row.find('.dm-amount-percent').val(hasBase && amount ? money(percent) : '').prop('readonly', true);
             $row.find('.dm-amount-value').prop('readonly', false);
+            if (hasBase) {
+                net = base - amount;
+            }
         }
+        $row.find('.dm-effective-amount').val(net === null ? '' : money(Math.max(net, 0)));
     }
 
     function recalcAll() {
@@ -305,12 +347,37 @@
         });
     }
 
-    function blankSlab() {
-        var $row = $('.dm-slab').first().clone();
+    function blankSlab($group) {
+        var $row = $group.find('.dm-slab').first().clone();
         $row.find('input').val('');
         $row.find('select').val('flat');
         $row.find('.dm-col-role').empty();
+        $row.find('.dm-slab-actions').html('<button type="button" class="btn btn-sm btn-soft-danger dm-remove-slab">{{ translate('Remove Slab') }}</button>');
         return $row;
+    }
+
+    function setParty(role, party) {
+        party = party || { locked: false, ids: [], names: '' };
+        var locked = !!party.locked;
+        var ids = (party.ids || []).map(String).filter(function (id) { return id !== ''; });
+        var names = party.names || '';
+        var $cell = $('.dm-party[data-role="' + role + '"]');
+        $cell.find('.dm-party-text').val(names).prop('hidden', !locked);
+        var $select = $cell.find('.dm-party-select');
+        $select.prop('hidden', locked);
+        $select.find('option').prop('selected', false);
+        if (!locked) {
+            ids.forEach(function (id) {
+                $select.find('option[value="' + id + '"]').prop('selected', true);
+            });
+        }
+    }
+
+    function applyParties(parties) {
+        parties = parties || {};
+        setParty('marketed', parties.marketed);
+        setParty('import', parties.import);
+        setParty('manufactured', parties.manufactured);
     }
 
     function roleSelect(index) {
@@ -387,7 +454,7 @@
     $(document).on('input change', '.dm-qty, .dm-free, .dm-value-type, .dm-amount, .dm-percent, .dm-amount-type, .dm-amount-value, .dm-amount-percent, .dm-from, .dm-to, .dm-slab-cap', recalcAll);
     $(document).on('click', '.dm-add-slab', function () {
         var $group = $(this).closest('.dm-role-group');
-        $group.find('.dm-slab-body').append(blankSlab());
+        $group.find('.dm-slab-body').append(blankSlab($group));
         reindexAll();
         syncRates();
     });
@@ -396,6 +463,7 @@
         $clone.find('.dm-slab').not(':first').remove();
         $clone.find('input').val('');
         $clone.find('.dm-slab-body .dm-col-role').html(roleSelect(0));
+        $clone.find('.dm-slab-actions').empty();
         $('#role-groups').append($clone);
         reindexAll();
     });
@@ -418,8 +486,10 @@
         var $row = $('.dm-amount-row').first().clone();
         $row.find('input').val('');
         $row.find('select').val('flat');
+        $row.find('.dm-amount-actions').html('<button type="button" class="btn btn-sm btn-soft-danger dm-remove-amount">{{ translate('Remove Slab') }}</button>');
         $('#amount-body').append($row);
         reindexAll();
+        recalcAll();
     });
     $(document).on('click', '.dm-remove-amount', function () {
         if ($('.dm-amount-row').length < 2) {

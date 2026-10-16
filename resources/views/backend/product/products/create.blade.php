@@ -848,7 +848,7 @@ margin-left: 42px;
                                 <div class="form-group row">
                                     <label class="col-md-3 col-from-label">{{translate('Meta Hashtag')}}</label>
                                     <div class="col-md-9">
-                                        <input type="text" class="form-control aiz-tag-input" name="meta_hashtag[]" value="{{ old('meta_hashtag') }}" placeholder="{{ translate('Type and hit enter to add a hashtag') }}">
+                                        <input type="text" class="form-control aiz-tag-input" name="meta_hashtag[]" value="{{ is_array(old('meta_hashtag')) ? old('meta_hashtag.0') : old('meta_hashtag') }}" placeholder="{{ translate('Type and hit enter to add a hashtag') }}">
                                     </div>
                                 </div>
                                 <!-- Meta Caption -->

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\DiscountMasterRequest;
 use App\Models\BatchMaster;
 use App\Models\Category;
+use App\Models\Company;
 use App\Models\DiscountMaster;
 use App\Models\Group;
 use App\Models\ProductBatch;
@@ -37,8 +38,14 @@ class DiscountMasterController extends Controller
             'date_to' => (string) $request->input('date_to'),
         ];
 
+        $tab = (string) $request->input('tab', 'discount_type');
+        if (!in_array($tab, ['discount_type', 'role_type', 'applied_on'], true)) {
+            $tab = 'discount_type';
+        }
+
         $tableReady = Schema::hasTable('discount_masters');
         $discounts = null;
+        $scopeStocks = collect();
         $sortBy = '';
         $sortDir = 'desc';
 
@@ -120,9 +127,29 @@ class DiscountMasterController extends Controller
             $this->applyDiscountMasterSort($query, $sortBy, $sortDir);
 
             $discounts = $query->paginate(15)->withQueryString();
+
+            $parts = [];
+            $scopeIds = [];
+            foreach ($discounts as $discount) {
+                foreach (preg_split('/[-_\/]+/', trim((string) optional($discount->stock)->variant)) ?: [] as $part) {
+                    $part = trim((string) $part);
+                    if ($part !== '') {
+                        $parts[] = $part;
+                    }
+                }
+                foreach ((array) ($discount->sheetPayload()['scope_products'] ?? []) as $scopeId) {
+                    if ($scopeId) {
+                        $scopeIds[] = (int) $scopeId;
+                    }
+                }
+            }
+            ProductStock::warmVariantLabelCache($parts);
+            if ($scopeIds !== []) {
+                $scopeStocks = ProductStock::with('product')->whereIn('id', array_values(array_unique($scopeIds)))->get()->keyBy('id');
+            }
         }
 
-        return view('backend.marketing.discount_master.index', compact('discounts', 'filters', 'tableReady', 'sortBy', 'sortDir'));
+        return view('backend.marketing.discount_master.index', compact('discounts', 'filters', 'tableReady', 'sortBy', 'sortDir', 'tab', 'scopeStocks'));
     }
 
     private function applyDiscountMasterSort($query, string $sortBy, string $sortDir): void
@@ -412,6 +439,11 @@ class DiscountMasterController extends Controller
         $header = ($stock && method_exists(BatchMaster::class, 'headerFromStock'))
             ? BatchMaster::headerFromStock($stock)
             : [];
+        $parties = $stock ? BatchMaster::companyPartiesForStock($stock) : [
+            'marketed' => ['locked' => false, 'ids' => [], 'names' => '', 'source' => null],
+            'import' => ['locked' => false, 'ids' => [], 'names' => '', 'source' => null],
+            'manufactured' => ['locked' => false, 'ids' => [], 'names' => '', 'source' => null],
+        ];
         $batches = $stock ? $stock->batches->sortBy('batch')->values() : collect();
         if ($batches->isEmpty() && $batch) {
             $batches = collect([$batch]);
@@ -424,20 +456,26 @@ class DiscountMasterController extends Controller
             'variant' => $stock ? $stock->expandedVariantLabel() : null,
             'product_name' => $product ? $product->getTranslation('name') : null,
             'drug_name' => $header['drug_name'] ?? null,
-            'marketed_by' => $header['marketed_by_name'] ?? null,
-            'import_by' => $this->nameList($header['import_by_names'] ?? null),
-            'mfg_by' => $this->nameList($header['manufactured_by_names'] ?? null),
+            'marketed_by' => $parties['marketed']['names'] ?? '',
+            'import_by' => $parties['import']['names'] ?? '',
+            'mfg_by' => $parties['manufactured']['names'] ?? '',
+            'parties' => $parties,
             'stock_available' => $stock?->qty,
             'role_prices' => DiscountMaster::decodeRolePrices($batch, $stock, $product),
+            'stock_coa' => $this->coaPayload(DiscountMaster::resolveCoaId(null, $stock?->id, null, $stock?->coa)),
             'batches' => $batches->map(function (ProductBatch $row) use ($stock, $product) {
+                $coaId = DiscountMaster::resolveCoaId($row->coa, $stock?->id, $row->batch, null);
+                $coa = $this->coaPayload($coaId);
+
                 return [
                     'id' => $row->id,
                     'batch' => $row->batch,
                     'qty' => $row->qty,
                     'mfg' => $row->manufacturing_date,
                     'expiry' => $row->product_exp_date,
-                    'coa_url' => $this->coaUrl($row->coa),
-                    'coa_label' => $this->coaLabel($row->coa),
+                    'coa_url' => $coa['url'],
+                    'coa_is_image' => $coa['is_image'],
+                    'coa_label' => $coa['label'],
                     'role_prices' => DiscountMaster::decodeRolePrices($row, $stock, $product),
                 ];
             })->values(),
@@ -479,7 +517,14 @@ class DiscountMasterController extends Controller
         }
         $groups = $groups->get(['id', 'name']);
 
-        return compact('categories', 'groups');
+        $companies = collect();
+        if (Schema::hasTable('companies')) {
+            $companies = Company::query()->orderBy('company_name')->get(['id', 'company_name', 'code']);
+        }
+
+        $sheetReady = Schema::hasTable('discount_masters') && Schema::hasColumn('discount_masters', 'sheet_payload');
+
+        return compact('categories', 'groups', 'companies', 'sheetReady');
     }
 
     private function payloadFromRequest(DiscountMasterRequest $request): array
@@ -619,22 +664,6 @@ class DiscountMasterController extends Controller
         flash(translate($message))->success();
     }
 
-    private function nameList($value): string
-    {
-        if ($value === null || $value === '') {
-            return '';
-        }
-        if (is_array($value)) {
-            return implode(', ', $value);
-        }
-        $decoded = json_decode((string) $value, true);
-        if (is_array($decoded)) {
-            return implode(', ', $decoded);
-        }
-
-        return (string) $value;
-    }
-
     private function purchaseRate(?int $stockId, ?int $batchId): ?float
     {
         if (!BatchMaster::tableReady() || !Schema::hasColumn('batch_masters', 'purchase_rate')) {
@@ -662,6 +691,19 @@ class DiscountMasterController extends Controller
         return $rate === null ? null : (float) $rate;
     }
 
+    private function coaPayload($coaId): array
+    {
+        if (!$coaId) {
+            return ['url' => null, 'is_image' => false, 'label' => null];
+        }
+
+        return [
+            'url' => uploaded_asset($coaId),
+            'is_image' => check_asset_type($coaId) === 'image',
+            'label' => $this->coaLabel($coaId),
+        ];
+    }
+
     private function coaLabel($coa): ?string
     {
         if ($coa === null || $coa === '') {
@@ -677,18 +719,5 @@ class DiscountMasterController extends Controller
         }
 
         return (string) $coa;
-    }
-
-    private function coaUrl($coa): ?string
-    {
-        if ($coa === null || $coa === '') {
-            return null;
-        }
-
-        if (is_numeric($coa)) {
-            return uploaded_asset((int) $coa) ?: null;
-        }
-
-        return null;
     }
 }

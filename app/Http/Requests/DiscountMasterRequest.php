@@ -47,7 +47,7 @@ class DiscountMasterRequest extends FormRequest
             $merge['value_percent'] = $slab['percent'] ?? null;
             $merge['rate'] = $slab['rate'] ?? null;
             $merge['amount'] = $slab['line_amount'] ?? null;
-            $merge['effective_rate'] = $slab['effective_rate'] ?? null;
+            $merge['effective_rate'] = $this->netFromSlab($slab, false);
         }
 
         if ($type === 'schemewise') {
@@ -56,7 +56,7 @@ class DiscountMasterRequest extends FormRequest
             $merge['qty_slab_to'] = null;
             $merge['rate'] = $slab['rate'] ?? null;
             $merge['amount'] = $slab['line_amount'] ?? null;
-            $merge['effective_rate'] = $slab['effective_rate'] ?? null;
+            $merge['effective_rate'] = $this->netFromSlab($slab, true);
             $merge['scheme_free_qty'] = $slab['free_qty'] ?? null;
             $merge['scheme_percent'] = $slab['scheme_percent'] ?? null;
             $merge['scheme_value'] = $slab['scheme_value'] ?? null;
@@ -75,7 +75,7 @@ class DiscountMasterRequest extends FormRequest
             $merge['earn'] = $type === 'pointwise' ? ($amountRow['amount'] ?? null) : null;
             $merge['rate'] = null;
             $merge['amount'] = $amountRow['amount'] ?? null;
-            $merge['effective_rate'] = null;
+            $merge['effective_rate'] = $this->netFromAmount($amountRow);
             $merge['role_key'] = $this->input('scope_role') ?: null;
         }
 
@@ -190,6 +190,49 @@ class DiscountMasterRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    private function netFromSlab(array $slab, bool $scheme): ?float
+    {
+        if (!isset($slab['rate']) || $slab['rate'] === '' || $slab['rate'] === null) {
+            $posted = $slab['effective_rate'] ?? null;
+
+            return ($posted === '' || $posted === null) ? null : (float) $posted;
+        }
+
+        $rate = (float) $slab['rate'];
+        if ($scheme) {
+            $qty = (float) ($slab['qty'] ?? 0);
+            $free = (float) ($slab['free_qty'] ?? 0);
+            if (($qty + $free) <= 0) {
+                return $rate;
+            }
+
+            return max(0, ($qty * $rate) / ($qty + $free));
+        }
+
+        if (($slab['value_type'] ?? 'flat') === 'percent') {
+            return max(0, $rate - ($rate * (float) ($slab['percent'] ?? 0) / 100));
+        }
+
+        return max(0, $rate - (float) ($slab['amount'] ?? 0));
+    }
+
+    private function netFromAmount(array $row): ?float
+    {
+        $baseRaw = $row['to'] ?? $row['slab'] ?? $row['from'] ?? null;
+        if ($baseRaw === null || $baseRaw === '') {
+            $posted = $row['effective'] ?? null;
+
+            return ($posted === '' || $posted === null) ? null : (float) $posted;
+        }
+
+        $base = (float) $baseRaw;
+        if (($row['value_type'] ?? 'flat') === 'percent') {
+            return max(0, $base - ($base * (float) ($row['percent'] ?? 0) / 100));
+        }
+
+        return max(0, $base - (float) ($row['amount'] ?? 0));
     }
 
     public function messages(): array
