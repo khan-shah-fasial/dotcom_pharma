@@ -17,6 +17,15 @@ class BatchMasterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if ($this->has('rows')) {
+            $rows = (array) $this->input('rows', []);
+            foreach ($rows as $index => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $rows[$index]['batch_code'] = strtoupper(trim((string) ($row['batch_code'] ?? '')));
+            }
+            $this->merge(['rows' => $rows]);
+
             return;
         }
 

@@ -82,7 +82,7 @@
                             @endphp
                             <tr>
                                 <td>{{ $cell(optional($row->stock)->sku) }}<br><span class="text-muted">{{ $row->id }}</span></td>
-                                <td>{{ $cell(optional($row->product)->name) }}<br><span class="text-muted">{{ $cell(optional($row->stock)->variant) }}</span></td>
+                                <td>{{ $cell(optional($row->product)->name) }}<br><span class="text-muted">{{ $cell($row->stock ? ($row->stock->expandedVariantLabel() ?: $row->stock->variant) : null) }}</span></td>
                                 <td>{{ $cell($row->batch_code) }}<br>{{ $row->is_non_batch ? 'Y' : 'N' }}</td>
                                 <td>{{ $month($row->manufacturing_date) }}<br>{{ $month($row->expiry_date) }}</td>
                                 <td>{{ $row->qty }}<br>{{ $money($row->scheme) }}</td>
@@ -95,14 +95,14 @@
                                     <br>{{ $money($row->mrp_price) }}
                                 </td>
                                 <td>{{ $money($row->tax_percent) }}<br>{{ !empty($showPurchaseRate) ? $money($row->lineAmount()) : '••••' }}</td>
-                                <td class="fs-12">
+                                <td class="fs-12 bm-role">
                                     @foreach (['pts' => 'PTS', 'ptr' => 'PTR', 'ptd' => 'PTD', 'gov' => 'Govt.', 'expo' => 'Export', 'customer' => 'B2C'] as $roleKey => $roleLabel)
                                         <div>{{ translate($roleLabel) }} {{ $money($row->rolePrice($roleKey)) }} / {{ translate('Value') }} {{ $money($row->roleLineValue($roleKey)) }}</div>
                                     @endforeach
                                 </td>
-                                <td>{{ $money($row->batch_discount_percent) }}</td>
-                                <td>{{ $money($row->product_discount_percent) }}</td>
-                                <td>{{ $money($row->scheme_discount_percent) }}</td>
+                                <td>{{ $money($row->show_batch_discount ?? $row->batch_discount_percent) }}</td>
+                                <td>{{ $money($row->show_product_discount ?? $row->product_discount_percent) }}</td>
+                                <td>{{ $money($row->show_scheme_discount ?? $row->scheme_discount_percent) }}</td>
                                 <td>
                                     @if ($row->coa)
                                         <a href="#" class="bm-coa-zoom" data-src="{{ uploaded_asset($row->coa) }}">{{ translate('Zoom') }}</a>
@@ -118,7 +118,7 @@
                                         <span class="slider round"></span>
                                     </label>
                                 </td>
-                                <td class="text-right">
+                                <td class="text-right bm-actions">
                                     @can('edit_batch_master')
                                         <a class="btn btn-soft-primary btn-icon btn-circle btn-sm" href="{{ route('batch_masters.edit', $row->id) }}" title="{{ translate('Edit') }}">
                                             <i class="las la-edit"></i>
@@ -151,9 +151,12 @@
 </div>
 
 <style>
+    .bm-listing { min-width: 1280px; }
     .bm-listing th { white-space: normal; vertical-align: bottom; font-size: 12px; }
     .bm-listing th a { text-decoration: none; }
     .bm-listing td { vertical-align: top; font-size: 13px; }
+    .bm-listing .bm-role { min-width: 210px; }
+    .bm-listing .bm-actions { white-space: nowrap; width: 88px; }
 </style>
 
 @endsection

@@ -104,10 +104,10 @@
         if (!url) {
             return;
         }
-        var isImage = !!(row.coa_is_image || row.is_image);
+        var isImage = !!(row.coa_is_image || row.is_image) || /\.(jpg|jpeg|png|gif|webp|bmp)(\?|$)/i.test(url);
         var label = row.coa_label || row.label || '{{ translate('COA') }}';
         if (isImage) {
-            var $img = $('<img class="img-thumbnail mr-1 mb-1" style="height:48px;width:48px;object-fit:cover;cursor:pointer;">').attr('src', url).attr('alt', 'COA');
+            var $img = $('<img class="img-thumbnail mr-1 mb-1" style="height:72px;width:72px;object-fit:cover;cursor:pointer;">').attr('src', url).attr('alt', 'COA');
             $img.on('click', function () {
                 $('#coa-modal-img').attr('src', url);
                 $('#coa-modal').modal('show');
@@ -158,6 +158,9 @@
         coaRows.forEach(function (row) {
             appendCoa($gallery, row);
         });
+        if (!$gallery.children().length) {
+            $gallery.append('<span class="text-muted fs-12">{{ translate('No COA for this batch.') }}</span>');
+        }
         if (rows.length && rows[0].role_prices) {
             rolePrices = rows[0].role_prices;
         }
@@ -234,6 +237,14 @@
         var rateRaw = $row.find('.dm-rate').val();
         var hasRate = rateRaw !== '' && !isNaN(parseFloat(rateRaw));
         var rate = hasRate ? parseFloat(rateRaw) : 0;
+        if (!hasRate) {
+            var roleKey = $row.closest('.dm-role-group').find('.dm-role-key').first().val();
+            if (roleKey && rolePrices[roleKey] != null && !isNaN(parseFloat(rolePrices[roleKey]))) {
+                rate = parseFloat(rolePrices[roleKey]);
+                hasRate = true;
+                $row.find('.dm-rate').val(money(rate));
+            }
+        }
         var type = discountType();
         var line = hasRate && qty > 0 ? qty * rate : 0;
         var effective = rate;
@@ -273,6 +284,9 @@
                 $row.find('.dm-amount').prop('readonly', false);
                 if (hasRate) {
                     effective = rate - amount;
+                } else if (amount) {
+                    effective = amount;
+                    hasRate = true;
                 }
             }
             $row.find('.dm-line-amount, .dm-line-amount-flat').val(line ? money(line) : '');
@@ -307,6 +321,8 @@
             $row.find('.dm-amount-value').prop('readonly', false);
             if (hasBase) {
                 net = base - amount;
+            } else if (amount) {
+                net = amount;
             }
         }
         $row.find('.dm-effective-amount').val(net === null ? '' : money(Math.max(net, 0)));
@@ -401,7 +417,11 @@
                     var $box = $el.siblings('.dm-typeahead-results');
                     $box.empty();
                     (items || []).forEach(function (item) {
-                        var $a = $('<a href="#" class="list-group-item list-group-item-action"></a>').text(item.label);
+                        var choice = item.label || '';
+                        if (item.expanded_variant && choice.indexOf(item.expanded_variant) === -1) {
+                            choice += ' / ' + item.expanded_variant;
+                        }
+                        var $a = $('<a href="#" class="list-group-item list-group-item-action"></a>').text(choice);
                         $a.on('click', function (e) {
                             e.preventDefault();
                             $box.empty();

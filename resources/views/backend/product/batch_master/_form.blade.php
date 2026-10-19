@@ -257,7 +257,7 @@
                                 @foreach (['pts' => 'price_pts', 'ptr' => 'price_ptr', 'ptd' => 'price_ptd', 'gov' => 'price_gov', 'expo' => 'price_expo', 'customer' => 'price_customer'] as $key => $column)
                                     <input type="hidden" name="{{ $field($column) }}" value="{{ $row[$column] ?? '' }}">
                                 @endforeach
-                                <input type="text" name="{{ $field('batch_code') }}" class="form-control form-control-sm batch-code" value="{{ $row['batch_code'] ?? '' }}" required>
+                                <input type="text" name="{{ $field('batch_code') }}" class="form-control form-control-sm batch-code" value="{{ $row['batch_code'] ?? '' }}" required style="text-transform:uppercase">
                             </td>
                             <td><input type="month" name="{{ $field('manufacturing_date') }}" class="form-control form-control-sm mfg-input" value="{{ $row['manufacturing_date'] ?? '' }}"></td>
                             <td><input type="month" name="{{ $field('expiry_date') }}" class="form-control form-control-sm" value="{{ $row['expiry_date'] ?? '' }}"></td>
@@ -283,7 +283,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <p class="text-muted fs-12 mb-0">{{ translate('All data is copied from the purchase entry. You can change it here. Later changes stay on this screen.') }}</p>
+            <p class="text-muted fs-12 mb-0">{{ translate('Only new batches from the purchase entry are listed here. Batches already on the listing stay there. If the purchase entry has none, use Add Batch.') }}</p>
             @if (!$isEdit)
                 <button type="button" class="btn btn-soft-primary btn-sm" id="add-batch-row">{{ translate('Add Batch') }}</button>
             @endif
@@ -333,7 +333,7 @@
             <input type="hidden" data-name="price_gov" value="">
             <input type="hidden" data-name="price_expo" value="">
             <input type="hidden" data-name="price_customer" value="">
-            <input type="text" data-name="batch_code" class="form-control form-control-sm batch-code" required>
+            <input type="text" data-name="batch_code" class="form-control form-control-sm batch-code" required style="text-transform:uppercase">
         </td>
         <td><input type="month" data-name="manufacturing_date" class="form-control form-control-sm mfg-input"></td>
         <td><input type="month" data-name="expiry_date" class="form-control form-control-sm"></td>
@@ -378,6 +378,7 @@
     #sku_results { position: absolute; z-index: 30; left: 0; right: 0; max-height: 260px; overflow: auto; background: #fff; border: 1px solid #e3e6ea; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
     #sku_results .list-group-item { white-space: normal; line-height: 1.35; }
     #variant_display { min-height: 52px; resize: vertical; }
+    .batch-code { text-transform: uppercase; }
     .bm-party-text, .bm-party-select { width: 100%; }
     .bm-party-text[hidden], .bm-party-select[hidden] { display: none !important; }
     .bm-live-lot { border: 1px solid #e3e6ea; margin-bottom: 14px; background: #fff; }

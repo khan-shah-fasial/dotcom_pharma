@@ -84,9 +84,9 @@
                         <tbody>
                             <tr>
                                 <td>{{ $cell(optional($row->stock)->sku) }}<br><span class="text-muted">{{ $row->id }}</span></td>
-                                <td>{{ $cell(optional($row->product)->name) }}<br><span class="text-muted">{{ $cell(optional($row->stock)->variant) }}</span></td>
+                                <td>{{ $cell(optional($row->product)->name) }}<br><span class="text-muted">{{ $cell($row->stock ? ($row->stock->expandedVariantLabel() ?: $row->stock->variant) : null) }}</span></td>
                                 <td>
-                                    <input form="{{ $formId }}" type="text" name="batch_code" class="form-control form-control-sm" value="{{ $row->batch_code }}">
+                                    <input form="{{ $formId }}" type="text" name="batch_code" class="form-control form-control-sm bm-batch-code" value="{{ $row->batch_code }}" style="text-transform:uppercase">
                                     <div class="text-muted fs-12">{{ $row->is_non_batch ? 'Y' : 'N' }}</div>
                                 </td>
                                 <td>
@@ -106,14 +106,14 @@
                                     <input form="{{ $formId }}" type="number" lang="en" step="0.01" min="0" name="mrp_price" class="form-control form-control-sm" value="{{ $row->mrp_price }}">
                                 </td>
                                 <td>{{ $money($row->tax_percent) }}<br>{{ !empty($showPurchaseRate) ? $money($row->lineAmount()) : '••••' }}</td>
-                                <td class="fs-12">
+                                <td class="fs-12 bm-role">
                                     @foreach (['pts' => 'PTS', 'ptr' => 'PTR', 'ptd' => 'PTD', 'gov' => 'Govt.', 'expo' => 'Export', 'customer' => 'B2C'] as $roleKey => $roleLabel)
                                         <div>{{ translate($roleLabel) }} {{ $money($row->rolePrice($roleKey)) }} / {{ translate('Value') }} {{ $money($row->roleLineValue($roleKey)) }}</div>
                                     @endforeach
                                 </td>
-                                <td>{{ $money($row->batch_discount_percent) }}</td>
-                                <td>{{ $money($row->product_discount_percent) }}</td>
-                                <td>{{ $money($row->scheme_discount_percent) }}</td>
+                                <td>{{ $money($row->show_batch_discount ?? $row->batch_discount_percent) }}</td>
+                                <td>{{ $money($row->show_product_discount ?? $row->product_discount_percent) }}</td>
+                                <td>{{ $money($row->show_scheme_discount ?? $row->scheme_discount_percent) }}</td>
                                 <td>
                                     @if ($row->coa)
                                         <a href="#" class="bm-coa-zoom" data-src="{{ uploaded_asset($row->coa) }}">{{ translate('Zoom') }}</a>
@@ -126,19 +126,13 @@
                                     <div class="text-muted fs-11">{{ optional($row->updated_at)->format('d-m-Y H:i') }}</div>
                                     <div>{{ $row->status ? translate('On') : translate('Off') }}</div>
                                 </td>
-                                <td class="text-right">
-                                    <button form="{{ $formId }}" type="submit" name="action" value="convert" class="btn btn-primary btn-sm mb-1" {{ (!$extended || !$adjustmentsReady) ? 'disabled' : '' }}>{{ translate('Convert') }}</button>
-                                    <button form="{{ $formId }}" type="submit" name="action" value="destroy" class="btn btn-danger btn-sm" {{ (!$extended || !$adjustmentsReady) ? 'disabled' : '' }}>{{ translate('Destroy') }}</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="14" class="bg-light">
-                                    <form id="{{ $formId }}" action="{{ route('batch_masters.adjust.store', $row->id) }}" method="POST" enctype="multipart/form-data" class="form-inline flex-wrap">
+                                <td class="text-right bm-actions">
+                                    <form id="{{ $formId }}" action="{{ route('batch_masters.adjust.store', $row->id) }}" method="POST" enctype="multipart/form-data">
                                         @csrf
-                                        <label class="mr-2 mb-2 fs-12">{{ translate('Reason') }}</label>
-                                        <input type="text" name="reason" class="form-control form-control-sm mr-3 mb-2" style="min-width:240px" maxlength="1000">
-                                        <label class="mr-2 mb-2 fs-12">{{ translate('Biowaste certificate') }}</label>
-                                        <input type="file" name="biowaste" class="form-control-file d-inline-block mb-2" style="width:auto">
+                                        <button type="submit" name="action" value="convert" class="btn btn-primary btn-sm mb-1" {{ (!$extended || !$adjustmentsReady) ? 'disabled' : '' }}>{{ translate('Convert') }}</button>
+                                        <button type="submit" name="action" value="destroy" class="btn btn-danger btn-sm mb-1" {{ (!$extended || !$adjustmentsReady) ? 'disabled' : '' }}>{{ translate('Destroy') }}</button>
+                                        <input type="text" name="reason" class="form-control form-control-sm mb-1" maxlength="1000" placeholder="{{ translate('Reason') }}">
+                                        <input type="file" name="biowaste" class="form-control-file" title="{{ translate('Biowaste certificate') }}">
                                     </form>
                                 </td>
                             </tr>
@@ -162,14 +156,27 @@
 </div>
 
 <style>
+    .bm-listing { min-width: 1280px; }
     .bm-listing th { white-space: normal; vertical-align: bottom; font-size: 12px; }
     .bm-listing th a { text-decoration: none; }
     .bm-listing td { vertical-align: top; font-size: 13px; }
+    .bm-listing .form-control { width: 100%; min-width: 0; }
+    .bm-listing .bm-role { min-width: 210px; }
+    .bm-listing .bm-actions { white-space: nowrap; width: 150px; }
+    .bm-listing .bm-actions .form-control-file { max-width: 140px; }
 </style>
 @endsection
 
 @section('script')
 <script type="text/javascript">
+    $(document).on('input', '.bm-batch-code', function () {
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+        this.value = this.value.toUpperCase();
+        if (start !== null) {
+            this.setSelectionRange(start, end);
+        }
+    });
     $(document).on('click', '.bm-coa-zoom', function (e) {
         e.preventDefault();
         $('#bm-coa-preview').attr('src', $(this).data('src'));

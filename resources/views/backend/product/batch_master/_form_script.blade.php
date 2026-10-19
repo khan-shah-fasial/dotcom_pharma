@@ -98,7 +98,7 @@
     function fillRow($tr, row) {
         var map = {
             id: row.id || '',
-            batch_code: row.batch_code || '',
+            batch_code: (row.batch_code || '').toString().toUpperCase(),
             manufacturing_date: (row.manufacturing_date || '').toString().substring(0, 7),
             expiry_date: (row.expiry_date || '').toString().substring(0, 7),
             qty: row.qty ?? 0,
@@ -214,7 +214,7 @@
                 '<thead><tr>' +
                 '<th class="bm-prate">{{ translate('P-Rate') }}</th><th>{{ translate('PTS') }}</th><th>{{ translate('PTR') }}</th>' +
                 '<th>{{ translate('PTD') }}</th><th>{{ translate('Govt.') }}</th><th>{{ translate('Export') }}</th>' +
-                '<th>{{ translate('Customer (B2C)') }}</th><th>{{ translate('Batchwise Discount') }}</th>' +
+                '<th>{{ translate('Customer (B2C)') }}</th><th>{{ translate('MRP') }}</th><th>{{ translate('Batchwise Discount') }}</th>' +
                 '<th>{{ translate('Productwise Discount') }}</th><th>{{ translate('Schemewise Discount') }}</th>' +
                 '</tr></thead><tbody><tr>' +
                 '<td class="bm-prate">' + pv(prices.prate, values.prate, !showPurchaseRate) + '</td>' +
@@ -224,6 +224,7 @@
                 '<td>' + pv(prices.gov, values.gov) + '</td>' +
                 '<td>' + pv(prices.expo, values.expo) + '</td>' +
                 '<td>' + pv(prices.customer, values.customer) + '</td>' +
+                '<td><div class="bm-pv"><div>{{ translate('Rate') }}: ' + dash(prices.mrp) + '</div><div class="text-muted">{{ translate('Value') }}: ' + dash(values.mrp) + '</div></div></td>' +
                 '<td>' + (discounts.batchwise === null || discounts.batchwise === undefined || discounts.batchwise === '' ? '—' : dash(discounts.batchwise) + '%') + '</td>' +
                 '<td>' + (discounts.productwise === null || discounts.productwise === undefined || discounts.productwise === '' ? '—' : dash(discounts.productwise) + '%') + '</td>' +
                 '<td>' + (discounts.schemewise === null || discounts.schemewise === undefined || discounts.schemewise === '' ? '—' : dash(discounts.schemewise) + '%') + '</td>' +
@@ -365,11 +366,14 @@
                         var variantText = row.expanded_variant || row.variant || '';
                         var $a = $('<a href="#" class="list-group-item list-group-item-action"></a>');
                         $a.append($('<div class="fw-600"></div>').text(row.product_name || row.label || ''));
-                        var detail = [row.brand, row.sku, variantText].filter(function (part) {
+                        var detail = [row.brand, row.sku].filter(function (part) {
                             return part !== null && part !== undefined && String(part) !== '';
                         }).join(' / ');
                         if (detail) {
                             $a.append($('<small class="text-muted d-block"></small>').text(detail));
+                        }
+                        if (variantText) {
+                            $a.append($('<small class="d-block"></small>').text('{{ translate('Full Variant') }}: ' + variantText));
                         }
                         $a.on('click', function (e) {
                             e.preventDefault();
@@ -408,6 +412,14 @@
         filterCompanySelects();
     });
     $('#batch-rows-body').on('input', '.qty-input, .rate-input', refreshAmounts);
+    $('#batch-rows-body').on('input', '.batch-code', function () {
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+        this.value = this.value.toUpperCase();
+        if (start !== null) {
+            this.setSelectionRange(start, end);
+        }
+    });
     $('#toggle-live-lots').on('click', function () {
         $('#live-lots-wrap').toggleClass('d-none');
     });

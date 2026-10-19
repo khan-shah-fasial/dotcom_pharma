@@ -6,6 +6,7 @@ use App\Http\Requests\BatchMasterRequest;
 use App\Models\BatchAdjustment;
 use App\Models\BatchMaster;
 use App\Models\Company;
+use App\Models\DiscountMaster;
 use App\Models\ProductBatch;
 use App\Models\ProductStock;
 use App\Models\Upload;
@@ -42,6 +43,8 @@ class BatchMasterController extends Controller
             BatchMaster::applyListingFilters($query, $filters);
             $this->applySort($query, $sortBy, $sortDir, $sortColumn);
             $batches = $query->paginate(15)->withQueryString();
+            $this->warmBatchVariants($batches);
+            $this->attachListingDiscounts($batches);
         }
 
         return view('backend.product.batch_master.index', compact(
@@ -73,6 +76,8 @@ class BatchMasterController extends Controller
         BatchMaster::applyListingFilters($query, $filters);
         $this->applySort($query, $sortBy, $sortDir, $sortColumn);
         $batches = $query->paginate(15)->withQueryString();
+        $this->warmBatchVariants($batches);
+        $this->attachListingDiscounts($batches);
 
         return view('backend.product.batch_master.adjust', compact(
             'batches',
@@ -111,21 +116,17 @@ class BatchMasterController extends Controller
         try {
             DB::transaction(function () use ($request) {
                 $stockId = (int) $request->input('product_stock_id');
-                $before = BatchMaster::query()
-                    ->where('product_stock_id', $stockId)
-                    ->pluck('id', 'batch_code');
-
-                $handledSources = [];
-                foreach ($request->input('rows', []) as $postedRow) {
-                    if (!empty($postedRow['source_product_batch_id'])) {
-                        $handledSources[] = (int) $postedRow['source_product_batch_id'];
-                    }
+                $before = [];
+                foreach (BatchMaster::query()->where('product_stock_id', $stockId)->pluck('batch_code') as $savedCode) {
+                    $before[strtoupper(trim((string) $savedCode))] = true;
                 }
-                BatchMaster::copyMissingForStock($stockId, $handledSources);
 
                 foreach ($request->input('rows', []) as $index => $row) {
                     $payload = $this->rowPayload($request, $row, $index);
                     $code = (string) $payload['batch_code'];
+                    if ($code === '') {
+                        continue;
+                    }
 
                     if (!empty($row['id'])) {
                         $existing = BatchMaster::query()
@@ -145,23 +146,13 @@ class BatchMasterController extends Controller
                         throw new \RuntimeException(translate('This Batch Code already exists for the selected SKU.') . ' ' . $code);
                     }
 
-                    $current = BatchMaster::query()
-                        ->where('product_stock_id', $stockId)
-                        ->where('batch_code', $code)
-                        ->first();
-                    if ($current) {
-                        $this->applyCoa($current, $payload, $row);
-                        $current->fill($payload);
-                        $current->save();
-                        continue;
-                    }
-
                     $created = new BatchMaster();
                     $created->fill($payload);
                     if (empty($created->copied_at)) {
                         $created->copied_at = now();
                     }
                     $created->save();
+                    $before[$code] = true;
                 }
             });
         } catch (\Throwable $e) {
@@ -303,7 +294,7 @@ class BatchMasterController extends Controller
                 $newId = null;
 
                 if ($data['action'] === 'convert') {
-                    $code = trim((string) ($data['batch_code'] ?? ''));
+                    $code = strtoupper(trim((string) ($data['batch_code'] ?? '')));
                     if ($code === '') {
                         throw new \RuntimeException(translate('Please enter Batch Code.'));
                     }
@@ -381,6 +372,189 @@ class BatchMasterController extends Controller
         session(['batch_master_prate_until' => time() + 900]);
 
         return response()->json(['ok' => true]);
+    }
+
+    private function attachListingDiscounts($batches): void
+    {
+        if (!$batches || $batches->isEmpty() || !Schema::hasTable('discount_masters')) {
+            return;
+        }
+
+        $stockIds = $batches->pluck('product_stock_id')->filter()->unique()->values()->all();
+        if ($stockIds === []) {
+            return;
+        }
+
+        $batches->loadMissing('product');
+        $categoryIds = [];
+        $groupIds = [];
+        foreach ($batches as $row) {
+            if (!$row->product) {
+                continue;
+            }
+            if ($row->product->category_id) {
+                $categoryIds[] = (int) $row->product->category_id;
+            }
+            if ($row->product->group_id) {
+                $groupIds[] = (int) $row->product->group_id;
+            }
+        }
+
+        $discounts = DiscountMaster::query()
+            ->where('status', 1)
+            ->where(function ($query) use ($stockIds, $categoryIds, $groupIds) {
+                $query->whereIn('product_stock_id', $stockIds)
+                    ->orWhere('sheet_payload', 'like', '%"same_discount":true%')
+                    ->orWhere('sheet_payload', 'like', '%"same_discount":1%');
+                if ($categoryIds !== []) {
+                    $query->orWhereIn('category_id', array_values(array_unique($categoryIds)));
+                }
+                if ($groupIds !== []) {
+                    $query->orWhereIn('group_id', array_values(array_unique($groupIds)));
+                }
+            })
+            ->orderByDesc('id')
+            ->get();
+
+        $productBatchCodes = [];
+        $productBatchIds = $discounts->pluck('batch_id')->filter()->unique()->values()->all();
+        if ($productBatchIds !== []) {
+            $productBatchCodes = ProductBatch::query()->whereIn('id', $productBatchIds)->pluck('batch', 'id')->all();
+        }
+
+        foreach ($batches as $row) {
+            $found = ['batchwise' => null, 'productwise' => null, 'schemewise' => null];
+            foreach ($discounts as $discount) {
+                $type = (string) $discount->discount_type;
+                if (!array_key_exists($type, $found) || $found[$type] !== null) {
+                    continue;
+                }
+                if (!$this->discountCoversRow($discount, $row)) {
+                    continue;
+                }
+                $direct = (int) $discount->product_stock_id === (int) $row->product_stock_id;
+                if ($direct && $type !== 'productwise' && !$this->discountMatchesBatch($discount, $row, $productBatchCodes)) {
+                    continue;
+                }
+                $percent = $this->percentFromDiscount($discount, $type);
+                if ($percent !== null) {
+                    $found[$type] = $percent;
+                }
+            }
+            $row->setAttribute('show_batch_discount', $found['batchwise'] ?? $row->batch_discount_percent);
+            $row->setAttribute('show_product_discount', $found['productwise'] ?? $row->product_discount_percent);
+            $row->setAttribute('show_scheme_discount', $found['schemewise'] ?? $row->scheme_discount_percent);
+        }
+    }
+
+    private function discountCoversRow(DiscountMaster $discount, BatchMaster $row): bool
+    {
+        if ((int) $discount->product_stock_id === (int) $row->product_stock_id) {
+            return true;
+        }
+
+        $sheet = $discount->sheetPayload();
+        $same = !empty($sheet['same_discount']);
+        $product = $row->product;
+        $scope = array_map('intval', array_filter((array) ($sheet['scope_products'] ?? [])));
+        if ($same && in_array((int) $row->product_stock_id, $scope, true)) {
+            return true;
+        }
+        if ($discount->category_id && $product && (int) $product->category_id === (int) $discount->category_id) {
+            return true;
+        }
+        if ($discount->group_id && $product && (int) $product->group_id === (int) $discount->group_id) {
+            return true;
+        }
+        if ($same && !empty($sheet['near_expiry']) && $row->expiry_date) {
+            try {
+                $expiry = \Carbon\Carbon::parse($row->expiry_date);
+
+                return $expiry->isFuture() && $expiry->lte(now()->addDays(90));
+            } catch (\Throwable $e) {
+                return false;
+            }
+        }
+
+        return $same
+            && $scope === []
+            && !$discount->category_id
+            && !$discount->group_id
+            && !$discount->customer_id
+            && empty($sheet['near_expiry']);
+    }
+
+    private function discountMatchesBatch(DiscountMaster $discount, BatchMaster $row, array $productBatchCodes): bool
+    {
+        $ids = array_map('strval', (array) ($discount->sheetPayload()['batch_ids'] ?? []));
+        if (in_array('bm-' . $row->id, $ids, true)) {
+            return true;
+        }
+
+        $pickedCode = strtoupper(trim((string) ($productBatchCodes[$discount->batch_id] ?? '')));
+        $rowCode = strtoupper(trim((string) $row->batch_code));
+
+        return $pickedCode !== '' && $pickedCode === $rowCode;
+    }
+
+    private function percentFromDiscount(DiscountMaster $discount, string $type): ?string
+    {
+        $value = $type === 'schemewise' ? $discount->scheme_percent : $discount->value_percent;
+        if ($value !== null && $value !== '') {
+            return (string) $value;
+        }
+
+        $key = $type === 'schemewise' ? 'scheme_percent' : 'percent';
+        foreach ($discount->sheetPayload()['roles'] ?? [] as $role) {
+            foreach ($role['slabs'] ?? [] as $slab) {
+                if (!is_array($slab)) {
+                    continue;
+                }
+                if (($slab[$key] ?? '') !== '' && $slab[$key] !== null) {
+                    return (string) $slab[$key];
+                }
+                if ($type !== 'schemewise' && ($slab['amount'] ?? '') !== '' && $slab['amount'] !== null) {
+                    return (string) $slab['amount'];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function warmBatchVariants($batches): void
+    {
+        if (!$batches) {
+            return;
+        }
+
+        $parts = [];
+        foreach ($batches as $row) {
+            $variant = trim((string) optional($row->stock)->variant);
+            foreach (preg_split('/[-_\/]+/', $variant) ?: [] as $part) {
+                $part = trim((string) $part);
+                if ($part !== '') {
+                    $parts[] = $part;
+                }
+            }
+        }
+
+        if ($parts !== []) {
+            ProductStock::warmVariantLabelCache($parts);
+        }
+    }
+
+    private function monthInput($date): string
+    {
+        if ($date === null || $date === '') {
+            return '';
+        }
+
+        try {
+            return \Carbon\Carbon::parse($date)->format('Y-m');
+        } catch (\Throwable $e) {
+            return substr((string) $date, 0, 7);
+        }
     }
 
     private function warmStockVariantLabels($stocks): void
@@ -482,29 +656,34 @@ class BatchMasterController extends Controller
         $purchaseDate = $parsedPurchaseDate ? $parsedPurchaseDate->toDateString() : null;
 
         $existingCodes = [];
-        $rows = [];
         if (BatchMaster::tableReady()) {
-            $saved = BatchMaster::query()
+            $savedCodes = BatchMaster::query()
                 ->where('product_stock_id', $stock->id)
                 ->when(BatchMaster::extendedColumnsReady(), function ($query) {
                     $query->whereNull('removed_at');
                 })
-                ->orderBy('id')
-                ->get();
-            foreach ($saved as $savedRow) {
-                $existingCodes[(string) $savedRow->batch_code] = true;
-                $rows[] = $this->formRowFromMaster($savedRow);
+                ->pluck('batch_code');
+            foreach ($savedCodes as $savedCode) {
+                $existingCodes[strtoupper(trim((string) $savedCode))] = true;
             }
         }
 
+        $rows = [];
         if (BatchMaster::extendedColumnsReady()) {
             foreach (BatchMaster::sourceBundles($stock) as $bundle) {
+                $purchase = $bundle['purchase'] ?? [];
+                if (!is_array($purchase) || $purchase === []) {
+                    continue;
+                }
                 $payload = BatchMaster::assembleCopy($bundle);
-                $code = (string) ($payload['batch_code'] ?? '');
+                $code = strtoupper(trim((string) ($payload['batch_code'] ?? '')));
                 if ($code === '' || isset($existingCodes[$code])) {
                     continue;
                 }
                 $payload['id'] = null;
+                $payload['batch_code'] = $code;
+                $payload['manufacturing_date'] = $this->monthInput($payload['manufacturing_date'] ?? null);
+                $payload['expiry_date'] = $this->monthInput($payload['expiry_date'] ?? null);
                 $payload['source_coa'] = $bundle['live']['coa'] ?? null;
                 $payload['coa'] = $bundle['live']['coa'] ?? null;
                 $rows[] = $payload;
@@ -665,39 +844,6 @@ class BatchMasterController extends Controller
         }
     }
 
-    private function formRowFromMaster(BatchMaster $row): array
-    {
-        $prices = $row->rolePrices();
-
-        return [
-            'id' => $row->id,
-            'batch_code' => $row->batch_code,
-            'manufacturing_date' => $row->monthValue('manufacturing_date'),
-            'expiry_date' => $row->monthValue('expiry_date'),
-            'qty' => $row->qty,
-            'free_qty' => $row->free_qty,
-            'mrp_price' => $row->mrp_price,
-            'purchase_rate' => $row->purchase_rate,
-            'tax_code' => $row->tax_code,
-            'tax_percent' => $row->tax_percent,
-            'scheme' => $row->scheme,
-            'company_id' => $row->company_id,
-            'coa' => $row->coa,
-            'source_coa' => null,
-            'batch_discount_percent' => $row->batch_discount_percent,
-            'product_discount_percent' => $row->product_discount_percent,
-            'scheme_discount_percent' => $row->scheme_discount_percent,
-            'price_pts' => $prices['pts'],
-            'price_ptr' => $prices['ptr'],
-            'price_ptd' => $prices['ptd'],
-            'price_gov' => $prices['gov'],
-            'price_expo' => $prices['expo'],
-            'price_customer' => $prices['customer'],
-            'source_purchase_history_id' => $row->source_purchase_history_id,
-            'source_product_batch_id' => $row->source_product_batch_id,
-        ];
-    }
-
     private function liveLots(ProductStock $stock, array $purchases): array
     {
         $discounts = BatchMaster::discountPercentsForStock($stock);
@@ -748,6 +894,7 @@ class BatchMasterController extends Controller
                         'gov' => $prices['gov'] ?? null,
                         'expo' => $prices['expo'] ?? null,
                         'customer' => $prices['customer'] ?? null,
+                        'mrp' => $lot->mrp_price,
                     ],
                     'values' => [
                         'prate' => BatchMaster::amountFrom($lot->qty, $rate),
@@ -757,6 +904,7 @@ class BatchMasterController extends Controller
                         'gov' => BatchMaster::amountFrom($lot->qty, $prices['gov'] ?? null),
                         'expo' => BatchMaster::amountFrom($lot->qty, $prices['expo'] ?? null),
                         'customer' => BatchMaster::amountFrom($lot->qty, $prices['customer'] ?? null),
+                        'mrp' => BatchMaster::amountFrom($lot->qty, $lot->mrp_price),
                     ],
                     'discounts' => $discounts,
                 ];

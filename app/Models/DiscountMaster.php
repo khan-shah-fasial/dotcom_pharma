@@ -255,6 +255,10 @@ class DiscountMaster extends Model
                     return (int) $matched;
                 }
             }
+            $any = (clone $query)->orderByDesc('id')->value('coa');
+            if ($any !== null && $any !== '' && is_numeric($any)) {
+                return (int) $any;
+            }
         }
 
         if ($stockCoa !== null && $stockCoa !== '' && is_numeric($stockCoa)) {

@@ -201,7 +201,7 @@ class BatchMaster extends Model
     public static function normalize(array $input): array
     {
         $isNonBatch = self::isTruthy($input['is_non_batch'] ?? false);
-        $batchCode = trim((string) ($input['batch_code'] ?? ''));
+        $batchCode = strtoupper(trim((string) ($input['batch_code'] ?? '')));
         $purchaseDate = self::parsePurchaseDate($input['purchase_date'] ?? null);
         if ($isNonBatch && $batchCode === '') {
             $batchCode = $purchaseDate ? $purchaseDate->format('Ymd') : '-';

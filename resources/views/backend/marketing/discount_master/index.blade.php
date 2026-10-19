@@ -7,6 +7,7 @@
     $sortDir = $sortDir ?? 'desc';
     $tab = $tab ?? 'discount_type';
     $scopeStocks = $scopeStocks ?? collect();
+    $batchMasters = $batchMasters ?? collect();
     $filtersApplied = collect($filters)->contains(function ($value) {
         return $value !== null && $value !== '';
     });
@@ -21,7 +22,7 @@
                 $html .= '<div class="mt-1"></div>';
             }
             $lastGroup = $line['group'];
-            $html .= '<div>' . e(translate($line['label'])) . ': ' . e($line['value']) . '</div>';
+            $html .= '<div class="dm-stack-line"><div>' . e(translate($line['label'])) . '</div><div>' . e($line['value']) . '</div></div>';
         }
 
         return $html !== '' ? $html : '—';
@@ -63,7 +64,7 @@
             ? translate('Same discount')
             : translate('Same discount') . ' — ' . implode(' | ', $bits);
     };
-    $colspan = $tab === 'applied_on' ? 9 : 7;
+    $colspan = $tab === 'applied_on' ? 10 : 8;
 @endphp
 
 <div class="aiz-titlebar text-left mt-2 mb-3">
@@ -121,7 +122,7 @@
             <table class="table table-bordered aiz-table mb-0 dm-listing">
                 <thead>
                     <tr>
-                        <th>{{ translate('Product') }}</th>
+                        <th>{{ translate('Product') }}<br>{{ translate('Full Variant') }}</th>
                         @if ($tab === 'discount_type')
                             @include('backend.inc.sortable_th', ['column' => 'discount_code', 'label' => translate('Discount ID'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             <th>{{ translate('Discount Type') }}</th>
@@ -135,8 +136,9 @@
                             @include('backend.inc.sortable_th', ['column' => 'sku', 'label' => translate('SKU Product'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'variant', 'label' => translate('Full Variant'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                             @include('backend.inc.sortable_th', ['column' => 'batch', 'label' => translate('Batch / Lot.No'), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
-                            <th>{{ translate('Mfg.Date') }}<br>{{ translate('Expiry Date') }}<br>{{ translate('COA Document') }}</th>
+                            <th>{{ translate('Mfg.Date') }}<br>{{ translate('Expiry Date') }}</th>
                         @endif
+                        <th>{{ translate('COA') }}</th>
                         <th>{{ translate('Total Discount Given') }}</th>
                         @include('backend.inc.sortable_th', ['column' => 'from_date', 'labelHtml' => e(translate('From Date')) . '<br>' . e(translate('To Date')) . '<br>' . e(translate('Offer Active')) . '<br>' . e(translate('Date Of Add / Edit')), 'routeName' => 'discount_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
                         <th class="text-right dm-actions">{{ translate('Actions') }}</th>
@@ -148,13 +150,30 @@
                             @php
                                 $isProductRow = in_array($discount->discount_type, \App\Models\DiscountMaster::PRODUCT_TYPES, true);
                                 $sourceBatch = $discount->sourceBatch();
-                                $coaId = $isProductRow ? $discount->sourceCoa() : null;
+                                $masterCodes = [];
+                                $masterCoa = null;
+                                foreach ((array) ($discount->sheetPayload()['batch_ids'] ?? []) as $batchPick) {
+                                    $batchPick = (string) $batchPick;
+                                    if (strpos($batchPick, 'bm-') !== 0) {
+                                        continue;
+                                    }
+                                    $master = $batchMasters->get((int) substr($batchPick, 3));
+                                    if (!$master) {
+                                        continue;
+                                    }
+                                    $masterCodes[] = $master->batch_code;
+                                    if (!$masterCoa && $master->coa) {
+                                        $masterCoa = $master->coa;
+                                    }
+                                }
+                                $coaId = $isProductRow ? ($discount->sourceCoa() ?: $masterCoa) : null;
                                 $coaIsImage = $coaId && function_exists('check_asset_type') && check_asset_type($coaId) === 'image';
                                 $sameScope = $scopeLine($discount);
                             @endphp
                             <tr>
                                 <td>
                                     {{ optional($discount->product)->getTranslation('name') ?: '—' }}
+                                    <div class="text-muted fs-12">{{ $discount->stock ? ($discount->stock->expandedVariantLabel() ?: '—') : '—' }}</div>
                                     @if ($sameScope !== '')
                                         <div class="text-muted fs-11">{{ $sameScope }}</div>
                                     @endif
@@ -194,7 +213,7 @@
                                     </td>
                                     <td>
                                         @if ($discount->applied_on === 'batch' || $discount->batch)
-                                            <div>{{ optional($sourceBatch)->batch ?: '—' }}</div>
+                                            <div>{{ optional($sourceBatch)->batch ?: ($masterCodes ? implode(', ', $masterCodes) : '—') }}</div>
                                             <div class="text-muted fs-11">{{ translate('Stock') }}: {{ $discount->sourceQty() ?? '—' }}</div>
                                         @elseif ($isProductRow)
                                             <div class="text-muted fs-11">{{ translate('Stock') }}: {{ $discount->sourceQty() ?? '—' }}</div>
@@ -216,20 +235,22 @@
                                         @if ($isProductRow)
                                             <div>{{ optional($sourceBatch)->manufacturing_date ?: '—' }}</div>
                                             <div>{{ optional($sourceBatch)->product_exp_date ?? optional($discount->stock)->product_exp_date ?: '—' }}</div>
-                                            @if ($coaId && $coaIsImage)
-                                                <a href="#" class="dm-coa-zoom" data-src="{{ uploaded_asset($coaId) }}">
-                                                    <img src="{{ uploaded_asset($coaId) }}" alt="{{ translate('COA Document') }}" class="img-thumbnail mt-1" style="height:42px;width:42px;object-fit:cover;">
-                                                </a>
-                                            @elseif ($coaId)
-                                                <a href="{{ uploaded_asset($coaId) }}" target="_blank">{{ translate('COA') }}</a>
-                                            @else
-                                                <div>—</div>
-                                            @endif
                                         @else
                                             —
                                         @endif
                                     </td>
                                 @endif
+                                <td>
+                                    @if ($coaId && $coaIsImage)
+                                        <a href="#" class="dm-coa-zoom" data-src="{{ uploaded_asset($coaId) }}">
+                                            <img src="{{ uploaded_asset($coaId) }}" alt="{{ translate('COA Document') }}" class="img-thumbnail" style="height:48px;width:48px;object-fit:cover;">
+                                        </a>
+                                    @elseif ($coaId)
+                                        <a href="{{ uploaded_asset($coaId) }}" target="_blank" class="btn btn-soft-primary btn-sm">{{ translate('COA') }}</a>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td>{{ $discount->totalDiscountLabel() }}</td>
                                 <td>
                                     {{ optional($discount->from_date)->format('d-m-Y') ?: '—' }}<br>
@@ -276,26 +297,21 @@
     .dm-listing th {
         white-space: normal;
         vertical-align: bottom;
-        min-width: 110px;
         font-size: 12px;
     }
     .dm-listing th a { text-decoration: none; }
     .dm-listing td {
         vertical-align: top;
         font-size: 13px;
+        white-space: normal;
     }
+    .dm-stack-line { display: block; margin-bottom: 6px; line-height: 1.25; }
+    .dm-stack-line div { display: block; }
     .dm-listing th.dm-actions,
     .dm-listing td.dm-actions {
-        position: sticky;
-        right: 0;
         white-space: nowrap;
-        min-width: 96px;
-        background: #fff;
-        z-index: 2;
-    }
-    .dm-listing thead th.dm-actions {
-        z-index: 3;
-        background: #f7f8fa;
+        width: 88px;
+        text-align: right;
     }
 </style>
 

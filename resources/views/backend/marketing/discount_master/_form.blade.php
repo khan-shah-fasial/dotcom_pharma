@@ -175,6 +175,12 @@
                     </div>
                 </div>
                 <div class="col-md-4">
+                    <div class="form-group">
+                        <label>{{ translate('COA') }}</label>
+                        <div id="coa-gallery" class="d-flex flex-wrap align-items-center"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
                     <div class="form-group dm-party" data-role="marketed">
                         <label>{{ translate('Marketed By') }}</label>
                         <input type="text" class="form-control dm-party-text" id="meta_marketed" readonly>
@@ -236,7 +242,7 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>{{ translate('COA') }}</label>
-                            <div id="coa-gallery" class="d-flex flex-wrap"></div>
+                            <div id="coa-gallery-note" class="text-muted fs-12">{{ translate('Shown beside Full Variant.') }}</div>
                         </div>
                     </div>
                 </div>
