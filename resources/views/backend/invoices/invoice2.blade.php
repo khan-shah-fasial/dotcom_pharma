@@ -255,10 +255,10 @@
             : ($quantity > 0 ? (float) ($detail->price ?? 0) / $quantity : 0);
         $baseUnit = $detail->before_productandbatch_discount ?? $saleUnit;
 
-        return round(max(0, (float) $baseUnit - $saleUnit) * $quantity, 2);
+        return round(max(0, (float) $baseUnit - $saleUnit) * $quantity, 3);
     };
     $detailCouponDiscount = function ($detail) use ($detailProductDiscount) {
-        return round(max(0, (float) ($detail->discount_amount ?? 0) - $detailProductDiscount($detail)), 2);
+        return round(max(0, (float) ($detail->discount_amount ?? 0) - $detailProductDiscount($detail)), 3);
     };
     $productDiscountTotal = $order->orderDetails->sum($detailProductDiscount);
     $couponDiscount = $order->coupon_discount ?? 0;
@@ -279,10 +279,11 @@
             $price = ($price / (float) $systemExchangeRate) * (float) $invoiceExchangeRate;
         }
 
+        $decimals = price_decimal_places($invoiceCurrencyCode, $invoiceCurrencySymbol);
         if (get_setting('decimal_separator') == 1) {
-            $formattedPrice = number_format($price, get_setting('no_of_decimals'));
+            $formattedPrice = number_format($price, $decimals);
         } else {
-            $formattedPrice = number_format($price, get_setting('no_of_decimals'), ',', '.');
+            $formattedPrice = number_format($price, $decimals, ',', '.');
         }
 
         if (get_setting('symbol_format') == 1 || get_setting('symbol_format') == 3) {

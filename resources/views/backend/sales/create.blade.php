@@ -1014,7 +1014,7 @@ span#picker-info-stock-badge {
                                         <option value="{{ $transport->id }}" data-mode="{{ $transport->mode }}"
                                             @selected((string) old('transport_id') === (string) $transport->id)>{{ $transport->name }}</option>
                                     @endforeach
-                                    <option value="other" @selected(old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')))>{{ translate('Other') }}</option>
+                                    <option value="other" @selected(old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')))>{{ translate('Not in List') }}</option>
                                 </select>
                                 <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')) ? '' : 'd-none' }}" name="transport_name" placeholder="{{ translate('Enter transport name') }}" value="{{ old('transport_name') }}">
                             </div>
@@ -1028,7 +1028,7 @@ span#picker-info-stock-badge {
                                     @foreach($localDeliveryPartners as $partner)
                                         <option value="{{ $partner->id }}" @selected((string) old('local_delivery_partner_id') === (string) $partner->id)>{{ $partner->name }}</option>
                                     @endforeach
-                                    <option value="other" @selected(old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')))>{{ translate('Other') }}</option>
+                                    <option value="other" @selected(old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')))>{{ translate('Not in List') }}</option>
                                 </select>
                                 <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')) ? '' : 'd-none' }}" name="local_delivery_partner_name" placeholder="{{ translate('Enter partner name') }}" value="{{ old('local_delivery_partner_name') }}">
                             </div>
@@ -1130,6 +1130,12 @@ span#picker-info-stock-badge {
                                 <option value="">{{ translate('Select transport first') }}</option>
                             </select>
                             <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('booked_to_id') === 'other' || filled(old('booked_to_name')) ? '' : 'd-none' }}" name="booked_to_name" placeholder="{{ translate('Enter booked to') }}" value="{{ old('booked_to_name') }}">
+                            <div class="selected-location-hover d-none mb-2" id="booked-to-detail" tabindex="0">
+                                <div class="selected-location-name">
+                                    <i class="las la-info-circle mr-1"></i><span></span>
+                                </div>
+                                <div class="selected-location-card"></div>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -1431,7 +1437,19 @@ span#picker-info-stock-badge {
             };
             var salePriceEdited = false;
             var bookedToOptions = @json($bookedToOptions->map(function ($option) {
-                return ['id' => $option->id, 'transport_id' => $option->transport_id, 'name' => $option->name];
+                return [
+                    'id' => $option->id,
+                    'transport_id' => $option->transport_id,
+                    'name' => $option->name,
+                    'branch_name' => $option->branch_name,
+                    'branch_address' => $option->branch_address,
+                    'branch_code' => $option->branch_code,
+                    'branch_gst_number' => $option->branch_gst_number,
+                    'branch_mobile_number' => $option->branch_mobile_number,
+                    'branch_alternate_mobile_number' => $option->branch_alternate_mobile_number,
+                    'contact_incharge' => $option->contact_incharge,
+                    'branch_email' => $option->branch_email,
+                ];
             })->values());
             var courierServices = [];
             var shippingItems = [];
@@ -3175,13 +3193,51 @@ span#picker-info-stock-badge {
 
             function appendOtherOption($select) {
                 if ($select.length && !$select.find('option[value="other"]').length) {
-                    $select.append('<option value="other">{{ translate('Other') }}</option>');
+                    $select.append('<option value="other">{{ translate('Not in List') }}</option>');
                 }
             }
 
             $(document).on('change', '.js-other-select', function () {
                 syncOtherEnter($(this));
             });
+
+            function renderBookedBranchDetail($select) {
+                if (!$select.length || $select.attr('id') !== 'booked-to-id') {
+                    return;
+                }
+                var $detail = $('#booked-to-detail');
+                var selected = bookedToOptions.find(function (option) {
+                    return String(option.id) === String($select.val() || '');
+                });
+                if (!selected) {
+                    $detail.addClass('d-none').find('.selected-location-card').empty();
+                    return;
+                }
+                var rows = [
+                    ['{{ translate('Branch Name') }}', selected.branch_name],
+                    ['{{ translate('Branch Address') }}', selected.branch_address],
+                    ['{{ translate('Branch Code') }}', selected.branch_code],
+                    ['{{ translate('GST Number') }}', selected.branch_gst_number],
+                    ['{{ translate('Mobile') }}', selected.branch_mobile_number],
+                    ['{{ translate('Alternate Mobile') }}', selected.branch_alternate_mobile_number],
+                    ['{{ translate('Contact Incharge') }}', selected.contact_incharge],
+                    ['{{ translate('Email') }}', selected.branch_email]
+                ];
+                var html = '';
+                rows.forEach(function (row) {
+                    if (row[1] === null || row[1] === undefined || String(row[1]).trim() === '') {
+                        return;
+                    }
+                    html += '<div class="selected-location-detail-row">'
+                        + '<span class="selected-location-detail-label">' + escapeHtml(row[0]) + '</span>'
+                        + '<span>' + escapeHtml(row[1]) + '</span></div>';
+                });
+                if (!html) {
+                    html = '<div class="selected-location-detail-row"><span>{{ translate('No branch details saved for this location.') }}</span></div>';
+                }
+                $detail.removeClass('d-none').find('.selected-location-name span').text(selected.name || '');
+                $detail.find('.selected-location-card').html(html);
+            }
 
             function fillBookedLocationSelect($select, transportId, readyPlaceholder) {
                 if (!$select.length) {
@@ -3208,10 +3264,12 @@ span#picker-info-stock-badge {
                 }
                 $select.data('selected', $select.val() || '');
                 syncOtherEnter($select);
+                renderBookedBranchDetail($select);
             }
 
             $('#booked-from-id,#booked-to-id').on('change', function () {
                 $(this).data('selected', $(this).val() || '');
+                renderBookedBranchDetail($(this));
             });
 
             function syncSubModeOptions() {

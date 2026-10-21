@@ -928,25 +928,62 @@ if (!function_exists('active_currency_cache_suffix')) {
     }
 }
 
+if (!function_exists('is_rupee_currency')) {
+    function is_rupee_currency($code = null, $symbol = null): bool
+    {
+        $code = strtoupper(trim((string) $code));
+        $symbol = trim((string) $symbol);
+        if (in_array($code, ['INR', 'RS'], true)) {
+            return true;
+        }
+
+        $plainSymbol = strtoupper(str_replace(['.', ' '], '', $symbol));
+
+        return in_array($symbol, ['₹', 'Rs', 'Rs.', 'INR'], true)
+            || in_array($plainSymbol, ['RS', 'INR'], true);
+    }
+}
+
+if (!function_exists('price_decimal_places')) {
+    function price_decimal_places($code = null, $symbol = null): int
+    {
+        if ($code === null && $symbol === null) {
+            $code = Session::get('currency_code')
+                ?: request()->header('Currency-Code')
+                ?: optional(get_system_default_currency())->code;
+            $symbol = currency_symbol();
+        }
+
+        if (is_rupee_currency($code, $symbol)) {
+            return 3;
+        }
+
+        $configured = get_setting('no_of_decimals');
+
+        return is_numeric($configured) ? (int) $configured : 2;
+    }
+}
+
 //formats currency
 if (!function_exists('format_price')) {
     function format_price($price, $isMinimize = false)
     {
+        $decimals = price_decimal_places();
         if (get_setting('decimal_separator') == 1) {
-            $fomated_price = number_format($price, get_setting('no_of_decimals'));
+            $fomated_price = number_format($price, $decimals);
         } else {
-            $fomated_price = number_format($price, get_setting('no_of_decimals'), ',', '.');
+            $fomated_price = number_format($price, $decimals, ',', '.');
         }
 
 
         // Minimize the price
         if ($isMinimize) {
-            $temp = number_format($price / 1000000000, get_setting('no_of_decimals'), ".", "");
+            $temp = number_format($price / 1000000000, $decimals, ".", "");
 
             if ($temp >= 1) {
                 $fomated_price = $temp . "B";
             } else {
-                $temp = number_format($price / 1000000, get_setting('no_of_decimals'), ".", "");
+                $temp = number_format($price / 1000000, $decimals, ".", "");
                 if ($temp >= 1) {
                     $fomated_price = $temp . "M";
                 }

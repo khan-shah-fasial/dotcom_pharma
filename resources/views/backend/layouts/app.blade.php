@@ -96,6 +96,13 @@
             border-top-right-radius: 4px !important;
             border-bottom-right-radius: 4px !important;
         }
+        .aiz-table thead th a,
+        a.listing-sort-link {
+            color: #1d4ed8 !important;
+        }
+        .aiz-table tbody td a:not(.btn):not(.dropdown-item):not(.badge) {
+            color: #15803d !important;
+        }
     </style>
     <script>
         var AIZ = AIZ || {};

@@ -471,7 +471,7 @@
                                             @foreach ($transports as $transport)
                                                 <option value="{{ $transport['id'] }}" data-mode="{{ $transport['mode'] }}">{{ $transport['name'] }}</option>
                                             @endforeach
-                                            <option value="other">{{ translate('Other') }}</option>
+                                            <option value="other">{{ translate('Not in List') }}</option>
                                         </select>
                                         <input type="text" class="form-control mt-2 other-enter-input d-none" name="transport_name" placeholder="{{ translate('Enter transport name') }}">
                                     </div>
@@ -485,7 +485,7 @@
                                             @foreach ($localDeliveryPartners as $partner)
                                                 <option value="{{ $partner['id'] }}">{{ $partner['name'] }}</option>
                                             @endforeach
-                                            <option value="other">{{ translate('Other') }}</option>
+                                            <option value="other">{{ translate('Not in List') }}</option>
                                         </select>
                                         <input type="text" class="form-control mt-2 other-enter-input d-none" name="local_delivery_partner_name" placeholder="{{ translate('Enter partner name') }}">
                                     </div>
@@ -916,7 +916,7 @@
                 matches.forEach(function (option) {
                     $bookedTo.append('<option value="' + option.id + '">' + escapeHtml(option.name) + '</option>');
                 });
-                $bookedTo.append('<option value="other">{{ translate('Other') }}</option>');
+                $bookedTo.append('<option value="other">{{ translate('Not in List') }}</option>');
                 syncOtherEnter($('#transport-id'));
                 syncOtherEnter($bookedTo);
             }
