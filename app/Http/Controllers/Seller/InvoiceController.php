@@ -79,7 +79,7 @@ class InvoiceController extends Controller
         // }];
         // mpdf config will be used in 4th params of loadview
 
-        $config = [];
+        $config = ['format' => 'A4-L'];
 
         $order = Order::with([
             'user.user_details.businessCountry',
