@@ -138,13 +138,27 @@
         }
     };
 
-    $siteName = get_setting('invoice_company_name') ?: 'Dotcom Pharma';
-    $contactAddress = get_setting('contact_address', null, 'en');
-    $contactPhone = get_setting('contact_phone');
+    $issuingCompany = issuing_company_for_order_code($order->code ?? null);
+    $siteName = trim((string) ($issuingCompany?->company_name ?? ''));
+    if ($siteName === '') {
+        $siteName = trim((string) (get_setting('invoice_company_name') ?: ''));
+    }
+    $contactAddress = trim((string) ($issuingCompany?->full_address ?? ''));
+    if ($contactAddress === '') {
+        $contactAddress = get_setting('contact_address', null, 'en');
+    }
+    $contactPhone = trim((string) ($issuingCompany?->mobile ?? ''));
+    if ($contactPhone === '') {
+        $contactPhone = get_setting('contact_phone');
+    }
+    $contactWhatsapp = trim((string) ($issuingCompany?->whatsapp ?? ''));
     $contactSalesPhone = get_setting('contact_sales_phone');
     $contactAccountPhone = get_setting('contact_account_phone');
-    $contactEmail = get_setting('contact_email');
-    $contactWebsite = get_setting('website_url') ?: get_setting('website_name');
+    $contactEmail = trim((string) ($issuingCompany?->email ?? ''));
+    if ($contactEmail === '') {
+        $contactEmail = get_setting('contact_email');
+    }
+    $contactWebsite = get_setting('website_url');
     $drugLicenceNumbers = array_filter(array_map('trim', explode(',', (string) (get_setting('drug_licence_numbers') ?? ''))));
 
     $shipping = json_decode($order->shipping_address ?? '{}') ?: (object) [];
@@ -813,17 +827,29 @@
         $outstanding = $openingBalance + $priorUnpaid;
     }
 
-    $logoId = get_setting('header_logo');
+    $logoId = ($issuingCompany && $issuingCompany->logo) ? $issuingCompany->logo : get_setting('header_logo');
     $logoUrl = $logoId ? uploaded_asset($logoId) : null;
     if (!$logoUrl && file_exists(public_path('assets/img/logo.png'))) {
         $logoUrl = static_asset('assets/img/logo.png');
     }
-    $stampId = get_setting('invoice_stamp');
+    $stampId = ($issuingCompany && $issuingCompany->stamp) ? $issuingCompany->stamp : get_setting('invoice_stamp');
     $stampUrl = $stampId ? uploaded_asset($stampId) : null;
-    $signatoryName = trim((string) (get_setting('authorised_signatory') ?: $billingBy ?: ''));
-    $upiName = trim((string) (get_setting('company_upi_name') ?: 'CMD-dotcompharma'));
+    $signId = ($issuingCompany && $issuingCompany->sign) ? $issuingCompany->sign : null;
+    $signUrl = $signId ? uploaded_asset($signId) : null;
+    $signatoryName = trim((string) (
+        ($issuingCompany?->contact_person ?? '')
+        ?: (get_setting('authorised_signatory') ?: '')
+        ?: ($billingBy ?: '')
+    ));
+    $upiName = trim((string) (get_setting('company_upi_name') ?: ''));
     $upiId = trim((string) (get_setting('company_upi_id') ?: ''));
-    $upiLine = translate('For UPI Payment') . ' : ' . translate('All Type Available') . ', ' . translate('Name Display') . ': ' . $upiName;
+    $upiLine = '';
+    if ($upiId !== '' || $upiName !== '') {
+        $upiLine = translate('For UPI Payment') . ' : ' . translate('All Type Available');
+        if ($upiName !== '') {
+            $upiLine .= ', ' . translate('Name Display') . ': ' . $upiName;
+        }
+    }
     $qrMarkup = function ($text) {
         $text = trim((string) $text);
         if ($text === '') {
@@ -837,7 +863,12 @@
         }
     };
     $invoiceQr = $qrMarkup($invoiceNo);
-    $upiQr = $qrMarkup($upiId !== '' ? ('upi://pay?pa=' . rawurlencode($upiId) . '&pn=' . rawurlencode($upiName) . '&cu=INR') : $upiName);
+    $upiQr = '';
+    if ($upiId !== '') {
+        $upiQr = $qrMarkup('upi://pay?pa=' . rawurlencode($upiId) . '&pn=' . rawurlencode($upiName) . '&cu=INR');
+    } elseif ($upiName !== '') {
+        $upiQr = $qrMarkup($upiName);
+    }
 
     $licenceOneLabel = $useExportIds ? translate('Pharmacy Lic. No. 1 & 2') : translate('Drug Lic. No. 1 & 2');
     $licenceThreeLabel = $useExportIds ? translate('Pharmacy Lic. No. 3 & Expiry') : translate('Drug Lic. No. 3 & Expiry');
@@ -887,7 +918,8 @@
                 @endif
                 <div class="co-name">{{ strtoupper($siteName) }}</div>
                 @if($contactAddress)<div>{{ $contactAddress }}</div>@endif
-                @if($contactPhone)<div>{{ translate('Customer Care') }}: {{ $contactPhone }}</div>@endif
+                @if($contactPhone)<div>{{ translate('Mobile') }}: {{ $contactPhone }}</div>@endif
+                @if($contactWhatsapp)<div>{{ translate('WhatsApp') }}: {{ $contactWhatsapp }}</div>@endif
                 @if($contactAccountPhone)<div>{{ translate('Account') }}: {{ $contactAccountPhone }}</div>@endif
                 @if($contactSalesPhone)<div>{{ translate('Sales') }}: {{ $contactSalesPhone }}</div>@endif
                 @if($contactEmail || $contactWebsite)
@@ -908,7 +940,7 @@
                 @if($bankLine)<div>{{ $bankLine }}</div>@endif
                 @if($bankLineTwo)<div>{{ $bankLineTwo }}</div>@endif
                 @if($companyFssai)<div>{{ translate('FSSAI Lic. No.') }}: {{ $companyFssai }}</div>@endif
-                <div>{{ $upiLine }}</div>
+                @if($upiLine)<div>{{ $upiLine }}</div>@endif
             </td>
             <td width="27%">
                 <div class="label">{{ $buyerHeading }}</div>
@@ -1220,7 +1252,9 @@
                 <table class="inner">
                     <tr>
                         <td class="text-center qr">{!! $invoiceQr !!}<div class="qr-label">{{ translate('Invoice No.') }}</div></td>
-                        <td class="text-center qr">{!! $upiQr !!}<div class="qr-label">{{ translate('UPI') }}</div></td>
+                        @if($upiQr)
+                            <td class="text-center qr">{!! $upiQr !!}<div class="qr-label">{{ translate('UPI') }}</div></td>
+                        @endif
                     </tr>
                 </table>
             </td>
@@ -1230,6 +1264,9 @@
                     <img src="{{ $stampUrl }}" alt="{{ translate('Authorised Signature') }}" style="height: 74px;">
                 @else
                     <div class="seal">{{ strtoupper($siteName) }}</div>
+                @endif
+                @if($signUrl)
+                    <img src="{{ $signUrl }}" alt="{{ translate('Authorised Signature') }}" style="height: 36px;">
                 @endif
                 @if($signatoryName)<div class="red">{{ $signatoryName }}</div>@endif
                 <div>{{ translate('Authorised Signature') }}</div>
