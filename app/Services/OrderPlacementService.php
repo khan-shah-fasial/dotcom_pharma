@@ -362,6 +362,7 @@ class OrderPlacementService
         $order->net_weight_kg = $request->filled('net_weight_kg') ? $request->input('net_weight_kg') : null;
         $order->gross_weight_kg = $request->filled('gross_weight_kg') ? $request->input('gross_weight_kg') : null;
         $order->total_volume_cbm = $request->filled('total_volume_cbm') ? $request->input('total_volume_cbm') : null;
+        $this->assignInvoiceAdjustments($order, $request);
         $order->cases = $this->nullableTrimmed($request->input('cases'));
         $order->attached_file_name = $this->nullableTrimmed($request->input('attached_file_name'));
         $order->po_number = $this->nullableTrimmed($request->input('po_number'));
@@ -1726,5 +1727,32 @@ class OrderPlacementService
     protected function fail(string $field, string $message): void
     {
         throw ValidationException::withMessages([$field => $message]);
+    }
+
+    protected function assignInvoiceAdjustments(Order $order, Request $request): void
+    {
+        $table = $order->getTable();
+        $textColumns = ['pm_accountant_name', 'eway_bill_number', 'eway_bill_date'];
+        $columns = [
+            'pm_accountant_name',
+            'eway_bill_number',
+            'eway_bill_date',
+            'pack_forwarding_amount',
+            'insurance_amount',
+            'other_charges_amount',
+            'amountwise_discount',
+            'cr_db_adjustment',
+        ];
+        foreach ($columns as $column) {
+            if (!Schema::hasColumn($table, $column)) {
+                continue;
+            }
+            $value = $request->input($column);
+            if (in_array($column, $textColumns, true)) {
+                $order->{$column} = ($value === null || $value === '') ? null : $value;
+                continue;
+            }
+            $order->{$column} = ($value === null || $value === '') ? 0 : $value;
+        }
     }
 }

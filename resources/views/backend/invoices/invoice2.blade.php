@@ -69,8 +69,28 @@
         .totals .grand { font-size: 10px; font-weight: 800; color: #c00; }
         .terms { font-size: 8px; line-height: 1.3; }
         .terms ol { margin: 2px 0 0 16px; padding: 0; }
-        .sign td { height: 52px; text-align: center; vertical-align: bottom; font-size: 9px; }
+        .sign td { height: 72px; text-align: center; vertical-align: bottom; font-size: 9px; }
         .small { font-size: 7px; }
+        .hl { background: #ffff00; }
+        .hl-red { background: #ffff00; color: #c00; font-weight: 700; }
+        .logo { height: 42px; margin-bottom: 2px; }
+        .qr svg { width: 62px; height: 62px; }
+        .sign td.qr { height: auto; vertical-align: middle; }
+        .qr-label { font-size: 7px; line-height: 1.1; margin-top: 1px; }
+        .seal {
+            width: 74px;
+            height: 74px;
+            margin: 0 auto 2px;
+            border: 2px solid #1a4f8b;
+            border-radius: 50%;
+            color: #1a4f8b;
+            font-size: 7px;
+            font-weight: 700;
+            line-height: 1.15;
+            text-align: center;
+            padding: 18px 6px 0;
+        }
+        .seal img { width: 74px; height: 74px; object-fit: contain; }
     </style>
 </head>
 <body>
@@ -91,7 +111,20 @@
         $number = rtrim(rtrim(number_format((float) $value, 3, '.', ''), '0'), '.');
         return $number . ' ' . $unit;
     };
+    $formatVolume = function ($value) {
+        if ($value === null || $value === '') {
+            return '—';
+        }
+        $number = rtrim(rtrim(number_format((float) $value, 6, '.', ''), '0'), '.');
+        if ($number === '' || $number === '0') {
+            return '0 CBM';
+        }
+        return $number . ' CBM';
+    };
     $formatPercent = function ($value) {
+        return number_format((float) $value, 3, '.', '');
+    };
+    $formatRate = function ($value) {
         return number_format((float) $value, 2, '.', '');
     };
     $monthYear = function ($date) {
@@ -162,6 +195,8 @@
     ];
     if ($storedDocumentType !== '' && isset($numberLabels[$storedDocumentType])) {
         $invoiceNumberLabel = $numberLabels[$storedDocumentType];
+    } elseif ($customDocumentTitle !== '') {
+        $invoiceNumberLabel = $customDocumentTitle . ' No.';
     } elseif ($useExportIds) {
         $invoiceNumberLabel = 'Commercial Invoice No.';
     } else {
@@ -262,6 +297,9 @@
     $salesExecutiveCode = $order->sales_man_code ?: $userDetails?->salesman;
     $paymentMethod = \App\Support\InvoiceType::paymentTermLabel($order->payment_type, $invoiceType)
         ?: ($order->payment_type ? ucwords(str_replace('_', ' ', (string) $order->payment_type)) : null);
+    if (is_string($paymentMethod) && str_contains($paymentMethod, ' / ')) {
+        $paymentMethod = trim(strstr($paymentMethod, ' / ', true));
+    }
     $paymentStatus = $order->payment_status ? ucwords(str_replace('_', ' ', (string) $order->payment_status)) : null;
     $deliveryType = \App\Support\InvoiceType::deliveryTermLabel($order->transport_delivery_type, $invoiceType);
     $transportMode = $order->transport_mode
@@ -273,7 +311,9 @@
     $dischargeLocation = ($order->discharge_location_type ?? null) === 'sea'
         ? optional($order->dischargeSeaPort)->name
         : optional($order->dischargeAirport)->name;
-    $bookedDisplay = implode(' / ', array_filter([$bookedName, $dischargeLocation]));
+    $bookedDisplay = $useExportIds
+        ? implode(' / ', array_filter([$bookedName, $dischargeLocation]))
+        : ($bookedName ?: null);
     $carrierTaxNumber = $order->carrier_tax_number ?: optional($order->bookedTo)->branch_gst_number;
     $billingBy = optional($order->billingByStaff)->name;
     $countryOfOrigin = $order->orderDetails
@@ -298,9 +338,6 @@
         $consigneeCopy = translate('Not Attached');
     } else {
         $consigneeCopy = '—';
-    }
-    if (!empty($order->attached_file_name) && $consigneeCopy !== '—') {
-        $consigneeCopy .= ' / ' . $order->attached_file_name;
     }
 
     $poText = trim((string) ($order->po_number ?? ''));
@@ -390,13 +427,7 @@
         } else {
             $formattedPrice = number_format($price, $decimals, ',', '.');
         }
-        if (get_setting('symbol_format') == 1 || get_setting('symbol_format') == 3) {
-            return $invoiceCurrencySymbol . ' ' . $formattedPrice;
-        }
-        if (get_setting('symbol_format') == 4) {
-            return $formattedPrice . ' ' . $invoiceCurrencySymbol;
-        }
-        return $formattedPrice . $invoiceCurrencySymbol;
+        return $formattedPrice;
     };
 
     $shippingTotal = (float) ($order->orderDetails?->sum('shipping_cost') ?? 0);
@@ -462,35 +493,64 @@
     }
 
     $splitDiscount = function ($detail, $rate, $gap) {
-        $bdPercent = 0.0;
-        $pdPercent = 0.0;
         $batch = $detail->batch;
         $product = $detail->product;
-        if ($rate > 0 && $gap > 0.0005 && $batch && ($batch->discount_type ?? null) === 'percent') {
-            $candidate = min(100, max(0, (float) ($batch->discount ?? 0)));
-            if (abs(($rate * $candidate / 100) - $gap) <= 0.05) {
-                $bdPercent = $candidate;
+        $bdPercent = 0.0;
+        $pdPercent = 0.0;
+        $bdUnit = 0.0;
+        $pdUnit = 0.0;
+
+        if ($batch && (float) ($batch->batch_discount_percent ?? 0) > 0) {
+            $bdPercent = min(100, max(0, (float) $batch->batch_discount_percent));
+        } elseif ($batch && ($batch->discount_type ?? null) === 'percent' && (float) ($batch->discount ?? 0) > 0) {
+            $bdPercent = min(100, max(0, (float) $batch->discount));
+        } elseif ($rate > 0 && $batch && ($batch->discount_type ?? null) === 'amount' && (float) ($batch->discount ?? 0) > 0) {
+            $bdUnit = max(0, (float) $batch->discount);
+            $bdPercent = ($bdUnit / $rate) * 100;
+        }
+
+        if ($batch && (float) ($batch->product_discount_percent ?? 0) > 0) {
+            $pdPercent = min(100, max(0, (float) $batch->product_discount_percent));
+        } elseif ($product && ($product->discount_type ?? null) === 'percent' && (float) ($product->discount ?? 0) > 0) {
+            $pdPercent = min(100, max(0, (float) $product->discount));
+        } elseif ($rate > 0 && $product && ($product->discount_type ?? null) === 'amount' && (float) ($product->discount ?? 0) > 0) {
+            $pdUnit = max(0, (float) $product->discount);
+            $pdPercent = ($pdUnit / $rate) * 100;
+        }
+
+        if ($bdPercent > 0 && $bdUnit <= 0) {
+            $bdUnit = $rate * $bdPercent / 100;
+        }
+        if ($pdPercent > 0 && $pdUnit <= 0) {
+            $pdUnit = $rate * $pdPercent / 100;
+        }
+
+        if ($bdUnit > 0.0005 && $pdUnit > 0.0005) {
+            return [
+                'bd_percent' => $bdPercent,
+                'pd_percent' => $pdPercent,
+                'bd_unit' => $bdUnit,
+                'pd_unit' => $pdUnit,
+                'stacked' => true,
+            ];
+        }
+
+        if ($gap <= 0.0005) {
+            return ['bd_percent' => 0.0, 'pd_percent' => 0.0, 'bd_unit' => 0.0, 'pd_unit' => 0.0, 'stacked' => false];
+        }
+
+        if ($bdUnit > 0.0005) {
+            if (abs($bdUnit - $gap) > 0.05) {
+                $bdUnit = $gap;
+                $bdPercent = $rate > 0 ? ($gap / $rate) * 100 : 0.0;
             }
+            return ['bd_percent' => $bdPercent, 'pd_percent' => 0.0, 'bd_unit' => $bdUnit, 'pd_unit' => 0.0, 'stacked' => false];
         }
-        if ($bdPercent <= 0 && $rate > 0 && $gap > 0.0005 && $batch && ($batch->discount_type ?? null) === 'amount') {
-            $candidateAmount = max(0, (float) ($batch->discount ?? 0));
-            if (abs($candidateAmount - $gap) <= 0.05) {
-                $bdPercent = ($candidateAmount / $rate) * 100;
-            }
-        }
-        if ($bdPercent <= 0 && $rate > 0 && $gap > 0.0005 && $product && ($product->discount_type ?? null) === 'percent') {
-            $candidate = min(100, max(0, (float) ($product->discount ?? 0)));
-            if (abs(($rate * $candidate / 100) - $gap) <= 0.05) {
-                $pdPercent = $candidate;
-            }
-        }
-        if ($bdPercent <= 0 && $pdPercent <= 0 && $rate > 0 && $gap > 0.0005) {
-            $pdPercent = ($gap / $rate) * 100;
-        }
-        if ($bdPercent > 0) {
-            return ['bd_percent' => $bdPercent, 'pd_percent' => 0.0, 'bd_unit' => $gap, 'pd_unit' => 0.0];
-        }
-        return ['bd_percent' => 0.0, 'pd_percent' => $pdPercent, 'bd_unit' => 0.0, 'pd_unit' => $gap];
+
+        $pdUnit = $gap;
+        $pdPercent = $rate > 0 ? ($gap / $rate) * 100 : 0.0;
+
+        return ['bd_percent' => 0.0, 'pd_percent' => $pdPercent, 'bd_unit' => 0.0, 'pd_unit' => $pdUnit, 'stacked' => false];
     };
 
     $renderedLines = [];
@@ -521,12 +581,22 @@
             $rate = 0.0;
             $saleUnit = 0.0;
         }
-        $gap = max(0, $rate - $saleUnit);
+        $chargedUnit = $saleUnit;
+        $gap = max(0, $rate - $chargedUnit);
         $split = $splitDiscount($detail, $rate, $gap);
+        if (!empty($split['stacked'])) {
+            $chargedBase = $chargedUnit * max(0, $qty);
+            $chargedGstPercent = $chargedBase > 0 ? ((float) ($detail->tax ?? 0) / $chargedBase) * 100 : 0.0;
+            $saleUnit = max(0, $rate - (float) $split['bd_unit'] - (float) $split['pd_unit']);
+            $gap = (float) $split['bd_unit'] + (float) $split['pd_unit'];
+        }
         $productValue = $rate * max(0, $qty);
         $discountAmount = $gap * max(0, $qty);
         $taxableAmount = max(0, $saleUnit * max(0, $qty));
         $lineTax = (float) ($detail->tax ?? 0);
+        if (!empty($split['stacked'])) {
+            $lineTax = $taxableAmount * ($chargedGstPercent ?? 0) / 100;
+        }
         if ($isMaharashtra) {
             $sgst = $lineTax / 2;
             $cgst = $lineTax / 2;
@@ -654,8 +724,8 @@
             $igstRateLabel = 0.0;
         }
     }
-    $rateTag = function ($rate) use ($formatPercent) {
-        return $rate === null ? '' : ' : (' . $formatPercent($rate) . ')';
+    $rateTag = function ($rate) use ($formatRate) {
+        return $rate === null ? '' : ' : (' . $formatRate($rate) . ')';
     };
 
     $youSave = max(0, $mrpValueTotal - $productGrossTotal);
@@ -665,7 +735,115 @@
     $hasCouponCode = trim((string) ($order->coupon_code ?? '')) !== '';
     $couponDiscountTotal = $hasCouponCode ? $orderDiscount : 0.0;
     $additionalDiscountTotal = $hasCouponCode ? 0.0 : $orderDiscount;
-    $grandTotal = (float) ($order->grand_total ?? 0);
+    $orderAmount = function ($column) use ($order) {
+        if (!\Illuminate\Support\Facades\Schema::hasColumn($order->getTable(), $column)) {
+            return 0.0;
+        }
+        return (float) ($order->{$column} ?? 0);
+    };
+    $packForwarding = $orderAmount('pack_forwarding_amount');
+    $insuranceCharges = $orderAmount('insurance_amount');
+    $otherCharges = $orderAmount('other_charges_amount');
+    $amountwiseDiscount = $orderAmount('amountwise_discount');
+    $crDbAdjustment = $orderAmount('cr_db_adjustment');
+    $printedTaxable = $taxableTotal + $packForwarding + $insuranceCharges + $otherCharges - $amountwiseDiscount - $couponDiscountTotal - $additionalDiscountTotal;
+    $grandTotal = $printedTaxable + $taxTotal + $crDbAdjustment;
+
+    $netWeightKg = 0.0;
+    $volumeCbm = 0.0;
+    $hasPieceWeight = false;
+    $hasPieceVolume = false;
+    foreach ($order->orderDetails ?? [] as $detail) {
+        $product = $detail->product;
+        $qty = (int) ($detail->quantity ?? 0);
+        if (!$product || $qty < 1) {
+            continue;
+        }
+        $stock = $product->stocks?->where('variant', $detail->variation)->first() ?? $product->stocks?->first();
+        $grams = (float) ($stock->weight ?? $product->weight ?? 0);
+        if ($grams > 0) {
+            $netWeightKg += ($grams * $qty) / 1000;
+            $hasPieceWeight = true;
+        }
+        $length = (float) ($stock->length ?? $product->length ?? 0);
+        $width = (float) ($stock->width ?? $product->width ?? 0);
+        $height = (float) ($stock->height ?? $product->height ?? 0);
+        if ($length > 0 && $width > 0 && $height > 0) {
+            $volumeCbm += ($length * $width * $height * $qty) / 1000000;
+            $hasPieceVolume = true;
+        }
+    }
+    if (!$hasPieceWeight) {
+        $netWeightKg = $order->net_weight_kg;
+    }
+    if (!$hasPieceVolume) {
+        $volumeCbm = $order->total_volume_cbm;
+    }
+    if (($volumeCbm === null || $volumeCbm === '') && (float) ($order->length_cm ?? 0) > 0 && (float) ($order->width_cm ?? 0) > 0 && (float) ($order->height_cm ?? 0) > 0) {
+        $volumeCbm = ((float) $order->length_cm * (float) $order->width_cm * (float) $order->height_cm) / 1000000;
+    }
+
+    $ewayNumber = null;
+    $ewayDate = null;
+    if (\Illuminate\Support\Facades\Schema::hasColumn($order->getTable(), 'eway_bill_number')) {
+        $ewayNumber = trim((string) ($order->eway_bill_number ?? ''));
+        $ewayDate = $order->eway_bill_date ?? null;
+    }
+    $ewayText = $ewayNumber !== null && $ewayNumber !== '' ? $ewayNumber : '';
+    if ($ewayText !== '' && !empty($ewayDate)) {
+        try {
+            $ewayText .= ' / ' . \Carbon\Carbon::parse($ewayDate)->format('d-m-Y');
+        } catch (\Throwable $exception) {
+        }
+    }
+
+    $outstanding = null;
+    if ($user) {
+        $openingBalance = (float) ($userDetails?->opening_balance ?? 0);
+        $priorUnpaid = (float) \App\Models\Order::query()
+            ->where('user_id', $user->id)
+            ->where('id', '!=', $order->id)
+            ->where(function ($query) {
+                $query->whereNull('payment_status')->orWhereNotIn('payment_status', ['paid', 'Paid']);
+            })
+            ->where(function ($query) {
+                $query->whereNull('delivery_status')->orWhere('delivery_status', '!=', 'cancelled');
+            })
+            ->sum('grand_total');
+        $outstanding = $openingBalance + $priorUnpaid;
+    }
+
+    $logoId = get_setting('header_logo');
+    $logoUrl = $logoId ? uploaded_asset($logoId) : null;
+    if (!$logoUrl && file_exists(public_path('assets/img/logo.png'))) {
+        $logoUrl = static_asset('assets/img/logo.png');
+    }
+    $stampId = get_setting('invoice_stamp');
+    $stampUrl = $stampId ? uploaded_asset($stampId) : null;
+    $signatoryName = trim((string) (get_setting('authorised_signatory') ?: $billingBy ?: ''));
+    $upiName = trim((string) (get_setting('company_upi_name') ?: 'CMD-dotcompharma'));
+    $upiId = trim((string) (get_setting('company_upi_id') ?: ''));
+    $upiLine = translate('For UPI Payment') . ' : ' . translate('All Type Available') . ', ' . translate('Name Display') . ': ' . $upiName;
+    $qrMarkup = function ($text) {
+        $text = trim((string) $text);
+        if ($text === '') {
+            return '';
+        }
+        try {
+            $svg = (string) \QrCode::format('svg')->size(70)->margin(0)->generate($text);
+            return str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $svg);
+        } catch (\Throwable $exception) {
+            return '';
+        }
+    };
+    $invoiceQr = $qrMarkup($invoiceNo);
+    $upiQr = $qrMarkup($upiId !== '' ? ('upi://pay?pa=' . rawurlencode($upiId) . '&pn=' . rawurlencode($upiName) . '&cu=INR') : $upiName);
+
+    $licenceOneLabel = $useExportIds ? translate('Pharmacy Lic. No. 1 & 2') : translate('Drug Lic. No. 1 & 2');
+    $licenceThreeLabel = $useExportIds ? translate('Pharmacy Lic. No. 3 & Expiry') : translate('Drug Lic. No. 3 & Expiry');
+    $bookedLabel = $useExportIds
+        ? translate('Booked To / Location / Port Of Discharge')
+        : translate('Booked To / Location');
 
     $buyerContacts = array_filter([
         $customerPhone ? translate('Phone') . ': ' . $customerPhone : null,
@@ -679,7 +857,12 @@
         $shippingContact ? translate('Contact Person') . ': ' . $shippingContact : null,
         $shippingEmail ? translate('E-mail') . ': ' . $shippingEmail : null,
     ]);
-    $orderBy = implode(' / ', array_filter([$customerName, $salesExecutiveName]));
+    $namedBuyer = trim((string) ($billing->name ?? ''));
+    if ($namedBuyer === '') {
+        $namedBuyer = trim((string) ($user?->name ?? ''));
+    }
+    $orderByName = $namedBuyer !== '' ? $namedBuyer : $salesExecutiveName;
+    $orderBy = implode(' / ', array_filter([trim((string) ($order->challan_number ?? '')), $orderByName]));
     $salesExecutiveText = implode(' / ', array_filter([$salesExecutiveName, $salesExecutiveCode]));
     $licencePair = implode(' / ', array_filter([$dl1, $dl2]));
     $licenceThree = implode(' / ', array_filter([
@@ -699,6 +882,9 @@
     <table class="meta">
         <tr>
             <td width="28%" rowspan="2">
+                @if($logoUrl)
+                    <div class="text-center"><img class="logo" src="{{ $logoUrl }}" alt="{{ $siteName }}"></div>
+                @endif
                 <div class="co-name">{{ strtoupper($siteName) }}</div>
                 @if($contactAddress)<div>{{ $contactAddress }}</div>@endif
                 @if($contactPhone)<div>{{ translate('Customer Care') }}: {{ $contactPhone }}</div>@endif
@@ -722,6 +908,7 @@
                 @if($bankLine)<div>{{ $bankLine }}</div>@endif
                 @if($bankLineTwo)<div>{{ $bankLineTwo }}</div>@endif
                 @if($companyFssai)<div>{{ translate('FSSAI Lic. No.') }}: {{ $companyFssai }}</div>@endif
+                <div>{{ $upiLine }}</div>
             </td>
             <td width="27%">
                 <div class="label">{{ $buyerHeading }}</div>
@@ -735,24 +922,24 @@
                     <tr><td class="label">{{ $registrationTaxLabel }}</td><td>{{ $dash($registrationTaxValue) }}</td></tr>
                     <tr><td class="label">{{ $identityLabel }}</td><td>{{ $dash($identityValue) }}</td></tr>
                     <tr><td class="label">{{ $panLabel }}</td><td>{{ $dash($customerPan) }}</td></tr>
-                    <tr><td class="label">{{ translate('Drug / Pharmacy Lic. No. 1 & 2') }}</td><td>{{ $dash($licencePair) }}</td></tr>
-                    <tr><td class="label">{{ translate('Drug / Pharmacy Lic. No. 3 & Expiry') }}</td><td>{{ $dash($licenceThree) }}</td></tr>
+                    <tr><td class="label">{{ $licenceOneLabel }}</td><td>{{ $dash($licencePair) }}</td></tr>
+                    <tr><td class="label">{{ $licenceThreeLabel }}</td><td>{{ $dash($licenceThree) }}</td></tr>
                     <tr><td class="label">{{ translate('Other Registration') }}</td><td>{{ $dash($otherRegistration) }}</td></tr>
                     <tr><td class="label">{{ translate('Customer Type / Status') }}</td><td>{{ $dash($customerTypeStatus) }}</td></tr>
+                    <tr><td class="label">{{ translate('Current Outstanding') }}</td><td>{{ $outstanding === null ? '—' : $invoicePrice($outstanding) }}</td></tr>
                     <tr><td class="label">{{ translate('Record File No.') }}</td><td>{{ $dash($recordFileNo) }}</td></tr>
                 </table>
             </td>
             <td width="23%" rowspan="2">
                 <table class="inner">
                     <tr><td class="label">{{ translate($invoiceNumberLabel) }}</td><td>{{ $dash($invoiceNo) }}</td></tr>
-                    <tr><td class="label">{{ translate('Challan No.') }}</td><td>{{ $dash($order->challan_number) }}</td></tr>
-                    <tr><td class="label">{{ translate('Order By') }}</td><td>{{ $dash($orderBy) }}</td></tr>
+                    <tr><td class="label">{{ translate('Challan No. / Order By') }}</td><td>{{ $dash($orderBy !== '' ? $orderBy : null) }}</td></tr>
                     <tr><td class="label">{{ translate('Date') }}</td><td>{{ $invoiceDate }}@if($invoiceDay) ({{ $invoiceDay }})@endif</td></tr>
                     <tr><td class="label">{{ translate('Time') }}</td><td>{{ $invoiceTime }}</td></tr>
+                    <tr><td class="label">{{ translate('EWB No. & Date') }}</td><td>{{ $dash($ewayText !== '' ? $ewayText : null) }}</td></tr>
                     <tr><td class="label">{{ translate('P.O. No. & Date') }}</td><td>{{ $dash($poText) }}</td></tr>
                     <tr><td class="label">{{ translate('Sales Executive Name & Code') }}</td><td>{{ $dash($salesExecutiveText) }}</td></tr>
-                    <tr><td class="label">{{ translate('Payment Terms') }}</td><td>{{ $dash($paymentMethod ? translate($paymentMethod) : null) }}</td></tr>
-                    <tr><td class="label">{{ translate('Status') }}</td><td>{{ $dash($paymentStatus ? translate($paymentStatus) : null) }}</td></tr>
+                    <tr><td class="label">{{ translate('Payment Terms / Status') }}</td><td>{{ $dash(implode(' / ', array_filter([$paymentMethod ? translate($paymentMethod) : null, $paymentStatus ? translate($paymentStatus) : null]))) }}</td></tr>
                     @if(!$useExportIds)
                         <tr><td class="label">{{ translate('Credit Days') }}</td><td>{{ $creditDays }}</td></tr>
                         <tr><td class="label">{{ translate('Due Date') }}</td><td>{{ $dueDate }}</td></tr>
@@ -781,7 +968,7 @@
         </tr>
         <tr>
             <td><span class="label">{{ translate('Carrier By') }}:</span> {{ $dash($transport) }}</td>
-            <td><span class="label">{{ translate('Net Weight') }}:</span> {{ $formatMeasure($order->net_weight_kg, 'KG') }}</td>
+            <td><span class="label">{{ translate('Net Weight') }}:</span> {{ $formatMeasure($netWeightKg, 'KG') }}</td>
             <td><span class="label">{{ translate('Shipping / Freight') }}:</span> {{ $dash($freightLabel ? translate($freightLabel) : null) }}</td>
             <td><span class="label">{{ translate('Terms Of Delivery') }}:</span> {{ $dash($deliveryType ? translate($deliveryType) : null) }}</td>
         </tr>
@@ -789,13 +976,13 @@
             <td><span class="label">{{ $useExportIds ? translate('B/L / AWB No. & Date') : translate('LR / GR / Doc / Vehicle No. & Date') }}:</span> {{ $dash($lrText) }}</td>
             <td><span class="label">{{ translate('Gross Weight') }}:</span> {{ $formatMeasure($order->gross_weight_kg, 'KG') }}</td>
             <td><span class="label">{{ translate('Consignee Copy') }}:</span> {{ $consigneeCopy }}</td>
-            <td><span class="label">{{ translate('Sea / Air Port Of Loading') }}:</span> {{ $dash($loadingLocation) }}</td>
+            <td>@if($useExportIds)<span class="label">{{ translate('Sea / Air Port Of Loading') }}:</span> {{ $dash($loadingLocation) }}@endif</td>
         </tr>
         <tr>
-            <td><span class="label">{{ translate('Booked To / Location / Port Of Discharge') }}:</span> {{ $dash($bookedDisplay) }}</td>
-            <td><span class="label">{{ translate('Total Volume / CBM') }}:</span> {{ $formatMeasure($order->total_volume_cbm, 'CBM') }}</td>
+            <td><span class="label">{{ $bookedLabel }}:</span> {{ $dash($bookedDisplay) }}</td>
+            <td><span class="label">{{ translate('Total Volume / CBM') }}:</span> {{ $formatVolume($volumeCbm) }}</td>
             <td><span class="label">{{ $carrierTaxLabel }}:</span> {{ $dash($carrierTaxNumber) }}</td>
-            <td><span class="label">{{ translate('Final Destination') }}:</span> {{ $dash($order->final_destination) }}</td>
+            <td>@if($useExportIds)<span class="label">{{ translate('Final Destination') }}:</span> {{ $dash($order->final_destination) }}@endif</td>
         </tr>
     </table>
 
@@ -868,11 +1055,11 @@
                     <td class="text-center">{{ $dash($line['hsn']) }}</td>
                     <td class="text-center">{{ $line['qty'] }}</td>
                     <td class="text-center">{{ $line['scheme_qty'] }}</td>
-                    <td class="num red">{{ $invoicePrice($line['mrp']) }}</td>
-                    <td class="num red">{{ $invoicePrice($line['mrp_value']) }}</td>
+                    <td class="num hl-red">{{ $invoicePrice($line['mrp']) }}</td>
+                    <td class="num hl-red">{{ $invoicePrice($line['mrp_value']) }}</td>
                     <td class="text-center">{{ $formatPercent($line['bd_percent']) }}</td>
                     <td class="text-center">{{ $formatPercent($line['pd_percent']) }}</td>
-                    <td class="num red">{{ $invoicePrice($line['discount_amount']) }}</td>
+                    <td class="num hl-red">{{ $invoicePrice($line['discount_amount']) }}</td>
                     <td class="text-center">{{ $formatPercent($line['sgst_percent']) }}</td>
                     <td class="text-center">{{ $formatPercent($line['cgst_percent']) }}</td>
                     <td class="text-center">{{ $formatPercent($line['igst_percent']) }}</td>
@@ -884,7 +1071,7 @@
                 </tr>
             @endforelse
             <tr>
-                <td rowspan="2" class="text-center">{{ count($renderedLines) + 1 }}</td>
+                <td rowspan="2" class="text-center"></td>
                 <td class="product-name">{{ translate('Shipping / Freight') }}</td>
                 <td class="text-center">—</td>
                 <td class="text-center">—</td>
@@ -930,12 +1117,12 @@
     <table class="totals" style="margin-top: 4px;">
         <tr>
             <td width="14%"><span class="label">{{ translate('M.R.P Value') }}</span></td>
-            <td width="8%" class="num">{{ $invoicePrice($mrpValueTotal) }}</td>
+            <td width="8%" class="num hl">{{ $invoicePrice($mrpValueTotal) }}</td>
             <td width="12%"><span class="label">{{ translate('Qty') }}:</span> {{ $paidQtyTotal }}</td>
             <td width="12%"><span class="label">{{ translate('SGST') }}{{ $rateTag($sgstRateLabel) }}</span></td>
             <td width="8%" class="num">{{ $invoicePrice($sgstTotal) }}</td>
             <td width="16%"><span class="label">{{ translate('Product Subtotal') }}</span></td>
-            <td width="8%" class="num">{{ $invoicePrice($productSubtotal) }}</td>
+            <td width="8%" class="num hl">{{ $invoicePrice($productSubtotal) }}</td>
             <td width="14%"><span class="label">{{ translate('Less: Productwise Discount') }}</span></td>
             <td width="8%" class="num">{{ $invoicePrice($productwiseDiscount) }}</td>
         </tr>
@@ -946,7 +1133,7 @@
             <td><span class="label">{{ translate('CGST') }}{{ $rateTag($cgstRateLabel) }}</span></td>
             <td class="num">{{ $invoicePrice($cgstTotal) }}</td>
             <td><span class="label">{{ translate('Add: Pack & Forwarding') }}</span></td>
-            <td class="num">{{ $invoicePrice(0) }}</td>
+            <td class="num">{{ $invoicePrice($packForwarding) }}</td>
             <td><span class="label">{{ translate('Less: Batchwise Discount') }}</span></td>
             <td class="num">{{ $invoicePrice($batchwiseDiscount) }}</td>
         </tr>
@@ -959,7 +1146,7 @@
             <td><span class="label">{{ translate('Add: Shipping / Freight') }}</span></td>
             <td class="num">{{ $invoicePrice($shippingBase) }}</td>
             <td><span class="label">{{ translate('Less: Amountwise Discount') }}</span></td>
-            <td class="num">{{ $invoicePrice(0) }}</td>
+            <td class="num">{{ $invoicePrice($amountwiseDiscount) }}</td>
         </tr>
         <tr>
             <td><span class="label">{{ translate('Scheme Discount Value') }}</span></td>
@@ -968,7 +1155,7 @@
             <td><span class="label">{{ translate('UTGST') }} : (0.00)</span></td>
             <td class="num">{{ $invoicePrice(0) }}</td>
             <td><span class="label">{{ translate('Add: Insurance Charges') }}</span></td>
-            <td class="num">{{ $invoicePrice(0) }}</td>
+            <td class="num">{{ $invoicePrice($insuranceCharges) }}</td>
             <td><span class="label">{{ translate('Less: Coupon Discount') }}</span></td>
             <td class="num">{{ $invoicePrice($couponDiscountTotal) }}</td>
         </tr>
@@ -979,28 +1166,29 @@
             <td><span class="label">{{ translate('GST') }}{{ $rateTag($gstRateLabel) }}</span></td>
             <td class="num">{{ $invoicePrice($taxTotal) }}</td>
             <td><span class="label">{{ translate('Add: Other Charges') }}</span></td>
-            <td class="num">{{ $invoicePrice(0) }}</td>
+            <td class="num">{{ $invoicePrice($otherCharges) }}</td>
             <td><span class="label">{{ translate('Less: Additional Discount') }}</span></td>
             <td class="num">{{ $invoicePrice($additionalDiscountTotal) }}</td>
         </tr>
         <tr>
             <td colspan="5"></td>
             <td><span class="label">{{ translate('Taxable Value') }}</span></td>
-            <td class="num">{{ $invoicePrice($taxableTotal) }}</td>
+            <td class="num">{{ $invoicePrice($printedTaxable) }}</td>
             <td><span class="label">{{ translate('Total Tax Value') }}</span></td>
             <td class="num">{{ $invoicePrice($taxTotal) }}</td>
         </tr>
         <tr>
             <td colspan="5"></td>
             <td><span class="label">{{ translate('CR/DB Adjustment') }}</span></td>
-            <td class="num">{{ $invoicePrice(0) }}</td>
-            <td class="grand">{{ translate('Grand Total Payable') }}</td>
-            <td class="num grand">{{ $invoicePrice($grandTotal) }}</td>
+            <td class="num">{{ $invoicePrice($crDbAdjustment) }}</td>
+            <td class="grand hl-red">{{ translate('Grand Total Payable') }}</td>
+            <td class="num grand hl-red">{{ $invoicePrice($grandTotal) }}</td>
         </tr>
     </table>
 
     @if(!$useExportIds)
-        <table class="terms" style="margin-top: 4px;">
+        <div class="red" style="margin-top: 4px;">{{ translate('For Domestics Invoice') }}</div>
+        <table class="terms" style="margin-top: 2px;">
             <tr>
                 <td>
                     <span class="label">{{ translate('Terms & Condition') }}:</span>
@@ -1024,13 +1212,26 @@
 
     <table class="sign" style="margin-top: 4px;">
         <tr>
-            <td width="50%">
+            <td width="34%">
                 <div class="red">{{ translate('Received By') }}</div>
                 <div class="small">{{ translate('Sign with Rubber Stamp') }}</div>
             </td>
-            <td width="50%">
-                <div class="label">{{ translate('For') }}, {{ $siteName }}</div>
-                @if($billingBy)<div>{{ $billingBy }}</div>@endif
+            <td width="32%">
+                <table class="inner">
+                    <tr>
+                        <td class="text-center qr">{!! $invoiceQr !!}<div class="qr-label">{{ translate('Invoice No.') }}</div></td>
+                        <td class="text-center qr">{!! $upiQr !!}<div class="qr-label">{{ translate('UPI') }}</div></td>
+                    </tr>
+                </table>
+            </td>
+            <td width="34%">
+                <div class="label">{{ translate('For') }}, {{ strtoupper($siteName) }}</div>
+                @if($stampUrl)
+                    <img src="{{ $stampUrl }}" alt="{{ translate('Authorised Signature') }}" style="height: 74px;">
+                @else
+                    <div class="seal">{{ strtoupper($siteName) }}</div>
+                @endif
+                @if($signatoryName)<div class="red">{{ $signatoryName }}</div>@endif
                 <div>{{ translate('Authorised Signature') }}</div>
             </td>
         </tr>

@@ -911,7 +911,48 @@ span#picker-info-stock-badge {
                         <div class="form-group">
                             <label>{{ translate('Total Volume / CBM') }}</label>
                             <input type="number" min="0" step="0.000001" class="form-control" name="total_volume_cbm" value="{{ old('total_volume_cbm') }}">
+                            <small class="text-muted">{{ translate('The invoice calculates net weight and CBM from piece weight and size when those are set.') }}</small>
                             @error('total_volume_cbm') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Carrier Pvt. Mark') }}</label>
+                            <input type="text" class="form-control" name="pm_accountant_name" value="{{ old('pm_accountant_name') }}">
+                            @error('pm_accountant_name') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('EWB No.') }}</label>
+                            <input type="text" class="form-control" name="eway_bill_number" value="{{ old('eway_bill_number') }}">
+                            @error('eway_bill_number') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('EWB Date') }}</label>
+                            <input type="date" class="form-control" name="eway_bill_date" value="{{ old('eway_bill_date') }}">
+                            @error('eway_bill_date') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Pack & Forwarding') }}</label>
+                            <input type="number" min="0" step="0.001" class="form-control" name="pack_forwarding_amount" value="{{ old('pack_forwarding_amount', 0) }}">
+                            @error('pack_forwarding_amount') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Insurance Charges') }}</label>
+                            <input type="number" min="0" step="0.001" class="form-control" name="insurance_amount" value="{{ old('insurance_amount', 0) }}">
+                            @error('insurance_amount') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Other Charges') }}</label>
+                            <input type="number" min="0" step="0.001" class="form-control" name="other_charges_amount" value="{{ old('other_charges_amount', 0) }}">
+                            @error('other_charges_amount') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Amountwise Discount') }}</label>
+                            <input type="number" min="0" step="0.001" class="form-control" name="amountwise_discount" value="{{ old('amountwise_discount', 0) }}">
+                            @error('amountwise_discount') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('CR/DB Adjustment') }}</label>
+                            <input type="number" step="0.001" class="form-control" name="cr_db_adjustment" value="{{ old('cr_db_adjustment', 0) }}">
+                            @error('cr_db_adjustment') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="shipping-section-title border-top pt-3">{{ translate('Manual') }}</div>
@@ -1436,21 +1477,24 @@ span#picker-info-stock-badge {
                 }
             };
             var salePriceEdited = false;
-            var bookedToOptions = @json($bookedToOptions->map(function ($option) {
-                return [
-                    'id' => $option->id,
-                    'transport_id' => $option->transport_id,
-                    'name' => $option->name,
-                    'branch_name' => $option->branch_name,
-                    'branch_address' => $option->branch_address,
-                    'branch_code' => $option->branch_code,
-                    'branch_gst_number' => $option->branch_gst_number,
-                    'branch_mobile_number' => $option->branch_mobile_number,
-                    'branch_alternate_mobile_number' => $option->branch_alternate_mobile_number,
-                    'contact_incharge' => $option->contact_incharge,
-                    'branch_email' => $option->branch_email,
-                ];
-            })->values());
+            @php
+                $bookedToOptionPayload = $bookedToOptions->map(function ($option) {
+                    return [
+                        'id' => $option->id,
+                        'transport_id' => $option->transport_id,
+                        'name' => $option->name,
+                        'branch_name' => $option->branch_name,
+                        'branch_address' => $option->branch_address,
+                        'branch_code' => $option->branch_code,
+                        'branch_gst_number' => $option->branch_gst_number,
+                        'branch_mobile_number' => $option->branch_mobile_number,
+                        'branch_alternate_mobile_number' => $option->branch_alternate_mobile_number,
+                        'contact_incharge' => $option->contact_incharge,
+                        'branch_email' => $option->branch_email,
+                    ];
+                })->values();
+            @endphp
+            var bookedToOptions = @json($bookedToOptionPayload);
             var courierServices = [];
             var shippingItems = [];
             var nextShippingItemId = 1;

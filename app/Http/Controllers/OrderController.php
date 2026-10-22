@@ -1086,7 +1086,7 @@ class OrderController extends Controller
                 'shipping_country_id' => ['nullable', 'integer', Rule::exists('countries', 'id')],
                 'shipping_state_id' => ['nullable', 'integer', Rule::exists('states', 'id')],
                 'shipping_city_id' => ['nullable', 'integer', Rule::exists('cities', 'id')],
-            ]);
+            ] + $this->invoiceAdjustmentRules());
 
             $company = Company::findOrFail($request->integer('company_id'));
             $request->merge(['order_company_code' => $company->code]);
@@ -1812,7 +1812,7 @@ class OrderController extends Controller
                     $query->where('status', 1)->orWhere('user_id', $order->billing_by);
                 }),
             ],
-        ]);
+        ] + $this->invoiceAdjustmentRules());
 
         $fodMode = $shippingChoice === 'local'
             ? 'surface'
@@ -2014,6 +2014,7 @@ class OrderController extends Controller
                 $lockedOrder->packed_by = $validated['packed_by'] ?? null;
                 $lockedOrder->checked_by = $validated['checked_by'] ?? null;
                 $lockedOrder->billing_by = $validated['billing_by'] ?? null;
+                $this->assignInvoiceAdjustments($lockedOrder, $validated);
                 $lockedOrder->grand_total = max(0, (float) $lockedOrder->grand_total - $oldShipping + $newShipping);
 
                 if ($validated['consignee_copy_status'] === 'not_attached') {
@@ -2498,5 +2499,38 @@ class OrderController extends Controller
             'status' => 'inactive',
             'created_by' => Auth::id(),
         ]);
+    }
+
+    private function invoiceAdjustmentRules(): array
+    {
+        $amount = ['nullable', 'numeric', 'min:0', 'max:99999999999.999'];
+
+        return [
+            'pm_accountant_name' => ['nullable', 'string', 'max:255'],
+            'eway_bill_number' => ['nullable', 'string', 'max:50'],
+            'eway_bill_date' => ['nullable', 'date'],
+            'pack_forwarding_amount' => $amount,
+            'insurance_amount' => $amount,
+            'other_charges_amount' => $amount,
+            'amountwise_discount' => $amount,
+            'cr_db_adjustment' => ['nullable', 'numeric', 'between:-99999999999.999,99999999999.999'],
+        ];
+    }
+
+    private function assignInvoiceAdjustments(Order $order, array $input): void
+    {
+        $table = $order->getTable();
+        $textColumns = ['pm_accountant_name', 'eway_bill_number', 'eway_bill_date'];
+        foreach (array_keys($this->invoiceAdjustmentRules()) as $column) {
+            if (!Schema::hasColumn($table, $column) || !array_key_exists($column, $input)) {
+                continue;
+            }
+            $value = $input[$column];
+            if (in_array($column, $textColumns, true)) {
+                $order->{$column} = ($value === null || $value === '') ? null : $value;
+                continue;
+            }
+            $order->{$column} = ($value === null || $value === '') ? 0 : $value;
+        }
     }
 }

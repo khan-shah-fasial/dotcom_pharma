@@ -506,6 +506,67 @@
                                     </div>
                                 </div>
                             </div>
+                            <p class="text-muted small">{{ translate('The invoice calculates net weight and CBM from piece weight and size when those are set.') }}</p>
+                            <div class="form-group">
+                                <label>{{ translate('Carrier Pvt. Mark') }}</label>
+                                <input type="text" class="form-control" name="pm_accountant_name" value="{{ old('pm_accountant_name', $order->pm_accountant_name ?? '') }}">
+                                @error('pm_accountant_name') <div class="text-danger small">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="row gutters-10">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ translate('EWB No.') }}</label>
+                                        <input type="text" class="form-control" name="eway_bill_number" value="{{ old('eway_bill_number', $order->eway_bill_number ?? '') }}">
+                                        @error('eway_bill_number') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ translate('EWB Date') }}</label>
+                                        <input type="date" class="form-control" name="eway_bill_date" value="{{ old('eway_bill_date', !empty($order->eway_bill_date) ? \Carbon\Carbon::parse($order->eway_bill_date)->format('Y-m-d') : '') }}">
+                                        @error('eway_bill_date') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row gutters-10">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ translate('Pack & Forwarding') }}</label>
+                                        <input type="number" min="0" step="0.001" class="form-control" name="pack_forwarding_amount" value="{{ old('pack_forwarding_amount', $order->pack_forwarding_amount ?? 0) }}">
+                                        @error('pack_forwarding_amount') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ translate('Insurance Charges') }}</label>
+                                        <input type="number" min="0" step="0.001" class="form-control" name="insurance_amount" value="{{ old('insurance_amount', $order->insurance_amount ?? 0) }}">
+                                        @error('insurance_amount') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ translate('Other Charges') }}</label>
+                                        <input type="number" min="0" step="0.001" class="form-control" name="other_charges_amount" value="{{ old('other_charges_amount', $order->other_charges_amount ?? 0) }}">
+                                        @error('other_charges_amount') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row gutters-10">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ translate('Amountwise Discount') }}</label>
+                                        <input type="number" min="0" step="0.001" class="form-control" name="amountwise_discount" value="{{ old('amountwise_discount', $order->amountwise_discount ?? 0) }}">
+                                        @error('amountwise_discount') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>{{ translate('CR/DB Adjustment') }}</label>
+                                        <input type="number" step="0.001" class="form-control" name="cr_db_adjustment" value="{{ old('cr_db_adjustment', $order->cr_db_adjustment ?? 0) }}">
+                                        @error('cr_db_adjustment') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
+                            </div>
 
                             @if($order->attachments->isNotEmpty())
                                 <div class="form-group">
@@ -625,21 +686,24 @@
             var orderId = @json($order->id);
             var csrf = @json(csrf_token());
             var airCargoTypes = @json(\App\Support\ShippingPath::AIR_CARGO_TYPES);
-            var bookedToOptions = @json($bookedToOptions->map(function ($option) {
-                return [
-                    'id' => (string) $option->id,
-                    'transport_id' => (string) $option->transport_id,
-                    'name' => $option->name,
-                    'branch_name' => $option->branch_name,
-                    'branch_address' => $option->branch_address,
-                    'branch_code' => $option->branch_code,
-                    'branch_gst_number' => $option->branch_gst_number,
-                    'branch_mobile_number' => $option->branch_mobile_number,
-                    'branch_alternate_mobile_number' => $option->branch_alternate_mobile_number,
-                    'contact_incharge' => $option->contact_incharge,
-                    'branch_email' => $option->branch_email,
-                ];
-            })->values());
+            @php
+                $bookedToOptionPayload = $bookedToOptions->map(function ($option) {
+                    return [
+                        'id' => (string) $option->id,
+                        'transport_id' => (string) $option->transport_id,
+                        'name' => $option->name,
+                        'branch_name' => $option->branch_name,
+                        'branch_address' => $option->branch_address,
+                        'branch_code' => $option->branch_code,
+                        'branch_gst_number' => $option->branch_gst_number,
+                        'branch_mobile_number' => $option->branch_mobile_number,
+                        'branch_alternate_mobile_number' => $option->branch_alternate_mobile_number,
+                        'contact_incharge' => $option->contact_incharge,
+                        'branch_email' => $option->branch_email,
+                    ];
+                })->values();
+            @endphp
+            var bookedToOptions = @json($bookedToOptionPayload);
 
             function escapeHtml(value) {
                 return String(value || '').replace(/[&<>"']/g, function (char) {
