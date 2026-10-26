@@ -57,6 +57,36 @@
     </div>
 </div>
 
+@can('add_contact_directory')
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0 h6">{{ translate('Import Google Contacts') }}</h5>
+        </div>
+        <div class="card-body">
+            <form action="{{ route('contact-directory.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="row align-items-end">
+                    <div class="col-md-8">
+                        <label>{{ translate('Google CSV or vCard') }} <span class="text-danger">*</span></label>
+                        <input type="file" name="bulk_file" class="form-control" accept=".csv,.vcf,text/csv,text/vcard" required>
+                        <small class="text-muted">
+                            {{ translate('Export from Google Contacts as Google CSV or vCard. Contacts with an email or phone number that already exists are skipped. Maximum file size: 10 MB.') }}
+                        </small>
+                        @foreach ($errors->get('bulk_file') as $message)
+                            <div class="text-danger small">{{ $message }}</div>
+                        @endforeach
+                    </div>
+                    <div class="col-md-4 text-md-right mt-3 mt-md-0">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="las la-upload"></i> {{ translate('Import Google Contacts') }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+@endcan
+
 <div class="card">
     <form id="sort_contacts" method="GET">
         <input type="hidden" name="sort_by" value="{{ $sortBy }}">

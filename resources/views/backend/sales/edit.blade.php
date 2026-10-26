@@ -6,6 +6,31 @@
         $isInternational = $invoiceType === \App\Support\InvoiceType::INTERNATIONAL;
         $hasExistingConsigneeCopy = $order->attachments->where('category', 'consignee_copy')->isNotEmpty() || filled($order->cc_attached_path);
         $hasExistingOrderAttachments = $order->attachments->where('category', 'order_attachment')->isNotEmpty();
+        $editDocTypeKey = \App\Support\DocumentType::canonicalKey($order->document_type, $order->document_type_custom);
+        $isDispatchedDelivery = in_array((string) $order->delivery_status, ['picked_up', 'on_the_way', 'delivered'], true);
+        $requireDispatchFieldsOnEdit = $isDispatchedDelivery
+            && in_array($editDocTypeKey, ['sales_invoice', 'bill_of_supply', 'sales_return'], true);
+        $storedPackingCases = [];
+        if (isset($order->packing_cases) && $order->packing_cases) {
+            $decodedCases = is_array($order->packing_cases)
+                ? $order->packing_cases
+                : json_decode((string) $order->packing_cases, true);
+            if (is_array($decodedCases)) {
+                $storedPackingCases = $decodedCases;
+            }
+        }
+        $extraPackingCases = old('extra_cases', $storedPackingCases);
+        if (!is_array($extraPackingCases)) {
+            $extraPackingCases = [];
+        }
+        $productBatchDiscountTotal = round((float) $order->orderDetails->sum(function ($d) {
+            if ((bool) ($d->is_scheme ?? false)) {
+                return 0;
+            }
+            $base = (float) ($d->before_productandbatch_discount ?? $d->sale_price ?? 0);
+            $sale = (float) ($d->sale_price ?? 0);
+            return max(0, $base - $sale) * (int) ($d->quantity ?? 0);
+        }), 3);
     @endphp
 
     <style>
@@ -100,6 +125,38 @@
         .term-detail.is-open .selected-location-card,
         .term-detail.is-open:hover .selected-location-card,
         .term-detail.is-open:focus-within .selected-location-card { display: block; }
+        .order-section-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            margin-bottom: 12px;
+        }
+        .order-section-header {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border-bottom: 1px solid #eef2f7;
+            border-radius: 8px 8px 0 0;
+        }
+        .order-section-title {
+            margin: 0;
+            color: #111827;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .01em;
+        }
+        .dimension-inputs {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .dimension-inputs .dimension-separator {
+            font-weight: 600;
+            color: #64748b;
+        }
     </style>
 
     <div class="card">
@@ -129,26 +186,13 @@
                     <div class="col-lg-7">
                         <div class="apple-green-order-box p-3 mb-3">
                             <div class="row gutters-10">
-                                <div class="col-md-8">
-                                    <div class="form-group">
-                                        <label>{{ translate('Order No') }}</label>
-                                        <input type="text" class="form-control" value="{{ $order->code }}" readonly>
-                                        <small class="text-muted">{{ translate('Existing order numbers are never regenerated during edit.') }}</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('Shipping Method') }}</label>
-                                        <input type="text" class="form-control" value="{{ ucfirst(str_replace('_', ' ', $shippingChoice)) }}" readonly>
-                                    </div>
-                                </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        @include('backend.sales.partials.document_type_field', ['order' => $order])
+                                        @include('backend.sales.partials.document_type_field', ['order' => $order, 'salesMarket' => $invoiceType])
                                     </div>
                                 </div>
                                 @if(!$isInternational)
-                                    <div class="col-md-6">
+                                    <div class="col-md-6" id="edit-reverse-charge-wrap">
                                         <div class="form-group">
                                             <label>{{ translate('Reverse Charges') }}</label>
                                             @php
@@ -163,510 +207,687 @@
                                         </div>
                                     </div>
                                 @endif
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label id="edit-order-no-heading">{{ translate(\App\Support\DocumentType::numberHeading($order->document_type, $order->document_type_custom)) }}</label>
+                                        <input type="text" class="form-control" value="{{ $order->code }}" readonly>
+                                        <small class="text-muted">{{ translate('Existing order numbers are never regenerated during edit.') }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label id="edit-order-date-heading">{{ translate(\App\Support\DocumentType::dateHeading($order->document_type, $order->document_type_custom)) }}</label>
+                                        <input type="text" class="form-control" value="{{ $order->order_date ? \Carbon\Carbon::parse($order->order_date)->format('Y-m-d') : ($order->date ? date('Y-m-d', (int) $order->date) : '') }}" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label id="edit-order-time-heading">{{ translate(\App\Support\DocumentType::timeHeading($order->document_type, $order->document_type_custom)) }}</label>
+                                        <input type="text" class="form-control" value="{{ $order->order_time ? substr((string) $order->order_time, 0, 5) : ($order->date ? date('H:i', (int) $order->date) : '') }}" readonly>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
 
-                            <div class="form-group">
-                                <label>{{ translate('Payment Terms') }}</label>
-                                <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="edit-payment-terms" data-live-search="true" data-term-kind="payment" data-detail-target="edit-payment-terms-detail">
-                                    <option value="">{{ translate('Select Payment Terms') }}</option>
-                                    @foreach(\App\Support\InvoiceType::paymentTerms($invoiceType) as $value => $label)
-                                        <option value="{{ $value }}" @selected(old('payment_type', $order->payment_type) === $value)>{{ translate($label) }}</option>
-                                    @endforeach
-                                </select>
-                                @if($invoiceType === \App\Support\InvoiceType::INTERNATIONAL)
-                                    <div class="selected-location-hover term-detail d-none mb-2" id="edit-payment-terms-detail" tabindex="0">
-                                        <div class="selected-location-name">
-                                            <i class="las la-info-circle mr-1"></i><span></span>
+                        <div class="order-section-card" id="edit-card-shipping-details">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('Shipping Details') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-shipping-details" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="edit-section-shipping-details" class="p-3">
+                                <div class="form-group">
+                                    <label>{{ translate('Shipping Method') }}</label>
+                                    <input type="text" class="form-control" value="{{ ucfirst(str_replace('_', ' ', $shippingChoice)) }}" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>{{ translate('Transport Mode') }}</label>
+                                    <select class="form-control" name="fod_mode" id="edit-fod-mode">
+                                        <option value="surface" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode ?: 'surface') === 'surface')>{{ translate('Surface') }}</option>
+                                        <option value="sea" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode) === 'sea')>{{ translate('Sea') }}</option>
+                                        <option value="air" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode) === 'air')>{{ translate('Air') }}</option>
+                                    </select>
+                                    @error('fod_mode') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="form-group mb-0" id="edit-transport-surface-mode-wrap">
+                                    <label id="edit-surface-mode-label">{{ translate('Surface Mode') }}</label>
+                                    <select class="form-control" name="transport_surface_mode" id="edit-transport-surface-mode"
+                                        data-old="{{ old('transport_surface_mode', $order->transport_surface_mode) }}">
+                                        <option value="road" @selected(old('transport_surface_mode', $order->transport_surface_mode ?: 'road') === 'road')>{{ translate('Road') }}</option>
+                                        <option value="train" @selected(old('transport_surface_mode', $order->transport_surface_mode) === 'train')>{{ translate('Train') }}</option>
+                                    </select>
+                                    @error('transport_surface_mode') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-section-card" id="edit-card-source-destination">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('Source And Destination') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-source-destination" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="edit-section-source-destination" class="p-3">
+                                @if($shippingChoice === 'transport')
+                                    <div class="form-group">
+                                        <label>{{ translate('Source (From)') }}</label>
+                                        <select class="form-control js-other-select" name="booked_from_id" id="edit-booked-from-id" data-selected="{{ old('booked_from_id') === 'other' || (filled(old('booked_from_name')) && !old('booked_from_id')) ? 'other' : (string) old('booked_from_id', $order->booked_from_id) }}">
+                                            <option value="">{{ translate('Select transport first') }}</option>
+                                        </select>
+                                        <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('booked_from_id') === 'other' || filled(old('booked_from_name')) ? '' : 'd-none' }}" name="booked_from_name" placeholder="{{ translate('Enter source (from)') }}" value="{{ old('booked_from_name') }}">
+                                        @error('booked_from_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>{{ translate('Booked To') }}</label>
+                                        <select class="form-control js-other-select" name="booked_to_id" id="edit-booked-to-id" data-selected="{{ old('booked_to_id') === 'other' || (filled(old('booked_to_name')) && !old('booked_to_id')) ? 'other' : (string) old('booked_to_id', $order->booked_to_id) }}">
+                                            <option value="">{{ translate('Select transport first') }}</option>
+                                        </select>
+                                        <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('booked_to_id') === 'other' || filled(old('booked_to_name')) ? '' : 'd-none' }}" name="booked_to_name" placeholder="{{ translate('Enter booked to') }}" value="{{ old('booked_to_name') }}">
+                                        <div class="selected-location-hover d-none mb-2" id="edit-booked-to-detail" tabindex="0">
+                                            <div class="selected-location-name">
+                                                <i class="las la-info-circle mr-1"></i><span></span>
+                                            </div>
+                                            <div class="selected-location-card"></div>
                                         </div>
-                                        <div class="selected-location-card"></div>
+                                        @error('booked_to_id') <div class="text-danger small">{{ $message }}</div> @enderror
                                     </div>
                                 @endif
-                                @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
 
-                            <div class="form-group">
-                                <label>{{ translate('Transport Mode') }}</label>
-                                <select class="form-control" name="fod_mode" id="edit-fod-mode">
-                                    <option value="surface" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode ?: 'surface') === 'surface')>{{ translate('Surface') }}</option>
-                                    <option value="sea" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode) === 'sea')>{{ translate('Sea') }}</option>
-                                    <option value="air" @selected(old('fod_mode', $order->fod_mode ?: $order->transport_mode) === 'air')>{{ translate('Air') }}</option>
-                                </select>
-                                @error('fod_mode') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="form-group" id="edit-transport-surface-mode-wrap">
-                                <label id="edit-surface-mode-label">{{ translate('Surface Mode') }}</label>
-                                <select class="form-control" name="transport_surface_mode" id="edit-transport-surface-mode"
-                                    data-old="{{ old('transport_surface_mode', $order->transport_surface_mode) }}">
-                                    <option value="road" @selected(old('transport_surface_mode', $order->transport_surface_mode ?: 'road') === 'road')>{{ translate('Road') }}</option>
-                                    <option value="train" @selected(old('transport_surface_mode', $order->transport_surface_mode) === 'train')>{{ translate('Train') }}</option>
-                                </select>
-                                @error('transport_surface_mode') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
+                                @if($shippingChoice !== 'local')
+                                    <input type="hidden" name="loading_location_type" id="edit-loading-location-type" value="{{ old('loading_location_type', $order->loading_location_type ?: ($order->fod_mode ?: 'sea')) }}">
+                                    <input type="hidden" name="discharge_location_type" id="edit-discharge-location-type" value="{{ old('discharge_location_type', $order->discharge_location_type ?: ($order->fod_mode ?: 'sea')) }}">
 
-                            @if($shippingChoice === 'transport')
-                                <div class="form-group">
-                                    <label>{{ translate('Transport') }}</label>
-                                    <select class="form-control js-other-select" name="transport_id" id="edit-transport-id">
-                                        <option value="">{{ translate('Select Transport') }}</option>
-                                        @foreach($transports as $transport)
-                                            <option value="{{ $transport->id }}" @selected((string) old('transport_id', $order->transport_id) === (string) $transport->id)>{{ $transport->name }}</option>
-                                        @endforeach
-                                        <option value="other" @selected(old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')))>{{ translate('Not in List') }}</option>
-                                    </select>
-                                    <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')) ? '' : 'd-none' }}" name="transport_name" placeholder="{{ translate('Enter transport name') }}" value="{{ old('transport_name') }}">
-                                    @error('transport_id') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    @error('transport_name') <div class="text-danger small">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div class="form-group">
-                                    <label>{{ translate('Source (From)') }}</label>
-                                    <select class="form-control js-other-select" name="booked_from_id" id="edit-booked-from-id" data-selected="{{ old('booked_from_id') === 'other' || (filled(old('booked_from_name')) && !old('booked_from_id')) ? 'other' : (string) old('booked_from_id', $order->booked_from_id) }}">
-                                        <option value="">{{ translate('Select transport first') }}</option>
-                                    </select>
-                                    <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('booked_from_id') === 'other' || filled(old('booked_from_name')) ? '' : 'd-none' }}" name="booked_from_name" placeholder="{{ translate('Enter source (from)') }}" value="{{ old('booked_from_name') }}">
-                                    @error('booked_from_id') <div class="text-danger small">{{ $message }}</div> @enderror
-                                </div>
-
-                                <div class="form-group">
-                                    <label>{{ translate('Booked To') }}</label>
-                                    <select class="form-control js-other-select" name="booked_to_id" id="edit-booked-to-id" data-selected="{{ old('booked_to_id') === 'other' || (filled(old('booked_to_name')) && !old('booked_to_id')) ? 'other' : (string) old('booked_to_id', $order->booked_to_id) }}">
-                                        <option value="">{{ translate('Select transport first') }}</option>
-                                    </select>
-                                    <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('booked_to_id') === 'other' || filled(old('booked_to_name')) ? '' : 'd-none' }}" name="booked_to_name" placeholder="{{ translate('Enter booked to') }}" value="{{ old('booked_to_name') }}">
-                                    <div class="selected-location-hover d-none mb-2" id="edit-booked-to-detail" tabindex="0">
-                                        <div class="selected-location-name">
-                                            <i class="las la-info-circle mr-1"></i><span></span>
-                                        </div>
-                                        <div class="selected-location-card"></div>
-                                    </div>
-                                    @error('booked_to_id') <div class="text-danger small">{{ $message }}</div> @enderror
-                                </div>
-                            @elseif($shippingChoice === 'local')
-                                <div class="form-group">
-                                    <label>{{ translate('Local Delivery Partner') }}</label>
-                                    <select class="form-control js-other-select" name="local_delivery_partner_id">
-                                        <option value="">{{ translate('Select Partner') }}</option>
-                                        @foreach($localDeliveryPartners as $partner)
-                                            <option value="{{ $partner->id }}" @selected((string) old('local_delivery_partner_id', $order->local_delivery_partner_id) === (string) $partner->id)>{{ $partner->name }}</option>
-                                        @endforeach
-                                        <option value="other" @selected(old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')))>{{ translate('Not in List') }}</option>
-                                    </select>
-                                    <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')) ? '' : 'd-none' }}" name="local_delivery_partner_name" placeholder="{{ translate('Enter partner name') }}" value="{{ old('local_delivery_partner_name') }}">
-                                    @error('local_delivery_partner_id') <div class="text-danger small">{{ $message }}</div> @enderror
-                                </div>
-                            @else
-                                @if($courierConfigurationLocked)
-                                    <div class="alert alert-soft-warning mb-3">
-                                        {{ translate('Courier provider and service are locked because this order already has a booked shipment.') }}
-                                    </div>
-                                    <div class="row gutters-10">
-                                        <div class="col-md-6 form-group">
-                                            <label>{{ translate('Courier Provider') }}</label>
-                                            <input type="text" class="form-control" value="{{ optional($currentShippingMethod)->name ?: $order->shipping_by }}" readonly>
-                                        </div>
-                                        <div class="col-md-6 form-group">
-                                            <label>{{ translate('Courier Service') }}</label>
-                                            <input type="text" class="form-control" value="{{ $order->shipping_courier_id }}" readonly>
-                                        </div>
-                                    </div>
-                                @else
-                                    <div class="form-group">
-                                        <label>{{ translate('Courier Provider') }}</label>
-                                        <select class="form-control" name="shipping_method_id" id="edit-courier-provider">
-                                            <option value="">{{ translate('Select Courier Provider') }}</option>
-                                            @foreach($shippingMethods as $method)
-                                                <option value="{{ $method->id }}" @selected((string) old('shipping_method_id', optional($currentShippingMethod)->id) === (string) $method->id)>
-                                                    {{ $method->name }}{{ !$method->is_active ? ' (' . translate('Inactive') . ')' : '' }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('shipping_method_id') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                    <div class="form-group">
-                                        <label>{{ translate('Courier Service') }}</label>
-                                        <div class="input-group">
-                                            <select class="form-control" name="courier_service" id="edit-courier-service"
-                                                data-selected="{{ old('courier_service', $order->shipping_courier_id) }}">
-                                                <option value="{{ old('courier_service', $order->shipping_courier_id) }}">
-                                                    {{ old('courier_service', $order->shipping_courier_id) ?: translate('Load available services') }}
-                                                </option>
-                                            </select>
-                                            <div class="input-group-append">
-                                                <button type="button" class="btn btn-soft-primary" id="edit-load-courier-services">
-                                                    {{ translate('Load Services') }}
-                                                </button>
+                                    <div id="edit-port-logistics-wrap">
+                                        <div id="edit-sea-logistics-fields">
+                                            <div class="form-group">
+                                                <label>{{ translate('Port Of Loading') }}</label>
+                                                <select class="form-control" name="loading_sea_port_id" id="edit-loading-sea-port-id">
+                                                    <option value="">{{ translate('Select Sea Port') }}</option>
+                                                    @foreach($seaPorts as $port)
+                                                        <option value="{{ $port->id }}" @selected((string) old('loading_sea_port_id', $order->loading_sea_port_id) === (string) $port->id)>{{ $port->country ? $port->country . ' - ' : '' }}{{ $port->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('loading_sea_port_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{{ translate('Destination Port Of Discharge') }}</label>
+                                                <select class="form-control" name="discharge_sea_port_id" id="edit-discharge-sea-port-id">
+                                                    <option value="">{{ translate('Select Sea Port') }}</option>
+                                                    @foreach($seaPorts as $port)
+                                                        <option value="{{ $port->id }}" @selected((string) old('discharge_sea_port_id', $order->discharge_sea_port_id) === (string) $port->id)>{{ $port->country ? $port->country . ' - ' : '' }}{{ $port->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('discharge_sea_port_id') <div class="text-danger small">{{ $message }}</div> @enderror
                                             </div>
                                         </div>
-                                        <div id="edit-courier-service-message" class="small text-muted mt-1"></div>
-                                        @error('courier_service') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                @endif
-                            @endif
 
-                            <div class="form-group">
-                                <label>{{ translate('Delivery Type') }}</label>
-                                <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="edit-terms-of-delivery" data-live-search="true" data-hide-disabled="true" data-term-kind="delivery" data-detail-target="edit-terms-of-delivery-detail">
-                                    <option value="">{{ translate('Select Delivery Type') }}</option>
-                                    @foreach(\App\Support\InvoiceType::deliveryTerms($invoiceType) as $value => $label)
-                                        <option value="{{ $value }}" @selected(old('transport_delivery_type', $order->transport_delivery_type) === $value)>{{ translate($label) }}</option>
-                                    @endforeach
-                                </select>
-                                @if($invoiceType === \App\Support\InvoiceType::INTERNATIONAL)
-                                    <div class="selected-location-hover term-detail d-none mb-2" id="edit-terms-of-delivery-detail" tabindex="0">
-                                        <div class="selected-location-name">
-                                            <i class="las la-info-circle mr-1"></i><span></span>
+                                        <div id="edit-air-logistics-fields">
+                                            <div class="form-group">
+                                                <label>{{ translate('Departure') }}</label>
+                                                <select class="form-control" name="loading_airport_id" id="edit-loading-airport-id">
+                                                    <option value="">{{ translate('Select Airport') }}</option>
+                                                    @foreach($airports as $airport)
+                                                        <option value="{{ $airport->id }}" @selected((string) old('loading_airport_id', $order->loading_airport_id) === (string) $airport->id)>{{ $airport->country ? $airport->country . ' - ' : '' }}{{ $airport->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('loading_airport_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                            </div>
+                                            <div class="form-group">
+                                                <label>{{ translate('Arrival') }}</label>
+                                                <select class="form-control" name="discharge_airport_id" id="edit-discharge-airport-id">
+                                                    <option value="">{{ translate('Select Airport') }}</option>
+                                                    @foreach($airports as $airport)
+                                                        <option value="{{ $airport->id }}" @selected((string) old('discharge_airport_id', $order->discharge_airport_id) === (string) $airport->id)>{{ $airport->country ? $airport->country . ' - ' : '' }}{{ $airport->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('discharge_airport_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                            </div>
                                         </div>
-                                        <div class="selected-location-card"></div>
                                     </div>
                                 @endif
-                                @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
+
+                                <div class="form-group mb-0">
+                                    <label>{{ translate('Final Destination') }}</label>
+                                    <input type="text" class="form-control" name="final_destination" value="{{ old('final_destination', $order->final_destination) }}">
+                                    @error('final_destination') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
                             </div>
+                        </div>
 
-                            @if($shippingChoice !== 'local')
-                                <input type="hidden" name="loading_location_type" id="edit-loading-location-type" value="{{ old('loading_location_type', $order->loading_location_type ?: ($order->fod_mode ?: 'sea')) }}">
-                                <input type="hidden" name="discharge_location_type" id="edit-discharge-location-type" value="{{ old('discharge_location_type', $order->discharge_location_type ?: ($order->fod_mode ?: 'sea')) }}">
-
-                                <div id="edit-port-logistics-wrap">
-                                    <div id="edit-sea-logistics-fields">
+                        <div class="order-section-card" id="edit-card-carrier-details">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('Carrier Details') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-carrier-details" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="edit-section-carrier-details" class="p-3">
+                                @if($shippingChoice === 'transport')
+                                    <div class="form-group">
+                                        <label>{{ translate('Transport') }}</label>
+                                        <select class="form-control js-other-select" name="transport_id" id="edit-transport-id">
+                                            <option value="">{{ translate('Select Transport') }}</option>
+                                            @foreach($transports as $transport)
+                                                <option value="{{ $transport->id }}" @selected((string) old('transport_id', $order->transport_id) === (string) $transport->id)>{{ $transport->name }}</option>
+                                            @endforeach
+                                            <option value="other" @selected(old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')))>{{ translate('Not in List') }}</option>
+                                        </select>
+                                        <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')) ? '' : 'd-none' }}" name="transport_name" placeholder="{{ translate('Enter transport name') }}" value="{{ old('transport_name') }}">
+                                        @error('transport_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        @error('transport_name') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+                                @elseif($shippingChoice === 'local')
+                                    <div class="form-group">
+                                        <label>{{ translate('Local Delivery Partner') }}</label>
+                                        <select class="form-control js-other-select" name="local_delivery_partner_id">
+                                            <option value="">{{ translate('Select Partner') }}</option>
+                                            @foreach($localDeliveryPartners as $partner)
+                                                <option value="{{ $partner->id }}" @selected((string) old('local_delivery_partner_id', $order->local_delivery_partner_id) === (string) $partner->id)>{{ $partner->name }}</option>
+                                            @endforeach
+                                            <option value="other" @selected(old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')))>{{ translate('Not in List') }}</option>
+                                        </select>
+                                        <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')) ? '' : 'd-none' }}" name="local_delivery_partner_name" placeholder="{{ translate('Enter partner name') }}" value="{{ old('local_delivery_partner_name') }}">
+                                        @error('local_delivery_partner_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    </div>
+                                @else
+                                    @if($courierConfigurationLocked)
+                                        <div class="alert alert-soft-warning mb-3">
+                                            {{ translate('Courier provider and service are locked because this order already has a booked shipment.') }}
+                                        </div>
+                                        <div class="row gutters-10">
+                                            <div class="col-md-6 form-group">
+                                                <label>{{ translate('Courier Provider') }}</label>
+                                                <input type="text" class="form-control" value="{{ optional($currentShippingMethod)->name ?: $order->shipping_by }}" readonly>
+                                            </div>
+                                            <div class="col-md-6 form-group">
+                                                <label>{{ translate('Courier Service') }}</label>
+                                                <input type="text" class="form-control" value="{{ $order->shipping_courier_id }}" readonly>
+                                            </div>
+                                        </div>
+                                    @else
                                         <div class="form-group">
-                                            <label>{{ translate('Port Of Loading') }}</label>
-                                            <select class="form-control" name="loading_sea_port_id" id="edit-loading-sea-port-id">
-                                                <option value="">{{ translate('Select Sea Port') }}</option>
-                                                @foreach($seaPorts as $port)
-                                                    <option value="{{ $port->id }}" @selected((string) old('loading_sea_port_id', $order->loading_sea_port_id) === (string) $port->id)>{{ $port->country ? $port->country . ' - ' : '' }}{{ $port->name }}</option>
+                                            <label>{{ translate('Courier Provider') }}</label>
+                                            <select class="form-control" name="shipping_method_id" id="edit-courier-provider">
+                                                <option value="">{{ translate('Select Courier Provider') }}</option>
+                                                @foreach($shippingMethods as $method)
+                                                    <option value="{{ $method->id }}" @selected((string) old('shipping_method_id', optional($currentShippingMethod)->id) === (string) $method->id)>
+                                                        {{ $method->name }}{{ !$method->is_active ? ' (' . translate('Inactive') . ')' : '' }}
+                                                    </option>
                                                 @endforeach
                                             </select>
-                                            @error('loading_sea_port_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                            @error('shipping_method_id') <div class="text-danger small">{{ $message }}</div> @enderror
                                         </div>
                                         <div class="form-group">
-                                            <label>{{ translate('Destination Port Of Discharge') }}</label>
-                                            <select class="form-control" name="discharge_sea_port_id" id="edit-discharge-sea-port-id">
-                                                <option value="">{{ translate('Select Sea Port') }}</option>
-                                                @foreach($seaPorts as $port)
-                                                    <option value="{{ $port->id }}" @selected((string) old('discharge_sea_port_id', $order->discharge_sea_port_id) === (string) $port->id)>{{ $port->country ? $port->country . ' - ' : '' }}{{ $port->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('discharge_sea_port_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                            <label>{{ translate('Courier Service') }}</label>
+                                            <div class="input-group">
+                                                <select class="form-control" name="courier_service" id="edit-courier-service"
+                                                    data-selected="{{ old('courier_service', $order->shipping_courier_id) }}">
+                                                    <option value="{{ old('courier_service', $order->shipping_courier_id) }}">
+                                                        {{ old('courier_service', $order->shipping_courier_id) ?: translate('Load available services') }}
+                                                    </option>
+                                                </select>
+                                                <div class="input-group-append">
+                                                    <button type="button" class="btn btn-soft-primary" id="edit-load-courier-services">
+                                                        {{ translate('Load Services') }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div id="edit-courier-service-message" class="small text-muted mt-1"></div>
+                                            @error('courier_service') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    @endif
+                                @endif
+
+                                <div class="form-group">
+                                    <label>{{ translate('Carrier GST No.') }}</label>
+                                    <input type="text" class="form-control" name="carrier_tax_number" value="{{ old('carrier_tax_number', $order->carrier_tax_number) }}">
+                                    @error('carrier_tax_number') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+
+                                <div class="form-group mb-0">
+                                    <label>{{ translate('Delivery Type') }}</label>
+                                    <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="edit-terms-of-delivery" data-live-search="true" data-hide-disabled="true" data-term-kind="delivery" data-detail-target="edit-terms-of-delivery-detail">
+                                        <option value="">{{ translate('Select Delivery Type') }}</option>
+                                        @foreach(\App\Support\InvoiceType::deliveryTerms($invoiceType) as $value => $label)
+                                            <option value="{{ $value }}" @selected(old('transport_delivery_type', $order->transport_delivery_type) === $value)>{{ translate($label) }}</option>
+                                        @endforeach
+                                    </select>
+                                    @if($invoiceType === \App\Support\InvoiceType::INTERNATIONAL)
+                                        <div class="selected-location-hover term-detail d-none mb-2" id="edit-terms-of-delivery-detail" tabindex="0">
+                                            <div class="selected-location-name">
+                                                <i class="las la-info-circle mr-1"></i><span></span>
+                                            </div>
+                                            <div class="selected-location-card"></div>
+                                        </div>
+                                    @endif
+                                    @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-section-card" id="edit-card-other-charges">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('Other Charges') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-other-charges" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="edit-section-other-charges" class="p-3">
+                                <div class="form-group">
+                                    <label>{{ translate('Shipping Cost') }}</label>
+                                    <select class="form-control" name="shipping_cost_type" id="edit-shipping-cost-type">
+                                        <option value="by_seller" @selected(old('shipping_cost_type', $order->free_shipping ? 'free_shipping' : 'by_seller') === 'by_seller')>{{ translate('By Seller') }}</option>
+                                        <option value="free_shipping" @selected(old('shipping_cost_type', $order->free_shipping ? 'free_shipping' : 'by_seller') === 'free_shipping')>{{ translate('Free Shipping') }}</option>
+                                    </select>
+                                    @error('shipping_cost_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    <input type="hidden" name="free_shipping" id="edit-free-shipping" value="{{ old('shipping_cost_type', $order->free_shipping ? 'free_shipping' : 'by_seller') === 'free_shipping' ? 1 : 0 }}">
+                                </div>
+                                <div class="form-group" id="edit-sell-amount-wrap">
+                                    <label>{{ translate('Sell Amount') }}</label>
+                                    <input type="number" min="0" step="0.01" class="form-control" name="sell_amount"
+                                        id="edit-sell-amount" value="{{ old('sell_amount', $sellAmount) }}">
+                                    @error('sell_amount') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="form-group">
+                                    <label>{{ translate('Freight') }}</label>
+                                    <select class="form-control" name="freight_type">
+                                        <option value="">{{ translate('Select Freight') }}</option>
+                                        <option value="pre_paid" @selected(old('freight_type', $order->freight_type) === 'pre_paid')>{{ translate('Pre-Paid') }}</option>
+                                        <option value="to_pay" @selected(old('freight_type', $order->freight_type) === 'to_pay')>{{ translate('To Pay') }}</option>
+                                        <option value="fod" @selected(old('freight_type', $order->freight_type) === 'fod')>{{ translate('FOD') }}</option>
+                                    </select>
+                                    @error('freight_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="row gutters-10">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>{{ translate('Pack & Forwarding') }}</label>
+                                            <input type="number" min="0" step="0.001" class="form-control" name="pack_forwarding_amount" value="{{ old('pack_forwarding_amount', $order->pack_forwarding_amount ?? 0) }}">
+                                            @error('pack_forwarding_amount') <div class="text-danger small">{{ $message }}</div> @enderror
                                         </div>
                                     </div>
-
-                                    <div id="edit-air-logistics-fields">
+                                    <div class="col-md-4">
                                         <div class="form-group">
-                                            <label>{{ translate('Departure') }}</label>
-                                            <select class="form-control" name="loading_airport_id" id="edit-loading-airport-id">
-                                                <option value="">{{ translate('Select Airport') }}</option>
-                                                @foreach($airports as $airport)
-                                                    <option value="{{ $airport->id }}" @selected((string) old('loading_airport_id', $order->loading_airport_id) === (string) $airport->id)>{{ $airport->country ? $airport->country . ' - ' : '' }}{{ $airport->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('loading_airport_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                            <label>{{ translate('Insurance Charges') }}</label>
+                                            <input type="number" min="0" step="0.001" class="form-control" name="insurance_amount" value="{{ old('insurance_amount', $order->insurance_amount ?? 0) }}">
+                                            @error('insurance_amount') <div class="text-danger small">{{ $message }}</div> @enderror
                                         </div>
+                                    </div>
+                                    <div class="col-md-4">
                                         <div class="form-group">
-                                            <label>{{ translate('Arrival') }}</label>
-                                            <select class="form-control" name="discharge_airport_id" id="edit-discharge-airport-id">
-                                                <option value="">{{ translate('Select Airport') }}</option>
-                                                @foreach($airports as $airport)
-                                                    <option value="{{ $airport->id }}" @selected((string) old('discharge_airport_id', $order->discharge_airport_id) === (string) $airport->id)>{{ $airport->country ? $airport->country . ' - ' : '' }}{{ $airport->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('discharge_airport_id') <div class="text-danger small">{{ $message }}</div> @enderror
+                                            <label>{{ translate('Other Charges') }}</label>
+                                            <input type="number" min="0" step="0.001" class="form-control" name="other_charges_amount" value="{{ old('other_charges_amount', $order->other_charges_amount ?? 0) }}">
+                                            @error('other_charges_amount') <div class="text-danger small">{{ $message }}</div> @enderror
                                         </div>
                                     </div>
                                 </div>
-                            @endif
-
-                            <div class="form-group">
-                                <label>{{ translate('Final Destination') }}</label>
-                                <input type="text" class="form-control" name="final_destination" value="{{ old('final_destination', $order->final_destination) }}">
-                                @error('final_destination') <div class="text-danger small">{{ $message }}</div> @enderror
+                                <div class="form-group mb-0">
+                                    <label>{{ translate('CR/DB Adjustment') }}</label>
+                                    <input type="number" step="0.001" class="form-control" name="cr_db_adjustment" value="{{ old('cr_db_adjustment', $order->cr_db_adjustment ?? 0) }}">
+                                    @error('cr_db_adjustment') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
                             </div>
+                        </div>
 
-                            <div class="form-group">
-                                <label>{{ translate('Freight') }}</label>
-                                <select class="form-control" name="freight_type">
-                                    <option value="">{{ translate('Select Freight') }}</option>
-                                    <option value="pre_paid" @selected(old('freight_type', $order->freight_type) === 'pre_paid')>{{ translate('Pre-Paid') }}</option>
-                                    <option value="to_pay" @selected(old('freight_type', $order->freight_type) === 'to_pay')>{{ translate('To Pay') }}</option>
-                                    <option value="fod" @selected(old('freight_type', $order->freight_type) === 'fod')>{{ translate('FOD') }}</option>
-                                </select>
-                                @error('freight_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <div class="order-section-card" id="edit-card-payment">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('Payment') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-payment" checked>
+                                    <span class="slider round"></span>
+                                </label>
                             </div>
-
-                            <div class="form-group">
-                                <label>{{ translate('Shipping Cost') }}</label>
-                                <select class="form-control" name="shipping_cost_type" id="edit-shipping-cost-type">
-                                    <option value="by_seller" @selected(old('shipping_cost_type', $order->free_shipping ? 'free_shipping' : 'by_seller') === 'by_seller')>{{ translate('By Seller') }}</option>
-                                    <option value="free_shipping" @selected(old('shipping_cost_type', $order->free_shipping ? 'free_shipping' : 'by_seller') === 'free_shipping')>{{ translate('Free Shipping') }}</option>
-                                </select>
-                                @error('shipping_cost_type') <div class="text-danger small">{{ $message }}</div> @enderror
-                                <input type="hidden" name="free_shipping" id="edit-free-shipping" value="{{ old('shipping_cost_type', $order->free_shipping ? 'free_shipping' : 'by_seller') === 'free_shipping' ? 1 : 0 }}">
-                            </div>
-                            <div class="form-group" id="edit-sell-amount-wrap">
-                                <label>{{ translate('Sell Amount') }}</label>
-                                <input type="number" min="0" step="0.01" class="form-control" name="sell_amount"
-                                    id="edit-sell-amount" value="{{ old('sell_amount', $sellAmount) }}">
-                                @error('sell_amount') <div class="text-danger small">{{ $message }}</div> @enderror
+                            <div id="edit-section-payment" class="p-3">
+                                <div class="form-group">
+                                    <label>{{ translate('Payment Terms') }}</label>
+                                    <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="edit-payment-terms" data-live-search="true" data-term-kind="payment" data-detail-target="edit-payment-terms-detail">
+                                        <option value="">{{ translate('Select Payment Terms') }}</option>
+                                        @foreach(\App\Support\InvoiceType::paymentTerms($invoiceType) as $value => $label)
+                                            <option value="{{ $value }}" @selected(old('payment_type', $order->payment_type) === $value)>{{ translate($label) }}</option>
+                                        @endforeach
+                                    </select>
+                                    @if($invoiceType === \App\Support\InvoiceType::INTERNATIONAL)
+                                        <div class="selected-location-hover term-detail d-none mb-2" id="edit-payment-terms-detail" tabindex="0">
+                                            <div class="selected-location-name">
+                                                <i class="las la-info-circle mr-1"></i><span></span>
+                                            </div>
+                                            <div class="selected-location-card"></div>
+                                        </div>
+                                    @endif
+                                    @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label>{{ translate('Additional Info') }}</label>
+                                    <textarea class="form-control" name="additional_info" rows="3">{{ old('additional_info', $order->additional_info) }}</textarea>
+                                    @error('additional_info') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="col-lg-5">
-                        <div class="border rounded p-3 mb-3">
-                            <div class="form-group">
-                                <label>{{ translate('Carrier GST No.') }}</label>
-                                <input type="text" class="form-control" name="carrier_tax_number" value="{{ old('carrier_tax_number', $order->carrier_tax_number) }}">
-                                @error('carrier_tax_number') <div class="text-danger small">{{ $message }}</div> @enderror
+                        <div class="order-section-card" id="edit-card-additional-details">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('Additional Details') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-additional-details" checked>
+                                    <span class="slider round"></span>
+                                </label>
                             </div>
-
-                            <div class="row gutters-10">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('Cases') }}</label>
-                                        <input type="number" min="0" class="form-control" name="cases" value="{{ old('cases', $order->cases) }}">
-                                        @error('cases') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('PO Date') }}</label>
-                                        <input type="date" class="form-control" name="po_date" value="{{ old('po_date', optional($order->po_date)->format('Y-m-d')) }}">
-                                        @error('po_date') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('LR Date') }}</label>
-                                        <input type="date" class="form-control" name="lr_date" value="{{ old('lr_date', optional($order->lr_date)->format('Y-m-d')) }}">
-                                        @error('lr_date') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>{{ translate('Weight (Gram)') }}</label>
-                                <input type="number" min="0" step="0.001" class="form-control" name="weight_grams"
-                                    id="edit-weight-grams" value="{{ old('weight_grams', $order->weight_grams) }}">
-                                <small class="apple-green-highlight mt-1" id="edit-weight-kg-display">0 KG</small>
-                                @error('weight_grams') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="form-group">
-                                <label>{{ translate('Dimensions (CM)') }}</label>
-                                <div class="row gutters-5">
-                                    <div class="col-4">
-                                        <input type="number" min="0" step="0.01" class="form-control" name="length_cm"
-                                            value="{{ old('length_cm', $order->length_cm) }}" placeholder="{{ translate('Length') }}">
-                                    </div>
-                                    <div class="col-4">
-                                        <input type="number" min="0" step="0.01" class="form-control" name="width_cm"
-                                            value="{{ old('width_cm', $order->width_cm) }}" placeholder="{{ translate('Width') }}">
-                                    </div>
-                                    <div class="col-4">
-                                        <input type="number" min="0" step="0.01" class="form-control" name="height_cm"
-                                            value="{{ old('height_cm', $order->height_cm) }}" placeholder="{{ translate('Height') }}">
-                                    </div>
-                                </div>
-                                @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                                @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                                @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="form-group">
-                                <label>{{ translate('PO Number') }}</label>
-                                <input type="text" class="form-control" name="po_number" value="{{ old('po_number', $order->po_number) }}">
-                                @error('po_number') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="form-group">
-                                <label>{{ translate('LR Number') }}</label>
-                                <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number', $order->lr_number) }}">
-                                @error('lr_number') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="row gutters-10">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('Net Weight (KG)') }}</label>
-                                        <input type="number" min="0" step="0.000001" class="form-control" name="net_weight_kg" value="{{ old('net_weight_kg', $order->net_weight_kg) }}">
-                                        @error('net_weight_kg') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('Gross Weight (KG)') }}</label>
-                                        <input type="number" min="0" step="0.000001" class="form-control" name="gross_weight_kg" value="{{ old('gross_weight_kg', $order->gross_weight_kg) }}">
-                                        @error('gross_weight_kg') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('Total Volume / CBM') }}</label>
-                                        <input type="number" min="0" step="0.000001" class="form-control" name="total_volume_cbm" value="{{ old('total_volume_cbm', $order->total_volume_cbm) }}">
-                                        @error('total_volume_cbm') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="text-muted small">{{ translate('The invoice calculates net weight and CBM from piece weight and size when those are set.') }}</p>
-                            <div class="form-group">
-                                <label>{{ translate('Carrier Pvt. Mark') }}</label>
-                                <input type="text" class="form-control" name="pm_accountant_name" value="{{ old('pm_accountant_name', $order->pm_accountant_name ?? '') }}">
-                                @error('pm_accountant_name') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="row gutters-10">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>{{ translate('EWB No.') }}</label>
-                                        <input type="text" class="form-control" name="eway_bill_number" value="{{ old('eway_bill_number', $order->eway_bill_number ?? '') }}">
-                                        @error('eway_bill_number') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>{{ translate('EWB Date') }}</label>
-                                        <input type="date" class="form-control" name="eway_bill_date" value="{{ old('eway_bill_date', !empty($order->eway_bill_date) ? \Carbon\Carbon::parse($order->eway_bill_date)->format('Y-m-d') : '') }}">
-                                        @error('eway_bill_date') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row gutters-10">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('Pack & Forwarding') }}</label>
-                                        <input type="number" min="0" step="0.001" class="form-control" name="pack_forwarding_amount" value="{{ old('pack_forwarding_amount', $order->pack_forwarding_amount ?? 0) }}">
-                                        @error('pack_forwarding_amount') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('Insurance Charges') }}</label>
-                                        <input type="number" min="0" step="0.001" class="form-control" name="insurance_amount" value="{{ old('insurance_amount', $order->insurance_amount ?? 0) }}">
-                                        @error('insurance_amount') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ translate('Other Charges') }}</label>
-                                        <input type="number" min="0" step="0.001" class="form-control" name="other_charges_amount" value="{{ old('other_charges_amount', $order->other_charges_amount ?? 0) }}">
-                                        @error('other_charges_amount') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row gutters-10">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>{{ translate('Amountwise Discount') }}</label>
-                                        <input type="number" min="0" step="0.001" class="form-control" name="amountwise_discount" value="{{ old('amountwise_discount', $order->amountwise_discount ?? 0) }}">
-                                        @error('amountwise_discount') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>{{ translate('CR/DB Adjustment') }}</label>
-                                        <input type="number" step="0.001" class="form-control" name="cr_db_adjustment" value="{{ old('cr_db_adjustment', $order->cr_db_adjustment ?? 0) }}">
-                                        @error('cr_db_adjustment') <div class="text-danger small">{{ $message }}</div> @enderror
-                                    </div>
-                                </div>
-                            </div>
-
-                            @if($order->attachments->isNotEmpty())
+                            <div id="edit-section-additional-details" class="p-3">
                                 <div class="form-group">
-                                    <label>{{ translate('Existing Attachments') }}</label>
-                                    @foreach($order->attachments as $attachment)
-                                        <div class="existing-attachment-row">
-                                            <div class="text-truncate">
-                                                <span class="badge badge-soft-secondary mr-1">
-                                                    {{ $attachment->category === 'consignee_copy' ? translate('Consignee Copy') : translate('Order Attachment') }}
-                                                </span>
-                                                <a href="{{ asset('storage/' . $attachment->path) }}" target="_blank" rel="noopener">
-                                                    {{ $attachment->original_name }}
-                                                </a>
-                                            </div>
-                                            <button type="button" class="btn btn-xs btn-soft-danger delete-existing-attachment"
-                                                data-url="{{ route('orders.attachments.destroy', [$order, $attachment]) }}"
-                                                data-name="{{ $attachment->original_name }}">
-                                                <i class="las la-trash"></i>
-                                            </button>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
-
-                            <div class="form-group">
-                                <label>{{ translate('Consignee Copy') }}</label>
-                                <select class="form-control" name="consignee_copy_status" id="edit-consignee-copy-status">
-                                    <option value="attached" @selected(old('consignee_copy_status', $order->consignee_copy_status ?: ($hasExistingConsigneeCopy ? 'attached' : 'not_attached')) === 'attached')>{{ translate('Attached') }}</option>
-                                    <option value="not_attached" @selected(old('consignee_copy_status', $order->consignee_copy_status ?: ($hasExistingConsigneeCopy ? 'attached' : 'not_attached')) === 'not_attached')>{{ translate('Not Attached') }}</option>
-                                </select>
-                                @error('consignee_copy_status') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-                            <div class="form-group" id="edit-consignee-files-wrap">
-                                <label>{{ translate('LR / Consignee Copy Files') }}</label>
-                                <input type="file" class="form-control multi-file-input" name="cc_attachments[]" id="edit-cc-attachments" multiple
-                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#edit-cc-attachment-names">
-                                <div class="selected-file-list mt-1" id="edit-cc-attachment-names">
-                                    <span class="text-muted">{{ translate('No files selected') }}</span>
-                                </div>
-                                @error('cc_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
-                                @if($hasExistingConsigneeCopy)
-                                    <small class="text-success d-block mt-1">{{ translate('An existing consignee copy is already stored.') }}</small>
-                                @endif
-                            </div>
-
-                            <div class="form-group">
-                                <label>{{ translate('Order Attachments') }}</label>
-                                <input type="file" class="form-control multi-file-input" name="order_attachments[]" id="edit-order-attachments" multiple
-                                    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#edit-order-attachment-names">
-                                <div class="selected-file-list mt-1" id="edit-order-attachment-names">
-                                    <span class="text-muted">{{ translate('No files selected') }}</span>
-                                </div>
-                                @error('order_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
-                                @if($hasExistingOrderAttachments)
-                                    <small class="text-success d-block mt-1">{{ translate('Existing order attachments are already stored.') }}</small>
-                                @endif
-                            </div>
-
-                            <div class="form-group">
-                                <label>{{ translate('Attachment File Name') }}</label>
-                                <input type="text" class="form-control" name="attached_file_name" value="{{ old('attached_file_name', $order->attached_file_name) }}">
-                                @error('attached_file_name') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="form-group">
-                                <label>{{ translate('Additional Info') }}</label>
-                                <textarea class="form-control" name="additional_info" rows="3">{{ old('additional_info', $order->additional_info) }}</textarea>
-                                @error('additional_info') <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="form-group">
-                                <label>{{ translate('Sales Executive Name') }}</label>
-                                <select class="form-control aiz-selectpicker" name="sales_executive_id" data-live-search="true">
-                                    <option value="">{{ translate('Select Sales Executive') }}</option>
-                                    @foreach($salesPeople as $staff)
-                                        <option value="{{ $staff->user_id }}" @selected((string) old('sales_executive_id', $order->sales_executive_id ?: $order->sales_person_id) === (string) $staff->user_id)>
-                                            {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}{{ !$staff->status ? ' (' . translate('Inactive') . ')' : '' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            @foreach([
-                                ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
-                                ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
-                                ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff],
-                            ] as $staffField)
-                                <div class="form-group">
-                                    <label>{{ translate($staffField['label']) }}</label>
-                                    <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
-                                        <option value="">{{ translate('Select Staff') }}</option>
-                                        @foreach($staffField['staff'] as $staff)
-                                            <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], $order->{$staffField['name']}) === (string) $staff->user_id)>
+                                    <label>{{ translate('Sales Executive Name') }}</label>
+                                    <select class="form-control aiz-selectpicker" name="sales_executive_id" data-live-search="true">
+                                        <option value="">{{ translate('Select Sales Executive') }}</option>
+                                        @foreach($salesPeople as $staff)
+                                            <option value="{{ $staff->user_id }}" @selected((string) old('sales_executive_id', $order->sales_executive_id ?: $order->sales_person_id) === (string) $staff->user_id)>
                                                 {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}{{ !$staff->status ? ' (' . translate('Inactive') . ')' : '' }}
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error($staffField['name']) <div class="text-danger small">{{ $message }}</div> @enderror
                                 </div>
-                            @endforeach
+
+                                <div class="form-group">
+                                    <label>{{ translate('Sales Man Code') }}</label>
+                                    <input type="text" class="form-control" value="{{ $order->sales_man_code ?: optional(optional($order->user)->user_details)->salesman }}" readonly>
+                                </div>
+
+                                <div id="edit-staff-handling-fields">
+                                    @foreach([
+                                        ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
+                                        ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
+                                        ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff],
+                                    ] as $staffField)
+                                        <div class="form-group">
+                                            <label>{{ translate($staffField['label']) }}</label>
+                                            <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
+                                                <option value="">{{ translate('Select Staff') }}</option>
+                                                @foreach($staffField['staff'] as $staff)
+                                                    <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], $order->{$staffField['name']}) === (string) $staff->user_id)>
+                                                        {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}{{ !$staff->status ? ' (' . translate('Inactive') . ')' : '' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error($staffField['name']) <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-section-card" id="edit-card-po-details">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('P.O. Details') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-po-details" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="edit-section-po-details" class="p-3">
+                                <div class="row gutters-10">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-0">
+                                            <label>{{ translate('P.O. No.') }}</label>
+                                            <input type="text" class="form-control" name="po_number" value="{{ old('po_number', $order->po_number) }}">
+                                            @error('po_number') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-0">
+                                            <label>{{ translate('P.O. Date') }}</label>
+                                            <input type="date" class="form-control" name="po_date" value="{{ old('po_date', optional($order->po_date)->format('Y-m-d')) }}">
+                                            @error('po_date') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-section-card" id="edit-card-weight-dimension">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('Weight & Dimension') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-weight-dimension" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="edit-section-weight-dimension" class="p-3">
+                                <div class="row gutters-10">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ translate('Total Cases') }}</label>
+                                            <input type="number" min="0" class="form-control" name="cases" value="{{ old('cases', $order->cases) }}">
+                                            @error('cases') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ translate('Net Weight (KG)') }}</label>
+                                            <input type="number" min="0" step="0.000001" class="form-control" name="net_weight_kg" value="{{ old('net_weight_kg', $order->net_weight_kg) }}">
+                                            @error('net_weight_kg') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ translate('Gross Weight (KG)') }}</label>
+                                            <input type="number" min="0" step="0.000001" class="form-control" name="gross_weight_kg" value="{{ old('gross_weight_kg', $order->gross_weight_kg) }}">
+                                            @error('gross_weight_kg') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ translate('Total Volume / CBM') }}</label>
+                                            <input type="number" min="0" step="0.000001" class="form-control" name="total_volume_cbm" value="{{ old('total_volume_cbm', $order->total_volume_cbm) }}">
+                                            @error('total_volume_cbm') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-muted small">{{ translate('The invoice calculates net weight and CBM from piece weight and size when those are set.') }}</p>
+
+                                <div class="form-group">
+                                    <label>{{ translate('Weight (Gram)') }}</label>
+                                    <input type="number" min="0" step="0.001" class="form-control" name="weight_grams"
+                                        id="edit-weight-grams" value="{{ old('weight_grams', $order->weight_grams) }}">
+                                    <small class="apple-green-highlight mt-1" id="edit-weight-kg-display">0 KG</small>
+                                    @error('weight_grams') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <label class="mb-0">{{ translate('Dimensions (CM)') }}</label>
+                                        <button type="button" class="btn btn-xs btn-soft-primary" id="edit-add-more-case-btn">
+                                            <i class="las la-plus"></i> {{ translate('Add More') }}
+                                        </button>
+                                    </div>
+                                    <div class="dimension-inputs">
+                                        <input type="number" min="0" step="0.01" class="form-control js-edit-case-dim-input" id="edit-length-cm" name="length_cm"
+                                            value="{{ old('length_cm', $order->length_cm) }}" placeholder="{{ translate('Length') }}">
+                                        <span class="dimension-separator">×</span>
+                                        <input type="number" min="0" step="0.01" class="form-control js-edit-case-dim-input" id="edit-width-cm" name="width_cm"
+                                            value="{{ old('width_cm', $order->width_cm) }}" placeholder="{{ translate('Width') }}">
+                                        <span class="dimension-separator">×</span>
+                                        <input type="number" min="0" step="0.01" class="form-control js-edit-case-dim-input" id="edit-height-cm" name="height_cm"
+                                            value="{{ old('height_cm', $order->height_cm) }}" placeholder="{{ translate('Height') }}">
+                                        <span class="dimension-separator">CM</span>
+                                    </div>
+                                    <small class="text-muted d-block mt-1" id="edit-manual-cbm-display">0.000000 CBM</small>
+                                    <div id="edit-extra-case-dimensions-list" class="mt-2">
+                                        @foreach ($extraPackingCases as $caseIdx => $extraCase)
+                                            <div class="extra-case-row mt-2">
+                                                <div class="dimension-inputs">
+                                                    <input type="number" min="0" step="0.01" class="form-control js-edit-case-dim-input extra-case-length" name="extra_cases[{{ $caseIdx }}][length_cm]" value="{{ $extraCase['length_cm'] ?? ($extraCase['length'] ?? '') }}" placeholder="{{ translate('Length') }}">
+                                                    <span class="dimension-separator">×</span>
+                                                    <input type="number" min="0" step="0.01" class="form-control js-edit-case-dim-input extra-case-width" name="extra_cases[{{ $caseIdx }}][width_cm]" value="{{ $extraCase['width_cm'] ?? ($extraCase['width'] ?? '') }}" placeholder="{{ translate('Width') }}">
+                                                    <span class="dimension-separator">×</span>
+                                                    <input type="number" min="0" step="0.01" class="form-control js-edit-case-dim-input extra-case-height" name="extra_cases[{{ $caseIdx }}][height_cm]" value="{{ $extraCase['height_cm'] ?? ($extraCase['height'] ?? '') }}" placeholder="{{ translate('Height') }}">
+                                                    <button type="button" class="btn btn-xs btn-soft-danger remove-edit-extra-case-btn" aria-label="{{ translate('Remove') }}">&times;</button>
+                                                </div>
+                                                <small class="text-muted d-block mt-1 extra-case-cbm-label">0.000000 CBM</small>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+
+                                <div class="form-group mb-0">
+                                    <label>{{ translate('Total CBM (All Dimensions)') }}</label>
+                                    <input type="text" class="form-control" id="edit-all-dimensions-total-cbm" value="0.000000 CBM" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-section-card" id="edit-card-dispatched-details">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('Dispatched Details') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-dispatched-details" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="edit-section-dispatched-details" class="p-3">
+                                <div class="form-group">
+                                    <label>{{ translate('LR / GR / Doc / Vehicle / AWB No.') }} <span class="text-danger dispatch-required-star {{ $requireDispatchFieldsOnEdit ? '' : 'd-none' }}">*</span></label>
+                                    <input type="text" class="form-control" name="lr_number" id="edit-lr-number" value="{{ old('lr_number', $order->lr_number) }}">
+                                    @error('lr_number') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label>{{ translate('LR Date') }} <span class="text-danger dispatch-required-star {{ $requireDispatchFieldsOnEdit ? '' : 'd-none' }}">*</span></label>
+                                    <input type="date" class="form-control" name="lr_date" id="edit-lr-date" value="{{ old('lr_date', optional($order->lr_date)->format('Y-m-d')) }}">
+                                    @error('lr_date') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label>{{ translate('Carrier Pvt. Mark') }} <span class="text-danger dispatch-required-star {{ $requireDispatchFieldsOnEdit ? '' : 'd-none' }}">*</span></label>
+                                    <input type="text" class="form-control" name="pm_accountant_name" id="edit-pm-accountant-name" value="{{ old('pm_accountant_name', $order->pm_accountant_name ?? '') }}">
+                                    @error('pm_accountant_name') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label>{{ translate('Consignee Copy') }}</label>
+                                    <select class="form-control" name="consignee_copy_status" id="edit-consignee-copy-status">
+                                        <option value="attached" @selected(old('consignee_copy_status', $order->consignee_copy_status ?: ($hasExistingConsigneeCopy ? 'attached' : 'not_attached')) === 'attached')>{{ translate('Attached') }}</option>
+                                        <option value="not_attached" @selected(old('consignee_copy_status', $order->consignee_copy_status ?: ($hasExistingConsigneeCopy ? 'attached' : 'not_attached')) === 'not_attached')>{{ translate('Not Attached') }}</option>
+                                    </select>
+                                    @error('consignee_copy_status') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="form-group" id="edit-consignee-files-wrap">
+                                    <label>{{ translate('LR / Consignee Copy Files') }}</label>
+                                    <input type="file" class="form-control multi-file-input" name="cc_attachments[]" id="edit-cc-attachments" multiple
+                                        accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#edit-cc-attachment-names">
+                                    <div class="selected-file-list mt-1" id="edit-cc-attachment-names">
+                                        <span class="text-muted">{{ translate('No files selected') }}</span>
+                                    </div>
+                                    @error('cc_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    @if($hasExistingConsigneeCopy)
+                                        <small class="text-success d-block mt-1">{{ translate('An existing consignee copy is already stored.') }}</small>
+                                    @endif
+                                </div>
+
+                                <div class="form-group">
+                                    <label>{{ translate('Attached File Name') }} <span class="text-danger dispatch-required-star {{ $requireDispatchFieldsOnEdit ? '' : 'd-none' }}">*</span></label>
+                                    <input type="text" class="form-control" name="attached_file_name" id="edit-attached-file-name" value="{{ old('attached_file_name', $order->attached_file_name) }}">
+                                    @error('attached_file_name') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+
+                                @if($order->attachments->isNotEmpty())
+                                    <div class="form-group">
+                                        <label>{{ translate('Existing Attachments') }}</label>
+                                        @foreach($order->attachments as $attachment)
+                                            <div class="existing-attachment-row">
+                                                <div class="text-truncate">
+                                                    <span class="badge badge-soft-secondary mr-1">
+                                                        {{ $attachment->category === 'consignee_copy' ? translate('Consignee Copy') : translate('Order Attachment') }}
+                                                    </span>
+                                                    <a href="{{ asset('storage/' . $attachment->path) }}" target="_blank" rel="noopener">
+                                                        {{ $attachment->original_name }}
+                                                    </a>
+                                                </div>
+                                                <button type="button" class="btn btn-xs btn-soft-danger delete-existing-attachment"
+                                                    data-url="{{ route('orders.attachments.destroy', [$order, $attachment]) }}"
+                                                    data-name="{{ $attachment->original_name }}">
+                                                    <i class="las la-trash"></i>
+                                                </button>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                <div class="form-group mb-0">
+                                    <label>{{ translate('Attachment Option') }} <span class="text-danger dispatch-required-star {{ $requireDispatchFieldsOnEdit && !$hasExistingOrderAttachments ? '' : 'd-none' }}">*</span></label>
+                                    <input type="file" class="form-control multi-file-input" name="order_attachments[]" id="edit-order-attachments" multiple
+                                        accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#edit-order-attachment-names">
+                                    <div class="selected-file-list mt-1" id="edit-order-attachment-names">
+                                        <span class="text-muted">{{ translate('No files selected') }}</span>
+                                    </div>
+                                    @error('order_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
+                                    @if($hasExistingOrderAttachments)
+                                        <small class="text-success d-block mt-1">{{ translate('Existing order attachments are already stored.') }}</small>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-section-card" id="edit-card-ewb-details">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('EWB Details') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-ewb-details" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="edit-section-ewb-details" class="p-3">
+                                <div class="row gutters-10">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-0">
+                                            <label>{{ translate('EWB No.') }}</label>
+                                            <input type="text" class="form-control" name="eway_bill_number" value="{{ old('eway_bill_number', $order->eway_bill_number ?? '') }}">
+                                            @error('eway_bill_number') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-0">
+                                            <label>{{ translate('EWB Date') }}</label>
+                                            <input type="date" class="form-control" name="eway_bill_date" value="{{ old('eway_bill_date', !empty($order->eway_bill_date) ? \Carbon\Carbon::parse($order->eway_bill_date)->format('Y-m-d') : '') }}">
+                                            @error('eway_bill_date') <div class="text-danger small">{{ $message }}</div> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-section-card" id="edit-card-discounts">
+                            <div class="order-section-header">
+                                <span class="order-section-title">{{ translate('Discounts') }}</span>
+                                <label class="aiz-switch aiz-switch-success mb-0">
+                                    <input type="checkbox" class="js-edit-section-toggle" data-target="#edit-section-discounts" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <div id="edit-section-discounts" class="p-3">
+                                <div class="form-group">
+                                    <label>{{ translate('Productwise / Batchwise Discount') }}</label>
+                                    <input type="text" class="form-control" value="{{ number_format($productBatchDiscountTotal, 3, '.', '') }}" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>{{ translate('Amountwise Discount') }}</label>
+                                    <input type="number" min="0" step="0.001" class="form-control" name="amountwise_discount" value="{{ old('amountwise_discount', $order->amountwise_discount ?? 0) }}">
+                                    @error('amountwise_discount') <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label>{{ translate('Coupon / Additional Discount') }}</label>
+                                    <input type="text" class="form-control" value="{{ number_format((float) ($order->coupon_discount ?? 0), 3, '.', '') }}" readonly>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -839,6 +1060,110 @@
                 $('#edit-weight-kg-display').text((Math.round(kilograms * 1000000) / 1000000) + ' KG');
             }
 
+            function updateEditManualCbm() {
+                var cbm = ((Number($('#edit-length-cm').val()) || 0) * (Number($('#edit-width-cm').val()) || 0) * (Number($('#edit-height-cm').val()) || 0)) / 1000000;
+                $('#edit-manual-cbm-display').text(cbm.toFixed(6) + ' CBM');
+                var totalCbm = cbm;
+                $('#edit-extra-case-dimensions-list .extra-case-row').each(function () {
+                    var $row = $(this);
+                    var rowCbm = ((Number($row.find('.extra-case-length').val()) || 0)
+                        * (Number($row.find('.extra-case-width').val()) || 0)
+                        * (Number($row.find('.extra-case-height').val()) || 0)) / 1000000;
+                    $row.find('.extra-case-cbm-label').text(rowCbm.toFixed(6) + ' CBM');
+                    totalCbm += rowCbm;
+                });
+                $('#edit-all-dimensions-total-cbm').val(totalCbm.toFixed(6) + ' CBM');
+            }
+
+            function currentEditCanonicalDocType() {
+                var $opt = $('#document-type option:selected');
+                var canonical = String($opt.data('canonical') || '').trim();
+                if (canonical) return canonical;
+                var val = String($opt.val() || '').trim().toLowerCase();
+                var map = {
+                    'performa': 'performa_invoice',
+                    'performa invoice': 'performa_invoice',
+                    'performa_invoice': 'performa_invoice',
+                    'proforma': 'performa_invoice',
+                    'proforma invoice': 'performa_invoice',
+                    'order': 'order_entry',
+                    'order entry': 'order_entry',
+                    'order_entry': 'order_entry',
+                    'sales': 'sales_invoice',
+                    'sales invoice': 'sales_invoice',
+                    'sales_invoice': 'sales_invoice',
+                    'bill of supply': 'bill_of_supply',
+                    'bill_of_supply': 'bill_of_supply',
+                    'sales return': 'sales_return',
+                    'sales_return': 'sales_return',
+                    'e-invoice': 'e_invoice',
+                    'e_invoice': 'e_invoice',
+                    'quotation': 'quotation',
+                    'commercial invoice': 'commercial_invoice',
+                    'commercial_invoice': 'commercial_invoice',
+                    'international invoice': 'international_invoice',
+                    'international_invoice': 'international_invoice'
+                };
+                return map[val] || val;
+            }
+
+            function syncEditSectionSwitch($checkbox) {
+                var targetSelector = $checkbox.data('target');
+                var $target = $(targetSelector);
+                if (!$target.length) return;
+                var isOn = $checkbox.is(':checked') && !$target.closest('.order-section-card').hasClass('d-none');
+                $target.toggleClass('d-none', !$checkbox.is(':checked'));
+                $target.find(':input').prop('disabled', !isOn);
+                if ($.fn.selectpicker) {
+                    $target.find('.aiz-selectpicker').selectpicker('refresh');
+                }
+            }
+
+            var isDispatchedDelivery = @json($isDispatchedDelivery);
+            var hasExistingOrderAttachments = @json($hasExistingOrderAttachments);
+
+            function syncEditDocumentTypeRules() {
+                var docType = currentEditCanonicalDocType();
+                var isPerformaOrOrder = docType === 'performa_invoice' || docType === 'order_entry';
+                var isSalesBosReturn = docType === 'sales_invoice' || docType === 'bill_of_supply' || docType === 'sales_return';
+                var requireDispatch = isDispatchedDelivery && isSalesBosReturn;
+
+                var numberHeadings = {
+                    performa_invoice: '{{ translate('Performa Invoice No') }}',
+                    sales_invoice: '{{ translate('Sales Invoice No') }}',
+                    bill_of_supply: '{{ translate('Bill Of Supply No') }}',
+                    sales_return: '{{ translate('Sales Return No') }}'
+                };
+                var useShortDate = Boolean(numberHeadings[docType]);
+                $('#edit-order-no-heading').text(numberHeadings[docType] || '{{ translate('Order No.') }}');
+                $('#edit-order-date-heading').text(useShortDate ? '{{ translate('Date') }}' : '{{ translate('Order Date') }}');
+                $('#edit-order-time-heading').text(useShortDate ? '{{ translate('Time') }}' : '{{ translate('Order Time') }}');
+
+                $('#edit-reverse-charge-wrap').toggleClass('d-none', isPerformaOrOrder)
+                    .find(':input').prop('disabled', isPerformaOrOrder);
+
+                $('#edit-staff-handling-fields').toggleClass('d-none', isPerformaOrOrder)
+                    .find(':input').prop('disabled', isPerformaOrOrder || !$('#edit-section-additional-details').is(':visible'));
+                if ($.fn.selectpicker) {
+                    $('#edit-staff-handling-fields .aiz-selectpicker').selectpicker('refresh');
+                }
+
+                var $ewbCard = $('#edit-card-ewb-details');
+                $ewbCard.toggleClass('d-none', isPerformaOrOrder);
+                syncEditSectionSwitch($ewbCard.find('.js-edit-section-toggle'));
+
+                var $dispatchedCard = $('#edit-card-dispatched-details');
+                $dispatchedCard.toggleClass('d-none', isPerformaOrOrder);
+                syncEditSectionSwitch($dispatchedCard.find('.js-edit-section-toggle'));
+
+                $('.dispatch-required-star').toggleClass('d-none', !requireDispatch);
+                var dispatchSectionVisible = !isPerformaOrOrder && $('#edit-section-dispatched-details').is(':visible');
+                $('#edit-lr-number,#edit-lr-date,#edit-pm-accountant-name,#edit-attached-file-name')
+                    .prop('required', requireDispatch && dispatchSectionVisible);
+                $('#edit-order-attachments')
+                    .prop('required', requireDispatch && dispatchSectionVisible && !hasExistingOrderAttachments);
+            }
+
             function filterBookedTo() {
                 if (shippingChoice !== 'transport') {
                     return;
@@ -990,6 +1315,34 @@
             $('#edit-consignee-copy-status').on('change', syncConsigneeCopy);
             $('#edit-shipping-cost-type').on('change', syncShippingCost);
             $('#edit-weight-grams').on('input change', updateWeightDisplay);
+            $(document).on('input change', '.js-edit-case-dim-input', updateEditManualCbm);
+            var nextEditExtraCaseIdx = $('#edit-extra-case-dimensions-list .extra-case-row').length;
+            $('#edit-add-more-case-btn').on('click', function () {
+                var idx = nextEditExtraCaseIdx++;
+                $('#edit-extra-case-dimensions-list').append(
+                    '<div class="extra-case-row mt-2">'
+                    + '<div class="dimension-inputs">'
+                    + '<input type="number" min="0" step="0.01" class="form-control js-edit-case-dim-input extra-case-length" name="extra_cases[' + idx + '][length_cm]" placeholder="{{ translate('Length') }}">'
+                    + '<span class="dimension-separator">×</span>'
+                    + '<input type="number" min="0" step="0.01" class="form-control js-edit-case-dim-input extra-case-width" name="extra_cases[' + idx + '][width_cm]" placeholder="{{ translate('Width') }}">'
+                    + '<span class="dimension-separator">×</span>'
+                    + '<input type="number" min="0" step="0.01" class="form-control js-edit-case-dim-input extra-case-height" name="extra_cases[' + idx + '][height_cm]" placeholder="{{ translate('Height') }}">'
+                    + '<button type="button" class="btn btn-xs btn-soft-danger remove-edit-extra-case-btn" aria-label="{{ translate('Remove') }}">&times;</button>'
+                    + '</div>'
+                    + '<small class="text-muted d-block mt-1 extra-case-cbm-label">0.000000 CBM</small>'
+                    + '</div>'
+                );
+                updateEditManualCbm();
+            });
+            $(document).on('click', '.remove-edit-extra-case-btn', function () {
+                $(this).closest('.extra-case-row').remove();
+                updateEditManualCbm();
+            });
+            $(document).on('change', '.js-edit-section-toggle', function () {
+                syncEditSectionSwitch($(this));
+                syncEditDocumentTypeRules();
+            });
+            $('#document-type,#document-type-custom').on('input change', syncEditDocumentTypeRules);
             $('#edit-transport-id').on('change', function () {
                 syncOtherEnter($(this));
                 filterBookedTo();
@@ -1079,12 +1432,14 @@
             syncConsigneeCopy();
             syncShippingCost();
             updateWeightDisplay();
+            updateEditManualCbm();
             filterBookedTo();
             $('.js-other-select').each(function () {
                 syncOtherEnter($(this));
             });
             syncSurfaceMode();
             syncPortLogistics();
+            syncEditDocumentTypeRules();
             $('#edit-terms-of-delivery, #edit-payment-terms').on('change', function () {
                 renderInternationalTermDetail($(this));
             });

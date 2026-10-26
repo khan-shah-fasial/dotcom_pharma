@@ -377,8 +377,76 @@ span#picker-info-stock-badge {
             border-color: #e8edf3 !important;
             font-size: 12px;
         }
+        .invoice2-lines-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            color: #111;
+        }
+        .invoice2-lines-table th,
+        .invoice2-lines-table td {
+            border: 1px solid #334155 !important;
+            padding: 3px 5px !important;
+            vertical-align: middle !important;
+            line-height: 1.2;
+        }
+        .invoice2-lines-table thead th {
+            background: #eef2e6;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .invoice2-lines-table td.num {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .invoice2-lines-table td.hl-red {
+            background: #fef08a;
+            color: #dc2626;
+            font-weight: 700;
+        }
+        .invoice2-lines-table td.product-name {
+            font-weight: 700;
+        }
+        .invoice2-lines-table td.label {
+            font-weight: 700;
+        }
         .order-sidebar-accordion .card {
             margin-bottom: 10px;
+        }
+        .order-section-header {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #eef2f7;
+        }
+        .order-section-title {
+            margin: 0;
+            color: #111827;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .01em;
+        }
+        .order-section-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+        }
+        .market-switch-group .btn {
+            font-weight: 600;
+        }
+        .market-switch-group .btn.active {
+            color: #fff;
+            background-color: var(--primary);
+            border-color: var(--primary);
         }
         .order-accordion-toggle {
             display: flex;
@@ -537,12 +605,30 @@ span#picker-info-stock-badge {
                     </div>
                     <div class="card-body">
                         <div class="row gutters-5">
+                            @php
+                                $selectedMarket = old('sales_market', \App\Support\InvoiceType::DOMESTIC);
+                                $selectedMarket = $selectedMarket === \App\Support\InvoiceType::INTERNATIONAL
+                                    ? \App\Support\InvoiceType::INTERNATIONAL
+                                    : \App\Support\InvoiceType::DOMESTIC;
+                            @endphp
+                            <div class="col-12 form-group mb-3">
+                                <label class="d-block fw-600 mb-2">{{ translate('Market Selection') }}</label>
+                                <input type="hidden" name="sales_market" id="sales-market-input" value="{{ $selectedMarket }}">
+                                <div class="btn-group market-switch-group" role="group" aria-label="{{ translate('Market Selection') }}">
+                                    <button type="button" class="btn btn-sm btn-outline-primary js-market-switch {{ $selectedMarket === \App\Support\InvoiceType::DOMESTIC ? 'active' : '' }}" data-market="domestic">
+                                        {{ translate('Domestic') }}
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary js-market-switch {{ $selectedMarket === \App\Support\InvoiceType::INTERNATIONAL ? 'active' : '' }}" data-market="international">
+                                        {{ translate('International') }}
+                                    </button>
+                                </div>
+                            </div>
                             <div class="col-md-6 form-group">
-                                @include('backend.sales.partials.document_type_field', ['documentTypeRequired' => true, 'invoiceTypeOptions' => $invoiceTypeOptions])
+                                @include('backend.sales.partials.document_type_field', ['documentTypeRequired' => true, 'invoiceTypeOptions' => $invoiceTypeOptions, 'salesMarket' => $selectedMarket, 'orderEntry' => $orderEntry])
                             </div>
                             <div class="col-md-6 form-group" id="domestic-invoice-fields">
                                 <label>{{ translate('Reverse Charges') }}</label>
-                                <select class="form-control" name="reverse_charge">
+                                <select class="form-control" name="reverse_charge" id="reverse-charge-select">
                                     <option value="" @selected(old('reverse_charge', '') === '' || old('reverse_charge') === null)>{{ translate('None') }}</option>
                                     <option value="0" @selected((string) old('reverse_charge') === '0')>{{ translate('No') }}</option>
                                     <option value="1" @selected((string) old('reverse_charge') === '1')>{{ translate('Yes') }}</option>
@@ -563,7 +649,7 @@ span#picker-info-stock-badge {
                                 @error('company_id') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-8 form-group order-number-group">
-                                <label class="order-number-heading">{{ translate('Order No') }} <span class="text-danger">*</span></label>
+                                <label class="order-number-heading"><span id="order-no-heading-text">{{ translate(\App\Support\DocumentType::numberHeading($initialDocumentType ?? 'performa_invoice')) }}</span> <span class="text-danger">*</span></label>
                                 <div class="order-number-parts">
                                     <div>
                                         <span class="order-number-part-label">{{ translate('Company Code') }}</span>
@@ -587,12 +673,12 @@ span#picker-info-stock-badge {
                                 @error('order_code_letter') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6 form-group">
-                                <label>{{ translate('Order Date') }} <span class="text-danger">*</span></label>
+                                <label><span id="order-date-heading-text">{{ translate(\App\Support\DocumentType::dateHeading($initialDocumentType ?? 'performa_invoice')) }}</span> <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="order_date" value="{{ old('order_date', now()->toDateString()) }}" required>
                                 @error('order_date') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6 form-group">
-                                <label>{{ translate('Order Time') }} <span class="text-danger">*</span></label>
+                                <label><span id="order-time-heading-text">{{ translate(\App\Support\DocumentType::timeHeading($initialDocumentType ?? 'performa_invoice')) }}</span> <span class="text-danger">*</span></label>
                                 <input type="time" class="form-control" name="order_time" value="{{ old('order_time', now()->format('H:i')) }}" required>
                                 @error('order_time') <div class="text-danger small">{{ $message }}</div> @enderror
                             </div>
@@ -786,25 +872,50 @@ span#picker-info-stock-badge {
                         </div>
 
                         <div class="table-responsive mt-3">
-                            <table class="table mb-0" id="order-lines-table">
+                            <table class="table mb-0 invoice2-lines-table" id="order-lines-table">
                                 <thead>
                                     <tr>
-                                        <th>{{ translate('Product') }}</th>
+                                        <th width="3%">{{ translate('Sr') }}</th>
+                                        <th width="13%">{{ translate('Description') }}</th>
+                                        <th width="8%">{{ translate('Batch / Lot') }}</th>
+                                        <th width="7%">{{ translate('Category') }}</th>
+                                        <th width="8%" colspan="2">{{ translate('Total Qty') }}</th>
+                                        <th width="6%">{{ translate('Rate') }}</th>
+                                        <th width="7%">{{ translate('Product Value') }}</th>
+                                        <th width="5%">{{ translate('BD') }}</th>
+                                        <th width="5%">{{ translate('PD') }}</th>
+                                        <th width="7%">{{ translate('Discounted Rate') }}</th>
+                                        <th width="7%">{{ translate('Taxable') }}</th>
+                                        <th width="5%">{{ translate('SGST') }}</th>
+                                        <th width="5%">{{ translate('CGST') }}</th>
+                                        <th width="5%">{{ translate('IGST') }}</th>
+                                        <th width="5%">{{ translate('GST Value') }}</th>
+                                        <th width="5%">{{ translate('Gross') }}</th>
+                                        <th width="3%" rowspan="2"></th>
+                                    </tr>
+                                    <tr>
+                                        <th>{{ translate('No') }}</th>
                                         <th>{{ translate('Variant') }}</th>
-                                        <th>{{ translate('Batch') }}</th>
-                                        <th class="text-right">{{ translate('Qty') }}</th>
-                                        <th class="text-right">{{ translate('Scheme Qty (Free)') }}</th>
-                                        <th class="text-right">{{ translate('Sale') }}</th>
-                                        <th class="text-right">{{ translate('GST Amount') }}</th>
-                                        <th class="text-right">{{ translate('Gross') }}</th>
-                                        <th class="text-right">{{ translate('MRP') }}</th>
-                                        <th class="text-right">{{ translate('Final') }}</th>
-                                        <th></th>
+                                        <th>{{ translate('Mfg / Expiry') }}</th>
+                                        <th>{{ translate('HSN / HS') }}</th>
+                                        <th width="4%">{{ translate('Qty') }}</th>
+                                        <th width="4%">{{ translate('Scheme') }}</th>
+                                        <th>{{ translate('M.R.P') }}</th>
+                                        <th>{{ translate('M.R.P Value') }}</th>
+                                        <th>%</th>
+                                        <th>%</th>
+                                        <th>{{ translate('Discount Amount') }}</th>
+                                        <th>{{ translate('Value') }}</th>
+                                        <th>%</th>
+                                        <th>%</th>
+                                        <th>%</th>
+                                        <th>%</th>
+                                        <th>{{ translate('Value') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody id="order-lines-body">
                                     <tr>
-                                        <td colspan="11" class="text-center text-muted">{{ translate('No products added') }}</td>
+                                        <td colspan="18" class="text-center text-muted">{{ translate('No products added') }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -818,17 +929,14 @@ span#picker-info-stock-badge {
             <div class="col-lg-4">
                 <div class="order-sidebar-accordion" id="order-sidebar-accordion">
                 <div class="card">
-                    <div class="card-header p-0" id="additional-details-heading">
-                        <button type="button" class="order-accordion-toggle" data-toggle="collapse"
-                            data-target="#additional-details-collapse" aria-expanded="true"
-                            aria-controls="additional-details-collapse">
-                            <span>{{ translate('Additional Details') }}</span>
-                            <i class="las la-angle-down order-accordion-icon"></i>
-                        </button>
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('Additional Details') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-additional-details" checked>
+                            <span class="slider round"></span>
+                        </label>
                     </div>
-                    <div id="additional-details-collapse" class="collapse show"
-                        aria-labelledby="additional-details-heading" data-parent="#order-sidebar-accordion">
-                    <div class="card-body">
+                    <div id="section-additional-details" class="card-body">
                         <div class="form-group">
                             <label>{{ translate('Sales Executive Name') }}</label>
                             <select class="form-control aiz-selectpicker" name="sales_executive_id" data-live-search="true" title="{{ translate('Select Sales Executive') }}">
@@ -841,31 +949,44 @@ span#picker-info-stock-badge {
                             </select>
                         </div>
 
-                            @foreach ([
-                                ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
-                                ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
-                                ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff, 'default' => $defaultBillingBy ?? optional($billingStaff->first())->user_id],
-                            ] as $staffField)
-                            <div class="form-group">
-                                <label>{{ translate($staffField['label']) }}</label>
-                                <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
-                                    <option value="">{{ translate('Select Staff') }}</option>
-                                    @foreach ($staffField['staff'] as $staff)
-                                        <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], $staffField['default'] ?? optional($staffField['staff']->first())->user_id) === (string) $staff->user_id)>
-                                            {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error($staffField['name']) <div class="text-danger small">{{ $message }}</div> @enderror
-                            </div>
-                        @endforeach
-
                         <div class="form-group">
                             <label>{{ translate('Sales Man Code') }}</label>
                             <input type="text" class="form-control" id="sales-man-code" value="{{ old('sales_man_code') }}" readonly>
                             <small class="text-muted">{{ translate('Fetched automatically from Account Master.') }}</small>
                         </div>
-                        <div class="shipping-section-title border-top pt-3">{{ translate('P.O. Details') }}</div>
+
+                        <div id="staff-handling-fields">
+                            @foreach ([
+                                ['name' => 'packed_by', 'label' => 'Packed By', 'staff' => $packedStaff],
+                                ['name' => 'checked_by', 'label' => 'Checked By', 'staff' => $checkedStaff],
+                                ['name' => 'billing_by', 'label' => 'Billing By', 'staff' => $billingStaff, 'default' => $defaultBillingBy ?? optional($billingStaff->first())->user_id],
+                            ] as $staffField)
+                                <div class="form-group">
+                                    <label>{{ translate($staffField['label']) }}</label>
+                                    <select class="form-control aiz-selectpicker" name="{{ $staffField['name'] }}" data-live-search="true">
+                                        <option value="">{{ translate('Select Staff') }}</option>
+                                        @foreach ($staffField['staff'] as $staff)
+                                            <option value="{{ $staff->user_id }}" @selected((string) old($staffField['name'], $staffField['default'] ?? optional($staffField['staff']->first())->user_id) === (string) $staff->user_id)>
+                                                {{ optional($staff->user)->name }}{{ $staff->designation ? ' - ' . $staff->designation : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error($staffField['name']) <div class="text-danger small">{{ $message }}</div> @enderror
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="section-card-po-details">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('P.O. Details') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-po-details" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="section-po-details" class="card-body">
                         <div class="form-group">
                             <label>{{ translate('P.O. No.') }}</label>
                             <input type="text" class="form-control" name="po_number" value="{{ old('po_number') }}">
@@ -877,21 +998,17 @@ span#picker-info-stock-badge {
                             @error('po_date') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                     </div>
-                    </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header p-0" id="shipping-heading">
-                        <button type="button" class="order-accordion-toggle collapsed" data-toggle="collapse"
-                            data-target="#shipping-collapse" aria-expanded="false"
-                            aria-controls="shipping-collapse">
-                            <span>{{ translate('Shipping') }}</span>
-                            <i class="las la-angle-down order-accordion-icon"></i>
-                        </button>
+                <div class="card" id="section-card-weight-dimension">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('Weight & Dimension') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-weight-dimension" checked>
+                            <span class="slider round"></span>
+                        </label>
                     </div>
-                    <div id="shipping-collapse" class="collapse"
-                        aria-labelledby="shipping-heading" data-parent="#order-sidebar-accordion">
-                    <div class="card-body">
+                    <div id="section-weight-dimension" class="card-body">
                         <div class="shipping-section-title">{{ translate('AutoFill') }}</div>
                         <div class="form-group">
                             <label>{{ translate('Total Cases') }}</label>
@@ -910,24 +1027,175 @@ span#picker-info-stock-badge {
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Total Volume / CBM') }}</label>
-                            <input type="number" min="0" step="0.000001" class="form-control" name="total_volume_cbm" value="{{ old('total_volume_cbm') }}">
+                            <input type="number" min="0" step="0.000001" class="form-control" name="total_volume_cbm" id="total-volume-cbm-input" value="{{ old('total_volume_cbm') }}">
                             <small class="text-muted">{{ translate('The invoice calculates net weight and CBM from piece weight and size when those are set.') }}</small>
                             @error('total_volume_cbm') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+
+                        <div class="shipping-section-title border-top pt-3">{{ translate('Manual') }}</div>
+                        <div class="form-group">
+                            <label>{{ translate('Weight (Gram)') }}</label>
+                            <input type="number" min="0" step="0.001" class="form-control" name="weight_grams" id="weight-grams" value="{{ old('weight_grams') }}">
+                            <small class="apple-green-highlight mt-1" id="weight-kg-display">0 KG</small>
+                            @error('weight_grams') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <label class="mb-0">{{ translate('Dimensions (CM)') }}</label>
+                                <button type="button" class="btn btn-xs btn-soft-primary" id="add-more-case-dimension-btn">
+                                    <i class="las la-plus"></i> {{ translate('Add More') }}
+                                </button>
+                            </div>
+                            <div class="dimension-inputs">
+                                <input type="number" min="0" step="0.01" class="form-control js-case-dim-input" id="length-cm" name="length_cm" value="{{ old('length_cm') }}" placeholder="{{ translate('Length') }}">
+                                <span class="dimension-separator">×</span>
+                                <input type="number" min="0" step="0.01" class="form-control js-case-dim-input" id="width-cm" name="width_cm" value="{{ old('width_cm') }}" placeholder="{{ translate('Width') }}">
+                                <span class="dimension-separator">×</span>
+                                <input type="number" min="0" step="0.01" class="form-control js-case-dim-input" id="height-cm" name="height_cm" value="{{ old('height_cm') }}" placeholder="{{ translate('Height') }}">
+                                <span class="dimension-separator">CM</span>
+                            </div>
+                            <small class="text-muted d-block mt-1" id="manual-cbm-display">0 CBM</small>
+                            <div id="extra-case-dimensions-list" class="mt-2">
+                                @foreach ((array) old('extra_cases', []) as $caseIdx => $extraCase)
+                                    <div class="extra-case-row mt-2">
+                                        <div class="dimension-inputs">
+                                            <input type="number" min="0" step="0.01" class="form-control js-case-dim-input extra-case-length" name="extra_cases[{{ $caseIdx }}][length_cm]" value="{{ $extraCase['length_cm'] ?? '' }}" placeholder="{{ translate('Length') }}">
+                                            <span class="dimension-separator">×</span>
+                                            <input type="number" min="0" step="0.01" class="form-control js-case-dim-input extra-case-width" name="extra_cases[{{ $caseIdx }}][width_cm]" value="{{ $extraCase['width_cm'] ?? '' }}" placeholder="{{ translate('Width') }}">
+                                            <span class="dimension-separator">×</span>
+                                            <input type="number" min="0" step="0.01" class="form-control js-case-dim-input extra-case-height" name="extra_cases[{{ $caseIdx }}][height_cm]" value="{{ $extraCase['height_cm'] ?? '' }}" placeholder="{{ translate('Height') }}">
+                                            <button type="button" class="btn btn-xs btn-soft-danger remove-extra-case-btn" aria-label="{{ translate('Remove') }}">&times;</button>
+                                        </div>
+                                        <small class="text-muted d-block mt-1 extra-case-cbm-label">0.000000 CBM</small>
+                                    </div>
+                                @endforeach
+                            </div>
+                            @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                            @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                            @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group mb-0">
+                            <label>{{ translate('Total CBM (All Dimensions)') }}</label>
+                            <input type="text" class="form-control" id="all-dimensions-total-cbm" value="0.000000 CBM" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="section-card-dispatched-details">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('Dispatched Details') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-dispatched-details" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="section-dispatched-details" class="card-body">
+                        <div class="form-group">
+                            <label>{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</label>
+                            <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('LR Date') }}</label>
+                            <input type="date" class="form-control" name="lr_date" value="{{ old('lr_date') }}">
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Carrier Pvt. Mark') }}</label>
                             <input type="text" class="form-control" name="pm_accountant_name" value="{{ old('pm_accountant_name') }}">
                             @error('pm_accountant_name') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
+                        <div class="form-group" id="consignee-copy-group">
+                            <label>{{ translate('Consignee Copy') }}</label>
+                            <select class="form-control" name="consignee_copy_status" id="consignee-copy-status">
+                                <option value="not_attached" @selected(old('consignee_copy_status', 'not_attached') === 'not_attached')>{{ translate('Not Attached') }}</option>
+                                <option value="attached" @selected(old('consignee_copy_status') === 'attached')>{{ translate('Attached') }}</option>
+                            </select>
+                            @error('consignee_copy_status') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group d-none" id="consignee-copy-files-wrap">
+                            <label>{{ translate('LR / Consignee Copy Files') }}</label>
+                            <input type="file" class="form-control multi-file-input" name="cc_attachments[]" id="cc-attachments" multiple
+                                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#cc-attachment-names">
+                            <div class="selected-file-list mt-1" id="cc-attachment-names"></div>
+                            @error('cc_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Attached File Name') }}</label>
+                            <input type="text" class="form-control" name="attached_file_name" value="{{ old('attached_file_name') }}">
+                            @error('attached_file_name') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group mb-0">
+                            <label>{{ translate('Attachment Option') }}</label>
+                            <input type="file" class="form-control multi-file-input" name="order_attachments[]" id="order-attachments" multiple
+                                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#order-attachment-names">
+                            <small class="text-muted">{{ translate('Select multiple files; maximum 10 MB per file.') }}</small>
+                            <div class="selected-file-list mt-1" id="order-attachment-names"></div>
+                            @error('order_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="section-card-ewb-details">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('EWB Details') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-ewb-details" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="section-ewb-details" class="card-body">
                         <div class="form-group">
                             <label>{{ translate('EWB No.') }}</label>
                             <input type="text" class="form-control" name="eway_bill_number" value="{{ old('eway_bill_number') }}">
                             @error('eway_bill_number') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label>{{ translate('EWB Date') }}</label>
                             <input type="date" class="form-control" name="eway_bill_date" value="{{ old('eway_bill_date') }}">
                             @error('eway_bill_date') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="section-card-other-charges">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('Other Charges') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-other-charges" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="section-other-charges" class="card-body">
+                        <div class="form-group">
+                            <label>{{ translate('Shipping Cost') }}</label>
+                            <select class="form-control" name="shipping_cost_type" id="shipping-cost-type">
+                                <option value="by_seller" @selected(old('shipping_cost_type', old('free_shipping') ? 'free_shipping' : 'by_seller') === 'by_seller')>{{ translate('By Seller') }}</option>
+                                <option value="free_shipping" @selected(old('shipping_cost_type', old('free_shipping') ? 'free_shipping' : 'by_seller') === 'free_shipping')>{{ translate('Free Shipping') }}</option>
+                            </select>
+                            @error('shipping_cost_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                            <input type="hidden" name="free_shipping" id="free-shipping" value="{{ old('shipping_cost_type', old('free_shipping') ? 'free_shipping' : 'by_seller') === 'free_shipping' ? 1 : 0 }}">
+                        </div>
+                        <div id="sell-amount-wrap" class="mb-3">
+                            <label>{{ translate('Sell Amount') }}</label>
+                            <div id="seller-shipping-costs" class="small text-muted">{{ translate('Add products to enter seller shipping cost.') }}</div>
+                            <div class="border-top pt-3 mt-3">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <label class="mb-0">{{ translate('Shipping Items') }}</label>
+                                    <button type="button" class="btn btn-sm btn-soft-primary" id="add-shipping-item-btn">
+                                        <i class="las la-plus"></i> {{ translate('Add Shipping Item') }}
+                                    </button>
+                                </div>
+                                <div id="shipping-items" class="small text-muted">{{ translate('No shipping items added.') }}</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ translate('Freight') }}</label>
+                            <select class="form-control" name="freight_type">
+                                <option value="">{{ translate('Select Freight') }}</option>
+                                <option value="pre_paid" @selected(old('freight_type') === 'pre_paid')>{{ translate('Pre-Paid') }}</option>
+                                <option value="to_pay" @selected(old('freight_type') === 'to_pay')>{{ translate('To Pay') }}</option>
+                                <option value="fod" @selected(old('freight_type') === 'fod')>{{ translate('FOD') }}</option>
+                            </select>
+                            @error('freight_type') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Pack & Forwarding') }}</label>
@@ -944,62 +1212,64 @@ span#picker-info-stock-badge {
                             <input type="number" min="0" step="0.001" class="form-control" name="other_charges_amount" value="{{ old('other_charges_amount', 0) }}">
                             @error('other_charges_amount') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
+                        <div class="form-group mb-0">
+                            <label>{{ translate('CR/DB Adjustment') }}</label>
+                            <input type="number" step="0.001" class="form-control" name="cr_db_adjustment" value="{{ old('cr_db_adjustment', 0) }}">
+                            @error('cr_db_adjustment') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="section-card-discounts">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('Discounts') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-discounts" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="section-discounts" class="card-body">
+                        <div class="form-group">
+                            <label>{{ translate('Productwise / Batchwise Discount') }}</label>
+                            <input type="text" class="form-control" id="sidebar-product-batch-discount-display" value="0.000" readonly>
+                            <small class="text-muted">{{ translate('Calculated automatically from product and batch rates.') }}</small>
+                        </div>
                         <div class="form-group">
                             <label>{{ translate('Amountwise Discount') }}</label>
                             <input type="number" min="0" step="0.001" class="form-control" name="amountwise_discount" value="{{ old('amountwise_discount', 0) }}">
                             @error('amountwise_discount') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
-                        <div class="form-group">
-                            <label>{{ translate('CR/DB Adjustment') }}</label>
-                            <input type="number" step="0.001" class="form-control" name="cr_db_adjustment" value="{{ old('cr_db_adjustment', 0) }}">
-                            @error('cr_db_adjustment') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="shipping-section-title border-top pt-3">{{ translate('Manual') }}</div>
-                        <div class="form-group">
-                            <label>{{ translate('Weight (Gram)') }}</label>
-                            <input type="number" min="0" step="0.001" class="form-control" name="weight_grams" id="weight-grams" value="{{ old('weight_grams') }}">
-                            <small class="apple-green-highlight mt-1" id="weight-kg-display">0 KG</small>
-                            @error('weight_grams') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('Dimensions (CM)') }}</label>
-                            <div class="dimension-inputs">
-                                <input type="number" min="0" step="0.01" class="form-control" id="length-cm" name="length_cm" value="{{ old('length_cm') }}" placeholder="{{ translate('Length') }}">
-                                <span class="dimension-separator">×</span>
-                                <input type="number" min="0" step="0.01" class="form-control" id="width-cm" name="width_cm" value="{{ old('width_cm') }}" placeholder="{{ translate('Width') }}">
-                                <span class="dimension-separator">×</span>
-                                <input type="number" min="0" step="0.01" class="form-control" id="height-cm" name="height_cm" value="{{ old('height_cm') }}" placeholder="{{ translate('Height') }}">
-                                <span class="dimension-separator">CM</span>
+                        <div class="form-group mb-0">
+                            <label>{{ translate('Coupon / Additional Discount') }}</label>
+                            <div class="row gutters-5">
+                                <div class="col-5">
+                                    <label class="small mb-1">{{ translate('Discount') }}</label>
+                                    <input type="number" min="0" step="0.001" class="form-control" name="additional_discount" id="additional-discount" value="{{ old('additional_discount', 0) }}">
+                                </div>
+                                <div class="col-7">
+                                    <label class="small mb-1">{{ translate('Discount Type') }}</label>
+                                    <select class="form-control" name="additional_discount_type" id="additional-discount-type">
+                                        <option value="percent" @selected(old('additional_discount_type', 'percent') === 'percent')>{{ translate('Percentage (%)') }}</option>
+                                        <option value="amount" @selected(old('additional_discount_type') === 'amount')>{{ translate('Fixed Amount') }}</option>
+                                    </select>
+                                </div>
                             </div>
-                            <small class="text-muted d-block mt-1" id="manual-cbm-display">0 CBM</small>
-                            @error('length_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                            @error('width_cm') <div class="text-danger small">{{ $message }}</div> @enderror
-                            @error('height_cm') <div class="text-danger small">{{ $message }}</div> @enderror
+                            <button type="button" class="btn btn-primary btn-block mt-2" id="apply-additional-discount-btn">{{ translate('Apply Discount') }}</button>
+                            <input type="hidden" name="additional_discount_enabled" id="additional-discount-enabled" value="0">
+                            <div id="additional-discount-message" class="small mt-1"></div>
                         </div>
-                        <div class="form-group">
-                            <label>{{ translate('LR / GR / Doc / Vehicle / AWB No.') }}</label>
-                            <input type="text" class="form-control" name="lr_number" value="{{ old('lr_number') }}">
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('LR Date') }}</label>
-                            <input type="date" class="form-control" name="lr_date" value="{{ old('lr_date') }}">
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('Attached File Name') }}</label>
-                            <input type="text" class="form-control" name="attached_file_name" value="{{ old('attached_file_name') }}">
-                            @error('attached_file_name') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="form-group">
-                            <label>{{ translate('Attachment Option') }}</label>
-                            <input type="file" class="form-control multi-file-input" name="order_attachments[]" id="order-attachments" multiple
-                                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#order-attachment-names">
-                            <small class="text-muted">{{ translate('Select multiple files; maximum 10 MB per file.') }}</small>
-                            <div class="selected-file-list mt-1" id="order-attachment-names"></div>
-                            @error('order_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
+                    </div>
+                </div>
 
-                        <div class="shipping-section-title border-top pt-3">{{ translate('Shipping') }}</div>
+                <div class="card" id="section-card-shipping-details">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('Shipping Details') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-shipping-details" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="section-shipping-details" class="card-body">
                         <div class="form-group">
                             <label>{{ translate('Shipping Method') }}</label>
                             <select class="form-control" name="shipping_method" id="shipping-method">
@@ -1017,7 +1287,7 @@ span#picker-info-stock-badge {
                             </select>
                             @error('fod_mode') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
-                        <div class="form-group" id="transport-surface-mode-fields">
+                        <div class="form-group mb-0" id="transport-surface-mode-fields">
                             <label id="transport-surface-mode-label">{{ translate('Surface Mode') }}</label>
                             <select class="form-control" name="transport_surface_mode" id="transport-surface-mode"
                                 data-old="{{ old('transport_surface_mode', 'road') }}">
@@ -1026,60 +1296,18 @@ span#picker-info-stock-badge {
                             </select>
                             @error('transport_surface_mode') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
+                    </div>
+                </div>
 
-                        <div id="courier-fields">
-                            <div class="form-group">
-                                <label>{{ translate('Courier Provider') }}</label>
-                                <select class="form-control" name="shipping_method_id" id="courier-provider">
-                                    <option value="">{{ translate('Select Courier Provider') }}</option>
-                                    @foreach($shippingMethods as $method)
-                                        <option value="{{ $method->id }}" data-provider="{{ $method->slug }}">{{ $method->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>{{ translate('Courier Service') }}</label>
-                                <select class="form-control" name="courier_service" id="courier-service" disabled>
-                                    <option value="">{{ translate('Select provider to load services') }}</option>
-                                </select>
-                                <div id="courier-service-message" class="small text-muted mt-1"></div>
-                            </div>
-                        </div>
-
-                        <div id="transport-fields" class="d-none">
-                            <div class="form-group">
-                                <label>{{ translate('Transport') }}</label>
-                                <select class="form-control js-other-select" name="transport_id" id="transport-id">
-                                    <option value="">{{ translate('Select Transport') }}</option>
-                                    @foreach($transports as $transport)
-                                        <option value="{{ $transport->id }}" data-mode="{{ $transport->mode }}"
-                                            @selected((string) old('transport_id') === (string) $transport->id)>{{ $transport->name }}</option>
-                                    @endforeach
-                                    <option value="other" @selected(old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')))>{{ translate('Not in List') }}</option>
-                                </select>
-                                <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')) ? '' : 'd-none' }}" name="transport_name" placeholder="{{ translate('Enter transport name') }}" value="{{ old('transport_name') }}">
-                            </div>
-                        </div>
-
-                        <div id="local-fields" class="d-none">
-                            <div class="form-group">
-                                <label>{{ translate('Local Delivery Partner') }}</label>
-                                <select class="form-control js-other-select" name="local_delivery_partner_id">
-                                    <option value="">{{ translate('Select Partner') }}</option>
-                                    @foreach($localDeliveryPartners as $partner)
-                                        <option value="{{ $partner->id }}" @selected((string) old('local_delivery_partner_id') === (string) $partner->id)>{{ $partner->name }}</option>
-                                    @endforeach
-                                    <option value="other" @selected(old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')))>{{ translate('Not in List') }}</option>
-                                </select>
-                                <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')) ? '' : 'd-none' }}" name="local_delivery_partner_name" placeholder="{{ translate('Enter partner name') }}" value="{{ old('local_delivery_partner_name') }}">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label id="carrier-tax-number-label">{{ translate('Carrier GST No.') }}</label>
-                            <input type="text" class="form-control" name="carrier_tax_number" value="{{ old('carrier_tax_number') }}">
-                        </div>
-
+                <div class="card" id="section-card-source-destination">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('Source And Destination') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-source-destination" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="section-source-destination" class="card-body">
                         <div id="surface-route-fields">
                             <div class="form-group">
                                 <label>{{ translate('Loading Country') }}</label>
@@ -1179,7 +1407,7 @@ span#picker-info-stock-badge {
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label>{{ translate('Final Destination') }}</label>
                             <select class="form-control" name="final_destination_type" id="final-destination-type">
                                 <option value="billing" @selected(old('final_destination_type', 'billing') === 'billing')>
@@ -1195,13 +1423,77 @@ span#picker-info-stock-badge {
                             <input type="hidden" name="final_destination" id="final-destination-value" value="{{ old('final_destination') }}">
                             <div class="small text-muted mt-2" id="final-destination-preview"></div>
                         </div>
-                        <div class="border rounded p-3 mb-3 d-none" id="final-destination-custom-fields">
+                        <div class="border rounded p-3 mt-3 d-none" id="final-destination-custom-fields">
                             <div class="row gutters-10">
                                 @include('backend.sales.partials.create_order_address_fields', ['prefix' => 'final_destination', 'countries' => $countries])
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="card" id="section-card-carrier-details">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('Carrier Details') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-carrier-details" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div id="section-carrier-details" class="card-body">
+                        <div id="courier-fields">
+                            <div class="form-group">
+                                <label>{{ translate('Courier Provider') }}</label>
+                                <select class="form-control" name="shipping_method_id" id="courier-provider">
+                                    <option value="">{{ translate('Select Courier Provider') }}</option>
+                                    @foreach($shippingMethods as $method)
+                                        <option value="{{ $method->id }}" data-provider="{{ $method->slug }}">{{ $method->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>{{ translate('Courier Service') }}</label>
+                                <select class="form-control" name="courier_service" id="courier-service" disabled>
+                                    <option value="">{{ translate('Select provider to load services') }}</option>
+                                </select>
+                                <div id="courier-service-message" class="small text-muted mt-1"></div>
+                            </div>
+                        </div>
+
+                        <div id="transport-fields" class="d-none">
+                            <div class="form-group">
+                                <label>{{ translate('Transport') }}</label>
+                                <select class="form-control js-other-select" name="transport_id" id="transport-id">
+                                    <option value="">{{ translate('Select Transport') }}</option>
+                                    @foreach($transports as $transport)
+                                        <option value="{{ $transport->id }}" data-mode="{{ $transport->mode }}"
+                                            @selected((string) old('transport_id') === (string) $transport->id)>{{ $transport->name }}</option>
+                                    @endforeach
+                                    <option value="other" @selected(old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')))>{{ translate('Not in List') }}</option>
+                                </select>
+                                <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('transport_id') === 'other' || (filled(old('transport_name')) && !old('transport_id')) ? '' : 'd-none' }}" name="transport_name" placeholder="{{ translate('Enter transport name') }}" value="{{ old('transport_name') }}">
+                            </div>
+                        </div>
+
+                        <div id="local-fields" class="d-none">
+                            <div class="form-group">
+                                <label>{{ translate('Local Delivery Partner') }}</label>
+                                <select class="form-control js-other-select" name="local_delivery_partner_id">
+                                    <option value="">{{ translate('Select Partner') }}</option>
+                                    @foreach($localDeliveryPartners as $partner)
+                                        <option value="{{ $partner->id }}" @selected((string) old('local_delivery_partner_id') === (string) $partner->id)>{{ $partner->name }}</option>
+                                    @endforeach
+                                    <option value="other" @selected(old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')))>{{ translate('Not in List') }}</option>
+                                </select>
+                                <input type="text" class="form-control mt-2 auto-capitalize-first other-enter-input {{ old('local_delivery_partner_id') === 'other' || (filled(old('local_delivery_partner_name')) && !old('local_delivery_partner_id')) ? '' : 'd-none' }}" name="local_delivery_partner_name" placeholder="{{ translate('Enter partner name') }}" value="{{ old('local_delivery_partner_name') }}">
+                            </div>
+                        </div>
 
                         <div class="form-group">
+                            <label id="carrier-tax-number-label">{{ translate('Carrier GST No.') }}</label>
+                            <input type="text" class="form-control" name="carrier_tax_number" value="{{ old('carrier_tax_number') }}">
+                        </div>
+
+                        <div class="form-group mb-0">
                             <label id="terms-of-delivery-label">{{ translate('Terms Of Delivery') }}</label>
                             <select class="form-control aiz-selectpicker js-delivery-term-select" name="transport_delivery_type" id="terms-of-delivery" data-live-search="true" data-hide-disabled="true" data-term-kind="delivery" data-detail-target="terms-of-delivery-detail" title="{{ translate('Select Terms Of Delivery') }}">
                                 @foreach(\App\Support\InvoiceType::DOMESTIC_DELIVERY_TERMS as $value => $label)
@@ -1219,73 +1511,18 @@ span#picker-info-stock-badge {
                             </div>
                             @error('transport_delivery_type') <div class="text-danger small">{{ $message }}</div> @enderror
                         </div>
-
-                        <div class="form-group">
-                            <label>{{ translate('Freight') }}</label>
-                            <select class="form-control" name="freight_type">
-                                <option value="">{{ translate('Select Freight') }}</option>
-                                <option value="pre_paid" @selected(old('freight_type') === 'pre_paid')>{{ translate('Pre-Paid') }}</option>
-                                <option value="to_pay" @selected(old('freight_type') === 'to_pay')>{{ translate('To Pay') }}</option>
-                                <option value="fod" @selected(old('freight_type') === 'fod')>{{ translate('FOD') }}</option>
-                            </select>
-                            @error('freight_type') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="border-top pt-3">
-                            <div class="form-group">
-                                <label>{{ translate('Shipping Cost') }}</label>
-                                <select class="form-control" name="shipping_cost_type" id="shipping-cost-type">
-                                    <option value="by_seller" @selected(old('shipping_cost_type', old('free_shipping') ? 'free_shipping' : 'by_seller') === 'by_seller')>{{ translate('By Seller') }}</option>
-                                    <option value="free_shipping" @selected(old('shipping_cost_type', old('free_shipping') ? 'free_shipping' : 'by_seller') === 'free_shipping')>{{ translate('Free Shipping') }}</option>
-                                </select>
-                                @error('shipping_cost_type') <div class="text-danger small">{{ $message }}</div> @enderror
-                                <input type="hidden" name="free_shipping" id="free-shipping" value="{{ old('shipping_cost_type', old('free_shipping') ? 'free_shipping' : 'by_seller') === 'free_shipping' ? 1 : 0 }}">
-                            </div>
-                            <div id="sell-amount-wrap">
-                                <label>{{ translate('Sell Amount') }}</label>
-                                <div id="seller-shipping-costs" class="small text-muted">{{ translate('Add products to enter seller shipping cost.') }}</div>
-                                <div class="border-top pt-3 mt-3">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <label class="mb-0">{{ translate('Shipping Items') }}</label>
-                                        <button type="button" class="btn btn-sm btn-soft-primary" id="add-shipping-item-btn">
-                                            <i class="las la-plus"></i> {{ translate('Add Shipping Item') }}
-                                        </button>
-                                    </div>
-                                    <div id="shipping-items" class="small text-muted">{{ translate('No shipping items added.') }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group mt-3">
-                            <label>{{ translate('Consignee Copy') }}</label>
-                            <select class="form-control" name="consignee_copy_status" id="consignee-copy-status">
-                                <option value="not_attached" @selected(old('consignee_copy_status', 'not_attached') === 'not_attached')>{{ translate('Not Attached') }}</option>
-                                <option value="attached" @selected(old('consignee_copy_status') === 'attached')>{{ translate('Attached') }}</option>
-                            </select>
-                            @error('consignee_copy_status') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="form-group mb-0 d-none" id="consignee-copy-files-wrap">
-                            <label>{{ translate('LR / Consignee Copy Files') }}</label>
-                            <input type="file" class="form-control multi-file-input" name="cc_attachments[]" id="cc-attachments" multiple
-                                accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.csv" data-list="#cc-attachment-names">
-                            <div class="selected-file-list mt-1" id="cc-attachment-names"></div>
-                            @error('cc_attachments') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header p-0" id="payment-heading">
-                        <button type="button" class="order-accordion-toggle collapsed" data-toggle="collapse"
-                            data-target="#payment-collapse" aria-expanded="false"
-                            aria-controls="payment-collapse">
-                            <span>{{ translate('Payment') }}</span>
-                            <i class="las la-angle-down order-accordion-icon"></i>
-                        </button>
+                <div class="card" id="section-card-payment">
+                    <div class="order-section-header">
+                        <span class="order-section-title">{{ translate('Payment') }}</span>
+                        <label class="aiz-switch aiz-switch-success mb-0">
+                            <input type="checkbox" class="js-section-toggle" data-target="#section-payment" checked>
+                            <span class="slider round"></span>
+                        </label>
                     </div>
-                    <div id="payment-collapse" class="collapse"
-                        aria-labelledby="payment-heading" data-parent="#order-sidebar-accordion">
-                    <div class="card-body">
+                    <div id="section-payment" class="card-body">
                         <div class="form-group">
                             <label>{{ translate('Payment Terms') }}</label>
                             <select class="form-control aiz-selectpicker js-payment-term-select" name="payment_type" id="payment-terms" data-live-search="true" data-hide-disabled="true" data-term-kind="payment" data-detail-target="payment-terms-detail" title="{{ translate('Select Payment Terms') }}">
@@ -1312,25 +1549,6 @@ span#picker-info-stock-badge {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>{{ translate('Additional Discount') }}</label>
-                            <div class="row gutters-5">
-                                <div class="col-5">
-                                    <label class="small mb-1">{{ translate('Discount') }}</label>
-                                    <input type="number" min="0" step="0.001" class="form-control" name="additional_discount" id="additional-discount" value="{{ old('additional_discount', 0) }}">
-                                </div>
-                                <div class="col-7">
-                                    <label class="small mb-1">{{ translate('Discount Type') }}</label>
-                                    <select class="form-control" name="additional_discount_type" id="additional-discount-type">
-                                        <option value="percent" @selected(old('additional_discount_type', 'percent') === 'percent')>{{ translate('Percentage (%)') }}</option>
-                                        <option value="amount" @selected(old('additional_discount_type') === 'amount')>{{ translate('Fixed Amount') }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-primary btn-block mt-2" id="apply-additional-discount-btn">{{ translate('Apply Discount') }}</button>
-                            <input type="hidden" name="additional_discount_enabled" id="additional-discount-enabled" value="0">
-                            <div id="additional-discount-message" class="small mt-1"></div>
-                        </div>
-                        <div class="form-group">
                             <label>{{ translate('Additional Info') }}</label>
                             <textarea class="form-control auto-capitalize-first" name="additional_info" rows="3">{{ old('additional_info') }}</textarea>
                         </div>
@@ -1340,7 +1558,6 @@ span#picker-info-stock-badge {
                             <span>{{ translate('Send order notification') }}</span>
                             <span class="aiz-square-check"></span>
                         </label>
-                    </div>
                     </div>
                 </div>
                 </div>
@@ -1597,6 +1814,142 @@ span#picker-info-stock-badge {
             function updateManualCbm() {
                 var cbm = ((Number($('#length-cm').val()) || 0) * (Number($('#width-cm').val()) || 0) * (Number($('#height-cm').val()) || 0)) / 1000000;
                 $('#manual-cbm-display').text(cbm.toFixed(6) + ' CBM');
+                var totalCbm = cbm;
+                $('#extra-case-dimensions-list .extra-case-row').each(function () {
+                    var $row = $(this);
+                    var rowCbm = ((Number($row.find('.extra-case-length').val()) || 0)
+                        * (Number($row.find('.extra-case-width').val()) || 0)
+                        * (Number($row.find('.extra-case-height').val()) || 0)) / 1000000;
+                    $row.find('.extra-case-cbm-label').text(rowCbm.toFixed(6) + ' CBM');
+                    totalCbm += rowCbm;
+                });
+                $('#all-dimensions-total-cbm').val(totalCbm.toFixed(6) + ' CBM');
+            }
+
+            function currentCanonicalDocumentType() {
+                var $opt = $('#document-type option:selected');
+                var canonical = String($opt.data('canonical') || '').trim();
+                if (canonical) return canonical;
+                var val = String($opt.val() || '').trim().toLowerCase();
+                var map = {
+                    'performa': 'performa_invoice',
+                    'performa invoice': 'performa_invoice',
+                    'performa_invoice': 'performa_invoice',
+                    'proforma': 'performa_invoice',
+                    'proforma invoice': 'performa_invoice',
+                    'order': 'order_entry',
+                    'order entry': 'order_entry',
+                    'order_entry': 'order_entry',
+                    'sales': 'sales_invoice',
+                    'sales invoice': 'sales_invoice',
+                    'sales_invoice': 'sales_invoice',
+                    'bill of supply': 'bill_of_supply',
+                    'bill_of_supply': 'bill_of_supply',
+                    'sales return': 'sales_return',
+                    'sales_return': 'sales_return',
+                    'e-invoice': 'e_invoice',
+                    'e_invoice': 'e_invoice',
+                    'quotation': 'quotation',
+                    'commercial invoice': 'commercial_invoice',
+                    'commercial_invoice': 'commercial_invoice',
+                    'international invoice': 'international_invoice',
+                    'international_invoice': 'international_invoice'
+                };
+                return map[val] || val;
+            }
+
+            function currentDocumentRequiresStockCheck() {
+                var type = currentCanonicalDocumentType();
+                return type !== 'performa_invoice' && type !== 'order_entry' && type !== 'sales_return';
+            }
+
+            function syncSectionSwitch($checkbox) {
+                var targetSelector = $checkbox.data('target');
+                var $target = $(targetSelector);
+                if (!$target.length) return;
+                var isOn = $checkbox.is(':checked') && !$target.closest('.card').hasClass('d-none');
+                $target.toggleClass('d-none', !$checkbox.is(':checked'));
+                $target.find(':input').prop('disabled', !isOn);
+                if ($.fn.selectpicker) {
+                    $target.find('.aiz-selectpicker').selectpicker('refresh');
+                }
+            }
+
+            function syncDocumentTypeRules() {
+                var docType = currentCanonicalDocumentType();
+                var isPerformaOrOrder = docType === 'performa_invoice' || docType === 'order_entry';
+                var isSalesBosReturn = docType === 'sales_invoice' || docType === 'bill_of_supply' || docType === 'sales_return';
+                var international = ($('#sales-market-input').val() || currentInvoiceType) === 'international';
+
+                var numberHeadings = {
+                    performa_invoice: '{{ translate('Performa Invoice No') }}',
+                    sales_invoice: '{{ translate('Sales Invoice No') }}',
+                    bill_of_supply: '{{ translate('Bill Of Supply No') }}',
+                    sales_return: '{{ translate('Sales Return No') }}'
+                };
+                var useShortDate = Boolean(numberHeadings[docType]);
+                $('#order-no-heading-text').text(numberHeadings[docType] || '{{ translate('Order No.') }}');
+                $('#order-date-heading-text').text(useShortDate ? '{{ translate('Date') }}' : '{{ translate('Order Date') }}');
+                $('#order-time-heading-text').text(useShortDate ? '{{ translate('Time') }}' : '{{ translate('Order Time') }}');
+
+                var hideReverse = international || isPerformaOrOrder;
+                $('#domestic-invoice-fields').toggleClass('d-none', hideReverse)
+                    .find(':input').prop('disabled', hideReverse);
+
+                $('#staff-handling-fields').toggleClass('d-none', isPerformaOrOrder)
+                    .find(':input').prop('disabled', isPerformaOrOrder || !$('#section-additional-details').is(':visible'));
+                if ($.fn.selectpicker) {
+                    $('#staff-handling-fields .aiz-selectpicker').selectpicker('refresh');
+                }
+
+                var $ewbCard = $('#section-card-ewb-details');
+                $ewbCard.toggleClass('d-none', isPerformaOrOrder);
+                syncSectionSwitch($ewbCard.find('.js-section-toggle'));
+
+                var hideDispatchedCard = isPerformaOrOrder || isSalesBosReturn;
+                var $dispatchedCard = $('#section-card-dispatched-details');
+                $dispatchedCard.toggleClass('d-none', hideDispatchedCard);
+                if (hideDispatchedCard) {
+                    $('#consignee-copy-status').val('not_attached');
+                    $('#cc-attachments').prop('required', false);
+                }
+                syncSectionSwitch($dispatchedCard.find('.js-section-toggle'));
+
+                if (currentProduct) {
+                    syncQuantityBounds(true);
+                    quoteCurrentProduct();
+                }
+            }
+
+            function applyMarketSelection(market, resetDocTypeDefault) {
+                market = market === 'international' ? 'international' : 'domestic';
+                $('#sales-market-input').val(market);
+                $('.js-market-switch').each(function () {
+                    $(this).toggleClass('active', $(this).data('market') === market);
+                });
+
+                var $docSelect = $('#document-type');
+                $docSelect.find('option').each(function () {
+                    var val = $(this).val();
+                    if (!val) return;
+                    var allowed = String($(this).data(market)) === '1';
+                    $(this).prop('disabled', !allowed).toggle(allowed);
+                });
+
+                var defaultKey = String($docSelect.data('default-' + market) || (market === 'international' ? 'quotation' : 'performa_invoice'));
+                var $selectedOpt = $docSelect.find('option:selected');
+                if (resetDocTypeDefault || !$selectedOpt.length || !$selectedOpt.val() || $selectedOpt.prop('disabled')) {
+                    if ($docSelect.find('option[value="' + defaultKey + '"]:not(:disabled)').length) {
+                        $docSelect.val(defaultKey);
+                    } else {
+                        var $firstAllowed = $docSelect.find('option:not(:disabled)').filter(function () { return Boolean(this.value); }).first();
+                        $docSelect.val($firstAllowed.val() || '');
+                    }
+                }
+
+                applyCustomerInvoiceType({type_option: market});
+                applyDocumentSeries();
+                syncDocumentTypeRules();
             }
 
             function seriesCodeForInvoiceType() {
@@ -2048,8 +2401,10 @@ span#picker-info-stock-badge {
                 $('#carrier-tax-number-label').text(international
                     ? '{{ translate('Carrier Tax No.') }}'
                     : '{{ translate('Carrier GST No.') }}');
-                $('#domestic-invoice-fields').toggleClass('d-none', international)
-                    .find(':input').prop('disabled', international);
+                var docType = currentCanonicalDocumentType();
+                var hideReverse = international || docType === 'performa_invoice' || docType === 'order_entry';
+                $('#domestic-invoice-fields').toggleClass('d-none', hideReverse)
+                    .find(':input').prop('disabled', hideReverse);
                 syncTransportLogistics();
                 syncFinalDestination();
             }
@@ -2455,14 +2810,19 @@ span#picker-info-stock-badge {
                 var batch = selectedBatch();
                 var minQty = Math.max(1, Math.ceil(Number(stock.min_qty || 1)));
                 var availableQty = Math.max(0, Math.floor(batch ? Number(batch.qty || 0) : Number(stock.qty || 0)));
+                var checkStock = currentDocumentRequiresStockCheck();
                 var $quantity = $('#picker-quantity');
                 var rawQty = $.trim($quantity.val());
                 var currentQty = rawQty === '' ? NaN : Number(rawQty);
 
                 $quantity.attr('min', minQty);
-                $quantity.attr('max', availableQty);
+                if (checkStock) {
+                    $quantity.attr('max', availableQty);
+                } else {
+                    $quantity.removeAttr('max');
+                }
 
-                if (availableQty <= 0 || availableQty < minQty) {
+                if (checkStock && (availableQty <= 0 || availableQty < minQty)) {
                     currentQuote = null;
                     $quantity.addClass('is-invalid').attr('aria-invalid', 'true');
                     $('#add-line-btn').prop('disabled', true);
@@ -2475,9 +2835,11 @@ span#picker-info-stock-badge {
                 // user is typing because intermediate values can be below the MOQ.
                 if (normalizeValue) {
                     currentQty = Number.isFinite(currentQty) ? Math.floor(currentQty) : minQty;
-                    currentQty = Math.max(minQty, Math.min(currentQty, availableQty));
+                    currentQty = checkStock
+                        ? Math.max(minQty, Math.min(currentQty, availableQty))
+                        : Math.max(minQty, currentQty);
                     $quantity.val(currentQty);
-                } else if (Number.isFinite(currentQty) && currentQty > availableQty) {
+                } else if (checkStock && Number.isFinite(currentQty) && currentQty > availableQty) {
                     currentQty = availableQty;
                     $quantity.val(currentQty);
                 }
@@ -2543,7 +2905,9 @@ span#picker-info-stock-badge {
                     product_id: currentProduct.id,
                     stock_id: stock.id,
                     batch_id: $('#picker-batch').val(),
-                    quantity: $('#picker-quantity').val()
+                    quantity: $('#picker-quantity').val(),
+                    document_type: $('#document-type').val() || '',
+                    document_type_custom: $('#document-type-custom').val() || ''
                 };
                 if (salePriceEdited && $('#picker-sale-price').val() !== '') {
                     quoteData.base_sale_price = $('#picker-sale-price').val();
@@ -2578,11 +2942,15 @@ span#picker-info-stock-badge {
                 });
             }
 
+            function dashText(value) {
+                return value === null || value === undefined || String(value).trim() === '' ? '—' : String(value);
+            }
+
             function renderLines() {
                 var $body = $('#order-lines-body').empty();
                 var $hidden = $('#line-hidden-inputs').empty();
                 if (!lines.length) {
-                    $body.html('<tr><td colspan="11" class="text-center text-muted">{{ translate('No products added') }}</td></tr>');
+                    $body.html('<tr><td colspan="18" class="text-center text-muted">{{ translate('No products added') }}</td></tr>');
                     $('#scheme-quantity-notice').addClass('d-none').text('');
                     $('#seller-shipping-costs').html('{{ translate('Add products to enter seller shipping cost.') }}');
                     shippingItems = [];
@@ -2592,19 +2960,73 @@ span#picker-info-stock-badge {
                 }
 
                 lines.forEach(function (line, index) {
-                    var isManualScheme = Boolean(line.quote && line.quote.is_manual_scheme);
-                    $body.append('<tr>'
-                        + '<td>' + escapeHtml(line.product_name) + '<br><small>' + escapeHtml(line.owner_name || '') + '</small></td>'
-                        + '<td>' + escapeHtml(line.stock_label || '-') + '</td>'
-                        + '<td>' + escapeHtml(line.batch_label || '-') + '</td>'
-                        + '<td class="text-right">' + (isManualScheme ? '-' : line.quantity) + '</td>'
-                        + '<td class="text-right line-scheme" data-index="' + index + '">' + schemeQuantityBadge(line.quote.scheme_quantity) + '</td>'
-                        + '<td class="text-right">' + money(line.quote.sale_price) + '</td>'
-                        + '<td class="text-right line-tax" data-index="' + index + '">' + money(line.quote.gst_amount || line.quote.tax) + '</td>'
-                        + '<td class="text-right line-gross" data-index="' + index + '">' + money(line.quote.gross_amount) + '</td>'
-                        + '<td class="text-right">' + money(line.quote.mrp_price) + '</td>'
-                        + '<td class="text-right line-final" data-index="' + index + '">' + money(line.quote.product_final_amount !== undefined ? line.quote.product_final_amount : (line.quote.final_amount || line.quote.line_total)) + '</td>'
-                        + '<td class="text-right"><button type="button" class="btn btn-soft-danger btn-icon btn-sm remove-line" data-index="' + index + '"><i class="las la-trash"></i></button></td>'
+                    var q = line.quote || {};
+                    var qty = q.quantity !== undefined ? Number(q.quantity) : (q.is_manual_scheme ? 0 : Number(line.quantity || 0));
+                    var schemeQty = Number(q.scheme_quantity || 0);
+                    var totalQty = q.total_qty !== undefined ? Number(q.total_qty) : (qty + schemeQty);
+                    var rate = Number(q.rate !== undefined ? q.rate : (q.before_productandbatch_discount !== undefined ? q.before_productandbatch_discount : (q.sale_price || 0)));
+                    var productValue = Number(q.product_value !== undefined ? q.product_value : (rate * qty));
+                    var bdUnit = Number(q.bd_unit || 0);
+                    var pdUnit = Number(q.pd_unit || 0);
+                    var bdPercent = Number(q.bd_percent || 0);
+                    var pdPercent = Number(q.pd_percent || 0);
+                    var discountedRate = Number(q.discounted_rate !== undefined ? q.discounted_rate : (q.sale_price || 0));
+                    var discountAmount = Number(q.discount_amount || 0);
+                    var taxable = Number(q.taxable !== undefined ? q.taxable : (discountedRate * qty));
+                    var sgst = Number(q.sgst || 0);
+                    var cgst = Number(q.cgst || 0);
+                    var igst = Number(q.igst || 0);
+                    var gst = Number(q.gst !== undefined ? q.gst : (q.gst_amount || q.tax || 0));
+                    var gross = Number(q.gross !== undefined ? q.gross : (q.gross_amount || (taxable + gst)));
+                    var mrp = Number(q.mrp_price || 0);
+                    var mrpValue = Number(q.mrp_value !== undefined ? q.mrp_value : (mrp * totalQty));
+                    var sgstPercent = Number(q.sgst_percent || 0);
+                    var cgstPercent = Number(q.cgst_percent || 0);
+                    var igstPercent = Number(q.igst_percent || 0);
+                    var gstPercent = Number(q.gst_percent || 0);
+                    var description = q.description || line.product_name || '-';
+                    var variant = q.variation || line.stock_label || '—';
+                    var batchText = q.batch_name || (line.batch_label ? String(line.batch_label).split('|')[0].trim() : '—');
+                    var mfg = dashText(q.mfg);
+                    var expiry = dashText(q.expiry);
+                    var category = dashText(q.category);
+                    var hsn = dashText(q.hsn);
+                    var schemeOnlyBadge = q.scheme_only ? '<div class="small">{{ translate('Scheme Free') }}</div>' : '';
+
+                    $body.append('<tr class="order-item-row-top" data-index="' + index + '">'
+                        + '<td rowspan="2" class="text-center">' + (index + 1) + '</td>'
+                        + '<td class="product-name">' + escapeHtml(description) + schemeOnlyBadge + '</td>'
+                        + '<td class="text-center">' + escapeHtml(dashText(batchText)) + '</td>'
+                        + '<td class="text-center">' + escapeHtml(category) + '</td>'
+                        + '<td colspan="2" class="text-center line-total-qty" data-index="' + index + '">' + totalQty + '</td>'
+                        + '<td class="num line-rate" data-index="' + index + '">' + money(rate) + '</td>'
+                        + '<td class="num line-product-value" data-index="' + index + '">' + money(productValue) + '</td>'
+                        + '<td class="num line-bd-unit" data-index="' + index + '">' + money(bdUnit) + '</td>'
+                        + '<td class="num line-pd-unit" data-index="' + index + '">' + money(pdUnit) + '</td>'
+                        + '<td class="num line-discounted-rate" data-index="' + index + '">' + money(discountedRate) + '</td>'
+                        + '<td rowspan="2" class="num line-taxable" data-index="' + index + '">' + money(taxable) + '</td>'
+                        + '<td class="num line-sgst" data-index="' + index + '">' + money(sgst) + '</td>'
+                        + '<td class="num line-cgst" data-index="' + index + '">' + money(cgst) + '</td>'
+                        + '<td class="num line-igst" data-index="' + index + '">' + money(igst) + '</td>'
+                        + '<td class="num line-tax" data-index="' + index + '">' + money(gst) + '</td>'
+                        + '<td rowspan="2" class="num line-gross" data-index="' + index + '">' + money(gross) + '</td>'
+                        + '<td rowspan="2" class="text-center"><button type="button" class="btn btn-soft-danger btn-icon btn-sm remove-line" data-index="' + index + '"><i class="las la-trash"></i></button></td>'
+                        + '</tr>'
+                        + '<tr class="order-item-row-bottom" data-index="' + index + '">'
+                        + '<td>' + escapeHtml(dashText(variant)) + '</td>'
+                        + '<td class="text-center">' + escapeHtml(mfg) + ' / ' + escapeHtml(expiry) + '</td>'
+                        + '<td class="text-center">' + escapeHtml(hsn) + '</td>'
+                        + '<td class="text-center line-qty" data-index="' + index + '">' + qty + '</td>'
+                        + '<td class="text-center line-scheme" data-index="' + index + '">' + schemeQty + '</td>'
+                        + '<td class="num hl-red line-mrp" data-index="' + index + '">' + money(mrp) + '</td>'
+                        + '<td class="num hl-red line-mrp-value" data-index="' + index + '">' + money(mrpValue) + '</td>'
+                        + '<td class="text-center line-bd-percent" data-index="' + index + '">' + money(bdPercent) + '</td>'
+                        + '<td class="text-center line-pd-percent" data-index="' + index + '">' + money(pdPercent) + '</td>'
+                        + '<td class="num hl-red line-discount-amount" data-index="' + index + '">' + money(discountAmount) + '</td>'
+                        + '<td class="text-center line-sgst-percent" data-index="' + index + '">' + money(sgstPercent) + '</td>'
+                        + '<td class="text-center line-cgst-percent" data-index="' + index + '">' + money(cgstPercent) + '</td>'
+                        + '<td class="text-center line-igst-percent" data-index="' + index + '">' + money(igstPercent) + '</td>'
+                        + '<td class="text-center line-gst-percent" data-index="' + index + '">' + money(gstPercent) + '</td>'
                         + '</tr>');
 
                     ['product_id', 'stock_id', 'variation', 'id_variant', 'batch_id', 'quantity', 'base_sale_price'].forEach(function (field) {
@@ -2714,71 +3136,97 @@ span#picker-info-stock-badge {
                 syncFreeShippingControls();
             }
 
-            function renderOrderShippingRows(serverRows) {
+            function renderOrderShippingRows(serverRows, summaryData) {
                 var $body = $('#order-lines-body');
-                $body.find('.order-shipping-line').remove();
-                if (!lines.length || $('#shipping-cost-type').val() === 'free_shipping') return;
+                $body.find('.order-shipping-line, .order-totals-line').remove();
+                if (!lines.length) return;
 
-                var sellers = {};
-                lines.forEach(function (line) {
-                    sellers[line.owner_id] = line.owner_name || ('{{ translate('Seller') }} #' + line.owner_id);
-                });
+                var shipRow = (summaryData && summaryData.shipping_invoice_row) || {};
+                var shippingBase = Number(shipRow.base_amount || 0);
+                var shippingSgst = Number(shipRow.sgst || 0);
+                var shippingCgst = Number(shipRow.cgst || 0);
+                var shippingIgst = Number(shipRow.igst || 0);
+                var shippingGst = Number(shipRow.gst || 0);
+                var shippingGross = Number(shipRow.gross || 0);
+                var shippingSgstPercent = Number(shipRow.sgst_percent || 0);
+                var shippingCgstPercent = Number(shipRow.cgst_percent || 0);
+                var shippingIgstPercent = Number(shipRow.igst_percent || 0);
+                var shippingGstPercent = Number(shipRow.gst_percent || 0);
 
-                var rows = [];
-                if (Array.isArray(serverRows)) {
-                    serverRows.forEach(function (shippingLine) {
-                        rows.push({
-                            id: null,
-                            description: '{{ translate('Shipping Cost') }} - ' + (sellers[shippingLine.seller_id] || ''),
-                            base_amount: Number(shippingLine.base_amount || 0),
-                            gst_amount: Number(shippingLine.gst_amount || 0),
-                            gst_percent: Number(shippingLine.gst_percent || 0),
-                            amount: Number(shippingLine.total_amount || 0),
-                            is_calculated: true
-                        });
-                    });
-                } else {
+                if (!summaryData && $('#shipping-cost-type').val() !== 'free_shipping') {
+                    var fallbackShipping = 0;
                     $('.seller-shipping-input').each(function () {
-                        var amount = Number($(this).val() || 0);
-                        if (amount > 0) {
-                            var sellerId = $(this).data('seller-id');
-                            rows.push({
-                                id: null,
-                                description: '{{ translate('Shipping Cost') }} - ' + (sellers[sellerId] || ''),
-                                amount: amount
-                            });
-                        }
+                        fallbackShipping += Number($(this).val() || 0);
                     });
                     shippingItems.forEach(function (item) {
-                        rows.push({
-                            id: item.id,
-                            description: item.description || '{{ translate('Shipping') }}',
-                            amount: Number(item.amount || 0),
-                            tax_inclusive: item.source === 'courier' || Boolean(item.tax_inclusive)
-                        });
+                        fallbackShipping += Number(item.amount || 0);
                     });
+                    shippingBase = fallbackShipping;
+                    shippingGross = fallbackShipping;
                 }
 
-                rows.forEach(function (row) {
-                    var action = row.id === null
-                        ? ''
-                        : '<button type="button" class="btn btn-soft-danger btn-icon btn-sm remove-shipping-item-from-line" data-id="' + row.id + '"><i class="las la-trash"></i></button>';
-                    var saleAmount = row.is_calculated ? money(row.base_amount) : '-';
-                    var gstAmount = row.is_calculated
-                        ? money(row.gst_amount) + '<br><small class="text-muted">' + money(row.gst_percent) + '%</small>'
-                        : '-';
-                    $body.append('<tr class="order-shipping-line bg-soft-light">'
-                        + '<td colspan="3"><strong>{{ translate('Shipping') }}</strong><br><small>' + escapeHtml(row.description) + '</small></td>'
-                        + '<td class="text-right">-</td>'
-                        + '<td class="text-right">-</td>'
-                        + '<td class="text-right">' + saleAmount + '</td>'
-                        + '<td class="text-right">' + gstAmount + '</td>'
-                        + '<td class="text-right">' + money(row.amount) + '</td>'
-                        + '<td class="text-right">-</td>'
-                        + '<td class="text-right">' + money(row.amount) + '</td>'
-                        + '<td class="text-right">' + action + '</td>'
-                        + '</tr>');
+                var sumTaxable = 0;
+                var sumTax = 0;
+                lines.forEach(function (line) {
+                    var q = line.quote || {};
+                    var qty = q.quantity !== undefined ? Number(q.quantity) : (q.is_manual_scheme ? 0 : Number(line.quantity || 0));
+                    var dRate = Number(q.discounted_rate !== undefined ? q.discounted_rate : (q.sale_price || 0));
+                    sumTaxable += Number(q.taxable !== undefined ? q.taxable : (dRate * qty));
+                    sumTax += Number(q.gst !== undefined ? q.gst : (q.gst_amount || q.tax || 0));
                 });
+                var tableTaxableTotal = summaryData && summaryData.table_taxable_total !== undefined
+                    ? Number(summaryData.table_taxable_total)
+                    : (sumTaxable + shippingBase);
+                var tableTaxTotal = summaryData && summaryData.table_tax_total !== undefined
+                    ? Number(summaryData.table_tax_total)
+                    : (sumTax + shippingGst);
+                var tableGrossTotal = summaryData && summaryData.table_gross_total !== undefined
+                    ? Number(summaryData.table_gross_total)
+                    : (tableTaxableTotal + tableTaxTotal);
+
+                $body.append('<tr class="order-shipping-line">'
+                    + '<td rowspan="2" class="text-center"></td>'
+                    + '<td class="product-name">{{ translate('Shipping / Freight') }}</td>'
+                    + '<td class="text-center">—</td>'
+                    + '<td class="text-center">—</td>'
+                    + '<td colspan="2" class="text-center">0</td>'
+                    + '<td class="num">' + money(0) + '</td>'
+                    + '<td class="num">' + money(shippingBase) + '</td>'
+                    + '<td class="num">—</td>'
+                    + '<td class="num">' + money(0) + '</td>'
+                    + '<td class="num">' + money(0) + '</td>'
+                    + '<td rowspan="2" class="num">' + money(shippingBase) + '</td>'
+                    + '<td class="num">' + money(shippingSgst) + '</td>'
+                    + '<td class="num">' + money(shippingCgst) + '</td>'
+                    + '<td class="num">' + money(shippingIgst) + '</td>'
+                    + '<td class="num">' + money(shippingGst) + '</td>'
+                    + '<td rowspan="2" class="num">' + money(shippingGross) + '</td>'
+                    + '<td rowspan="2"></td>'
+                    + '</tr>'
+                    + '<tr class="order-shipping-line">'
+                    + '<td class="text-center">—</td>'
+                    + '<td class="text-center">—</td>'
+                    + '<td class="text-center">—</td>'
+                    + '<td class="text-center">0</td>'
+                    + '<td class="text-center">0</td>'
+                    + '<td class="num">' + money(0) + '</td>'
+                    + '<td class="num">—</td>'
+                    + '<td class="text-center">—</td>'
+                    + '<td class="text-center">0</td>'
+                    + '<td class="num">' + money(0) + '</td>'
+                    + '<td class="text-center">' + money(shippingSgstPercent) + '</td>'
+                    + '<td class="text-center">' + money(shippingCgstPercent) + '</td>'
+                    + '<td class="text-center">' + money(shippingIgstPercent) + '</td>'
+                    + '<td class="text-center">' + money(shippingGstPercent) + '</td>'
+                    + '</tr>'
+                    + '<tr class="order-totals-line">'
+                    + '<td colspan="11"></td>'
+                    + '<td class="num label">' + money(tableTaxableTotal) + '</td>'
+                    + '<td colspan="3"></td>'
+                    + '<td class="num label">' + money(tableTaxTotal) + '</td>'
+                    + '<td class="num label">' + money(tableGrossTotal) + '</td>'
+                    + '<td></td>'
+                    + '</tr>');
             }
 
             function firstSellerId() {
@@ -2850,6 +3298,7 @@ span#picker-info-stock-badge {
                 $('#summary-message').text('');
                 if (!$('#selected-customer-id').val() || !lines.length) {
                     $('.order-summary-value').text('0.000');
+                    $('#sidebar-product-batch-discount-display').val('0.000');
                     $('#summary-product-tax, #summary-shipping-tax').text('0.000');
                     $('#scheme-quantity-notice').addClass('d-none').text('');
                     renderWalletRewardPreview(null);
@@ -2880,6 +3329,7 @@ span#picker-info-stock-badge {
 
                     $('#summary-subtotal').text(money(data.subtotal));
                     $('#summary-product-discount').text(money(productDiscount));
+                    $('#sidebar-product-batch-discount-display').val(money(productDiscount));
                     $('#summary-coupon').text(money(couponDiscount));
                     $('#summary-shipping').text(money(shippingBase));
                     $('#summary-taxable-value').text(money(taxableValue));
@@ -2895,18 +3345,49 @@ span#picker-info-stock-badge {
                     }
                     $('#summary-grand-total').text(money(data.grand_total));
                     renderWalletRewardPreview(data.wallet_reward_preview);
-                    renderOrderShippingRows(data.shipping_lines || []);
                     if (data.lines) {
                         data.lines.forEach(function (line, index) {
                             if (lines[index]) {
                                 lines[index].quote = line;
-                                $('.line-scheme[data-index="' + index + '"]').html(schemeQuantityBadge(line.scheme_quantity));
-                                $('.line-tax[data-index="' + index + '"]').text(money(line.gst_amount || line.tax));
-                                $('.line-gross[data-index="' + index + '"]').text(money(line.gross_amount));
-                                $('.line-final[data-index="' + index + '"]').text(money(line.product_final_amount !== undefined ? line.product_final_amount : (line.final_amount || line.line_total)));
+                                var qty = line.quantity !== undefined ? Number(line.quantity) : (line.is_manual_scheme ? 0 : Number(lines[index].quantity || 0));
+                                var schemeQty = Number(line.scheme_quantity || 0);
+                                var totalQty = line.total_qty !== undefined ? Number(line.total_qty) : (qty + schemeQty);
+                                var rate = Number(line.rate !== undefined ? line.rate : (line.before_productandbatch_discount !== undefined ? line.before_productandbatch_discount : (line.sale_price || 0)));
+                                var productValue = Number(line.product_value !== undefined ? line.product_value : (rate * qty));
+                                var discountedRate = Number(line.discounted_rate !== undefined ? line.discounted_rate : (line.sale_price || 0));
+                                var taxable = Number(line.taxable !== undefined ? line.taxable : (discountedRate * qty));
+                                var gst = Number(line.gst !== undefined ? line.gst : (line.gst_amount || line.tax || 0));
+                                var gross = Number(line.gross !== undefined ? line.gross : (line.gross_amount || (taxable + gst)));
+                                var mrp = Number(line.mrp_price || 0);
+                                var mrpValue = Number(line.mrp_value !== undefined ? line.mrp_value : (mrp * totalQty));
+
+                                $('.line-total-qty[data-index="' + index + '"]').text(totalQty);
+                                $('.line-qty[data-index="' + index + '"]').text(qty);
+                                $('.line-scheme[data-index="' + index + '"]').text(schemeQty);
+                                $('.line-rate[data-index="' + index + '"]').text(money(rate));
+                                $('.line-product-value[data-index="' + index + '"]').text(money(productValue));
+                                $('.line-bd-unit[data-index="' + index + '"]').text(money(line.bd_unit));
+                                $('.line-pd-unit[data-index="' + index + '"]').text(money(line.pd_unit));
+                                $('.line-discounted-rate[data-index="' + index + '"]').text(money(discountedRate));
+                                $('.line-taxable[data-index="' + index + '"]').text(money(taxable));
+                                $('.line-sgst[data-index="' + index + '"]').text(money(line.sgst));
+                                $('.line-cgst[data-index="' + index + '"]').text(money(line.cgst));
+                                $('.line-igst[data-index="' + index + '"]').text(money(line.igst));
+                                $('.line-tax[data-index="' + index + '"]').text(money(gst));
+                                $('.line-gross[data-index="' + index + '"]').text(money(gross));
+                                $('.line-mrp[data-index="' + index + '"]').text(money(mrp));
+                                $('.line-mrp-value[data-index="' + index + '"]').text(money(mrpValue));
+                                $('.line-bd-percent[data-index="' + index + '"]').text(money(line.bd_percent));
+                                $('.line-pd-percent[data-index="' + index + '"]').text(money(line.pd_percent));
+                                $('.line-discount-amount[data-index="' + index + '"]').text(money(line.discount_amount));
+                                $('.line-sgst-percent[data-index="' + index + '"]').text(money(line.sgst_percent));
+                                $('.line-cgst-percent[data-index="' + index + '"]').text(money(line.cgst_percent));
+                                $('.line-igst-percent[data-index="' + index + '"]').text(money(line.igst_percent));
+                                $('.line-gst-percent[data-index="' + index + '"]').text(money(line.gst_percent));
                             }
                         });
                     }
+                    renderOrderShippingRows(data.shipping_lines || [], data);
                     if (validateDiscount) {
                         var discount = data.additional_discount || {};
                         var typeLabel = discount.discount_type === 'percent'
@@ -2930,12 +3411,50 @@ span#picker-info-stock-badge {
             }
 
             $('#weight-grams').on('input change', updateWeightDisplay);
-            $('#length-cm,#width-cm,#height-cm').on('input change', updateManualCbm);
+            $(document).on('input change', '.js-case-dim-input', updateManualCbm);
+            var nextExtraCaseIndex = $('#extra-case-dimensions-list .extra-case-row').length;
+            $('#add-more-case-dimension-btn').on('click', function () {
+                var idx = nextExtraCaseIndex++;
+                $('#extra-case-dimensions-list').append(
+                    '<div class="extra-case-row mt-2">'
+                    + '<div class="dimension-inputs">'
+                    + '<input type="number" min="0" step="0.01" class="form-control js-case-dim-input extra-case-length" name="extra_cases[' + idx + '][length_cm]" placeholder="{{ translate('Length') }}">'
+                    + '<span class="dimension-separator">×</span>'
+                    + '<input type="number" min="0" step="0.01" class="form-control js-case-dim-input extra-case-width" name="extra_cases[' + idx + '][width_cm]" placeholder="{{ translate('Width') }}">'
+                    + '<span class="dimension-separator">×</span>'
+                    + '<input type="number" min="0" step="0.01" class="form-control js-case-dim-input extra-case-height" name="extra_cases[' + idx + '][height_cm]" placeholder="{{ translate('Height') }}">'
+                    + '<button type="button" class="btn btn-xs btn-soft-danger remove-extra-case-btn" aria-label="{{ translate('Remove') }}">&times;</button>'
+                    + '</div>'
+                    + '<small class="text-muted d-block mt-1 extra-case-cbm-label">0.000000 CBM</small>'
+                    + '</div>'
+                );
+                updateManualCbm();
+            });
+            $(document).on('click', '.remove-extra-case-btn', function () {
+                $(this).closest('.extra-case-row').remove();
+                updateManualCbm();
+            });
+            $(document).on('change', '.js-section-toggle', function () {
+                syncSectionSwitch($(this));
+            });
+            $('.js-market-switch').on('click', function () {
+                var newMarket = $(this).data('market');
+                if (newMarket === $('#sales-market-input').val()) return;
+                $('#selected-customer-id').val('');
+                $('#selected-customer-card').addClass('d-none').empty();
+                $('#customer-search').val('');
+                $('#customer-results').empty();
+                $('#billing-address-list,#shipping-address-list').empty();
+                applyMarketSelection(newMarket, true);
+                refreshSummary(false);
+            });
             updateWeightDisplay();
             updateManualCbm();
             $('#order-company-id,#order-series,#document-type,#document-type-custom,input[name="order_date"]').on('input change', function () {
                 if (this.id === 'document-type' || this.id === 'document-type-custom') {
                     applyDocumentSeries();
+                    syncDocumentTypeRules();
+                    refreshSummary(false);
                     return;
                 }
                 updateOrderCodePreview();
@@ -2998,7 +3517,11 @@ span#picker-info-stock-badge {
                         $('#customer-results').empty();
                         return;
                     }
-                    requestJson({url: customerSearchUrl, method: 'GET', data: {q: q}}).done(renderCustomerResults);
+                    requestJson({
+                        url: customerSearchUrl,
+                        method: 'GET',
+                        data: {q: q, market: $('#sales-market-input').val() || 'domestic'}
+                    }).done(renderCustomerResults);
                 });
             });
 
@@ -3460,17 +3983,20 @@ span#picker-info-stock-badge {
                     return;
                 }
 
-                var shippingMethod = $('#shipping-method').val();
-                if (shippingMethod === 'courier' && (!$('#courier-provider').val() || !$('#courier-service').val())) {
+                var carrierSectionOn = $('#section-carrier-details').is(':visible');
+                var shippingSectionOn = $('#section-shipping-details').is(':visible');
+                var sourceDestSectionOn = $('#section-source-destination').is(':visible');
+                var shippingMethod = shippingSectionOn ? $('#shipping-method').val() : '';
+                if (carrierSectionOn && shippingMethod === 'courier' && (!$('#courier-provider').val() || !$('#courier-service').val())) {
                     event.preventDefault();
                     notify('warning', '{{ translate('Please select a courier provider and service.') }}');
                     return;
                 }
-                if (shippingMethod === 'transport') {
+                if (carrierSectionOn && shippingMethod === 'transport') {
                     var transportValue = $('#transport-id').val();
                     var hasTransport = (transportValue && !isOtherValue(transportValue)) || $.trim($('input[name="transport_name"]').val());
                     var bookedToValue = $('#booked-to-id').val();
-                    var hasBookedTo = usesPortLogistics() || (bookedToValue && !isOtherValue(bookedToValue)) || $.trim($('input[name="booked_to_name"]').val());
+                    var hasBookedTo = !sourceDestSectionOn || usesPortLogistics() || (bookedToValue && !isOtherValue(bookedToValue)) || $.trim($('input[name="booked_to_name"]').val());
                     if (!hasTransport || !hasBookedTo) {
                         event.preventDefault();
                         notify('warning', '{{ translate('Please select a transport provider and booked-to destination.') }}');
@@ -3482,7 +4008,7 @@ span#picker-info-stock-badge {
                         return;
                     }
                 }
-                if (shippingMethod === 'local') {
+                if (carrierSectionOn && shippingMethod === 'local') {
                     var partnerValue = $('select[name="local_delivery_partner_id"]').val();
                     if ((!partnerValue || isOtherValue(partnerValue)) && !$.trim($('input[name="local_delivery_partner_name"]').val())) {
                         event.preventDefault();
@@ -3502,7 +4028,7 @@ span#picker-info-stock-badge {
                 syncOtherEnter($(this));
             });
 
-            applyCustomerInvoiceType({type_option: 'domestic'});
+            applyMarketSelection($('#sales-market-input').val() || 'domestic', false);
             $('#terms-of-delivery, #payment-terms').on('change', function () {
                 renderInternationalTermDetail($(this));
             });

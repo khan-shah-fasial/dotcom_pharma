@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\GoogleContactsImport;
 use App\Models\ContactClassification;
 use App\Models\Country;
 use App\Models\DirectoryContact;
@@ -19,7 +20,7 @@ class DirectoryContactController extends Controller
     public function __construct()
     {
         $this->middleware(['permission:view_contact_directory'])->only(['index', 'show']);
-        $this->middleware(['permission:add_contact_directory'])->only(['create', 'store']);
+        $this->middleware(['permission:add_contact_directory'])->only(['create', 'store', 'import']);
         $this->middleware(['permission:edit_contact_directory'])->only([
             'edit',
             'update',
@@ -230,6 +231,50 @@ class DirectoryContactController extends Controller
 
         flash(translate('Contact has been created successfully'))->success();
         return redirect()->route('contact-directory.show', $contact->id);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'bulk_file' => ['required', 'file', 'max:10240'],
+        ]);
+
+        $extension = strtolower((string) $request->file('bulk_file')->getClientOriginalExtension());
+        if (!in_array($extension, ['csv', 'vcf', 'txt'], true)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'bulk_file' => translate('Upload a Google CSV or vCard file.'),
+            ]);
+        }
+
+        $import = new GoogleContactsImport();
+        $import->import($request->file('bulk_file'));
+
+        $created = $import->createdCount();
+        $skipped = $import->skippedCount();
+        $reasons = array_slice($import->messages(), 0, 15);
+
+        if ($created === 0 && $skipped === 0) {
+            flash(translate('No contacts were found in the file.'))->warning();
+            return redirect()->route('contact-directory.index');
+        }
+
+        if ($created > 0) {
+            $summary = translate('Contacts imported successfully') . ': ' . $created . ' ' . translate('created');
+            if ($skipped > 0) {
+                $summary .= ', ' . $skipped . ' ' . translate('skipped');
+                if ($reasons) {
+                    $summary .= '. ' . implode(' ', $reasons);
+                }
+                if (count($import->messages()) > 15) {
+                    $summary .= ' ' . translate('More rows were skipped.');
+                }
+            }
+            flash($summary)->success();
+            return redirect()->route('contact-directory.index');
+        }
+
+        flash(translate('No contacts were imported.') . ' ' . implode(' ', $reasons))->warning();
+        return redirect()->route('contact-directory.index');
     }
 
     public function show(Request $request, DirectoryContact $directoryContact)

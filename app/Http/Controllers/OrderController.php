@@ -370,7 +370,10 @@ class OrderController extends Controller
             $documentSeriesCodes[$option['name']] = $option['code'];
             $seriesCodesByName[strtolower($option['name'])] = $option['code'];
         }
-        $initialDocumentType = old('document_type', '');
+        $defaultDocType = $orderEntry === 'sales_return'
+            ? 'sales_return'
+            : (DocumentType::DEFAULT_SALES_TYPE_BY_MARKET[old('sales_market', InvoiceType::DOMESTIC)] ?? 'performa_invoice');
+        $initialDocumentType = old('document_type', $defaultDocType);
         $initialDocumentTypeCustom = old('document_type_custom', '');
         $orderSeriesCode = DocumentType::seriesCode($initialDocumentType, $initialDocumentTypeCustom);
         $orderNumberParts = financial_year_order_code_parts(
@@ -408,6 +411,7 @@ class OrderController extends Controller
     public function backendCustomerSearch(Request $request, OrderPlacementService $orders)
     {
         $query = trim((string) $request->input('q'));
+        $market = strtolower(trim((string) $request->input('market', '')));
 
         $customers = $orders->approvedCustomerQuery()
             ->with([
@@ -418,6 +422,32 @@ class OrderController extends Controller
                 'user_details.personalState',
                 'user_details.personalCountry',
             ])
+            ->when(in_array($market, [InvoiceType::DOMESTIC, InvoiceType::INTERNATIONAL], true), function ($builder) use ($market) {
+                if ($market === InvoiceType::INTERNATIONAL) {
+                    $builder->where(function ($sub) {
+                        $sub->whereRaw("LOWER(TRIM(COALESCE(users.type_option, ''))) = ?", [InvoiceType::INTERNATIONAL])
+                            ->orWhere(function ($fallback) {
+                                $fallback->whereRaw("TRIM(COALESCE(users.type_option, '')) = ''")
+                                    ->whereHas('user_details', function ($details) {
+                                        $details->whereRaw("LOWER(TRIM(COALESCE(user_details.type_option, ''))) = ?", [InvoiceType::INTERNATIONAL]);
+                                    });
+                            });
+                    });
+                } else {
+                    $builder->where(function ($sub) {
+                        $sub->whereRaw("LOWER(TRIM(COALESCE(users.type_option, ''))) = ?", [InvoiceType::DOMESTIC])
+                            ->orWhere(function ($fallback) {
+                                $fallback->whereRaw("TRIM(COALESCE(users.type_option, '')) = ''")
+                                    ->where(function ($detailsCheck) {
+                                        $detailsCheck->whereDoesntHave('user_details')
+                                            ->orWhereHas('user_details', function ($details) {
+                                                $details->whereRaw("LOWER(TRIM(COALESCE(user_details.type_option, ''))) IN ('', ?)", [InvoiceType::DOMESTIC]);
+                                            });
+                                    });
+                            });
+                    });
+                }
+            })
             ->when($query !== '', function ($builder) use ($query) {
                 $like = '%' . $query . '%';
                 $prefixLike = $query . '%';
@@ -998,6 +1028,29 @@ class OrderController extends Controller
 
             if ($request->hasFile('cc_attachments')) {
                 $request->merge(['consignee_copy_status' => 'attached']);
+            } elseif (!$request->filled('consignee_copy_status')) {
+                $request->merge(['consignee_copy_status' => 'not_attached']);
+            }
+            if (!$request->filled('fod_mode')) {
+                $request->merge(['fod_mode' => 'surface']);
+            }
+            if (!$request->filled('transport_surface_mode')) {
+                $request->merge(['transport_surface_mode' => 'road']);
+            }
+            if (!$request->filled('transport_delivery_type')) {
+                $defaultDeliveryTerm = array_key_first(InvoiceType::deliveryTerms($invoiceType));
+                if ($defaultDeliveryTerm) {
+                    $request->merge(['transport_delivery_type' => $defaultDeliveryTerm]);
+                }
+            }
+            if (!$request->filled('payment_type')) {
+                $defaultPaymentTerm = array_key_first(InvoiceType::paymentTerms($invoiceType));
+                if ($defaultPaymentTerm) {
+                    $request->merge(['payment_type' => $defaultPaymentTerm]);
+                }
+            }
+            if (!$request->filled('shipping_cost_type')) {
+                $request->merge(['shipping_cost_type' => 'free_shipping', 'free_shipping' => 1]);
             }
 
             $shippingCostType = $request->input('shipping_cost_type');
@@ -1011,7 +1064,8 @@ class OrderController extends Controller
             if ($shippingCostType === 'free_shipping') {
                 $request->merge(['shipping_costs' => [], 'shipping_items' => []]);
             }
-            $usesPortLogistics = $request->input('shipping_method') !== 'local'
+            $usesPortLogistics = $request->filled('shipping_method')
+                && $request->input('shipping_method') !== 'local'
                 && in_array($request->input('fod_mode'), ['sea', 'air'], true);
 
             $request->validate([
@@ -1044,6 +1098,10 @@ class OrderController extends Controller
                 'length_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:width_cm,height_cm'],
                 'width_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,height_cm'],
                 'height_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,width_cm'],
+                'extra_cases' => ['nullable', 'array', 'max:50'],
+                'extra_cases.*.length_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+                'extra_cases.*.width_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+                'extra_cases.*.height_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
                 'freight_type' => ['nullable', Rule::in(['pre_paid', 'to_pay', 'fod'])],
                 'fod_mode' => ['required', Rule::in(['surface', 'air', 'sea'])],
                 'transport_surface_mode' => ['required', Rule::in(ShippingPath::allSubModes())],
@@ -1333,10 +1391,10 @@ class OrderController extends Controller
                 $selectedBatch = null;
                 $groupKey = (int) $cartItem['product_id'] . '|' . (string) ($product_variation ?? '');
 
-                // Stock validation and deduction
+                // Stock validation and movement by document type
+                $docStockEffect = DocumentType::stockEffect($order->document_type ?? null, $order->document_type_custom ?? null);
                 if ($product->digital != 1 && $product_stock) {
                     if ($batchId) {
-                        // Validate batch belongs to this stock and deduct from batch
                         $selectedBatch = $product_stock->batches()->where('id', $batchId)->first();
                         if (!$selectedBatch || is_batch_expired($selectedBatch)) {
                             flash(translate('Invalid batch selected for ') . $product->getTranslation('name'))->warning();
@@ -1344,34 +1402,46 @@ class OrderController extends Controller
                             return redirect()->route('cart')->send();
                         }
 
-                        if ($cartItem['quantity'] > $selectedBatch->qty) {
-                            flash(translate('The requested quantity is not available for ') . $product->getTranslation('name'))->warning();
-                            $order->delete();
-                            return redirect()->route('cart')->send();
+                        if ($docStockEffect === 'minus') {
+                            if ($cartItem['quantity'] > $selectedBatch->qty) {
+                                flash(translate('The requested quantity is not available for ') . $product->getTranslation('name'))->warning();
+                                $order->delete();
+                                return redirect()->route('cart')->send();
+                            }
+
+                            $selectedBatch->qty -= $cartItem['quantity'];
+                            $selectedBatch->save();
+                        } elseif ($docStockEffect === 'plus') {
+                            $selectedBatch->qty += $cartItem['quantity'];
+                            $selectedBatch->save();
                         }
 
-                        $selectedBatch->qty -= $cartItem['quantity'];
-                        $selectedBatch->save();
-
-                        // Update parent stock quantity (aggregate from batches)
-                        $product_stock->load('batches');
-                        $batches = $product_stock->batches;
-                        $totalBatchQty = $batches->sum('qty');
-                        $product_stock->qty = $totalBatchQty;
-                        $product_stock->save();
+                        if ($docStockEffect !== 'none') {
+                            $product_stock->load('batches');
+                            $batches = $product_stock->batches;
+                            $totalBatchQty = $batches->sum('qty');
+                            $product_stock->qty = $totalBatchQty;
+                            $product_stock->save();
+                        }
                     } else {
-                        // Fallback to stock validation if no batch
-                        if ($cartItem['quantity'] > $product_stock->qty) {
-                            flash(translate('The requested quantity is not available for ') . $product->getTranslation('name'))->warning();
-                            $order->delete();
-                            return redirect()->route('cart')->send();
-                        }
+                        if ($docStockEffect === 'minus') {
+                            if ($cartItem['quantity'] > $product_stock->qty) {
+                                flash(translate('The requested quantity is not available for ') . $product->getTranslation('name'))->warning();
+                                $order->delete();
+                                return redirect()->route('cart')->send();
+                            }
 
-                        $product_stock->qty -= $cartItem['quantity'];
-                        $product_stock->save();
+                            $product_stock->qty -= $cartItem['quantity'];
+                            $product_stock->save();
+                        } elseif ($docStockEffect === 'plus') {
+                            $product_stock->qty += $cartItem['quantity'];
+                            $product_stock->save();
+                        }
                     }
 
-                    $affectedProductIds[] = (int) $product->id;
+                    if ($docStockEffect === 'minus') {
+                        $affectedProductIds[] = (int) $product->id;
+                    }
                 }
 
                 $order_detail = new OrderDetail;
@@ -1406,13 +1476,18 @@ class OrderController extends Controller
                 foreach (($schemeGroupsWritten[$groupKey] ?? false) ? [] : ($schemeAllocationsByGroup[$groupKey] ?? []) as $allocation) {
                     $schemeGroupsWritten[$groupKey] = true;
                     $schemeBatchForDeduction = ProductBatch::find($allocation['batch_id']);
-                    if (!$schemeBatchForDeduction || is_batch_expired($schemeBatchForDeduction) || (int) $schemeBatchForDeduction->qty < (int) $allocation['quantity']) {
-                        flash(translate('The requested scheme quantity is not available for ') . $product->getTranslation('name'))->warning();
-                        $order->delete();
-                        return redirect()->route('cart')->send();
+                    if ($docStockEffect === 'minus') {
+                        if (!$schemeBatchForDeduction || is_batch_expired($schemeBatchForDeduction) || (int) $schemeBatchForDeduction->qty < (int) $allocation['quantity']) {
+                            flash(translate('The requested scheme quantity is not available for ') . $product->getTranslation('name'))->warning();
+                            $order->delete();
+                            return redirect()->route('cart')->send();
+                        }
+                        $schemeBatchForDeduction->qty -= (int) $allocation['quantity'];
+                        $schemeBatchForDeduction->save();
+                    } elseif ($docStockEffect === 'plus' && $schemeBatchForDeduction) {
+                        $schemeBatchForDeduction->qty += (int) $allocation['quantity'];
+                        $schemeBatchForDeduction->save();
                     }
-                    $schemeBatchForDeduction->qty -= (int) $allocation['quantity'];
-                    $schemeBatchForDeduction->save();
 
                     $schemeBatch = $allocation['batch'] ?? ProductBatch::find($allocation['batch_id']);
                     $scheme_order_detail = new OrderDetail;
@@ -1731,9 +1806,32 @@ class OrderController extends Controller
 
         if ($request->hasFile('cc_attachments')) {
             $request->merge(['consignee_copy_status' => 'attached']);
+        } elseif (!$request->filled('consignee_copy_status')) {
+            $request->merge(['consignee_copy_status' => $order->consignee_copy_status ?: 'not_attached']);
+        }
+        if (!$request->filled('payment_type') && $order->payment_type) {
+            $request->merge(['payment_type' => $order->payment_type]);
+        }
+        if (!$request->filled('transport_delivery_type') && $order->transport_delivery_type) {
+            $request->merge(['transport_delivery_type' => $order->transport_delivery_type]);
+        }
+        if (!$request->filled('shipping_cost_type')) {
+            $request->merge([
+                'shipping_cost_type' => $order->free_shipping ? 'free_shipping' : 'by_seller',
+                'sell_amount' => (float) $order->orderDetails->sum('shipping_cost'),
+            ]);
         }
 
         $this->normalizeOtherLookupSelects($request);
+
+        $canonicalDocType = DocumentType::canonicalKey(
+            $request->input('document_type', $order->document_type),
+            $request->input('document_type_custom', $order->document_type_custom)
+        );
+        $isDispatchedStatus = in_array((string) $order->delivery_status, ['picked_up', 'on_the_way', 'delivered'], true);
+        $requireDispatchFields = $isDispatchedStatus
+            && in_array($canonicalDocType, ['sales_invoice', 'bill_of_supply', 'sales_return'], true);
+        $hasOrderAttachmentAlready = $order->attachments->where('category', 'order_attachment')->isNotEmpty();
 
         $validated = $request->validate([
             'payment_type' => ['required', Rule::in(array_keys(InvoiceType::paymentTerms($invoiceType)))],
@@ -1751,7 +1849,7 @@ class OrderController extends Controller
             'consignee_copy_status' => ['required', Rule::in(['attached', 'not_attached'])],
             'cc_attachments' => ['nullable', 'array', 'max:20'],
             'cc_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
-            'order_attachments' => ['nullable', 'array', 'max:20'],
+            'order_attachments' => [$requireDispatchFields && !$hasOrderAttachmentAlready ? 'required' : 'nullable', 'array', 'max:20'],
             'order_attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,csv', 'max:10240'],
             'fod_mode' => ['nullable', Rule::in(['surface', 'air', 'sea'])],
             'transport_surface_mode' => ['nullable', Rule::in(ShippingPath::allSubModes())],
@@ -1774,12 +1872,16 @@ class OrderController extends Controller
             'length_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:width_cm,height_cm'],
             'width_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,height_cm'],
             'height_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99', 'required_with:length_cm,width_cm'],
-            'attached_file_name' => ['nullable', 'string', 'max:255'],
+            'extra_cases' => ['nullable', 'array', 'max:50'],
+            'extra_cases.*.length_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'extra_cases.*.width_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'extra_cases.*.height_cm' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'attached_file_name' => [$requireDispatchFields ? 'required' : 'nullable', 'string', 'max:255'],
             'additional_info' => ['nullable', 'string', 'max:2000'],
             'po_number' => ['nullable', 'string', 'max:255'],
             'po_date' => ['nullable', 'date'],
-            'lr_number' => ['nullable', 'string', 'max:255'],
-            'lr_date' => ['nullable', 'date'],
+            'lr_number' => [$requireDispatchFields ? 'required' : 'nullable', 'string', 'max:255'],
+            'lr_date' => [$requireDispatchFields ? 'required' : 'nullable', 'date'],
             'net_weight_kg' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
             'gross_weight_kg' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
             'total_volume_cbm' => ['nullable', 'numeric', 'min:0', 'max:99999999.999999'],
@@ -1814,6 +1916,12 @@ class OrderController extends Controller
             ],
         ] + $this->invoiceAdjustmentRules());
 
+        if ($requireDispatchFields && blank($validated['pm_accountant_name'] ?? null)) {
+            throw ValidationException::withMessages([
+                'pm_accountant_name' => translate('The Carrier Pvt. Mark field is required after dispatch.'),
+            ]);
+        }
+
         $fodMode = $shippingChoice === 'local'
             ? 'surface'
             : ($validated['fod_mode'] ?? $order->fod_mode);
@@ -1823,36 +1931,50 @@ class OrderController extends Controller
             ]);
         }
 
-        if ($shippingChoice === 'transport') {
+        $carrierInputsProvided = $request->hasAny(['transport_id', 'transport_name', 'local_delivery_partner_id', 'local_delivery_partner_name', 'shipping_method_id', 'courier_service']);
+        $sourceDestInputsProvided = $request->hasAny(['booked_to_id', 'booked_to_name', 'booked_from_id', 'booked_from_name', 'final_destination', 'loading_location_type', 'discharge_location_type']);
+
+        if ($shippingChoice === 'transport' && $carrierInputsProvided) {
             $transport = $this->resolveTransport($request);
             $validated['transport_id'] = optional($transport)->id;
-            $validated['booked_to_id'] = optional($this->resolveBookedTo($request, $transport))->id;
-            $validated['booked_from_id'] = optional($this->resolveBookedFrom($request, $transport))->id;
+            if ($sourceDestInputsProvided) {
+                $validated['booked_to_id'] = optional($this->resolveBookedTo($request, $transport))->id;
+                $validated['booked_from_id'] = optional($this->resolveBookedFrom($request, $transport))->id;
+            } else {
+                $validated['booked_to_id'] = $order->booked_to_id;
+                $validated['booked_from_id'] = $order->booked_from_id;
+            }
+        } elseif ($shippingChoice === 'transport') {
+            $validated['transport_id'] = $order->transport_id;
+            $validated['booked_to_id'] = $order->booked_to_id;
+            $validated['booked_from_id'] = $order->booked_from_id;
         }
 
-        if ($shippingChoice === 'local') {
+        if ($shippingChoice === 'local' && $carrierInputsProvided) {
             $validated['local_delivery_partner_id'] = optional($this->resolveLocalDeliveryPartner($request))->id;
+        } elseif ($shippingChoice === 'local') {
+            $validated['local_delivery_partner_id'] = $order->local_delivery_partner_id;
         }
 
-        if ($shippingChoice === 'transport' && empty($validated['transport_id'])) {
+        if ($shippingChoice === 'transport' && $carrierInputsProvided && empty($validated['transport_id'])) {
             throw ValidationException::withMessages([
                 'transport_id' => translate('Please select a transport provider.'),
             ]);
         }
 
-        if ($shippingChoice === 'transport' && !$usesPortLogistics && empty($validated['booked_to_id'])) {
+        if ($shippingChoice === 'transport' && $carrierInputsProvided && $sourceDestInputsProvided && !$usesPortLogistics && empty($validated['booked_to_id'])) {
             throw ValidationException::withMessages([
                 'booked_to_id' => translate('Please select a booked-to destination.'),
             ]);
         }
 
-        if ($shippingChoice === 'local' && empty($validated['local_delivery_partner_id'])) {
+        if ($shippingChoice === 'local' && $carrierInputsProvided && empty($validated['local_delivery_partner_id'])) {
             throw ValidationException::withMessages([
                 'local_delivery_partner_id' => translate('Please select a local delivery partner.'),
             ]);
         }
 
-        if ($shippingChoice === 'courier' && !$courierConfigurationLocked) {
+        if ($shippingChoice === 'courier' && $carrierInputsProvided && !$courierConfigurationLocked) {
             if (empty($validated['shipping_method_id'])) {
                 throw ValidationException::withMessages([
                     'shipping_method_id' => translate('Please select an active courier provider.'),
@@ -1943,11 +2065,11 @@ class OrderController extends Controller
                     : ($shippingChoice === 'local'
                         ? optional(LocalDeliveryPartner::find($validated['local_delivery_partner_id'] ?? null))->name
                         : $lockedOrder->shipping_by);
-                if ($shippingChoice === 'courier' && !$courierConfigurationLocked) {
+                if ($shippingChoice === 'courier' && !$courierConfigurationLocked && !empty($validated['shipping_method_id'])) {
                     $courierMethod = ShippingMethod::where('is_active', 1)
                         ->findOrFail($validated['shipping_method_id']);
                     $lockedOrder->shipping_by = $courierMethod->slug;
-                    $lockedOrder->shipping_courier_id = $validated['courier_service'];
+                    $lockedOrder->shipping_courier_id = $validated['courier_service'] ?? $lockedOrder->shipping_courier_id;
 
                     if ($lockedOrder->shipment
                         && (!filled($lockedOrder->shipment->shipping_id) || $lockedOrder->shipment->status === 'error')) {
@@ -2000,6 +2122,18 @@ class OrderController extends Controller
                 $lockedOrder->length_cm = $validated['length_cm'] ?? null;
                 $lockedOrder->width_cm = $validated['width_cm'] ?? null;
                 $lockedOrder->height_cm = $validated['height_cm'] ?? null;
+                $extraCases = app(OrderPlacementService::class)->normalizeExtraCases($validated['extra_cases'] ?? []);
+                $dimensionRows = [];
+                if ($lockedOrder->length_cm !== null && $lockedOrder->width_cm !== null && $lockedOrder->height_cm !== null) {
+                    $dimensionRows[] = implode(' × ', [$lockedOrder->length_cm, $lockedOrder->width_cm, $lockedOrder->height_cm]) . ' CM';
+                }
+                foreach ($extraCases as $extraCase) {
+                    $dimensionRows[] = implode(' × ', [$extraCase['length_cm'], $extraCase['width_cm'], $extraCase['height_cm']]) . ' CM';
+                }
+                $lockedOrder->dimensions = !empty($dimensionRows) ? implode(' | ', $dimensionRows) : $lockedOrder->dimensions;
+                if (Schema::hasColumn($lockedOrder->getTable(), 'packing_cases')) {
+                    $lockedOrder->packing_cases = !empty($extraCases) ? json_encode($extraCases) : null;
+                }
                 $lockedOrder->attached_file_name = $validated['attached_file_name'] ?? null;
                 $lockedOrder->additional_info = $validated['additional_info'] ?? null;
                 $lockedOrder->po_number = $validated['po_number'] ?? null;

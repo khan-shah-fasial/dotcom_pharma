@@ -118,7 +118,18 @@ class SeriesMaster extends Model
         }
 
         if ($documentType !== '' && isset(DocumentType::TYPES[$documentType])) {
-            return self::codeForName(DocumentType::TYPES[$documentType]);
+            $code = self::codeForName(DocumentType::TYPES[$documentType]);
+            if ($code !== '') {
+                return $code;
+            }
+        }
+
+        $canonical = DocumentType::canonicalKey($documentType, null);
+        if ($canonical !== null && isset(DocumentType::TYPES[$canonical])) {
+            $code = self::codeForName(DocumentType::TYPES[$canonical]);
+            if ($code !== '') {
+                return $code;
+            }
         }
 
         if ($documentType !== '') {

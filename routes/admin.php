@@ -450,6 +450,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     Route::controller(DirectoryContactController::class)->group(function () {
         Route::get('/contact-directory', 'index')->name('contact-directory.index');
         Route::get('/contact-directory/create', 'create')->name('contact-directory.create');
+        Route::post('/contact-directory/import', 'import')->name('contact-directory.import');
         Route::post('/contact-directory', 'store')->name('contact-directory.store');
         Route::get('/contact-directory/destroy/{directoryContact}', 'destroy')->name('contact-directory.destroy');
         Route::get('/contact-directory/{directoryContact}', 'show')->name('contact-directory.show');

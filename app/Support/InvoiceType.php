@@ -15,6 +15,7 @@ class InvoiceType
         'cash_on_delivery' => 'COD / Cash On Delivery',
         'manual' => 'Manual / Cash',
         'bank_payment' => 'Bank Payment / Cheque / NEFT / IMPS / RTGS',
+        'upi' => 'UPI / Unified Payments Interface',
         'wallet' => 'Wallet / Rechargeable',
         'credit' => 'Credit / Credit Allowed',
     ];

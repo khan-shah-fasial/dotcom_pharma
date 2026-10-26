@@ -192,20 +192,20 @@
     }
 
     $numberLabels = [
-        'sales_invoice' => 'Tax Invoice No.',
-        'bill_of_supply' => 'BOS Invoice No.',
+        'sales_invoice' => 'Sales Invoice No',
+        'bill_of_supply' => 'Bill Of Supply No',
         'e_invoice' => 'E-Invoice No.',
         'commercial_invoice' => 'Commercial Invoice No.',
         'international_invoice' => 'International Invoice No.',
         'order_entry' => 'Order No.',
-        'performa_invoice' => 'PI No.',
+        'performa_invoice' => 'Performa Invoice No',
         'quotation' => 'Quotation No.',
         'inquiry' => 'Inquiry No.',
         'counter_offer' => 'Counter Offer No.',
         'purchase_order' => 'Purchase Order No.',
         'purchase_invoice' => 'Purchase No.',
         'purchase_return' => 'Purchase Return No.',
-        'sales_return' => 'Sales Return No.',
+        'sales_return' => 'Sales Return No',
     ];
     if ($storedDocumentType !== '' && isset($numberLabels[$storedDocumentType])) {
         $invoiceNumberLabel = $numberLabels[$storedDocumentType];
@@ -214,8 +214,10 @@
     } elseif ($useExportIds) {
         $invoiceNumberLabel = 'Commercial Invoice No.';
     } else {
-        $invoiceNumberLabel = $documentHasTax ? 'Tax Invoice No.' : 'BOS Invoice No.';
+        $invoiceNumberLabel = $documentHasTax ? 'Sales Invoice No' : 'Bill Of Supply No';
     }
+    $invoiceDateLabel = \App\Support\DocumentType::dateHeading($storedDocumentType, $customDocumentTitle);
+    $invoiceTimeLabel = \App\Support\DocumentType::timeHeading($storedDocumentType, $customDocumentTitle);
 
     $customerName = $billing->name ?? $user?->name ?? translate('Customer');
     $customerEmail = $billing->email ?? $user?->email ?? $userDetails?->prim_email_business;
@@ -900,6 +902,59 @@
         $dl3,
         $dlExpiryText ? translate('Expiry') . ' ' . $dlExpiryText : null,
     ]));
+
+    $intToIndianWords = function (int $num) use (&$intToIndianWords): string {
+        if ($num === 0) {
+            return 'Zero';
+        }
+        $ones = [
+            0 => '', 1 => 'One', 2 => 'Two', 3 => 'Three', 4 => 'Four',
+            5 => 'Five', 6 => 'Six', 7 => 'Seven', 8 => 'Eight', 9 => 'Nine',
+            10 => 'Ten', 11 => 'Eleven', 12 => 'Twelve', 13 => 'Thirteen',
+            14 => 'Fourteen', 15 => 'Fifteen', 16 => 'Sixteen', 17 => 'Seventeen',
+            18 => 'Eighteen', 19 => 'Nineteen',
+        ];
+        $tens = [
+            0 => '', 2 => 'Twenty', 3 => 'Thirty', 4 => 'Forty', 5 => 'Fifty',
+            6 => 'Sixty', 7 => 'Seventy', 8 => 'Eighty', 9 => 'Ninety',
+        ];
+        if ($num < 20) {
+            return $ones[$num];
+        }
+        if ($num < 100) {
+            return trim($tens[(int) floor($num / 10)] . ' ' . $ones[$num % 10]);
+        }
+        if ($num < 1000) {
+            return trim($ones[(int) floor($num / 100)] . ' Hundred ' . ($num % 100 ? $intToIndianWords($num % 100) : ''));
+        }
+        if ($num < 100000) {
+            return trim($intToIndianWords((int) floor($num / 1000)) . ' Thousand ' . ($num % 1000 ? $intToIndianWords($num % 1000) : ''));
+        }
+        if ($num < 10000000) {
+            return trim($intToIndianWords((int) floor($num / 100000)) . ' Lakh ' . ($num % 100000 ? $intToIndianWords($num % 100000) : ''));
+        }
+
+        return trim($intToIndianWords((int) floor($num / 10000000)) . ' Crore ' . ($num % 10000000 ? $intToIndianWords($num % 10000000) : ''));
+    };
+
+    $roundedGrandTotal = round(max(0, (float) $grandTotal), 2);
+    $wholeAmount = (int) floor($roundedGrandTotal);
+    $fractionalAmount = (int) round(($roundedGrandTotal - $wholeAmount) * 100);
+    if ($fractionalAmount >= 100) {
+        $wholeAmount += 1;
+        $fractionalAmount = 0;
+    }
+    $currencyWordLabel = strtoupper((string) $invoiceCurrencyCode) === 'INR'
+        ? 'Rupees'
+        : strtoupper((string) ($invoiceCurrencyCode ?: 'INR'));
+    $subCurrencyWordLabel = strtoupper((string) $invoiceCurrencyCode) === 'INR'
+        ? 'Paise'
+        : 'Cents';
+    $grandTotalInWords = $currencyWordLabel . ' ' . $intToIndianWords($wholeAmount);
+    if ($fractionalAmount > 0) {
+        $grandTotalInWords .= ' and ' . $intToIndianWords($fractionalAmount) . ' ' . $subCurrencyWordLabel;
+    }
+    $grandTotalInWords .= ' Only';
 @endphp
 <div class="invoice-wrap">
     <div class="doc-title">{{ translate($documentTitle) }}</div>
@@ -966,8 +1021,8 @@
                 <table class="inner">
                     <tr><td class="label">{{ translate($invoiceNumberLabel) }}</td><td>{{ $dash($invoiceNo) }}</td></tr>
                     <tr><td class="label">{{ translate('Challan No. / Order By') }}</td><td>{{ $dash($orderBy !== '' ? $orderBy : null) }}</td></tr>
-                    <tr><td class="label">{{ translate('Date') }}</td><td>{{ $invoiceDate }}@if($invoiceDay) ({{ $invoiceDay }})@endif</td></tr>
-                    <tr><td class="label">{{ translate('Time') }}</td><td>{{ $invoiceTime }}</td></tr>
+                    <tr><td class="label">{{ translate($invoiceDateLabel) }}</td><td>{{ $invoiceDate }}@if($invoiceDay) ({{ $invoiceDay }})@endif</td></tr>
+                    <tr><td class="label">{{ translate($invoiceTimeLabel) }}</td><td>{{ $invoiceTime }}</td></tr>
                     <tr><td class="label">{{ translate('EWB No. & Date') }}</td><td>{{ $dash($ewayText !== '' ? $ewayText : null) }}</td></tr>
                     <tr><td class="label">{{ translate('P.O. No. & Date') }}</td><td>{{ $dash($poText) }}</td></tr>
                     <tr><td class="label">{{ translate('Sales Executive Name & Code') }}</td><td>{{ $dash($salesExecutiveText) }}</td></tr>
@@ -1215,6 +1270,9 @@
             <td class="num">{{ $invoicePrice($crDbAdjustment) }}</td>
             <td class="grand hl-red">{{ translate('Grand Total Payable') }}</td>
             <td class="num grand hl-red">{{ $invoicePrice($grandTotal) }}</td>
+        </tr>
+        <tr>
+            <td colspan="9"><span class="label">{{ translate('Final Amount In Words') }}:</span> {{ $grandTotalInWords }}</td>
         </tr>
     </table>
 
