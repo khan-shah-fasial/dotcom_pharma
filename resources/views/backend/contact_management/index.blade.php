@@ -83,6 +83,34 @@
                     </div>
                 </div>
             </form>
+            <hr>
+            <h6 class="mb-2">{{ translate('Sync from a Google account') }}</h6>
+            <p class="text-muted mb-3">
+                {{ translate('One-way sync adds contacts from the connected Google account. Contacts already in this directory are left unchanged. A Google contact is discarded when its email or phone number matches one already stored, including a different formatting of the same phone number. The same email or phone is not added twice.') }}
+            </p>
+            @if (!($googleContactsReady ?? false))
+                <div class="alert alert-warning mb-0">
+                    {{ translate('Google Contacts is using placeholder credentials. Add the client id and secret, then connect the account.') }}
+                    <div class="mt-2"><code>{{ $googleContactsRedirect ?? '' }}</code></div>
+                </div>
+            @elseif ($googleContactsConnected ?? false)
+                <div class="d-flex flex-wrap">
+                    <form action="{{ route('contact-directory.google.sync') }}" method="POST" class="mr-2 mb-2">
+                        @csrf
+                        <button type="submit" class="btn btn-primary">
+                            <i class="las la-sync"></i> {{ translate('Sync Google Contacts') }}
+                        </button>
+                    </form>
+                    <form action="{{ route('contact-directory.google.disconnect') }}" method="POST" class="mb-2" onsubmit="return confirm('{{ translate('Disconnect this Google account?') }}')">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-danger">{{ translate('Disconnect') }}</button>
+                    </form>
+                </div>
+            @else
+                <a href="{{ route('contact-directory.google.connect') }}" class="btn btn-primary">
+                    <i class="lab la-google"></i> {{ translate('Connect Google account') }}
+                </a>
+            @endif
         </div>
     </div>
 @endcan

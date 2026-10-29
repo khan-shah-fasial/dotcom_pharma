@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Imports\GoogleContactsImport;
 use App\Models\ContactClassification;
+use App\Services\GoogleContactsSyncService;
 use App\Models\Country;
 use App\Models\DirectoryContact;
 use App\Models\DirectoryContactActivity;
@@ -11,6 +12,7 @@ use App\Models\State;
 use App\Models\Upload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use RuntimeException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -20,7 +22,15 @@ class DirectoryContactController extends Controller
     public function __construct()
     {
         $this->middleware(['permission:view_contact_directory'])->only(['index', 'show']);
-        $this->middleware(['permission:add_contact_directory'])->only(['create', 'store', 'import']);
+        $this->middleware(['permission:add_contact_directory'])->only([
+            'create',
+            'store',
+            'import',
+            'googleConnect',
+            'googleCallback',
+            'googleSync',
+            'googleDisconnect',
+        ]);
         $this->middleware(['permission:edit_contact_directory'])->only([
             'edit',
             'update',
@@ -199,6 +209,8 @@ class DirectoryContactController extends Controller
         $visitingCardSlides = $hasVisitingCards ? $this->visitingCardSlides(clone $contacts) : [];
         $contacts = $contacts->paginate(20)->appends($request->query());
 
+        $googleContacts = app(GoogleContactsSyncService::class);
+
         return view('backend.contact_management.index', $this->indexData() + $this->activityFormData() + [
             'contacts' => $contacts,
             'filters' => $filters,
@@ -207,6 +219,9 @@ class DirectoryContactController extends Controller
             'hasRegion' => $hasRegion,
             'hasVisitingCards' => $hasVisitingCards,
             'visitingCardSlides' => $visitingCardSlides,
+            'googleContactsReady' => $googleContacts->credentialsConfigured(),
+            'googleContactsConnected' => $googleContacts->connected(),
+            'googleContactsRedirect' => $googleContacts->redirectUri(),
         ]);
     }
 
@@ -249,12 +264,64 @@ class DirectoryContactController extends Controller
         $import = new GoogleContactsImport();
         $import->import($request->file('bulk_file'));
 
+        return $this->redirectWithImportSummary($import, translate('No contacts were found in the file.'));
+    }
+
+    public function googleConnect(GoogleContactsSyncService $googleContacts)
+    {
+        try {
+            return redirect()->away($googleContacts->authorizationUrl());
+        } catch (RuntimeException $exception) {
+            flash($exception->getMessage())->warning();
+            return redirect()->route('contact-directory.index');
+        }
+    }
+
+    public function googleCallback(Request $request, GoogleContactsSyncService $googleContacts)
+    {
+        if ($request->filled('error')) {
+            flash(translate('Google Contacts connection was cancelled.'))->warning();
+            return redirect()->route('contact-directory.index');
+        }
+
+        try {
+            $googleContacts->storeAuthorizationCode((string) $request->query('code', ''), (string) $request->query('state', ''));
+        } catch (RuntimeException $exception) {
+            flash($exception->getMessage())->error();
+            return redirect()->route('contact-directory.index');
+        }
+
+        flash(translate('Google account connected. Sync only adds contacts that are not already in the directory.'))->success();
+        return redirect()->route('contact-directory.index');
+    }
+
+    public function googleSync(GoogleContactsSyncService $googleContacts)
+    {
+        try {
+            $import = $googleContacts->sync();
+        } catch (RuntimeException $exception) {
+            flash($exception->getMessage())->error();
+            return redirect()->route('contact-directory.index');
+        }
+
+        return $this->redirectWithImportSummary($import, translate('No contacts were found in the Google account.'));
+    }
+
+    public function googleDisconnect(GoogleContactsSyncService $googleContacts)
+    {
+        $googleContacts->disconnect();
+        flash(translate('Google account disconnected.'))->success();
+        return redirect()->route('contact-directory.index');
+    }
+
+    protected function redirectWithImportSummary(GoogleContactsImport $import, string $emptyMessage)
+    {
         $created = $import->createdCount();
         $skipped = $import->skippedCount();
         $reasons = array_slice($import->messages(), 0, 15);
 
         if ($created === 0 && $skipped === 0) {
-            flash(translate('No contacts were found in the file.'))->warning();
+            flash($emptyMessage)->warning();
             return redirect()->route('contact-directory.index');
         }
 

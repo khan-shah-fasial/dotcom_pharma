@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QA report — Google Contacts sync — 28 Oct 2026</title>
+<style>
+  :root { --ink:#1c2430; --muted:#5c6b7a; --line:#d8e0e8; --bg:#f4f7fa; --card:#fff; --pass:#0f7b4c; --fail:#b42318; --blocked:#b54708; --na:#667085; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 "Segoe UI", sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:#142033; color:#fff; padding:28px 24px; }
+  header h1 { margin:0 0 8px; font-size:28px; }
+  header p { margin:0; color:#c9d4e3; }
+  main { max-width:1100px; margin:0 auto; padding:24px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700; color:#fff; }
+  .pass { background:var(--pass); } .fail { background:var(--fail); } .blocked { background:var(--blocked); } .na { background:var(--na); }
+  .high { background:#c2410c; } .medium { background:#b45309; } .low { background:#475569; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:16px 0 28px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .card strong { display:block; font-size:26px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px; margin-bottom:16px; }
+  h2 { margin:0 0 12px; font-size:20px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { border-bottom:1px solid var(--line); text-align:left; padding:8px; vertical-align:top; }
+  th { background:#eef3f8; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  code { font-family:Consolas, monospace; font-size:13px; }
+  .rec { font-family:Consolas, monospace; font-size:12px; }
+  footer { color:var(--muted); font-size:13px; padding:8px 0 28px; }
+  @media print { body { background:#fff; } section, .card { break-inside:avoid; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Software testing report</h1>
+  <p>Pharm Vet Easy — Google Contacts one-way sync — 28 Oct 2026 — local</p>
+  <p>Overall status: <span class="badge blocked">Blocked</span> &nbsp; Score: 62 / 100 on tests that could run</p>
+</header>
+<main>
+  <section>
+    <h2>1. Project information</h2>
+    <table>
+      <tr><th>Item</th><th>Value</th></tr>
+      <tr><td>Application</td><td>Pharm Vet Easy contact directory</td></tr>
+      <tr><td>Scope</td><td>Google Contacts connect and one-way duplicate-safe sync</td></tr>
+      <tr><td>Environment</td><td>Windows, PHP 8.2.12, MySQL 9.1.0 started locally, app served at http://127.0.0.1:80</td></tr>
+      <tr><td>Date</td><td>28 Oct 2026</td></tr>
+      <tr><td>Credentials</td><td>Google OAuth client values are present in .env. Secret values are not included in this report.</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>2. Testing summary</h2>
+    <div class="cards">
+      <div class="card"><strong>6</strong>Pass</div>
+      <div class="card"><strong>1</strong>Fail</div>
+      <div class="card"><strong>2</strong>Blocked</div>
+      <div class="card"><strong>1</strong>Not tested</div>
+    </div>
+    <p>Google accepts the OAuth client, redirect URI, and read-only contacts scope. The admin contacts screen cannot be opened because MySQL has no database named <code>dotcom_pharma</code>. Sync against a Google account was not completed.</p>
+  </section>
+
+  <section>
+    <h2>3. Functional testing</h2>
+    <table>
+      <tr><th>Test</th><th>Result</th><th>Evidence</th><th>Recommendation</th></tr>
+      <tr>
+        <td>Contacts OAuth settings load and are not placeholders</td>
+        <td><span class="badge pass">Pass</span></td>
+        <td>credentialsConfigured() returned true. Redirect is http://localhost/admin/contact-directory/google/callback. Scope is contacts.readonly. Access type is offline.</td>
+        <td class="rec">-</td>
+      </tr>
+      <tr>
+        <td>Google accepts the client and redirect URI</td>
+        <td><span class="badge pass">Pass</span></td>
+        <td>Opening the authorization URL reached a Google sign-in page titled for app contactsAPI. Google did not show a redirect URI error.</td>
+        <td class="rec">-</td>
+      </tr>
+      <tr>
+        <td>Contacts admin route is registered</td>
+        <td><span class="badge pass">Pass</span></td>
+        <td>GET /admin/contact-directory returned 302 to /login.</td>
+        <td class="rec">-</td>
+      </tr>
+      <tr>
+        <td>Login page loads so an admin can connect Google</td>
+        <td><span class="badge fail">Fail</span></td>
+        <td>GET /login returned 500. Log: SQLSTATE[HY000] [1049] Unknown database 'dotcom_pharma'.</td>
+        <td class="rec">.env DB_DATABASE — point it at the database that actually exists, or create and import dotcom_pharma. Do not continue UI testing until login returns 200.</td>
+      </tr>
+      <tr>
+        <td>Connect button and sync form on the contacts page</td>
+        <td><span class="badge blocked">Blocked</span></td>
+        <td>Page never rendered. Login fails before the directory screen.</td>
+        <td class="rec">resources/views/backend/contact_management/index.blade.php — retest after the database is available.</td>
+      </tr>
+      <tr>
+        <td>Same phone with and without country code is treated as a duplicate</td>
+        <td><span class="badge pass">Pass</span></td>
+        <td>Isolated call: +91 98765-43210 stored, then 9876543210 reported as already used. A different number was not matched. This did not write to the database.</td>
+        <td class="rec">-</td>
+      </tr>
+      <tr>
+        <td>Repeated phone on one contact is stored once</td>
+        <td><span class="badge pass">Pass</span></td>
+        <td>Two forms of the same number plus a second number produced 2 phone rows, labels Mobile and Work.</td>
+        <td class="rec">-</td>
+      </tr>
+      <tr>
+        <td>Email match is case-insensitive</td>
+        <td><span class="badge pass">Pass</span></td>
+        <td>Lowercased person@example.com matched an existing person@example.com key. The importer lowercases emails before the check.</td>
+        <td class="rec">-</td>
+      </tr>
+      <tr>
+        <td>Live sync adds only new Google contacts</td>
+        <td><span class="badge na">Not Tested</span></td>
+        <td>Requires an admin session and a signed-in Google account. Neither was available.</td>
+        <td class="rec">app/Services/GoogleContactsSyncService.php — sign in, connect, sync twice, and confirm the second run creates 0 contacts.</td>
+      </tr>
+      <tr>
+        <td>Existing directory row is not updated</td>
+        <td><span class="badge blocked">Blocked</span></td>
+        <td>directory_contacts was not queried. The named database does not exist.</td>
+        <td class="rec">app/Imports/GoogleContactsImport.php — retest storeParsedContact against a real directory after the database is restored.</td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. Bug / issue report</h2>
+    <table>
+      <tr><th>ID</th><th>Severity</th><th>Status</th><th>Issue</th><th>Recommendation</th></tr>
+      <tr>
+        <td>GC-1</td>
+        <td><span class="badge high">High</span></td>
+        <td><span class="badge fail">Open</span></td>
+        <td>Confirmed. The app cannot query MySQL because database dotcom_pharma does not exist. The running server only has information_schema, mysql, performance_schema, resisquare_laravel_webdeveloper, and sys. Login returns 500.</td>
+        <td class="rec">.env DB_DATABASE=dotcom_pharma — restore that database or correct the name. Confirmed in storage/logs/laravel-2026-10-28.log.</td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. Security testing</h2>
+    <table>
+      <tr><th>Test</th><th>Result</th><th>Evidence</th><th>Recommendation</th></tr>
+      <tr>
+        <td>Client secret is not placed in the Google authorization URL</td>
+        <td><span class="badge pass">Pass</span></td>
+        <td>The generated URL contains client_id, redirect_uri, scope, state, and access_type. It does not contain the client secret.</td>
+        <td class="rec">-</td>
+      </tr>
+      <tr>
+        <td>Refresh token storage and OAuth state check at runtime</td>
+        <td><span class="badge na">Not Tested</span></td>
+        <td>Connect callback was not completed, so no token was written.</td>
+        <td class="rec">app/Services/GoogleContactsSyncService.php storeAuthorizationCode — retest after login works.</td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>6. UI/UX testing</h2>
+    <p>Not Tested. The contacts screen did not render.</p>
+  </section>
+  <section>
+    <h2>7. Performance testing</h2>
+    <p>Not Tested. Sync was not run.</p>
+  </section>
+  <section>
+    <h2>8. SEO testing</h2>
+    <p>Not Applicable. This is an admin contacts sync, not a public page.</p>
+  </section>
+  <section>
+    <h2>9. Content testing</h2>
+    <p>Not Tested. The contacts card was not rendered.</p>
+  </section>
+  <section>
+    <h2>10. Browser and device testing</h2>
+    <table>
+      <tr><th>Test</th><th>Result</th><th>Evidence</th><th>Recommendation</th></tr>
+      <tr>
+        <td>Google sign-in page in the Cursor browser</td>
+        <td><span class="badge pass">Pass</span></td>
+        <td>Desktop browser showed Sign in to continue to contactsAPI, with email field and Next button.</td>
+        <td class="rec">-</td>
+      </tr>
+      <tr>
+        <td>Mobile viewport and other browsers</td>
+        <td><span class="badge na">Not Tested</span></td>
+        <td>Only one desktop browser session was used, and only the Google page loaded.</td>
+        <td class="rec">-</td>
+      </tr>
+    </table>
+  </section>
+  <section>
+    <h2>11. API testing</h2>
+    <table>
+      <tr><th>Test</th><th>Result</th><th>Evidence</th><th>Recommendation</th></tr>
+      <tr>
+        <td>Google OAuth authorization endpoint</td>
+        <td><span class="badge pass">Pass</span></td>
+        <td>accounts.google.com returned the account chooser / sign-in flow for this client.</td>
+        <td class="rec">-</td>
+      </tr>
+      <tr>
+        <td>People API connections list</td>
+        <td><span class="badge na">Not Tested</span></td>
+        <td>No access token was obtained.</td>
+        <td class="rec">app/Services/GoogleContactsSyncService.php sync — run after a Google account is connected.</td>
+      </tr>
+    </table>
+  </section>
+  <section>
+    <h2>12. Database testing</h2>
+    <table>
+      <tr><th>Test</th><th>Result</th><th>Evidence</th><th>Recommendation</th></tr>
+      <tr>
+        <td>Application database is reachable</td>
+        <td><span class="badge fail">Fail</span></td>
+        <td>MySQL on 127.0.0.1:3306 accepts root with an empty password, then rejects database dotcom_pharma.</td>
+        <td class="rec">.env DB_DATABASE — use the restored database name.</td>
+      </tr>
+      <tr>
+        <td>business_settings.value can hold an encrypted refresh token</td>
+        <td><span class="badge na">Not Tested</span></td>
+        <td>Checked only on resisquare_laravel_webdeveloper, where value is longtext. The configured database could not be checked.</td>
+        <td class="rec">After the correct database is online, confirm business_settings.value is TEXT or LONGTEXT before connecting Google.</td>
+      </tr>
+    </table>
+  </section>
+  <section>
+    <h2>13. Production / deployment testing</h2>
+    <p>Not Applicable. This run used the local app only. APP_ENV is local.</p>
+  </section>
+  <section>
+    <h2>14. Overall score</h2>
+    <p>62 / 100. Calculated from tests that ran: 6 passed, 1 failed, with blocked and untested items excluded from the numerator and counted against completeness. The failing database check blocks the user-facing sync.</p>
+  </section>
+  <section>
+    <h2>15. Final status</h2>
+    <p><span class="badge blocked">Blocked</span> Google Cloud setup for this client is valid. Sync testing cannot continue until the application database exists and an admin can log in.</p>
+  </section>
+  <section>
+    <h2>16. Testing limitations</h2>
+    <ul>
+      <li>WAMP services could not be started without administrator rights. MySQL was started from mysql9.1.0 directly, and the site was served with php artisan serve on port 80.</li>
+      <li>No admin password was used. The Google sign-in page was not submitted.</li>
+      <li>Duplicate checks were in-memory method calls. No contact row was inserted.</li>
+      <li>The other local database, resisquare_laravel_webdeveloper, has business_settings and users, and no directory_contacts table. It was not switched in .env.</li>
+      <li>Safari, mobile, SEO, and performance were not tested.</li>
+    </ul>
+  </section>
+  <footer>Report generated 28 Oct 2026. Secrets, tokens, and passwords are omitted.</footer>
+</main>
+</body>
+</html>

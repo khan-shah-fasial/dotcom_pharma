@@ -42,6 +42,12 @@ return [
         'redirect'      => env('APP_URL').'/social-login/google/callback',
     ],
 
+    'google_contacts' => [
+        'client_id' => env('GOOGLE_CONTACTS_CLIENT_ID', 'placeholder-google-contacts-client-id.apps.googleusercontent.com'),
+        'client_secret' => env('GOOGLE_CONTACTS_CLIENT_SECRET', 'placeholder-google-contacts-client-secret'),
+        'redirect' => env('GOOGLE_CONTACTS_REDIRECT_URI'),
+    ],
+
     'facebook' => [
         'client_id'     => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),

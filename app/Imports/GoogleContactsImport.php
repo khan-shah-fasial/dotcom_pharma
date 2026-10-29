@@ -33,6 +33,8 @@ class GoogleContactsImport
 
     private bool $hasRegion = false;
 
+    private bool $requireIdentity = false;
+
     public function import(UploadedFile $file): void
     {
         $extension = strtolower((string) $file->getClientOriginalExtension());
@@ -63,6 +65,17 @@ class GoogleContactsImport
         }
     }
 
+    public function begin(bool $requireIdentity = false): void
+    {
+        $this->requireIdentity = $requireIdentity;
+        $this->loadLookups();
+    }
+
+    public function addParsed(array $contact): void
+    {
+        $this->storeParsedContact($contact);
+    }
+
     public function createdCount(): int
     {
         return $this->created;
@@ -83,9 +96,9 @@ class GoogleContactsImport
         $label = $parsed['label'];
         $noteLines = $parsed['note_lines'];
         $email = null;
-        $validEmails = [];
+        $emailKeys = [];
 
-        foreach ($parsed['emails'] as $emailRow) {
+        foreach ($parsed['emails'] ?? [] as $emailRow) {
             $value = trim((string) $emailRow['value']);
             if ($value === '') {
                 continue;
@@ -94,18 +107,19 @@ class GoogleContactsImport
                 $noteLines[] = ($emailRow['label'] !== '' ? $emailRow['label'] . ' email: ' : 'Email: ') . $value;
                 continue;
             }
-            $validEmails[] = $value;
+            $emailKeys[strtolower($value)] = $value;
         }
 
-        if ($validEmails) {
-            $email = $validEmails[0];
-            foreach (array_slice($validEmails, 1) as $extraEmail) {
-                $noteLines[] = 'Email: ' . $extraEmail;
+        $emailKeyList = array_keys($emailKeys);
+        if ($emailKeyList) {
+            $email = $emailKeys[$emailKeyList[0]];
+            foreach (array_slice($emailKeyList, 1) as $extraKey) {
+                $noteLines[] = 'Email: ' . $emailKeys[$extraKey];
             }
         }
 
         $phones = [];
-        foreach ($parsed['phones'] as $phoneRow) {
+        foreach ($parsed['phones'] ?? [] as $phoneRow) {
             $raw = trim((string) $phoneRow['value']);
             if ($raw === '') {
                 continue;
@@ -120,6 +134,26 @@ class GoogleContactsImport
                 'label' => $phoneRow['label'] !== '' ? $phoneRow['label'] : 'Phone',
                 'stored' => $stored,
             ];
+        }
+        $phones = $this->uniquePhoneRows($phones);
+
+        $phoneKeys = [];
+        foreach ($phones as $phoneRow) {
+            $key = $this->phoneKey($phoneRow['stored']);
+            if ($key) {
+                $phoneKeys[$key] = $key;
+            }
+        }
+        $phoneKeys = array_values($phoneKeys);
+
+        if ($this->requireIdentity && !$emailKeyList && !$phoneKeys) {
+            $this->skip($label, translate('skipped because no email or phone number was found'));
+            return;
+        }
+
+        if ($this->emailKeysTaken($emailKeyList) || $this->phoneKeysTaken($phoneKeys)) {
+            $this->skip($label, translate('skipped because the email or phone number is already used'));
+            return;
         }
 
         $whatsapp = $this->pullPhone($phones, 'whatsapp');
@@ -154,18 +188,6 @@ class GoogleContactsImport
         }
         if ($name === '') {
             $this->skip($label, translate('skipped because no name, email, or phone was found'));
-            return;
-        }
-
-        $emailKey = $email ? strtolower($email) : null;
-        $phoneKeys = array_values(array_filter([
-            $this->phoneKey($phone),
-            $this->phoneKey($whatsapp),
-            $this->phoneKey($alternate),
-        ]));
-
-        if (($emailKey && isset($this->takenEmails[$emailKey])) || $this->phoneKeysTaken($phoneKeys)) {
-            $this->skip($label, translate('skipped because the email or phone number is already used'));
             return;
         }
 
@@ -248,7 +270,7 @@ class GoogleContactsImport
             throw $exception;
         }
 
-        $this->rememberIdentity($emailKey, $phoneKeys);
+        $this->rememberIdentity($emailKeyList, $phoneKeys);
         $this->attachPhoto($contact, $parsed);
         $this->created++;
     }
@@ -873,7 +895,7 @@ class GoogleContactsImport
         }
 
         DirectoryContact::query()
-            ->select(['email', 'phone', 'alternate_mobile_number', 'whatsapp_number'])
+            ->select(['email', 'phone', 'alternate_mobile_number', 'whatsapp_number', 'notes'])
             ->orderBy('id')
             ->chunk(500, function ($contacts) {
                 foreach ($contacts as $contact) {
@@ -883,9 +905,10 @@ class GoogleContactsImport
                     foreach (['phone', 'alternate_mobile_number', 'whatsapp_number'] as $column) {
                         $key = $this->phoneKey($contact->{$column});
                         if ($key) {
-                            $this->takenPhones[$key] = true;
+                            $this->rememberPhoneKey($key);
                         }
                     }
+                    $this->rememberIdentitiesInNotes((string) $contact->notes);
                 }
             });
     }
@@ -1047,10 +1070,53 @@ class GoogleContactsImport
         return null;
     }
 
-    private function phoneKeysTaken(array $keys): bool
+    private function uniquePhoneRows(array $phones): array
+    {
+        $unique = [];
+        $seen = [];
+        foreach ($phones as $phone) {
+            $key = $this->phoneKey($phone['stored'] ?? null);
+            if (!$key) {
+                continue;
+            }
+            $bucket = strlen($key) >= 10 ? substr($key, -10) : $key;
+            if (isset($seen[$bucket])) {
+                continue;
+            }
+            $seen[$bucket] = true;
+            $unique[] = $phone;
+        }
+
+        return $unique;
+    }
+
+    private function rememberIdentitiesInNotes(string $notes): void
+    {
+        if ($notes === '') {
+            return;
+        }
+
+        if (preg_match_all('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', $notes, $matches)) {
+            foreach ($matches[0] as $found) {
+                $this->takenEmails[strtolower($found)] = true;
+            }
+        }
+
+        foreach (preg_split('/\R/', $notes) ?: [] as $line) {
+            if (!preg_match('/:\s*(\+?[0-9\s().-]{7,20})$/', trim((string) $line), $match)) {
+                continue;
+            }
+            $key = $this->phoneKey($match[1]);
+            if ($key) {
+                $this->rememberPhoneKey($key);
+            }
+        }
+    }
+
+    private function emailKeysTaken(array $keys): bool
     {
         foreach ($keys as $key) {
-            if (isset($this->takenPhones[$key])) {
+            if (isset($this->takenEmails[$key])) {
                 return true;
             }
         }
@@ -1058,13 +1124,45 @@ class GoogleContactsImport
         return false;
     }
 
-    private function rememberIdentity(?string $emailKey, array $phoneKeys): void
+    private function phoneKeysTaken(array $keys): bool
     {
-        if ($emailKey) {
+        foreach ($keys as $key) {
+            if ($this->phoneKeyIsTaken($key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function phoneKeyIsTaken(string $key): bool
+    {
+        if (isset($this->takenPhones[$key])) {
+            return true;
+        }
+
+        if (strlen($key) < 10) {
+            return false;
+        }
+
+        return isset($this->takenPhones['suffix:' . substr($key, -10)]);
+    }
+
+    private function rememberPhoneKey(string $key): void
+    {
+        $this->takenPhones[$key] = true;
+        if (strlen($key) >= 10) {
+            $this->takenPhones['suffix:' . substr($key, -10)] = true;
+        }
+    }
+
+    private function rememberIdentity(array $emailKeys, array $phoneKeys): void
+    {
+        foreach ($emailKeys as $emailKey) {
             $this->takenEmails[$emailKey] = true;
         }
         foreach ($phoneKeys as $key) {
-            $this->takenPhones[$key] = true;
+            $this->rememberPhoneKey($key);
         }
     }
 
