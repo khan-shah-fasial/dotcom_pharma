@@ -2833,60 +2833,168 @@ function scrollTabs(direction) {
     }).length > 0;
   }
 
+  function sameCode(a, b) {
+    return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+  }
+
+  function findOptionValue($el, value) {
+    var found = '';
+    if (value === null || value === undefined || String(value).trim() === '') {
+      return '';
+    }
+
+    $el.find('option').each(function() {
+      if (sameCode(this.value, value)) {
+        found = String(this.value);
+        return false;
+      }
+    });
+
+    return found;
+  }
+
+  function rememberAllOptions($el) {
+    if (!$el.length || $el.data('all-options')) {
+      return $el.data('all-options');
+    }
+
+    var $clones = $el.find('option').clone();
+    $clones.each(function() {
+      this.selected = false;
+      $(this).removeAttr('selected');
+    });
+    $el.data('all-options', $clones);
+    return $clones;
+  }
+
+  function locationOptionTemplate(opt) {
+    if (!opt.id) return opt.text;
+    var flag = $(opt.element).attr('data-flag');
+    var text = opt.text || '';
+    return $(
+      '<span style="display:flex;align-items:center;gap:8px;">' +
+        (flag ? '<img src="'+flag+'" style="width:20px;height:14px;object-fit:cover;border-radius:2px;" alt="">' : '') +
+        '<span>'+ text +'</span>' +
+      '</span>'
+    );
+  }
+
+  function mountLocationSelect($el) {
+    if (!$el || !$el.length) return;
+
+    var options = {
+      width: '100%',
+      dropdownParent: $('#languageCurrencyModal')
+    };
+    if (!$el.is('#currencyDropdown')) {
+      options.templateResult = locationOptionTemplate;
+      options.templateSelection = locationOptionTemplate;
+    }
+    if ($el.is('#languageDropdown')) {
+      options.minimumResultsForSearch = 5;
+    }
+
+    if ($el.select2) {
+      var current = $el.val();
+      if ($el.data('selectpicker') && $el.selectpicker) {
+        try { $el.selectpicker('destroy'); } catch (e) {}
+        $el.removeClass('selectpicker');
+      }
+      if ($el.hasClass('select2-hidden-accessible')) {
+        try { $el.select2('destroy'); } catch (e) {}
+      }
+      $el.select2(options);
+      if (current !== null && current !== undefined && String(current) !== '') {
+        $el.val(current).trigger('change.select2');
+      }
+      return;
+    }
+
+    if ($el.selectpicker) {
+      $el.addClass('selectpicker');
+      if (!$el.attr('data-live-search')) {
+        $el.attr('data-live-search', 'true');
+      }
+      try {
+        if (!$el.data('selectpicker')) {
+          $el.selectpicker();
+        }
+        $el.selectpicker('refresh');
+      } catch (e) {}
+    }
+  }
+
   function setSelectValue($el, value) {
-    if (!hasOptionValue($el, value)) {
+    var matched = findOptionValue($el, value);
+    if (!matched) {
       return false;
     }
 
-    $el.val(value).trigger('change');
+    $el.val(matched);
+    if ($el.hasClass('select2-hidden-accessible')) {
+      $el.trigger('change.select2');
+    } else if ($el.selectpicker && $el.hasClass('selectpicker')) {
+      try { $el.selectpicker('refresh'); } catch (e) {}
+    }
+    $el.trigger('change');
     return true;
   }
 
-  function filterSelectOptions($el, allowedValues) {
+  function rebuildSelectOptions($el, allowedValues, preferredValues) {
     if (!$el.length) {
       return;
     }
 
-    if (!$el.data('all-options')) {
-      $el.data('all-options', $el.find('option').clone());
+    if ($el.select2 && $el.hasClass('select2-hidden-accessible')) {
+      try { $el.select2('destroy'); } catch (e) {}
     }
 
-    var currentValue = $el.val();
-    var allOptions = $el.data('all-options');
+    var allOptions = rememberAllOptions($el);
     var allowedMap = null;
 
     if (Array.isArray(allowedValues) && allowedValues.length) {
       allowedMap = {};
       allowedValues.forEach(function(value) {
-        allowedMap[String(value)] = true;
+        var key = String(value || '').trim().toLowerCase();
+        if (key) {
+          allowedMap[key] = true;
+        }
       });
     }
 
     $el.empty();
     var added = 0;
     allOptions.each(function() {
-      if (!allowedMap || allowedMap[String(this.value)]) {
-        $el.append($(this).clone());
+      var key = String(this.value || '').trim().toLowerCase();
+      if (!allowedMap || allowedMap[key]) {
+        var $opt = $(this).clone();
+        $opt.prop('selected', false).removeAttr('selected');
+        $el.append($opt);
         added++;
       }
     });
 
-    if (!added && allowedMap) {
+    if (!added && allOptions) {
       allOptions.each(function() {
-        $el.append($(this).clone());
+        var $opt = $(this).clone();
+        $opt.prop('selected', false).removeAttr('selected');
+        $el.append($opt);
       });
     }
 
-    if (currentValue && hasOptionValue($el, currentValue)) {
-      $el.val(currentValue);
-    } else {
-      $el.val('');
+    var chosen = '';
+    (preferredValues || []).some(function(value) {
+      chosen = findOptionValue($el, value);
+      return !!chosen;
+    });
+    if (!chosen) {
+      chosen = $el.find('option').first().val() || '';
+    }
+    if (chosen) {
+      $el.val(String(chosen));
     }
 
-    $el.trigger('change.select2');
-    if ($el.selectpicker && $el.hasClass('selectpicker')) {
-      try { $el.selectpicker('refresh'); } catch (e) {}
-    }
+    mountLocationSelect($el);
   }
 
   function updateNavFromSelections() {
@@ -2905,43 +3013,42 @@ function scrollTabs(direction) {
     var $opt = $('#countryDropdown option:selected');
     if (!$opt.length) return;
 
-    var defaultLocale = $opt.attr('data-default-locale');
-    var defaultCurrencyCode = $opt.attr('data-default-currency-code');
-
-    function refreshPicker($el) {
-      if ($el && $el.length && $el.selectpicker && $el.hasClass('selectpicker')) {
-        try { $el.selectpicker('refresh'); } catch (e) {}
-      }
-    }
-
+    var defaultLocale = $.trim($opt.attr('data-default-locale') || '');
+    var defaultCurrencyCode = $.trim($opt.attr('data-default-currency-code') || '');
     var $lang = $('#languageDropdown');
     var $cur = $('#currencyDropdown');
+    var currentLocale = $lang.val();
+    var currentCurrency = $cur.val();
+    var fallbackLocale = @json(env('DEFAULT_LANGUAGE', 'en'));
 
-    filterSelectOptions($lang, getAllowedLanguageValues($opt));
-    filterSelectOptions($cur, getAllowedCurrencyValues($opt));
+    var langPreferred = force
+      ? [defaultLocale, currentLocale, fallbackLocale, 'en']
+      : [currentLocale, defaultLocale, fallbackLocale, 'en'];
+    var curPreferred = force
+      ? [defaultCurrencyCode, currentCurrency, 'USD', 'CNY']
+      : [currentCurrency, defaultCurrencyCode, 'USD', 'CNY'];
 
-    var hasLang = $lang.length && $lang.val();
-    var hasCur = $cur.length && $cur.val();
-
-    if ((force || !hasLang) && defaultLocale && setSelectValue($lang, defaultLocale)) {
-      refreshPicker($lang);
-    } else if (!hasLang && setSelectValue($lang, @json(env('DEFAULT_LANGUAGE', 'en')))) {
-      refreshPicker($lang);
-    } else if (!hasLang && setSelectValue($lang, 'en')) {
-      refreshPicker($lang);
-    }
-
-    if ((force || !hasCur) && defaultCurrencyCode && setSelectValue($cur, defaultCurrencyCode)) {
-      refreshPicker($cur);
-    } else if (!hasCur && setSelectValue($cur, 'USD')) {
-      refreshPicker($cur);
-    }
+    rebuildSelectOptions($lang, getAllowedLanguageValues($opt), langPreferred);
+    rebuildSelectOptions($cur, getAllowedCurrencyValues($opt), curPreferred);
   }
 
   // ---- Save handler ----
   function wireEvents() {
+    var countryDefaultsTimer = null;
+
+    function flushCountryDefaults() {
+      if (!countryDefaultsTimer) {
+        return;
+      }
+      clearTimeout(countryDefaultsTimer);
+      countryDefaultsTimer = null;
+      applyCountryDefaultsFromSelection(true);
+      updateNavFromSelections();
+    }
+
     $('#defaultEnglishLanguageBtn').on('click', function(event) {
       event.preventDefault();
+      flushCountryDefaults();
 
       var $btn = $(this);
       var originalHtml = $btn.html();
@@ -2972,9 +3079,13 @@ function scrollTabs(direction) {
       });
     });
 
-    $('#countryDropdown').on('change select2:select', function() {
-      applyCountryDefaultsFromSelection(true);
-      updateNavFromSelections();
+    $('#countryDropdown').on('change', function() {
+      clearTimeout(countryDefaultsTimer);
+      countryDefaultsTimer = setTimeout(function() {
+        countryDefaultsTimer = null;
+        applyCountryDefaultsFromSelection(true);
+        updateNavFromSelections();
+      }, 0);
     });
 
     $('#languageDropdown').on('change select2:select', function() {
@@ -2986,12 +3097,19 @@ function scrollTabs(direction) {
     });
 
     $('#saveLangCurrency').on('click', function() {
+      flushCountryDefaults();
+
       var $btn = $(this);
       $btn.prop('disabled', true).text('Applying...');
 
+      var $countryOpt = $('#countryDropdown option:selected');
       var countryId = $('#countryDropdown').val();
-      var locale = $('#languageDropdown').val();
-      var currencyCode = $('#currencyDropdown').val();
+      var locale = $('#languageDropdown').val()
+        || $.trim($countryOpt.attr('data-default-locale') || '')
+        || 'en';
+      var currencyCode = $('#currencyDropdown').val()
+        || $.trim($countryOpt.attr('data-default-currency-code') || '')
+        || null;
 
       persistSelectedGoogleCookie();
 
@@ -3015,6 +3133,8 @@ function scrollTabs(direction) {
 
   // ---- Init ----
   $(function(){
+    rememberAllOptions($('#languageDropdown'));
+    rememberAllOptions($('#currencyDropdown'));
     initSelect2();
     // Initial page load can fill missing values from the detected country.
     // Reopening the modal must not re-apply country defaults over saved choices.
@@ -3030,6 +3150,7 @@ function scrollTabs(direction) {
     // Select2 inside Bootstrap modals can break if initialized while hidden; re-init on open.
     $('#languageCurrencyModal').on('shown.bs.modal', function () {
       initSelect2();
+      applyCountryDefaultsFromSelection(false);
       updateNavFromSelections();
     });
     $('#languageCurrencyModal').on('hidden.bs.modal', function () {
