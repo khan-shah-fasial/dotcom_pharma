@@ -644,52 +644,13 @@ class BatchMasterController extends Controller
         $parties = BatchMaster::companyPartiesForStock($stock);
         $picked = $this->stockLookupPayload($stock);
         $productName = $picked['product_name'];
-        $purchases = BatchMaster::latestPurchasesForSku($stock->sku);
-        $latestPurchase = collect($purchases)->sortByDesc(function ($row) {
-            $date = BatchMaster::parsePurchaseDate($row->invoice_date ?: $row->order_date);
-            $stamp = $date ? $date->timestamp : 0;
-
-            return sprintf('%010d-%010d', $stamp, (int) $row->id);
-        })->first();
-        $rawPurchaseDate = $latestPurchase ? ($latestPurchase->invoice_date ?: $latestPurchase->order_date) : null;
+        $latestEntry = BatchMaster::latestPurchaseEntry($stock);
+        $rawPurchaseDate = null;
+        if ($latestEntry && $latestEntry->order) {
+            $rawPurchaseDate = $latestEntry->order->order_date ?: $latestEntry->order->created_at;
+        }
         $parsedPurchaseDate = BatchMaster::parsePurchaseDate($rawPurchaseDate);
         $purchaseDate = $parsedPurchaseDate ? $parsedPurchaseDate->toDateString() : null;
-
-        $existingCodes = [];
-        if (BatchMaster::tableReady()) {
-            $savedCodes = BatchMaster::query()
-                ->where('product_stock_id', $stock->id)
-                ->when(BatchMaster::extendedColumnsReady(), function ($query) {
-                    $query->whereNull('removed_at');
-                })
-                ->pluck('batch_code');
-            foreach ($savedCodes as $savedCode) {
-                $existingCodes[strtoupper(trim((string) $savedCode))] = true;
-            }
-        }
-
-        $rows = [];
-        if (BatchMaster::extendedColumnsReady()) {
-            foreach (BatchMaster::sourceBundles($stock) as $bundle) {
-                $purchase = $bundle['purchase'] ?? [];
-                if (!is_array($purchase) || $purchase === []) {
-                    continue;
-                }
-                $payload = BatchMaster::assembleCopy($bundle);
-                $code = strtoupper(trim((string) ($payload['batch_code'] ?? '')));
-                if ($code === '' || isset($existingCodes[$code])) {
-                    continue;
-                }
-                $payload['id'] = null;
-                $payload['batch_code'] = $code;
-                $payload['manufacturing_date'] = $this->monthInput($payload['manufacturing_date'] ?? null);
-                $payload['expiry_date'] = $this->monthInput($payload['expiry_date'] ?? null);
-                $payload['source_coa'] = $bundle['live']['coa'] ?? null;
-                $payload['coa'] = $bundle['live']['coa'] ?? null;
-                $rows[] = $payload;
-                $existingCodes[$code] = true;
-            }
-        }
 
         return response()->json([
             'found' => true,
@@ -711,12 +672,12 @@ class BatchMasterController extends Controller
             'parties' => $parties,
             'company_id' => $parties['manufactured']['ids'][0] ?? ($parties['marketed']['ids'][0] ?? $header['company_id']),
             'purchase_date' => $purchaseDate,
-            'last_mrp' => $latestPurchase->mrp_rate ?? null,
-            'last_rate' => $latestPurchase->sale_rate ?? null,
-            'last_tax_code' => $latestPurchase->tax_code ?? null,
-            'last_tax_percent' => $latestPurchase ? (($taxSnap = BatchMaster::taxSnapshot($latestPurchase->tax_code))['purchase_tax'] ?? ($latestPurchase->gst_percentage ?? null)) : null,
-            'rows' => $rows,
-            'live_lots' => $this->liveLots($stock, $purchases),
+            'last_mrp' => $latestEntry->mrp_price ?? null,
+            'last_rate' => $latestEntry->price ?? null,
+            'last_tax_code' => null,
+            'last_tax_percent' => null,
+            'rows' => [],
+            'live_lots' => $this->liveLots($stock),
         ]);
     }
 
@@ -827,6 +788,9 @@ class BatchMasterController extends Controller
         if ($file) {
             $payload['coa'] = $this->storeUpload($file);
         }
+        if (!array_key_exists('purchase_rate', $row)) {
+            unset($payload['purchase_rate']);
+        }
 
         return $payload;
     }
@@ -844,7 +808,7 @@ class BatchMasterController extends Controller
         }
     }
 
-    private function liveLots(ProductStock $stock, array $purchases): array
+    private function liveLots(ProductStock $stock): array
     {
         $discounts = BatchMaster::discountPercentsForStock($stock);
         $header = BatchMaster::headerFromStock($stock);
@@ -856,21 +820,49 @@ class BatchMasterController extends Controller
             }
         }
 
-        return ProductBatch::query()
+        $entryLines = BatchMaster::purchaseEntryLines($stock);
+        $lots = ProductBatch::query()
             ->where('product_stock_id', $stock->id)
             ->orderByDesc('id')
             ->limit(10)
-            ->get()
-            ->map(function (ProductBatch $lot) use ($purchases, $discounts, $header, $companyCode) {
+            ->get();
+        $seen = [];
+        foreach ($lots as $lot) {
+            $seen[(int) $lot->id] = true;
+        }
+        $extraIds = $entryLines->keys()->reject(function ($id) use ($seen) {
+            return isset($seen[(int) $id]);
+        })->values();
+        if ($extraIds->isNotEmpty()) {
+            $lots = $lots->concat(
+                ProductBatch::query()->whereIn('id', $extraIds->all())->orderByDesc('id')->get()
+            );
+        }
+
+        $savedMasters = [];
+        if (BatchMaster::tableReady()) {
+            $saved = BatchMaster::query()
+                ->where('product_stock_id', $stock->id)
+                ->when(BatchMaster::extendedColumnsReady(), function ($query) {
+                    $query->whereNull('removed_at');
+                })
+                ->get(['id', 'batch_code']);
+            foreach ($saved as $savedRow) {
+                $savedMasters[strtoupper(trim((string) $savedRow->batch_code))] = (int) $savedRow->id;
+            }
+        }
+
+        return $lots
+            ->map(function (ProductBatch $lot) use ($entryLines, $discounts, $header, $companyCode, $savedMasters) {
                 $code = trim((string) $lot->batch);
-                $purchase = $purchases[$code] ?? null;
-                $tax = BatchMaster::taxSnapshot($purchase->tax_code ?? null);
+                $entry = $entryLines->get($lot->id);
                 $prices = BatchMaster::decodeRolePrices($lot->role_price);
-                $rate = $this->purchaseRateVisible() ? ($purchase->sale_rate ?? null) : null;
-                $taxPercent = $tax['purchase_tax'] ?? ($purchase->gst_percentage ?? null);
+                $rate = ($this->purchaseRateVisible() && $entry) ? $entry->price : null;
+                $taxPercent = null;
 
                 return [
                     'id' => $lot->id,
+                    'batch_master_id' => $savedMasters[strtoupper($code)] ?? null,
                     'batch' => $lot->batch,
                     'manufacturing_date' => $lot->manufacturing_date,
                     'expiry_date' => $lot->product_exp_date,

@@ -20,8 +20,12 @@
         return (parseFloat(qty || 0) * parseFloat(rate)).toFixed(4);
     }
 
+    function entryRows() {
+        return $('#batch-rows-body tr.batch-entry-row, #live-lots-blocks tr.batch-entry-row');
+    }
+
     function refreshAmounts() {
-        $('#batch-rows-body tr').each(function () {
+        entryRows().each(function () {
             var qty = $(this).find('.qty-input').val();
             var rate = $(this).find('.rate-input').val();
             $(this).find('.amount-output').val(amount(qty, rate));
@@ -29,9 +33,9 @@
     }
 
     function renumber() {
-        $('#batch-rows-body tr').each(function (index) {
+        entryRows().each(function (index) {
             $(this).find('.sr-no').text(index + 1);
-            $(this).find('[data-name], [name]').each(function () {
+            $(this).find('[data-name]').each(function () {
                 var key = $(this).attr('data-name');
                 if (!key) {
                     return;
@@ -170,7 +174,7 @@
 
     function filterCompanySelects() {
         var ids = selectedMfgIds();
-        $('#batch-rows-body .company-select').each(function () {
+        $('#batch-rows-body .company-select, #live-lots-blocks .company-select').each(function () {
             var $sel = $(this);
             var current = String($sel.val() || '');
             $sel.find('option').each(function () {
@@ -186,6 +190,38 @@
         });
     }
 
+    function liveLotRow(lot) {
+        var prices = lot.prices || {};
+        var discounts = lot.discounts || {};
+        return {
+            id: lot.batch_master_id || '',
+            batch_code: lot.batch || '',
+            manufacturing_date: lot.manufacturing_date || '',
+            expiry_date: lot.expiry_date || '',
+            qty: lot.qty ?? 0,
+            free_qty: lot.free_qty ?? '',
+            mrp_price: lot.mrp_price ?? '',
+            purchase_rate: showPurchaseRate ? (lot.purchase_rate ?? '') : '',
+            tax_percent: lot.tax_percent ?? '',
+            tax_code: lot.tax_code || '',
+            scheme: lot.scheme ?? '',
+            company_id: lot.company_id || '',
+            coa: lot.coa || '',
+            source_coa: lot.coa || '',
+            source_purchase_history_id: '',
+            source_product_batch_id: lot.id || '',
+            batch_discount_percent: discounts.batchwise ?? '',
+            product_discount_percent: discounts.productwise ?? '',
+            scheme_discount_percent: discounts.schemewise ?? '',
+            price_pts: prices.pts ?? '',
+            price_ptr: prices.ptr ?? '',
+            price_ptd: prices.ptd ?? '',
+            price_gov: prices.gov ?? '',
+            price_expo: prices.expo ?? '',
+            price_customer: prices.customer ?? ''
+        };
+    }
+
     function renderLots(lots) {
         var $wrap = $('#live-lots-blocks').empty();
         (lots || []).forEach(function (lot) {
@@ -194,7 +230,14 @@
             var discounts = lot.discounts || {};
             var coa = lot.coa_url ? '<a href="#" class="bm-coa-zoom" data-src="' + lot.coa_url + '">{{ translate('Zoom') }}</a>' : '—';
             var $block = $('<div class="bm-live-lot"></div>');
-            $block.append(
+            $block.data('lot', lot);
+            if (!isEdit) {
+                var $actions = $('<div class="text-right mb-2"></div>');
+                $actions.append($('<button type="button" class="btn btn-soft-primary btn-sm bm-edit-live-lot"></button>').text('{{ translate('Edit') }}'));
+                $block.append($actions);
+            }
+            var $readonly = $('<div class="bm-live-readonly"></div>');
+            $readonly.append(
                 '<div class="table-responsive"><table class="table table-sm table-bordered">' +
                 '<thead><tr>' +
                 '<th>{{ translate('Batch') }}</th><th>{{ translate('Mfg.') }}</th><th>{{ translate('Expiry') }}</th><th>{{ translate('Qty') }}</th>' +
@@ -209,7 +252,7 @@
                 '<td>' + coa + '</td><td>' + dash(lot.upload_date) + '</td><td>' + (lot.status ? '{{ translate('On') }}' : '{{ translate('Off') }}') + '</td>' +
                 '</tr></tbody></table></div>'
             );
-            $block.append(
+            $readonly.append(
                 '<div class="bm-live-lot-values table-responsive"><table class="table table-sm table-bordered">' +
                 '<thead><tr>' +
                 '<th class="bm-prate">{{ translate('P-Rate') }}</th><th>{{ translate('PTS') }}</th><th>{{ translate('PTR') }}</th>' +
@@ -230,6 +273,7 @@
                 '<td>' + (discounts.schemewise === null || discounts.schemewise === undefined || discounts.schemewise === '' ? '—' : dash(discounts.schemewise) + '%') + '</td>' +
                 '</tr></tbody></table></div>'
             );
+            $block.append($readonly);
             $wrap.append($block);
         });
         if (!(lots || []).length) {
@@ -267,33 +311,49 @@
         };
     }
 
+    function stripPartyTooltip($picker) {
+        var $btn = $picker.parent('.bootstrap-select').find('.dropdown-toggle');
+        if (!$btn.length) {
+            return;
+        }
+        if ($btn.data('ui-tooltip')) {
+            try {
+                $btn.tooltip('close');
+                $btn.tooltip('destroy');
+            } catch (e) {}
+        }
+        $btn.removeAttr('title');
+    }
+
     function setParty(role, party) {
         party = party || { locked: false, ids: [], names: '' };
         var locked = !!party.locked;
         var ids = (party.ids || []).map(String).filter(function (id) { return id !== ''; });
         var names = party.names || '';
         var $cell = $('.bm-party[data-role="' + role + '"]');
+        if (role !== 'marketed') {
+            var selectId = role === 'import' ? '#import_by_ids' : '#manufactured_by_ids';
+            var namesId = role === 'import' ? '#import_by_names' : '#manufactured_by_names';
+            $(namesId).val(names);
+            $cell.find('.bm-party-locked').val('0');
+            var $picker = $(selectId);
+            $picker.prop('hidden', false).prop('disabled', false);
+            $picker.parent('.bootstrap-select').prop('hidden', false);
+            selectIds(selectId, ids);
+            if ($picker.parent().hasClass('bootstrap-select')) {
+                $picker.selectpicker('val', ids);
+            }
+            stripPartyTooltip($picker);
+            return;
+        }
         $cell.find('.bm-party-locked').val(locked ? '1' : '0');
         $cell.find('.bm-party-text').val(names).prop('hidden', !locked);
         var $select = $cell.find('.bm-party-select');
         $select.prop('hidden', locked).prop('disabled', locked);
-        var $hidden = $cell.find('.bm-party-id-hiddens').empty();
-        if (role === 'marketed') {
-            $('#marketed_by_id').val(ids[0] || '');
-            $('#marketed_by_name').val(names);
-            $select.val(ids[0] || '');
-            return;
-        }
-        var selectId = role === 'import' ? '#import_by_ids' : '#manufactured_by_ids';
-        var namesId = role === 'import' ? '#import_by_names' : '#manufactured_by_names';
-        $(namesId).val(names);
-        selectIds(selectId, ids);
-        if (locked) {
-            var inputName = role === 'import' ? 'import_by_ids[]' : 'manufactured_by_ids[]';
-            ids.forEach(function (id) {
-                $hidden.append($('<input type="hidden">').attr('name', inputName).val(id));
-            });
-        }
+        $cell.find('.bm-party-id-hiddens').empty();
+        $('#marketed_by_id').val(ids[0] || '');
+        $('#marketed_by_name').val(names);
+        $select.val(ids[0] || '');
     }
 
     function applyParties(data) {
@@ -341,14 +401,7 @@
             };
             if (!isEdit) {
                 $('#batch-rows-body').empty();
-                var rows = data.rows || [];
-                if (!rows.length) {
-                    addRow(null);
-                }
-                rows.forEach(function (row) {
-                    addRow(row);
-                });
-                applyNonBatch();
+                renumber();
             }
             renderLots(data.live_lots || []);
             $('#live-lots-wrap').removeClass('d-none');
@@ -404,6 +457,11 @@
         $('#marketed_by_id').val(id);
         $('#marketed_by_name').val(id ? ($(this).find('option:selected').data('name') || '') : '');
     });
+    $('#import_by_ids, #manufactured_by_ids').on('loaded.bs.select changed.bs.select rendered.bs.select shown.bs.select', function () {
+        stripPartyTooltip($(this));
+    }).each(function () {
+        stripPartyTooltip($(this));
+    });
     $('#import_by_ids').on('change', function () {
         $('#import_by_names').val(selectedOptionNames($(this)));
     });
@@ -411,7 +469,39 @@
         $('#manufactured_by_names').val(selectedOptionNames($(this)));
         filterCompanySelects();
     });
-    $('#batch-rows-body').on('input', '.qty-input, .rate-input', refreshAmounts);
+    $('#batch-rows-body, #live-lots-blocks').on('input', '.qty-input, .rate-input', refreshAmounts);
+    $('#live-lots-blocks').on('click', '.bm-edit-live-lot', function () {
+        var $button = $(this);
+        var $block = $button.closest('.bm-live-lot');
+        var $editor = $block.children('.bm-live-editor');
+        if ($editor.length) {
+            $editor.remove();
+            $block.children('.bm-live-readonly').prop('hidden', false);
+            $button.text('{{ translate('Edit') }}');
+            renumber();
+            refreshAmounts();
+            return;
+        }
+        var lot = $block.data('lot') || {};
+        var $tr = $($('#batch-row-template').html());
+        if (companyOptions) {
+            $tr.find('.company-select').html(companyOptions);
+        }
+        fillRow($tr, liveLotRow(lot));
+        if (!showPurchaseRate) {
+            $tr.find('.rate-input').val('').removeAttr('data-name').prop('readonly', true).attr('placeholder', '••••');
+        }
+        var $table = $('<table class="table table-bordered table-sm mb-0"></table>');
+        $table.append($('#batch-rows-table thead').clone());
+        $table.append($('<tbody></tbody>').append($tr));
+        var $editorWrap = $('<div class="bm-live-editor table-responsive mt-2"></div>').append($table);
+        $block.children('.bm-live-readonly').prop('hidden', true);
+        $block.append($editorWrap);
+        $button.text('{{ translate('Close') }}');
+        renumber();
+        refreshAmounts();
+        filterCompanySelects();
+    });
     $('#batch-rows-body').on('input', '.batch-code', function () {
         var start = this.selectionStart;
         var end = this.selectionEnd;

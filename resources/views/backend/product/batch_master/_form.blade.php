@@ -49,9 +49,9 @@
     }
     $selectedImport = collect(old('import_by_ids', $b ? (json_decode((string) ($b->import_by_ids ?? '[]'), true) ?: []) : []))->map(fn ($id) => (string) $id);
     $selectedMfg = collect(old('manufactured_by_ids', $b ? (json_decode((string) ($b->manufactured_by_ids ?? '[]'), true) ?: []) : []))->map(fn ($id) => (string) $id);
-    $companyOptions = function ($selected) use ($companies) {
+    $companyOptions = function ($selected, $blank = true) use ($companies) {
         $selectedIds = collect(is_array($selected) ? $selected : [$selected])->map(fn ($id) => (string) $id)->filter(fn ($id) => $id !== '');
-        $html = '<option value="">' . e(translate('Select')) . '</option>';
+        $html = $blank ? '<option value="">' . e(translate('Select')) . '</option>' : '';
         foreach ($companies as $company) {
             $label = trim(($company->code ? $company->code . ' — ' : '') . $company->company_name);
             $html .= '<option value="' . e($company->id) . '" data-name="' . e($company->company_name) . '" ' . ($selectedIds->contains((string) $company->id) ? 'selected' : '') . '>' . e($label) . '</option>';
@@ -171,31 +171,15 @@
                             </select>
                         </td>
                         <td class="bm-party" data-role="import">
-                            <input type="hidden" name="import_by_locked" class="bm-party-locked" value="{{ $importLocked ? '1' : '0' }}">
-                            <textarea class="form-control form-control-sm bm-party-text" id="import_by_text" rows="2" readonly @unless($showPartyChoice && $importLocked) hidden @endunless>{{ $importText }}</textarea>
-                            <div class="bm-party-id-hiddens">
-                                @if ($importLocked)
-                                    @foreach ($selectedImport as $importId)
-                                        <input type="hidden" name="import_by_ids[]" value="{{ $importId }}">
-                                    @endforeach
-                                @endif
-                            </div>
-                            <select class="form-control form-control-sm bm-party-select" name="import_by_ids[]" id="import_by_ids" multiple @if($importLocked) disabled @endif @unless($showPartyChoice && !$importLocked) hidden @endunless>
-                                {!! $companyOptions($selectedImport->all()) !!}
+                            <input type="hidden" name="import_by_locked" class="bm-party-locked" value="0">
+                            <select class="form-control form-control-sm aiz-selectpicker bm-party-select" name="import_by_ids[]" id="import_by_ids" multiple data-live-search="true" data-container="body" data-size="8" data-selected-text-format="values" title="{{ translate('Select') }}">
+                                {!! $companyOptions($selectedImport->all(), false) !!}
                             </select>
                         </td>
                         <td class="bm-party" data-role="manufactured">
-                            <input type="hidden" name="manufactured_by_locked" class="bm-party-locked" value="{{ $mfgLocked ? '1' : '0' }}">
-                            <textarea class="form-control form-control-sm bm-party-text" id="manufactured_by_text" rows="2" readonly @unless($showPartyChoice && $mfgLocked) hidden @endunless>{{ $mfgText }}</textarea>
-                            <div class="bm-party-id-hiddens">
-                                @if ($mfgLocked)
-                                    @foreach ($selectedMfg as $mfgId)
-                                        <input type="hidden" name="manufactured_by_ids[]" value="{{ $mfgId }}">
-                                    @endforeach
-                                @endif
-                            </div>
-                            <select class="form-control form-control-sm bm-party-select" name="manufactured_by_ids[]" id="manufactured_by_ids" multiple @if($mfgLocked) disabled @endif @unless($showPartyChoice && !$mfgLocked) hidden @endunless>
-                                {!! $companyOptions($selectedMfg->all()) !!}
+                            <input type="hidden" name="manufactured_by_locked" class="bm-party-locked" value="0">
+                            <select class="form-control form-control-sm aiz-selectpicker bm-party-select" name="manufactured_by_ids[]" id="manufactured_by_ids" multiple data-live-search="true" data-container="body" data-size="8" data-selected-text-format="values" title="{{ translate('Select') }}">
+                                {!! $companyOptions($selectedMfg->all(), false) !!}
                             </select>
                         </td>
                         <td>
@@ -283,7 +267,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <p class="text-muted fs-12 mb-0">{{ translate('Only new batches from the purchase entry are listed here. Batches already on the listing stay there. If the purchase entry has none, use Add Batch.') }}</p>
+            <p class="text-muted fs-12 mb-0">{{ translate('Use Add Batch for a new batch. A batch already shown in Current live lots is not listed here. Use Edit on that live lot to change it.') }}</p>
             @if (!$isEdit)
                 <button type="button" class="btn btn-soft-primary btn-sm" id="add-batch-row">{{ translate('Add Batch') }}</button>
             @endif
@@ -293,7 +277,7 @@
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
                     <h6 class="mb-0">{{ translate('Current live lots (read only)') }}</h6>
-                    <p class="text-muted fs-12 mb-0">{{ translate('Display purpose only. Shown from existing product lots.') }}</p>
+                    <p class="text-muted fs-12 mb-0">{{ translate('Current product lots. A batch found on a purchase entry is listed here as well.') }}</p>
                 </div>
                 <button type="button" class="btn btn-outline-secondary btn-sm" id="toggle-live-lots">{{ translate('Open/Close') }}</button>
             </div>
@@ -372,7 +356,9 @@
 <style>
     .bm-header-grid th { background: #f3f6f9; font-size: 12px; white-space: normal; vertical-align: bottom; }
     .bm-header-grid td { vertical-align: top; }
-    .bm-header-grid select[multiple] { min-height: 78px; }
+    .bm-party .bootstrap-select { width: 100% !important; }
+    .bm-party .bootstrap-select .dropdown-toggle { font-size: 12px; }
+    .bm-party .bootstrap-select .filter-option-inner-inner { overflow: hidden; text-overflow: ellipsis; }
     .table-responsive.bm-header-wrap { overflow: visible; }
     .bm-sku-cell { position: relative; }
     #sku_results { position: absolute; z-index: 30; left: 0; right: 0; max-height: 260px; overflow: auto; background: #fff; border: 1px solid #e3e6ea; box-shadow: 0 4px 16px rgba(0,0,0,.08); }

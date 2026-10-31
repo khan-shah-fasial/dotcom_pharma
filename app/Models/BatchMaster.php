@@ -690,25 +690,10 @@ class BatchMaster extends Model
         $header = self::headerFromStock($stock);
         $discounts = self::discountPercentsForStock($stock);
         $lives = ProductBatch::query()->where('product_stock_id', $stock->id)->orderBy('id')->get();
-        $latestPurchase = self::latestPurchasesForSku($stock->sku);
         $bundles = [];
-        $seen = [];
 
         foreach ($lives as $live) {
-            $code = trim((string) $live->batch);
-            if ($code === '') {
-                $code = '-';
-            }
-            $purchase = $latestPurchase[$code] ?? null;
-            $bundles[] = self::bundle($header, $live->toArray(), $purchase, $discounts);
-            $seen[$code] = true;
-        }
-
-        foreach ($latestPurchase as $code => $purchase) {
-            if (isset($seen[$code]) || $code === '') {
-                continue;
-            }
-            $bundles[] = self::bundle($header, ['batch' => $code], $purchase, $discounts);
+            $bundles[] = self::bundle($header, $live->toArray(), null, $discounts);
         }
 
         return $bundles;
@@ -780,12 +765,6 @@ class BatchMaster extends Model
                 $sources[] = $detail->order;
             }
         }
-        if ($stock->sku && Schema::hasTable('purchase_history')) {
-            $history = PurchaseHistory::query()->where('product_sku', $stock->sku)->orderByDesc('id')->first();
-            if ($history) {
-                $sources[] = $history;
-            }
-        }
 
         foreach ($roles as $role) {
             foreach ($sources as $source) {
@@ -818,6 +797,34 @@ class BatchMaster extends Model
         }
 
         return $query->with('order')->orderByDesc('id')->first();
+    }
+
+    public static function latestPurchaseEntry(ProductStock $stock): ?OrderDetail
+    {
+        return self::latestPurchaseDetail($stock);
+    }
+
+    public static function purchaseEntryLines(ProductStock $stock)
+    {
+        if (!$stock->id || !Schema::hasTable('orders') || !Schema::hasTable('order_details') || !Schema::hasColumn('orders', 'document_type') || !Schema::hasColumn('order_details', 'batch_id')) {
+            return collect();
+        }
+
+        $types = \App\Support\DocumentType::ENTRIES['purchase']['types'];
+
+        return OrderDetail::query()
+            ->with('order')
+            ->whereNotNull('batch_id')
+            ->whereHas('order', function ($order) use ($types) {
+                $order->whereIn('document_type', $types);
+            })
+            ->whereHas('batch', function ($batch) use ($stock) {
+                $batch->where('product_stock_id', $stock->id);
+            })
+            ->orderByDesc('id')
+            ->get()
+            ->unique('batch_id')
+            ->keyBy('batch_id');
     }
 
     private static function readParty($record, string $role): array

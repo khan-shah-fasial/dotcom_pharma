@@ -11,6 +11,12 @@
             <div class="col-md-6 text-md-right">
                 <a href="{{ route('batch_masters.index') }}" class="btn btn-circle btn-light">{{ translate('Back') }}</a>
             </div>
+        @elseif ($showAddButton)
+            @can('add_batch_master')
+                <div class="col-md-6 text-md-right">
+                    <a href="{{ route('batch_masters.create') }}" class="btn btn-circle btn-info">{{ translate('Add New Batch / Lot') }}</a>
+                </div>
+            @endcan
         @endif
     </div>
 </div>
@@ -18,13 +24,6 @@
     <a class="px-3 py-2 fs-15 text-reset {{ $activeTab === 'listing' ? 'show active font-weight-bold' : '' }}" href="{{ route('batch_masters.index') }}">
         {{ translate('Listing Page') }}
     </a>
-    @if ($showAddButton)
-        @can('add_batch_master')
-            <a href="{{ route('batch_masters.create') }}" class="btn btn-info btn-sm mx-2 my-1">
-                {{ translate('Add New Batch / Lot') }}
-            </a>
-        @endcan
-    @endif
     <a class="px-3 py-2 fs-15 text-reset {{ $activeTab === 'adjust' ? 'show active font-weight-bold' : '' }}" href="{{ route('batch_masters.adjust') }}">
         {{ translate('Batch Adjustment') }}
     </a>
