@@ -23,15 +23,18 @@
         }
         $appliedTypeOptions[$key] = $label;
     }
-    $appliedType = old('applied_on_type');
-    if (!is_string($appliedType) || !isset($appliedTypeOptions[$appliedType])) {
-        $appliedType = $t ? \App\Models\TaxMaster::activeAppliedType($t) : 'category';
-        if (!isset($appliedTypeOptions[$appliedType])) {
-            $appliedType = array_key_first($appliedTypeOptions) ?: 'category';
-        }
+    if (session()->hasOldInput()) {
+        $appliedType = (string) old('applied_on_type', '');
+    } else {
+        $appliedType = $t ? \App\Models\TaxMaster::activeAppliedType($t) : '';
+    }
+    if ($appliedType !== '' && !isset($appliedTypeOptions[$appliedType])) {
+        $appliedType = '';
     }
     $postedTargets = old('applied_targets');
-    if (is_array($postedTargets)) {
+    if ($appliedType === '') {
+        $appliedSelected = [];
+    } elseif (is_array($postedTargets)) {
         $appliedSelected = \App\Models\TaxMaster::itemsFromTargetIds($appliedType, $postedTargets);
     } else {
         $appliedColumn = \App\Models\TaxMaster::APPLIED_COLUMNS[$appliedType] ?? 'applied_on_category';
@@ -79,6 +82,7 @@
         'labels' => $appliedLabels,
         'lookupUrl' => route('tax_masters.lookup.targets'),
         'none' => translate('No matches'),
+        'noneLabel' => translate('None'),
     ];
 @endphp
 
@@ -283,13 +287,14 @@
             <div class="col-md-3">
                 <label for="applied_on_type">{{ translate('Apply on') }}</label>
                 <select name="applied_on_type" id="applied_on_type" class="form-control form-control-sm">
+                    <option value="" @selected($appliedType === '')>{{ translate('None') }}</option>
                     @foreach ($appliedTypeOptions as $key => $label)
                         <option value="{{ $key }}" @selected($appliedType === $key)>{{ translate($label) }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-9">
-                <label for="applied-search" id="applied-target-label">{{ translate($appliedTypeOptions[$appliedType] ?? 'Category') }}</label>
+                <label for="applied-search" id="applied-target-label">{{ $appliedType === '' ? translate('None') : translate($appliedTypeOptions[$appliedType] ?? 'None') }}</label>
                 <div class="tm-multi tm-hsn-wrap" id="applied-multi">
                     <div class="tm-multi-control @error('applied_targets') is-invalid @enderror">
                         <div id="applied-picks" class="tm-multi-picks">
@@ -300,7 +305,7 @@
                                 </span>
                             @endforeach
                         </div>
-                        <input type="text" id="applied-search" class="tm-multi-input" placeholder="{{ $appliedPlaceholders[$appliedType] ?? translate('Search') }}" autocomplete="off">
+                        <input type="text" id="applied-search" class="tm-multi-input" placeholder="{{ count($appliedSelected) ? ($appliedPlaceholders[$appliedType] ?? translate('Search')) : translate('None') }}" autocomplete="off">
                         <button type="button" class="tm-combo-caret" id="applied-caret" tabindex="-1" aria-label="{{ translate('Applied On') }}"></button>
                     </div>
                     <div id="applied-results" class="tm-hsn-results tm-multi-results" hidden></div>

@@ -291,7 +291,7 @@ class TaxMaster extends Model
             }
         }
 
-        return 'category';
+        return '';
     }
 
     public static function itemsFromTargetIds(string $type, array $ids): array
@@ -945,7 +945,7 @@ class TaxMaster extends Model
             $parts[] = $label . ': ' . $value;
         }
 
-        return $parts ? implode(' / ', $parts) : '—';
+        return $parts ? implode(' / ', $parts) : 'None';
     }
 
     public static function resolveSort(string $sortBy, string $sortDir): array

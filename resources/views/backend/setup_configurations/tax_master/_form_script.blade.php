@@ -336,7 +336,7 @@
     });
 
     function appliedType() {
-        return $('#applied_on_type').val() || appliedConfig.type || 'category';
+        return $('#applied_on_type').val() || '';
     }
 
     function hideAppliedResults() {
@@ -357,10 +357,20 @@
             $picks.append(chip);
             $hidden.append($('<input type="hidden" name="applied_targets[]">').val(item.id));
         });
-        $('#applied-search').attr('placeholder', (appliedConfig.placeholders || {})[type] || '');
-        $('#applied-target-label').text((appliedConfig.labels || {})[type] || '');
+        syncAppliedPlaceholder();
+        $('#applied-target-label').text(type ? ((appliedConfig.labels || {})[type] || '') : (appliedConfig.noneLabel || 'None'));
         $('#applied-hint').text((appliedConfig.hints || {})[type] || '');
         $('#applied-empty-note').text(appliedSelected.length ? '' : ((appliedConfig.emptyNotes || {})[type] || ''));
+    }
+
+    function syncAppliedPlaceholder() {
+        var type = appliedType();
+        var field = document.getElementById('applied-search');
+        var searching = field && (document.activeElement === field || $.trim(field.value) !== '');
+        var text = (!appliedSelected.length && !searching)
+            ? (appliedConfig.noneLabel || 'None')
+            : ((appliedConfig.placeholders || {})[type] || '');
+        $('#applied-search').attr('placeholder', text);
     }
 
     function appliedIsSelected(id) {
@@ -408,6 +418,10 @@
     }
 
     function openAppliedResults() {
+        if (!appliedType()) {
+            hideAppliedResults();
+            return;
+        }
         loadAppliedResults($.trim($('#applied-search').val()));
     }
 
@@ -439,7 +453,12 @@
     });
 
     $('#applied-search').on('focus', function () {
+        syncAppliedPlaceholder();
         openAppliedResults();
+    });
+
+    $('#applied-search').on('blur', function () {
+        syncAppliedPlaceholder();
     });
 
     $('#applied-search').on('input', function () {

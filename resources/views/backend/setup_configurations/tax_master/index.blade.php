@@ -121,7 +121,7 @@
                                     @endif
                                     <div>{{ translate('IGST') }} {{ $rate($tax->sale_igst) }}</div>
                                 </td>
-                                <td class="fs-12">{{ !empty($hsnReady) ? $tax->appliedOnSummary() : '—' }}</td>
+                                <td class="fs-12">{{ (!empty($hsnReady) && $tax->appliedOnSummary() !== 'None') ? $tax->appliedOnSummary() : translate('None') }}</td>
                                 <td>
                                     <label class="aiz-switch aiz-switch-success mb-0">
                                         <input type="checkbox" onchange="updateTaxMasterStatus(this)" value="{{ $tax->id }}" {{ $tax->status ? 'checked' : '' }} @cannot('edit_tax_master') disabled @endcannot>
