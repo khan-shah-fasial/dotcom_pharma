@@ -17,15 +17,8 @@ class TaxMasterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $normalized = TaxMaster::normalize($this->all());
-        if (!$this->route('id')) {
-            $kind = (string) ($normalized['kind'] ?? 'taxable');
-            $percent = $normalized['purchase_tax'] ?? 0;
-            $existing = TaxMaster::findForRate($kind, $percent);
-            if ($existing) {
-                $normalized['tax_code'] = $existing->tax_code;
-            } elseif (($normalized['tax_code'] ?? '') === '') {
-                $normalized['tax_code'] = TaxMaster::taxCodeBase($percent);
-            }
+        if (!$this->route('id') && ($normalized['tax_code'] ?? '') === '') {
+            $normalized['tax_code'] = TaxMaster::taxCodeBase($normalized['purchase_tax'] ?? 0);
         }
 
         $this->merge($normalized);
@@ -33,28 +26,12 @@ class TaxMasterRequest extends FormRequest
 
     public function rules(): array
     {
-        $id = $this->route('id');
-        if (!$id && TaxMaster::tableReady()) {
-            $existing = TaxMaster::findForRate($this->input('kind'), $this->input('purchase_tax'));
-            if ($existing) {
-                $id = $existing->id;
-            }
-        }
-
         $taxCodeRules = [
             'required',
             'string',
             'max:20',
             'regex:/^[A-Z0-9][A-Z0-9\-_]*$/',
         ];
-
-        if (TaxMaster::tableReady()) {
-            $taxCodeRules[] = Rule::unique('tax_masters', 'tax_code')
-                ->where(function ($query) {
-                    $query->where('kind', (string) $this->input('kind'));
-                })
-                ->ignore($id);
-        }
 
         $appliedLimit = TaxMaster::appliedStorageLimit();
         $appliedRule = ['nullable', 'string', 'max:' . $appliedLimit];
@@ -95,16 +72,13 @@ class TaxMasterRequest extends FormRequest
         $validator->after(function (Validator $validator) {
             $data = $this->all();
             $id = $this->route('id');
-            if ($id && TaxMaster::tableReady()) {
-                $current = TaxMaster::query()->find($id);
-                $existing = TaxMaster::findForRate($data['kind'] ?? '', $data['purchase_tax'] ?? 0, $id);
-                $alreadyThisRate = $current
-                    && (string) $current->kind === (string) ($data['kind'] ?? '')
-                    && abs(TaxMaster::toDecimal($current->purchase_tax) - TaxMaster::toDecimal($data['purchase_tax'] ?? 0)) < 0.0001;
-                if ($existing && !$alreadyThisRate) {
+            $hsn = trim((string) ($data['hsn_code'] ?? ''));
+            if ($id && $hsn !== '') {
+                $owned = TaxMaster::findByHsn($hsn, $id);
+                if ($owned) {
                     $validator->errors()->add(
-                        'tax_code',
-                        translate('A tax code for this tax % already exists.')
+                        'hsn_code',
+                        translate('This HSN Code already belongs to Tax Code ') . $owned->tax_code . '.'
                     );
                 }
             }
@@ -136,7 +110,6 @@ class TaxMasterRequest extends FormRequest
         return [
             'kind.required' => translate('Please select Tax Type.'),
             'tax_code.required' => translate('Please enter Tax Code.'),
-            'tax_code.unique' => translate('This Tax Code already exists for this tax type.'),
             'tax_code.regex' => translate('Tax Code may use letters, numbers, hyphen, and underscore only.'),
             'applied_on_category.max' => translate('Too many Applied On selections for the current column size. Run sqlupdates/tax_master_applied_multi.sql, then save again.'),
             'applied_on_group.max' => translate('Too many Applied On selections for the current column size. Run sqlupdates/tax_master_applied_multi.sql, then save again.'),

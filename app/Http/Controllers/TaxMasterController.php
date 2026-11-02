@@ -53,6 +53,9 @@ class TaxMasterController extends Controller
             $query = TaxMaster::query();
             TaxMaster::applyListingFilters($query, $filters);
             $query->orderBy($sortColumn, $sortDir);
+            if ($sortBy === 'tax_code' && $hsnReady) {
+                $query->orderBy('tax_masters.hsn_code', 'asc');
+            }
             if ($sortBy !== 'id') {
                 $query->orderBy('tax_masters.id', 'desc');
             }
@@ -90,7 +93,8 @@ class TaxMasterController extends Controller
         }
 
         $payload = $this->payloadFromRequest($request);
-        $tax = TaxMaster::findForRate($payload['kind'] ?? '', $payload['purchase_tax'] ?? 0);
+        $hsn = trim((string) ($payload['hsn_code'] ?? ''));
+        $tax = $hsn !== '' ? TaxMaster::findByHsn($hsn) : null;
         $reused = (bool) $tax;
         if (!$tax) {
             $tax = new TaxMaster();
@@ -100,7 +104,7 @@ class TaxMasterController extends Controller
             $tax->save();
         } catch (\Illuminate\Database\QueryException $e) {
             if ((string) $e->getCode() === '23000') {
-                flash(translate('This tax code needs its own Tax ID. Run sqlupdates/tax_master_code_kind.sql, then save again.'))->error();
+                flash(translate('The same tax code could not be saved again. Run sqlupdates/tax_master_code_repeat.sql, then save again.'))->error();
 
                 return back()->withInput();
             }
@@ -108,7 +112,7 @@ class TaxMasterController extends Controller
         }
 
         flash(translate($reused
-            ? 'This tax type and tax % already exist, so that Tax ID was updated.'
+            ? 'This HSN already had a tax code, so that Tax ID was updated.'
             : 'Tax Master saved successfully.'))->success();
 
         return redirect()->route('tax_masters.index');
@@ -131,7 +135,16 @@ class TaxMasterController extends Controller
     {
         $tax = TaxMaster::findOrFail($id);
         $tax->fill($this->payloadFromRequest($request));
-        $tax->save();
+        try {
+            $tax->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ((string) $e->getCode() === '23000') {
+                flash(translate('The same tax code could not be saved again. Run sqlupdates/tax_master_code_repeat.sql, then save again.'))->error();
+
+                return back()->withInput();
+            }
+            throw $e;
+        }
 
         flash(translate('Tax Master updated successfully.'))->success();
 

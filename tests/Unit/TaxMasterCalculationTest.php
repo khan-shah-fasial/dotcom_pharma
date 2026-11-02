@@ -201,7 +201,7 @@ class TaxMasterCalculationTest extends TestCase
         $this->assertNull($normalized['applied_on_variant']);
     }
 
-    public function test_empty_applied_targets_mean_all_of_that_kind(): void
+    public function test_empty_applied_targets_stay_unapplied(): void
     {
         $normalized = TaxMaster::normalize([
             'kind' => 'taxable',
@@ -212,9 +212,11 @@ class TaxMasterCalculationTest extends TestCase
             'sale_same_as_purchase' => 1,
         ]);
 
-        $this->assertSame('All Product', $normalized['applied_on_product']);
+        $this->assertNull($normalized['applied_on_product']);
         $this->assertNull($normalized['applied_on_category']);
-        $this->assertSame([], TaxMaster::appliedItems('All Product'));
+        $this->assertNull($normalized['applied_on_group']);
+        $this->assertNull($normalized['applied_on_sku']);
+        $this->assertNull($normalized['applied_on_variant']);
     }
 
     public function test_applied_items_round_trip_and_summary(): void

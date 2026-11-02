@@ -849,12 +849,11 @@ class TaxMaster extends Model
             }
             $encoded = self::encodeAppliedItems(self::itemsFromTargetIds($appliedType, $targets));
             $applied = [];
-            foreach (self::APPLIED_COLUMNS as $key => $column) {
-                if ($key === $appliedType) {
-                    $applied[$column] = $encoded ?? self::APPLIED_ALL[$key];
-                } else {
-                    $applied[$column] = null;
-                }
+            foreach (self::APPLIED_COLUMNS as $column) {
+                $applied[$column] = null;
+            }
+            if ($encoded !== null) {
+                $applied[self::APPLIED_COLUMNS[$appliedType]] = $encoded;
             }
         } else {
             $applied = [
@@ -932,7 +931,7 @@ class TaxMaster extends Model
         }
         foreach ($labels as $column => $label) {
             $value = trim((string) ($this->getAttribute($column) ?? ''));
-            if ($value === '') {
+            if ($value === '' || in_array($value, self::APPLIED_ALL, true)) {
                 continue;
             }
             $items = self::appliedItems($value);
@@ -1047,6 +1046,34 @@ class TaxMaster extends Model
         }
 
         return $query;
+    }
+
+    public static function findByHsn(string $hsn, $ignoreId = null): ?self
+    {
+        $hsn = trim($hsn);
+        if ($hsn === '' || !self::tableReady() || !self::hsnColumnsReady()) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D/', '', $hsn) ?? '';
+        $query = self::query()
+            ->where(function ($query) use ($hsn, $digits) {
+                $query->where('hsn_code', $hsn);
+                if ($digits !== '') {
+                    $query->orWhere('hsn_code', $digits);
+                    $query->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(hsn_code, '.', ''), '-', ''), ' ', '') = ?",
+                        [$digits]
+                    );
+                }
+            })
+            ->orderBy('id');
+
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        return $query->first();
     }
 
     public static function findForRate($kind, $taxPercent, $ignoreId = null): ?self

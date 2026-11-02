@@ -125,13 +125,12 @@
                 if (!response || !response.tax_code || numberValue('#tax_percent') !== tax || kind() !== currentKind) {
                     return;
                 }
-                if (response.existing) {
-                    $('#tax_code').val(response.tax_code).prop('readonly', true);
-                    $('#tax-code-existing').removeClass('d-none');
-                    return;
-                }
                 $('#tax_code').prop('readonly', false);
-                $('#tax-code-existing').addClass('d-none');
+                if (response.existing) {
+                    $('#tax-code-existing').removeClass('d-none');
+                } else {
+                    $('#tax-code-existing').addClass('d-none');
+                }
                 var stillAuto = $('#tax_code').data('auto') === 1 || $('#tax_code').data('auto') === '1';
                 if (stillAuto) {
                     $('#tax_code').val(response.tax_code);

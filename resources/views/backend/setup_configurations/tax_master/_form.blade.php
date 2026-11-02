@@ -60,11 +60,11 @@
         'variant' => translate('Variants only, from any product. You can select several variants, and nothing else.'),
     ];
     $appliedEmptyNotes = [
-        'category' => translate('None selected, so this tax applies to every category.'),
-        'group' => translate('None selected, so this tax applies to every group.'),
-        'sku' => translate('None selected, so this tax applies to every SKU.'),
-        'product' => translate('None selected, so this tax applies to every product.'),
-        'variant' => translate('None selected, so this tax applies to every variant.'),
+        'category' => translate('None selected. This tax is saved and stays unapplied.'),
+        'group' => translate('None selected. This tax is saved and stays unapplied.'),
+        'sku' => translate('None selected. This tax is saved and stays unapplied.'),
+        'product' => translate('None selected. This tax is saved and stays unapplied.'),
+        'variant' => translate('None selected. This tax is saved and stays unapplied.'),
     ];
     $appliedLabels = [];
     foreach ($appliedTypeOptions as $key => $label) {
@@ -161,7 +161,7 @@
                         </td>
                         <td>
                             <input type="text" name="tax_code" id="tax_code" class="form-control form-control-sm @error('tax_code') is-invalid @enderror" value="{{ old('tax_code', optional($t)->tax_code) }}" maxlength="20" placeholder="G5" data-auto="{{ $t || old('tax_code') ? '0' : '1' }}" data-ignore-id="{{ optional($t)->id }}">
-                            <small id="tax-code-existing" class="text-muted d-none">{{ translate('This tax type and tax % already exist. Saving updates that Tax ID. A different tax type keeps this code and gets a new Tax ID.') }}</small>
+                            <small id="tax-code-existing" class="text-muted d-none">{{ translate('This tax code is already used for this tax %. Saving adds a new Tax ID for a new HSN. The same HSN updates its existing Tax ID.') }}</small>
                         </td>
                         <td>
                             <textarea name="description" id="description" class="form-control form-control-sm tm-description" maxlength="255" rows="3">{{ old('description', optional($t)->description) }}</textarea>
