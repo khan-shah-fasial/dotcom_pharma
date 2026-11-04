@@ -63,61 +63,32 @@
                     <hr>
                     <br>
 
-                    {{-- @php
-                        $limit = (int) ($user2->credit_limit ?? 0);
-                        $remainRaw = (int) ($user2->credit_remain ?? 0);
-                        $remain = max(0, min($remainRaw, $limit)); // clamp 0..limit
-                        $used = max(0, $limit - $remain);
-                        $pctUsed = $limit > 0 ? round(($used / $limit) * 100) : 0;
-                        $pctRemain = 100 - $pctUsed;
-                        $isActive = (int) ($user2->credit_status ?? 0) === 1;
-                        $fmt = fn($n) => number_format((int) $n); // simple integer format
-                    @endphp
-
-                    <div class="card p-3 h-100">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h6 class="mb-0">Credit Overview</h6>
-                            @if ($isActive)
-                                <span class="badge badge-success">Active</span>
-                            @else
-                                <span class="badge badge-secondary">Not Active</span>
-                            @endif
-                        </div>
-
-                        @if (!$isActive)
-                            <div class="alert alert-warning py-2 mb-3">
-                                Credit not active.
+                    @if ($user2)
+                        <div class="card p-3 mb-4">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h5 class="mb-0">{{ translate('Credit') }}</h5>
+                                @if ($user2->creditIsActive())
+                                    <span class="badge badge-success">{{ translate('Active') }}</span>
+                                @else
+                                    <span class="badge badge-secondary">{{ translate('Deactive') }}</span>
+                                @endif
                             </div>
-                        @endif
-
-                        <div class="row text-center mb-3">
-                            <div class="col-6">
-                                <div class="small text-muted">Credit Limit</div>
-                                <div class="h5 mb-0">₹ {{ $fmt($limit) }}</div>
-                            </div>
-                            <div class="col-6">
-                                <div class="small text-muted">Credit Remaining</div>
-                                <div class="h5 mb-0 {{ $isActive ? '' : 'text-muted' }}">₹ {{ $fmt($remain) }}</div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="d-flex justify-content-between small mb-1">
-                                <span>Used</span>
-                                <span>{{ $pctUsed }}%</span>
-                            </div>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar {{ $isActive ? 'bg-info' : 'bg-secondary' }}" role="progressbar"
-                                    style="width: {{ $pctUsed }}%;" aria-valuenow="{{ $pctUsed }}"
-                                    aria-valuemin="0" aria-valuemax="100">
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ translate('Number of Days') }}</label>
+                                    <p class="mb-0">{{ ($user2->credit_days === null || $user2->credit_days === '') ? '-' : (int) $user2->credit_days }}</p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ translate('Credit Limit') }}</label>
+                                    <p class="mb-0">{{ ($user2->credit_limit === null || $user2->credit_limit === '') ? '-' : single_price($user2->credit_limit) }}</p>
                                 </div>
                             </div>
-                            <div class="d-flex justify-content-between small mt-1 text-muted">
-                                <span>₹ {{ $fmt($used) }} used</span>
-                                <span>₹ {{ $fmt($remain) }} left</span>
-                            </div>
+                            @if (!$user2->creditIsActive())
+                                <div class="alert alert-warning py-2 mb-0">{{ translate('Credit not active.') }}</div>
+                            @endif
                         </div>
-                    </div> --}}
+                    @endif
 
                     <div class="card p-3">
                         <h5> Business Details </h5>

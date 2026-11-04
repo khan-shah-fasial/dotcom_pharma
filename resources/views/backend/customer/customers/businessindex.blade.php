@@ -577,9 +577,9 @@
                                             <div>{{ $details->current_status ?? '-' }}</div>
                                         </td>
                                         <td>
-                                            <div>{{ $user->credit_status == 1 ? translate('Active') : translate('Deactive') }}</div>
-                                            <div>{{ $user->credit_days ?? '-' }}</div>
-                                            <div>{{ $user->credit_limit ?? '-' }}</div>
+                                            <div>{{ $user->creditIsActive() ? translate('Active') : translate('Deactive') }}</div>
+                                            <div>{{ ($user->credit_days === null || $user->credit_days === '') ? '-' : (int) $user->credit_days }}</div>
+                                            <div>{{ ($user->credit_limit === null || $user->credit_limit === '') ? '-' : single_price($user->credit_limit) }}</div>
                                         </td>
                                         <td>
                                             <div>{{ $details->transport ?? '-' }}</div>
@@ -682,9 +682,8 @@
 
 
                                                     <a href="#"
-                                                        onclick="show_credit_modal({{ $user->id }}, '{{ $user->credit_status }}', {{ (int) $user->credit_limit }}, {{ $user->credit_days }}); return false;"
-                                                        {{-- onclick="show_credit_modal({{ $user->id }}, '{{ $user->credit_status == 1 ? 'active' : 'deactive' }}', {{ (int) $user->credit_limit }}); return false;" --}}
-                                                        title="Credit Manage" class="btn">
+                                                        onclick="show_credit_modal({{ (int) $user->id }}, '{{ $user->creditIsActive() ? 'active' : 'deactive' }}', {{ (int) $user->credit_limit }}, {{ (int) $user->credit_days }}); return false;"
+                                                        title="{{ translate('Credit Manage') }}" class="btn">
                                                         <i
                                                             class="las la-edit btn-soft-success btn-icon btn-circle btn-sm mr-2"></i>
                                                         <span class="ms-1">Credit</span>
@@ -843,7 +842,7 @@
                 {{-- If you prefer PATCH: @method('PATCH') --}}
 
                 <div class="modal-header py-2">
-                    <h5 class="modal-title" id="creditManageLabel">Credit Manage</h5>
+                    <h5 class="modal-title" id="creditManageLabel">{{ translate('Credit Manage') }}</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>
                     </button>
@@ -853,13 +852,11 @@
                     <input type="hidden" id="credit_user_id" name="user_id" value="{{ old('user_id') }}">
 
                     <div class="form-group">
-                        <label for="credit_status" class="mb-1">Credit Status</label>
+                        <label for="credit_status" class="mb-1">{{ translate('Credit Status') }}</label>
                         <select class="form-control @error('credit_status') is-invalid @enderror" id="credit_status"
                             name="credit_status" required>
-                            <option value="active" {{ old('credit_status') === 'active' ? 'selected' : '' }}>Active
-                            </option>
-                            <option value="deactive" {{ old('credit_status') === 'deactive' ? 'selected' : '' }}>Deactive
-                            </option>
+                            <option value="active" {{ old('credit_status') === 'active' ? 'selected' : '' }}>{{ translate('Active') }}</option>
+                            <option value="deactive" {{ old('credit_status') === 'deactive' ? 'selected' : '' }}>{{ translate('Deactive') }}</option>
                         </select>
                         @error('credit_status')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -867,10 +864,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="credit_days" class="mb-1">Number of Days</label>
+                        <label for="credit_days" class="mb-1">{{ translate('Number of Days') }}</label>
                         <input type="number" min="0" step="1"
                             class="form-control @error('credit_days') is-invalid @enderror" id="credit_days"
-                            name="credit_days" placeholder="Enter number of days" value="{{ old('credit_days') }}"
+                            name="credit_days" placeholder="{{ translate('Enter number of days') }}" value="{{ old('credit_days') }}"
                             required>
                         @error('credit_days')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -878,10 +875,10 @@
                     </div>
 
                     <div class="form-group mb-0">
-                        <label for="credit_limit" class="mb-1">Credit Limit</label>
+                        <label for="credit_limit" class="mb-1">{{ translate('Credit Limit') }}</label>
                         <input type="number" min="0" step="1"
                             class="form-control @error('credit_limit') is-invalid @enderror" id="credit_limit"
-                            name="credit_limit" placeholder="Enter credit limit" value="{{ old('credit_limit') }}"
+                            name="credit_limit" placeholder="{{ translate('Enter credit limit') }}" value="{{ old('credit_limit') }}"
                             required>
                         @error('credit_limit')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -890,8 +887,8 @@
                 </div>
 
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-light" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Close') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ translate('Save') }}</button>
                 </div>
             </form>
         </div>
@@ -1238,13 +1235,17 @@
     <script>
         function show_credit_modal(userId, status, limit, days) {
             $('#credit_user_id').val(userId);
-            if(status){
-                $('#credit_status').val(status);
-            }
+            $('#credit_status').val(status === 'active' ? 'active' : 'deactive');
             $('#credit_limit').val(limit || 0);
             $('#credit_days').val(days || 0);
             $('#creditManageModal').modal('show');
         }
+
+        @if (session('open_credit_modal') || $errors->hasAny(['user_id', 'credit_status', 'credit_limit', 'credit_days']))
+        $(function () {
+            $('#creditManageModal').modal('show');
+        });
+        @endif
 
     </script>
 @endsection

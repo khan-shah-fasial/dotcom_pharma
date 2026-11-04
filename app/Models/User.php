@@ -185,4 +185,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(UserDetails::class);
     }
+
+    public function creditIsActive(): bool
+    {
+        return in_array((string) $this->credit_status, ['1', 'active'], true);
+    }
 }

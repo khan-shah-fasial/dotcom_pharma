@@ -32,7 +32,7 @@ class CustomerController extends Controller
         $this->middleware(['permission:view_all_customers'])->only('index');
         $this->middleware(['permission:add_customer'])->only('create', 'createBusiness', 'storeBusiness');
         $this->middleware(['permission:login_as_customer'])->only('login');
-        $this->middleware(['permission:ban_customer'])->only('ban');
+        $this->middleware(['permission:ban_customer'])->only('ban', 'update_credit');
         $this->middleware(['permission:delete_customer'])->only('destroy');
     }
 
@@ -1831,73 +1831,69 @@ class CustomerController extends Controller
 
     public function update_credit(Request $request)
     {
+        $validator = \Validator::make($request->all(), [
+            'user_id'       => 'required|exists:users,id',
+            'credit_status' => 'required|in:active,deactive',
+            'credit_limit'  => 'required|numeric|min:0',
+            'credit_days'   => 'required|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('open_credit_modal', true);
+        }
+
+        $validated = $validator->validated();
+
         try {
-            // ✅ Validate request data
-            $validator = \Validator::make($request->all(), [
-                'user_id'       => 'required|exists:users,id',
-                'credit_status' => 'required|in:active,deactive',
-                'credit_limit'  => 'required|numeric|min:0',
-                'credit_days'   => 'required|numeric|min:0',
-            ]);
-
-            if ($validator->fails()) {
-                // Laravel will automatically redirect back with errors
-                return back()
-                    ->withErrors($validator)
-                    ->withInput()
-                    ->with('open_modal', true); // Optional flag if you reopen a modal
-            }
-
-            $validated = $validator->validated();
-
             $user = User::findOrFail($validated['user_id']);
-
-            $statusVal = $validated['credit_status'];
-            // $statusStr = $validated['credit_status'];
-            // $statusVal = $statusStr === 'active' ? 1 : 0;
-            $newLimit  = (int) $validated['credit_limit'];
-            $creditDays = (int) $validated['credit_days'];
+            $active = $validated['credit_status'] === 'active';
 
             DB::beginTransaction();
 
-            $oldLimit  = (int) ($user->credit_limit ?? 0);
-            $oldRemain = (int) ($user->credit_remain ?? 0);
-
-            // ✅ Safe rule for remain
-            $delta     = $newLimit - $oldLimit;
-            // $newRemain = $oldRemain;
-
-            // if ($delta > 0) {
-            //     $newRemain = min($newLimit, $oldRemain + $delta);
-            // } elseif ($delta < 0) {
-            //     $newRemain = min($newLimit, $oldRemain);
-            // }
-
-            // $newRemain = max(0, $newRemain);
-
-            // ✅ Update user
             $user->update([
-                'credit_status' => $statusVal,
-                'credit_limit'  => $newLimit,
-                // 'credit_remain' => $newRemain,
-                'credit_days'   => $creditDays,
+                'credit_status' => $this->persistableCreditStatus($active),
+                'credit_limit'  => (int) round((float) $validated['credit_limit']),
+                'credit_days'   => (int) $validated['credit_days'],
             ]);
 
             DB::commit();
 
-            // ✅ Flash success + redirect back
             flash(translate('Credit details updated successfully'))->success();
             return back();
-
         } catch (\Throwable $e) {
-            DB::rollBack(); // ✅ Always rollback on error
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             report($e);
 
             flash(translate('Something went wrong: ' . $e->getMessage()))->error();
-            return back()->withInput();
+            return back()->withInput()->with('open_credit_modal', true);
         }
     }
 
+    private function persistableCreditStatus(bool $active)
+    {
+        $type = '';
+
+        try {
+            $column = DB::selectOne("SHOW COLUMNS FROM `users` WHERE Field = 'credit_status'");
+            $type = strtolower((string) ($column->Type ?? ''));
+        } catch (\Throwable $e) {
+            $type = '';
+        }
+
+        $numeric = $type !== '' && preg_match('/^(tinyint|smallint|mediumint|int|bigint|bit|bool)/', $type) === 1;
+        $wordEnum = str_starts_with($type, 'enum') && str_contains($type, 'active');
+
+        if ($numeric || (str_starts_with($type, 'enum') && !$wordEnum)) {
+            return $active ? 1 : 0;
+        }
+
+        return $active ? 'active' : 'deactive';
+    }
 
     /**
      * Import user detail values from an Excel file located in /public.

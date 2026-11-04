@@ -5,6 +5,27 @@
 @endphp
 
 <div class="customer-print">
+    @if ($user2)
+        <div class="card mb-3">
+            <div class="card-body py-3">
+                <h6 class="section-title mb-3">{{ translate('Credit') }}</h6>
+                <div class="row g-2">
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <div class="field-label">{{ translate('Credit Status') }}</div>
+                        <div class="field-value">{{ $user2->creditIsActive() ? translate('Active') : translate('Deactive') }}</div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <div class="field-label">{{ translate('Number of Days') }}</div>
+                        <div class="field-value">{{ ($user2->credit_days === null || $user2->credit_days === '') ? '-' : (int) $user2->credit_days }}</div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <div class="field-label">{{ translate('Credit Limit') }}</div>
+                        <div class="field-value">{{ ($user2->credit_limit === null || $user2->credit_limit === '') ? '-' : single_price($user2->credit_limit) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
     @if ($hasFullProfile)
         <div class="card mb-3">
             <div class="card-body py-3">
